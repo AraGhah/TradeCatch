@@ -44,10 +44,12 @@
   },
   "home": {
     "hero": {
+      "eyebrow": "Contractor Revenue Recovery System",
       "headline": "Stop Losing Jobs to Missed Calls and Forgotten Quotes",
       "subheadline": "We install a bilingual system that responds to missed callers, collects customer information, alerts the correct technician, and follows up automatically on unanswered quotes.",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
-      "workflowCaption": "Missed call → Customer contacted → Technician alerted → Quote sent → Follow-up → Job won"
+      "workflowCaption": "Missed call → Customer contacted → Technician alerted → Quote sent → Follow-up → Job won",
+      "trustChips": ["Bilingual, French & English", "You approve every message", "Human control on every decision"]
     },
     "leaks": {
       "headline": "Where Good Jobs Are Being Lost",
@@ -79,6 +81,7 @@
     },
     "missedCall": {
       "headline": "Every Missed Call Gets an Immediate Response",
+      "badge": "Human oversight",
       "items": [
         "Detects missed and after-hours calls",
         "Sends French or English SMS responses",
@@ -113,6 +116,8 @@
     },
     "dashboard": {
       "headline": "See Exactly What the System Catches",
+      "badge": "Recovery dashboard",
+      "live": "Live",
       "metrics": [
         "Missed calls detected",
         "Customers who responded",
@@ -314,6 +319,7 @@
   "pricing": {
     "headline": "Pricing Based on Your Call Volume, Quote Volume, and Integrations",
     "metaDescription": "Starter, Growth, and Premium packages for missed-call recovery and quote follow-up automation, with starting prices for contractor businesses.",
+    "mostPopular": "Most popular",
     "disclaimer": "Final pricing depends on call volume, number of technicians, quote volume, software integrations, and workflow complexity.",
     "tiers": [
       {
@@ -398,6 +404,7 @@
       "mainProblem": "Main problem"
     },
     "consent": "By submitting this form, you agree to be contacted about your request by phone, email, or text. Message and data rates may apply. You may opt out at any time.",
+    "consentRequired": "Please check the box above to continue.",
     "submit": "Submit and Choose a Time",
     "confirmation": {
       "headline": "Thank you — your audit request has been received.",

@@ -4,6 +4,7 @@ import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
 import { CheckIcon } from "@/components/icons";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -43,38 +44,44 @@ export default async function PricingPage({
 
       <section className="py-16 sm:py-24">
         <Container>
-          <div className="grid gap-6 lg:grid-cols-3">
+          <StaggerGroup className="grid gap-6 lg:grid-cols-3 lg:items-start">
             {tiers.map((tier, i) => (
-              <div
-                key={tier.name}
-                className={`flex flex-col rounded-xl border p-8 ${
-                  i === 1
-                    ? "border-orange bg-white shadow-md ring-1 ring-orange/30"
-                    : "border-navy/10 bg-white shadow-sm"
-                }`}
-              >
-                <h3 className="text-xl font-bold text-navy">{tier.name}</h3>
-                <p className="mt-2 text-base font-semibold text-blue">{tier.price}</p>
-                <ul className="mt-6 flex-1 space-y-2.5">
-                  {tier.items.map((item) => (
-                    <li key={item} className="flex items-start gap-2 text-sm text-text/80">
-                      <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <CTAButton
-                  href="/book-audit"
-                  variant={i === 1 ? "primary" : "secondary"}
-                  className="mt-8"
+              <StaggerItem key={tier.name} className="h-full">
+                <div
+                  className={`relative flex h-full flex-col rounded-xl border p-8 transition-shadow duration-200 ${
+                    i === 1
+                      ? "border-orange bg-white shadow-card-hover ring-1 ring-orange/30 lg:-translate-y-2"
+                      : "border-navy/10 bg-white shadow-card hover:shadow-card-hover"
+                  }`}
                 >
-                  {cta("getRecommendation")}
-                </CTAButton>
-              </div>
+                  {i === 1 ? (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange px-3 py-1 text-xs font-bold uppercase tracking-wide text-navy shadow-cta">
+                      {t("mostPopular")}
+                    </span>
+                  ) : null}
+                  <h3 className="text-xl font-bold text-navy">{tier.name}</h3>
+                  <p className="mt-2 text-base font-semibold text-blue">{tier.price}</p>
+                  <ul className="mt-6 flex-1 space-y-2.5">
+                    {tier.items.map((item) => (
+                      <li key={item} className="flex items-start gap-2 text-sm text-text/80">
+                        <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <CTAButton
+                    href="/book-audit"
+                    variant={i === 1 ? "primary" : "secondary"}
+                    className="mt-8"
+                  >
+                    {cta("getRecommendation")}
+                  </CTAButton>
+                </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
 
-          <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-text/60">
+          <p className="mx-auto mt-12 max-w-2xl text-center text-sm text-text/70">
             {t("disclaimer")}
           </p>
         </Container>

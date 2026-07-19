@@ -1,3 +1,6 @@
+"use client";
+
+import { motion } from "framer-motion";
 import {
   PhoneMissedIcon,
   MessageIcon,
@@ -16,31 +19,73 @@ const STEP_ICONS = [
   CheckIcon,
 ];
 
+const container = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.12, delayChildren: 0.1 } },
+};
+
+const item = {
+  hidden: { opacity: 0, scale: 0.85, y: 10 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    y: 0,
+    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
 export function WorkflowDiagram({ caption }: { caption: string }) {
   const labels = caption.split("→").map((s) => s.trim());
 
   return (
-    <div className="rounded-xl border border-navy/10 bg-white p-6 shadow-sm">
-      <ol className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between md:gap-2">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="relative overflow-hidden rounded-2xl border border-navy/10 bg-white p-6 shadow-card sm:p-8"
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue/5 blur-2xl"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-orange/10 blur-2xl"
+      />
+
+      <motion.ol
+        initial="hidden"
+        animate="visible"
+        variants={container}
+        className="relative flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-2"
+      >
         {labels.map((label, i) => {
           const Icon = STEP_ICONS[i] ?? CheckIcon;
+          const isLast = i === labels.length - 1;
           return (
-            <li key={label} className="contents">
-              <div className="flex flex-1 items-center gap-3 md:flex-col md:items-center md:text-center">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue/10 text-blue">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span className="text-sm font-medium text-text">{label}</span>
-              </div>
-              {i < labels.length - 1 ? (
-                <span aria-hidden className="hidden text-navy/20 md:block">
-                  →
-                </span>
+            <motion.li
+              key={label}
+              variants={item}
+              className="relative flex flex-1 items-center gap-3 md:flex-col md:items-center md:text-center"
+            >
+              <span
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm ${
+                  isLast ? "bg-green/15 text-green" : "bg-blue/10 text-blue"
+                }`}
+              >
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="text-sm font-medium text-text">{label}</span>
+              {!isLast ? (
+                <span
+                  aria-hidden
+                  className="absolute top-6 left-[calc(50%+32px)] hidden h-px w-[calc(100%-40px)] bg-gradient-to-r from-navy/20 to-navy/5 md:block"
+                />
               ) : null}
-            </li>
+            </motion.li>
           );
         })}
-      </ol>
-    </div>
+      </motion.ol>
+    </motion.div>
   );
 }

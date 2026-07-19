@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
-import { CheckIcon } from "@/components/icons";
+import { CheckIcon, PinIcon, MessageIcon } from "@/components/icons";
+import { Reveal } from "@/components/motion/Reveal";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -50,24 +51,32 @@ export default async function AboutPage({
         </Container>
       </section>
 
-      <section className="py-16 sm:py-24">
+      <Reveal as="section" className="py-16 sm:py-24">
         <Container>
-          <div className="mx-auto max-w-2xl rounded-xl border border-navy/10 bg-white p-8 shadow-sm">
+          <div className="mx-auto max-w-2xl rounded-xl border border-navy/10 bg-white p-8 shadow-card">
             <p className="text-sm font-semibold uppercase tracking-wide text-blue">
               {t("founderTitle")}
             </p>
             <p className="mt-4 text-base leading-relaxed text-text/80">
               {t("founderBody")}
             </p>
-            <p className="mt-6 text-sm text-text/60">{site("serviceArea")}</p>
-            <p className="mt-1 text-sm text-text/60">{site("email")}</p>
+            <div className="mt-6 flex flex-col gap-2 border-t border-navy/10 pt-6 sm:flex-row sm:gap-6">
+              <p className="flex items-center gap-2 text-sm text-text/70">
+                <PinIcon className="h-4 w-4 shrink-0 text-blue" />
+                {site("serviceArea")}
+              </p>
+              <p className="flex items-center gap-2 text-sm text-text/70">
+                <MessageIcon className="h-4 w-4 shrink-0 text-blue" />
+                {site("email")}
+              </p>
+            </div>
           </div>
 
           <div className="mt-12 text-center">
             <CTAButton href="/book-audit">{cta("primary")}</CTAButton>
           </div>
         </Container>
-      </section>
+      </Reveal>
     </>
   );
 }

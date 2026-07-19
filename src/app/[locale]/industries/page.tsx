@@ -4,6 +4,7 @@ import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
 import { CheckIcon } from "@/components/icons";
+import { Reveal } from "@/components/motion/Reveal";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -46,11 +47,12 @@ export default async function IndustriesPage({
       </section>
 
       <section className="py-16 sm:py-24">
-        <Container className="space-y-8">
-          {sections.map((section) => (
-            <div
+        <Container className="space-y-6">
+          {sections.map((section, i) => (
+            <Reveal
               key={section.name}
-              className="grid gap-6 rounded-xl border border-navy/10 bg-white p-8 shadow-sm md:grid-cols-3"
+              delay={i * 0.05}
+              className="grid gap-6 rounded-xl border border-navy/10 bg-white p-8 shadow-card transition-shadow duration-200 hover:shadow-card-hover md:grid-cols-3"
             >
               <div>
                 <p className="text-sm font-semibold uppercase tracking-wide text-blue">
@@ -68,10 +70,10 @@ export default async function IndustriesPage({
                   </li>
                 ))}
               </ul>
-            </div>
+            </Reveal>
           ))}
 
-          <div className="text-center">
+          <div className="pt-4 text-center">
             <CTAButton href="/book-audit">{cta("primary")}</CTAButton>
           </div>
         </Container>
