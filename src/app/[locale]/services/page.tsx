@@ -4,6 +4,7 @@ import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
 import { CheckIcon } from "@/components/icons";
+import { Reveal } from "@/components/motion/Reveal";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -47,20 +48,23 @@ export default async function ServicesPage({
       </section>
 
       <section className="py-16 sm:py-24">
-        <Container className="space-y-10">
+        <Container className="space-y-6">
           {groups.map((group, i) => (
-            <div
+            <Reveal
               key={group.title}
-              className="grid gap-6 rounded-xl border border-navy/10 bg-white p-8 shadow-sm md:grid-cols-3"
+              delay={i * 0.05}
+              className="grid gap-6 rounded-xl border border-navy/10 bg-white p-8 shadow-card transition-shadow duration-200 hover:shadow-card-hover md:grid-cols-3"
             >
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-wide text-blue">
-                  Group {i + 1}
-                </p>
-                <h3 className="mt-2 text-2xl font-bold text-navy">{group.title}</h3>
-                <p className="mt-3 text-sm text-text/70">{group.purpose}</p>
+              <div className="flex gap-4 md:flex-col md:gap-0">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
+                  {i + 1}
+                </span>
+                <div>
+                  <h3 className="text-xl font-bold text-navy md:mt-3">{group.title}</h3>
+                  <p className="mt-2 text-sm text-text/70">{group.purpose}</p>
+                </div>
               </div>
-              <ul className="md:col-span-2 grid gap-2 sm:grid-cols-2">
+              <ul className="md:col-span-2 grid gap-2.5 sm:grid-cols-2">
                 {group.items.map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-text/80">
                     <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" />
@@ -68,10 +72,10 @@ export default async function ServicesPage({
                   </li>
                 ))}
               </ul>
-            </div>
+            </Reveal>
           ))}
 
-          <div className="rounded-xl border border-dashed border-navy/20 bg-bg p-8">
+          <Reveal className="rounded-xl border border-dashed border-navy/20 bg-bg p-8">
             <h3 className="text-lg font-semibold text-navy">{t("laterTitle")}</h3>
             <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
               {later.map((item) => (
@@ -80,9 +84,9 @@ export default async function ServicesPage({
                 </li>
               ))}
             </ul>
-          </div>
+          </Reveal>
 
-          <div className="text-center">
+          <div className="pt-4 text-center">
             <CTAButton href="/book-audit">{cta("primary")}</CTAButton>
           </div>
         </Container>

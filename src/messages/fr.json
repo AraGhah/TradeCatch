@@ -44,10 +44,12 @@
   },
   "home": {
     "hero": {
+      "eyebrow": "Système de récupération de revenus pour entrepreneurs",
       "headline": "Arrêtez de perdre des jobs à cause d'appels manqués et de soumissions oubliées",
       "subheadline": "Nous installons un système bilingue qui répond aux appels manqués, recueille les informations du client, alerte le bon technicien et relance automatiquement les soumissions sans réponse.",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
-      "workflowCaption": "Appel manqué → Client contacté → Technicien alerté → Soumission envoyée → Relance → Job gagné"
+      "workflowCaption": "Appel manqué → Client contacté → Technicien alerté → Soumission envoyée → Relance → Job gagné",
+      "trustChips": ["Bilingue, français et anglais", "Vous approuvez chaque message", "Contrôle humain sur chaque décision"]
     },
     "leaks": {
       "headline": "Où les bons jobs se perdent",
@@ -79,6 +81,7 @@
     },
     "missedCall": {
       "headline": "Chaque appel manqué reçoit une réponse immédiate",
+      "badge": "Supervision humaine",
       "items": [
         "Détecte les appels manqués et hors des heures d'ouverture",
         "Envoie des réponses SMS en français ou en anglais",
@@ -113,6 +116,8 @@
     },
     "dashboard": {
       "headline": "Voyez exactement ce que le système récupère",
+      "badge": "Tableau de bord de récupération",
+      "live": "En direct",
       "metrics": [
         "Appels manqués détectés",
         "Clients ayant répondu",
@@ -314,6 +319,7 @@
   "pricing": {
     "headline": "Tarifs basés sur votre volume d'appels, de soumissions et d'intégrations",
     "metaDescription": "Forfaits Démarrage, Croissance et Premium pour l'automatisation de la récupération d'appels manqués et de relance de soumissions, avec prix de départ.",
+    "mostPopular": "Le plus populaire",
     "disclaimer": "Le prix final dépend du volume d'appels, du nombre de techniciens, du volume de soumissions, des intégrations logicielles et de la complexité du processus.",
     "tiers": [
       {
@@ -398,6 +404,7 @@
       "mainProblem": "Problème principal"
     },
     "consent": "En soumettant ce formulaire, vous acceptez d'être contacté au sujet de votre demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Vous pouvez vous désabonner en tout temps.",
+    "consentRequired": "Veuillez cocher la case ci-dessus pour continuer.",
     "submit": "Soumettre et choisir un moment",
     "confirmation": {
       "headline": "Merci — votre demande d'audit a été reçue.",
