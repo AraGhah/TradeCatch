@@ -1,0 +1,538 @@
+{
+  "site": {
+    "name": "TradeCatch",
+    "tagline": "Système de récupération de revenus pour entrepreneurs",
+    "phone": "+1 (450) 000-0000",
+    "phoneHref": "+14500000000",
+    "email": "bonjour@tradecatch.ca",
+    "serviceArea": "Montréal, Laval, Mirabel, Vaudreuil-Dorion et les environs"
+  },
+  "nav": {
+    "home": "Accueil",
+    "services": "Services",
+    "howItWorks": "Fonctionnement",
+    "industries": "Industries",
+    "pricing": "Tarifs",
+    "about": "À propos",
+    "faq": "FAQ",
+    "bookAudit": "Réserver un audit",
+    "cta": "Réserver un audit gratuit"
+  },
+  "cta": {
+    "primary": "Réserver un audit gratuit",
+    "secondary": "Voir comment fonctionne le système",
+    "tertiary": "Demander une démo",
+    "watchDemo": "Regarder la démo de 90 secondes",
+    "findLeaks": "Trouvez vos pertes de revenus",
+    "seeWorkflow": "Voir comment ça fonctionne",
+    "viewMissedCall": "Voir le processus des appels manqués",
+    "viewQuoteFollowUp": "Voir le processus de relance des soumissions",
+    "requestDashboard": "Demander une démo du tableau de bord",
+    "viewIndustries": "Voir les solutions par industrie",
+    "bookRevenueAudit": "Réserver votre audit",
+    "bookFinal": "Réserver mon audit gratuit",
+    "getRecommendation": "Obtenir une recommandation personnalisée",
+    "seeSystemWorkflow": "Voir le système appliqué à votre entreprise"
+  },
+  "footer": {
+    "description": "Nous installons et gérons un système bilingue de récupération de revenus pour entrepreneurs qui capte les appels manqués, recueille les informations des clients, alerte le bon technicien, relance les soumissions sans réponse et suit les jobs récupérés grâce au système.",
+    "company": "Entreprise",
+    "legal": "Légal",
+    "resources": "Ressources",
+    "rightsReserved": "Tous droits réservés.",
+    "disclaimer": "Le système ne diagnostique pas les problèmes techniques, électriques, de plomberie, de CVC, médicaux ou de sécurité. La gestion des urgences et les consignes de sécurité demeurent la responsabilité de l'entrepreneur et du personnel qualifié."
+  },
+  "home": {
+    "hero": {
+      "headline": "Arrêtez de perdre des jobs à cause d'appels manqués et de soumissions oubliées",
+      "subheadline": "Nous installons un système bilingue qui répond aux appels manqués, recueille les informations du client, alerte le bon technicien et relance automatiquement les soumissions sans réponse.",
+      "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
+      "workflowCaption": "Appel manqué → Client contacté → Technicien alerté → Soumission envoyée → Relance → Job gagné"
+    },
+    "leaks": {
+      "headline": "Où les bons jobs se perdent",
+      "cards": [
+        {
+          "title": "Appels manqués",
+          "body": "Votre équipe travaille. Le client appelle. Personne ne répond. Le client appelle la prochaine entreprise sur Google."
+        },
+        {
+          "title": "Soumissions sans réponse",
+          "body": "Vous envoyez la soumission, vous devenez occupé et vous ne faites jamais de relance. Le client signe avec l'entreprise qui est restée en contact."
+        },
+        {
+          "title": "Administration lente",
+          "body": "Les employés passent du temps à recueillir manuellement les détails, transférer les messages, vérifier les statuts et relancer les clients."
+        }
+      ]
+    },
+    "system": {
+      "headline": "Un seul système du premier appel jusqu'au job signé",
+      "steps": [
+        { "title": "Appel capté", "body": "Les appels manqués et hors des heures d'ouverture déclenchent une réponse bilingue immédiate." },
+        { "title": "Informations recueillies", "body": "Le système recueille le nom, l'adresse, le service demandé, l'urgence et les photos du client." },
+        { "title": "Technicien alerté", "body": "Le bon technicien, répartiteur ou propriétaire reçoit un résumé complet du job." },
+        { "title": "Prospect suivi", "body": "La demande est enregistrée dans le CRM ou le tableau de bord de l'entreprise." },
+        { "title": "Soumission relancée", "body": "Si le client ne répond pas après avoir reçu une soumission, des rappels personnalisés sont envoyés automatiquement." },
+        { "title": "Résultat mesuré", "body": "L'entrepreneur voit quels appels, soumissions, rendez-vous et jobs ont été récupérés." }
+      ]
+    },
+    "missedCall": {
+      "headline": "Chaque appel manqué reçoit une réponse immédiate",
+      "items": [
+        "Détecte les appels manqués et hors des heures d'ouverture",
+        "Envoie des réponses SMS en français ou en anglais",
+        "Recueille noms, adresses, descriptions et photos",
+        "Vérifie la zone de service",
+        "Identifie les demandes potentiellement urgentes",
+        "Alerte le technicien de garde",
+        "Escalade vers un contact de remplacement",
+        "Crée un prospect dans le CRM",
+        "Suit si l'appel est devenu un rendez-vous"
+      ],
+      "note": "Le système recueille et achemine la demande. Vos techniciens licenciés continuent de diagnostiquer le problème, confirmer les prix et effectuer les travaux."
+    },
+    "quoteFollowUp": {
+      "headline": "Chaque soumission fait l'objet d'une relance",
+      "items": [
+        "Détecte la soumission",
+        "Enregistre les informations du client et du projet",
+        "Envoie des relances personnalisées",
+        "S'arrête lorsque le client répond",
+        "Classe la réponse",
+        "Alerte l'entrepreneur en cas d'objection de prix ou de question",
+        "Suit si la soumission devient un job signé",
+        "Peut ensuite se connecter à des outils de signature électronique et de dépôt"
+      ],
+      "sequence": [
+        { "day": "Jour 2", "action": "Confirmer la réception de la soumission" },
+        { "day": "Jour 5", "action": "Fournir de l'information utile" },
+        { "day": "Jour 10", "action": "Demander où en est le projet" },
+        { "day": "Jour 20", "action": "Clore la conversation" }
+      ]
+    },
+    "dashboard": {
+      "headline": "Voyez exactement ce que le système récupère",
+      "metrics": [
+        "Appels manqués détectés",
+        "Clients ayant répondu",
+        "Prospects créés",
+        "Alertes envoyées aux techniciens",
+        "Rendez-vous pris",
+        "Soumissions relancées",
+        "Réponses des clients",
+        "Soumissions gagnées",
+        "Revenu récupéré estimé",
+        "Cas nécessitant votre attention"
+      ],
+      "note": "Suivez les appels, réponses, rendez-vous et occasions de soumission liés au système."
+    },
+    "industries": {
+      "headline": "Conçu pour les entreprises de service occupées",
+      "cards": [
+        { "name": "Plomberie", "pain": "Captez les appels d'urgence avant que le client n'appelle un autre plombier." },
+        { "name": "CVC", "pain": "Captez les appels d'urgence de chauffage et relancez les soumissions d'installation." },
+        { "name": "Électricité", "pain": "Acheminez les demandes urgentes et récupérez les soumissions électriques sans réponse." },
+        { "name": "Toiture", "pain": "Récupérez les demandes d'inspection manquées et relancez les soumissions de toiture à haute valeur." },
+        { "name": "Rénovation", "pain": "Relancez chaque soumission de projet à haute valeur." },
+        { "name": "Aménagement paysager et travaux extérieurs", "pain": "Gardez vos prospects et soumissions actifs pendant que vous êtes sur le chantier." }
+      ]
+    },
+    "implementation": {
+      "headline": "Installé sans remplacer tout votre système d'affaires",
+      "steps": [
+        { "title": "Audit des revenus", "body": "Vous passez en revue les appels, soumissions, outils, employés et processus." },
+        { "title": "Conception du système", "body": "Vous créez les messages, règles d'escalade, structure de garde et séquence de relance." },
+        { "title": "Installation et tests", "body": "Vous connectez le téléphone, le courriel, le CRM, le calendrier et les outils de rapport." },
+        { "title": "Lancement et optimisation", "body": "Le système est lancé, les résultats sont suivis et les processus sont améliorés." }
+      ]
+    },
+    "trust": {
+      "headline": "L'automatisation, sous contrôle humain",
+      "points": [
+        "Les décisions importantes restent entre les mains de l'entrepreneur",
+        "Les demandes urgentes sont escaladées de façon prudente",
+        "L'IA ne diagnostique pas les problèmes techniques",
+        "Les rabais nécessitent l'approbation de l'entrepreneur",
+        "Les messages s'arrêtent dès que le client répond",
+        "Les scripts français et anglais sont révisés avant le lancement",
+        "Chaque processus est testé",
+        "L'activité des clients est enregistrée"
+      ],
+      "guaranteeTitle": "Garantie de lancement",
+      "guaranteeBody": "Si le système convenu n'est pas lancé en raison d'un retard de notre part, votre premier mois de gestion est crédité."
+    },
+    "finalCta": {
+      "headline": "Combien de jobs perdez-vous avant même de parler au client?",
+      "body": "Réservez un audit gratuit et nous passerons en revue comment votre entreprise gère actuellement les appels manqués, les nouveaux prospects et les soumissions sans réponse."
+    }
+  },
+  "services": {
+    "headline": "Un seul système de récupération de revenus. Plusieurs automatisations.",
+    "intro": "Le système connecte votre téléphone, vos messages, votre courriel, votre processus de soumission et votre CRM afin que moins d'occasions disparaissent entre le premier appel et le job signé.",
+    "groups": [
+      {
+        "title": "Capture de prospects",
+        "purpose": "Empêcher les appelants de contacter immédiatement la concurrence.",
+        "items": [
+          "Détection des appels manqués",
+          "Réponse SMS hors des heures d'ouverture",
+          "Communication en français et en anglais",
+          "Collecte des informations du client",
+          "Collecte de photos",
+          "Vérification de la zone de service",
+          "Création de prospect"
+        ]
+      },
+      {
+        "title": "Alertes aux techniciens",
+        "purpose": "S'assurer que la bonne personne reçoit rapidement la demande complète.",
+        "items": [
+          "Configuration de l'horaire de garde",
+          "Alertes SMS aux techniciens",
+          "Fiches de job",
+          "Détails du client",
+          "Photos",
+          "Niveau d'urgence",
+          "Escalade vers un technicien de remplacement",
+          "Notifications au propriétaire"
+        ]
+      },
+      {
+        "title": "Qualification et prise de rendez-vous",
+        "purpose": "Réduire les conversations administratives et réserver plus rapidement les prospects qualifiés.",
+        "items": [
+          "Questions de qualification approuvées",
+          "Détection du type de projet",
+          "Vérification de la zone de service",
+          "Demandes de rendez-vous",
+          "Réservation au calendrier",
+          "Messages de confirmation",
+          "Rappels de rendez-vous"
+        ]
+      },
+      {
+        "title": "Récupération des soumissions",
+        "purpose": "Empêcher les estimations à haute valeur de mourir faute de relance.",
+        "items": [
+          "Détection de la soumission",
+          "Extraction des informations client et projet",
+          "Séquences de relance",
+          "Détection des réponses",
+          "Classification des réponses",
+          "Demandes d'approbation à l'entrepreneur",
+          "Suivi gagné/perdu"
+        ]
+      },
+      {
+        "title": "Rapports",
+        "purpose": "Montrer si le système produit une activité mesurable.",
+        "items": [
+          "Résumés hebdomadaires",
+          "Rapports sur les appels manqués",
+          "Taux de réponse",
+          "Jobs réservés",
+          "Soumissions relancées",
+          "Soumissions gagnées",
+          "Cas nécessitant votre attention",
+          "Valeur estimée des occasions récupérées"
+        ]
+      }
+    ],
+    "laterTitle": "Ajouts optionnels (disponibles plus tard)",
+    "later": [
+      "Signature électronique",
+      "Collecte de dépôts",
+      "Rappels de facture",
+      "Demandes d'avis",
+      "Réactivation d'anciens prospects",
+      "Renouvellements de contrats saisonniers",
+      "Automatisation des commandes de matériaux"
+    ]
+  },
+  "howItWorks": {
+    "headline": "De l'appel manqué au job signé",
+    "stages": [
+      {
+        "title": "Le client contacte l'entreprise",
+        "items": ["Appel téléphonique", "Formulaire du site web", "Courriel", "Page d'atterrissage"]
+      },
+      {
+        "title": "Le système répond",
+        "items": ["SMS immédiat", "Choix de la langue", "Collecte des informations de base"]
+      },
+      {
+        "title": "La demande est acheminée",
+        "items": ["Type de service", "Localisation", "Urgence", "Bon technicien", "Escalade de remplacement"]
+      },
+      {
+        "title": "L'entrepreneur traite le job",
+        "items": ["Appelle le client", "Diagnostique le problème", "Visite la propriété", "Prépare la soumission"]
+      },
+      {
+        "title": "La relance de la soumission commence",
+        "items": ["Soumission détectée", "Relances planifiées", "Réponses classées", "Entrepreneur avisé"]
+      },
+      {
+        "title": "Le résultat est enregistré",
+        "items": ["Rendez-vous pris", "Soumission acceptée", "Soumission perdue", "Relance suspendue", "Revenu suivi"]
+      }
+    ]
+  },
+  "industriesPage": {
+    "headline": "Conçu pour les entreprises de service occupées",
+    "intro": "Un seul système, ajusté à la façon dont chaque métier perd réellement des jobs.",
+    "sections": [
+      {
+        "name": "Plomberie",
+        "headline": "Captez les urgences avant que le client n'appelle un autre plombier",
+        "focus": ["Appels d'urgence manqués", "Escalade des dégâts d'eau", "Répartition des techniciens", "Soumissions de réparation et de remplacement"]
+      },
+      {
+        "name": "CVC",
+        "headline": "Captez les appels de service et relancez les soumissions d'installation à haute valeur",
+        "focus": ["Appels sans chauffage ou climatisation", "Demandes de thermopompe", "Soumissions de remplacement", "Demande saisonnière"]
+      },
+      {
+        "name": "Électricité",
+        "headline": "Acheminez les demandes urgentes et récupérez les soumissions électriques sans réponse",
+        "focus": ["Escalade d'urgence", "Vérifications de zone de service", "Estimations de panneaux et de câblage"]
+      },
+      {
+        "name": "Toiture et rénovation",
+        "headline": "Relancez chaque estimation de projet à haute valeur",
+        "focus": ["Demandes d'inspection", "Estimations", "Planification", "Relance des soumissions"]
+      },
+      {
+        "name": "Travaux extérieurs",
+        "headline": "Gardez vos prospects et soumissions actifs pendant que vous êtes sur le chantier",
+        "focus": ["Aménagement paysager", "Pavage", "Clôtures", "Excavation", "Renouvellements de déneigement"]
+      }
+    ]
+  },
+  "pricing": {
+    "headline": "Tarifs basés sur votre volume d'appels, de soumissions et d'intégrations",
+    "disclaimer": "Le prix final dépend du volume d'appels, du nombre de techniciens, du volume de soumissions, des intégrations logicielles et de la complexité du processus.",
+    "tiers": [
+      {
+        "name": "Démarrage",
+        "price": "À partir de 2 500 $ d'installation + 750 $/mois",
+        "items": [
+          "SMS pour appels manqués",
+          "Collecte des informations de prospect",
+          "Un processus d'alerte technicien",
+          "Relance des soumissions",
+          "Rapport hebdomadaire"
+        ]
+      },
+      {
+        "name": "Croissance",
+        "price": "À partir de 4 000 $ d'installation + 1 000 $–1 500 $/mois",
+        "items": [
+          "Plusieurs techniciens",
+          "Rotation de garde",
+          "Escalade de remplacement",
+          "Intégration CRM",
+          "Prise de rendez-vous",
+          "Relance de soumissions avancée",
+          "Tableau de bord personnalisé"
+        ]
+      },
+      {
+        "name": "Premium",
+        "price": "Tarification personnalisée",
+        "items": [
+          "Plusieurs emplacements",
+          "Volume d'appels élevé",
+          "Signatures électroniques",
+          "Dépôts",
+          "Rappels de facture",
+          "Automatisation des avis",
+          "Intégrations personnalisées",
+          "Support prioritaire"
+        ]
+      }
+    ]
+  },
+  "about": {
+    "headline": "Conçu pour les entrepreneurs québécois trop occupés pour courir après chaque occasion",
+    "body": [
+      "Nous nous concentrons sur les entreprises de service et de métiers locales.",
+      "Le système est offert en français et en anglais.",
+      "Nous construisons et gérons les processus.",
+      "Nous ne remplaçons pas les professionnels licenciés.",
+      "Les décisions importantes demeurent humaines.",
+      "L'objectif est la récupération pratique de revenus, pas l'expérimentation de l'IA."
+    ],
+    "founderTitle": "Fondateur",
+    "founderBody": "TradeCatch est bâti et exploité directement par son fondateur — un développeur logiciel avec une expertise en automatisation qui travaille étroitement avec chaque entrepreneur pour concevoir, installer et gérer le système. Pas de centre d'appels, pas de support externalisé : vous travaillez avec la personne qui l'a construit."
+  },
+  "bookAudit": {
+    "headline": "Découvrez où vos appels et soumissions se perdent",
+    "intro": "Parlez-nous de votre entreprise. Ça prend environ trois minutes.",
+    "sections": {
+      "contact": "Coordonnées",
+      "qualification": "À propos de votre entreprise"
+    },
+    "fields": {
+      "firstName": "Prénom",
+      "lastName": "Nom de famille",
+      "company": "Entreprise",
+      "email": "Courriel",
+      "phone": "Téléphone",
+      "city": "Ville",
+      "trade": "Métier",
+      "preferredLanguage": "Langue préférée",
+      "employees": "Nombre d'employés",
+      "callsPerMonth": "Appels approximatifs par mois",
+      "missedCallsPerWeek": "Appels manqués approximatifs par semaine",
+      "quotesPerMonth": "Soumissions envoyées par mois",
+      "averageJobValue": "Valeur moyenne d'un job",
+      "currentCrm": "CRM ou logiciel d'affaires actuel",
+      "afterHours": "Offrez-vous un service hors des heures d'ouverture?",
+      "handlesMissedCalls": "Qui s'occupe des appels manqués actuellement?",
+      "followsUpQuotes": "Qui relance les soumissions actuellement?",
+      "mainProblem": "Problème principal"
+    },
+    "consent": "En soumettant ce formulaire, vous acceptez d'être contacté au sujet de votre demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Vous pouvez vous désabonner en tout temps.",
+    "submit": "Soumettre et choisir un moment",
+    "confirmation": {
+      "headline": "Merci — votre demande d'audit a été reçue.",
+      "body": "Nous vous contacterons sous peu pour confirmer un moment. Ayez sous la main votre volume d'appels récent, votre liste de soumissions et vos logiciels actuels."
+    }
+  },
+  "faq": {
+    "headline": "Foire aux questions",
+    "items": [
+      {
+        "q": "L'IA parle-t-elle directement aux clients?",
+        "a": "Le système envoie des messages approuvés et recueille de l'information. Les discussions importantes demeurent avec vos employés."
+      },
+      {
+        "q": "Remplace-t-il notre réceptionniste?",
+        "a": "Non. Il gère le travail répétitif lié aux appels manqués et aux relances. Le personnel continue de gérer les conversations et décisions importantes."
+      },
+      {
+        "q": "Que se passe-t-il en cas d'urgence?",
+        "a": "La demande est escaladée selon des règles approuvées par votre entreprise. Le système ne diagnostique pas et ne fournit pas de consignes de sécurité non approuvées."
+      },
+      {
+        "q": "Peut-il fonctionner avec notre numéro de téléphone actuel?",
+        "a": "Cela dépend du fournisseur téléphonique et de la configuration. L'audit détermine la méthode de connexion la plus sécuritaire."
+      },
+      {
+        "q": "Peut-il s'intégrer à notre CRM?",
+        "a": "Le système peut être configuré autour des CRM, calendriers, comptes courriel ou tableaux de bord courants. Les intégrations doivent être vérifiées lors de l'audit."
+      },
+      {
+        "q": "Les clients sauront-ils qu'ils communiquent avec de l'automatisation?",
+        "a": "Les messages doivent représenter clairement l'entreprise de l'entrepreneur et ne pas prétendre être un employé humain lorsque cela serait trompeur."
+      },
+      {
+        "q": "Que se passe-t-il quand un client répond?",
+        "a": "La séquence automatique s'arrête ou se met en pause, et la réponse est acheminée selon les règles de l'entrepreneur."
+      },
+      {
+        "q": "Le système peut-il offrir des rabais?",
+        "a": "Pas automatiquement. Les changements de prix et les rabais nécessitent une approbation."
+      },
+      {
+        "q": "Le revenu est-il garanti?",
+        "a": "Non. Le système améliore la constance des réponses et des relances, mais les résultats dépendent de la demande, des prix, de la réputation, de la disponibilité et de la qualité du service."
+      },
+      {
+        "q": "Combien de temps prend l'installation?",
+        "a": "Nous fournissons un délai réaliste après l'audit de votre entreprise — les délais varient selon le volume d'appels, les intégrations et le nombre de processus impliqués."
+      }
+    ]
+  },
+  "legal": {
+    "lastUpdated": "Dernière mise à jour",
+    "reviewNotice": "Ébauche à usage interne. Faites réviser ce document par un professionnel du droit qualifié avant sa publication.",
+    "privacyPolicy": {
+      "title": "Politique de confidentialité",
+      "sections": [
+        {
+          "heading": "Informations que nous recueillons",
+          "body": "Nous recueillons les informations que vous nous fournissez directement, comme votre nom, votre entreprise, votre courriel, votre numéro de téléphone et vos réponses aux questions de qualification lors de la réservation d'un audit. Nous recueillons aussi des données analytiques de base sur l'utilisation du site."
+        },
+        {
+          "heading": "Utilisation de vos informations",
+          "body": "Nous utilisons vos informations pour répondre à votre demande d'audit, planifier et mener des appels, préparer des propositions et — si vous devenez client — concevoir et exploiter votre système de récupération de revenus. Nous ne vendons pas vos informations personnelles."
+        },
+        {
+          "heading": "Communication par SMS et courriel",
+          "body": "En soumettant un formulaire sur ce site, vous consentez à être contacté par téléphone, courriel ou texto au sujet de votre demande. Des frais de messagerie et de données peuvent s'appliquer. Vous pouvez vous désabonner des communications SMS ou courriel en tout temps."
+        },
+        {
+          "heading": "Partage des données",
+          "body": "Nous pouvons partager des informations avec des fournisseurs de services qui soutiennent nos opérations (comme des fournisseurs de calendrier, CRM, courriel ou hébergement) en vertu d'ententes exigeant qu'ils protègent vos données. Nous ne partageons pas vos informations à des fins de marketing tiers."
+        },
+        {
+          "heading": "Conservation des données",
+          "body": "Nous conservons les informations aussi longtemps que nécessaire pour fournir nos services et respecter nos obligations légales. Vous pouvez demander la suppression de vos informations en nous contactant."
+        },
+        {
+          "heading": "Vos droits",
+          "body": "Vous pouvez demander l'accès, la correction ou la suppression de vos informations personnelles en tout temps en écrivant à bonjour@tradecatch.ca."
+        }
+      ]
+    },
+    "termsOfService": {
+      "title": "Conditions d'utilisation",
+      "sections": [
+        {
+          "heading": "Services",
+          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés (réponse aux appels manqués, qualification de prospects, alertes aux techniciens et relance des soumissions) pour les entreprises de service. Les services sont définis et tarifés individuellement après un audit."
+        },
+        {
+          "heading": "Responsabilités du client",
+          "body": "Le client est responsable de fournir des informations d'affaires exactes, d'approuver le contenu des messages et les règles d'escalade avant le lancement, et de s'assurer que le personnel licencié gère le diagnostic, la tarification et les décisions liées à la sécurité."
+        },
+        {
+          "heading": "Limites du service",
+          "body": "Le système ne diagnostique pas les problèmes techniques, électriques, de plomberie, de CVC, médicaux ou de sécurité, et ne garantit aucun volume précis de prospects, de rendez-vous ou de revenus. Les résultats dépendent de facteurs hors de notre contrôle, notamment la demande, les prix et la qualité du service."
+        },
+        {
+          "heading": "Frais et paiement",
+          "body": "Les frais d'installation et de gestion mensuelle sont indiqués dans votre proposition et facturés selon l'échéancier convenu. Un retard de paiement peut entraîner la suspension des services."
+        },
+        {
+          "heading": "Annulation",
+          "body": "Chaque partie peut mettre fin à l'entente de gestion moyennant un préavis écrit selon les termes précisés dans votre proposition. Les frais d'installation ne sont pas remboursables une fois le travail commencé."
+        },
+        {
+          "heading": "Limitation de responsabilité",
+          "body": "TradeCatch n'est pas responsable des dommages indirects, accessoires ou consécutifs découlant de l'utilisation du système, y compris les communications manquées causées par des fournisseurs tiers de téléphonie, de SMS ou de logiciels."
+        }
+      ]
+    },
+    "cookiePolicy": {
+      "title": "Politique de cookies",
+      "sections": [
+        {
+          "heading": "Que sont les cookies",
+          "body": "Les cookies sont de petits fichiers texte stockés sur votre appareil qui permettent au site de fonctionner et nous aident à comprendre comment les visiteurs l'utilisent."
+        },
+        {
+          "heading": "Cookies que nous utilisons",
+          "body": "Nous utilisons des cookies essentiels nécessaires au fonctionnement du site, ainsi que des cookies analytiques pour comprendre le trafic et améliorer le site. Nous n'utilisons pas de cookies à des fins publicitaires tierces."
+        },
+        {
+          "heading": "Gestion des cookies",
+          "body": "Vous pouvez accepter ou refuser les cookies non essentiels à l'aide de la bannière affichée lors de votre première visite, et modifier les paramètres de votre navigateur en tout temps pour bloquer ou supprimer les cookies."
+        }
+      ]
+    }
+  },
+  "cookieBanner": {
+    "text": "Nous utilisons des cookies pour faire fonctionner ce site et comprendre son utilisation. Consultez notre politique de cookies pour plus de détails.",
+    "accept": "Accepter",
+    "decline": "Refuser"
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "body": "La page que vous recherchez n'existe pas.",
+    "cta": "Retour à l'accueil"
+  }
+}

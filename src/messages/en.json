@@ -1,0 +1,538 @@
+{
+  "site": {
+    "name": "TradeCatch",
+    "tagline": "Contractor Revenue Recovery System",
+    "phone": "+1 (450) 000-0000",
+    "phoneHref": "+14500000000",
+    "email": "hello@tradecatch.ca",
+    "serviceArea": "Montréal, Laval, Mirabel, Vaudreuil-Dorion & area"
+  },
+  "nav": {
+    "home": "Home",
+    "services": "Services",
+    "howItWorks": "How It Works",
+    "industries": "Industries",
+    "pricing": "Pricing",
+    "about": "About",
+    "faq": "FAQ",
+    "bookAudit": "Book an Audit",
+    "cta": "Book a Free Revenue Leak Audit"
+  },
+  "cta": {
+    "primary": "Book a Free Revenue Leak Audit",
+    "secondary": "See How the System Works",
+    "tertiary": "Request a Demo",
+    "watchDemo": "Watch the 90-Second Demo",
+    "findLeaks": "Find Your Revenue Leaks",
+    "seeWorkflow": "See How It Works",
+    "viewMissedCall": "View Missed-Call Workflow",
+    "viewQuoteFollowUp": "See the Quote Follow-Up Process",
+    "requestDashboard": "Request a Dashboard Demo",
+    "viewIndustries": "View Industry Solutions",
+    "bookRevenueAudit": "Book Your Revenue Audit",
+    "bookFinal": "Book My Free Audit",
+    "getRecommendation": "Get a Custom Recommendation",
+    "seeSystemWorkflow": "See the System With Your Workflow"
+  },
+  "footer": {
+    "description": "We install and manage a bilingual revenue recovery system for contractors that catches missed calls, collects customer information, alerts the correct technician, follows up on unanswered quotes, and tracks the jobs the system helps recover.",
+    "company": "Company",
+    "legal": "Legal",
+    "resources": "Resources",
+    "rightsReserved": "All rights reserved.",
+    "disclaimer": "The system does not diagnose technical, electrical, plumbing, HVAC, medical, or safety conditions. Emergency handling and safety instructions remain the responsibility of the contractor and qualified personnel."
+  },
+  "home": {
+    "hero": {
+      "headline": "Stop Losing Jobs to Missed Calls and Forgotten Quotes",
+      "subheadline": "We install a bilingual system that responds to missed callers, collects customer information, alerts the correct technician, and follows up automatically on unanswered quotes.",
+      "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
+      "workflowCaption": "Missed call → Customer contacted → Technician alerted → Quote sent → Follow-up → Job won"
+    },
+    "leaks": {
+      "headline": "Where Good Jobs Are Being Lost",
+      "cards": [
+        {
+          "title": "Missed calls",
+          "body": "Your team is working. The customer calls. Nobody answers. The customer calls the next company on Google."
+        },
+        {
+          "title": "Unanswered quotes",
+          "body": "You send the quote, become busy, and never follow up. The customer signs with the company that stayed in contact."
+        },
+        {
+          "title": "Slow administration",
+          "body": "Employees spend time manually collecting details, forwarding messages, checking statuses, and reminding customers."
+        }
+      ]
+    },
+    "system": {
+      "headline": "One System From First Call to Signed Job",
+      "steps": [
+        { "title": "Call captured", "body": "Missed and after-hours calls trigger an immediate bilingual response." },
+        { "title": "Information collected", "body": "The system collects the customer's name, address, service needed, urgency, and photos." },
+        { "title": "Technician alerted", "body": "The correct technician, dispatcher, or owner receives a complete job summary." },
+        { "title": "Lead tracked", "body": "The request is recorded in the company's CRM or lead dashboard." },
+        { "title": "Quote followed up", "body": "If the customer does not answer after receiving a quote, personalized reminders are sent automatically." },
+        { "title": "Result measured", "body": "The contractor sees which calls, quotes, bookings, and jobs were recovered." }
+      ]
+    },
+    "missedCall": {
+      "headline": "Every Missed Call Gets an Immediate Response",
+      "items": [
+        "Detects missed and after-hours calls",
+        "Sends French or English SMS responses",
+        "Collects names, addresses, descriptions, and photos",
+        "Checks the service area",
+        "Identifies potentially urgent requests",
+        "Alerts the on-call technician",
+        "Escalates to a backup contact",
+        "Creates a CRM lead",
+        "Tracks whether the call became a booking"
+      ],
+      "note": "The system collects and routes the request. Your licensed technicians still diagnose the problem, confirm pricing, and perform the work."
+    },
+    "quoteFollowUp": {
+      "headline": "Every Quote Gets Followed Up",
+      "items": [
+        "Detects the quote",
+        "Saves the customer and project information",
+        "Sends personalized follow-ups",
+        "Stops when the customer responds",
+        "Classifies the response",
+        "Alerts the contractor about price objections or questions",
+        "Tracks whether the quote becomes a signed job",
+        "Can later connect to e-signature and deposit tools"
+      ],
+      "sequence": [
+        { "day": "Day 2", "action": "Confirm the quote was received" },
+        { "day": "Day 5", "action": "Provide useful information" },
+        { "day": "Day 10", "action": "Ask about timing" },
+        { "day": "Day 20", "action": "Close the conversation" }
+      ]
+    },
+    "dashboard": {
+      "headline": "See Exactly What the System Catches",
+      "metrics": [
+        "Missed calls detected",
+        "Customers who responded",
+        "Leads created",
+        "Technician alerts sent",
+        "Appointments booked",
+        "Quotes followed up",
+        "Customer replies",
+        "Quotes won",
+        "Estimated recovered revenue",
+        "Cases requiring attention"
+      ],
+      "note": "Track the calls, replies, bookings, and quote opportunities connected to the system."
+    },
+    "industries": {
+      "headline": "Built for Busy Trade Companies",
+      "cards": [
+        { "name": "Plumbing", "pain": "Catch emergency calls before the customer calls another plumber." },
+        { "name": "HVAC", "pain": "Capture emergency no-heat calls and follow up on installation quotes." },
+        { "name": "Electrical", "pain": "Route urgent requests and recover unanswered electrical quotes." },
+        { "name": "Roofing", "pain": "Recover missed inspection requests and follow up on high-value roofing estimates." },
+        { "name": "Renovation", "pain": "Follow up on every high-value project estimate." },
+        { "name": "Landscaping & exterior trades", "pain": "Keep leads and quotes moving while you're on the job site." }
+      ]
+    },
+    "implementation": {
+      "headline": "Installed Without Replacing Your Entire Business System",
+      "steps": [
+        { "title": "Revenue audit", "body": "You review calls, quotes, tools, employees, and workflows." },
+        { "title": "System design", "body": "You create the messages, escalation rules, on-call structure, and follow-up sequence." },
+        { "title": "Installation and testing", "body": "You connect the phone, email, CRM, calendar, and reporting tools." },
+        { "title": "Launch and optimization", "body": "The system goes live, results are monitored, and workflows are improved." }
+      ]
+    },
+    "trust": {
+      "headline": "Automation With Human Control",
+      "points": [
+        "Important decisions stay with the contractor",
+        "Emergency requests are escalated conservatively",
+        "AI does not diagnose technical problems",
+        "Discounts require contractor approval",
+        "Messages stop when the customer responds",
+        "French and English scripts are reviewed before launch",
+        "Every workflow is tested",
+        "Customer activity is logged"
+      ],
+      "guaranteeTitle": "Launch Guarantee",
+      "guaranteeBody": "If the agreed system is not launched because of a delay on our side, your first management month is credited."
+    },
+    "finalCta": {
+      "headline": "How Many Jobs Are You Losing Before You Ever Speak to the Customer?",
+      "body": "Book a free audit and we will review how your company currently handles missed calls, new leads, and unanswered quotes."
+    }
+  },
+  "services": {
+    "headline": "One Revenue Recovery System. Multiple Automations.",
+    "intro": "The system connects your phone, messages, email, quote process, and CRM so that fewer opportunities disappear between the first call and the signed job.",
+    "groups": [
+      {
+        "title": "Lead capture",
+        "purpose": "Prevent callers from immediately contacting competitors.",
+        "items": [
+          "Missed-call detection",
+          "After-hours SMS response",
+          "French and English communication",
+          "Customer-information collection",
+          "Photo collection",
+          "Service-area checking",
+          "Lead creation"
+        ]
+      },
+      {
+        "title": "Technician alerts",
+        "purpose": "Ensure the correct person receives the complete request quickly.",
+        "items": [
+          "On-call schedule configuration",
+          "Technician SMS alerts",
+          "Job cards",
+          "Customer details",
+          "Photos",
+          "Urgency level",
+          "Backup technician escalation",
+          "Owner notifications"
+        ]
+      },
+      {
+        "title": "Lead qualification and booking",
+        "purpose": "Reduce administrative conversations and book qualified leads faster.",
+        "items": [
+          "Approved qualification questions",
+          "Project-type detection",
+          "Service-area verification",
+          "Appointment requests",
+          "Calendar booking",
+          "Confirmation messages",
+          "Appointment reminders"
+        ]
+      },
+      {
+        "title": "Quote recovery",
+        "purpose": "Prevent high-value estimates from dying because nobody followed up.",
+        "items": [
+          "Quote detection",
+          "Customer and project extraction",
+          "Follow-up sequences",
+          "Reply detection",
+          "Reply classification",
+          "Contractor approval requests",
+          "Won/lost tracking"
+        ]
+      },
+      {
+        "title": "Reporting",
+        "purpose": "Show whether the system is producing measurable activity.",
+        "items": [
+          "Weekly summaries",
+          "Missed-call reports",
+          "Response rates",
+          "Jobs booked",
+          "Quotes followed up",
+          "Quotes won",
+          "Cases needing attention",
+          "Estimated recovered opportunity value"
+        ]
+      }
+    ],
+    "laterTitle": "Optional additions (available later)",
+    "later": [
+      "E-signature",
+      "Deposit collection",
+      "Invoice reminders",
+      "Review requests",
+      "Old-lead reactivation",
+      "Seasonal contract renewals",
+      "Material-order automation"
+    ]
+  },
+  "howItWorks": {
+    "headline": "From Missed Call to Signed Job",
+    "stages": [
+      {
+        "title": "Customer contacts the company",
+        "items": ["Phone call", "Website form", "Email", "Landing page"]
+      },
+      {
+        "title": "System responds",
+        "items": ["Immediate SMS", "Language selection", "Basic information collection"]
+      },
+      {
+        "title": "Request is routed",
+        "items": ["Service type", "Location", "Urgency", "Correct technician", "Backup escalation"]
+      },
+      {
+        "title": "Contractor handles the job",
+        "items": ["Calls the customer", "Diagnoses the issue", "Visits the property", "Prepares the quote"]
+      },
+      {
+        "title": "Quote follow-up begins",
+        "items": ["Quote detected", "Follow-ups scheduled", "Replies classified", "Contractor notified"]
+      },
+      {
+        "title": "Outcome recorded",
+        "items": ["Appointment booked", "Quote accepted", "Quote lost", "Follow-up paused", "Revenue tracked"]
+      }
+    ]
+  },
+  "industriesPage": {
+    "headline": "Built for Busy Trade Companies",
+    "intro": "One system, tuned to the way each trade actually loses jobs.",
+    "sections": [
+      {
+        "name": "Plumbing",
+        "headline": "Catch Emergency Calls Before the Customer Calls Another Plumber",
+        "focus": ["Missed emergency calls", "Flooding escalation", "Technician routing", "Repair and replacement quotes"]
+      },
+      {
+        "name": "HVAC",
+        "headline": "Capture Service Calls and Follow Up on High-Value Installation Quotes",
+        "focus": ["No-heat and no-cooling calls", "Heat-pump inquiries", "Replacement quotes", "Seasonal demand"]
+      },
+      {
+        "name": "Electrical",
+        "headline": "Route Urgent Requests and Recover Unanswered Electrical Quotes",
+        "focus": ["Emergency escalation", "Service-area checks", "Panel and rewiring estimates"]
+      },
+      {
+        "name": "Roofing & Renovation",
+        "headline": "Follow Up on Every High-Value Project Estimate",
+        "focus": ["Inspection requests", "Estimates", "Scheduling", "Quote follow-up"]
+      },
+      {
+        "name": "Exterior Trades",
+        "headline": "Keep Leads and Quotes Moving While You Are on the Job Site",
+        "focus": ["Landscaping", "Paving", "Fencing", "Excavation", "Snow-removal renewals"]
+      }
+    ]
+  },
+  "pricing": {
+    "headline": "Pricing Based on Your Call Volume, Quote Volume, and Integrations",
+    "disclaimer": "Final pricing depends on call volume, number of technicians, quote volume, software integrations, and workflow complexity.",
+    "tiers": [
+      {
+        "name": "Starter",
+        "price": "Starting at $2,500 setup + $750/month",
+        "items": [
+          "Missed-call SMS",
+          "Lead-information collection",
+          "One technician alert workflow",
+          "Quote follow-up",
+          "Weekly reporting"
+        ]
+      },
+      {
+        "name": "Growth",
+        "price": "Starting at $4,000 setup + $1,000–$1,500/month",
+        "items": [
+          "Multiple technicians",
+          "On-call rotation",
+          "Backup escalation",
+          "CRM integration",
+          "Appointment booking",
+          "Advanced quote follow-up",
+          "Custom dashboard"
+        ]
+      },
+      {
+        "name": "Premium",
+        "price": "Custom pricing",
+        "items": [
+          "Multiple locations",
+          "High call volume",
+          "E-signatures",
+          "Deposits",
+          "Invoice reminders",
+          "Review automation",
+          "Custom integrations",
+          "Priority support"
+        ]
+      }
+    ]
+  },
+  "about": {
+    "headline": "Built for Quebec Contractors Who Are Too Busy to Chase Every Opportunity",
+    "body": [
+      "We focus on local service and trade businesses.",
+      "The system is available in French and English.",
+      "We build and manage the workflows.",
+      "We do not replace licensed professionals.",
+      "Important decisions remain human.",
+      "The objective is practical revenue recovery, not experimental AI."
+    ],
+    "founderTitle": "Founder",
+    "founderBody": "TradeCatch is built and operated directly by its founder — a software developer with an automation background who works closely with each contractor to design, install, and manage the system. No call centre, no outsourced support: you work with the person who built it."
+  },
+  "bookAudit": {
+    "headline": "Find Out Where Calls and Quotes Are Being Lost",
+    "intro": "Tell us about your business. It takes about three minutes.",
+    "sections": {
+      "contact": "Contact information",
+      "qualification": "About your business"
+    },
+    "fields": {
+      "firstName": "First name",
+      "lastName": "Last name",
+      "company": "Company",
+      "email": "Email",
+      "phone": "Phone",
+      "city": "City",
+      "trade": "Trade",
+      "preferredLanguage": "Preferred language",
+      "employees": "Number of employees",
+      "callsPerMonth": "Approximate calls per month",
+      "missedCallsPerWeek": "Approximate missed calls per week",
+      "quotesPerMonth": "Quotes sent per month",
+      "averageJobValue": "Average job value",
+      "currentCrm": "Current CRM or business software",
+      "afterHours": "Do you offer after-hours service?",
+      "handlesMissedCalls": "Who handles missed calls now?",
+      "followsUpQuotes": "Who follows up on quotes now?",
+      "mainProblem": "Main problem"
+    },
+    "consent": "By submitting this form, you agree to be contacted about your request by phone, email, or text. Message and data rates may apply. You may opt out at any time.",
+    "submit": "Submit and Choose a Time",
+    "confirmation": {
+      "headline": "Thank you — your audit request has been received.",
+      "body": "We'll follow up shortly to confirm a time. Have your recent call volume, quote list, and any current software handy for the call."
+    }
+  },
+  "faq": {
+    "headline": "Frequently Asked Questions",
+    "items": [
+      {
+        "q": "Does the AI speak directly to customers?",
+        "a": "The system sends approved messages and collects information. Important discussions remain with your employees."
+      },
+      {
+        "q": "Does it replace our receptionist?",
+        "a": "No. It handles repetitive missed-call and follow-up work. Staff continue handling important conversations and decisions."
+      },
+      {
+        "q": "What happens during an emergency?",
+        "a": "The request is escalated using rules approved by your company. The system does not diagnose or provide unapproved safety instructions."
+      },
+      {
+        "q": "Can it work with our current phone number?",
+        "a": "This depends on the phone provider and setup. The audit identifies the safest connection method."
+      },
+      {
+        "q": "Can it integrate with our CRM?",
+        "a": "The system can be configured around common CRMs, calendars, email accounts, or a separate dashboard. Integrations must be verified during the audit."
+      },
+      {
+        "q": "Will customers know they are speaking with automation?",
+        "a": "The messages should clearly represent the contractor's business and should not pretend to be a human employee when that would be misleading."
+      },
+      {
+        "q": "What happens when a customer replies?",
+        "a": "The automatic sequence stops or pauses, and the reply is routed according to the contractor's rules."
+      },
+      {
+        "q": "Can the system offer discounts?",
+        "a": "Not automatically. Pricing changes and discounts require approval."
+      },
+      {
+        "q": "Is revenue guaranteed?",
+        "a": "No. The system improves response and follow-up consistency, but results depend on demand, pricing, reputation, availability, and service quality."
+      },
+      {
+        "q": "How long does installation take?",
+        "a": "We provide a realistic range after auditing your business — timelines vary with call volume, integrations, and how many workflows are involved."
+      }
+    ]
+  },
+  "legal": {
+    "lastUpdated": "Last updated",
+    "reviewNotice": "Draft for internal use. Have this document reviewed by a qualified legal professional before publishing.",
+    "privacyPolicy": {
+      "title": "Privacy Policy",
+      "sections": [
+        {
+          "heading": "Information we collect",
+          "body": "We collect information you provide directly, such as your name, company, email, phone number, and answers to qualification questions when you book an audit. We also collect basic analytics data about how the website is used."
+        },
+        {
+          "heading": "How we use your information",
+          "body": "We use your information to respond to your audit request, schedule and conduct calls, prepare proposals, and — if you become a client — to design and operate your revenue recovery system. We do not sell your personal information."
+        },
+        {
+          "heading": "SMS and email communication",
+          "body": "By submitting a form on this site, you consent to be contacted by phone, email, or text about your request. Message and data rates may apply. You may opt out of SMS or email communication at any time."
+        },
+        {
+          "heading": "Data sharing",
+          "body": "We may share information with service providers that support our operations (such as calendar, CRM, email, or hosting providers) under agreements that require them to protect your data. We do not share your information for third-party marketing purposes."
+        },
+        {
+          "heading": "Data retention",
+          "body": "We retain information for as long as needed to provide our services and meet legal obligations. You may request deletion of your information by contacting us."
+        },
+        {
+          "heading": "Your rights",
+          "body": "You may request access to, correction of, or deletion of your personal information at any time by contacting hello@tradecatch.ca."
+        }
+      ]
+    },
+    "termsOfService": {
+      "title": "Terms of Service",
+      "sections": [
+        {
+          "heading": "Services",
+          "body": "TradeCatch designs, installs, and manages automated communication workflows (missed-call response, lead qualification, technician alerting, and quote follow-up) for contractor businesses. Services are scoped and priced individually following an audit."
+        },
+        {
+          "heading": "Client responsibilities",
+          "body": "Clients are responsible for providing accurate business information, approving message content and escalation rules before launch, and ensuring that licensed staff handle diagnosis, pricing, and safety-related decisions."
+        },
+        {
+          "heading": "Service limitations",
+          "body": "The system does not diagnose technical, electrical, plumbing, HVAC, medical, or safety conditions, and does not guarantee any specific volume of leads, bookings, or revenue. Results depend on factors outside our control, including demand, pricing, and service quality."
+        },
+        {
+          "heading": "Fees and payment",
+          "body": "Setup and monthly management fees are outlined in your proposal and invoiced according to the agreed schedule. Late payment may result in suspension of services."
+        },
+        {
+          "heading": "Cancellation",
+          "body": "Either party may terminate the management agreement with written notice according to the term specified in your proposal. Setup fees are non-refundable once work has begun."
+        },
+        {
+          "heading": "Limitation of liability",
+          "body": "TradeCatch is not liable for indirect, incidental, or consequential damages arising from the use of the system, including missed communications caused by third-party phone, SMS, or software providers."
+        }
+      ]
+    },
+    "cookiePolicy": {
+      "title": "Cookie Policy",
+      "sections": [
+        {
+          "heading": "What are cookies",
+          "body": "Cookies are small text files stored on your device that help websites function and let us understand how visitors use the site."
+        },
+        {
+          "heading": "Cookies we use",
+          "body": "We use essential cookies required for the site to function, and analytics cookies to understand traffic and improve the website. We do not use cookies for third-party advertising."
+        },
+        {
+          "heading": "Managing cookies",
+          "body": "You can accept or decline non-essential cookies using the banner shown on your first visit, and can change your browser settings at any time to block or delete cookies."
+        }
+      ]
+    }
+  },
+  "cookieBanner": {
+    "text": "We use cookies to run this site and to understand how it's used. See our Cookie Policy for details.",
+    "accept": "Accept",
+    "decline": "Decline"
+  },
+  "notFound": {
+    "title": "Page not found",
+    "body": "The page you're looking for doesn't exist.",
+    "cta": "Back to home"
+  }
+}
