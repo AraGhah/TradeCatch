@@ -3,11 +3,13 @@ export function SectionHeading({
   title,
   intro,
   align = "center",
+  as: Heading = "h2",
 }: {
   eyebrow?: string;
   title: string;
   intro?: string;
   align?: "center" | "left";
+  as?: "h1" | "h2";
 }) {
   const alignClass = align === "center" ? "text-center mx-auto" : "text-left";
   return (
@@ -17,9 +19,9 @@ export function SectionHeading({
           {eyebrow}
         </p>
       ) : null}
-      <h2 className="text-3xl font-bold leading-tight text-navy sm:text-4xl">
+      <Heading className="text-3xl font-bold leading-tight text-navy sm:text-4xl">
         {title}
-      </h2>
+      </Heading>
       {intro ? <p className="mt-4 text-lg text-text/80">{intro}</p> : null}
     </div>
   );

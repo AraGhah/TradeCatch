@@ -10,9 +10,14 @@ export function BookAuditForm() {
   const [step, setStep] = useState<Step>("form");
   const [consent, setConsent] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!consent) return;
+
+    // Honeypot: real visitors never see or fill this field, bots often do.
+    const honeypot = new FormData(e.currentTarget).get("company_website");
+    if (honeypot) return;
+
     setStep("calendar");
   }
 
@@ -51,6 +56,15 @@ export function BookAuditForm() {
       onSubmit={handleSubmit}
       className="space-y-10 rounded-xl border border-navy/10 bg-white p-8 shadow-sm"
     >
+      <input
+        type="text"
+        name="company_website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
+      />
+
       <div>
         <h2 className="text-lg font-semibold text-navy">{t("sections.contact")}</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">

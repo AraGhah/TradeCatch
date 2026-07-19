@@ -252,6 +252,7 @@
   },
   "howItWorks": {
     "headline": "De l'appel manqué au job signé",
+    "metaDescription": "Découvrez comment le système transforme un appel manqué ou un nouveau prospect en rendez-vous réservé, relance de soumission et résultat suivi.",
     "stages": [
       {
         "title": "Le client contacte l'entreprise",
@@ -312,6 +313,7 @@
   },
   "pricing": {
     "headline": "Tarifs basés sur votre volume d'appels, de soumissions et d'intégrations",
+    "metaDescription": "Forfaits Démarrage, Croissance et Premium pour l'automatisation de la récupération d'appels manqués et de relance de soumissions, avec prix de départ.",
     "disclaimer": "Le prix final dépend du volume d'appels, du nombre de techniciens, du volume de soumissions, des intégrations logicielles et de la complexité du processus.",
     "tiers": [
       {
@@ -356,6 +358,7 @@
   },
   "about": {
     "headline": "Conçu pour les entrepreneurs québécois trop occupés pour courir après chaque occasion",
+    "metaDescription": "TradeCatch est bâti et exploité pour les entreprises de service du Québec, en français et en anglais, avec un contrôle humain sur chaque décision importante.",
     "body": [
       "Nous nous concentrons sur les entreprises de service et de métiers locales.",
       "Le système est offert en français et en anglais.",
@@ -403,6 +406,7 @@
   },
   "faq": {
     "headline": "Foire aux questions",
+    "metaDescription": "Réponses sur le fonctionnement du système d'appels manqués et de relance de soumissions, ce qui reste humain et ce qu'il ne fait pas.",
     "items": [
       {
         "q": "L'IA parle-t-elle directement aux clients?",
@@ -451,6 +455,7 @@
     "reviewNotice": "Ébauche à usage interne. Faites réviser ce document par un professionnel du droit qualifié avant sa publication.",
     "privacyPolicy": {
       "title": "Politique de confidentialité",
+      "metaDescription": "Comment TradeCatch recueille, utilise et protège les informations soumises via ce site et les systèmes que nous gérons.",
       "sections": [
         {
           "heading": "Informations que nous recueillons",
@@ -480,6 +485,7 @@
     },
     "termsOfService": {
       "title": "Conditions d'utilisation",
+      "metaDescription": "Les conditions régissant l'utilisation du site TradeCatch et des systèmes de récupération de revenus que nous concevons, installons et gérons.",
       "sections": [
         {
           "heading": "Services",
@@ -509,6 +515,7 @@
     },
     "cookiePolicy": {
       "title": "Politique de cookies",
+      "metaDescription": "Quels cookies ce site utilise, pourquoi, et comment gérer vos préférences.",
       "sections": [
         {
           "heading": "Que sont les cookies",

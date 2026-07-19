@@ -4,6 +4,7 @@ import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
+import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -12,7 +13,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "faq" });
-  return { title: t("headline") };
+  return buildMetadata({
+    locale,
+    pathname: "/faq",
+    title: t("headline"),
+    description: t("metaDescription"),
+  });
 }
 
 export default async function FaqPage({
@@ -45,7 +51,7 @@ export default async function FaqPage({
       />
       <section className="bg-white py-16 sm:py-24">
         <Container className="max-w-3xl">
-          <SectionHeading title={t("headline")} />
+          <SectionHeading as="h1" title={t("headline")} />
           <div className="mt-12">
             <FaqAccordion items={items} />
           </div>
