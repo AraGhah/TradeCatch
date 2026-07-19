@@ -1,5 +1,8 @@
+"use client";
+
 import { ComponentProps } from "react";
 import { Link } from "@/i18n/navigation";
+import { trackEvent } from "@/lib/analytics";
 
 type Variant = "primary" | "secondary" | "ghost";
 
@@ -16,6 +19,7 @@ export function CTAButton({
   variant = "primary",
   className = "",
   children,
+  onClick,
   ...props
 }: {
   href: ComponentProps<typeof Link>["href"];
@@ -26,6 +30,10 @@ export function CTAButton({
   return (
     <Link
       href={href}
+      onClick={(e) => {
+        trackEvent("cta_click", { href: String(href), variant });
+        onClick?.(e);
+      }}
       className={`inline-flex items-center justify-center rounded-md px-6 py-3 text-base font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${styles[variant]} ${className}`}
       {...props}
     >

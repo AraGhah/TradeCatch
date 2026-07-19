@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-
-const STORAGE_KEY = "tradecatch-cookie-consent";
+import { CONSENT_EVENT, CONSENT_STORAGE_KEY } from "@/lib/analytics";
 
 export function CookieConsent() {
   const t = useTranslations("cookieBanner");
@@ -13,11 +12,12 @@ export function CookieConsent() {
   useEffect(() => {
     // Reading localStorage requires the client mount; can't be done during SSR render.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVisible(!localStorage.getItem(STORAGE_KEY));
+    setVisible(!localStorage.getItem(CONSENT_STORAGE_KEY));
   }, []);
 
   function decide(value: "accepted" | "declined") {
-    localStorage.setItem(STORAGE_KEY, value);
+    localStorage.setItem(CONSENT_STORAGE_KEY, value);
+    window.dispatchEvent(new CustomEvent(CONSENT_EVENT, { detail: value }));
     setVisible(false);
   }
 
