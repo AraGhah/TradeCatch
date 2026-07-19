@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { trackEvent } from "@/lib/analytics";
 
 type Step = "form" | "calendar" | "confirmed";
 
@@ -18,7 +19,13 @@ export function BookAuditForm() {
     const honeypot = new FormData(e.currentTarget).get("company_website");
     if (honeypot) return;
 
+    trackEvent("audit_form_submitted");
     setStep("calendar");
+  }
+
+  function handleConfirm() {
+    trackEvent("audit_booking_confirmed");
+    setStep("confirmed");
   }
 
   if (step === "confirmed") {
@@ -42,7 +49,7 @@ export function BookAuditForm() {
         </div>
         <button
           type="button"
-          onClick={() => setStep("confirmed")}
+          onClick={handleConfirm}
           className="mt-6 w-full rounded-md bg-orange px-6 py-3 text-base font-semibold text-white hover:bg-orange/90"
         >
           {t("submit")}
