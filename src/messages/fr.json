@@ -379,36 +379,69 @@
   "bookAudit": {
     "headline": "Découvrez où vos appels et soumissions se perdent",
     "intro": "Parlez-nous de votre entreprise. Ça prend environ trois minutes.",
-    "sections": {
-      "contact": "Coordonnées",
-      "qualification": "À propos de votre entreprise"
-    },
     "fields": {
       "firstName": "Prénom",
       "lastName": "Nom de famille",
       "company": "Entreprise",
-      "email": "Courriel",
+      "email": "Courriel professionnel",
       "phone": "Téléphone",
       "city": "Ville",
-      "trade": "Métier",
+      "trade": "Métier ou secteur",
       "preferredLanguage": "Langue préférée",
       "employees": "Nombre d'employés",
       "callsPerMonth": "Appels approximatifs par mois",
       "missedCallsPerWeek": "Appels manqués approximatifs par semaine",
+      "afterHours": "Offrez-vous un service hors des heures d'ouverture?",
       "quotesPerMonth": "Soumissions envoyées par mois",
       "averageJobValue": "Valeur moyenne d'un job",
       "currentCrm": "CRM ou logiciel d'affaires actuel",
-      "afterHours": "Offrez-vous un service hors des heures d'ouverture?",
       "handlesMissedCalls": "Qui s'occupe des appels manqués actuellement?",
       "followsUpQuotes": "Qui relance les soumissions actuellement?",
-      "mainProblem": "Problème principal"
+      "mainProblem": "Problème opérationnel principal"
     },
-    "consent": "En soumettant ce formulaire, vous acceptez d'être contacté au sujet de votre demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Vous pouvez vous désabonner en tout temps.",
-    "consentRequired": "Veuillez cocher la case ci-dessus pour continuer.",
+    "options": {
+      "language": { "en": "English", "fr": "Français" },
+      "yesNo": { "yes": "Oui", "no": "Non" }
+    },
+    "consent": "J'accepte d'être contacté au sujet de cette demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Je peux me désabonner en tout temps.",
+    "marketingConsent": "J'aimerais aussi recevoir occasionnellement des conseils et des offres par courriel (optionnel — distinct du consentement ci-dessus).",
+    "consentRequired": "Veuillez accepter d'être contacté pour que nous puissions donner suite à votre demande.",
     "submit": "Soumettre et choisir un moment",
     "confirmation": {
       "headline": "Merci — votre demande d'audit a été reçue.",
       "body": "Nous vous contacterons sous peu pour confirmer un moment. Ayez sous la main votre volume d'appels récent, votre liste de soumissions et vos logiciels actuels."
+    },
+    "wizard": {
+      "stepOf": "Étape {current} sur {total}",
+      "back": "Retour",
+      "continue": "Continuer",
+      "submit": "Soumettre la demande",
+      "submitting": "Envoi en cours…",
+      "retry": "Réessayer",
+      "editStep": "Modifier",
+      "verifyingHuman": "Vérification en cours…",
+      "genericError": "Une erreur est survenue de notre côté. Veuillez réessayer.",
+      "networkError": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+      "reviewNote": "Vérifiez vos réponses ci-dessous, puis soumettez votre demande.",
+      "steps": {
+        "name": "Votre nom",
+        "company": "Entreprise et métier",
+        "contact": "Coordonnées",
+        "location": "Ville et langue",
+        "volume": "Volume d'appels",
+        "afterHours": "Service hors heures",
+        "quotes": "Soumissions",
+        "tools": "Outils actuels",
+        "followUp": "Suivi et problème",
+        "consent": "Consentement",
+        "review": "Révision",
+        "calendar": "Choisir un moment"
+      },
+      "errors": {
+        "required": "Ce champ est obligatoire.",
+        "email": "Entrez une adresse courriel valide.",
+        "phone": "Entrez un numéro de téléphone valide."
+      }
     }
   },
   "faq": {

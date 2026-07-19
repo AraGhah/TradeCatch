@@ -379,36 +379,69 @@
   "bookAudit": {
     "headline": "Find Out Where Calls and Quotes Are Being Lost",
     "intro": "Tell us about your business. It takes about three minutes.",
-    "sections": {
-      "contact": "Contact information",
-      "qualification": "About your business"
-    },
     "fields": {
       "firstName": "First name",
       "lastName": "Last name",
       "company": "Company",
-      "email": "Email",
+      "email": "Work email",
       "phone": "Phone",
       "city": "City",
-      "trade": "Trade",
+      "trade": "Trade or industry",
       "preferredLanguage": "Preferred language",
       "employees": "Number of employees",
       "callsPerMonth": "Approximate calls per month",
       "missedCallsPerWeek": "Approximate missed calls per week",
+      "afterHours": "Do you offer after-hours service?",
       "quotesPerMonth": "Quotes sent per month",
       "averageJobValue": "Average job value",
       "currentCrm": "Current CRM or business software",
-      "afterHours": "Do you offer after-hours service?",
-      "handlesMissedCalls": "Who handles missed calls now?",
-      "followsUpQuotes": "Who follows up on quotes now?",
-      "mainProblem": "Main problem"
+      "handlesMissedCalls": "Who currently handles missed calls?",
+      "followsUpQuotes": "Who currently follows up on quotes?",
+      "mainProblem": "Main operational problem"
     },
-    "consent": "By submitting this form, you agree to be contacted about your request by phone, email, or text. Message and data rates may apply. You may opt out at any time.",
-    "consentRequired": "Please check the box above to continue.",
+    "options": {
+      "language": { "en": "English", "fr": "Français" },
+      "yesNo": { "yes": "Yes", "no": "No" }
+    },
+    "consent": "I agree to be contacted about this request by phone, email, or text. Message and data rates may apply. I can opt out at any time.",
+    "marketingConsent": "I'd also like to receive occasional tips and offers by email (optional — separate from the contact above).",
+    "consentRequired": "Please agree to be contacted so we can follow up on your request.",
     "submit": "Submit and Choose a Time",
     "confirmation": {
       "headline": "Thank you — your audit request has been received.",
       "body": "We'll follow up shortly to confirm a time. Have your recent call volume, quote list, and any current software handy for the call."
+    },
+    "wizard": {
+      "stepOf": "Step {current} of {total}",
+      "back": "Back",
+      "continue": "Continue",
+      "submit": "Submit request",
+      "submitting": "Submitting…",
+      "retry": "Try again",
+      "editStep": "Edit",
+      "verifyingHuman": "Verifying you're human…",
+      "genericError": "Something went wrong on our end. Please try again.",
+      "networkError": "We couldn't reach the server. Check your connection and try again.",
+      "reviewNote": "Check your answers below, then submit your request.",
+      "steps": {
+        "name": "Your name",
+        "company": "Company & trade",
+        "contact": "Contact details",
+        "location": "Location & language",
+        "volume": "Call volume",
+        "afterHours": "After-hours coverage",
+        "quotes": "Quotes",
+        "tools": "Current tools",
+        "followUp": "Follow-up & problem",
+        "consent": "Consent",
+        "review": "Review",
+        "calendar": "Book a time"
+      },
+      "errors": {
+        "required": "This field is required.",
+        "email": "Enter a valid email address.",
+        "phone": "Enter a valid phone number."
+      }
     }
   },
   "faq": {
