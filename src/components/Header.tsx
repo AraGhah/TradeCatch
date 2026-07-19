@@ -8,6 +8,10 @@ import { Container } from "@/components/Container";
 import { CTAButton } from "@/components/CTAButton";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNav } from "@/components/MobileNav";
+import { CheckIcon } from "@/components/icons";
+
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
 
 type NavHref =
   | "/services"
@@ -51,9 +55,14 @@ export function Header() {
       <Container className="flex h-16 items-center justify-between gap-4 lg:h-20">
         <Link
           href="/"
-          className="rounded text-lg font-bold text-navy font-heading transition-opacity hover:opacity-80"
+          className={`flex items-center gap-2.5 rounded-md py-1 transition-opacity hover:opacity-85 ${FOCUS_RING}`}
         >
-          TradeCatch
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy text-white">
+            <CheckIcon className="h-4 w-4" />
+          </span>
+          <span className="font-heading text-lg font-bold tracking-tight text-navy">
+            TradeCatch
+          </span>
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">
@@ -63,7 +72,8 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`group relative rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                aria-current={active ? "page" : undefined}
+                className={`group relative rounded-md px-3 py-2 text-sm font-medium transition-colors ${FOCUS_RING} ${
                   active ? "text-navy" : "text-text/70 hover:text-navy"
                 }`}
               >

@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2";
 
 export function MobileNav({
   links,
@@ -15,6 +18,7 @@ export function MobileNav({
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     // document.body only exists on the client; the portal can't render during SSR.
@@ -29,6 +33,22 @@ export function MobileNav({
     };
   }, [open]);
 
+  function close() {
+    setOpen(false);
+    // Return focus to the toggle button so keyboard users don't lose their
+    // place once the panel (and everything inside it) unmounts.
+    toggleButtonRef.current?.focus();
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") close();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   const overlay = (
     <AnimatePresence>
       {open ? (
@@ -39,7 +59,8 @@ export function MobileNav({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={() => setOpen(false)}
+            onClick={close}
+            aria-hidden="true"
             className="fixed left-0 right-0 top-16 bottom-0 z-40 bg-navy/30 backdrop-blur-[1px]"
           />
           <motion.div
@@ -48,6 +69,9 @@ export function MobileNav({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "tween", duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile navigation"
             className="fixed right-0 top-16 bottom-0 z-40 flex w-full max-w-sm flex-col gap-6 overflow-y-auto border-l border-navy/10 bg-white p-6 shadow-2xl"
           >
             <nav className="flex flex-col gap-1">
@@ -56,8 +80,8 @@ export function MobileNav({
                   key={link.href}
                   // @ts-expect-error - href comes from a typed union at call sites
                   href={link.href}
-                  onClick={() => setOpen(false)}
-                  className="rounded-md px-3 py-3 text-base font-medium text-text active:bg-bg"
+                  onClick={close}
+                  className={`rounded-md px-3 py-3 text-base font-medium text-text active:bg-bg ${FOCUS_RING}`}
                 >
                   {link.label}
                 </Link>
@@ -68,8 +92,8 @@ export function MobileNav({
             </div>
             <Link
               href="/book-audit"
-              onClick={() => setOpen(false)}
-              className="rounded-lg bg-orange px-4 py-3 text-center text-sm font-semibold text-navy shadow-cta"
+              onClick={close}
+              className={`rounded-lg bg-orange px-4 py-3 text-center text-sm font-semibold text-navy shadow-cta ${FOCUS_RING}`}
             >
               {ctaLabel}
             </Link>
@@ -82,11 +106,12 @@ export function MobileNav({
   return (
     <div className="lg:hidden">
       <button
+        ref={toggleButtonRef}
         type="button"
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="relative flex h-10 w-10 items-center justify-center rounded-md border border-navy/15 text-navy"
+        className={`relative flex h-10 w-10 items-center justify-center rounded-md border border-navy/15 text-navy ${FOCUS_RING}`}
       >
         <span className="relative block h-4 w-5">
           <motion.span
