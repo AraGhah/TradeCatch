@@ -252,6 +252,7 @@
   },
   "howItWorks": {
     "headline": "From Missed Call to Signed Job",
+    "metaDescription": "See exactly how the system takes a missed call or new lead through to a booked appointment, quote follow-up, and a tracked outcome.",
     "stages": [
       {
         "title": "Customer contacts the company",
@@ -312,6 +313,7 @@
   },
   "pricing": {
     "headline": "Pricing Based on Your Call Volume, Quote Volume, and Integrations",
+    "metaDescription": "Starter, Growth, and Premium packages for missed-call recovery and quote follow-up automation, with starting prices for contractor businesses.",
     "disclaimer": "Final pricing depends on call volume, number of technicians, quote volume, software integrations, and workflow complexity.",
     "tiers": [
       {
@@ -356,6 +358,7 @@
   },
   "about": {
     "headline": "Built for Quebec Contractors Who Are Too Busy to Chase Every Opportunity",
+    "metaDescription": "TradeCatch is built and operated for Quebec trade businesses, in French and English, with human control over every important decision.",
     "body": [
       "We focus on local service and trade businesses.",
       "The system is available in French and English.",
@@ -403,6 +406,7 @@
   },
   "faq": {
     "headline": "Frequently Asked Questions",
+    "metaDescription": "Answers about how the missed-call and quote follow-up system works, what stays human, and what it does not do.",
     "items": [
       {
         "q": "Does the AI speak directly to customers?",
@@ -451,6 +455,7 @@
     "reviewNotice": "Draft for internal use. Have this document reviewed by a qualified legal professional before publishing.",
     "privacyPolicy": {
       "title": "Privacy Policy",
+      "metaDescription": "How TradeCatch collects, uses, and protects information submitted through this website and the systems we manage.",
       "sections": [
         {
           "heading": "Information we collect",
@@ -480,6 +485,7 @@
     },
     "termsOfService": {
       "title": "Terms of Service",
+      "metaDescription": "The terms governing the use of the TradeCatch website and the revenue recovery systems we design, install, and manage.",
       "sections": [
         {
           "heading": "Services",
@@ -509,6 +515,7 @@
     },
     "cookiePolicy": {
       "title": "Cookie Policy",
+      "metaDescription": "Which cookies this website uses, why, and how to manage your preferences.",
       "sections": [
         {
           "heading": "What are cookies",

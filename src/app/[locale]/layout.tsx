@@ -24,26 +24,21 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "home" });
   const site = await getTranslations({ locale, namespace: "site" });
 
   return {
+    metadataBase: new URL(SITE_URL),
     title: {
       default: `${site("name")} — ${site("tagline")}`,
       template: `%s — ${site("name")}`,
-    },
-    description: t("hero.subheadline"),
-    alternates: {
-      languages: {
-        en: "/",
-        fr: "/fr",
-      },
     },
   };
 }

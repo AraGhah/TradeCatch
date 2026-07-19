@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
+import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -11,7 +12,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "howItWorks" });
-  return { title: t("headline") };
+  return buildMetadata({
+    locale,
+    pathname: "/how-it-works",
+    title: t("headline"),
+    description: t("metaDescription"),
+  });
 }
 
 export default async function HowItWorksPage({
@@ -30,7 +36,7 @@ export default async function HowItWorksPage({
     <>
       <section className="bg-white py-16 sm:py-24">
         <Container>
-          <SectionHeading title={t("headline")} />
+          <SectionHeading as="h1" title={t("headline")} />
         </Container>
       </section>
 
