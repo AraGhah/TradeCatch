@@ -207,18 +207,22 @@ export function BookAuditForm() {
     setPhase("confirmed");
   }
 
-  const transition = shouldReduceMotion
-    ? { duration: 0 }
-    : { duration: 0.25 };
+  // Reduced-motion handling here is intentionally NOT a per-render branch on
+  // useReducedMotion(): that value differs between the server (always null)
+  // and the client's first paint, and branching on it would make this step's
+  // initial/exit shape disagree with the server-rendered HTML — a real
+  // hydration mismatch. Instead this always declares the same initial/exit
+  // values, and the app-wide <MotionConfig reducedMotion="user"> (see the
+  // root layout) transparently makes the resulting transition instant for
+  // users who prefer reduced motion, with no SSR/CSR discrepancy.
+  const transition = { duration: 0.25 };
   // exit sets pointerEvents: "none" so the outgoing step's fields can't be
   // typed into or clicked during its ~250ms fade-out — without this, a fast
   // typist could briefly land keystrokes in fields that are about to unmount.
-  const slideProps = shouldReduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, x: 16 },
-        exit: { opacity: 0, x: -16, pointerEvents: "none" as const },
-      };
+  const slideProps = {
+    initial: { opacity: 0, x: 16 },
+    exit: { opacity: 0, x: -16, pointerEvents: "none" as const },
+  };
 
   return (
     <div className="rounded-2xl border border-navy/10 bg-white p-6 shadow-card sm:p-8">

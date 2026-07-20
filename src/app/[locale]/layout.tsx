@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, Inter } from "next/font/google";
+import { MotionConfig } from "framer-motion";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -77,12 +78,18 @@ export default async function LocaleLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <Analytics />
-        <NextIntlClientProvider>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <CookieConsent />
-        </NextIntlClientProvider>
+        {/* reducedMotion="user" makes every motion component respect the
+            visitor's OS-level prefers-reduced-motion setting automatically,
+            without any component branching on it — the SSR-safe approach
+            (see BookAuditForm.tsx for why per-component branching is unsafe). */}
+        <MotionConfig reducedMotion="user">
+          <NextIntlClientProvider>
+            <Header />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <CookieConsent />
+          </NextIntlClientProvider>
+        </MotionConfig>
       </body>
     </html>
   );
