@@ -1,6 +1,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Container } from "@/components/Container";
+import { ManageCookiesButton } from "@/components/ManageCookiesButton";
 
 export function Footer() {
   const t = useTranslations("footer");
@@ -47,6 +48,11 @@ export function Footer() {
             <li><Link href="/privacy-policy" className={linkClass}>{legal("privacyPolicy.title")}</Link></li>
             <li><Link href="/terms-of-service" className={linkClass}>{legal("termsOfService.title")}</Link></li>
             <li><Link href="/cookie-policy" className={linkClass}>{legal("cookiePolicy.title")}</Link></li>
+            <li><Link href="/acceptable-use-policy" className={linkClass}>{legal("acceptableUsePolicy.title")}</Link></li>
+            <li><Link href="/accessibility-statement" className={linkClass}>{legal("accessibilityStatement.title")}</Link></li>
+            <li>
+              <ManageCookiesButton label={t("manageCookies")} className={linkClass} />
+            </li>
           </ul>
         </div>
       </Container>
