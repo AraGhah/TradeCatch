@@ -40,7 +40,8 @@
     "legal": "Legal",
     "resources": "Resources",
     "rightsReserved": "All rights reserved.",
-    "disclaimer": "The system does not diagnose technical, electrical, plumbing, HVAC, medical, or safety conditions. Emergency handling and safety instructions remain the responsibility of the contractor and qualified personnel."
+    "disclaimer": "The system does not diagnose technical, electrical, plumbing, HVAC, medical, or safety conditions. Emergency handling and safety instructions remain the responsibility of the contractor and qualified personnel.",
+    "manageCookies": "Manage cookies"
   },
   "home": {
     "hero": {
@@ -492,34 +493,54 @@
   },
   "legal": {
     "lastUpdated": "Last updated",
-    "reviewNotice": "Draft for internal use. Have this document reviewed by a qualified legal professional before publishing.",
+    "reviewNotice": "Draft for internal use — not yet reviewed by a lawyer. This document must be reviewed by a qualified Quebec legal professional before this site is used to serve real clients, and every bracketed [TODO] placeholder must be filled in first.",
     "privacyPolicy": {
       "title": "Privacy Policy",
       "metaDescription": "How TradeCatch collects, uses, and protects information submitted through this website and the systems we manage.",
       "sections": [
         {
+          "heading": "Who this policy covers",
+          "body": "This policy applies to TradeCatch [TODO: confirm legal entity name and business number], operating from [TODO: business address], with respect to personal information collected through this website and the systems we manage on behalf of contractor clients. It is written to reflect Quebec's private-sector privacy legislation (the Act respecting the protection of personal information in the private sector, as amended by Law 25) and applicable federal privacy law (PIPEDA)."
+        },
+        {
           "heading": "Information we collect",
-          "body": "We collect information you provide directly, such as your name, company, email, phone number, and answers to qualification questions when you book an audit. We also collect basic analytics data about how the website is used."
+          "body": "We collect information you provide directly, such as your name, company, trade, email, phone number, city, and answers to qualification questions when you book an audit. We also collect basic technical and analytics data about how the website is used, gated behind the cookie consent described in our Cookie Policy."
         },
         {
-          "heading": "How we use your information",
-          "body": "We use your information to respond to your audit request, schedule and conduct calls, prepare proposals, and — if you become a client — to design and operate your revenue recovery system. We do not sell your personal information."
+          "heading": "Purposes and legal basis for collection",
+          "body": "We use your information to respond to your audit request, schedule and conduct calls, prepare proposals, and — if you become a client — to design and operate your revenue recovery system. Collection is based on your consent (for optional communications) and on what is necessary to take steps at your request before entering a service agreement. We do not sell your personal information."
         },
         {
-          "heading": "SMS and email communication",
-          "body": "By submitting a form on this site, you consent to be contacted by phone, email, or text about your request. Message and data rates may apply. You may opt out of SMS or email communication at any time."
+          "heading": "SMS and email communication consent",
+          "body": "Contacting you about your specific audit request (by phone, email, or text) is a necessary service communication, not optional marketing — it is covered by the required consent checkbox on our forms. Marketing emails (tips, offers, updates) are separate, optional, opt-in, and never pre-checked, consistent with Canada's Anti-Spam Legislation (CASL). Message and data rates may apply to SMS. We record the exact wording, source form, and timestamp of each consent given, and honour opt-out or unsubscribe requests without delay."
         },
         {
-          "heading": "Data sharing",
-          "body": "We may share information with service providers that support our operations (such as calendar, CRM, email, or hosting providers) under agreements that require them to protect your data. We do not share your information for third-party marketing purposes."
+          "heading": "Data sharing and service providers",
+          "body": "We share information with service providers that support our operations under agreements requiring them to protect your data and use it only for the purpose we specify. As of this writing that includes: Resend (transactional email delivery), Google Analytics 4 (site analytics, only after cookie consent), Cloudflare Turnstile (bot-abuse prevention on our forms), and our hosting provider [TODO: name hosting provider]. We do not share your information for third-party advertising."
         },
         {
-          "heading": "Data retention",
-          "body": "We retain information for as long as needed to provide our services and meet legal obligations. You may request deletion of your information by contacting us."
+          "heading": "Cross-border data transfers",
+          "body": "Some service providers listed above may process or store data outside Quebec or Canada, including in the United States. Where this occurs, the provider is contractually required to protect the information to a standard comparable to Quebec law, and we conduct the privacy impact assessment required before using a service provider outside Quebec, per Law 25."
         },
         {
-          "heading": "Your rights",
-          "body": "You may request access to, correction of, or deletion of your personal information at any time by contacting hello@tradecatch.ca."
+          "heading": "Data retention schedule",
+          "body": "Audit-request and contact-form submissions are retained for up to 24 months after your last interaction with us, unless you become a client (in which case client records are retained per our service agreement and applicable tax/accounting requirements) or you request earlier deletion. Analytics data is retained per Google Analytics' default retention settings. [TODO: confirm final retention periods with counsel and update this section to match actual practice.]"
+        },
+        {
+          "heading": "Your privacy rights",
+          "body": "Under Quebec and Canadian privacy law you may request access to, correction of, or deletion of your personal information, and may withdraw consent to non-essential processing at any time, by contacting our privacy contact below. We will respond within the timelines required by law."
+        },
+        {
+          "heading": "How to reach us or file a complaint",
+          "body": "For any privacy question or request, contact our privacy contact at privacy@tradecatch.ca [TODO: confirm this inbox exists and is monitored]. If you believe we have not resolved your concern, you may file a complaint with the Commission d'accès à l'information du Québec (CAI)."
+        },
+        {
+          "heading": "Security and incident reporting",
+          "body": "We apply technical and organizational safeguards (encryption in transit, access restrictions, security headers, and the controls described in our security practices) appropriate to the sensitivity of the information involved. In the event of a confidentiality incident presenting a risk of serious harm, we will notify affected individuals and the CAI as required by Law 25."
+        },
+        {
+          "heading": "Changes to this policy",
+          "body": "We may update this policy as our practices or legal obligations change. Material changes will be reflected in the \"last updated\" date above."
         }
       ]
     },
@@ -529,7 +550,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch designs, installs, and manages automated communication workflows (missed-call response, lead qualification, technician alerting, and quote follow-up) for contractor businesses. Services are scoped and priced individually following an audit."
+          "body": "TradeCatch designs, installs, and manages automated communication workflows (missed-call response, lead qualification, technician alerting, and quote follow-up) for contractor businesses. Services are scoped and priced individually following an audit and confirmed in a written proposal."
         },
         {
           "heading": "Client responsibilities",
@@ -540,16 +561,28 @@
           "body": "The system does not diagnose technical, electrical, plumbing, HVAC, medical, or safety conditions, and does not guarantee any specific volume of leads, bookings, or revenue. Results depend on factors outside our control, including demand, pricing, and service quality."
         },
         {
+          "heading": "Emergency handling",
+          "body": "The system escalates messages using rules the client approves in advance; it does not itself assess or respond to emergencies. Handling of urgent or safety-related situations remains the responsibility of the contractor and their qualified personnel at all times, and clients must maintain their own emergency-response process independent of this system."
+        },
+        {
           "heading": "Fees and payment",
           "body": "Setup and monthly management fees are outlined in your proposal and invoiced according to the agreed schedule. Late payment may result in suspension of services."
         },
         {
-          "heading": "Cancellation",
-          "body": "Either party may terminate the management agreement with written notice according to the term specified in your proposal. Setup fees are non-refundable once work has begun."
+          "heading": "Cancellation and refunds",
+          "body": "Either party may terminate the management agreement with written notice according to the term specified in your proposal. Setup fees are non-refundable once work has begun; unused prepaid management fees for the remainder of a notice period are not refunded except as required by applicable Quebec consumer-protection law."
+        },
+        {
+          "heading": "Electronic acceptance",
+          "body": "Proposals, this agreement, and related documents may be accepted electronically (including by e-signature or by written confirmation such as email). Electronic acceptance has the same legal effect as a handwritten signature, consistent with Quebec's legal framework for information technology (An Act to establish a legal framework for information technology)."
         },
         {
           "heading": "Limitation of liability",
           "body": "TradeCatch is not liable for indirect, incidental, or consequential damages arising from the use of the system, including missed communications caused by third-party phone, SMS, or software providers."
+        },
+        {
+          "heading": "Governing law",
+          "body": "These terms are governed by the laws of the Province of Quebec and the applicable federal laws of Canada."
         }
       ]
     },
@@ -559,23 +592,69 @@
       "sections": [
         {
           "heading": "What are cookies",
-          "body": "Cookies are small text files stored on your device that help websites function and let us understand how visitors use the site."
+          "body": "Cookies are small text files stored on your device that help websites function and let us understand how visitors use the site. This site also uses similar browser storage (localStorage) to remember your cookie choice itself."
         },
         {
-          "heading": "Cookies we use",
-          "body": "We use essential cookies required for the site to function, and analytics cookies to understand traffic and improve the website. We do not use cookies for third-party advertising."
+          "heading": "Cookies and storage we use",
+          "body": "Essential: none of our own session cookies are strictly required for core browsing, but your cookie preference is saved in your browser's localStorage so we don't ask again every visit. Analytics: Google Analytics 4 sets cookies (such as _ga) to measure traffic and usage, and only loads after you accept analytics cookies below. Security: Cloudflare Turnstile may set short-lived, essential cookies while verifying that a form submission is not automated; these are not used for tracking. We do not use cookies for third-party advertising."
         },
         {
-          "heading": "Managing cookies",
-          "body": "You can accept or decline non-essential cookies using the banner shown on your first visit, and can change your browser settings at any time to block or delete cookies."
+          "heading": "Managing your cookie choice",
+          "body": "You can accept all cookies, reject non-essential cookies, or open detailed preferences using the banner shown on your first visit — all three options are equally easy to choose. You can change your choice at any time using the \"Manage cookies\" link in the footer, or by changing your browser settings to block or delete cookies."
+        }
+      ]
+    },
+    "acceptableUsePolicy": {
+      "title": "Acceptable Use Policy",
+      "metaDescription": "Rules for acceptable use of the TradeCatch website, forms, and related systems.",
+      "sections": [
+        {
+          "heading": "Purpose",
+          "body": "This policy sets out acceptable use of this website, its forms, and any system we operate on your behalf. It exists to keep the site and our systems safe, available, and usable for everyone."
+        },
+        {
+          "heading": "Prohibited activity",
+          "body": "You may not use this website or its forms to: submit false, fraudulent, or malicious information; attempt to bypass security controls (including rate limits, bot-verification, or form validation); scrape, harvest, or bulk-extract content or contact data; upload or transmit malicious code; or use the site in a way that infringes another party's rights or violates applicable law."
+        },
+        {
+          "heading": "Automated and bulk use",
+          "body": "Automated interaction with our forms or systems (bots, scripts, scrapers) is not permitted except for legitimate, publicly documented purposes (such as search-engine indexing of public pages) that respect our robots.txt directives."
+        },
+        {
+          "heading": "Enforcement",
+          "body": "We may block, rate-limit, or refuse service to any user or system that violates this policy, and may report unlawful activity to the appropriate authorities."
+        }
+      ]
+    },
+    "accessibilityStatement": {
+      "title": "Accessibility Statement",
+      "metaDescription": "Our accessibility target for this website, known limitations, and how to report an accessibility issue.",
+      "sections": [
+        {
+          "heading": "Our commitment",
+          "body": "We aim for this website to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 at Level AA, including keyboard navigability, visible focus states, sufficient colour contrast, semantic heading structure, and support for reduced-motion preferences."
+        },
+        {
+          "heading": "Known limitations",
+          "body": "This site is under active development. Some third-party embeds (such as the Cloudflare Turnstile widget or a future calendar-booking embed) are provided by external vendors and may not fully match our own accessibility standard. We review and address issues as they're identified."
+        },
+        {
+          "heading": "Feedback and contact",
+          "body": "If you encounter an accessibility barrier on this site, please contact us at hello@tradecatch.ca describing the page and the issue. We will work to address genuine barriers in a reasonable timeframe."
         }
       ]
     }
   },
   "cookieBanner": {
     "text": "We use cookies to run this site and to understand how it's used. See our Cookie Policy for details.",
-    "accept": "Accept",
-    "decline": "Decline"
+    "acceptAll": "Accept all",
+    "rejectNonEssential": "Reject non-essential",
+    "managePreferences": "Manage preferences",
+    "savePreferences": "Save preferences",
+    "essentialLabel": "Essential",
+    "essentialDescription": "Required for the site to work. Always on.",
+    "analyticsLabel": "Analytics",
+    "analyticsDescription": "Helps us understand site usage (Google Analytics 4). Only loads if you allow it."
   },
   "notFound": {
     "title": "Page not found",

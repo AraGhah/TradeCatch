@@ -40,7 +40,8 @@
     "legal": "Légal",
     "resources": "Ressources",
     "rightsReserved": "Tous droits réservés.",
-    "disclaimer": "Le système ne diagnostique pas les problèmes techniques, électriques, de plomberie, de CVC, médicaux ou de sécurité. La gestion des urgences et les consignes de sécurité demeurent la responsabilité de l'entrepreneur et du personnel qualifié."
+    "disclaimer": "Le système ne diagnostique pas les problèmes techniques, électriques, de plomberie, de CVC, médicaux ou de sécurité. La gestion des urgences et les consignes de sécurité demeurent la responsabilité de l'entrepreneur et du personnel qualifié.",
+    "manageCookies": "Gérer les cookies"
   },
   "home": {
     "hero": {
@@ -492,34 +493,54 @@
   },
   "legal": {
     "lastUpdated": "Dernière mise à jour",
-    "reviewNotice": "Ébauche à usage interne. Faites réviser ce document par un professionnel du droit qualifié avant sa publication.",
+    "reviewNotice": "Ébauche à usage interne — non encore révisée par un avocat. Ce document doit être révisé par un professionnel du droit québécois qualifié avant que ce site ne serve de vrais clients, et chaque espace réservé [TODO] doit d'abord être complété.",
     "privacyPolicy": {
       "title": "Politique de confidentialité",
       "metaDescription": "Comment TradeCatch recueille, utilise et protège les informations soumises via ce site et les systèmes que nous gérons.",
       "sections": [
         {
+          "heading": "Portée de cette politique",
+          "body": "Cette politique s'applique à TradeCatch [TODO : confirmer la dénomination sociale et le numéro d'entreprise], exploitée depuis [TODO : adresse d'affaires], à l'égard des renseignements personnels recueillis via ce site et les systèmes que nous gérons pour nos clients entrepreneurs. Elle reflète la Loi sur la protection des renseignements personnels dans le secteur privé du Québec, telle que modifiée par la Loi 25, ainsi que la loi fédérale applicable (LPRPDE)."
+        },
+        {
           "heading": "Informations que nous recueillons",
-          "body": "Nous recueillons les informations que vous nous fournissez directement, comme votre nom, votre entreprise, votre courriel, votre numéro de téléphone et vos réponses aux questions de qualification lors de la réservation d'un audit. Nous recueillons aussi des données analytiques de base sur l'utilisation du site."
+          "body": "Nous recueillons les informations que vous nous fournissez directement, comme votre nom, votre entreprise, votre métier, votre courriel, votre numéro de téléphone, votre ville et vos réponses aux questions de qualification lors de la réservation d'un audit. Nous recueillons aussi des données techniques et analytiques de base, sous réserve du consentement décrit dans notre politique de cookies."
         },
         {
-          "heading": "Utilisation de vos informations",
-          "body": "Nous utilisons vos informations pour répondre à votre demande d'audit, planifier et mener des appels, préparer des propositions et — si vous devenez client — concevoir et exploiter votre système de récupération de revenus. Nous ne vendons pas vos informations personnelles."
+          "heading": "Finalités et fondement du traitement",
+          "body": "Nous utilisons vos informations pour répondre à votre demande d'audit, planifier et mener des appels, préparer des propositions et — si vous devenez client — concevoir et exploiter votre système de récupération de revenus. La collecte repose sur votre consentement (pour les communications optionnelles) et sur ce qui est nécessaire pour donner suite à votre demande avant la conclusion d'une entente de service. Nous ne vendons pas vos informations personnelles."
         },
         {
-          "heading": "Communication par SMS et courriel",
-          "body": "En soumettant un formulaire sur ce site, vous consentez à être contacté par téléphone, courriel ou texto au sujet de votre demande. Des frais de messagerie et de données peuvent s'appliquer. Vous pouvez vous désabonner des communications SMS ou courriel en tout temps."
+          "heading": "Consentement aux communications SMS et courriel",
+          "body": "Vous contacter au sujet de votre demande d'audit précise (par téléphone, courriel ou texto) est une communication de service nécessaire, non optionnelle — elle est couverte par la case de consentement obligatoire de nos formulaires. Les courriels de marketing (conseils, offres, mises à jour) sont distincts, optionnels, à adhésion explicite et jamais précochés, conformément à la Loi canadienne anti-pourriel (LCAP). Des frais de messagerie et de données peuvent s'appliquer aux SMS. Nous conservons le libellé exact, le formulaire source et l'horodatage de chaque consentement, et donnons suite sans délai à toute demande de retrait ou de désabonnement."
         },
         {
-          "heading": "Partage des données",
-          "body": "Nous pouvons partager des informations avec des fournisseurs de services qui soutiennent nos opérations (comme des fournisseurs de calendrier, CRM, courriel ou hébergement) en vertu d'ententes exigeant qu'ils protègent vos données. Nous ne partageons pas vos informations à des fins de marketing tiers."
+          "heading": "Partage des données et fournisseurs de services",
+          "body": "Nous partageons des informations avec des fournisseurs de services qui soutiennent nos opérations, en vertu d'ententes exigeant qu'ils protègent vos données et ne les utilisent qu'aux fins précisées. À ce jour, il s'agit de : Resend (envoi de courriels transactionnels), Google Analytics 4 (analytique du site, uniquement après consentement aux cookies), Cloudflare Turnstile (prévention des abus automatisés sur nos formulaires) et notre fournisseur d'hébergement [TODO : nommer le fournisseur d'hébergement]. Nous ne partageons pas vos informations à des fins de publicité tierce."
         },
         {
-          "heading": "Conservation des données",
-          "body": "Nous conservons les informations aussi longtemps que nécessaire pour fournir nos services et respecter nos obligations légales. Vous pouvez demander la suppression de vos informations en nous contactant."
+          "heading": "Transferts de données hors Québec",
+          "body": "Certains fournisseurs ci-dessus peuvent traiter ou stocker des données hors Québec ou du Canada, notamment aux États-Unis. Le cas échéant, le fournisseur est contractuellement tenu de protéger les informations selon une norme comparable à la loi québécoise, et nous réalisons l'évaluation des facteurs relatifs à la vie privée exigée avant de recourir à un fournisseur hors Québec, conformément à la Loi 25."
         },
         {
-          "heading": "Vos droits",
-          "body": "Vous pouvez demander l'accès, la correction ou la suppression de vos informations personnelles en tout temps en écrivant à bonjour@tradecatch.ca."
+          "heading": "Calendrier de conservation des données",
+          "body": "Les soumissions de demande d'audit et de formulaire de contact sont conservées jusqu'à 24 mois après votre dernière interaction avec nous, sauf si vous devenez client (les dossiers clients sont alors conservés selon notre entente de service et les exigences fiscales et comptables applicables) ou si vous demandez une suppression anticipée. Les données analytiques sont conservées selon les paramètres par défaut de Google Analytics. [TODO : confirmer les périodes de conservation finales avec un conseiller juridique et mettre à jour cette section en conséquence.]"
+        },
+        {
+          "heading": "Vos droits en matière de confidentialité",
+          "body": "En vertu du droit québécois et canadien, vous pouvez demander l'accès, la correction ou la suppression de vos renseignements personnels, et retirer votre consentement à tout traitement non essentiel en tout temps, en écrivant à notre contact vie privée ci-dessous. Nous répondrons dans les délais prescrits par la loi."
+        },
+        {
+          "heading": "Nous joindre ou porter plainte",
+          "body": "Pour toute question ou demande relative à la confidentialité, écrivez à confidentialite@tradecatch.ca [TODO : confirmer que cette boîte courriel existe et est surveillée]. Si vous estimez que votre préoccupation n'a pas été résolue, vous pouvez déposer une plainte auprès de la Commission d'accès à l'information du Québec (CAI)."
+        },
+        {
+          "heading": "Sécurité et signalement d'incidents",
+          "body": "Nous appliquons des mesures de sécurité techniques et organisationnelles (chiffrement en transit, restrictions d'accès, en-têtes de sécurité et les contrôles décrits dans nos pratiques de sécurité) proportionnées à la sensibilité des informations concernées. En cas d'incident de confidentialité présentant un risque de préjudice sérieux, nous en informerons les personnes concernées et la CAI, comme l'exige la Loi 25."
+        },
+        {
+          "heading": "Modifications de cette politique",
+          "body": "Nous pouvons mettre à jour cette politique si nos pratiques ou nos obligations légales changent. Les modifications importantes seront reflétées dans la date de « dernière mise à jour » ci-dessus."
         }
       ]
     },
@@ -529,7 +550,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés (réponse aux appels manqués, qualification de prospects, alertes aux techniciens et relance des soumissions) pour les entreprises de service. Les services sont définis et tarifés individuellement après un audit."
+          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés (réponse aux appels manqués, qualification de prospects, alertes aux techniciens et relance des soumissions) pour les entreprises de service. Les services sont définis et tarifés individuellement après un audit et confirmés dans une proposition écrite."
         },
         {
           "heading": "Responsabilités du client",
@@ -540,16 +561,28 @@
           "body": "Le système ne diagnostique pas les problèmes techniques, électriques, de plomberie, de CVC, médicaux ou de sécurité, et ne garantit aucun volume précis de prospects, de rendez-vous ou de revenus. Les résultats dépendent de facteurs hors de notre contrôle, notamment la demande, les prix et la qualité du service."
         },
         {
+          "heading": "Gestion des urgences",
+          "body": "Le système achemine les messages selon des règles approuvées à l'avance par le client; il n'évalue ni ne traite lui-même les urgences. La gestion des situations urgentes ou liées à la sécurité demeure en tout temps la responsabilité de l'entrepreneur et de son personnel qualifié, et le client doit maintenir son propre processus de gestion des urgences, indépendant de ce système."
+        },
+        {
           "heading": "Frais et paiement",
           "body": "Les frais d'installation et de gestion mensuelle sont indiqués dans votre proposition et facturés selon l'échéancier convenu. Un retard de paiement peut entraîner la suspension des services."
         },
         {
-          "heading": "Annulation",
-          "body": "Chaque partie peut mettre fin à l'entente de gestion moyennant un préavis écrit selon les termes précisés dans votre proposition. Les frais d'installation ne sont pas remboursables une fois le travail commencé."
+          "heading": "Annulation et remboursements",
+          "body": "Chaque partie peut mettre fin à l'entente de gestion moyennant un préavis écrit selon les termes précisés dans votre proposition. Les frais d'installation ne sont pas remboursables une fois le travail commencé; les frais de gestion prépayés non utilisés pour le reste d'une période de préavis ne sont pas remboursés, sauf si le droit québécois de la protection du consommateur l'exige."
+        },
+        {
+          "heading": "Acceptation électronique",
+          "body": "Les propositions, la présente entente et les documents connexes peuvent être acceptés électroniquement (y compris par signature électronique ou confirmation écrite telle qu'un courriel). L'acceptation électronique a la même valeur juridique qu'une signature manuscrite, conformément à la Loi concernant le cadre juridique des technologies de l'information du Québec."
         },
         {
           "heading": "Limitation de responsabilité",
           "body": "TradeCatch n'est pas responsable des dommages indirects, accessoires ou consécutifs découlant de l'utilisation du système, y compris les communications manquées causées par des fournisseurs tiers de téléphonie, de SMS ou de logiciels."
+        },
+        {
+          "heading": "Droit applicable",
+          "body": "Les présentes conditions sont régies par les lois de la province de Québec et les lois fédérales canadiennes applicables."
         }
       ]
     },
@@ -559,23 +592,69 @@
       "sections": [
         {
           "heading": "Que sont les cookies",
-          "body": "Les cookies sont de petits fichiers texte stockés sur votre appareil qui permettent au site de fonctionner et nous aident à comprendre comment les visiteurs l'utilisent."
+          "body": "Les cookies sont de petits fichiers texte stockés sur votre appareil qui permettent au site de fonctionner et nous aident à comprendre comment les visiteurs l'utilisent. Ce site utilise aussi un stockage similaire du navigateur (localStorage) pour se souvenir de votre choix de cookies."
         },
         {
-          "heading": "Cookies que nous utilisons",
-          "body": "Nous utilisons des cookies essentiels nécessaires au fonctionnement du site, ainsi que des cookies analytiques pour comprendre le trafic et améliorer le site. Nous n'utilisons pas de cookies à des fins publicitaires tierces."
+          "heading": "Cookies et stockage que nous utilisons",
+          "body": "Essentiels : aucun cookie de session propre n'est strictement requis pour la navigation de base, mais votre choix de cookies est enregistré dans le localStorage de votre navigateur afin de ne pas vous redemander à chaque visite. Analytiques : Google Analytics 4 dépose des cookies (comme _ga) pour mesurer le trafic et l'utilisation, et ne se charge qu'après votre acceptation des cookies analytiques ci-dessous. Sécurité : Cloudflare Turnstile peut déposer des cookies essentiels de courte durée lors de la vérification qu'une soumission de formulaire n'est pas automatisée; ceux-ci ne servent pas au suivi. Nous n'utilisons pas de cookies à des fins publicitaires tierces."
         },
         {
-          "heading": "Gestion des cookies",
-          "body": "Vous pouvez accepter ou refuser les cookies non essentiels à l'aide de la bannière affichée lors de votre première visite, et modifier les paramètres de votre navigateur en tout temps pour bloquer ou supprimer les cookies."
+          "heading": "Gérer votre choix de cookies",
+          "body": "Vous pouvez tout accepter, refuser les cookies non essentiels, ou ouvrir les préférences détaillées à l'aide de la bannière affichée lors de votre première visite — les trois options sont également faciles à choisir. Vous pouvez modifier votre choix en tout temps via le lien « Gérer les cookies » dans le pied de page, ou en modifiant les paramètres de votre navigateur."
+        }
+      ]
+    },
+    "acceptableUsePolicy": {
+      "title": "Politique d'utilisation acceptable",
+      "metaDescription": "Règles d'utilisation acceptable du site, des formulaires et des systèmes connexes de TradeCatch.",
+      "sections": [
+        {
+          "heading": "Objectif",
+          "body": "Cette politique établit les règles d'utilisation acceptable de ce site, de ses formulaires et de tout système que nous exploitons en votre nom. Elle vise à garder le site et nos systèmes sécuritaires, disponibles et utilisables pour tous."
+        },
+        {
+          "heading": "Utilisations interdites",
+          "body": "Vous ne pouvez pas utiliser ce site ou ses formulaires pour : soumettre des informations fausses, frauduleuses ou malveillantes; tenter de contourner les contrôles de sécurité (y compris les limites de débit, la vérification anti-robot ou la validation des formulaires); extraire ou collecter en masse du contenu ou des coordonnées; transmettre du code malveillant; ou utiliser le site d'une manière qui porte atteinte aux droits d'autrui ou enfreint la loi applicable."
+        },
+        {
+          "heading": "Utilisation automatisée et massive",
+          "body": "L'interaction automatisée avec nos formulaires ou systèmes (robots, scripts, extracteurs) n'est pas permise, sauf à des fins légitimes et publiquement documentées (comme l'indexation par un moteur de recherche) qui respectent les directives de notre fichier robots.txt."
+        },
+        {
+          "heading": "Application",
+          "body": "Nous pouvons bloquer, limiter le débit ou refuser le service à tout utilisateur ou système qui enfreint cette politique, et pouvons signaler toute activité illégale aux autorités compétentes."
+        }
+      ]
+    },
+    "accessibilityStatement": {
+      "title": "Déclaration d'accessibilité",
+      "metaDescription": "Notre cible d'accessibilité pour ce site, les limites connues et comment signaler un problème d'accessibilité.",
+      "sections": [
+        {
+          "heading": "Notre engagement",
+          "body": "Nous visons la conformité de ce site aux Règles pour l'accessibilité des contenus Web (WCAG) 2.1 de niveau AA, notamment la navigabilité au clavier, des états de focus visibles, un contraste de couleurs suffisant, une structure de titres sémantique et la prise en charge des préférences de mouvement réduit."
+        },
+        {
+          "heading": "Limites connues",
+          "body": "Ce site est en développement actif. Certains éléments intégrés de tiers (comme le module Cloudflare Turnstile ou un futur module de réservation de calendrier) proviennent de fournisseurs externes et peuvent ne pas correspondre entièrement à notre propre norme d'accessibilité. Nous examinons et corrigeons les problèmes au fur et à mesure qu'ils sont signalés."
+        },
+        {
+          "heading": "Commentaires et contact",
+          "body": "Si vous rencontrez un obstacle à l'accessibilité sur ce site, veuillez nous écrire à bonjour@tradecatch.ca en décrivant la page et le problème. Nous nous efforcerons de corriger les obstacles réels dans un délai raisonnable."
         }
       ]
     }
   },
   "cookieBanner": {
     "text": "Nous utilisons des cookies pour faire fonctionner ce site et comprendre son utilisation. Consultez notre politique de cookies pour plus de détails.",
-    "accept": "Accepter",
-    "decline": "Refuser"
+    "acceptAll": "Tout accepter",
+    "rejectNonEssential": "Refuser les non essentiels",
+    "managePreferences": "Gérer les préférences",
+    "savePreferences": "Enregistrer les préférences",
+    "essentialLabel": "Essentiels",
+    "essentialDescription": "Nécessaires au fonctionnement du site. Toujours actifs.",
+    "analyticsLabel": "Analytiques",
+    "analyticsDescription": "Nous aide à comprendre l'utilisation du site (Google Analytics 4). Ne se charge que si vous l'autorisez."
   },
   "notFound": {
     "title": "Page introuvable",
