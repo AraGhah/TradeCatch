@@ -44,15 +44,7 @@ export function WorkflowDiagram({ caption }: { caption: string }) {
       transition={{ duration: 0.5 }}
       className="relative overflow-hidden rounded-2xl border border-navy/10 bg-white p-6 shadow-card sm:p-8"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue/5 blur-2xl"
-      />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -bottom-20 -left-10 h-48 w-48 rounded-full bg-orange/10 blur-2xl"
-      />
-
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-navy" />
       <motion.ol
         initial="hidden"
         animate="visible"

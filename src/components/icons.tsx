@@ -105,6 +105,14 @@ export function ChartIcon(props: IconProps) {
   );
 }
 
+export function PhoneIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 5c0 8.5 6.5 15 15 15a2 2 0 0 0 2-2v-2.2a1 1 0 0 0-.76-.97l-3.2-.8a1 1 0 0 0-1 .27l-1.2 1.2a12 12 0 0 1-5.3-5.3l1.2-1.2a1 1 0 0 0 .27-1l-.8-3.2A1 1 0 0 0 8.2 4H6a2 2 0 0 0-2 1z" />
+    </svg>
+  );
+}
+
 export function CheckIcon(props: IconProps) {
   return (
     <svg {...base} {...props}>

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { PhoneIcon } from "@/components/icons";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2";
@@ -12,9 +13,13 @@ const FOCUS_RING =
 export function MobileNav({
   links,
   ctaLabel,
+  phone,
+  phoneHref,
 }: {
   links: { href: string; label: string }[];
   ctaLabel: string;
+  phone: string;
+  phoneHref: string;
 }) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -87,6 +92,14 @@ export function MobileNav({
                 </Link>
               ))}
             </nav>
+            <a
+              href={`tel:${phoneHref}`}
+              onClick={close}
+              className={`flex items-center gap-2 rounded-md px-3 py-2 text-base font-semibold text-navy ${FOCUS_RING}`}
+            >
+              <PhoneIcon className="h-4 w-4 text-orange-dark" />
+              {phone}
+            </a>
             <div className="flex items-center justify-between border-t border-navy/10 pt-6">
               <LocaleSwitcher />
             </div>

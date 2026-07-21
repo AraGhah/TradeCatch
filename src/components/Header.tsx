@@ -8,7 +8,7 @@ import { Container } from "@/components/Container";
 import { CTAButton } from "@/components/CTAButton";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNav } from "@/components/MobileNav";
-import { CheckIcon } from "@/components/icons";
+import { CheckIcon, PhoneIcon } from "@/components/icons";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
@@ -23,6 +23,7 @@ type NavHref =
 
 export function Header() {
   const t = useTranslations("nav");
+  const site = useTranslations("site");
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
 
@@ -46,13 +47,17 @@ export function Header() {
 
   return (
     <header
-      className={`sticky top-0 z-40 border-b bg-white/90 backdrop-blur transition-shadow duration-300 ${
+      className={`sticky top-0 z-40 border-b bg-white/95 backdrop-blur transition-all duration-300 ${
         scrolled
           ? "border-navy/10 shadow-[0_2px_16px_rgba(18,32,51,0.06)]"
           : "border-transparent"
       }`}
     >
-      <Container className="flex h-16 items-center justify-between gap-4 lg:h-20">
+      <Container
+        className={`flex items-center justify-between gap-4 transition-[height] duration-300 ${
+          scrolled ? "h-16 lg:h-16" : "h-16 lg:h-20"
+        }`}
+      >
         <Link
           href="/"
           className={`flex items-center gap-2.5 rounded-md py-1 transition-opacity hover:opacity-85 ${FOCUS_RING}`}
@@ -90,14 +95,26 @@ export function Header() {
           })}
         </nav>
 
-        <div className="hidden items-center gap-4 lg:flex">
+        <div className="hidden items-center gap-5 lg:flex">
+          <a
+            href={`tel:${site("phoneHref")}`}
+            className={`flex items-center gap-2 rounded-md py-1 text-sm font-semibold text-navy transition-colors hover:text-blue ${FOCUS_RING}`}
+          >
+            <PhoneIcon className="h-4 w-4 text-orange-dark" />
+            {site("phone")}
+          </a>
           <LocaleSwitcher />
           <CTAButton href="/book-audit" size="sm">
             {t("bookAudit")}
           </CTAButton>
         </div>
 
-        <MobileNav links={links} ctaLabel={t("bookAudit")} />
+        <MobileNav
+          links={links}
+          ctaLabel={t("bookAudit")}
+          phone={site("phone")}
+          phoneHref={site("phoneHref")}
+        />
       </Container>
     </header>
   );
