@@ -2,6 +2,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Container } from "@/components/Container";
 import { ManageCookiesButton } from "@/components/ManageCookiesButton";
+import { CheckIcon, PhoneIcon } from "@/components/icons";
 
 export function Footer() {
   const t = useTranslations("footer");
@@ -16,14 +17,20 @@ export function Footer() {
     <footer className="border-t border-navy/10 bg-navy text-white/80">
       <Container className="grid gap-10 py-12 md:grid-cols-4">
         <div className="md:col-span-2">
-          <p className="text-lg font-bold text-white font-heading">TradeCatch</p>
-          <p className="mt-3 max-w-sm text-sm leading-relaxed">{t("description")}</p>
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-navy">
+              <CheckIcon className="h-4 w-4" />
+            </span>
+            <p className="text-lg font-bold text-white font-heading">TradeCatch</p>
+          </div>
+          <p className="mt-4 max-w-sm text-sm leading-relaxed">{t("description")}</p>
           <p className="mt-4 text-sm">{site("serviceArea")}</p>
-          <p className="mt-1 text-sm">
-            <a href={`tel:${site("phoneHref")}`} className={linkClass}>
+          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+            <a href={`tel:${site("phoneHref")}`} className={`flex items-center gap-1.5 ${linkClass}`}>
+              <PhoneIcon className="h-3.5 w-3.5" />
               {site("phone")}
             </a>
-            {" · "}
+            <span aria-hidden>·</span>
             <a href={`mailto:${site("email")}`} className={linkClass}>
               {site("email")}
             </a>

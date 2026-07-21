@@ -7,14 +7,18 @@
   --color-blue-light: #3d6fe0;
   --color-orange: #f28c28;
   --color-orange-dark: #d9740f;
-  --color-bg: #f7f8fa;
+  --color-bg: #f7f6f3;
+  --color-paper: #fbfaf8;
   --color-text: #1d2430;
   --color-green: #248a5a;
   --color-white: #ffffff;
 
   --shadow-card: 0 1px 2px rgba(18, 32, 51, 0.04), 0 8px 24px -8px rgba(18, 32, 51, 0.08);
   --shadow-card-hover: 0 4px 8px rgba(18, 32, 51, 0.06), 0 16px 32px -12px rgba(18, 32, 51, 0.16);
-  --shadow-cta: 0 8px 20px -6px rgba(242, 140, 40, 0.45);
+  --shadow-cta: 0 6px 16px -6px rgba(217, 116, 15, 0.4);
+
+  /* Hairline rule used in place of decorative dividers/glows */
+  --rule: rgba(18, 32, 51, 0.1);
 }
 
 @theme inline {
@@ -25,6 +29,7 @@
   --color-orange: var(--color-orange);
   --color-orange-dark: var(--color-orange-dark);
   --color-bg: var(--color-bg);
+  --color-paper: var(--color-paper);
   --color-text: var(--color-text);
   --color-green: var(--color-green);
 
@@ -67,6 +72,16 @@ h4 {
   outline: 2px solid var(--color-blue);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+/* Fine hairline grid used behind the hero instead of blurred gradient blobs */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(18, 32, 51, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(18, 32, 51, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 85%);
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -2,8 +2,8 @@
   "site": {
     "name": "TradeCatch",
     "tagline": "Contractor Revenue Recovery System",
-    "phone": "+1 (450) 000-0000",
-    "phoneHref": "+14500000000",
+    "phone": "438-993-6997",
+    "phoneHref": "4389936997",
     "email": "hello@tradecatch.ca",
     "serviceArea": "Montréal, Laval, Mirabel, Vaudreuil-Dorion & area"
   },
@@ -50,10 +50,15 @@
       "subheadline": "We install a bilingual system that responds to missed callers, collects customer information, alerts the correct technician, and follows up automatically on unanswered quotes.",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
       "workflowCaption": "Missed call → Customer contacted → Technician alerted → Quote sent → Follow-up → Job won",
-      "trustChips": ["Bilingual, French & English", "You approve every message", "Human control on every decision"]
+      "trustChips": [
+        "Bilingual, French & English",
+        "You approve every message",
+        "Human control on every decision"
+      ]
     },
     "leaks": {
       "headline": "Where Good Jobs Are Being Lost",
+      "intro": "None of this shows up as a lost sale. It shows up as a quiet drop in booked jobs that's hard to trace back to a cause.",
       "cards": [
         {
           "title": "Missed calls",
@@ -72,12 +77,30 @@
     "system": {
       "headline": "One System From First Call to Signed Job",
       "steps": [
-        { "title": "Call captured", "body": "Missed and after-hours calls trigger an immediate bilingual response." },
-        { "title": "Information collected", "body": "The system collects the customer's name, address, service needed, urgency, and photos." },
-        { "title": "Technician alerted", "body": "The correct technician, dispatcher, or owner receives a complete job summary." },
-        { "title": "Lead tracked", "body": "The request is recorded in the company's CRM or lead dashboard." },
-        { "title": "Quote followed up", "body": "If the customer does not answer after receiving a quote, personalized reminders are sent automatically." },
-        { "title": "Result measured", "body": "The contractor sees which calls, quotes, bookings, and jobs were recovered." }
+        {
+          "title": "Call captured",
+          "body": "Missed and after-hours calls trigger an immediate bilingual response."
+        },
+        {
+          "title": "Information collected",
+          "body": "The system collects the customer's name, address, service needed, urgency, and photos."
+        },
+        {
+          "title": "Technician alerted",
+          "body": "The correct technician, dispatcher, or owner receives a complete job summary."
+        },
+        {
+          "title": "Lead tracked",
+          "body": "The request is recorded in the company's CRM or lead dashboard."
+        },
+        {
+          "title": "Quote followed up",
+          "body": "If the customer does not answer after receiving a quote, personalized reminders are sent automatically."
+        },
+        {
+          "title": "Result measured",
+          "body": "The contractor sees which calls, quotes, bookings, and jobs were recovered."
+        }
       ]
     },
     "missedCall": {
@@ -109,10 +132,49 @@
         "Can later connect to e-signature and deposit tools"
       ],
       "sequence": [
-        { "day": "Day 2", "action": "Confirm the quote was received" },
-        { "day": "Day 5", "action": "Provide useful information" },
-        { "day": "Day 10", "action": "Ask about timing" },
-        { "day": "Day 20", "action": "Close the conversation" }
+        {
+          "day": "Day 2",
+          "action": "Confirm the quote was received"
+        },
+        {
+          "day": "Day 5",
+          "action": "Provide useful information"
+        },
+        {
+          "day": "Day 10",
+          "action": "Ask about timing"
+        },
+        {
+          "day": "Day 20",
+          "action": "Close the conversation"
+        }
+      ]
+    },
+    "comparison": {
+      "headline": "What Changes Once the System Is Running",
+      "manualLabel": "Handling it manually",
+      "systemLabel": "With TradeCatch installed",
+      "rows": [
+        {
+          "manual": "A missed call gets a callback whenever someone remembers, sometimes hours later.",
+          "system": "A missed call gets a bilingual text response within seconds, day or night."
+        },
+        {
+          "manual": "Quotes get followed up when someone has a free minute, which often means never.",
+          "system": "Every quote gets a scheduled follow-up sequence that stops the moment the customer replies."
+        },
+        {
+          "manual": "The technician learns the job details secondhand, if at all.",
+          "system": "The on-call technician gets a complete job summary the moment a lead comes in."
+        },
+        {
+          "manual": "Nobody can say how many calls or quotes actually turned into jobs.",
+          "system": "A dashboard shows exactly which calls, quotes, and follow-ups became booked work."
+        },
+        {
+          "manual": "An after-hours emergency call waits until business hours.",
+          "system": "After-hours requests are triaged immediately and escalated to a backup contact if needed."
+        }
       ]
     },
     "dashboard": {
@@ -136,21 +198,51 @@
     "industries": {
       "headline": "Built for Busy Trade Companies",
       "cards": [
-        { "name": "Plumbing", "pain": "Catch emergency calls before the customer calls another plumber." },
-        { "name": "HVAC", "pain": "Capture emergency no-heat calls and follow up on installation quotes." },
-        { "name": "Electrical", "pain": "Route urgent requests and recover unanswered electrical quotes." },
-        { "name": "Roofing", "pain": "Recover missed inspection requests and follow up on high-value roofing estimates." },
-        { "name": "Renovation", "pain": "Follow up on every high-value project estimate." },
-        { "name": "Landscaping & exterior trades", "pain": "Keep leads and quotes moving while you're on the job site." }
+        {
+          "name": "Plumbing",
+          "pain": "Catch emergency calls before the customer calls another plumber."
+        },
+        {
+          "name": "HVAC",
+          "pain": "Capture emergency no-heat calls and follow up on installation quotes."
+        },
+        {
+          "name": "Electrical",
+          "pain": "Route urgent requests and recover unanswered electrical quotes."
+        },
+        {
+          "name": "Roofing",
+          "pain": "Recover missed inspection requests and follow up on high-value roofing estimates."
+        },
+        {
+          "name": "Renovation",
+          "pain": "Follow up on every high-value project estimate."
+        },
+        {
+          "name": "Landscaping & exterior trades",
+          "pain": "Keep leads and quotes moving while you're on the job site."
+        }
       ]
     },
     "implementation": {
       "headline": "Installed Without Replacing Your Entire Business System",
       "steps": [
-        { "title": "Revenue audit", "body": "You review calls, quotes, tools, employees, and workflows." },
-        { "title": "System design", "body": "You create the messages, escalation rules, on-call structure, and follow-up sequence." },
-        { "title": "Installation and testing", "body": "You connect the phone, email, CRM, calendar, and reporting tools." },
-        { "title": "Launch and optimization", "body": "The system goes live, results are monitored, and workflows are improved." }
+        {
+          "title": "Revenue audit",
+          "body": "You review calls, quotes, tools, employees, and workflows."
+        },
+        {
+          "title": "System design",
+          "body": "You create the messages, escalation rules, on-call structure, and follow-up sequence."
+        },
+        {
+          "title": "Installation and testing",
+          "body": "You connect the phone, email, CRM, calendar, and reporting tools."
+        },
+        {
+          "title": "Launch and optimization",
+          "body": "The system goes live, results are monitored, and workflows are improved."
+        }
       ]
     },
     "trust": {
@@ -167,6 +259,28 @@
       ],
       "guaranteeTitle": "Launch Guarantee",
       "guaranteeBody": "If the agreed system is not launched because of a delay on our side, your first management month is credited."
+    },
+    "faqTeaser": {
+      "headline": "Questions Owners Ask Before They Book",
+      "viewAll": "See all FAQs",
+      "items": [
+        {
+          "q": "Does the AI speak directly to customers?",
+          "a": "The system sends approved messages and collects information. Important discussions remain with your employees."
+        },
+        {
+          "q": "Does it replace our receptionist?",
+          "a": "No. It handles repetitive missed-call and follow-up work. Staff continue handling important conversations and decisions."
+        },
+        {
+          "q": "What happens during an emergency?",
+          "a": "The request is escalated using rules approved by your company. The system does not diagnose or provide unapproved safety instructions."
+        },
+        {
+          "q": "Can it work with our current phone number?",
+          "a": "This depends on the phone provider and setup. The audit identifies the safest connection method."
+        }
+      ]
     },
     "finalCta": {
       "headline": "How Many Jobs Are You Losing Before You Ever Speak to the Customer?",
@@ -262,27 +376,58 @@
     "stages": [
       {
         "title": "Customer contacts the company",
-        "items": ["Phone call", "Website form", "Email", "Landing page"]
+        "items": [
+          "Phone call",
+          "Website form",
+          "Email",
+          "Landing page"
+        ]
       },
       {
         "title": "System responds",
-        "items": ["Immediate SMS", "Language selection", "Basic information collection"]
+        "items": [
+          "Immediate SMS",
+          "Language selection",
+          "Basic information collection"
+        ]
       },
       {
         "title": "Request is routed",
-        "items": ["Service type", "Location", "Urgency", "Correct technician", "Backup escalation"]
+        "items": [
+          "Service type",
+          "Location",
+          "Urgency",
+          "Correct technician",
+          "Backup escalation"
+        ]
       },
       {
         "title": "Contractor handles the job",
-        "items": ["Calls the customer", "Diagnoses the issue", "Visits the property", "Prepares the quote"]
+        "items": [
+          "Calls the customer",
+          "Diagnoses the issue",
+          "Visits the property",
+          "Prepares the quote"
+        ]
       },
       {
         "title": "Quote follow-up begins",
-        "items": ["Quote detected", "Follow-ups scheduled", "Replies classified", "Contractor notified"]
+        "items": [
+          "Quote detected",
+          "Follow-ups scheduled",
+          "Replies classified",
+          "Contractor notified"
+        ]
       },
       {
         "title": "Outcome recorded",
-        "items": ["Appointment booked", "Quote accepted", "Quote lost", "Follow-up paused", "Revenue tracked"]
+        "items": [
+          "Appointment booked",
+          "Quote accepted",
+          "Quote lost",
+          "Follow-up paused",
+          "Revenue tracked"
+        ]
       }
     ]
   },
@@ -293,27 +438,52 @@
       {
         "name": "Plumbing",
         "headline": "Catch Emergency Calls Before the Customer Calls Another Plumber",
-        "focus": ["Missed emergency calls", "Flooding escalation", "Technician routing", "Repair and replacement quotes"]
+        "focus": [
+          "Missed emergency calls",
+          "Flooding escalation",
+          "Technician routing",
+          "Repair and replacement quotes"
+        ]
       },
       {
         "name": "HVAC",
         "headline": "Capture Service Calls and Follow Up on High-Value Installation Quotes",
-        "focus": ["No-heat and no-cooling calls", "Heat-pump inquiries", "Replacement quotes", "Seasonal demand"]
+        "focus": [
+          "No-heat and no-cooling calls",
+          "Heat-pump inquiries",
+          "Replacement quotes",
+          "Seasonal demand"
+        ]
       },
       {
         "name": "Electrical",
         "headline": "Route Urgent Requests and Recover Unanswered Electrical Quotes",
-        "focus": ["Emergency escalation", "Service-area checks", "Panel and rewiring estimates"]
+        "focus": [
+          "Emergency escalation",
+          "Service-area checks",
+          "Panel and rewiring estimates"
+        ]
       },
       {
         "name": "Roofing & Renovation",
         "headline": "Follow Up on Every High-Value Project Estimate",
-        "focus": ["Inspection requests", "Estimates", "Scheduling", "Quote follow-up"]
+        "focus": [
+          "Inspection requests",
+          "Estimates",
+          "Scheduling",
+          "Quote follow-up"
+        ]
       },
       {
         "name": "Exterior Trades",
         "headline": "Keep Leads and Quotes Moving While You Are on the Job Site",
-        "focus": ["Landscaping", "Paving", "Fencing", "Excavation", "Snow-removal renewals"]
+        "focus": [
+          "Landscaping",
+          "Paving",
+          "Fencing",
+          "Excavation",
+          "Snow-removal renewals"
+        ]
       }
     ]
   },
@@ -401,8 +571,14 @@
       "mainProblem": "Main operational problem"
     },
     "options": {
-      "language": { "en": "English", "fr": "Français" },
-      "yesNo": { "yes": "Yes", "no": "No" }
+      "language": {
+        "en": "English",
+        "fr": "Français"
+      },
+      "yesNo": {
+        "yes": "Yes",
+        "no": "No"
+      }
     },
     "consent": "I agree to be contacted about this request by phone, email, or text. Message and data rates may apply. I can opt out at any time.",
     "marketingConsent": "I'd also like to receive occasional tips and offers by email (optional — separate from the contact above).",

@@ -7,6 +7,8 @@ import { Card } from "@/components/Card";
 import { NumberedStep } from "@/components/NumberedStep";
 import { WorkflowDiagram } from "@/components/WorkflowDiagram";
 import { DashboardPreview } from "@/components/DashboardPreview";
+import { ComparisonPanel } from "@/components/ComparisonPanel";
+import { FaqAccordion } from "@/components/FaqAccordion";
 import { Reveal } from "@/components/motion/Reveal";
 import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import {
@@ -51,23 +53,17 @@ export default async function HomePage({
     <>
       {/* 1. Hero */}
       <section className="relative overflow-hidden bg-white py-16 sm:py-24">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-32 -top-32 h-96 w-96 rounded-full bg-blue/5 blur-3xl"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 top-40 h-72 w-72 rounded-full bg-orange/10 blur-3xl"
-        />
+        <div aria-hidden className="bg-grid pointer-events-none absolute inset-0" />
         <Container className="relative grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
-            <span className="inline-flex items-center rounded-full border border-blue/20 bg-blue/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-blue">
+            <span className="inline-flex items-center gap-2 rounded-full border border-navy/15 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-navy">
+              <span className="h-1.5 w-1.5 rounded-full bg-orange" />
               {t("hero.eyebrow")}
             </span>
-            <h1 className="mt-5 text-4xl font-bold leading-[1.1] text-navy sm:text-5xl">
+            <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-[3.4rem]">
               {t("hero.headline")}
             </h1>
-            <p className="mt-6 text-lg leading-relaxed text-text/70">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-text/70">
               {t("hero.subheadline")}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -99,33 +95,31 @@ export default async function HomePage({
 
       {/* 2. Revenue leaks */}
       <Reveal as="section" className="py-16 sm:py-24">
-        <Container>
-          <SectionHeading title={t("leaks.headline")} />
-          <StaggerGroup className="mt-12 grid gap-6 md:grid-cols-3">
-            {t.raw("leaks.cards").map((card: { title: string; body: string }, i: number) => (
-              <StaggerItem key={card.title}>
-                <Card
-                  title={card.title}
-                  icon={
-                    i === 0 ? (
-                      <PhoneMissedIcon className="h-5 w-5" />
-                    ) : i === 1 ? (
-                      <QuoteIcon className="h-5 w-5" />
-                    ) : (
-                      <FollowUpIcon className="h-5 w-5" />
-                    )
-                  }
-                >
-                  {card.body}
-                </Card>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-          <div className="mt-10 text-center">
-            <CTAButton href="/book-audit" variant="secondary">
+        <Container className="grid gap-12 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
+          <div>
+            <SectionHeading align="left" title={t("leaks.headline")} intro={t("leaks.intro")} />
+            <CTAButton href="/book-audit" variant="secondary" className="mt-8">
               {cta("findLeaks")}
             </CTAButton>
           </div>
+          <StaggerGroup className="divide-y divide-navy/10 border-y border-navy/10">
+            {t.raw("leaks.cards").map((card: { title: string; body: string }, i: number) => {
+              const Icon = [PhoneMissedIcon, QuoteIcon, FollowUpIcon][i] ?? FollowUpIcon;
+              return (
+                <StaggerItem key={card.title}>
+                  <div className="flex items-start gap-5 py-6 first:pt-0 last:pb-0">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy/5 text-navy">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <h3 className="font-semibold text-navy">{card.title}</h3>
+                      <p className="mt-1 text-sm leading-relaxed text-text/70">{card.body}</p>
+                    </div>
+                  </div>
+                </StaggerItem>
+              );
+            })}
+          </StaggerGroup>
         </Container>
       </Reveal>
 
@@ -211,7 +205,21 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 6. Dashboard */}
+      {/* 6. Manual vs automated comparison */}
+      <Reveal as="section" className="bg-white py-16 sm:py-24">
+        <Container>
+          <SectionHeading title={t("comparison.headline")} />
+          <div className="mt-12">
+            <ComparisonPanel
+              manualLabel={t("comparison.manualLabel")}
+              systemLabel={t("comparison.systemLabel")}
+              rows={t.raw("comparison.rows")}
+            />
+          </div>
+        </Container>
+      </Reveal>
+
+      {/* 7. Dashboard */}
       <Reveal as="section" className="py-16 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
@@ -229,7 +237,7 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 7. Industries */}
+      {/* 8. Industries */}
       <Reveal as="section" className="bg-white py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("industries.headline")} />
@@ -248,7 +256,7 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 8. Implementation */}
+      {/* 9. Implementation */}
       <Reveal as="section" className="py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("implementation.headline")} />
@@ -265,7 +273,7 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 9. Trust */}
+      {/* 10. Trust */}
       <Reveal as="section" className="bg-white py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("trust.headline")} />
@@ -288,9 +296,23 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 10. Final CTA */}
-      <Reveal as="section" className="bg-navy py-16 sm:py-24">
-        <Container className="text-center">
+      {/* 11. FAQ teaser */}
+      <Reveal as="section" className="py-16 sm:py-24">
+        <Container className="grid gap-12 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
+          <div>
+            <SectionHeading align="left" title={t("faqTeaser.headline")} />
+            <CTAButton href="/faq" variant="secondary" className="mt-8">
+              {t("faqTeaser.viewAll")}
+            </CTAButton>
+          </div>
+          <FaqAccordion items={t.raw("faqTeaser.items")} />
+        </Container>
+      </Reveal>
+
+      {/* 12. Final CTA */}
+      <Reveal as="section" className="relative overflow-hidden bg-navy py-16 sm:py-24">
+        <div aria-hidden className="bg-grid pointer-events-none absolute inset-0 opacity-20 invert" />
+        <Container className="relative text-center">
           <h2 className="mx-auto max-w-3xl text-3xl font-bold leading-tight text-white sm:text-4xl">
             {t("finalCta.headline")}
           </h2>

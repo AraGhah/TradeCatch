@@ -2,8 +2,8 @@
   "site": {
     "name": "TradeCatch",
     "tagline": "Système de récupération de revenus pour entrepreneurs",
-    "phone": "+1 (450) 000-0000",
-    "phoneHref": "+14500000000",
+    "phone": "438-993-6997",
+    "phoneHref": "4389936997",
     "email": "bonjour@tradecatch.ca",
     "serviceArea": "Montréal, Laval, Mirabel, Vaudreuil-Dorion et les environs"
   },
@@ -50,10 +50,15 @@
       "subheadline": "Nous installons un système bilingue qui répond aux appels manqués, recueille les informations du client, alerte le bon technicien et relance automatiquement les soumissions sans réponse.",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
       "workflowCaption": "Appel manqué → Client contacté → Technicien alerté → Soumission envoyée → Relance → Job gagné",
-      "trustChips": ["Bilingue, français et anglais", "Vous approuvez chaque message", "Contrôle humain sur chaque décision"]
+      "trustChips": [
+        "Bilingue, français et anglais",
+        "Vous approuvez chaque message",
+        "Contrôle humain sur chaque décision"
+      ]
     },
     "leaks": {
       "headline": "Où les bons jobs se perdent",
+      "intro": "Rien de tout cela n'apparaît comme une vente perdue. Cela se traduit plutôt par une baisse tranquille des jobs réservés, difficile à retracer.",
       "cards": [
         {
           "title": "Appels manqués",
@@ -72,12 +77,30 @@
     "system": {
       "headline": "Un seul système du premier appel jusqu'au job signé",
       "steps": [
-        { "title": "Appel capté", "body": "Les appels manqués et hors des heures d'ouverture déclenchent une réponse bilingue immédiate." },
-        { "title": "Informations recueillies", "body": "Le système recueille le nom, l'adresse, le service demandé, l'urgence et les photos du client." },
-        { "title": "Technicien alerté", "body": "Le bon technicien, répartiteur ou propriétaire reçoit un résumé complet du job." },
-        { "title": "Prospect suivi", "body": "La demande est enregistrée dans le CRM ou le tableau de bord de l'entreprise." },
-        { "title": "Soumission relancée", "body": "Si le client ne répond pas après avoir reçu une soumission, des rappels personnalisés sont envoyés automatiquement." },
-        { "title": "Résultat mesuré", "body": "L'entrepreneur voit quels appels, soumissions, rendez-vous et jobs ont été récupérés." }
+        {
+          "title": "Appel capté",
+          "body": "Les appels manqués et hors des heures d'ouverture déclenchent une réponse bilingue immédiate."
+        },
+        {
+          "title": "Informations recueillies",
+          "body": "Le système recueille le nom, l'adresse, le service demandé, l'urgence et les photos du client."
+        },
+        {
+          "title": "Technicien alerté",
+          "body": "Le bon technicien, répartiteur ou propriétaire reçoit un résumé complet du job."
+        },
+        {
+          "title": "Prospect suivi",
+          "body": "La demande est enregistrée dans le CRM ou le tableau de bord de l'entreprise."
+        },
+        {
+          "title": "Soumission relancée",
+          "body": "Si le client ne répond pas après avoir reçu une soumission, des rappels personnalisés sont envoyés automatiquement."
+        },
+        {
+          "title": "Résultat mesuré",
+          "body": "L'entrepreneur voit quels appels, soumissions, rendez-vous et jobs ont été récupérés."
+        }
       ]
     },
     "missedCall": {
@@ -109,10 +132,49 @@
         "Peut ensuite se connecter à des outils de signature électronique et de dépôt"
       ],
       "sequence": [
-        { "day": "Jour 2", "action": "Confirmer la réception de la soumission" },
-        { "day": "Jour 5", "action": "Fournir de l'information utile" },
-        { "day": "Jour 10", "action": "Demander où en est le projet" },
-        { "day": "Jour 20", "action": "Clore la conversation" }
+        {
+          "day": "Jour 2",
+          "action": "Confirmer la réception de la soumission"
+        },
+        {
+          "day": "Jour 5",
+          "action": "Fournir de l'information utile"
+        },
+        {
+          "day": "Jour 10",
+          "action": "Demander où en est le projet"
+        },
+        {
+          "day": "Jour 20",
+          "action": "Clore la conversation"
+        }
+      ]
+    },
+    "comparison": {
+      "headline": "Ce qui change une fois le système en place",
+      "manualLabel": "Gestion manuelle",
+      "systemLabel": "Avec TradeCatch installé",
+      "rows": [
+        {
+          "manual": "Un appel manqué reçoit un rappel quand quelqu'un y pense, parfois des heures plus tard.",
+          "system": "Un appel manqué reçoit une réponse texte bilingue en quelques secondes, jour et nuit."
+        },
+        {
+          "manual": "Les soumissions sont relancées quand quelqu'un a une minute libre, ce qui veut souvent dire jamais.",
+          "system": "Chaque soumission reçoit une séquence de relance planifiée qui s'arrête dès que le client répond."
+        },
+        {
+          "manual": "Le technicien apprend les détails du job de seconde main, si jamais il les apprend.",
+          "system": "Le technicien de garde reçoit un résumé complet du job dès qu'un prospect arrive."
+        },
+        {
+          "manual": "Personne ne peut dire combien d'appels ou de soumissions sont réellement devenus des jobs.",
+          "system": "Un tableau de bord montre exactement quels appels, soumissions et relances sont devenus des jobs réservés."
+        },
+        {
+          "manual": "Un appel d'urgence hors des heures d'ouverture attend l'heure d'ouverture.",
+          "system": "Les demandes hors des heures d'ouverture sont triées immédiatement et escaladées vers un contact de remplacement au besoin."
+        }
       ]
     },
     "dashboard": {
@@ -136,21 +198,51 @@
     "industries": {
       "headline": "Conçu pour les entreprises de service occupées",
       "cards": [
-        { "name": "Plomberie", "pain": "Captez les appels d'urgence avant que le client n'appelle un autre plombier." },
-        { "name": "CVC", "pain": "Captez les appels d'urgence de chauffage et relancez les soumissions d'installation." },
-        { "name": "Électricité", "pain": "Acheminez les demandes urgentes et récupérez les soumissions électriques sans réponse." },
-        { "name": "Toiture", "pain": "Récupérez les demandes d'inspection manquées et relancez les soumissions de toiture à haute valeur." },
-        { "name": "Rénovation", "pain": "Relancez chaque soumission de projet à haute valeur." },
-        { "name": "Aménagement paysager et travaux extérieurs", "pain": "Gardez vos prospects et soumissions actifs pendant que vous êtes sur le chantier." }
+        {
+          "name": "Plomberie",
+          "pain": "Captez les appels d'urgence avant que le client n'appelle un autre plombier."
+        },
+        {
+          "name": "CVC",
+          "pain": "Captez les appels d'urgence de chauffage et relancez les soumissions d'installation."
+        },
+        {
+          "name": "Électricité",
+          "pain": "Acheminez les demandes urgentes et récupérez les soumissions électriques sans réponse."
+        },
+        {
+          "name": "Toiture",
+          "pain": "Récupérez les demandes d'inspection manquées et relancez les soumissions de toiture à haute valeur."
+        },
+        {
+          "name": "Rénovation",
+          "pain": "Relancez chaque soumission de projet à haute valeur."
+        },
+        {
+          "name": "Aménagement paysager et travaux extérieurs",
+          "pain": "Gardez vos prospects et soumissions actifs pendant que vous êtes sur le chantier."
+        }
       ]
     },
     "implementation": {
       "headline": "Installé sans remplacer tout votre système d'affaires",
       "steps": [
-        { "title": "Audit des revenus", "body": "Vous passez en revue les appels, soumissions, outils, employés et processus." },
-        { "title": "Conception du système", "body": "Vous créez les messages, règles d'escalade, structure de garde et séquence de relance." },
-        { "title": "Installation et tests", "body": "Vous connectez le téléphone, le courriel, le CRM, le calendrier et les outils de rapport." },
-        { "title": "Lancement et optimisation", "body": "Le système est lancé, les résultats sont suivis et les processus sont améliorés." }
+        {
+          "title": "Audit des revenus",
+          "body": "Vous passez en revue les appels, soumissions, outils, employés et processus."
+        },
+        {
+          "title": "Conception du système",
+          "body": "Vous créez les messages, règles d'escalade, structure de garde et séquence de relance."
+        },
+        {
+          "title": "Installation et tests",
+          "body": "Vous connectez le téléphone, le courriel, le CRM, le calendrier et les outils de rapport."
+        },
+        {
+          "title": "Lancement et optimisation",
+          "body": "Le système est lancé, les résultats sont suivis et les processus sont améliorés."
+        }
       ]
     },
     "trust": {
@@ -167,6 +259,28 @@
       ],
       "guaranteeTitle": "Garantie de lancement",
       "guaranteeBody": "Si le système convenu n'est pas lancé en raison d'un retard de notre part, votre premier mois de gestion est crédité."
+    },
+    "faqTeaser": {
+      "headline": "Questions posées avant de réserver",
+      "viewAll": "Voir toutes les questions",
+      "items": [
+        {
+          "q": "Est-ce que l'IA parle directement aux clients?",
+          "a": "Le système envoie des messages approuvés et recueille des informations. Les discussions importantes restent avec vos employés."
+        },
+        {
+          "q": "Est-ce que ça remplace notre réceptionniste?",
+          "a": "Non. Le système gère le travail répétitif d'appels manqués et de relances. Le personnel continue de gérer les conversations et décisions importantes."
+        },
+        {
+          "q": "Que se passe-t-il en cas d'urgence?",
+          "a": "La demande est escaladée selon des règles approuvées par votre entreprise. Le système ne diagnostique pas et ne donne pas de consignes de sécurité non approuvées."
+        },
+        {
+          "q": "Peut-il fonctionner avec notre numéro de téléphone actuel?",
+          "a": "Cela dépend du fournisseur téléphonique et de la configuration. L'audit détermine la méthode de connexion la plus sûre."
+        }
+      ]
     },
     "finalCta": {
       "headline": "Combien de jobs perdez-vous avant même de parler au client?",
@@ -262,27 +376,58 @@
     "stages": [
       {
         "title": "Le client contacte l'entreprise",
-        "items": ["Appel téléphonique", "Formulaire du site web", "Courriel", "Page d'atterrissage"]
+        "items": [
+          "Appel téléphonique",
+          "Formulaire du site web",
+          "Courriel",
+          "Page d'atterrissage"
+        ]
       },
       {
         "title": "Le système répond",
-        "items": ["SMS immédiat", "Choix de la langue", "Collecte des informations de base"]
+        "items": [
+          "SMS immédiat",
+          "Choix de la langue",
+          "Collecte des informations de base"
+        ]
       },
       {
         "title": "La demande est acheminée",
-        "items": ["Type de service", "Localisation", "Urgence", "Bon technicien", "Escalade de remplacement"]
+        "items": [
+          "Type de service",
+          "Localisation",
+          "Urgence",
+          "Bon technicien",
+          "Escalade de remplacement"
+        ]
       },
       {
         "title": "L'entrepreneur traite le job",
-        "items": ["Appelle le client", "Diagnostique le problème", "Visite la propriété", "Prépare la soumission"]
+        "items": [
+          "Appelle le client",
+          "Diagnostique le problème",
+          "Visite la propriété",
+          "Prépare la soumission"
+        ]
       },
       {
         "title": "La relance de la soumission commence",
-        "items": ["Soumission détectée", "Relances planifiées", "Réponses classées", "Entrepreneur avisé"]
+        "items": [
+          "Soumission détectée",
+          "Relances planifiées",
+          "Réponses classées",
+          "Entrepreneur avisé"
+        ]
       },
       {
         "title": "Le résultat est enregistré",
-        "items": ["Rendez-vous pris", "Soumission acceptée", "Soumission perdue", "Relance suspendue", "Revenu suivi"]
+        "items": [
+          "Rendez-vous pris",
+          "Soumission acceptée",
+          "Soumission perdue",
+          "Relance suspendue",
+          "Revenu suivi"
+        ]
       }
     ]
   },
@@ -293,27 +438,52 @@
       {
         "name": "Plomberie",
         "headline": "Captez les urgences avant que le client n'appelle un autre plombier",
-        "focus": ["Appels d'urgence manqués", "Escalade des dégâts d'eau", "Répartition des techniciens", "Soumissions de réparation et de remplacement"]
+        "focus": [
+          "Appels d'urgence manqués",
+          "Escalade des dégâts d'eau",
+          "Répartition des techniciens",
+          "Soumissions de réparation et de remplacement"
+        ]
       },
       {
         "name": "CVC",
         "headline": "Captez les appels de service et relancez les soumissions d'installation à haute valeur",
-        "focus": ["Appels sans chauffage ou climatisation", "Demandes de thermopompe", "Soumissions de remplacement", "Demande saisonnière"]
+        "focus": [
+          "Appels sans chauffage ou climatisation",
+          "Demandes de thermopompe",
+          "Soumissions de remplacement",
+          "Demande saisonnière"
+        ]
       },
       {
         "name": "Électricité",
         "headline": "Acheminez les demandes urgentes et récupérez les soumissions électriques sans réponse",
-        "focus": ["Escalade d'urgence", "Vérifications de zone de service", "Estimations de panneaux et de câblage"]
+        "focus": [
+          "Escalade d'urgence",
+          "Vérifications de zone de service",
+          "Estimations de panneaux et de câblage"
+        ]
       },
       {
         "name": "Toiture et rénovation",
         "headline": "Relancez chaque estimation de projet à haute valeur",
-        "focus": ["Demandes d'inspection", "Estimations", "Planification", "Relance des soumissions"]
+        "focus": [
+          "Demandes d'inspection",
+          "Estimations",
+          "Planification",
+          "Relance des soumissions"
+        ]
       },
       {
         "name": "Travaux extérieurs",
         "headline": "Gardez vos prospects et soumissions actifs pendant que vous êtes sur le chantier",
-        "focus": ["Aménagement paysager", "Pavage", "Clôtures", "Excavation", "Renouvellements de déneigement"]
+        "focus": [
+          "Aménagement paysager",
+          "Pavage",
+          "Clôtures",
+          "Excavation",
+          "Renouvellements de déneigement"
+        ]
       }
     ]
   },
@@ -401,8 +571,14 @@
       "mainProblem": "Problème opérationnel principal"
     },
     "options": {
-      "language": { "en": "English", "fr": "Français" },
-      "yesNo": { "yes": "Oui", "no": "Non" }
+      "language": {
+        "en": "English",
+        "fr": "Français"
+      },
+      "yesNo": {
+        "yes": "Oui",
+        "no": "Non"
+      }
     },
     "consent": "J'accepte d'être contacté au sujet de cette demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Je peux me désabonner en tout temps.",
     "marketingConsent": "J'aimerais aussi recevoir occasionnellement des conseils et des offres par courriel (optionnel — distinct du consentement ci-dessus).",
