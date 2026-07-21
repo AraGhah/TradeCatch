@@ -74,7 +74,7 @@ export default async function PricingPage({
                     variant={i === 1 ? "primary" : "secondary"}
                     className="mt-8"
                   >
-                    {cta("getRecommendation")}
+                    {cta("primary")}
                   </CTAButton>
                 </div>
               </StaggerItem>

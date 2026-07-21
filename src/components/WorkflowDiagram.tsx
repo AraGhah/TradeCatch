@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
+import { useMounted } from "@/components/motion/useMounted";
 import {
   PhoneMissedIcon,
   MessageIcon,
@@ -34,8 +35,56 @@ const item = {
   },
 };
 
+function StepList({ labels }: { labels: string[] }) {
+  return (
+    <>
+      {labels.map((label, i) => {
+        const Icon = STEP_ICONS[i] ?? CheckIcon;
+        const isLast = i === labels.length - 1;
+        return (
+          <span
+            key={label}
+            className="relative flex flex-1 items-center gap-3 md:flex-col md:items-center md:text-center"
+          >
+            <span
+              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full shadow-sm ${
+                isLast ? "bg-green/15 text-green" : "bg-blue/10 text-blue"
+              }`}
+            >
+              <Icon className="h-5 w-5" />
+            </span>
+            <span className="text-sm font-medium text-text">{label}</span>
+            {!isLast ? (
+              <span
+                aria-hidden
+                className="absolute top-6 left-[calc(50%+32px)] hidden h-px w-[calc(100%-40px)] bg-gradient-to-r from-navy/20 to-navy/5 md:block"
+              />
+            ) : null}
+          </span>
+        );
+      })}
+    </>
+  );
+}
+
 export function WorkflowDiagram({ caption }: { caption: string }) {
   const labels = caption.split("→").map((s) => s.trim());
+  const mounted = useMounted();
+  const prefersReducedMotion = useReducedMotion();
+
+  // Content is visible by default; the staggered entrance only ever
+  // enhances an already-visible diagram once JS has mounted and motion
+  // is allowed. See Reveal.tsx for the same progressive-enhancement rule.
+  if (!mounted || prefersReducedMotion) {
+    return (
+      <div className="relative overflow-hidden rounded-2xl border border-navy/10 bg-white p-6 shadow-card sm:p-8">
+        <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-navy" />
+        <ol className="relative flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-2">
+          <StepList labels={labels} />
+        </ol>
+      </div>
+    );
+  }
 
   return (
     <motion.div

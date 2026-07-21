@@ -4,8 +4,9 @@
     "tagline": "Système de récupération de revenus pour entrepreneurs",
     "phone": "438-993-6997",
     "phoneHref": "4389936997",
-    "email": "bonjour@tradecatch.ca",
-    "serviceArea": "Montréal, Laval, Mirabel, Vaudreuil-Dorion et les environs"
+    "email": "ara.ghahramanyan07@gmail.com",
+    "serviceArea": "Montréal, Laval, Mirabel, Vaudreuil-Dorion et les environs",
+    "founderEmail": "ara.ghahramanyan07@gmail.com"
   },
   "nav": {
     "home": "Accueil",
@@ -14,25 +15,17 @@
     "industries": "Industries",
     "pricing": "Tarifs",
     "about": "À propos",
-    "faq": "FAQ",
-    "bookAudit": "Réserver un audit",
-    "cta": "Réserver un audit gratuit"
+    "faq": "FAQ"
   },
   "cta": {
-    "primary": "Réserver un audit gratuit",
+    "primary": "Voir où je perds des contrats",
     "secondary": "Voir comment fonctionne le système",
     "tertiary": "Demander une démo",
     "watchDemo": "Regarder la démo de 90 secondes",
-    "findLeaks": "Trouvez vos pertes de revenus",
     "seeWorkflow": "Voir comment ça fonctionne",
     "viewMissedCall": "Voir le processus des appels manqués",
     "viewQuoteFollowUp": "Voir le processus de relance des soumissions",
-    "requestDashboard": "Demander une démo du tableau de bord",
-    "viewIndustries": "Voir les solutions par industrie",
-    "bookRevenueAudit": "Réserver votre audit",
-    "bookFinal": "Réserver mon audit gratuit",
-    "getRecommendation": "Obtenir une recommandation personnalisée",
-    "seeSystemWorkflow": "Voir le système appliqué à votre entreprise"
+    "viewIndustries": "Voir les solutions par industrie"
   },
   "footer": {
     "description": "Nous installons et gérons un système bilingue de récupération de revenus pour entrepreneurs qui capte les appels manqués, recueille les informations des clients, alerte le bon technicien, relance les soumissions sans réponse et suit les jobs récupérés grâce au système.",
@@ -46,19 +39,20 @@
   "home": {
     "hero": {
       "eyebrow": "Système de récupération de revenus pour entrepreneurs",
-      "headline": "Arrêtez de perdre des jobs à cause d'appels manqués et de soumissions oubliées",
+      "headline": "Arrêtez de perdre des contrats à cause d'appels manqués et de soumissions oubliées",
       "subheadline": "Nous installons un système bilingue qui répond aux appels manqués, recueille les informations du client, alerte le bon technicien et relance automatiquement les soumissions sans réponse.",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
-      "workflowCaption": "Appel manqué → Client contacté → Technicien alerté → Soumission envoyée → Relance → Job gagné",
+      "workflowCaption": "Appel manqué → Client contacté → Technicien alerté → Soumission envoyée → Relance → Contrat gagné",
       "trustChips": [
         "Bilingue, français et anglais",
         "Vous approuvez chaque message",
         "Contrôle humain sur chaque décision"
-      ]
+      ],
+      "reassurance": "Audit de 20 minutes · Sans engagement · Français et anglais"
     },
     "leaks": {
-      "headline": "Où les bons jobs se perdent",
-      "intro": "Rien de tout cela n'apparaît comme une vente perdue. Cela se traduit plutôt par une baisse tranquille des jobs réservés, difficile à retracer.",
+      "headline": "Où les bons contrats se perdent",
+      "intro": "Rien de tout cela n'apparaît comme une vente perdue. Cela se traduit plutôt par une baisse tranquille des contrats réservés, difficile à retracer.",
       "cards": [
         {
           "title": "Appels manqués",
@@ -75,7 +69,7 @@
       ]
     },
     "system": {
-      "headline": "Un seul système du premier appel jusqu'au job signé",
+      "headline": "Un seul système du premier appel jusqu'au contrat signé",
       "steps": [
         {
           "title": "Appel capté",
@@ -87,10 +81,10 @@
         },
         {
           "title": "Technicien alerté",
-          "body": "Le bon technicien, répartiteur ou propriétaire reçoit un résumé complet du job."
+          "body": "Le bon technicien, répartiteur ou propriétaire reçoit un résumé complet de la demande."
         },
         {
-          "title": "Prospect suivi",
+          "title": "Demande prise en charge",
           "body": "La demande est enregistrée dans le CRM ou le tableau de bord de l'entreprise."
         },
         {
@@ -99,7 +93,7 @@
         },
         {
           "title": "Résultat mesuré",
-          "body": "L'entrepreneur voit quels appels, soumissions, rendez-vous et jobs ont été récupérés."
+          "body": "L'entrepreneur voit quels appels, soumissions, rendez-vous et contrats ont été récupérés."
         }
       ]
     },
@@ -114,7 +108,7 @@
         "Identifie les demandes potentiellement urgentes",
         "Alerte le technicien de garde",
         "Escalade vers un contact de remplacement",
-        "Crée un prospect dans le CRM",
+        "Enregistre une nouvelle demande dans le CRM",
         "Suit si l'appel est devenu un rendez-vous"
       ],
       "note": "Le système recueille et achemine la demande. Vos techniciens licenciés continuent de diagnostiquer le problème, confirmer les prix et effectuer les travaux."
@@ -128,7 +122,7 @@
         "S'arrête lorsque le client répond",
         "Classe la réponse",
         "Alerte l'entrepreneur en cas d'objection de prix ou de question",
-        "Suit si la soumission devient un job signé",
+        "Suit si la soumission devient un contrat signé",
         "Peut ensuite se connecter à des outils de signature électronique et de dépôt"
       ],
       "sequence": [
@@ -164,12 +158,12 @@
           "system": "Chaque soumission reçoit une séquence de relance planifiée qui s'arrête dès que le client répond."
         },
         {
-          "manual": "Le technicien apprend les détails du job de seconde main, si jamais il les apprend.",
-          "system": "Le technicien de garde reçoit un résumé complet du job dès qu'un prospect arrive."
+          "manual": "Le technicien apprend les détails de la demande de seconde main, si jamais il les apprend.",
+          "system": "Le technicien de garde reçoit un résumé complet de la demande dès qu'elle arrive."
         },
         {
-          "manual": "Personne ne peut dire combien d'appels ou de soumissions sont réellement devenus des jobs.",
-          "system": "Un tableau de bord montre exactement quels appels, soumissions et relances sont devenus des jobs réservés."
+          "manual": "Personne ne peut dire combien d'appels ou de soumissions sont réellement devenus des contrats.",
+          "system": "Un tableau de bord montre exactement quels appels, soumissions et relances sont devenus des contrats réservés."
         },
         {
           "manual": "Un appel d'urgence hors des heures d'ouverture attend l'heure d'ouverture.",
@@ -179,49 +173,79 @@
     },
     "dashboard": {
       "headline": "Voyez exactement ce que le système récupère",
-      "badge": "Tableau de bord de récupération",
-      "live": "En direct",
+      "badge": "Exemple de tableau de bord",
+      "live": "Données d'exemple",
       "metrics": [
-        "Appels manqués détectés",
-        "Clients ayant répondu",
-        "Prospects créés",
-        "Alertes envoyées aux techniciens",
-        "Rendez-vous pris",
-        "Soumissions relancées",
-        "Réponses des clients",
-        "Soumissions gagnées",
-        "Revenu récupéré estimé",
-        "Cas nécessitant votre attention"
+        {
+          "value": "18",
+          "label": "Appels manqués détectés"
+        },
+        {
+          "value": "13",
+          "label": "Clients ayant répondu"
+        },
+        {
+          "value": "9",
+          "label": "Nouvelles demandes enregistrées"
+        },
+        {
+          "value": "7",
+          "label": "Alertes envoyées aux techniciens"
+        },
+        {
+          "value": "5",
+          "label": "Rendez-vous pris"
+        },
+        {
+          "value": "22",
+          "label": "Soumissions relancées"
+        },
+        {
+          "value": "8",
+          "label": "Réponses reçues"
+        },
+        {
+          "value": "3",
+          "label": "Contrats signés"
+        },
+        {
+          "value": "14 800 $",
+          "label": "Valeur des occasions suivies"
+        },
+        {
+          "value": "4",
+          "label": "Cas nécessitant votre attention"
+        }
       ],
-      "note": "Suivez les appels, réponses, rendez-vous et occasions de soumission liés au système."
+      "note": "Un aperçu de ce que suit votre tableau de bord : appels, réponses, rendez-vous et occasions de soumission liés au système.",
+      "sampleDataLabel": "Données illustratives à des fins de démonstration."
     },
     "industries": {
       "headline": "Conçu pour les entreprises de service occupées",
-      "cards": [
+      "priorityLabel": "Industries principales",
+      "priority": [
         {
           "name": "Plomberie",
-          "pain": "Captez les appels d'urgence avant que le client n'appelle un autre plombier."
+          "pain": "Récupérez les appels urgents, recueillez les photos du problème et alertez le plombier de garde."
         },
         {
           "name": "CVC",
-          "pain": "Captez les appels d'urgence de chauffage et relancez les soumissions d'installation."
+          "pain": "Capturez les demandes sans chauffage ou climatisation et relancez les soumissions de thermopompes."
         },
         {
           "name": "Électricité",
-          "pain": "Acheminez les demandes urgentes et récupérez les soumissions électriques sans réponse."
-        },
-        {
-          "name": "Toiture",
-          "pain": "Récupérez les demandes d'inspection manquées et relancez les soumissions de toiture à haute valeur."
-        },
-        {
-          "name": "Rénovation",
-          "pain": "Relancez chaque soumission de projet à haute valeur."
-        },
-        {
-          "name": "Aménagement paysager et travaux extérieurs",
-          "pain": "Gardez vos prospects et soumissions actifs pendant que vous êtes sur le chantier."
+          "pain": "Transmettez les demandes urgentes au bon technicien et assurez le suivi des soumissions à haute valeur."
         }
+      ],
+      "supportingLabel": "Aussi conçu pour",
+      "supporting": [
+        "Toiture",
+        "Rénovation",
+        "Aménagement paysager",
+        "Pavage",
+        "Excavation",
+        "Clôture",
+        "Travaux extérieurs"
       ]
     },
     "implementation": {
@@ -246,19 +270,30 @@
       ]
     },
     "trust": {
-      "headline": "Vous gardez le contrôle sur chaque décision",
+      "headline": "Chaque scénario est testé avec votre équipe avant le lancement",
+      "intro": "Rien n'est mis en service sans avoir été vérifié. Avant le lancement, nous confirmons ensemble :",
+      "verifiedItems": [
+        "Les messages destinés aux clients",
+        "Les numéros de téléphone des techniciens",
+        "L'horaire de garde",
+        "Les contacts de remplacement",
+        "Le moment des escalades",
+        "Les limites de la zone de service",
+        "Les séquences de relance de soumission",
+        "Les conditions d'arrêt",
+        "Les règles d'approbation humaine"
+      ],
+      "controlHeadline": "Vous gardez le contrôle sur chaque décision",
       "points": [
         "Les décisions importantes restent entre les mains de l'entrepreneur",
         "Les demandes urgentes sont escaladées de façon prudente",
-        "L'IA ne diagnostique pas les problèmes techniques",
+        "Le système ne diagnostique pas les problèmes techniques",
         "Les rabais nécessitent l'approbation de l'entrepreneur",
         "Les messages s'arrêtent dès que le client répond",
-        "Les scripts français et anglais sont révisés avant le lancement",
-        "Chaque processus est testé",
-        "L'activité des clients est enregistrée"
+        "Les scénarios en français et en anglais sont révisés avant le lancement",
+        "L'activité des clients est journalisée"
       ],
-      "guaranteeTitle": "Garantie de lancement",
-      "guaranteeBody": "Si le système convenu n'est pas lancé en raison d'un retard de notre part, votre premier mois de gestion est crédité."
+      "guaranteeNote": "Garantie de lancement : si le système convenu n'est pas lancé en raison d'un retard de notre part, votre premier mois de gestion est crédité."
     },
     "faqTeaser": {
       "headline": "Questions posées avant de réserver",
@@ -283,8 +318,64 @@
       ]
     },
     "finalCta": {
-      "headline": "Combien de jobs perdez-vous avant même de parler au client?",
+      "headline": "Combien de contrats perdez-vous avant même de parler au client?",
       "body": "Réservez un audit gratuit et nous passerons en revue comment votre entreprise gère actuellement les appels manqués, les nouveaux prospects et les soumissions sans réponse."
+    },
+    "scenario": {
+      "headline": "Voici ce qui se passe lorsque vous manquez un appel",
+      "intro": "Voici un exemple de séquence d'appel manqué et de relance de soumission, présenté pour illustrer comment le système réagit.",
+      "exampleLabel": "Exemple de fonctionnement",
+      "timelineLabel": "Séquence d'appel manqué",
+      "steps": [
+        {
+          "time": "19 h 42",
+          "text": "Un propriétaire appelle. Votre équipe est déjà sur un chantier."
+        },
+        {
+          "time": "19 h 42",
+          "text": "TradeCatch lui envoie immédiatement un texto, en français ou en anglais."
+        },
+        {
+          "time": "19 h 44",
+          "text": "Le client fournit son adresse, décrit le problème et joint une photo."
+        },
+        {
+          "time": "19 h 44",
+          "text": "Le technicien de garde reçoit le résumé complet."
+        },
+        {
+          "time": "19 h 48",
+          "text": "Le technicien accepte la demande et rappelle le client."
+        },
+        {
+          "time": "Le lendemain",
+          "text": "Le rendez-vous et sa valeur estimée apparaissent dans votre tableau de bord."
+        }
+      ],
+      "secondFlowLabel": "Séquence de relance de soumission",
+      "secondFlowCaption": "Soumission envoyée → Aucun retour → Relance personnalisée → Réponse du client → Entrepreneur alerté → Statut mis à jour"
+    },
+    "founder": {
+      "headline": "Un système installé et suivi par une vraie personne",
+      "name": "Ara Ghahramanyan",
+      "role": "Fondateur, TradeCatch",
+      "bio": "TradeCatch n'est pas un logiciel que vous devez configurer seul. J'analyse votre processus, connecte vos outils, teste les scénarios avec votre équipe et surveille le système après son lancement.",
+      "points": [
+        "Développeur logiciel de formation, spécialisé en automatisations et systèmes d'affaires",
+        "Service bilingue, français et anglais",
+        "Concentré sur la région de Montréal et Laval",
+        "Implication personnelle dans l'installation et le suivi"
+      ],
+      "emailLabel": "Courriel"
+    },
+    "pilot": {
+      "headline": "Devenez l'une des premières entreprises pilotes TradeCatch",
+      "body": "TradeCatch est actuellement déployé auprès d'un nombre limité d'entrepreneurs québécois. Les entreprises pilotes bénéficient d'un accompagnement plus rapproché, d'un système ajusté à leur façon de travailler et d'un accès direct au fondateur pendant que le système est peaufiné.",
+      "points": [
+        "Installation accompagnée avec votre équipe, pas un tableau de bord en libre-service",
+        "Scénarios ajustés selon votre volume réel d'appels et de soumissions",
+        "Vos commentaires influencent directement les prochaines améliorations"
+      ]
     }
   },
   "services": {

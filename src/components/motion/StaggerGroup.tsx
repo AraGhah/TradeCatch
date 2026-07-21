@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { ReactNode } from "react";
+import { useMounted } from "@/components/motion/useMounted";
 
 const container = {
   hidden: {},
@@ -10,14 +11,23 @@ const container = {
   },
 };
 
+// Opacity is intentionally never part of these variants. whileInView's
+// IntersectionObserver can fail to fire for full-page screenshot tools,
+// print, and some crawlers; if it never fires, items just keep their
+// resting position instead of staying invisible.
 export const staggerItem = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { y: 16 },
   visible: {
-    opacity: 1,
     y: 0,
     transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
+
+function useProgressiveMotion() {
+  const mounted = useMounted();
+  const prefersReducedMotion = useReducedMotion();
+  return mounted && !prefersReducedMotion;
+}
 
 export function StaggerGroup({
   children,
@@ -26,6 +36,14 @@ export function StaggerGroup({
   children: ReactNode;
   className?: string;
 }) {
+  const animate = useProgressiveMotion();
+
+  // Same progressive-enhancement rule as Reveal: without JS or with
+  // reduced motion, children render plainly and stay fully visible.
+  if (!animate) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div
       className={className}
@@ -46,6 +64,12 @@ export function StaggerItem({
   children: ReactNode;
   className?: string;
 }) {
+  const animate = useProgressiveMotion();
+
+  if (!animate) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div className={className} variants={staggerItem}>
       {children}
