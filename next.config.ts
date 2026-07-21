@@ -8,12 +8,16 @@ const isDev = process.env.NODE_ENV === "development";
 
 // Static (non-nonce) CSP: keeps pages statically rendered/cacheable, which
 // matters more for this marketing site than nonce-level script isolation.
-// 'unsafe-inline' on style-src is required because framer-motion animates
-// via inline style attributes; script-src stays restricted to self plus the
-// specific third-party origins we actually load (GA4, Cloudflare Turnstile).
+// 'unsafe-inline' on script-src is required in every environment, not just
+// dev: Next's App Router streams the RSC payload and hydration bootstrap
+// through inline <script> tags on every request, and without a nonce
+// mechanism (which would force these pages off static rendering) the
+// browser blocks those tags outright, breaking hydration for the whole
+// site. 'unsafe-eval' stays dev-only since it's only needed for Turbopack's
+// dev-time module runtime.
 const cspDirectives = [
   "default-src 'self'",
-  `script-src 'self' https://www.googletagmanager.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://www.google-analytics.com",
   "font-src 'self'",

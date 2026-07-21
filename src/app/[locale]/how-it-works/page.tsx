@@ -66,7 +66,7 @@ export default async function HowItWorksPage({
           </StaggerGroup>
 
           <div className="mt-12 text-center">
-            <CTAButton href="/book-audit">{cta("seeSystemWorkflow")}</CTAButton>
+            <CTAButton href="/book-audit">{cta("primary")}</CTAButton>
           </div>
         </Container>
       </section>

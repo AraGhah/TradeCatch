@@ -4,8 +4,9 @@
     "tagline": "Contractor Revenue Recovery System",
     "phone": "438-993-6997",
     "phoneHref": "4389936997",
-    "email": "hello@tradecatch.ca",
-    "serviceArea": "Montréal, Laval, Mirabel, Vaudreuil-Dorion & area"
+    "email": "ara.ghahramanyan07@gmail.com",
+    "serviceArea": "Montréal, Laval, Mirabel, Vaudreuil-Dorion & area",
+    "founderEmail": "ara.ghahramanyan07@gmail.com"
   },
   "nav": {
     "home": "Home",
@@ -14,25 +15,17 @@
     "industries": "Industries",
     "pricing": "Pricing",
     "about": "About",
-    "faq": "FAQ",
-    "bookAudit": "Book an Audit",
-    "cta": "Book a Free Revenue Leak Audit"
+    "faq": "FAQ"
   },
   "cta": {
-    "primary": "Book a Free Revenue Leak Audit",
+    "primary": "See Where I'm Losing Contracts",
     "secondary": "See How the System Works",
     "tertiary": "Request a Demo",
     "watchDemo": "Watch the 90-Second Demo",
-    "findLeaks": "Find Your Revenue Leaks",
     "seeWorkflow": "See How It Works",
     "viewMissedCall": "View Missed-Call Workflow",
     "viewQuoteFollowUp": "See the Quote Follow-Up Process",
-    "requestDashboard": "Request a Dashboard Demo",
-    "viewIndustries": "View Industry Solutions",
-    "bookRevenueAudit": "Book Your Revenue Audit",
-    "bookFinal": "Book My Free Audit",
-    "getRecommendation": "Get a Custom Recommendation",
-    "seeSystemWorkflow": "See the System With Your Workflow"
+    "viewIndustries": "View Industry Solutions"
   },
   "footer": {
     "description": "We install and manage a bilingual revenue recovery system for contractors that catches missed calls, collects customer information, alerts the correct technician, follows up on unanswered quotes, and tracks the jobs the system helps recover.",
@@ -54,7 +47,8 @@
         "Bilingual, French & English",
         "You approve every message",
         "Human control on every decision"
-      ]
+      ],
+      "reassurance": "20-minute audit · No commitment · French and English"
     },
     "leaks": {
       "headline": "Where Good Jobs Are Being Lost",
@@ -179,49 +173,79 @@
     },
     "dashboard": {
       "headline": "See Exactly What the System Catches",
-      "badge": "Recovery dashboard",
-      "live": "Live",
+      "badge": "Example dashboard",
+      "live": "Sample data",
       "metrics": [
-        "Missed calls detected",
-        "Customers who responded",
-        "Leads created",
-        "Technician alerts sent",
-        "Appointments booked",
-        "Quotes followed up",
-        "Customer replies",
-        "Quotes won",
-        "Estimated recovered revenue",
-        "Cases requiring attention"
+        {
+          "value": "18",
+          "label": "Missed calls detected"
+        },
+        {
+          "value": "13",
+          "label": "Customers who responded"
+        },
+        {
+          "value": "9",
+          "label": "New requests logged"
+        },
+        {
+          "value": "7",
+          "label": "Technician alerts sent"
+        },
+        {
+          "value": "5",
+          "label": "Appointments booked"
+        },
+        {
+          "value": "22",
+          "label": "Quotes followed up"
+        },
+        {
+          "value": "8",
+          "label": "Customer replies"
+        },
+        {
+          "value": "3",
+          "label": "Contracts signed"
+        },
+        {
+          "value": "14 800 $",
+          "label": "Tracked opportunity value"
+        },
+        {
+          "value": "4",
+          "label": "Cases needing your attention"
+        }
       ],
-      "note": "Track the calls, replies, bookings, and quote opportunities connected to the system."
+      "note": "A sample of what your dashboard tracks: calls, replies, bookings, and quote opportunities connected to the system.",
+      "sampleDataLabel": "Illustrative data, for demonstration purposes only."
     },
     "industries": {
       "headline": "Built for Busy Trade Companies",
-      "cards": [
+      "priorityLabel": "Primary industries",
+      "priority": [
         {
           "name": "Plumbing",
-          "pain": "Catch emergency calls before the customer calls another plumber."
+          "pain": "Catch urgent calls, collect photos of the problem, and alert the on-call plumber."
         },
         {
           "name": "HVAC",
-          "pain": "Capture emergency no-heat calls and follow up on installation quotes."
+          "pain": "Capture no-heat and no-cooling calls, and follow up on heat pump quotes."
         },
         {
           "name": "Electrical",
-          "pain": "Route urgent requests and recover unanswered electrical quotes."
-        },
-        {
-          "name": "Roofing",
-          "pain": "Recover missed inspection requests and follow up on high-value roofing estimates."
-        },
-        {
-          "name": "Renovation",
-          "pain": "Follow up on every high-value project estimate."
-        },
-        {
-          "name": "Landscaping & exterior trades",
-          "pain": "Keep leads and quotes moving while you're on the job site."
+          "pain": "Route urgent requests to the right technician and follow up on high-value electrical quotes."
         }
+      ],
+      "supportingLabel": "Also built for",
+      "supporting": [
+        "Roofing",
+        "Renovation",
+        "Landscaping",
+        "Paving",
+        "Excavation",
+        "Fencing",
+        "Exterior trades"
       ]
     },
     "implementation": {
@@ -246,19 +270,30 @@
       ]
     },
     "trust": {
-      "headline": "You Stay in Control of Every Decision",
+      "headline": "Every Scenario Is Tested With Your Team Before Launch",
+      "intro": "Nothing goes live untested. Before launch, we verify these with you directly:",
+      "verifiedItems": [
+        "Customer messages",
+        "Technician phone numbers",
+        "On-call schedule",
+        "Backup contacts",
+        "Escalation timing",
+        "Service area boundaries",
+        "Quote follow-up sequences",
+        "Stop conditions",
+        "Human-approval rules"
+      ],
+      "controlHeadline": "You Stay in Control of Every Decision",
       "points": [
         "Important decisions stay with the contractor",
         "Emergency requests are escalated conservatively",
-        "AI does not diagnose technical problems",
+        "The system does not diagnose technical problems",
         "Discounts require contractor approval",
         "Messages stop when the customer responds",
         "French and English scripts are reviewed before launch",
-        "Every workflow is tested",
         "Customer activity is logged"
       ],
-      "guaranteeTitle": "Launch Guarantee",
-      "guaranteeBody": "If the agreed system is not launched because of a delay on our side, your first management month is credited."
+      "guaranteeNote": "Launch guarantee: if the agreed system is not launched because of a delay on our side, your first management month is credited."
     },
     "faqTeaser": {
       "headline": "Questions Owners Ask Before They Book",
@@ -285,6 +320,62 @@
     "finalCta": {
       "headline": "How Many Jobs Are You Losing Before You Ever Speak to the Customer?",
       "body": "Book a free audit and we will review how your company currently handles missed calls, new leads, and unanswered quotes."
+    },
+    "scenario": {
+      "headline": "What Happens When You Miss a Call",
+      "intro": "This is a walkthrough of a typical missed-call and quote follow-up sequence, shown here to illustrate how the system responds.",
+      "exampleLabel": "Example scenario",
+      "timelineLabel": "Missed-call sequence",
+      "steps": [
+        {
+          "time": "7:42 p.m.",
+          "text": "A homeowner calls. Your crew is already on a job site."
+        },
+        {
+          "time": "7:42 p.m.",
+          "text": "TradeCatch texts them back immediately, in French or English."
+        },
+        {
+          "time": "7:44 p.m.",
+          "text": "The customer shares their address, describes the problem, and attaches a photo."
+        },
+        {
+          "time": "7:44 p.m.",
+          "text": "The on-call technician receives the full summary."
+        },
+        {
+          "time": "7:48 p.m.",
+          "text": "The technician accepts the request and calls the customer back."
+        },
+        {
+          "time": "Next morning",
+          "text": "The appointment and its estimated value appear on your dashboard."
+        }
+      ],
+      "secondFlowLabel": "Quote follow-up sequence",
+      "secondFlowCaption": "Quote sent → No reply → Personalized follow-up → Customer responds → Contractor alerted → Status updated"
+    },
+    "founder": {
+      "headline": "Built and Monitored by a Real Person",
+      "name": "Ara Ghahramanyan",
+      "role": "Founder, TradeCatch",
+      "bio": "TradeCatch isn't software you're handed to configure alone. I review your process, connect your tools, test every scenario with your team, and keep watching the system after it goes live.",
+      "points": [
+        "Software developer by background, building automations and business systems",
+        "Bilingual service, French and English",
+        "Focused on the Montréal and Laval area",
+        "Personally involved in setup and monitoring"
+      ],
+      "emailLabel": "Email"
+    },
+    "pilot": {
+      "headline": "Become One of TradeCatch's First Pilot Companies",
+      "body": "TradeCatch is currently being rolled out to a limited number of Quebec contractors. Pilot companies get closer onboarding, a workflow built around how your team already works, and direct access to the founder while the system is fine-tuned.",
+      "points": [
+        "Hands-on setup with your team, not a self-serve dashboard",
+        "Workflows adjusted based on your actual call and quote volume",
+        "Your feedback directly shapes what gets built next"
+      ]
     }
   },
   "services": {

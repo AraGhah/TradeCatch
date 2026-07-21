@@ -18,11 +18,11 @@ type NavHref =
   | "/how-it-works"
   | "/industries"
   | "/pricing"
-  | "/about"
-  | "/faq";
+  | "/about";
 
 export function Header() {
   const t = useTranslations("nav");
+  const cta = useTranslations("cta");
   const site = useTranslations("site");
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
@@ -42,7 +42,6 @@ export function Header() {
     { href: "/industries", label: t("industries") },
     { href: "/pricing", label: t("pricing") },
     { href: "/about", label: t("about") },
-    { href: "/faq", label: t("faq") },
   ];
 
   return (
@@ -105,13 +104,13 @@ export function Header() {
           </a>
           <LocaleSwitcher />
           <CTAButton href="/book-audit" size="sm">
-            {t("bookAudit")}
+            {cta("primary")}
           </CTAButton>
         </div>
 
         <MobileNav
           links={links}
-          ctaLabel={t("bookAudit")}
+          ctaLabel={cta("primary")}
           phone={site("phone")}
           phoneHref={site("phoneHref")}
         />
