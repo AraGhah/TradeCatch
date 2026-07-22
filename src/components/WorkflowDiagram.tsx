@@ -53,7 +53,7 @@ function StepList({ labels }: { labels: string[] }) {
             >
               <Icon className="h-5 w-5" />
             </span>
-            <span className="text-sm font-medium text-text">{label}</span>
+            <span className="text-base font-medium text-text">{label}</span>
             {!isLast ? (
               <span
                 aria-hidden
@@ -116,7 +116,7 @@ export function WorkflowDiagram({ caption }: { caption: string }) {
               >
                 <Icon className="h-5 w-5" />
               </span>
-              <span className="text-sm font-medium text-text">{label}</span>
+              <span className="text-base font-medium text-text">{label}</span>
               {!isLast ? (
                 <span
                   aria-hidden
