@@ -23,7 +23,7 @@ export function Footer() {
             </span>
             <p className="text-lg font-bold text-white font-heading">TradeCatch</p>
           </div>
-          <p className="mt-4 max-w-sm text-sm leading-relaxed">{t("description")}</p>
+          <p className="mt-4 max-w-sm text-base leading-relaxed text-white/85">{t("description")}</p>
           <p className="mt-4 text-sm">{site("serviceArea")}</p>
           <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             <a href={`tel:${site("phoneHref")}`} className={`flex items-center gap-1.5 ${linkClass}`}>
@@ -65,7 +65,7 @@ export function Footer() {
       </Container>
 
       <div className="border-t border-white/10">
-        <Container className="flex flex-col gap-2 py-6 text-xs text-white/70 md:flex-row md:items-center md:justify-between">
+        <Container className="flex flex-col gap-3 py-6 text-sm leading-relaxed text-white/75 md:flex-row md:items-center md:justify-between md:gap-6">
           <p>© {year} TradeCatch. {t("rightsReserved")}</p>
           <p className="max-w-2xl">{t("disclaimer")}</p>
         </Container>

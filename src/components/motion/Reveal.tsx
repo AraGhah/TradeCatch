@@ -9,11 +9,13 @@ export function Reveal({
   delay = 0,
   className = "",
   as = "div",
+  id,
 }: {
   children: ReactNode;
   delay?: number;
   className?: string;
   as?: "div" | "section";
+  id?: string;
 }) {
   const mounted = useMounted();
   const prefersReducedMotion = useReducedMotion();
@@ -23,7 +25,11 @@ export function Reveal({
   // enhances already-visible content once mounted and motion is allowed.
   if (!mounted || prefersReducedMotion) {
     const Tag = as;
-    return <Tag className={className}>{children}</Tag>;
+    return (
+      <Tag id={id} className={className}>
+        {children}
+      </Tag>
+    );
   }
 
   const MotionTag = as === "section" ? motion.section : motion.div;
@@ -35,6 +41,7 @@ export function Reveal({
   // sits at its final position instead of vanishing.
   return (
     <MotionTag
+      id={id}
       className={className}
       initial={{ y: 20 }}
       whileInView={{ y: 0 }}

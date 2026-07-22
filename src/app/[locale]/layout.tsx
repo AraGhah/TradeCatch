@@ -61,12 +61,21 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
+  // ProfessionalService rather than a storefront LocalBusiness type: this is
+  // a service delivered to contractors wherever they operate, not a
+  // location customers visit, so no street address is asserted.
   const organizationSchema = {
     "@context": "https://schema.org",
-    "@type": "Organization",
+    "@type": "ProfessionalService",
     name: "TradeCatch",
     url: siteUrl,
-    areaServed: ["Montréal", "Laval", "Mirabel", "Vaudreuil-Dorion"],
+    telephone: "+1-438-993-6997",
+    areaServed: [
+      { "@type": "City", name: "Montréal" },
+      { "@type": "City", name: "Laval" },
+      { "@type": "City", name: "Mirabel" },
+      { "@type": "City", name: "Vaudreuil-Dorion" },
+    ],
     availableLanguage: ["en", "fr"],
   };
 

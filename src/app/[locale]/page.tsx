@@ -6,6 +6,7 @@ import { CTAButton } from "@/components/CTAButton";
 import { Card } from "@/components/Card";
 import { NumberedStep } from "@/components/NumberedStep";
 import { WorkflowDiagram } from "@/components/WorkflowDiagram";
+import { HeroMockup } from "@/components/HeroMockup";
 import { ScenarioTimeline } from "@/components/ScenarioTimeline";
 import { DashboardPreview } from "@/components/DashboardPreview";
 import { ComparisonPanel } from "@/components/ComparisonPanel";
@@ -34,7 +35,7 @@ export async function generateMetadata({
   return buildMetadata({
     locale,
     pathname: "/",
-    title: t("hero.headline"),
+    title: (t.raw("hero.headlineLines") as string[]).join(" "),
     description: t("hero.subheadline"),
   });
 }
@@ -57,14 +58,18 @@ export default async function HomePage({
       {/* 1. Hero */}
       <section className="relative overflow-hidden bg-white py-16 sm:py-24">
         <div aria-hidden className="bg-grid pointer-events-none absolute inset-0" />
-        <Container className="relative grid gap-12 lg:grid-cols-2 lg:items-center">
+        <Container className="relative grid gap-12 lg:grid-cols-[5fr_7fr] lg:items-center">
           <div>
             <span className="inline-flex items-center gap-2 rounded-full border border-navy/15 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-navy">
               <span className="h-1.5 w-1.5 rounded-full bg-orange" />
               {t("hero.eyebrow")}
             </span>
-            <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-tight text-navy sm:text-5xl lg:text-[3.4rem]">
-              {t("hero.headline")}
+            <h1 className="mt-5 text-4xl font-bold leading-[1.1] tracking-tight text-navy sm:text-5xl lg:text-[3.4rem]">
+              {t.raw("hero.headlineLines").map((line: string, i: number) => (
+                <span key={i} className="block">
+                  {line}
+                </span>
+              ))}
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-text/70">
               {t("hero.subheadline")}
@@ -73,9 +78,12 @@ export default async function HomePage({
               <CTAButton href="/book-audit" size="lg">
                 {cta("primary")}
               </CTAButton>
-              <CTAButton href="/how-it-works" variant="secondary" size="lg">
+              <a
+                href="#product-demo"
+                className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-navy/15 bg-white px-8 py-4 text-lg font-semibold text-navy transition-colors duration-200 hover:border-blue hover:text-blue focus-visible:outline-2 focus-visible:outline-offset-2"
+              >
                 {cta("watchDemo")}
-              </CTAButton>
+              </a>
             </div>
             <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-text/50">
               {t("hero.reassurance")}
@@ -95,12 +103,26 @@ export default async function HomePage({
               })}
             </ul>
           </div>
-          <WorkflowDiagram caption={t("hero.workflowCaption")} />
+          <HeroMockup
+            illustrativeLabel={t("hero.mockup.illustrativeLabel")}
+            missedCallLabel={t("hero.mockup.missedCallLabel")}
+            missedCallTime={t("hero.mockup.missedCallTime")}
+            chatTime={t("hero.mockup.chatTime")}
+            systemMessage={t("hero.mockup.systemMessage")}
+            customerReply={t("hero.mockup.customerReply")}
+            technicianAlert={t("hero.mockup.technicianAlert")}
+            technicianAlertTime={t("hero.mockup.technicianAlertTime")}
+            technicianAcceptedLabel={t("hero.mockup.technicianAcceptedLabel")}
+            dashboardResult={t("hero.mockup.dashboardResult")}
+            dashboardResultTime={t("hero.mockup.dashboardResultTime")}
+            dashboardMetricValue={t("hero.mockup.dashboardMetricValue")}
+            dashboardMetricLabel={t("hero.mockup.dashboardMetricLabel")}
+          />
         </Container>
       </section>
 
       {/* 2. Product demonstration */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
+      <Reveal as="section" id="product-demo" className="scroll-mt-20 bg-white py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("scenario.headline")} intro={t("scenario.intro")} />
           <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-orange-dark">
@@ -151,29 +173,29 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 4. Complete system */}
+      {/* 4. One system, then missed-call recovery and quote follow-up */}
       <Reveal as="section" className="bg-white py-16 sm:py-24">
         <Container>
-          <SectionHeading title={t("system.headline")} />
-          <div className="mt-12 grid gap-x-10 gap-y-8 md:grid-cols-2">
-            {t.raw("system.steps").map((step: { title: string; body: string }, i: number) => (
-              <NumberedStep key={step.title} index={i + 1} title={step.title}>
-                {step.body}
-              </NumberedStep>
-            ))}
-          </div>
-          <div className="mt-10 text-center">
-            <CTAButton href="/how-it-works" variant="secondary">
+          <div className="flex flex-wrap items-baseline justify-between gap-4">
+            <SectionHeading title={t("system.headline")} />
+            <CTAButton href="/how-it-works" variant="ghost">
               {cta("seeWorkflow")}
             </CTAButton>
           </div>
-        </Container>
-      </Reveal>
+          <StaggerGroup className="mt-8 flex flex-wrap gap-3">
+            {t.raw("system.steps").map((step: { title: string }, i: number) => (
+              <StaggerItem key={step.title}>
+                <span className="flex items-center gap-2 rounded-full border border-navy/10 bg-bg px-4 py-2 text-sm font-medium text-navy">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-bold text-white">
+                    {i + 1}
+                  </span>
+                  {step.title}
+                </span>
+              </StaggerItem>
+            ))}
+          </StaggerGroup>
 
-      {/* 5. Missed-call recovery and quote follow-up */}
-      <Reveal as="section" className="py-16 sm:py-24">
-        <Container>
-          <div className="grid gap-10 lg:grid-cols-2 lg:gap-14">
+          <div className="mt-14 grid gap-10 border-t border-navy/10 pt-14 lg:grid-cols-2 lg:gap-14">
             <div>
               <SectionHeading align="left" title={t("missedCall.headline")} />
               <ul className="mt-6 space-y-3">
@@ -229,8 +251,8 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 6. Manual vs automated comparison */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
+      {/* 5. Manual vs automated comparison */}
+      <Reveal as="section" className="py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("comparison.headline")} />
           <div className="mt-12">
@@ -243,8 +265,8 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 7. Dashboard */}
-      <Reveal as="section" className="py-16 sm:py-24">
+      {/* 6. Dashboard */}
+      <Reveal as="section" className="bg-white py-16 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-2 lg:items-center">
           <div>
             <SectionHeading align="left" title={t("dashboard.headline")} />
@@ -262,8 +284,8 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 8. Industries */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
+      {/* 7. Industries */}
+      <Reveal as="section" className="py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("industries.headline")} />
           <p className="mt-8 text-xs font-semibold uppercase tracking-wide text-navy/50">
@@ -297,8 +319,8 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 9. Implementation */}
-      <Reveal as="section" className="py-16 sm:py-24">
+      {/* 8. Implementation */}
+      <Reveal as="section" className="bg-white py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("implementation.headline")} />
           <div className="mt-12 grid gap-x-10 gap-y-8 md:grid-cols-2">
@@ -314,50 +336,52 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 10. Trust: tested with your team */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
+      {/* 9. Trust: tested with your team */}
+      <Reveal as="section" className="py-16 sm:py-24">
         <Container>
           <SectionHeading title={t("trust.headline")} intro={t("trust.intro")} />
-          <ul className="mt-10 grid gap-3 sm:grid-cols-3">
+          <ul className="mt-10 grid gap-4 sm:grid-cols-3">
             {t.raw("trust.verifiedItems").map((item: string) => (
-              <li key={item} className="flex items-start gap-3 text-sm text-text/70">
-                <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" />
+              <li key={item} className="flex items-start gap-3 text-base leading-relaxed text-text/80">
+                <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-green" />
                 {item}
               </li>
             ))}
           </ul>
           <div className="mt-14 border-t border-navy/10 pt-10">
             <h3 className="text-lg font-semibold text-navy">{t("trust.controlHeadline")}</h3>
-            <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+            <ul className="mt-6 grid gap-4 sm:grid-cols-2">
               {t.raw("trust.points").map((point: string) => (
-                <li key={point} className="flex items-start gap-3 text-sm text-text/70">
-                  <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" />
+                <li key={point} className="flex items-start gap-3 text-base leading-relaxed text-text/80">
+                  <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-green" />
                   {point}
                 </li>
               ))}
             </ul>
           </div>
-          <p className="mt-8 text-xs text-text/50">{t("trust.guaranteeNote")}</p>
+          <p className="mt-8 text-sm text-text/60">{t("trust.guaranteeNote")}</p>
         </Container>
       </Reveal>
 
-      {/* 11. Founder */}
+      {/* 10. Founder */}
       <Reveal as="section" className="py-16 sm:py-24">
         <Container>
           <FounderSection
             headline={t("founder.headline")}
             name={t("founder.name")}
             role={t("founder.role")}
+            statement={t("founder.statement")}
             bio={t("founder.bio")}
             points={t.raw("founder.points")}
             emailLabel={t("founder.emailLabel")}
             email={site("founderEmail")}
+            talkCta={t("founder.talkCta")}
           />
         </Container>
       </Reveal>
 
-      {/* 12. Pilot program */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
+      {/* 11. Pilot program */}
+      <Reveal as="section" className="py-16 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
           <div>
             <SectionHeading align="left" title={t("pilot.headline")} />
@@ -376,8 +400,8 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 13. FAQ teaser */}
-      <Reveal as="section" className="py-16 sm:py-24">
+      {/* 12. FAQ teaser */}
+      <Reveal as="section" className="bg-white py-16 sm:py-24">
         <Container className="grid gap-12 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
           <div>
             <SectionHeading align="left" title={t("faqTeaser.headline")} />
@@ -389,7 +413,7 @@ export default async function HomePage({
         </Container>
       </Reveal>
 
-      {/* 14. Final CTA */}
+      {/* 13. Final CTA */}
       <Reveal as="section" className="relative overflow-hidden bg-navy py-16 sm:py-24">
         <div aria-hidden className="bg-grid pointer-events-none absolute inset-0 opacity-20 invert" />
         <Container className="relative text-center">
@@ -399,6 +423,14 @@ export default async function HomePage({
           <p className="mx-auto mt-4 max-w-2xl text-lg text-white/70">
             {t("finalCta.body")}
           </p>
+          <ul className="mx-auto mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-white/60">
+            {t.raw("finalCta.whatToExpect").map((item: string) => (
+              <li key={item} className="flex items-center gap-2">
+                <CheckIcon className="h-4 w-4 shrink-0 text-green" />
+                {item}
+              </li>
+            ))}
+          </ul>
           <div className="mt-8">
             <CTAButton href="/book-audit" size="lg">
               {cta("primary")}

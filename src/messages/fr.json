@@ -21,14 +21,14 @@
     "primary": "Voir où je perds des contrats",
     "secondary": "Voir comment fonctionne le système",
     "tertiary": "Demander une démo",
-    "watchDemo": "Regarder la démo de 90 secondes",
+    "watchDemo": "Voir le système en action",
     "seeWorkflow": "Voir comment ça fonctionne",
     "viewMissedCall": "Voir le processus des appels manqués",
     "viewQuoteFollowUp": "Voir le processus de relance des soumissions",
     "viewIndustries": "Voir les solutions par industrie"
   },
   "footer": {
-    "description": "Nous installons et gérons un système bilingue de récupération de revenus pour entrepreneurs qui capte les appels manqués, recueille les informations des clients, alerte le bon technicien, relance les soumissions sans réponse et suit les jobs récupérés grâce au système.",
+    "description": "TradeCatch installe et gère un système bilingue qui répond aux appels manqués, alerte votre équipe et relance les soumissions sans réponse.",
     "company": "Entreprise",
     "legal": "Légal",
     "resources": "Ressources",
@@ -39,19 +39,37 @@
   "home": {
     "hero": {
       "eyebrow": "Système de récupération de revenus pour entrepreneurs",
-      "headline": "Arrêtez de perdre des contrats à cause d'appels manqués et de soumissions oubliées",
       "subheadline": "Nous installons un système bilingue qui répond aux appels manqués, recueille les informations du client, alerte le bon technicien et relance automatiquement les soumissions sans réponse.",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
-      "workflowCaption": "Appel manqué → Client contacté → Technicien alerté → Soumission envoyée → Relance → Contrat gagné",
       "trustChips": [
         "Bilingue, français et anglais",
         "Vous approuvez chaque message",
         "Contrôle humain sur chaque décision"
       ],
-      "reassurance": "Audit de 20 minutes · Sans engagement · Français et anglais"
+      "reassurance": "Audit de 20 minutes · Sans engagement · Français et anglais",
+      "mockup": {
+        "illustrativeLabel": "Exemple illustratif",
+        "missedCallLabel": "Appel manqué détecté",
+        "missedCallTime": "19 h 42",
+        "chatTime": "19 h 42 à 19 h 44",
+        "systemMessage": "Désolé d'avoir manqué votre appel. Quel est le problème et votre adresse?",
+        "customerReply": "Pas de chauffage, la fournaise ne démarre pas. 12 rue Oak.",
+        "technicianAlert": "Technicien de garde alerté avec tous les détails",
+        "technicianAlertTime": "19 h 44",
+        "technicianAcceptedLabel": "Accepté",
+        "dashboardResult": "Rendez-vous pris",
+        "dashboardResultTime": "Le lendemain",
+        "dashboardMetricValue": "1",
+        "dashboardMetricLabel": "nouveau rendez-vous suivi dans votre tableau de bord"
+      },
+      "headlineLines": [
+        "Récupérez les appels manqués.",
+        "Relancez chaque soumission.",
+        "Gagnez plus de contrats."
+      ]
     },
     "leaks": {
-      "headline": "Où les bons contrats se perdent",
+      "headline": "Arrêtez de perdre des contrats à cause d'appels manqués et de soumissions oubliées",
       "intro": "Rien de tout cela n'apparaît comme une vente perdue. Cela se traduit plutôt par une baisse tranquille des contrats réservés, difficile à retracer.",
       "cards": [
         {
@@ -319,7 +337,13 @@
     },
     "finalCta": {
       "headline": "Combien de contrats perdez-vous avant même de parler au client?",
-      "body": "Réservez un audit gratuit et nous passerons en revue comment votre entreprise gère actuellement les appels manqués, les nouveaux prospects et les soumissions sans réponse."
+      "body": "Réservez un audit gratuit et nous passerons en revue comment votre entreprise gère actuellement les appels manqués, les nouveaux prospects et les soumissions sans réponse.",
+      "whatToExpect": [
+        "Audit de 20 minutes",
+        "Analyse de vos appels et soumissions",
+        "Recommandations adaptées à votre processus",
+        "Sans engagement"
+      ]
     },
     "scenario": {
       "headline": "Voici ce qui se passe lorsque vous manquez un appel",
@@ -366,11 +390,13 @@
         "Concentré sur la région de Montréal et Laval",
         "Implication personnelle dans l'installation et le suivi"
       ],
-      "emailLabel": "Courriel"
+      "emailLabel": "Courriel",
+      "statement": "Je conçois, installe et teste personnellement chaque système avec l'entreprise. Vous ne recevez pas un logiciel générique à configurer seul.",
+      "talkCta": "Parler avec Ara"
     },
     "pilot": {
       "headline": "Devenez l'une des premières entreprises pilotes TradeCatch",
-      "body": "TradeCatch est actuellement déployé auprès d'un nombre limité d'entrepreneurs québécois. Les entreprises pilotes bénéficient d'un accompagnement plus rapproché, d'un système ajusté à leur façon de travailler et d'un accès direct au fondateur pendant que le système est peaufiné.",
+      "body": "TradeCatch ouvre actuellement son programme pilote à un nombre limité d'entrepreneurs québécois. Les entreprises pilotes bénéficient d'un accompagnement plus rapproché, d'un système ajusté à leur façon de travailler et d'un accès direct au fondateur pendant que le système est peaufiné.",
       "points": [
         "Installation accompagnée avec votre équipe, pas un tableau de bord en libre-service",
         "Scénarios ajustés selon votre volume réel d'appels et de soumissions",
@@ -799,7 +825,7 @@
         },
         {
           "heading": "Nous joindre ou porter plainte",
-          "body": "Pour toute question ou demande relative à la confidentialité, écrivez à confidentialite@tradecatch.ca [TODO : confirmer que cette boîte courriel existe et est surveillée]. Si vous estimez que votre préoccupation n'a pas été résolue, vous pouvez déposer une plainte auprès de la Commission d'accès à l'information du Québec (CAI)."
+          "body": "Pour toute question ou demande relative à la confidentialité, écrivez à ara.ghahramanyan07@gmail.com. Si vous estimez que votre préoccupation n'a pas été résolue, vous pouvez déposer une plainte auprès de la Commission d'accès à l'information du Québec (CAI)."
         },
         {
           "heading": "Sécurité et signalement d'incidents",
@@ -863,7 +889,7 @@
         },
         {
           "heading": "Cookies et stockage que nous utilisons",
-          "body": "Essentiels : aucun cookie de session propre n'est strictement requis pour la navigation de base, mais votre choix de cookies est enregistré dans le localStorage de votre navigateur afin de ne pas vous redemander à chaque visite. Analytiques : Google Analytics 4 dépose des cookies (comme _ga) pour mesurer le trafic et l'utilisation, et ne se charge qu'après votre acceptation des cookies analytiques ci-dessous. Sécurité : Cloudflare Turnstile peut déposer des cookies essentiels de courte durée lors de la vérification qu'une soumission de formulaire n'est pas automatisée; ceux-ci ne servent pas au suivi. Nous n'utilisons pas de cookies à des fins publicitaires tierces."
+          "body": "Essentiels : un cookie de préférence linguistique (NEXT_LOCALE) mémorise si vous naviguez en français ou en anglais; aucun autre cookie de session propre n'est strictement requis pour la navigation de base, et votre choix de cookies est enregistré dans le localStorage de votre navigateur afin de ne pas vous redemander à chaque visite. Analytiques : Google Analytics 4 dépose des cookies (comme _ga) pour mesurer le trafic et l'utilisation, et ne se charge qu'après votre acceptation des cookies analytiques ci-dessous. Sécurité : Cloudflare Turnstile peut déposer des cookies essentiels de courte durée lors de la vérification qu'une soumission de formulaire n'est pas automatisée; ceux-ci ne servent pas au suivi. Nous n'utilisons pas de cookies à des fins publicitaires tierces."
         },
         {
           "heading": "Gérer votre choix de cookies",
@@ -907,7 +933,7 @@
         },
         {
           "heading": "Commentaires et contact",
-          "body": "Si vous rencontrez un obstacle à l'accessibilité sur ce site, veuillez nous écrire à bonjour@tradecatch.ca en décrivant la page et le problème. Nous nous efforcerons de corriger les obstacles réels dans un délai raisonnable."
+          "body": "Si vous rencontrez un obstacle à l'accessibilité sur ce site, veuillez nous écrire à ara.ghahramanyan07@gmail.com en décrivant la page et le problème. Nous nous efforcerons de corriger les obstacles réels dans un délai raisonnable."
         }
       ]
     }
