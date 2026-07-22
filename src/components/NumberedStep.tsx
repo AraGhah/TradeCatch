@@ -16,14 +16,14 @@ export function NumberedStep({
   const prefersReducedMotion = useReducedMotion();
 
   const badge = (
-    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-bold text-white shadow-sm transition-transform duration-200 group-hover:scale-110 group-hover:bg-orange group-hover:text-navy">
+    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy text-base font-bold text-white shadow-sm transition-transform duration-200 group-hover:scale-110 group-hover:bg-orange group-hover:text-navy">
       {index}
     </span>
   );
   const body = (
     <div>
-      <h3 className="font-semibold text-navy">{title}</h3>
-      <p className="mt-1 text-sm leading-relaxed text-text/70">{children}</p>
+      <h3 className="text-lg font-semibold text-navy">{title}</h3>
+      <p className="mt-2 text-base leading-relaxed text-text/80">{children}</p>
     </div>
   );
 

@@ -1,36 +1,84 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TradeCatch
 
-## Getting Started
+Marketing site — Next.js 16 (App Router), next-intl (en/fr), Tailwind v4.
 
-First, run the development server:
+## Local development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000> (or whatever port is printed — it auto-picks the next free one).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Before every deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npx tsc --noEmit -p tsconfig.json   # type-check
+npm run lint                        # eslint
+npm run build                       # production build
+```
 
-## Learn More
+All three must pass with zero errors. `npm run build` alone is not sufficient proof the
+site works — it only checks that the code compiles. CSP and hydration bugs only show up
+when you actually load the built output in a real browser, which is why the step below
+matters:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+rm -rf .next && npm run build
+npx next start -p 3000
+# then open http://localhost:3000 in a real browser and check the console for errors
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Copy `.env.example` to `.env.local` and fill in real values. Nothing in `.env.example`
+is a secret — it's committed on purpose as the template. `.env.local` itself is
+gitignored and must never be committed.
 
-## Deploy on Vercel
+| Variable | Required for | Behavior if unset |
+| - | - | - |
+| `NEXT_PUBLIC_SITE_URL` | canonical URLs, sitemap, robots.txt | falls back to `https://tradecatch.ca` |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 | analytics script just doesn't load |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_NOTIFY_EMAIL` | audit-request confirmation + internal notification | `/api/book-audit` still accepts submissions and logs them server-side, just skips sending email (see `src/lib/email.ts`) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | bot verification on the audit form | server-side verification is skipped with a warning log (see `src/lib/turnstile.ts`) |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This is a standard Next.js app — deploy it the same way regardless of host:
+
+1. Push the branch to `origin` (`git push origin Ara` or whatever branch you're deploying).
+2. On the hosting platform (Vercel or similar), set the environment variables above for
+   the production environment.
+3. Trigger a build from the deployed branch. The platform runs `npm run build` and
+   serves the output — no custom build command needed.
+4. After the deploy finishes, load the live URL in a real browser (not just curl) and
+   check DevTools console for errors, especially any CSP violations — that class of bug
+   passes `npm run build` silently and only shows up at runtime.
+
+## Rollback
+
+If something ships broken:
+
+- **Platform with instant rollback (e.g. Vercel):** use the dashboard's "promote a
+  previous deployment" / rollback action — this is the fastest path and needs no git
+  operations.
+- **Manual rollback:** `git revert <bad-commit>` and push, or redeploy from the last
+  known-good commit SHA if the platform supports deploying an arbitrary ref. Avoid
+  `git reset --hard` on a shared branch — it rewrites history other people may have
+  already pulled.
+- Rate limiting, idempotency keys, and duplicate-submission guards in
+  `src/app/api/book-audit/route.ts` are in-memory (`Map`), scoped to a single server
+  process. A rollback or redeploy resets them — expected, not a bug — but if you ever
+  run multiple instances behind a load balancer, that in-memory state stops being
+  reliable across instances and would need moving to a shared store (Redis, etc.).
+
+## Testing
+
+```bash
+npm run test:e2e
+```
+
+Playwright specs live in `tests/`. They currently cover the book-audit API and security
+headers. There's no unit-test suite — coverage is build/lint/type-check plus these e2e
+specs plus manual browser verification.

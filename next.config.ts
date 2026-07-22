@@ -50,6 +50,11 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // Purely a local-dev quality-of-life setting: hides the floating dev-tools
+  // indicator badge. It never rendered in production (confirmed via a clean,
+  // extension-free browser against the actual build output) — this only
+  // stops it from being mistaken for a shipped UI element during development.
+  devIndicators: false,
   turbopack: {
     root: path.join(__dirname),
   },
