@@ -1,35 +1,46 @@
 "use client";
 
 import { ComponentProps } from "react";
-import { motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
 
-type Variant = "primary" | "secondary" | "ghost";
+type Variant = "ember" | "ink" | "ghost" | "ghost-ink" | "outline" | "primary" | "secondary" | "link";
 type Size = "sm" | "md" | "lg";
 
-const styles: Record<Variant, string> = {
-  primary:
-    "bg-orange text-navy shadow-cta hover:bg-orange-dark hover:shadow-lg",
-  secondary:
-    "bg-white text-navy border-2 border-navy/15 hover:border-blue hover:text-blue",
+const styles: Record<string, string> = {
+  ember:
+    "bg-orange text-navy shadow-cta hover:bg-orange-dark hover:translate-y-[-2px]",
+  ink: "bg-navy text-white shadow-[0_8px_20px_-10px_rgba(12,20,30,.6)] hover:bg-navy-light hover:translate-y-[-1px]",
   ghost:
-    "bg-transparent text-blue hover:text-navy underline underline-offset-4 decoration-blue/40 hover:decoration-navy",
+    "bg-white text-navy border-[1.5px] border-[rgba(12,20,30,0.16)] hover:border-navy hover:translate-y-[-2px]",
+  "ghost-ink":
+    "bg-transparent text-white border border-white/20 hover:bg-white/[0.07] hover:border-white/40",
+  outline:
+    "bg-transparent text-navy border-[1.5px] border-[rgba(12,20,30,0.16)] w-full hover:bg-navy hover:text-white hover:border-navy",
+  link: "bg-transparent text-ember-text underline underline-offset-[6px] decoration-[1.5px] decoration-ember-text/40 hover:text-navy hover:decoration-navy px-0 py-0 rounded-none",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "px-4 py-2 text-sm",
-  md: "px-6 py-3 text-base",
-  lg: "px-8 py-4 text-lg",
+  sm: "px-5 py-3 text-[14px] rounded-[10px]",
+  md: "px-[22px] py-[14px] text-[15px] rounded-[11px]",
+  lg: "px-[26px] py-[17px] text-[16.5px] rounded-[12px]",
 };
+
+function resolveVariant(variant: Variant): string {
+  if (variant === "primary") return "ember";
+  if (variant === "secondary") return "ghost";
+  if (variant === "ghost") return "link";
+  return variant;
+}
 
 export function CTAButton({
   href,
-  variant = "primary",
+  variant = "ember",
   size = "md",
   className = "",
   children,
   onClick,
+  showDot = false,
   ...props
 }: {
   href: ComponentProps<typeof Link>["href"];
@@ -37,25 +48,29 @@ export function CTAButton({
   size?: Size;
   className?: string;
   children: React.ReactNode;
+  showDot?: boolean;
 } & Omit<ComponentProps<typeof Link>, "href">) {
+  const styleKey = resolveVariant(variant);
+  const isLink = styleKey === "link";
+  const withDot = showDot || styleKey === "ink";
+
   return (
-    <motion.span
-      className="inline-block"
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ duration: 0.15 }}
+    <Link
+      href={href}
+      onClick={(e) => {
+        trackEvent("cta_click", { href: String(href), variant });
+        onClick?.(e);
+      }}
+      className={`inline-flex items-center justify-center gap-2.5 font-semibold tracking-[-0.01em] transition-[transform,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 ${styles[styleKey]} ${isLink ? "" : sizes[size]} ${className}`}
+      {...props}
     >
-      <Link
-        href={href}
-        onClick={(e) => {
-          trackEvent("cta_click", { href: String(href), variant });
-          onClick?.(e);
-        }}
-        className={`inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 ${styles[variant]} ${sizes[size]} ${className}`}
-        {...props}
-      >
-        {children}
-      </Link>
-    </motion.span>
+      {children}
+      {withDot ? (
+        <span
+          aria-hidden
+          className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-orange"
+        />
+      ) : null}
+    </Link>
   );
 }

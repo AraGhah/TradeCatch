@@ -2,13 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
-import { LocaleSwitcher } from "@/components/LocaleSwitcher";
-import { PhoneIcon } from "@/components/icons";
+import { BrandLockup } from "@/components/BrandLockup";
 
 const FOCUS_RING =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2";
 
 export function MobileNav({
   links,
@@ -26,7 +24,6 @@ export function MobileNav({
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    // document.body only exists on the client; the portal can't render during SSR.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
@@ -40,8 +37,6 @@ export function MobileNav({
 
   function close() {
     setOpen(false);
-    // Return focus to the toggle button so keyboard users don't lose their
-    // place once the panel (and everything inside it) unmounts.
     toggleButtonRef.current?.focus();
   }
 
@@ -54,98 +49,75 @@ export function MobileNav({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  const overlay = (
-    <AnimatePresence>
-      {open ? (
-        <>
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+  const overlay = open ? (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Mobile navigation"
+      className="fixed inset-0 z-[80] flex flex-col bg-navy animate-tc-in"
+    >
+      <div className="flex h-(--header-h) items-center justify-between px-[clamp(20px,4vw,40px)]">
+        <BrandLockup inverted />
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={close}
+          className={`flex h-[42px] w-[42px] items-center justify-center rounded-[10px] text-white ${FOCUS_RING}`}
+        >
+          <span className="text-[22px] leading-none" aria-hidden>
+            &#215;
+          </span>
+        </button>
+      </div>
+
+      <nav className="flex flex-1 flex-col overflow-y-auto px-[clamp(20px,4vw,40px)] pt-4">
+        {links.map((link) => (
+          <Link
+            key={link.href}
+            // @ts-expect-error - href comes from a typed union at call sites
+            href={link.href}
             onClick={close}
-            aria-hidden="true"
-            className="fixed left-0 right-0 top-16 bottom-0 z-40 bg-navy/30 backdrop-blur-[1px]"
-          />
-          <motion.div
-            key="panel"
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "tween", duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mobile navigation"
-            className="fixed right-0 top-16 bottom-0 z-40 flex w-full max-w-sm flex-col gap-6 overflow-y-auto border-l border-navy/10 bg-white p-6 shadow-2xl"
+            className={`border-b border-white/[0.09] py-5 font-heading text-[26px] font-bold tracking-[-0.03em] text-white ${FOCUS_RING}`}
           >
-            <nav className="flex flex-col gap-1">
-              {links.map((link) => (
-                <Link
-                  key={link.href}
-                  // @ts-expect-error - href comes from a typed union at call sites
-                  href={link.href}
-                  onClick={close}
-                  className={`rounded-md px-3 py-3 text-base font-medium text-text active:bg-bg ${FOCUS_RING}`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-            <a
-              href={`tel:${phoneHref}`}
-              onClick={close}
-              className={`flex items-center gap-2 rounded-md px-3 py-2 text-base font-semibold text-navy ${FOCUS_RING}`}
-            >
-              <PhoneIcon className="h-4 w-4 text-orange-dark" />
-              {phone}
-            </a>
-            <div className="flex items-center justify-between border-t border-navy/10 pt-6">
-              <LocaleSwitcher />
-            </div>
-            <Link
-              href="/book-audit"
-              onClick={close}
-              className={`rounded-lg bg-orange px-4 py-3 text-center text-sm font-semibold text-navy shadow-cta ${FOCUS_RING}`}
-            >
-              {ctaLabel}
-            </Link>
-          </motion.div>
-        </>
-      ) : null}
-    </AnimatePresence>
-  );
+            {link.label}
+          </Link>
+        ))}
+      </nav>
+
+      <div className="px-[clamp(20px,4vw,40px)] pb-10 pt-6">
+        <a
+          href={`tel:${phoneHref}`}
+          onClick={close}
+          className={`mb-4 block font-mono text-[14px] text-[rgba(255,255,255,0.64)] ${FOCUS_RING}`}
+        >
+          {phone}
+        </a>
+        <Link
+          href="/book-audit"
+          onClick={close}
+          className={`flex w-full items-center justify-center gap-2.5 rounded-[12px] bg-orange px-6 py-4 text-[16px] font-bold text-navy shadow-cta ${FOCUS_RING}`}
+        >
+          {ctaLabel}
+        </Link>
+      </div>
+    </div>
+  ) : null;
 
   return (
-    <div className="lg:hidden">
+    <div>
       <button
         ref={toggleButtonRef}
         type="button"
-        aria-label={open ? "Close menu" : "Open menu"}
+        aria-label={open ? "Close menu" : "Menu"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`relative flex h-10 w-10 items-center justify-center rounded-md border border-navy/15 text-navy ${FOCUS_RING}`}
+        className={`flex h-[42px] w-[42px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[rgba(12,20,30,0.14)] ${FOCUS_RING}`}
       >
-        <span className="relative block h-4 w-5">
-          <motion.span
-            className="absolute left-0 top-0 block h-0.5 w-5 rounded-full bg-navy"
-            animate={open ? { rotate: 45, y: 7 } : { rotate: 0, y: 0 }}
-            transition={{ duration: 0.2 }}
-          />
-          <motion.span
-            className="absolute left-0 top-[7px] block h-0.5 w-5 rounded-full bg-navy"
-            animate={open ? { opacity: 0 } : { opacity: 1 }}
-            transition={{ duration: 0.15 }}
-          />
-          <motion.span
-            className="absolute left-0 top-[14px] block h-0.5 w-5 rounded-full bg-navy"
-            animate={open ? { rotate: -45, y: -7 } : { rotate: 0, y: 0 }}
-            transition={{ duration: 0.2 }}
-          />
-        </span>
+        <span className="block h-[1.8px] w-[17px] rounded-full bg-navy" />
+        <span className="block h-[1.8px] w-[17px] rounded-full bg-navy" />
       </button>
 
-      {mounted ? createPortal(overlay, document.body) : null}
+      {mounted && open ? createPortal(overlay, document.body) : null}
     </div>
   );
 }

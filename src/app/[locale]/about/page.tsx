@@ -1,10 +1,9 @@
+import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
-import { CheckIcon, PinIcon, MessageIcon } from "@/components/icons";
-import { Reveal } from "@/components/motion/Reveal";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -31,52 +30,85 @@ export default async function AboutPage({
   setRequestLocale(locale);
   const t = await getTranslations("about");
   const site = await getTranslations("site");
-  const cta = await getTranslations("cta");
 
   const body = t.raw("body") as string[];
+  const email = site("founderEmail");
 
   return (
     <>
-      <section className="bg-white py-16 sm:py-24">
+      <section className="bg-navy pt-[clamp(56px,7vw,96px)] pb-[clamp(64px,8vw,100px)]">
         <Container>
-          <SectionHeading as="h1" title={t("headline")} />
-          <ul className="mx-auto mt-10 max-w-2xl space-y-3">
-            {body.map((line) => (
-              <li key={line} className="flex items-start gap-3 text-base text-text/80">
-                <CheckIcon className="mt-1 h-4 w-4 shrink-0 text-green" />
-                {line}
-              </li>
-            ))}
-          </ul>
+          <SectionHeading
+            as="h1"
+            light
+            align="left"
+            eyebrow={t("eyebrow")}
+            title={t("headline")}
+          />
         </Container>
       </section>
 
-      <Reveal as="section" className="py-16 sm:py-24">
+      <section className="bg-paper py-[clamp(64px,7vw,110px)]">
         <Container>
-          <div className="mx-auto max-w-2xl rounded-xl border border-navy/10 bg-white p-8 shadow-card">
-            <p className="text-sm font-semibold uppercase tracking-wide text-blue">
-              {t("founderTitle")}
-            </p>
-            <p className="mt-4 text-base leading-relaxed text-text/80">
-              {t("founderBody")}
-            </p>
-            <div className="mt-6 flex flex-col gap-2 border-t border-navy/10 pt-6 sm:flex-row sm:gap-6">
-              <p className="flex items-center gap-2 text-sm text-text/70">
-                <PinIcon className="h-4 w-4 shrink-0 text-blue" />
-                {site("serviceArea")}
-              </p>
-              <p className="flex items-center gap-2 text-sm text-text/70">
-                <MessageIcon className="h-4 w-4 shrink-0 text-blue" />
-                {site("email")}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              gap: "clamp(36px, 5vw, 80px)",
+              alignItems: "start",
+            }}
+          >
+            <div data-reveal>
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[20px] border border-[rgba(12,20,30,0.1)] bg-paper-deep">
+                <Image
+                  src="/images/founder.jpg"
+                  alt={t("caption")}
+                  width={720}
+                  height={900}
+                  className="h-full w-full object-cover"
+                  priority={false}
+                />
+              </div>
+              <p className="mt-[18px] font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
+                {t("caption")}
               </p>
             </div>
-          </div>
 
-          <div className="mt-12 text-center">
-            <CTAButton href="/book-audit">{cta("primary")}</CTAButton>
+            <div data-reveal>
+              <h2 className="m-0 font-heading text-[clamp(28px,3.2vw,42px)] font-extrabold leading-[1.06] tracking-[-0.038em] text-navy">
+                {t("bodyHeadline")}
+              </h2>
+              <p className="mt-5 text-[17px] leading-[1.65] text-secondary">
+                {t("bodyIntro")}
+              </p>
+              <ul className="mt-[30px] flex list-none flex-col p-0">
+                {body.map((line, i) => (
+                  <li
+                    key={line}
+                    className="flex items-start gap-3.5 border-t border-[rgba(12,20,30,0.1)] py-[15px] text-[16px] leading-[1.6] text-secondary"
+                  >
+                    <span className="pt-[3px] font-mono text-[12px] text-ember-text">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    {line}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <CTAButton href="/book-audit" variant="ink" size="md">
+                  {t("cta")}
+                </CTAButton>
+                <a
+                  href={`mailto:${email}`}
+                  className="inline-flex items-center rounded-[11px] border-[1.5px] border-[rgba(12,20,30,0.14)] px-[22px] py-4 text-[15.5px] font-semibold text-navy transition-colors hover:border-navy"
+                >
+                  {t("emailCta")}
+                </a>
+              </div>
+            </div>
           </div>
         </Container>
-      </Reveal>
+      </section>
     </>
   );
 }

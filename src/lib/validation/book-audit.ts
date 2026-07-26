@@ -20,7 +20,8 @@ export const bookAuditSchema = z.object({
   employees: z.string().trim().max(40).optional().or(z.literal("")),
   callsPerMonth: z.string().trim().max(40).optional().or(z.literal("")),
   missedCallsPerWeek: z.string().trim().max(40).optional().or(z.literal("")),
-  afterHours: z.enum(["yes", "no"]).optional(),
+  // Choice labels from the redesign wizard (Yes always / Sometimes / No)
+  afterHours: z.string().trim().max(40).optional().or(z.literal("")),
   quotesPerMonth: z.string().trim().max(40).optional().or(z.literal("")),
   averageJobValue: z.string().trim().max(40).optional().or(z.literal("")),
   currentCrm: z.string().trim().max(120).optional().or(z.literal("")),
@@ -29,46 +30,57 @@ export const bookAuditSchema = z.object({
   mainProblem: z.string().trim().max(1000).optional().or(z.literal("")),
   serviceConsent: z.literal(true),
   marketingConsent: z.boolean(),
-  // Honeypot: should stay empty for real visitors, but must still accept
-  // arbitrary bot-filled values so the route handler (not schema validation)
-  // is what decides how to respond to a filled honeypot.
   companyWebsite: z.string().max(500).optional().default(""),
   turnstileToken: z.string().min(1),
 });
 
 export type BookAuditPayload = z.infer<typeof bookAuditSchema>;
 
+/** One-question-per-screen wizard steps (presentation), plus review. */
 export const BOOK_AUDIT_STEPS = [
   "name",
   "company",
-  "contact",
-  "location",
-  "volume",
+  "trade",
+  "city",
+  "language",
+  "email",
+  "phone",
+  "employees",
+  "calls",
+  "missed",
   "afterHours",
   "quotes",
-  "tools",
-  "followUp",
+  "jobValue",
+  "crm",
+  "handlesCalls",
+  "followsQuotes",
+  "problem",
   "consent",
   "review",
-  "calendar",
 ] as const;
 
 export type BookAuditStep = (typeof BOOK_AUDIT_STEPS)[number];
 
-// Maps each wizard step to the payload keys it collects, so the client can
-// validate only the current step's slice without re-deriving this list.
-// "review" and "calendar" collect no new fields of their own.
+export const OPTIONAL_STEPS: BookAuditStep[] = ["crm", "problem"];
+
 export const STEP_FIELDS: Record<BookAuditStep, (keyof BookAuditPayload)[]> = {
   name: ["firstName", "lastName"],
-  company: ["company", "trade"],
-  contact: ["email", "phone"],
-  location: ["city", "preferredLanguage"],
-  volume: ["employees", "callsPerMonth"],
-  afterHours: ["missedCallsPerWeek", "afterHours"],
-  quotes: ["quotesPerMonth", "averageJobValue"],
-  tools: ["currentCrm", "handlesMissedCalls"],
-  followUp: ["followsUpQuotes", "mainProblem"],
+  company: ["company"],
+  trade: ["trade"],
+  city: ["city"],
+  language: ["preferredLanguage"],
+  email: ["email"],
+  phone: ["phone"],
+  employees: ["employees"],
+  calls: ["callsPerMonth"],
+  missed: ["missedCallsPerWeek"],
+  afterHours: ["afterHours"],
+  quotes: ["quotesPerMonth"],
+  jobValue: ["averageJobValue"],
+  crm: ["currentCrm"],
+  handlesCalls: ["handlesMissedCalls"],
+  followsQuotes: ["followsUpQuotes"],
+  problem: ["mainProblem"],
   consent: ["serviceConsent", "marketingConsent"],
   review: [],
-  calendar: [],
 };

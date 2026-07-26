@@ -1,46 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --color-navy: #122033;
-  --color-navy-light: #1c3252;
-  --color-blue: #2457c5;
-  --color-blue-light: #3d6fe0;
-  --color-orange: #f28c28;
-  --color-orange-dark: #d9740f;
-  --color-bg: #f7f6f3;
-  --color-paper: #fbfaf8;
-  --color-text: #1d2430;
-  --color-green: #248a5a;
+  /* Ink */
+  --color-navy: #0c141e;
+  --color-navy-light: #16222f;
+  --color-ink-panel: #0f1926;
+
+  /* Paper */
+  --color-bg: #f4f1ec;
+  --color-paper: #f4f1ec;
+  --color-paper-deep: #eae5dc;
+  --color-paper-hover: #faf8f5;
   --color-white: #ffffff;
 
-  --shadow-card: 0 1px 2px rgba(18, 32, 51, 0.04), 0 8px 24px -8px rgba(18, 32, 51, 0.08);
-  --shadow-card-hover: 0 4px 8px rgba(18, 32, 51, 0.06), 0 16px 32px -12px rgba(18, 32, 51, 0.16);
-  --shadow-cta: 0 6px 16px -6px rgba(217, 116, 15, 0.4);
+  /* Ember */
+  --color-orange: #e4762b;
+  --color-orange-dark: #f08b45;
+  --color-ember-text: #a94f12;
 
-  /* Hairline rule used in place of decorative dividers/glows */
-  --rule: rgba(18, 32, 51, 0.1);
+  /* Signal green */
+  --color-green: #2f9e68;
+  --color-signal-text: #1e6b47;
+
+  /* Text */
+  --color-text: #1a2430;
+  --color-muted: #5c6875;
+  --color-secondary: #3d4855;
+
+  /* Deprecated blue → ember (focus / leftover refs) */
+  --color-blue: #e4762b;
+  --color-blue-light: #f08b45;
+
+  /* Hairlines */
+  --rule: rgba(12, 20, 30, 0.1);
+  --rule-08: rgba(12, 20, 30, 0.08);
+  --rule-10: rgba(12, 20, 30, 0.1);
+  --rule-12: rgba(12, 20, 30, 0.12);
+  --rule-14: rgba(12, 20, 30, 0.14);
+  --rule-18: rgba(12, 20, 30, 0.18);
+  --rule-ink: rgba(255, 255, 255, 0.1);
+  --mono-on-ink: rgba(255, 255, 255, 0.64);
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px rgba(12, 20, 30, 0.04), 0 8px 24px -8px rgba(12, 20, 30, 0.08);
+  --shadow-card-hover: 0 26px 46px -28px rgba(12, 20, 30, 0.34);
+  --shadow-cta: 0 14px 34px -16px rgba(228, 118, 43, 0.8);
+  --shadow-ink-panel: 0 40px 70px -44px rgba(12, 20, 30, 0.7);
+  --shadow-phone: 0 60px 90px -50px rgba(0, 0, 0, 0.9);
+  --shadow-header: 0 8px 30px -18px rgba(12, 20, 30, 0.35);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --header-h: clamp(68px, 7vw, 86px);
+  --section-y: clamp(80px, 9vw, 140px);
+  --pad-x: clamp(20px, 4vw, 40px);
 }
 
 @theme inline {
   --color-navy: var(--color-navy);
   --color-navy-light: var(--color-navy-light);
+  --color-ink-panel: var(--color-ink-panel);
   --color-blue: var(--color-blue);
   --color-blue-light: var(--color-blue-light);
   --color-orange: var(--color-orange);
   --color-orange-dark: var(--color-orange-dark);
+  --color-ember-text: var(--color-ember-text);
   --color-bg: var(--color-bg);
   --color-paper: var(--color-paper);
+  --color-paper-deep: var(--color-paper-deep);
+  --color-paper-hover: var(--color-paper-hover);
   --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-secondary: var(--color-secondary);
   --color-green: var(--color-green);
+  --color-signal-text: var(--color-signal-text);
 
-  --font-heading: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
-  --container-page: 1200px;
+  --container-page: 1280px;
+  --container-how: 1040px;
+  --container-faq: 900px;
+  --container-wizard: 760px;
 
   --shadow-card: var(--shadow-card);
   --shadow-card-hover: var(--shadow-card-hover);
   --shadow-cta: var(--shadow-cta);
+  --shadow-ink-panel: var(--shadow-ink-panel);
+  --shadow-phone: var(--shadow-phone);
+  --shadow-header: var(--shadow-header);
 }
 
 html {
@@ -52,6 +100,7 @@ body {
   color: var(--color-text);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+  text-wrap: pretty;
 }
 
 h1,
@@ -59,7 +108,8 @@ h2,
 h3,
 h4 {
   font-family: var(--font-heading);
-  letter-spacing: -0.01em;
+  letter-spacing: -0.04em;
+  font-weight: 800;
 }
 
 ::selection {
@@ -67,21 +117,144 @@ h4 {
   color: var(--color-navy);
 }
 
-/* Consistent, visible focus ring across every interactive element */
 :focus-visible {
-  outline: 2px solid var(--color-blue);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: 2px solid var(--color-orange);
+  outline-offset: 3px;
 }
 
-/* Fine hairline grid used behind the hero instead of blurred gradient blobs */
+/* Hero ink grid */
+.bg-grid-ink {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(120% 80% at 30% 0%, #000, transparent 72%);
+  mask-image: radial-gradient(120% 80% at 30% 0%, #000, transparent 72%);
+}
+
 .bg-grid {
   background-image:
-    linear-gradient(to right, rgba(18, 32, 51, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(18, 32, 51, 0.06) 1px, transparent 1px);
-  background-size: 48px 48px;
-  -webkit-mask-image: linear-gradient(to bottom, black, transparent 85%);
-  mask-image: linear-gradient(to bottom, black, transparent 85%);
+    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 64px 64px;
+  -webkit-mask-image: radial-gradient(120% 80% at 50% 0%, #000, transparent 72%);
+  mask-image: radial-gradient(120% 80% at 50% 0%, #000, transparent 72%);
+}
+
+/* Typography helpers */
+.text-hero {
+  font-size: clamp(40px, 5.6vw, 74px);
+  line-height: 0.98;
+  letter-spacing: -0.042em;
+  font-weight: 800;
+}
+
+.text-page-hero {
+  font-size: clamp(36px, 4.8vw, 62px);
+  line-height: 1.02;
+  letter-spacing: -0.042em;
+  font-weight: 800;
+}
+
+.text-section {
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 1.03;
+  letter-spacing: -0.04em;
+  font-weight: 800;
+}
+
+.text-lede {
+  font-size: clamp(16.5px, 1.35vw, 19px);
+  line-height: 1.62;
+}
+
+.text-mono-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Motion */
+@keyframes tcIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tcBlink {
+  0%,
+  80% {
+    opacity: 0.22;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes tcPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(47, 158, 104, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 9px rgba(47, 158, 104, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(47, 158, 104, 0);
+  }
+}
+
+@keyframes tcDrift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-9px);
+  }
+}
+
+.animate-tc-in {
+  animation: tcIn 0.42s var(--ease-out) both;
+}
+
+.animate-tc-pulse {
+  animation: tcPulse 2.4s ease-out infinite;
+}
+
+.animate-tc-drift {
+  animation: tcDrift 7s ease-in-out infinite;
+}
+
+.animate-tc-blink {
+  animation: tcBlink 1.2s ease-in-out infinite;
+}
+
+/* Scroll reveal — transform only (never opacity). Opacity:0 left blank
+   full-page screenshots and print captures; the prior Reveal component
+   documented the same constraint. */
+[data-reveal] {
+  transition: transform 0.7s var(--ease-out);
+}
+
+[data-reveal].reveal-pending:not(.is-visible) {
+  transform: translateY(18px);
+}
+
+[data-reveal].is-visible {
+  transform: none;
+}
+
+@media print {
+  [data-reveal] {
+    transform: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -95,5 +268,9 @@ h4 {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
+  }
+  [data-reveal],
+  [data-reveal].reveal-pending {
+    transform: none !important;
   }
 }

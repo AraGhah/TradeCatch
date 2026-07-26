@@ -1,48 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 
-export function FaqAccordion({ items }: { items: { q: string; a: string }[] }) {
-  const [open, setOpen] = useState<number | null>(0);
+export function FaqAccordion({
+  items,
+  bordered = false,
+}: {
+  items: { q: string; a: string }[];
+  bordered?: boolean;
+}) {
+  const [open, setOpen] = useState<number>(-1);
 
   return (
-    <div className="divide-y divide-navy/10 rounded-xl border border-navy/10 bg-white shadow-card">
+    <div
+      className={
+        bordered
+          ? "rounded-[18px] border border-[rgba(12,20,30,0.1)] bg-white px-6"
+          : ""
+      }
+    >
       {items.map((item, i) => {
         const isOpen = open === i;
         return (
-          <div key={item.q}>
+          <div
+            key={item.q}
+            className="border-b border-[rgba(12,20,30,0.12)] last:border-b-0"
+          >
             <button
               type="button"
-              onClick={() => setOpen(isOpen ? null : i)}
+              onClick={() => setOpen(isOpen ? -1 : i)}
               aria-expanded={isOpen}
-              className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left transition-colors hover:bg-bg/60"
+              className="flex w-full items-center justify-between gap-4 py-[22px] text-left"
             >
-              <span className="font-semibold text-navy">{item.q}</span>
-              <motion.span
-                animate={{ rotate: isOpen ? 45 : 0 }}
-                transition={{ duration: 0.2 }}
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue/10 text-base text-blue"
+              <span className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-navy sm:text-[18.5px]">
+                {item.q}
+              </span>
+              <span
+                className="shrink-0 font-mono text-[18px] font-medium text-ember-text"
                 aria-hidden
               >
-                +
-              </motion.span>
+                {isOpen ? "−" : "+"}
+              </span>
             </button>
-            <AnimatePresence initial={false}>
-              {isOpen ? (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="overflow-hidden"
-                >
-                  <p className="px-6 pb-5 text-sm leading-relaxed text-text/70">
-                    {item.a}
-                  </p>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+            {isOpen ? (
+              <p className="animate-tc-in pb-6 text-[15px] leading-[1.65] text-muted">
+                {item.a}
+              </p>
+            ) : null}
           </div>
         );
       })}

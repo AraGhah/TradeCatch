@@ -1,21 +1,33 @@
 "use client";
 
-import { useEffect, useRef, useState, type SyntheticEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { Link } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
 import {
   BOOK_AUDIT_STEPS,
+  OPTIONAL_STEPS,
   STEP_FIELDS,
   bookAuditSchema,
   type BookAuditStep,
 } from "@/lib/validation/book-audit";
 
 const DRAFT_STORAGE_KEY = "tradecatch-book-audit-draft";
-const FORM_STEPS = BOOK_AUDIT_STEPS.filter(
-  (step) => step !== "calendar"
-) as Exclude<BookAuditStep, "calendar">[];
+const OPT_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+/** Question steps only — review is a separate screen after these. */
+const QUESTION_STEPS = BOOK_AUDIT_STEPS.filter(
+  (step) => step !== "review",
+) as Exclude<BookAuditStep, "review">[];
+
+const TOTAL_QUESTIONS = QUESTION_STEPS.length;
 
 type Answers = {
   firstName: string;
@@ -29,7 +41,7 @@ type Answers = {
   employees: string;
   callsPerMonth: string;
   missedCallsPerWeek: string;
-  afterHours: "yes" | "no" | "";
+  afterHours: string;
   quotesPerMonth: string;
   averageJobValue: string;
   currentCrm: string;
@@ -41,7 +53,7 @@ type Answers = {
   companyWebsite: string;
 };
 
-function emptyAnswers(defaultLanguage: "en" | "fr"): Answers {
+function emptyAnswers(): Answers {
   return {
     firstName: "",
     lastName: "",
@@ -50,11 +62,11 @@ function emptyAnswers(defaultLanguage: "en" | "fr"): Answers {
     email: "",
     phone: "",
     city: "",
-    preferredLanguage: defaultLanguage,
+    preferredLanguage: "",
     employees: "",
     callsPerMonth: "",
     missedCallsPerWeek: "",
-    afterHours: "no",
+    afterHours: "",
     quotesPerMonth: "",
     averageJobValue: "",
     currentCrm: "",
@@ -67,26 +79,77 @@ function emptyAnswers(defaultLanguage: "en" | "fr"): Answers {
   };
 }
 
-type Phase = "wizard" | "calendar" | "confirmed";
+type Phase = "wizard" | "confirmed";
 type SubmitStatus = "idle" | "submitting" | "error";
+
+type StepKind =
+  | "name"
+  | "text"
+  | "textarea"
+  | "choice"
+  | "consent"
+  | "review";
+
+function stepKind(step: BookAuditStep): StepKind {
+  switch (step) {
+    case "name":
+      return "name";
+    case "problem":
+      return "textarea";
+    case "trade":
+    case "language":
+    case "employees":
+    case "calls":
+    case "missed":
+    case "afterHours":
+    case "quotes":
+    case "jobValue":
+    case "handlesCalls":
+    case "followsQuotes":
+      return "choice";
+    case "consent":
+      return "consent";
+    case "review":
+      return "review";
+    default:
+      return "text";
+  }
+}
+
+/** Primary answer field for soft “answered?” checks (not name/consent/review). */
+function primaryField(step: BookAuditStep): keyof Answers | null {
+  const fields = STEP_FIELDS[step];
+  if (fields.length === 0) return null;
+  return fields[0] as keyof Answers;
+}
 
 export function BookAuditForm() {
   const t = useTranslations("bookAudit");
   const locale = useLocale() as "en" | "fr";
-  const shouldReduceMotion = useReducedMotion();
 
   const [phase, setPhase] = useState<Phase>("wizard");
   const [stepIndex, setStepIndex] = useState(0);
-  const [answers, setAnswers] = useState<Answers>(() => emptyAnswers(locale));
+  const [answers, setAnswers] = useState<Answers>(emptyAnswers);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [consentTouched, setConsentTouched] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const idempotencyKey = useRef<string>(crypto.randomUUID());
   const hydrated = useRef(false);
+  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const step = FORM_STEPS[stepIndex];
-  const totalSteps = FORM_STEPS.length;
+  const step = BOOK_AUDIT_STEPS[stepIndex];
+  const onReview = step === "review";
+  const kind = stepKind(step);
+  const questionNumber = onReview ? TOTAL_QUESTIONS : stepIndex + 1;
+  const minutesLeft = Math.max(
+    1,
+    Math.round(((TOTAL_QUESTIONS - stepIndex) * 9) / 60),
+  );
+  const progressPct = Math.round(
+    ((onReview ? TOTAL_QUESTIONS : stepIndex) / TOTAL_QUESTIONS) * 100,
+  );
+  const isOptional = OPTIONAL_STEPS.includes(step);
 
   // Restore an in-progress draft within this browser tab only (sessionStorage,
   // not localStorage) so back/forward preserves answers but nothing survives
@@ -115,6 +178,12 @@ export function BookAuditForm() {
     }
   }, [answers, phase]);
 
+  useEffect(() => {
+    return () => {
+      if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    };
+  }, []);
+
   function update<K extends keyof Answers>(key: K, value: Answers[K]) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
     setErrors((prev) => {
@@ -125,52 +194,137 @@ export function BookAuditForm() {
     });
   }
 
-  function validateStep(current: BookAuditStep): boolean {
-    const fields = STEP_FIELDS[current];
-    if (fields.length === 0) return true;
+  /** Soft check — drives Continue ember vs greyed pill. */
+  function isStepSatisfied(current: BookAuditStep): boolean {
+    if (OPTIONAL_STEPS.includes(current)) return true;
+    if (current === "review") return answers.serviceConsent && Boolean(turnstileToken);
+    if (current === "name") return Boolean(answers.firstName.trim());
+    if (current === "consent") return answers.serviceConsent;
+    if (current === "language") return answers.preferredLanguage === "en" || answers.preferredLanguage === "fr";
+    const field = primaryField(current);
+    if (!field) return true;
+    const value = answers[field];
+    return typeof value === "string" ? Boolean(value.trim()) : Boolean(value);
+  }
 
-    // zod's .pick() types its mask as an exact subset of the schema's own
-    // shape rather than a plain Record<string, true> — cast here since
-    // `fields` is already typed as (keyof BookAuditPayload)[] upstream.
-    const shape = Object.fromEntries(fields.map((f) => [f, true]));
-    const result = bookAuditSchema
-      .pick(shape as Parameters<typeof bookAuditSchema.pick>[0])
-      .safeParse(answers);
-    if (result.success) {
+  /**
+   * Hard check on Continue. Soft rules above, plus zod format for email/phone
+   * (and other STEP_FIELDS picks when the soft check already passed).
+   */
+  function validateStep(current: BookAuditStep): boolean {
+    if (OPTIONAL_STEPS.includes(current)) {
+      setErrors({});
+      return true;
+    }
+    if (current === "review") return true;
+
+    if (current === "name") {
+      // Soft Continue lights on firstName alone; hard check still asks for
+      // lastName so the API payload matches bookAuditSchema.
+      const shape = Object.fromEntries(
+        STEP_FIELDS.name.map((f) => [f, true]),
+      );
+      const result = bookAuditSchema
+        .pick(shape as Parameters<typeof bookAuditSchema.pick>[0])
+        .safeParse(answers);
+      if (result.success) {
+        setErrors({});
+        return true;
+      }
+      const nextErrors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        nextErrors[String(issue.path[0])] = t("wizard.errors.required");
+      }
+      setErrors(nextErrors);
+      return false;
+    }
+
+    if (current === "consent") {
+      if (!answers.serviceConsent) {
+        setConsentTouched(true);
+        setErrors({ serviceConsent: t("consentRequired") });
+        return false;
+      }
       setErrors({});
       return true;
     }
 
-    const nextErrors: Record<string, string> = {};
-    for (const issue of result.error.issues) {
-      const field = String(issue.path[0]);
-      if (field === "email") nextErrors[field] = t("wizard.errors.email");
-      else if (field === "phone") nextErrors[field] = t("wizard.errors.phone");
-      else nextErrors[field] = t("wizard.errors.required");
+    // email / phone — zod format via STEP_FIELDS pick
+    if (current === "email" || current === "phone") {
+      const fields = STEP_FIELDS[current];
+      const shape = Object.fromEntries(fields.map((f) => [f, true]));
+      const result = bookAuditSchema
+        .pick(shape as Parameters<typeof bookAuditSchema.pick>[0])
+        .safeParse(answers);
+      if (result.success) {
+        setErrors({});
+        return true;
+      }
+      const nextErrors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const field = String(issue.path[0]);
+        if (field === "email") nextErrors[field] = t("wizard.errors.email");
+        else if (field === "phone") nextErrors[field] = t("wizard.errors.phone");
+        else nextErrors[field] = t("wizard.errors.required");
+      }
+      setErrors(nextErrors);
+      return false;
     }
-    setErrors(nextErrors);
-    if (current === "consent") setConsentTouched(true);
-    return false;
+
+    if (!isStepSatisfied(current)) {
+      const field = primaryField(current);
+      if (field) setErrors({ [field]: t("wizard.errors.required") });
+      return false;
+    }
+
+    setErrors({});
+    return true;
+  }
+
+  function scrollTop() {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
+  function goToStep(index: number) {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    setErrors({});
+    setStepIndex(index);
+    scrollTop();
   }
 
   function goBack() {
     if (stepIndex === 0) return;
-    setErrors({});
-    setStepIndex((i) => i - 1);
+    goToStep(stepIndex - 1);
   }
 
-  async function handleStepSubmit(e: SyntheticEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!validateStep(step)) return;
-
+  function goNext() {
+    if (stepIndex >= BOOK_AUDIT_STEPS.length - 1) return;
     trackEvent("audit_step_completed", { step: stepIndex + 1 });
+    goToStep(stepIndex + 1);
+  }
 
-    if (step !== "review") {
-      setStepIndex((i) => i + 1);
+  function skipOptional() {
+    if (!isOptional) return;
+    goNext();
+  }
+
+  async function submitAudit() {
+    if (!turnstileToken || !answers.serviceConsent) return;
+
+    // Full-payload guard before POST — API re-validates anyway.
+    const payload = {
+      ...answers,
+      preferredLanguage:
+        answers.preferredLanguage === "fr" || answers.preferredLanguage === "en"
+          ? answers.preferredLanguage
+          : locale,
+      turnstileToken,
+    };
+    const parsed = bookAuditSchema.safeParse(payload);
+    if (!parsed.success) {
+      setSubmitStatus("error");
       return;
     }
-
-    if (!turnstileToken) return;
 
     setSubmitStatus("submitting");
     try {
@@ -178,8 +332,7 @@ export function BookAuditForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...answers,
-          turnstileToken,
+          ...parsed.data,
           idempotencyKey: idempotencyKey.current,
         }),
       });
@@ -196,430 +349,571 @@ export function BookAuditForm() {
         // Nothing to clean up if storage was never available.
       }
       setSubmitStatus("idle");
-      setPhase("calendar");
+      setPhase("confirmed");
+      scrollTop();
     } catch {
       setSubmitStatus("error");
     }
   }
 
-  function handleConfirm() {
-    trackEvent("audit_booking_confirmed");
-    setPhase("confirmed");
+  function handleContinue(e?: FormEvent) {
+    e?.preventDefault();
+    if (onReview) {
+      void submitAudit();
+      return;
+    }
+    if (!validateStep(step)) return;
+    goNext();
   }
 
-  // Reduced-motion handling here is intentionally NOT a per-render branch on
-  // useReducedMotion(): that value differs between the server (always null)
-  // and the client's first paint, and branching on it would make this step's
-  // initial/exit shape disagree with the server-rendered HTML — a real
-  // hydration mismatch. Instead this always declares the same initial/exit
-  // values, and the app-wide <MotionConfig reducedMotion="user"> (see the
-  // root layout) transparently makes the resulting transition instant for
-  // users who prefer reduced motion, with no SSR/CSR discrepancy.
-  const transition = { duration: 0.25 };
-  // exit sets pointerEvents: "none" so the outgoing step's fields can't be
-  // typed into or clicked during its ~250ms fade-out — without this, a fast
-  // typist could briefly land keystrokes in fields that are about to unmount.
-  const slideProps = {
-    initial: { opacity: 0, x: 16 },
-    exit: { opacity: 0, x: -16, pointerEvents: "none" as const },
-  };
+  function handleChoice(field: keyof Answers, label: string) {
+    update(field, label as Answers[typeof field]);
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    advanceTimer.current = setTimeout(() => {
+      trackEvent("audit_step_completed", { step: stepIndex + 1 });
+      goToStep(stepIndex + 1);
+    }, 180);
+  }
+
+  function handleLanguageChoice(code: "en" | "fr") {
+    update("preferredLanguage", code);
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    advanceTimer.current = setTimeout(() => {
+      trackEvent("audit_step_completed", { step: stepIndex + 1 });
+      goToStep(stepIndex + 1);
+    }, 180);
+  }
+
+  function handleTextKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    if (!isStepSatisfied(step)) return;
+    handleContinue();
+  }
+
+  function resetForm() {
+    if (advanceTimer.current) clearTimeout(advanceTimer.current);
+    idempotencyKey.current = crypto.randomUUID();
+    setAnswers(emptyAnswers());
+    setErrors({});
+    setConsentTouched(false);
+    setTurnstileToken("");
+    setSubmitStatus("idle");
+    setStepIndex(0);
+    setPhase("wizard");
+    try {
+      window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    scrollTop();
+  }
+
+  const satisfied = isStepSatisfied(step);
+  const showEnterHint =
+    (kind === "text" || kind === "name") && satisfied && !onReview;
+  const nextLabel = onReview
+    ? submitStatus === "submitting"
+      ? t("wizard.submitting")
+      : t("wizard.submit")
+    : kind === "consent"
+      ? t("wizard.reviewAnswers")
+      : t("wizard.continue");
+
+  if (phase === "confirmed") {
+    return (
+      <div className="flex flex-1 items-center justify-center px-[clamp(20px,4vw,40px)] py-[clamp(56px,8vw,110px)]">
+        <div className="w-full max-w-[640px] animate-tc-in text-center">
+          <span
+            aria-hidden
+            className="animate-tc-pulse inline-flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(47,158,104,0.14)] text-[26px] text-signal-text"
+          >
+            ✓
+          </span>
+          <h1 className="mt-7 font-heading text-[clamp(30px,4.2vw,48px)] leading-[1.05] font-extrabold tracking-[-0.04em] text-navy">
+            {t("confirmation.headline")}
+          </h1>
+          <p className="mx-auto mt-5 max-w-[34em] text-[17px] leading-[1.65] text-muted">
+            {t("confirmation.body")}
+          </p>
+          <div className="mt-[34px] flex flex-wrap justify-center gap-3">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2.5 rounded-[11px] bg-navy px-[26px] py-4 text-[16px] font-semibold text-white transition-[background,transform] duration-200 hover:translate-y-[-2px] hover:bg-navy-light"
+            >
+              {t("confirmation.backToSite")}
+            </Link>
+            <button
+              type="button"
+              onClick={resetForm}
+              className="rounded-[11px] border-[1.5px] border-[rgba(12,20,30,0.14)] px-[22px] py-4 text-[15.5px] font-semibold text-navy transition-colors duration-200 hover:border-navy"
+            >
+              {t("confirmation.submitAnother")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="rounded-2xl border border-navy/10 bg-white p-6 shadow-card sm:p-8">
-      {phase === "wizard" ? (
-        <>
-          <ProgressBar current={stepIndex + 1} total={totalSteps} label={t(`wizard.steps.${step}`)} stepOfLabel={t("wizard.stepOf", { current: stepIndex + 1, total: totalSteps })} />
+    <div className="flex flex-1 flex-col">
+      <ProgressBar
+        counterText={
+          onReview
+            ? t("wizard.reviewYourAnswers")
+            : t("wizard.questionOf", {
+                current: questionNumber,
+                total: TOTAL_QUESTIONS,
+              })
+        }
+        timeLeft={
+          onReview ? t("wizard.almostDone") : t("wizard.minLeft", { minutes: minutesLeft })
+        }
+        progressPct={progressPct}
+      />
 
-          <form onSubmit={handleStepSubmit} noValidate>
-            <input
-              type="text"
-              name="company_website"
-              value={answers.companyWebsite}
-              onChange={(e) => update("companyWebsite", e.target.value)}
-              tabIndex={-1}
-              autoComplete="off"
-              aria-hidden="true"
-              className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden"
-            />
+      <div className="flex flex-1 justify-center px-[clamp(20px,4vw,40px)] pt-[clamp(40px,7vw,88px)] pb-[clamp(56px,7vw,96px)]">
+        <form
+          onSubmit={handleContinue}
+          noValidate
+          className="w-full max-w-(--container-wizard)"
+        >
+          <input
+            type="text"
+            name="company_website"
+            value={answers.companyWebsite}
+            onChange={(e) => update("companyWebsite", e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute top-auto left-[-9999px] h-px w-px overflow-hidden"
+          />
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={step}
-                {...slideProps}
-                animate={{ opacity: 1, x: 0 }}
-                transition={transition}
-                className="min-h-[220px]"
-              >
-                <StepFields
-                  step={step}
-                  answers={answers}
-                  errors={errors}
-                  consentTouched={consentTouched}
-                  update={update}
-                  t={t}
-                />
-
-                {step === "review" ? (
-                  <div className="mt-6">
-                    <TurnstileWidget onToken={setTurnstileToken} />
-                    {submitStatus === "error" ? (
-                      <p role="alert" className="mt-3 text-sm font-medium text-red-600">
-                        {t("wizard.genericError")}
-                      </p>
-                    ) : null}
-                  </div>
+          {/*
+            Remount on step change so animate-tc-in replays. Prefer CSS over
+            framer here: MotionConfig handles reduced motion for framer, but
+            a keyed CSS animation avoids any AnimatePresence exit/enter timing
+            that could fight sticky progress layout during step swaps.
+          */}
+          <div key={step} className="animate-tc-in">
+            {!onReview ? (
+              <>
+                <p className="m-0 flex items-center gap-2.5 font-mono text-[12px] font-semibold tracking-[0.12em] text-ember-text">
+                  {String(questionNumber).padStart(2, "0")}
+                  <span
+                    aria-hidden
+                    className="block h-px w-[22px] bg-[rgba(169,79,18,0.4)]"
+                  />
+                </p>
+                <h1 className="mt-[18px] max-w-[16em] font-heading text-[clamp(28px,4vw,46px)] leading-[1.06] font-extrabold tracking-[-0.04em] text-navy">
+                  {t(`wizard.questions.${step}.title`)}
+                </h1>
+                {t.has(`wizard.questions.${step}.help`) ? (
+                  <p className="mt-4 max-w-[38em] text-[16.5px] leading-[1.62] text-muted">
+                    {t(`wizard.questions.${step}.help`)}
+                  </p>
                 ) : null}
-              </motion.div>
-            </AnimatePresence>
+              </>
+            ) : (
+              <>
+                <p className="m-0 font-mono text-[12px] font-semibold tracking-[0.12em] text-ember-text">
+                  {t("wizard.reviewLabel")}
+                </p>
+                <h1 className="mt-[18px] max-w-[15em] font-heading text-[clamp(28px,4vw,46px)] leading-[1.06] font-extrabold tracking-[-0.04em] text-navy">
+                  {t("wizard.reviewHeadline")}
+                </h1>
+              </>
+            )}
 
-            <div className="mt-8 flex items-center justify-between gap-3">
+            <div className="mt-[clamp(28px,4vw,44px)]">
+              <StepBody
+                step={step}
+                kind={kind}
+                answers={answers}
+                errors={errors}
+                consentTouched={consentTouched}
+                update={update}
+                onTextKeyDown={handleTextKeyDown}
+                onChoice={handleChoice}
+                onLanguageChoice={handleLanguageChoice}
+                onEditStep={goToStep}
+                t={t}
+              />
+            </div>
+
+            {onReview ? (
+              <div className="mt-6">
+                <TurnstileWidget onToken={setTurnstileToken} />
+                {submitStatus === "error" ? (
+                  <p role="alert" className="mt-3 text-sm font-medium text-red-600">
+                    {t("wizard.genericError")}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-[clamp(32px,4vw,48px)] flex flex-wrap items-center gap-3.5">
+            {satisfied && !(onReview && submitStatus === "submitting") ? (
+              <button
+                type="submit"
+                disabled={onReview && (!turnstileToken || submitStatus === "submitting")}
+                className="inline-flex items-center gap-3 rounded-[12px] bg-orange px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+              >
+                {nextLabel}
+                {!onReview ? (
+                  <span aria-hidden className="font-mono text-[15px]">
+                    →
+                  </span>
+                ) : null}
+              </button>
+            ) : (
+              <span
+                aria-disabled
+                className="inline-flex cursor-not-allowed items-center gap-3 rounded-[12px] bg-[rgba(12,20,30,0.08)] px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-muted"
+              >
+                {nextLabel}
+              </span>
+            )}
+
+            {stepIndex > 0 ? (
               <button
                 type="button"
                 onClick={goBack}
-                disabled={stepIndex === 0}
-                className="rounded-lg px-4 py-2.5 text-sm font-semibold text-navy/70 transition-colors hover:text-navy disabled:pointer-events-none disabled:opacity-0"
+                className="rounded-[12px] px-5 py-[17px] text-[15.5px] font-semibold text-muted transition-colors duration-200 hover:text-navy"
               >
                 {t("wizard.back")}
               </button>
+            ) : null}
 
-              <motion.button
-                type="submit"
-                whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
-                whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-                disabled={
-                  step === "review" &&
-                  (submitStatus === "submitting" || !turnstileToken)
-                }
-                className="rounded-lg bg-orange px-6 py-3 text-base font-semibold text-navy shadow-cta transition-colors hover:bg-orange-dark disabled:cursor-not-allowed disabled:opacity-60"
+            {isOptional ? (
+              <button
+                type="button"
+                onClick={skipOptional}
+                className="border-b border-[rgba(12,20,30,0.18)] px-1 py-[17px] text-[15px] text-muted transition-colors duration-200 hover:text-navy"
               >
-                {step === "review"
-                  ? submitStatus === "submitting"
-                    ? t("wizard.submitting")
-                    : t("wizard.submit")
-                  : t("wizard.continue")}
-              </motion.button>
-            </div>
-          </form>
-        </>
-      ) : null}
+                {t("wizard.skip")}
+              </button>
+            ) : null}
 
-      <AnimatePresence mode="wait">
-        {phase === "calendar" ? (
-          <motion.div
-            key="calendar"
-            initial={shouldReduceMotion ? undefined : { opacity: 0, x: 16 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={transition}
-          >
-            <h2 className="text-xl font-bold text-navy">{t("headline")}</h2>
-            <div className="mt-6 flex h-80 flex-col items-center justify-center rounded-lg border border-dashed border-navy/20 bg-bg text-center text-sm text-text/70">
-              <p>Calendar booking widget placeholder</p>
-              <p className="mt-1 text-xs">(Cal.com / scheduling embed goes here)</p>
-            </div>
-            <motion.button
-              type="button"
-              whileHover={shouldReduceMotion ? undefined : { scale: 1.01 }}
-              whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-              onClick={handleConfirm}
-              className="mt-6 w-full rounded-lg bg-orange px-6 py-3.5 text-base font-semibold text-navy shadow-cta transition-colors hover:bg-orange-dark"
-            >
-              {t("submit")}
-            </motion.button>
-          </motion.div>
-        ) : null}
-
-        {phase === "confirmed" ? (
-          <motion.div
-            key="confirmed"
-            initial={shouldReduceMotion ? undefined : { opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
-            className="py-6 text-center"
-          >
-            <motion.svg
-              viewBox="0 0 52 52"
-              className="mx-auto h-16 w-16 text-green"
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.circle
-                cx="26"
-                cy="26"
-                r="24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                variants={{
-                  hidden: { pathLength: 0, opacity: 0 },
-                  visible: {
-                    pathLength: 1,
-                    opacity: 1,
-                    transition: { duration: shouldReduceMotion ? 0 : 0.5 },
-                  },
-                }}
-              />
-              <motion.path
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15 27l7 7 15-15"
-                variants={{
-                  hidden: { pathLength: 0 },
-                  visible: {
-                    pathLength: 1,
-                    transition: {
-                      duration: shouldReduceMotion ? 0 : 0.4,
-                      delay: shouldReduceMotion ? 0 : 0.4,
-                    },
-                  },
-                }}
-              />
-            </motion.svg>
-            <h2 className="mt-6 text-2xl font-bold text-navy">
-              {t("confirmation.headline")}
-            </h2>
-            <p className="mx-auto mt-4 max-w-md text-text/70">
-              {t("confirmation.body")}
-            </p>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+            {showEnterHint ? (
+              <span className="font-mono text-[11px] tracking-[0.08em] text-muted uppercase">
+                {t("wizard.enterHint")}
+              </span>
+            ) : null}
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
 
 function ProgressBar({
-  current,
-  total,
-  label,
-  stepOfLabel,
+  counterText,
+  timeLeft,
+  progressPct,
 }: {
-  current: number;
-  total: number;
-  label: string;
-  stepOfLabel: string;
+  counterText: string;
+  timeLeft: string;
+  progressPct: number;
 }) {
-  const percent = (current / total) * 100;
   return (
-    <div className="mb-8">
-      <div className="flex items-baseline justify-between">
-        <span className="text-sm font-semibold text-navy">{label}</span>
-        <span className="text-xs font-medium text-navy/50">{stepOfLabel}</span>
-      </div>
-      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-navy/10">
-        <motion.div
-          className="h-full rounded-full bg-orange"
-          animate={{ width: `${percent}%` }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        />
+    <div className="sticky top-(--header-h) z-30 border-b border-[rgba(12,20,30,0.08)] bg-[rgba(244,241,236,0.92)] backdrop-blur-[12px]">
+      <div className="mx-auto w-full max-w-(--container-wizard) px-[clamp(20px,4vw,40px)] pt-3.5 pb-[13px]">
+        <div className="flex items-center justify-between gap-4">
+          <p className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
+            {counterText}
+          </p>
+          <p className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
+            {timeLeft}
+          </p>
+        </div>
+        <div className="mt-[11px] h-[3px] overflow-hidden rounded-[3px] bg-[rgba(12,20,30,0.1)]">
+          <span
+            className="block h-full rounded-[3px] bg-orange transition-[width] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
       </div>
     </div>
   );
 }
 
-type StepFieldsProps = {
+type Translator = ReturnType<typeof useTranslations<"bookAudit">>;
+
+function StepBody({
+  step,
+  kind,
+  answers,
+  errors,
+  consentTouched,
+  update,
+  onTextKeyDown,
+  onChoice,
+  onLanguageChoice,
+  onEditStep,
+  t,
+}: {
   step: BookAuditStep;
+  kind: StepKind;
   answers: Answers;
   errors: Record<string, string>;
   consentTouched: boolean;
   update: <K extends keyof Answers>(key: K, value: Answers[K]) => void;
-  t: ReturnType<typeof useTranslations<"bookAudit">>;
-};
+  onTextKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
+  onChoice: (field: keyof Answers, label: string) => void;
+  onLanguageChoice: (code: "en" | "fr") => void;
+  onEditStep: (index: number) => void;
+  t: Translator;
+}) {
+  if (kind === "name") {
+    return (
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-[clamp(20px,3vw,36px)]">
+        <UnderlineField
+          label={t("fields.firstName")}
+          value={answers.firstName}
+          placeholder={t("wizard.questions.name.firstPlaceholder")}
+          error={errors.firstName}
+          onChange={(v) => update("firstName", v)}
+          onKeyDown={onTextKeyDown}
+          size="name"
+          autoFocus
+        />
+        <UnderlineField
+          label={t("fields.lastName")}
+          value={answers.lastName}
+          placeholder={t("wizard.questions.name.lastPlaceholder")}
+          error={errors.lastName}
+          onChange={(v) => update("lastName", v)}
+          onKeyDown={onTextKeyDown}
+          size="name"
+        />
+      </div>
+    );
+  }
 
-function StepFields({ step, answers, errors, consentTouched, update, t }: StepFieldsProps) {
-  const grid = "grid gap-4 sm:grid-cols-2";
+  if (kind === "text") {
+    const field = primaryField(step)!;
+    const inputType =
+      step === "email" ? "email" : step === "phone" ? "tel" : "text";
+    return (
+      <div>
+        <UnderlineField
+          value={String(answers[field] ?? "")}
+          placeholder={
+            t.has(`wizard.questions.${step}.placeholder`)
+              ? t(`wizard.questions.${step}.placeholder`)
+              : undefined
+          }
+          error={errors[field]}
+          onChange={(v) => update(field, v as Answers[typeof field])}
+          onKeyDown={onTextKeyDown}
+          size="text"
+          type={inputType}
+          autoFocus
+        />
+      </div>
+    );
+  }
 
+  if (kind === "textarea") {
+    return (
+      <div>
+        <textarea
+          value={answers.mainProblem}
+          onChange={(e) => update("mainProblem", e.target.value)}
+          rows={4}
+          placeholder={t("wizard.questions.problem.placeholder")}
+          className="w-full resize-y rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.16)] bg-white px-5 py-5 font-sans text-[17px] leading-[1.6] text-text outline-none focus:border-orange"
+        />
+      </div>
+    );
+  }
+
+  if (kind === "choice") {
+    if (step === "language") {
+      const options: { code: "en" | "fr"; label: string }[] = [
+        { code: "en", label: t("options.language.en") },
+        { code: "fr", label: t("options.language.fr") },
+      ];
+      return (
+        <ChoiceGrid
+          options={options.map((o) => ({
+            label: o.label,
+            selected: answers.preferredLanguage === o.code,
+            onPick: () => onLanguageChoice(o.code),
+          }))}
+        />
+      );
+    }
+
+    const optionsKey = t(`wizard.questions.${step}.optionsKey`);
+    const options = t.raw(`options.${optionsKey}`) as string[];
+    const field = primaryField(step)!;
+    const current = String(answers[field] ?? "");
+
+    return (
+      <ChoiceGrid
+        options={options.map((label) => ({
+          label,
+          selected: current === label,
+          onPick: () => onChoice(field, label),
+        }))}
+      />
+    );
+  }
+
+  if (kind === "consent") {
+    return (
+      <div className="flex flex-col gap-3.5">
+        <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white p-5 text-[16px] leading-[1.6] text-text">
+          <input
+            type="checkbox"
+            checked={answers.serviceConsent}
+            onChange={(e) => update("serviceConsent", e.target.checked)}
+            className="mt-1 h-[18px] w-[18px] shrink-0 accent-orange"
+          />
+          <span>{t("consent")}</span>
+        </label>
+        {consentTouched && errors.serviceConsent ? (
+          <p role="alert" className="text-sm font-medium text-red-600">
+            {t("consentRequired")}
+          </p>
+        ) : null}
+        <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white/50 p-5 text-[16px] leading-[1.6] text-muted">
+          <input
+            type="checkbox"
+            checked={answers.marketingConsent}
+            onChange={(e) => update("marketingConsent", e.target.checked)}
+            className="mt-1 h-[18px] w-[18px] shrink-0 accent-orange"
+          />
+          <span>{t("marketingConsent")}</span>
+        </label>
+      </div>
+    );
+  }
+
+  // Review
+  return (
+    <div className="border-t border-[rgba(12,20,30,0.12)]">
+      {QUESTION_STEPS.map((s, n) => (
+        <ReviewRow
+          key={s}
+          label={t(`wizard.questions.${s}.label`)}
+          value={formatReviewValue(s, answers, t)}
+          onEdit={() => onEditStep(n)}
+          editLabel={t("wizard.edit")}
+        />
+      ))}
+    </div>
+  );
+}
+
+function formatReviewValue(
+  step: Exclude<BookAuditStep, "review">,
+  answers: Answers,
+  t: Translator,
+): string {
+  const empty = t("wizard.emptyValue");
   switch (step) {
-    case "name":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.firstName")} value={answers.firstName} error={errors.firstName} onChange={(v) => update("firstName", v)} autoFocus />
-          <TextField label={t("fields.lastName")} value={answers.lastName} error={errors.lastName} onChange={(v) => update("lastName", v)} />
-        </div>
-      );
-    case "company":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.company")} value={answers.company} error={errors.company} onChange={(v) => update("company", v)} autoFocus />
-          <TextField label={t("fields.trade")} value={answers.trade} error={errors.trade} onChange={(v) => update("trade", v)} />
-        </div>
-      );
-    case "contact":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.email")} type="email" value={answers.email} error={errors.email} onChange={(v) => update("email", v)} autoFocus />
-          <TextField label={t("fields.phone")} type="tel" value={answers.phone} error={errors.phone} onChange={(v) => update("phone", v)} />
-        </div>
-      );
-    case "location":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.city")} value={answers.city} error={errors.city} onChange={(v) => update("city", v)} autoFocus />
-          <SelectField
-            label={t("fields.preferredLanguage")}
-            value={answers.preferredLanguage}
-            onChange={(v) => update("preferredLanguage", v as Answers["preferredLanguage"])}
-            options={[
-              { value: "en", label: t("options.language.en") },
-              { value: "fr", label: t("options.language.fr") },
-            ]}
-          />
-        </div>
-      );
-    case "volume":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.employees")} value={answers.employees} onChange={(v) => update("employees", v)} autoFocus inputMode="numeric" />
-          <TextField label={t("fields.callsPerMonth")} value={answers.callsPerMonth} onChange={(v) => update("callsPerMonth", v)} inputMode="numeric" />
-        </div>
-      );
-    case "afterHours":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.missedCallsPerWeek")} value={answers.missedCallsPerWeek} onChange={(v) => update("missedCallsPerWeek", v)} autoFocus inputMode="numeric" />
-          <SelectField
-            label={t("fields.afterHours")}
-            value={answers.afterHours}
-            onChange={(v) => update("afterHours", v as Answers["afterHours"])}
-            options={[
-              { value: "yes", label: t("options.yesNo.yes") },
-              { value: "no", label: t("options.yesNo.no") },
-            ]}
-          />
-        </div>
-      );
-    case "quotes":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.quotesPerMonth")} value={answers.quotesPerMonth} onChange={(v) => update("quotesPerMonth", v)} autoFocus inputMode="numeric" />
-          <TextField label={t("fields.averageJobValue")} value={answers.averageJobValue} onChange={(v) => update("averageJobValue", v)} inputMode="numeric" />
-        </div>
-      );
-    case "tools":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.currentCrm")} value={answers.currentCrm} onChange={(v) => update("currentCrm", v)} autoFocus />
-          <TextField label={t("fields.handlesMissedCalls")} value={answers.handlesMissedCalls} onChange={(v) => update("handlesMissedCalls", v)} />
-        </div>
-      );
-    case "followUp":
-      return (
-        <div className={grid}>
-          <TextField label={t("fields.followsUpQuotes")} value={answers.followsUpQuotes} onChange={(v) => update("followsUpQuotes", v)} autoFocus />
-          <TextField label={t("fields.mainProblem")} value={answers.mainProblem} onChange={(v) => update("mainProblem", v)} textarea className="sm:col-span-2" />
-        </div>
-      );
+    case "name": {
+      const name = [answers.firstName, answers.lastName].filter(Boolean).join(" ");
+      return name || empty;
+    }
+    case "language":
+      if (answers.preferredLanguage === "en") return t("options.language.en");
+      if (answers.preferredLanguage === "fr") return t("options.language.fr");
+      return empty;
     case "consent":
-      return (
-        <div className="space-y-4">
-          <label className="flex items-start gap-3 text-sm text-text/70">
-            <input
-              type="checkbox"
-              checked={answers.serviceConsent}
-              onChange={(e) => update("serviceConsent", e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-navy/30 accent-orange"
-            />
-            {t("consent")}
-          </label>
-          {consentTouched && errors.serviceConsent ? (
-            <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} className="text-sm font-medium text-red-600" role="alert">
-              {t("consentRequired")}
-            </motion.p>
-          ) : null}
-          <label className="flex items-start gap-3 text-sm text-text/70">
-            <input
-              type="checkbox"
-              checked={answers.marketingConsent}
-              onChange={(e) => update("marketingConsent", e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-navy/30 accent-orange"
-            />
-            {t("marketingConsent")}
-          </label>
-        </div>
-      );
-    case "review":
-      return (
-        <div>
-          <p className="text-sm text-text/70">{t("wizard.reviewNote")}</p>
-          <dl className="mt-4 divide-y divide-navy/10 rounded-lg border border-navy/10">
-            {(
-              [
-                ["firstName", "lastName"],
-                ["company", "trade"],
-                ["email", "phone"],
-                ["city"],
-              ] as (keyof Answers)[][]
-            ).map((keys, i) => (
-              <div key={i} className="flex items-center justify-between gap-4 px-4 py-3 text-sm">
-                <dt className="text-navy/60">
-                  {keys.map((k) => t(`fields.${k as string}`)).join(" / ")}
-                </dt>
-                <dd className="font-medium text-navy">
-                  {keys.map((k) => String(answers[k]) || "—").join(" · ")}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      );
-    case "calendar":
-      return null;
-    default:
-      return null;
+      return answers.serviceConsent ? t("wizard.agreed") : t("wizard.notYet");
+    default: {
+      const field = primaryField(step);
+      if (!field) return empty;
+      const value = answers[field];
+      if (typeof value === "string") return value.trim() || empty;
+      return empty;
+    }
   }
 }
 
-function TextField({
+function ChoiceGrid({
+  options,
+}: {
+  options: { label: string; selected: boolean; onPick: () => void }[];
+}) {
+  return (
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(232px,1fr))] gap-2.5">
+      {options.map((option, n) => (
+        <button
+          key={option.label}
+          type="button"
+          onClick={option.onPick}
+          className={
+            option.selected
+              ? "flex w-full items-center justify-between gap-3.5 rounded-[13px] border-[1.5px] border-navy bg-navy px-5 py-[17px] text-left text-[16.5px] font-semibold tracking-[-0.015em] text-white"
+              : "flex w-full items-center justify-between gap-3.5 rounded-[13px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white px-5 py-[17px] text-left text-[16.5px] font-medium tracking-[-0.015em] text-text transition-[border-color,transform,box-shadow] duration-200 hover:translate-y-[-2px] hover:border-navy hover:shadow-[0_12px_24px_-16px_rgba(12,20,30,0.5)]"
+          }
+        >
+          {option.label}
+          {option.selected ? (
+            <span aria-hidden className="text-[15px] text-orange">
+              ✓
+            </span>
+          ) : (
+            <span className="font-mono text-[11px] text-muted">
+              {OPT_KEYS[n] ?? ""}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function UnderlineField({
   label,
   value,
   onChange,
+  onKeyDown,
+  placeholder,
   error,
+  size,
   type = "text",
-  textarea,
-  className = "",
   autoFocus,
-  inputMode,
 }: {
-  label: string;
+  label?: string;
   value: string;
   onChange: (value: string) => void;
+  onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
+  placeholder?: string;
   error?: string;
+  size: "name" | "text";
   type?: string;
-  textarea?: boolean;
-  className?: string;
   autoFocus?: boolean;
-  inputMode?: "text" | "numeric" | "tel" | "email";
 }) {
-  const fieldClass = `rounded-lg border px-3.5 py-2.5 text-sm font-normal text-text transition-colors duration-150 outline-none focus:ring-2 hover:border-navy/25 ${
-    error
-      ? "border-red-400 focus:border-red-500 focus:ring-red-100"
-      : "border-navy/15 focus:border-blue focus:ring-blue/15"
-  }`;
+  const sizeClass =
+    size === "name"
+      ? "text-[clamp(22px,2.4vw,28px)] tracking-[-0.03em]"
+      : "text-[clamp(24px,3vw,34px)] tracking-[-0.032em]";
 
   return (
-    <label className={`flex flex-col gap-1.5 text-sm font-medium text-navy ${className}`}>
-      <span>{label}</span>
-      {textarea ? (
-        <textarea
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          rows={3}
-          className={fieldClass}
-          aria-invalid={Boolean(error)}
-        />
-      ) : (
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={fieldClass}
-          autoFocus={autoFocus}
-          inputMode={inputMode}
-          aria-invalid={Boolean(error)}
-        />
-      )}
+    <label className="flex flex-col gap-2.5">
+      {label ? (
+        <span className="font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
+          {label}
+        </span>
+      ) : null}
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        autoFocus={autoFocus}
+        aria-invalid={Boolean(error)}
+        className={`w-full border-0 border-b-2 border-[rgba(12,20,30,0.18)] bg-transparent py-3 font-heading font-bold text-navy outline-none placeholder:text-[rgba(12,20,30,0.28)] focus:border-orange ${sizeClass}`}
+      />
       {error ? (
         <span role="alert" className="text-xs font-medium text-red-600">
           {error}
@@ -629,31 +923,32 @@ function TextField({
   );
 }
 
-function SelectField({
+function ReviewRow({
   label,
   value,
-  onChange,
-  options,
+  onEdit,
+  editLabel,
 }: {
   label: string;
   value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string }[];
+  onEdit: () => void;
+  editLabel: string;
 }) {
   return (
-    <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-      {label}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-navy/15 px-3.5 py-2.5 text-sm font-normal text-text transition-colors duration-150 outline-none focus:border-blue focus:ring-2 focus:ring-blue/15 hover:border-navy/25"
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] items-baseline gap-2 gap-x-5 border-b border-[rgba(12,20,30,0.1)] py-[15px]">
+      <p className="m-0 font-mono text-[11px] tracking-[0.1em] text-muted uppercase">
+        {label}
+      </p>
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="m-0 text-[16.5px] leading-[1.5] text-text">{value}</p>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="shrink-0 border-b border-[rgba(169,79,18,0.35)] text-[13.5px] font-semibold text-ember-text transition-colors duration-200 hover:text-navy"
+        >
+          {editLabel}
+        </button>
+      </div>
+    </div>
   );
 }
