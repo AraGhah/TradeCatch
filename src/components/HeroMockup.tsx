@@ -1,121 +1,258 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-import { useMounted } from "@/components/motion/useMounted";
-import { PhoneMissedIcon, MessageIcon, TechnicianIcon, CheckIcon } from "@/components/icons";
+import { useEffect, useRef, useState } from "react";
 
-const container = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.14, delayChildren: 0.15 } },
+type Msg = {
+  type: "event" | "out" | "in" | "win";
+  text: string;
+  time?: string;
 };
 
-const item = {
-  hidden: { y: 10 },
-  visible: {
-    y: 0,
-    transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const },
-  },
+type ScriptBeat = Msg & {
+  think?: number;
+  after: number;
 };
+
+const TIMING: { think?: number; after: number }[] = [
+  { after: 900 },
+  { think: 1300, after: 900 },
+  { think: 1500, after: 800 },
+  { think: 1200, after: 1000 },
+  { after: 1100 },
+  { after: 1000 },
+];
 
 export function HeroMockup({
-  illustrativeLabel,
-  missedCallLabel,
-  missedCallTime,
-  chatTime,
-  systemMessage,
-  customerReply,
-  technicianAlert,
-  technicianAlertTime,
-  technicianAcceptedLabel,
-  dashboardResult,
-  dashboardResultTime,
-  dashboardMetricValue,
-  dashboardMetricLabel,
+  businessName,
+  avatar,
+  autoReply,
+  statusTime,
+  statusNetwork,
+  disclaimer,
+  floatLabel,
+  floatTitle,
+  messages,
 }: {
-  illustrativeLabel: string;
-  missedCallLabel: string;
-  missedCallTime: string;
-  chatTime: string;
-  systemMessage: string;
-  customerReply: string;
-  technicianAlert: string;
-  technicianAlertTime: string;
-  technicianAcceptedLabel: string;
-  dashboardResult: string;
-  dashboardResultTime: string;
-  dashboardMetricValue: string;
-  dashboardMetricLabel: string;
+  businessName: string;
+  avatar: string;
+  autoReply: string;
+  statusTime: string;
+  statusNetwork: string;
+  disclaimer: string;
+  floatLabel: string;
+  floatTitle: string;
+  messages: Msg[];
 }) {
-  const mounted = useMounted();
-  const prefersReducedMotion = useReducedMotion();
-  const animate = mounted && !prefersReducedMotion;
+  const [shown, setShown] = useState<Msg[]>([]);
+  const [typing, setTyping] = useState<"out" | "in" | null>(null);
+  const [parallax, setParallax] = useState(0);
+  const timers = useRef<number[]>([]);
+  const reduced = useRef(false);
 
-  const Wrapper = animate ? motion.div : "div";
-  const Item = animate ? motion.div : "div";
+  useEffect(() => {
+    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function onScroll() {
+      if (reduced.current) return;
+      const y = Math.min(window.scrollY, 1200);
+      setParallax(y);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const clearTimers = () => {
+      timers.current.forEach((id) => window.clearTimeout(id));
+      timers.current = [];
+    };
+
+    function delay(ms: number) {
+      const d = reduced.current ? Math.min(ms, 200) : ms;
+      return new Promise<void>((resolve) => {
+        const id = window.setTimeout(resolve, d);
+        timers.current.push(id);
+      });
+    }
+
+    async function run() {
+      while (!cancelled) {
+        setShown([]);
+        setTyping(null);
+        for (let i = 0; i < messages.length; i++) {
+          if (cancelled) return;
+          const msg = messages[i];
+          const timing = TIMING[i] ?? { after: 900 };
+          const beat: ScriptBeat = { ...msg, ...timing };
+
+          if (beat.think && (beat.type === "out" || beat.type === "in")) {
+            setTyping(beat.type);
+            await delay(beat.think);
+            if (cancelled) return;
+            setTyping(null);
+          }
+
+          setShown((prev) => [...prev, msg]);
+          await delay(beat.after);
+        }
+        await delay(3800);
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+      clearTimers();
+    };
+  }, [messages]);
 
   return (
-    <div className="relative rounded-2xl border border-navy/10 bg-white p-6 shadow-card sm:p-8 lg:p-9">
-      <p className="text-xs font-semibold uppercase tracking-wide text-navy/40">
-        {illustrativeLabel}
-      </p>
-      <Wrapper
-        {...(animate ? { initial: "hidden", animate: "visible", variants: container } : {})}
-        className="relative mt-6 space-y-7 border-l border-navy/10 pl-8"
+    <div
+      className="relative mx-auto w-full max-w-[384px]"
+      style={{
+        transform: reduced.current
+          ? undefined
+          : `translateY(${parallax * -0.045}px)`,
+      }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -top-20 h-[520px] w-[520px] rounded-full opacity-40"
+        style={{
+          background:
+            "radial-gradient(circle, rgba(228,118,43,0.35) 0%, transparent 70%)",
+        }}
+      />
+
+      <div
+        className="relative rounded-[46px] p-[11px] shadow-phone"
+        style={{
+          background: "linear-gradient(160deg,#2A3846,#141F2B 55%,#0A1017)",
+          boxShadow:
+            "0 60px 90px -50px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.07)",
+        }}
       >
-        <Item {...(animate ? { variants: item } : {})} className="relative">
-          <span className="absolute top-0.5 -left-[calc(2rem+1px)] flex h-9 w-9 items-center justify-center rounded-full bg-orange/15 text-orange-dark">
-            <PhoneMissedIcon className="h-5 w-5" />
-          </span>
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-navy/10 bg-bg px-5 py-3.5">
-            <p className="text-base font-semibold text-navy">{missedCallLabel}</p>
-            <p className="shrink-0 text-sm text-text/60">{missedCallTime}</p>
+        <div
+          className="flex flex-col overflow-hidden rounded-[36px] bg-paper"
+          style={{ height: "min(660px, 72vh)" }}
+        >
+          {/* Status bar */}
+          <div className="relative flex items-center justify-between bg-white px-4 pb-3 pt-3.5">
+            <div className="absolute left-1/2 top-1.5 h-[22px] w-[88px] -translate-x-1/2 rounded-full bg-navy/90" />
+            <span className="font-mono text-[11px] font-medium text-navy">
+              {statusTime}
+            </span>
+            <span className="font-mono text-[10px] text-muted">{statusNetwork}</span>
           </div>
-        </Item>
 
-        <Item {...(animate ? { variants: item } : {})} className="relative">
-          <span className="absolute top-0.5 -left-[calc(2rem+1px)] flex h-9 w-9 items-center justify-center rounded-full bg-blue/10 text-blue">
-            <MessageIcon className="h-5 w-5" />
-          </span>
-          <p className="mb-2 text-sm text-text/50">{chatTime}</p>
-          <div className="flex flex-col gap-2">
-            <p className="max-w-[85%] rounded-2xl rounded-tl-sm bg-blue/10 px-4 py-2.5 text-sm leading-relaxed text-navy">
-              {systemMessage}
-            </p>
-            <p className="ml-auto max-w-[85%] rounded-2xl rounded-tr-sm bg-navy px-4 py-2.5 text-sm leading-relaxed text-white">
-              {customerReply}
-            </p>
-          </div>
-        </Item>
-
-        <Item {...(animate ? { variants: item } : {})} className="relative">
-          <span className="absolute top-0.5 -left-[calc(2rem+1px)] flex h-9 w-9 items-center justify-center rounded-full bg-blue/10 text-blue">
-            <TechnicianIcon className="h-5 w-5" />
-          </span>
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-navy/10 bg-bg px-5 py-3.5">
-            <div className="flex items-center gap-2">
-              <p className="text-base font-medium text-navy">{technicianAlert}</p>
-              <span className="shrink-0 rounded-full bg-green/15 px-2.5 py-0.5 text-xs font-semibold text-green">
-                {technicianAcceptedLabel}
-              </span>
+          <div className="flex items-center gap-3 border-b border-[rgba(12,20,30,0.08)] bg-white px-4 py-3">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-navy font-heading text-[12px] font-bold text-white">
+              {avatar}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-semibold text-navy">
+                {businessName}
+              </p>
+              <p className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[0.06em] text-signal-text">
+                <span className="h-1.5 w-1.5 animate-tc-pulse rounded-full bg-green" />
+                {autoReply}
+              </p>
             </div>
-            <p className="shrink-0 text-sm text-text/60">{technicianAlertTime}</p>
           </div>
-        </Item>
 
-        <Item {...(animate ? { variants: item } : {})} className="relative">
-          <span className="absolute top-0.5 -left-[calc(2rem+1px)] flex h-9 w-9 items-center justify-center rounded-full bg-green/15 text-green">
-            <CheckIcon className="h-5 w-5" />
-          </span>
-          <div className="flex items-center justify-between gap-3 rounded-xl border border-green/20 bg-green/5 px-5 py-3.5">
-            <p className="text-base font-semibold text-navy">{dashboardResult}</p>
-            <p className="shrink-0 text-sm text-text/60">{dashboardResultTime}</p>
+          {/* Thread — flex-end is critical */}
+          <div
+            className="flex flex-1 flex-col justify-end gap-3 overflow-hidden px-[18px] py-4"
+            aria-live="polite"
+          >
+            {shown.map((msg, i) => (
+              <MessageBubble key={`${msg.type}-${i}-${msg.text.slice(0, 12)}`} msg={msg} />
+            ))}
+            {typing ? <TypingDots side={typing} /> : null}
           </div>
-          <div className="mt-3 flex items-baseline gap-2 rounded-xl border border-navy/10 bg-white px-5 py-3.5">
-            <span className="text-2xl font-bold text-navy">{dashboardMetricValue}</span>
-            <span className="text-sm leading-snug text-text/60">{dashboardMetricLabel}</span>
-          </div>
-        </Item>
-      </Wrapper>
+
+          <p className="border-t border-[rgba(12,20,30,0.08)] px-4 py-2.5 text-center font-mono text-[10px] tracking-[0.04em] text-muted">
+            {disclaimer}
+          </p>
+        </div>
+      </div>
+
+      <div
+        className="absolute bottom-[54px] left-[-8px] z-10 animate-tc-drift rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-white px-4 py-3 shadow-card-hover"
+      >
+        <p className="font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
+          {floatLabel}
+        </p>
+        <p className="mt-0.5 text-[14px] font-semibold text-navy">{floatTitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function MessageBubble({ msg }: { msg: Msg }) {
+  if (msg.type === "event" || msg.type === "win") {
+    const win = msg.type === "win";
+    return (
+      <div
+        className={`animate-tc-in flex w-full items-center gap-2 rounded-full px-3 py-2 ${
+          win
+            ? "border border-green/30 bg-[rgba(47,158,104,0.1)]"
+            : "bg-[rgba(12,20,30,0.05)]"
+        }`}
+      >
+        <span
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+            win ? "bg-green" : "bg-muted"
+          }`}
+        />
+        <span
+          className={`flex-1 font-mono text-[10.5px] font-medium tracking-[0.04em] ${
+            win ? "text-signal-text" : "text-secondary"
+          }`}
+        >
+          {msg.text}
+        </span>
+        {msg.time ? (
+          <span className="font-mono text-[10px] text-muted">{msg.time}</span>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (msg.type === "out") {
+    return (
+      <div
+        className="animate-tc-in max-w-[86%] self-start rounded-[18px] rounded-bl-[5px] border border-[rgba(12,20,30,0.08)] bg-white px-3.5 py-2.5 text-[13.5px] leading-snug text-navy"
+      >
+        {msg.text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="animate-tc-in max-w-[86%] self-end rounded-[18px] rounded-br-[5px] bg-navy px-3.5 py-2.5 text-[13.5px] leading-snug text-white">
+      {msg.text}
+    </div>
+  );
+}
+
+function TypingDots({ side }: { side: "out" | "in" }) {
+  return (
+    <div
+      className={`flex gap-1 px-3 py-2 ${
+        side === "out" ? "self-start" : "self-end"
+      }`}
+    >
+      {[0, 1, 2].map((i) => (
+        <span
+          key={i}
+          className={`h-1.5 w-1.5 rounded-full ${
+            side === "out" ? "bg-muted" : "bg-navy/40"
+          } animate-tc-blink`}
+          style={{ animationDelay: `${i * 0.2}s` }}
+        />
+      ))}
     </div>
   );
 }

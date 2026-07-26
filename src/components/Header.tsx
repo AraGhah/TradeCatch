@@ -8,17 +8,18 @@ import { Container } from "@/components/Container";
 import { CTAButton } from "@/components/CTAButton";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNav } from "@/components/MobileNav";
-import { CheckIcon, PhoneIcon } from "@/components/icons";
+import { BrandLockup } from "@/components/BrandLockup";
 
 const FOCUS_RING =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
 
 type NavHref =
   | "/services"
   | "/how-it-works"
   | "/industries"
   | "/pricing"
-  | "/about";
+  | "/about"
+  | "/faq";
 
 export function Header() {
   const t = useTranslations("nav");
@@ -26,14 +27,23 @@ export function Header() {
   const site = useTranslations("site");
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
+  const [wide, setWide] = useState(true);
 
   useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > 8);
+      setScrolled(window.scrollY > 10);
+    }
+    function onResize() {
+      setWide(window.innerWidth >= 1080);
     }
     onScroll();
+    onResize();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
   const links: { href: NavHref; label: string }[] = [
@@ -42,78 +52,78 @@ export function Header() {
     { href: "/industries", label: t("industries") },
     { href: "/pricing", label: t("pricing") },
     { href: "/about", label: t("about") },
+    { href: "/faq", label: t("faq") },
   ];
+
+  const phoneDisplay = site("phone").replace(/-/g, "·");
 
   return (
     <header
-      className={`sticky top-0 z-40 border-b bg-white/95 backdrop-blur transition-all duration-300 ${
+      className={`sticky top-0 z-[60] transition-all duration-300 ${
         scrolled
-          ? "border-navy/10 shadow-[0_2px_16px_rgba(18,32,51,0.06)]"
-          : "border-transparent"
+          ? "border-b border-[rgba(12,20,30,0.10)] bg-[rgba(244,241,236,0.92)] shadow-header"
+          : "border-b border-transparent bg-[rgba(244,241,236,0.82)]"
       }`}
+      style={{ backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
     >
-      <Container
-        className={`flex items-center justify-between gap-4 transition-[height] duration-300 ${
-          scrolled ? "h-16 lg:h-16" : "h-16 lg:h-20"
-        }`}
-      >
-        <Link
-          href="/"
-          className={`flex items-center gap-2.5 rounded-md py-1 transition-opacity hover:opacity-85 ${FOCUS_RING}`}
-        >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-navy text-white">
-            <CheckIcon className="h-4 w-4" />
-          </span>
-          <span className="font-heading text-lg font-bold tracking-tight text-navy">
-            TradeCatch
-          </span>
-        </Link>
+      <Container className="flex h-(--header-h) items-center justify-between gap-4">
+        <div className="flex h-full w-full items-center justify-between gap-4">
+          <Link href="/" className={`rounded-md py-1 ${FOCUS_RING}`}>
+            <BrandLockup />
+          </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex">
-          {links.map((link) => {
-            const active = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={active ? "page" : undefined}
-                className={`group relative rounded-md px-3 py-2 text-sm font-medium transition-colors ${FOCUS_RING} ${
-                  active ? "text-navy" : "text-text/70 hover:text-navy"
-                }`}
-              >
-                {link.label}
-                <span
-                  className={`absolute inset-x-3 -bottom-0.5 h-0.5 rounded-full bg-orange transition-transform duration-200 ${
-                    active
-                      ? "scale-x-100"
-                      : "scale-x-0 group-hover:scale-x-100"
-                  }`}
-                />
-              </Link>
-            );
-          })}
-        </nav>
+          {wide ? (
+            <>
+              <nav className="flex items-center gap-0.5">
+                {links.map((link) => {
+                  const active = pathname === link.href;
+                  return (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`group relative rounded-md px-3.5 py-2 text-[14.5px] font-medium transition-colors ${FOCUS_RING} ${
+                        active ? "text-navy" : "text-muted hover:text-navy"
+                      }`}
+                    >
+                      {link.label}
+                      <span
+                        className={`absolute inset-x-[14px] bottom-[2px] h-0.5 bg-orange transition-opacity ${
+                          active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      />
+                    </Link>
+                  );
+                })}
+              </nav>
 
-        <div className="hidden items-center gap-5 lg:flex">
-          <a
-            href={`tel:${site("phoneHref")}`}
-            className={`flex items-center gap-2 rounded-md py-1 text-sm font-semibold text-navy transition-colors hover:text-blue ${FOCUS_RING}`}
-          >
-            <PhoneIcon className="h-4 w-4 text-orange-dark" />
-            {site("phone")}
-          </a>
-          <LocaleSwitcher />
-          <CTAButton href="/book-audit" size="sm">
-            {cta("primary")}
-          </CTAButton>
+              <div className="flex items-center gap-4">
+                <a
+                  href={`tel:${site("phoneHref")}`}
+                  className={`font-mono text-[13px] font-medium text-navy transition-colors hover:text-ember-text ${FOCUS_RING}`}
+                >
+                  {phoneDisplay}
+                </a>
+                <LocaleSwitcher />
+                <CTAButton href="/book-audit" variant="ink" size="sm">
+                  {cta("bookAudit")}
+                </CTAButton>
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-2.5">
+              <CTAButton href="/book-audit" variant="ink" size="sm" className="!px-3.5 !py-2.5 text-[13px]">
+                {cta("bookAuditShort")}
+              </CTAButton>
+              <MobileNav
+                links={links}
+                ctaLabel={cta("bookAuditFree")}
+                phone={phoneDisplay}
+                phoneHref={site("phoneHref")}
+              />
+            </div>
+          )}
         </div>
-
-        <MobileNav
-          links={links}
-          ctaLabel={cta("primary")}
-          phone={site("phone")}
-          phoneHref={site("phoneHref")}
-        />
       </Container>
     </header>
   );

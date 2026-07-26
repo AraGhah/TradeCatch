@@ -11,7 +11,7 @@ import {
 } from "@/lib/analytics";
 
 const BUTTON_BASE =
-  "rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2";
+  "rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2";
 
 export function CookieConsent() {
   const t = useTranslations("cookieBanner");
@@ -35,6 +35,14 @@ export function CookieConsent() {
     window.addEventListener(MANAGE_COOKIES_EVENT, reopen);
     return () => window.removeEventListener(MANAGE_COOKIES_EVENT, reopen);
   }, []);
+
+  useEffect(() => {
+    // Keep the fixed cookie bar from covering the footer copyright strip.
+    document.body.style.paddingBottom = visible ? "96px" : "";
+    return () => {
+      document.body.style.paddingBottom = "";
+    };
+  }, [visible]);
 
   function acceptAll() {
     writeConsent(true, t("acceptAll"));

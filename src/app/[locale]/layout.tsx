@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Manrope, Inter } from "next/font/google";
+import { Archivo, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -9,17 +9,25 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CookieConsent } from "@/components/CookieConsent";
 import { Analytics } from "@/components/Analytics";
+import { ScrollReveal } from "@/components/motion/ScrollReveal";
 import "../globals.css";
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const archivo = Archivo({
+  variable: "--font-archivo",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["700", "800"],
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const plexSans = IBM_Plex_Sans({
+  variable: "--font-plex-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
 });
 
 export function generateStaticParams() {
@@ -61,9 +69,6 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
-  // ProfessionalService rather than a storefront LocalBusiness type: this is
-  // a service delivered to contractors wherever they operate, not a
-  // location customers visit, so no street address is asserted.
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
@@ -80,19 +85,19 @@ export default async function LocaleLayout({
   };
 
   return (
-    <html lang={locale} className={`${manrope.variable} ${inter.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col pb-16 lg:pb-0">
+    <html
+      lang={locale}
+      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+    >
+      <body className="flex min-h-full flex-col">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <Analytics />
-        {/* reducedMotion="user" makes every motion component respect the
-            visitor's OS-level prefers-reduced-motion setting automatically,
-            without any component branching on it — the SSR-safe approach
-            (see BookAuditForm.tsx for why per-component branching is unsafe). */}
         <MotionConfig reducedMotion="user">
           <NextIntlClientProvider>
+            <ScrollReveal />
             <Header />
             <main className="flex-1">{children}</main>
             <Footer />

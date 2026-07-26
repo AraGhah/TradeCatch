@@ -3,26 +3,12 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
-import { Card } from "@/components/Card";
-import { NumberedStep } from "@/components/NumberedStep";
-import { WorkflowDiagram } from "@/components/WorkflowDiagram";
 import { HeroMockup } from "@/components/HeroMockup";
-import { ScenarioTimeline } from "@/components/ScenarioTimeline";
+import { HeroBackground } from "@/components/HeroBackground";
 import { DashboardPreview } from "@/components/DashboardPreview";
 import { ComparisonPanel } from "@/components/ComparisonPanel";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
-import { Reveal } from "@/components/motion/Reveal";
-import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
-import {
-  PhoneMissedIcon,
-  QuoteIcon,
-  FollowUpIcon,
-  TechnicianIcon,
-  CheckIcon,
-  MessageIcon,
-  SignatureIcon,
-} from "@/components/icons";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -35,12 +21,22 @@ export async function generateMetadata({
   return buildMetadata({
     locale,
     pathname: "/",
-    title: (t.raw("hero.headlineLines") as string[]).join(" "),
+    title: t("hero.headline"),
     description: t("hero.subheadline"),
   });
 }
 
-const TRUST_CHIP_ICONS = [MessageIcon, SignatureIcon, CheckIcon];
+function accentHeadline(headline: string, accentWord: string) {
+  const idx = headline.lastIndexOf(accentWord);
+  if (idx === -1) return headline;
+  return (
+    <>
+      {headline.slice(0, idx)}
+      <span className="text-orange">{accentWord}</span>
+      {headline.slice(idx + accentWord.length)}
+    </>
+  );
+}
 
 export default async function HomePage({
   params,
@@ -53,209 +49,262 @@ export default async function HomePage({
   const cta = await getTranslations("cta");
   const site = await getTranslations("site");
 
+  const headline = t("hero.headline");
+  const accentWord = t("hero.accentWord");
+  const trustChips = t.raw("hero.trustChips") as string[];
+  const stats = t.raw("stats.items") as { value: string; label: string }[];
+  const leakCards = t.raw("leaks.cards") as { title: string; body: string }[];
+  const systemSteps = t.raw("system.steps") as { title: string; body: string }[];
+  const industries = t.raw("industries.priority") as { name: string; pain: string }[];
+  const supporting = t.raw("industries.supporting") as string[];
+  const pilotPoints = t.raw("pilot.points") as string[];
+  const expect = t.raw("finalCta.whatToExpect") as string[];
+  const mockMessages = t.raw("hero.mockup.messages") as {
+    type: "event" | "out" | "in" | "win";
+    text: string;
+    time?: string;
+  }[];
+
   return (
     <>
       {/* 1. Hero */}
-      <section className="relative overflow-hidden bg-white py-16 sm:py-24">
-        <div aria-hidden className="bg-grid pointer-events-none absolute inset-0" />
-        <Container className="relative grid gap-12 lg:grid-cols-[5fr_7fr] lg:items-center">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-navy/15 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-navy">
-              <span className="h-1.5 w-1.5 rounded-full bg-orange" />
-              {t("hero.eyebrow")}
-            </span>
-            <h1 className="mt-5 text-4xl font-bold leading-[1.1] tracking-tight text-navy sm:text-5xl lg:text-[3.4rem]">
-              {t.raw("hero.headlineLines").map((line: string, i: number) => (
-                <span key={i} className="block">
-                  {line}
-                </span>
-              ))}
-            </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-text/70">
-              {t("hero.subheadline")}
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <CTAButton href="/book-audit" size="lg">
-                {cta("primary")}
-              </CTAButton>
-              <a
-                href="#product-demo"
-                className="inline-flex items-center justify-center gap-2 rounded-lg border-2 border-navy/15 bg-white px-8 py-4 text-lg font-semibold text-navy transition-colors duration-200 hover:border-blue hover:text-blue focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
-                {cta("watchDemo")}
-              </a>
-            </div>
-            <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-text/50">
-              {t("hero.reassurance")}
-            </p>
-            <p className="mt-4 text-sm font-medium text-text/70">
-              {t("hero.proofLine")}
-            </p>
-            <ul className="mt-6 flex flex-col gap-3 border-t border-navy/10 pt-6 sm:flex-row sm:flex-wrap sm:gap-6">
-              {t.raw("hero.trustChips").map((chip: string, i: number) => {
-                const Icon = TRUST_CHIP_ICONS[i] ?? CheckIcon;
-                return (
-                  <li key={chip} className="flex items-center gap-2 text-sm text-text/70">
-                    <Icon className="h-4 w-4 shrink-0 text-green" />
-                    {chip}
+      <section
+        className="relative overflow-hidden bg-navy text-white"
+        style={{
+          padding: "clamp(56px, 7vw, 96px) 0 clamp(72px, 8vw, 120px)",
+        }}
+      >
+        <HeroBackground />
+        <Container className="relative">
+          <div
+            className="grid items-center"
+            style={{
+              gap: "clamp(40px, 5vw, 72px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+            }}
+          >
+            <div>
+              <span className="inline-flex items-center gap-[9px] rounded-full border border-white/16 bg-white/[0.045] py-[7px] pr-3.5 pl-2.5 font-mono text-[11px] font-medium tracking-[0.13em] text-white/78 uppercase">
+                <span className="block h-[7px] w-[7px] animate-tc-pulse rounded-full bg-green" />
+                {t("hero.eyebrow")}
+              </span>
+
+              <h1 className="text-hero mt-[26px] text-white">
+                {accentHeadline(headline, accentWord)}
+              </h1>
+
+              <p className="text-lede mt-[26px] max-w-[36em] text-white/68">
+                {t("hero.subheadline")}
+              </p>
+
+              <div className="mt-[34px] flex flex-wrap gap-3">
+                <CTAButton href="/book-audit" variant="ember" size="lg">
+                  {t("hero.ctaPrimary")}
+                </CTAButton>
+                <CTAButton href="/how-it-works" variant="ghost-ink" size="lg">
+                  {t("hero.ctaSecondary")}
+                </CTAButton>
+              </div>
+
+              <p className="mt-[18px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
+                {t("hero.reassurance")}
+              </p>
+
+              <ul className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-3 border-t border-white/10 pt-[26px]">
+                {trustChips.map((chip) => (
+                  <li
+                    key={chip}
+                    className="flex items-center gap-[9px] text-[14px] leading-none text-white/72"
+                  >
+                    <span className="block h-[5px] w-[5px] shrink-0 rounded-full bg-green" />
+                    <span>{chip}</span>
                   </li>
-                );
-              })}
-            </ul>
+                ))}
+              </ul>
+            </div>
+
+            <HeroMockup
+              businessName={t("hero.mockup.businessName")}
+              avatar={t("hero.mockup.avatar")}
+              autoReply={t("hero.mockup.autoReply")}
+              statusTime={t("hero.mockup.statusTime")}
+              statusNetwork={t("hero.mockup.statusNetwork")}
+              disclaimer={t("hero.mockup.disclaimer")}
+              floatLabel={t("hero.mockup.floatCard.label")}
+              floatTitle={t("hero.mockup.floatCard.title")}
+              messages={mockMessages}
+            />
           </div>
-          <HeroMockup
-            illustrativeLabel={t("hero.mockup.illustrativeLabel")}
-            missedCallLabel={t("hero.mockup.missedCallLabel")}
-            missedCallTime={t("hero.mockup.missedCallTime")}
-            chatTime={t("hero.mockup.chatTime")}
-            systemMessage={t("hero.mockup.systemMessage")}
-            customerReply={t("hero.mockup.customerReply")}
-            technicianAlert={t("hero.mockup.technicianAlert")}
-            technicianAlertTime={t("hero.mockup.technicianAlertTime")}
-            technicianAcceptedLabel={t("hero.mockup.technicianAcceptedLabel")}
-            dashboardResult={t("hero.mockup.dashboardResult")}
-            dashboardResultTime={t("hero.mockup.dashboardResultTime")}
-            dashboardMetricValue={t("hero.mockup.dashboardMetricValue")}
-            dashboardMetricLabel={t("hero.mockup.dashboardMetricLabel")}
-          />
         </Container>
       </section>
 
-      {/* 2. Product demonstration */}
-      <Reveal as="section" id="product-demo" className="scroll-mt-20 bg-white py-16 sm:py-24">
+      {/* 2. Stat strip */}
+      <section
+        className="bg-navy"
+        style={{ padding: "0 0 clamp(28px, 4vw, 44px)" }}
+      >
         <Container>
-          <SectionHeading title={t("scenario.headline")} intro={t("scenario.intro")} />
-          <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-orange-dark">
-            {t("scenario.exampleLabel")}
-          </p>
-          <div className="mt-10 grid gap-8 lg:grid-cols-2 lg:items-start">
-            <ScenarioTimeline
-              label={t("scenario.timelineLabel")}
-              steps={t.raw("scenario.steps")}
-            />
-            <div className="lg:pt-2">
-              <p className="mb-4 text-xs font-semibold uppercase tracking-wide text-blue">
-                {t("scenario.secondFlowLabel")}
-              </p>
-              <WorkflowDiagram caption={t("scenario.secondFlowCaption")} />
-            </div>
-          </div>
-        </Container>
-      </Reveal>
-
-      {/* 3. Revenue leaks */}
-      <Reveal as="section" className="py-16 sm:py-24">
-        <Container className="grid gap-12 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
-          <div>
-            <SectionHeading align="left" title={t("leaks.headline")} intro={t("leaks.intro")} />
-            <CTAButton href="/book-audit" variant="secondary" className="mt-8">
-              {cta("primary")}
-            </CTAButton>
-          </div>
-          <StaggerGroup className="divide-y divide-navy/10 border-y border-navy/10">
-            {t.raw("leaks.cards").map((card: { title: string; body: string }, i: number) => {
-              const Icon = [PhoneMissedIcon, QuoteIcon, FollowUpIcon][i] ?? FollowUpIcon;
-              return (
-                <StaggerItem key={card.title}>
-                  <div className="flex items-start gap-5 py-6 first:pt-0 last:pb-0">
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy/5 text-navy">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <div>
-                      <h3 className="font-semibold text-navy">{card.title}</h3>
-                      <p className="mt-1 text-sm leading-relaxed text-text/70">{card.body}</p>
-                    </div>
-                  </div>
-                </StaggerItem>
-              );
-            })}
-          </StaggerGroup>
-        </Container>
-      </Reveal>
-
-      {/* 4. One system, then missed-call recovery and quote follow-up */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
-        <Container>
-          <div className="flex flex-wrap items-baseline justify-between gap-4">
-            <SectionHeading title={t("system.headline")} />
-            <CTAButton href="/how-it-works" variant="ghost">
-              {cta("seeWorkflow")}
-            </CTAButton>
-          </div>
-          <StaggerGroup className="mt-8 flex flex-wrap gap-3">
-            {t.raw("system.steps").map((step: { title: string }, i: number) => (
-              <StaggerItem key={step.title}>
-                <span className="flex items-center gap-2 rounded-full border border-navy/10 bg-bg px-4 py-2 text-sm font-medium text-navy">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-bold text-white">
-                    {i + 1}
-                  </span>
-                  {step.title}
-                </span>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-
-          <div className="mt-14 grid gap-10 border-t border-navy/10 pt-14 lg:grid-cols-2 lg:gap-14">
-            <div>
-              <SectionHeading align="left" title={t("missedCall.headline")} />
-              <ul className="mt-6 space-y-3">
-                {t.raw("missedCall.items").map((item: string) => (
-                  <li key={item} className="flex items-start gap-3 text-sm text-text/70">
-                    <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-6 rounded-xl border border-navy/10 bg-white p-6 shadow-card">
-                <div className="flex items-center gap-3 text-navy">
-                  <TechnicianIcon className="h-6 w-6" />
-                  <span className="text-sm font-semibold uppercase tracking-wide">
-                    {t("missedCall.badge")}
-                  </span>
-                </div>
-                <p className="mt-4 text-sm leading-relaxed text-text/70">
-                  {t("missedCall.note")}
+          <div
+            className="grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+            }}
+          >
+            {stats.map((stat, i) => (
+              <div
+                key={stat.label}
+                data-reveal
+                className="bg-ink-panel px-6 py-[26px]"
+              >
+                <p
+                  className={`font-heading text-[34px] font-extrabold tracking-[-0.04em] ${
+                    i === 0 ? "text-orange" : "text-white"
+                  }`}
+                >
+                  {stat.value}
+                </p>
+                <p className="mt-1.5 text-[13.5px] leading-snug text-white/60">
+                  {stat.label}
                 </p>
               </div>
-              <CTAButton href="/services" variant="secondary" className="mt-8">
-                {cta("viewMissedCall")}
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* 3. Leaks */}
+      <section
+        className="bg-paper"
+        style={{ padding: "var(--section-y) 0" }}
+        data-reveal
+      >
+        <Container>
+          <div
+            className="grid items-start"
+            style={{
+              gap: "clamp(28px, 4vw, 64px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            }}
+          >
+            <div className="sticky top-[120px] max-w-[28em]">
+              <SectionHeading
+                align="left"
+                eyebrow={t("leaks.eyebrow")}
+                title={t("leaks.headline")}
+                intro={t("leaks.intro")}
+                className="max-w-[14em]"
+              />
+              <CTAButton href="/book-audit" variant="secondary" className="mt-[30px]">
+                {t("leaks.cta")}
               </CTAButton>
             </div>
-            <div className="border-t border-navy/10 pt-10 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-14">
-              <SectionHeading align="left" title={t("quoteFollowUp.headline")} />
-              <ul className="mt-6 space-y-3">
-                {t.raw("quoteFollowUp.items").map((item: string) => (
-                  <li key={item} className="flex items-start gap-3 text-sm text-text/70">
-                    <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <div className="mt-6 rounded-xl border border-navy/10 bg-bg p-6">
-                <ol className="space-y-4">
-                  {t.raw("quoteFollowUp.sequence").map((step: { day: string; action: string }) => (
-                    <li key={step.day} className="flex gap-4">
-                      <span className="w-16 shrink-0 text-sm font-semibold text-blue">
-                        {step.day}
-                      </span>
-                      <span className="text-sm text-text/70">{step.action}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-              <CTAButton href="/services" variant="secondary" className="mt-8">
-                {cta("viewQuoteFollowUp")}
-              </CTAButton>
+
+            <div className="flex flex-col">
+              {leakCards.map((card, i) => (
+                <div
+                  key={card.title}
+                  data-reveal
+                  className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] transition-colors duration-200 hover:bg-white/60 ${
+                    i === leakCards.length - 1
+                      ? "border-y border-[rgba(12,20,30,0.12)]"
+                      : "border-t border-[rgba(12,20,30,0.12)]"
+                  }`}
+                  style={{ gridTemplateColumns: "auto 1fr" }}
+                >
+                  <span className="pt-1.5 font-mono text-[12px] font-semibold tracking-[0.08em] text-ember-text">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <div>
+                    <h3 className="font-heading text-[clamp(21px,2.2vw,27px)] font-bold tracking-[-0.028em] text-navy">
+                      {card.title}
+                    </h3>
+                    <p className="mt-2.5 max-w-[44em] text-[16px] leading-[1.65] text-muted">
+                      {card.body}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </Container>
-      </Reveal>
+      </section>
 
-      {/* 5. Manual vs automated comparison */}
-      <Reveal as="section" className="py-16 sm:py-24">
+      {/* 4. System */}
+      <section
+        className="border-y border-[rgba(12,20,30,0.08)] bg-white"
+        style={{ padding: "var(--section-y) 0" }}
+      >
         <Container>
-          <SectionHeading title={t("comparison.headline")} />
-          <div className="mt-12">
+          <div
+            data-reveal
+            className="grid items-end gap-x-8 gap-y-4"
+            style={{
+              gridTemplateColumns: "minmax(0, 1fr) auto",
+            }}
+          >
+            <SectionHeading
+              align="left"
+              eyebrow={t("system.eyebrow")}
+              title={t("system.headline")}
+              className="max-w-[14em]"
+            />
+            <CTAButton
+              href="/how-it-works"
+              variant="link"
+              className="justify-self-end pb-1"
+            >
+              {t("system.cta")}
+            </CTAButton>
+          </div>
+
+          <div
+            className="mt-[clamp(40px,5vw,64px)] grid gap-px overflow-hidden rounded-[18px] border border-[rgba(12,20,30,0.1)] bg-[rgba(12,20,30,0.1)]"
+            style={{
+              gridTemplateColumns: "repeat(auto-fit, minmax(268px, 1fr))",
+            }}
+          >
+            {systemSteps.map((step, i) => (
+              <div
+                key={step.title}
+                data-reveal
+                className="bg-white p-[clamp(26px,3vw,34px)] transition-colors duration-200 hover:bg-paper-hover"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[11px] font-semibold tracking-[0.1em] text-ember-text">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="block h-px w-[26px] bg-[rgba(12,20,30,0.18)]" />
+                </div>
+                <h3 className="mt-[22px] font-heading text-[19.5px] font-bold tracking-[-0.028em] text-navy">
+                  {step.title}
+                </h3>
+                <p className="mt-[9px] text-[15px] leading-[1.6] text-muted">
+                  {step.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* 5. Before / after */}
+      <section
+        className="bg-paper"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div data-reveal>
+            <SectionHeading
+              align="left"
+              eyebrow={t("comparison.eyebrow")}
+              title={t("comparison.headline")}
+              className="max-w-[15em]"
+            />
+          </div>
+          <div
+            data-reveal
+            className="mt-[clamp(36px,4vw,56px)]"
+          >
             <ComparisonPanel
               manualLabel={t("comparison.manualLabel")}
               systemLabel={t("comparison.systemLabel")}
@@ -263,181 +312,281 @@ export default async function HomePage({
             />
           </div>
         </Container>
-      </Reveal>
+      </section>
 
       {/* 6. Dashboard */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
-        <Container className="grid gap-12 lg:grid-cols-2 lg:items-center">
-          <div>
-            <SectionHeading align="left" title={t("dashboard.headline")} />
-            <p className="mt-4 text-sm text-text/70">{t("dashboard.note")}</p>
-            <CTAButton href="/book-audit" variant="secondary" className="mt-8">
-              {cta("primary")}
-            </CTAButton>
+      <section
+        className="bg-navy text-white"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div
+            className="grid items-center"
+            style={{
+              gap: "clamp(32px, 5vw, 72px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            }}
+          >
+            <div data-reveal>
+              <SectionHeading
+                align="left"
+                light
+                eyebrow={t("dashboard.eyebrow")}
+                title={t("dashboard.headline")}
+                intro={t("dashboard.intro")}
+              />
+              <CTAButton
+                href="/book-audit"
+                variant="ghost-ink"
+                className="mt-[30px]"
+              >
+                {t("dashboard.cta")}
+              </CTAButton>
+            </div>
+            <div data-reveal>
+              <DashboardPreview
+                period={t("dashboard.period")}
+                liveLabel={t("dashboard.live")}
+                sampleDataLabel={t("dashboard.sampleDataLabel")}
+                metrics={t.raw("dashboard.metrics")}
+              />
+            </div>
           </div>
-          <DashboardPreview
-            metrics={t.raw("dashboard.metrics")}
-            badge={t("dashboard.badge")}
-            liveLabel={t("dashboard.live")}
-            sampleDataLabel={t("dashboard.sampleDataLabel")}
-          />
         </Container>
-      </Reveal>
+      </section>
 
       {/* 7. Industries */}
-      <Reveal as="section" className="py-16 sm:py-24">
+      <section
+        className="bg-paper"
+        style={{ padding: "var(--section-y) 0" }}
+      >
         <Container>
-          <SectionHeading title={t("industries.headline")} />
-          <p className="mt-8 text-xs font-semibold uppercase tracking-wide text-navy/50">
-            {t("industries.priorityLabel")}
-          </p>
-          <StaggerGroup className="mt-4 grid gap-6 sm:grid-cols-3">
-            {t.raw("industries.priority").map((card: { name: string; pain: string }) => (
-              <StaggerItem key={card.name}>
-                <Card title={card.name}>{card.pain}</Card>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-          <p className="mt-10 text-xs font-semibold uppercase tracking-wide text-navy/50">
-            {t("industries.supportingLabel")}
-          </p>
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {t.raw("industries.supporting").map((trade: string) => (
-              <li
-                key={trade}
-                className="rounded-full border border-navy/10 bg-bg px-4 py-1.5 text-sm text-text/70"
-              >
-                {trade}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-10 text-center">
-            <CTAButton href="/industries" variant="secondary">
-              {cta("viewIndustries")}
+          <div
+            data-reveal
+            className="grid items-end gap-x-8 gap-y-4"
+            style={{
+              gridTemplateColumns: "minmax(0, 1fr) auto",
+            }}
+          >
+            <SectionHeading
+              align="left"
+              eyebrow={t("industries.eyebrow")}
+              title={t("industries.headline")}
+              className="max-w-[14em]"
+            />
+            <CTAButton
+              href="/industries"
+              variant="link"
+              className="justify-self-end pb-1"
+            >
+              {t("industries.cta")}
             </CTAButton>
           </div>
-        </Container>
-      </Reveal>
 
-      {/* 8. Implementation */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
-        <Container>
-          <SectionHeading title={t("implementation.headline")} />
-          <div className="mt-12 grid gap-x-10 gap-y-8 md:grid-cols-2">
-            {t.raw("implementation.steps").map((step: { title: string; body: string }, i: number) => (
-              <NumberedStep key={step.title} index={i + 1} title={step.title}>
-                {step.body}
-              </NumberedStep>
+          <div
+            className="mt-[clamp(32px,4vw,52px)] grid"
+            style={{
+              gap: "clamp(14px, 2vw, 22px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            }}
+          >
+            {industries.map((card) => (
+              <div
+                key={card.name}
+                data-reveal
+                className="rounded-2xl border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(26px,3vw,34px)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-[5px] hover:border-[rgba(12,20,30,0.2)] hover:shadow-card-hover"
+              >
+                <span className="font-mono text-[10.5px] tracking-[0.14em] text-ember-text uppercase">
+                  {t("industries.priorityLabel")}
+                </span>
+                <h3 className="mt-4 font-heading text-2xl font-bold tracking-[-0.03em] text-navy">
+                  {card.name}
+                </h3>
+                <p className="mt-2.5 text-[15.5px] leading-[1.62] text-muted">
+                  {card.pain}
+                </p>
+              </div>
             ))}
           </div>
-          <div className="mt-10 text-center">
-            <CTAButton href="/book-audit">{cta("primary")}</CTAButton>
-          </div>
-        </Container>
-      </Reveal>
 
-      {/* 9. Trust: tested with your team */}
-      <Reveal as="section" className="py-16 sm:py-24">
-        <Container>
-          <SectionHeading title={t("trust.headline")} intro={t("trust.intro")} />
-          <ul className="mt-10 grid gap-4 sm:grid-cols-3">
-            {t.raw("trust.verifiedItems").map((item: string) => (
-              <li key={item} className="flex items-start gap-3 text-base leading-relaxed text-text/80">
-                <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-green" />
-                {item}
-              </li>
+          <div
+            data-reveal
+            className="mt-[34px] flex flex-wrap items-center gap-2.5"
+          >
+            <span className="mr-1.5 font-mono text-[10.5px] tracking-[0.14em] text-muted uppercase">
+              {t("industries.supportingLabel")}
+            </span>
+            {supporting.map((trade) => (
+              <span
+                key={trade}
+                className="rounded-full border border-[rgba(12,20,30,0.13)] bg-white/55 px-[15px] py-2 text-[14px] text-[#4B5764] transition-colors duration-200 hover:border-navy hover:bg-white"
+              >
+                {trade}
+              </span>
             ))}
-          </ul>
-          <div className="mt-14 border-t border-navy/10 pt-10">
-            <h3 className="text-lg font-semibold text-navy">{t("trust.controlHeadline")}</h3>
-            <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-              {t.raw("trust.points").map((point: string) => (
-                <li key={point} className="flex items-start gap-3 text-base leading-relaxed text-text/80">
-                  <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-green" />
-                  {point}
-                </li>
-              ))}
-            </ul>
           </div>
-          <p className="mt-8 text-sm text-text/60">{t("trust.guaranteeNote")}</p>
         </Container>
-      </Reveal>
+      </section>
 
-      {/* 10. Founder */}
-      <Reveal as="section" className="py-16 sm:py-24">
+      {/* 8. Founder */}
+      <section
+        className="border-t border-[rgba(12,20,30,0.08)] bg-white"
+        style={{ padding: "var(--section-y) 0" }}
+        data-reveal
+      >
         <Container>
           <FounderSection
+            eyebrow={t("founder.eyebrow")}
             headline={t("founder.headline")}
             name={t("founder.name")}
-            role={t("founder.role")}
+            floatLabel={t("founder.floatLabel")}
             statement={t("founder.statement")}
-            bio={t("founder.bio")}
             points={t.raw("founder.points")}
-            emailLabel={t("founder.emailLabel")}
+            emailLabel={cta("emailDirect")}
             email={site("founderEmail")}
             talkCta={t("founder.talkCta")}
           />
         </Container>
-      </Reveal>
+      </section>
 
-      {/* 11. Pilot program */}
-      <Reveal as="section" className="py-16 sm:py-24">
-        <Container className="grid gap-12 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
-          <div>
-            <SectionHeading align="left" title={t("pilot.headline")} />
-          </div>
-          <div>
-            <p className="text-base leading-relaxed text-text/70">{t("pilot.body")}</p>
-            <ul className="mt-6 space-y-3">
-              {t.raw("pilot.points").map((point: string) => (
-                <li key={point} className="flex items-start gap-3 text-sm text-text/70">
-                  <CheckIcon className="mt-0.5 h-4 w-4 shrink-0 text-green" />
-                  {point}
-                </li>
-              ))}
-            </ul>
+      {/* 9. Pilot */}
+      <section
+        className="bg-paper"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div
+            className="grid items-start"
+            style={{
+              gap: "clamp(32px, 5vw, 72px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            }}
+          >
+            <div data-reveal>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(228,118,43,0.13)] px-[13px] py-1.5 font-mono text-[10.5px] font-semibold tracking-[0.13em] text-ember-text uppercase">
+                {t("pilot.badge")}
+              </span>
+              <h2 className="mt-[18px] font-heading text-[clamp(30px,3.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy">
+                {t("pilot.headline")}
+              </h2>
+              <p className="text-lede mt-[18px] max-w-[34em] text-muted">
+                {t("pilot.body")}
+              </p>
+            </div>
+
+            <div
+              data-reveal
+              className="rounded-[18px] border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(28px,3.4vw,40px)]"
+            >
+              <p className="font-mono text-[11px] tracking-[0.14em] text-muted uppercase">
+                {t("pilot.pointsLabel")}
+              </p>
+              <ul className="mt-[22px] flex flex-col">
+                {pilotPoints.map((point) => (
+                  <li
+                    key={point}
+                    className="flex items-start gap-3.5 border-t border-[rgba(12,20,30,0.08)] py-[15px] text-[15.5px] leading-[1.6] text-secondary"
+                  >
+                    <span className="mt-0.5 shrink-0 text-[14px] text-green" aria-hidden>
+                      ✓
+                    </span>
+                    {point}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-[22px] border-t border-[rgba(12,20,30,0.08)] pt-5 text-[14px] leading-[1.6] text-muted">
+                {t("pilot.guarantee")}
+              </p>
+            </div>
           </div>
         </Container>
-      </Reveal>
+      </section>
 
-      {/* 12. FAQ teaser */}
-      <Reveal as="section" className="bg-white py-16 sm:py-24">
-        <Container className="grid gap-12 lg:grid-cols-[minmax(0,320px)_1fr] lg:items-start">
-          <div>
-            <SectionHeading align="left" title={t("faqTeaser.headline")} />
-            <CTAButton href="/faq" variant="secondary" className="mt-8">
-              {t("faqTeaser.viewAll")}
-            </CTAButton>
+      {/* 10. FAQ teaser */}
+      <section
+        className="border-t border-[rgba(12,20,30,0.08)] bg-white"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div
+            className="grid items-start"
+            style={{
+              gap: "clamp(28px, 4vw, 56px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            }}
+          >
+            <div data-reveal className="max-w-[22em]">
+              <SectionHeading
+                align="left"
+                eyebrow={t("faqTeaser.eyebrow")}
+                title={t("faqTeaser.headline")}
+                className="max-w-[13em]"
+              />
+              <CTAButton href="/faq" variant="secondary" className="mt-7">
+                {t("faqTeaser.viewAll")}
+              </CTAButton>
+            </div>
+            <div data-reveal className="min-w-0 border-t border-[rgba(12,20,30,0.12)]">
+              <FaqAccordion items={t.raw("faqTeaser.items")} />
+            </div>
           </div>
-          <FaqAccordion items={t.raw("faqTeaser.items")} />
         </Container>
-      </Reveal>
+      </section>
 
-      {/* 13. Final CTA */}
-      <Reveal as="section" className="relative overflow-hidden bg-navy py-16 sm:py-24">
-        <div aria-hidden className="bg-grid pointer-events-none absolute inset-0 opacity-20 invert" />
-        <Container className="relative text-center">
-          <h2 className="mx-auto max-w-3xl text-3xl font-bold leading-tight text-white sm:text-4xl">
+      {/* 11. Final CTA */}
+      <section
+        className="relative overflow-hidden bg-navy"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
+            backgroundSize: "64px 64px",
+            WebkitMaskImage:
+              "radial-gradient(90% 70% at 50% 50%, #000, transparent 75%)",
+            maskImage:
+              "radial-gradient(90% 70% at 50% 50%, #000, transparent 75%)",
+          }}
+        />
+        <Container size="cta" className="relative text-center">
+          <h2
+            data-reveal
+            className="font-heading text-[clamp(34px,4.8vw,64px)] font-extrabold leading-[1.02] tracking-[-0.042em] text-white"
+          >
             {t("finalCta.headline")}
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-white/70">
+          <p
+            data-reveal
+            className="mx-auto mt-6 max-w-[36em] text-[clamp(16.5px,1.4vw,19px)] leading-[1.6] text-white/66"
+          >
             {t("finalCta.body")}
           </p>
-          <ul className="mx-auto mt-6 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm font-medium text-white/60">
-            {t.raw("finalCta.whatToExpect").map((item: string) => (
-              <li key={item} className="flex items-center gap-2">
-                <CheckIcon className="h-4 w-4 shrink-0 text-green" />
+          <div data-reveal className="mt-9 flex justify-center">
+            <CTAButton href="/book-audit" variant="ember" size="lg">
+              {t("finalCta.cta")}
+            </CTAButton>
+          </div>
+          <ul
+            data-reveal
+            className="mt-[34px] flex flex-wrap items-center justify-center gap-x-7 gap-y-2.5"
+          >
+            {expect.map((item) => (
+              <li
+                key={item}
+                className="flex items-center gap-[9px] text-[14px] text-white/55"
+              >
+                <span className="text-green" aria-hidden>
+                  ✓
+                </span>
                 {item}
               </li>
             ))}
           </ul>
-          <div className="mt-8">
-            <CTAButton href="/book-audit" size="lg">
-              {cta("primary")}
-            </CTAButton>
-          </div>
         </Container>
-      </Reveal>
+      </section>
     </>
   );
 }

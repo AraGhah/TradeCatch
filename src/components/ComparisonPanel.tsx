@@ -1,5 +1,3 @@
-import { CheckIcon, AlertIcon } from "@/components/icons";
-
 export function ComparisonPanel({
   manualLabel,
   systemLabel,
@@ -10,28 +8,46 @@ export function ComparisonPanel({
   rows: { manual: string; system: string }[];
 }) {
   return (
-    <div className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-card">
-      <div className="grid grid-cols-2 divide-x divide-navy/10 border-b border-navy/10 bg-bg">
-        <p className="px-5 py-4 text-sm font-semibold text-text/70 sm:px-6">
-          {manualLabel}
-        </p>
-        <p className="px-5 py-4 text-sm font-semibold text-navy sm:px-6">
-          {systemLabel}
-        </p>
+    <div
+      className="grid items-stretch gap-5"
+      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}
+    >
+      <div className="flex h-full flex-col rounded-[20px] border border-[rgba(12,20,30,0.1)] bg-white/70 p-7">
+        <div className="mb-5 flex items-center gap-2.5">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#C4564A]" />
+          <p className="font-heading text-[17px] font-bold tracking-[-0.02em] text-navy">
+            {manualLabel}
+          </p>
+        </div>
+        <ul className="flex flex-1 flex-col">
+          {rows.map((row) => (
+            <li
+              key={row.manual}
+              className="flex flex-1 items-start border-b border-[rgba(12,20,30,0.08)] py-[14px] text-[14.5px] leading-[1.55] text-muted last:border-0"
+            >
+              {row.manual}
+            </li>
+          ))}
+        </ul>
       </div>
-      <div className="divide-y divide-navy/10">
-        {rows.map((row) => (
-          <div key={row.manual} className="grid grid-cols-2 divide-x divide-navy/10">
-            <div className="flex items-start gap-3 px-5 py-5 sm:px-6">
-              <AlertIcon className="mt-0.5 h-5 w-5 shrink-0 text-orange-dark" />
-              <p className="text-base leading-relaxed text-text/80">{row.manual}</p>
-            </div>
-            <div className="flex items-start gap-3 px-5 py-5 sm:px-6">
-              <CheckIcon className="mt-0.5 h-5 w-5 shrink-0 text-green" />
-              <p className="text-base leading-relaxed text-navy">{row.system}</p>
-            </div>
-          </div>
-        ))}
+
+      <div className="flex h-full flex-col rounded-[20px] bg-navy p-7 text-white shadow-ink-panel">
+        <div className="mb-5 flex items-center gap-2.5">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-green" />
+          <p className="font-heading text-[17px] font-bold tracking-[-0.02em] text-orange">
+            {systemLabel}
+          </p>
+        </div>
+        <ul className="flex flex-1 flex-col">
+          {rows.map((row) => (
+            <li
+              key={row.system}
+              className="flex flex-1 items-start border-b border-white/[0.08] py-[14px] text-[14.5px] leading-[1.55] text-white/85 last:border-0"
+            >
+              {row.system}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

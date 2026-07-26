@@ -4,7 +4,7 @@ import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { useParams } from "next/navigation";
 
-export function LocaleSwitcher() {
+export function LocaleSwitcher({ inverted = false }: { inverted?: boolean }) {
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
@@ -19,30 +19,38 @@ export function LocaleSwitcher() {
   }
 
   return (
-    <div className="flex items-center gap-1 text-sm font-medium">
-      <button
-        type="button"
-        onClick={() => switchTo("en")}
-        aria-current={locale === "en" ? "true" : undefined}
-        aria-label="Switch to English"
-        className={`rounded px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
-          locale === "en" ? "bg-navy text-white" : "text-navy/70 hover:text-navy"
-        }`}
-      >
-        EN
-      </button>
-      <span className="text-navy/20" aria-hidden>/</span>
-      <button
-        type="button"
-        onClick={() => switchTo("fr")}
-        aria-current={locale === "fr" ? "true" : undefined}
-        aria-label="Passer au français"
-        className={`rounded px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue/50 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
-          locale === "fr" ? "bg-navy text-white" : "text-navy/70 hover:text-navy"
-        }`}
-      >
-        FR
-      </button>
+    <div
+      className={`inline-flex items-center rounded-full p-0.5 ${
+        inverted
+          ? "bg-white/10"
+          : "bg-[rgba(12,20,30,0.06)]"
+      }`}
+      role="group"
+      aria-label="Language"
+    >
+      {(["en", "fr"] as const).map((code) => {
+        const active = locale === code;
+        return (
+          <button
+            key={code}
+            type="button"
+            onClick={() => switchTo(code)}
+            aria-current={active ? "true" : undefined}
+            aria-label={code === "en" ? "Switch to English" : "Passer au français"}
+            className={`rounded-full px-2.5 py-1 font-mono text-[12px] font-medium tracking-wide transition-colors ${
+              active
+                ? inverted
+                  ? "bg-white text-navy"
+                  : "bg-navy text-white"
+                : inverted
+                  ? "text-white/70 hover:text-white"
+                  : "text-muted hover:text-navy"
+            }`}
+          >
+            {code.toUpperCase()}
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" />
+<style>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#F4F1EC;color:#1A2430;font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-wrap:pretty}
+a{color:#A94F12;text-decoration:none}
+a:hover{color:#0C141E}
+::selection{background:#E4762B;color:#0C141E}
+:focus-visible{outline:2px solid #E4762B;outline-offset:3px}
+button{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+@keyframes tcIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes tcBlink{0%,80%{opacity:.22}40%{opacity:1}}
+@keyframes tcPulse{0%{box-shadow:0 0 0 0 rgba(47,158,104,.45)}70%{box-shadow:0 0 0 9px rgba(47,158,104,0)}100%{box-shadow:0 0 0 0 rgba(47,158,104,0)}}
+@keyframes tcDrift{0%{transform:translateY(0)}50%{transform:translateY(-9px)}100%{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}html{scroll-behavior:auto}}
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+
+<div ref="{{ rootRef }}" style="background:#F4F1EC;min-height:100vh;overflow-x:hidden">
+
+<header ref="{{ headerRef }}" style="position:sticky;top:0;z-index:60;background:rgba(244,241,236,0.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid rgba(12,20,30,0);transition:border-color .3s ease, box-shadow .3s ease, background .3s ease">
+  <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:flex;align-items:center;justify-content:space-between;gap:24px;height:clamp(68px,7vw,86px);transition:height .3s ease" ref="{{ headerInnerRef }}">
+    <button onClick="{{ goHome }}" style="display:flex;align-items:center;gap:11px;cursor:pointer">
+      <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:#0C141E;position:relative">
+        <span style="display:block;width:14px;height:7px;border-left:2.2px solid #E4762B;border-bottom:2.2px solid #E4762B;transform:rotate(-45deg) translate(1px,-2px)"></span>
+      </span>
+      <span style="font-family:Archivo,sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.035em;color:#0C141E">TradeCatch</span>
+    </button>
+
+    <sc-if value="{{ wide }}" hint-placeholder-val="{{ true }}">
+      <nav style="display:flex;align-items:center;gap:2px">
+        <button onClick="{{ goServices }}" style="position:relative;padding:9px 14px;font-size:14.5px;font-weight:500;color:#4B5764;border-radius:8px;transition:color .18s ease" style-hover="color:#0C141E">Services<sc-if value="{{ isServices }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:#E4762B"></span></sc-if></button>
+        <button onClick="{{ goHow }}" style="position:relative;padding:9px 14px;font-size:14.5px;font-weight:500;color:#4B5764;border-radius:8px;transition:color .18s ease" style-hover="color:#0C141E">How it works<sc-if value="{{ isHow }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:#E4762B"></span></sc-if></button>
+        <button onClick="{{ goIndustries }}" style="position:relative;padding:9px 14px;font-size:14.5px;font-weight:500;color:#4B5764;border-radius:8px;transition:color .18s ease" style-hover="color:#0C141E">Industries<sc-if value="{{ isIndustries }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:#E4762B"></span></sc-if></button>
+        <button onClick="{{ goPricing }}" style="position:relative;padding:9px 14px;font-size:14.5px;font-weight:500;color:#4B5764;border-radius:8px;transition:color .18s ease" style-hover="color:#0C141E">Pricing<sc-if value="{{ isPricing }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:#E4762B"></span></sc-if></button>
+        <button onClick="{{ goAbout }}" style="position:relative;padding:9px 14px;font-size:14.5px;font-weight:500;color:#4B5764;border-radius:8px;transition:color .18s ease" style-hover="color:#0C141E">About<sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:#E4762B"></span></sc-if></button>
+        <button onClick="{{ goFaq }}" style="position:relative;padding:9px 14px;font-size:14.5px;font-weight:500;color:#4B5764;border-radius:8px;transition:color .18s ease" style-hover="color:#0C141E">FAQ<sc-if value="{{ isFaq }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:2px;background:#E4762B"></span></sc-if></button>
+      </nav>
+
+      <div style="display:flex;align-items:center;gap:16px">
+        <a href="tel:4389936997" style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:#0C141E;letter-spacing:-0.01em;transition:color .18s ease" style-hover="color:#A94F12">438·993·6997</a>
+        <sc-if value="{{ showLang }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;padding:2px;border-radius:999px;border:1px solid rgba(12,20,30,0.13);background:rgba(255,255,255,0.6)">
+            <button onClick="{{ setEn }}" ref="{{ enRef }}" style="padding:4px 10px;border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.06em">EN</button>
+            <button onClick="{{ setFr }}" ref="{{ frRef }}" style="padding:4px 10px;border-radius:999px;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.06em">FR</button>
+          </div>
+        </sc-if>
+        <button onClick="{{ goBook }}" style="display:inline-flex;align-items:center;gap:9px;background:#0C141E;color:#FFFFFF;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;letter-spacing:-0.01em;box-shadow:0 8px 20px -10px rgba(12,20,30,.6);transition:transform .18s cubic-bezier(.22,1,.36,1), background .2s ease" style-hover="background:#16222F;transform:translateY(-1px)">
+          Book the audit
+          <span style="display:block;width:6px;height:6px;border-radius:50%;background:#E4762B"></span>
+        </button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ narrow }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button onClick="{{ goBook }}" style="background:#0C141E;color:#fff;padding:10px 16px;border-radius:9px;font-size:13.5px;font-weight:600">Book audit</button>
+        <button onClick="{{ toggleMenu }}" aria-label="Menu" style="display:flex;flex-direction:column;justify-content:center;gap:5px;width:42px;height:42px;align-items:center;border-radius:10px;border:1px solid rgba(12,20,30,0.13)">
+          <span style="display:block;width:17px;height:1.8px;background:#0C141E"></span>
+          <span style="display:block;width:17px;height:1.8px;background:#0C141E"></span>
+        </button>
+      </div>
+    </sc-if>
+  </div>
+</header>
+
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed;inset:0;z-index:80;background:#0C141E;padding:clamp(20px,5vw,40px);display:flex;flex-direction:column;animation:tcIn .3s cubic-bezier(.22,1,.36,1) both">
+    <div style="display:flex;align-items:center;justify-content:space-between;height:68px">
+      <span style="font-family:Archivo,sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.035em;color:#fff">TradeCatch</span>
+      <button onClick="{{ toggleMenu }}" aria-label="Close" style="width:42px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,0.16);color:#fff;font-size:20px;line-height:1">&#215;</button>
+    </div>
+    <nav style="display:flex;flex-direction:column;gap:2px;margin-top:36px">
+      <button onClick="{{ goServices }}" style="text-align:left;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.09);font-family:Archivo,sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.03em;color:#fff">Services</button>
+      <button onClick="{{ goHow }}" style="text-align:left;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.09);font-family:Archivo,sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.03em;color:#fff">How it works</button>
+      <button onClick="{{ goIndustries }}" style="text-align:left;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.09);font-family:Archivo,sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.03em;color:#fff">Industries</button>
+      <button onClick="{{ goPricing }}" style="text-align:left;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.09);font-family:Archivo,sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.03em;color:#fff">Pricing</button>
+      <button onClick="{{ goAbout }}" style="text-align:left;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.09);font-family:Archivo,sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.03em;color:#fff">About</button>
+      <button onClick="{{ goFaq }}" style="text-align:left;padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.09);font-family:Archivo,sans-serif;font-weight:700;font-size:26px;letter-spacing:-0.03em;color:#fff">FAQ</button>
+    </nav>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:14px;padding-top:32px">
+      <a href="tel:4389936997" style="font-family:'IBM Plex Mono',monospace;font-size:14px;color:rgba(255,255,255,0.7)">438·993·6997</a>
+      <button onClick="{{ goBook }}" style="background:#E4762B;color:#0C141E;padding:16px;border-radius:11px;font-size:16px;font-weight:700">Book the free audit</button>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<main>
+
+  <section style="position:relative;background:#0C141E;color:#FFFFFF;overflow:hidden;padding:clamp(56px,7vw,96px) 0 clamp(72px,8vw,120px)">
+    <div aria-hidden="true" ref="{{ heroGridRef }}" style="position:absolute;inset:-10% 0 0 0;background-image:linear-gradient(to right,rgba(255,255,255,0.045) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.045) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(120% 80% at 30% 0%,#000 0%,transparent 72%);mask-image:radial-gradient(120% 80% at 30% 0%,#000 0%,transparent 72%);pointer-events:none"></div>
+    <div aria-hidden="true" style="position:absolute;top:-160px;right:-120px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(228,118,43,0.16),transparent 66%);pointer-events:none"></div>
+
+    <div style="position:relative;width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:grid;gap:clamp(40px,5vw,72px);grid-template-columns:repeat(auto-fit,minmax(400px,1fr));align-items:center">
+      <div>
+        <span style="display:inline-flex;align-items:center;gap:9px;padding:7px 14px 7px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.045);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:500;letter-spacing:0.13em;text-transform:uppercase;color:rgba(255,255,255,0.78)">
+          <span style="display:block;width:7px;height:7px;border-radius:50%;background:#2F9E68;animation:tcPulse 2.4s ease-out infinite"></span>
+          Pilot program · Québec trades
+        </span>
+
+        <h1 style="margin:26px 0 0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(40px,5.6vw,74px);line-height:0.98;letter-spacing:-0.042em;color:#FFFFFF">
+          Every missed call is a job<br />someone else is <span style="color:#E4762B">booking</span>.
+        </h1>
+
+        <p style="margin:26px 0 0;max-width:36em;font-size:clamp(16.5px,1.35vw,19px);line-height:1.62;color:rgba(255,255,255,0.68)">
+          TradeCatch answers the calls your crew can't — in French and English. It collects the address, the problem and the photos, alerts your on-call technician, and keeps following up on quotes until the customer replies.
+        </p>
+
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:34px">
+          <button onClick="{{ goBook }}" style="display:inline-flex;align-items:center;gap:12px;background:#E4762B;color:#0C141E;padding:17px 26px;border-radius:12px;font-size:16.5px;font-weight:700;letter-spacing:-0.015em;box-shadow:0 14px 34px -14px rgba(228,118,43,.8);transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s ease,box-shadow .2s ease" style-hover="background:#F08B45;transform:translateY(-2px);box-shadow:0 20px 42px -16px rgba(228,118,43,.9)">
+            See where you're losing contracts
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:15px">&#8594;</span>
+          </button>
+          <button onClick="{{ goHow }}" style="display:inline-flex;align-items:center;gap:10px;padding:17px 24px;border-radius:12px;border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:16.5px;font-weight:600;letter-spacing:-0.015em;transition:background .2s ease,border-color .2s ease" style-hover="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.4)">
+            Watch the flow
+          </button>
+        </div>
+
+        <p style="margin:18px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.64)">
+          20-minute audit · No commitment · FR &amp; EN
+        </p>
+
+        <ul style="display:flex;flex-wrap:wrap;gap:10px 26px;margin:36px 0 0;padding:26px 0 0;list-style:none;border-top:1px solid rgba(255,255,255,0.1)">
+          <li style="display:flex;align-items:center;gap:9px;font-size:14px;color:rgba(255,255,255,0.72)"><span style="display:block;width:5px;height:5px;border-radius:50%;background:#2F9E68"></span>Bilingual, French &amp; English</li>
+          <li style="display:flex;align-items:center;gap:9px;font-size:14px;color:rgba(255,255,255,0.72)"><span style="display:block;width:5px;height:5px;border-radius:50%;background:#2F9E68"></span>You approve every message</li>
+          <li style="display:flex;align-items:center;gap:9px;font-size:14px;color:rgba(255,255,255,0.72)"><span style="display:block;width:5px;height:5px;border-radius:50%;background:#2F9E68"></span>A human on every decision</li>
+        </ul>
+      </div>
+
+      <div ref="{{ phoneWrapRef }}" style="position:relative;display:flex;justify-content:center;align-items:flex-start">
+        <div aria-hidden="true" style="position:absolute;inset:8% -4% -6% -4%;border-radius:44px;background:radial-gradient(60% 50% at 50% 40%,rgba(228,118,43,0.14),transparent 70%);pointer-events:none"></div>
+
+        <div style="position:relative;width:min(384px,100%);border-radius:46px;padding:11px;background:linear-gradient(160deg,#2A3846,#141F2B 55%,#0A1017);box-shadow:0 60px 90px -50px rgba(0,0,0,.9),0 0 0 1px rgba(255,255,255,.07)">
+          <div style="border-radius:36px;background:#F4F1EC;overflow:hidden;display:flex;flex-direction:column;height:min(660px,72vh)">
+            <div style="position:relative;background:#FFFFFF;padding:14px 20px 13px;border-bottom:1px solid rgba(12,20,30,0.08)">
+              <div style="position:absolute;top:9px;left:50%;transform:translateX(-50%);width:96px;height:22px;border-radius:999px;background:#0C141E"></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#5C6875;letter-spacing:0.04em">
+                <span>7:44 PM</span>
+                <span>LTE &#9679;&#9679;&#9679;</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;margin-top:16px">
+                <span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:#0C141E;color:#E4762B;font-family:Archivo,sans-serif;font-weight:800;font-size:13px">NP</span>
+                <div>
+                  <p style="margin:0;font-size:14.5px;font-weight:600;color:#0C141E;letter-spacing:-0.015em">Nord Plomberie</p>
+                  <p style="margin:2px 0 0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#1E6B47;letter-spacing:0.05em">AUTO-REPLY ACTIVE</p>
+                </div>
+              </div>
+            </div>
+
+            <div ref="{{ threadRef }}" style="flex:1;overflow:hidden;padding:20px 18px 16px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px">
+              <sc-for list="{{ thread }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;animation:tcIn .38s cubic-bezier(.22,1,.36,1) both">
+                  <sc-if value="{{ m.isEvent }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:10px;align-self:stretch;padding:10px 13px;border-radius:12px;background:rgba(12,20,30,0.05);border:1px solid rgba(12,20,30,0.07)">
+                      <span style="display:block;width:6px;height:6px;border-radius:50%;background:#8A9099;flex-shrink:0"></span>
+                      <p style="margin:0;flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.03em;color:#4B5764;line-height:1.45">{{ m.text }}</p>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#5C6875">{{ m.time }}</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ m.isWin }}" hint-placeholder-val="{{ false }}">
+                    <div style="display:flex;align-items:center;gap:10px;align-self:stretch;padding:12px 13px;border-radius:12px;background:rgba(47,158,104,0.1);border:1px solid rgba(47,158,104,0.26)">
+                      <span style="display:block;width:6px;height:6px;border-radius:50%;background:#2F9E68;flex-shrink:0"></span>
+                      <p style="margin:0;flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.03em;color:#1E6B47;line-height:1.45">{{ m.text }}</p>
+                      <span style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:#1E6B47">{{ m.time }}</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ m.isOut }}" hint-placeholder-val="{{ false }}">
+                    <div style="max-width:86%;align-self:flex-start;padding:11px 14px;border-radius:18px 18px 18px 5px;background:#FFFFFF;border:1px solid rgba(12,20,30,0.08);box-shadow:0 2px 8px -4px rgba(12,20,30,.2)">
+                      <p style="margin:0;font-size:13.5px;line-height:1.5;color:#1A2430">{{ m.text }}</p>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ m.isIn }}" hint-placeholder-val="{{ false }}">
+                    <div style="max-width:86%;align-self:flex-end;padding:11px 14px;border-radius:18px 18px 5px 18px;background:#0C141E">
+                      <p style="margin:0;font-size:13.5px;line-height:1.5;color:#FFFFFF">{{ m.text }}</p>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+
+              <sc-if value="{{ typingOut }}" hint-placeholder-val="{{ false }}">
+                <div style="align-self:flex-start;display:flex;gap:4px;padding:13px 15px;border-radius:18px 18px 18px 5px;background:#FFFFFF;border:1px solid rgba(12,20,30,0.08)">
+                  <span style="display:block;width:5px;height:5px;border-radius:50%;background:#8A9099;animation:tcBlink 1.2s infinite"></span>
+                  <span style="display:block;width:5px;height:5px;border-radius:50%;background:#8A9099;animation:tcBlink 1.2s .2s infinite"></span>
+                  <span style="display:block;width:5px;height:5px;border-radius:50%;background:#8A9099;animation:tcBlink 1.2s .4s infinite"></span>
+                </div>
+              </sc-if>
+              <sc-if value="{{ typingIn }}" hint-placeholder-val="{{ false }}">
+                <div style="align-self:flex-end;display:flex;gap:4px;padding:13px 15px;border-radius:18px 18px 5px 18px;background:rgba(12,20,30,0.12)">
+                  <span style="display:block;width:5px;height:5px;border-radius:50%;background:#4B5764;animation:tcBlink 1.2s infinite"></span>
+                  <span style="display:block;width:5px;height:5px;border-radius:50%;background:#4B5764;animation:tcBlink 1.2s .2s infinite"></span>
+                  <span style="display:block;width:5px;height:5px;border-radius:50%;background:#4B5764;animation:tcBlink 1.2s .4s infinite"></span>
+                </div>
+              </sc-if>
+            </div>
+
+            <div style="padding:12px 18px 20px;border-top:1px solid rgba(12,20,30,0.08);background:#FFFFFF">
+              <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:#5C6875;text-align:center">Illustrative example · not real customer data</p>
+            </div>
+          </div>
+        </div>
+
+        <div ref="{{ floatCardRef }}" style="position:absolute;left:-8px;bottom:54px;z-index:2;display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:14px;background:#FFFFFF;box-shadow:0 26px 50px -22px rgba(0,0,0,.65);animation:tcDrift 7s ease-in-out infinite">
+          <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:rgba(47,158,104,0.12);color:#1E6B47;font-size:15px">&#10003;</span>
+          <div>
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.1em;text-transform:uppercase;color:#5C6875">Dashboard</p>
+            <p style="margin:2px 0 0;font-size:13.5px;font-weight:600;color:#0C141E;letter-spacing:-0.015em">Appointment booked</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="background:#0C141E;padding:0 0 clamp(28px,4vw,44px)">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.1);border-radius:16px;overflow:hidden">
+        <div data-reveal="" style="background:#0F1926;padding:26px 24px">
+          <p style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:34px;letter-spacing:-0.04em;color:#E4762B">&lt;30s</p>
+          <p style="margin:6px 0 0;font-size:13.5px;line-height:1.45;color:rgba(255,255,255,0.6)">to the first reply on a missed call</p>
+        </div>
+        <div data-reveal="" style="background:#0F1926;padding:26px 24px">
+          <p style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:34px;letter-spacing:-0.04em;color:#FFFFFF">4</p>
+          <p style="margin:6px 0 0;font-size:13.5px;line-height:1.45;color:rgba(255,255,255,0.6)">follow-ups per quote, stopping the second they reply</p>
+        </div>
+        <div data-reveal="" style="background:#0F1926;padding:26px 24px">
+          <p style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:34px;letter-spacing:-0.04em;color:#FFFFFF">2</p>
+          <p style="margin:6px 0 0;font-size:13.5px;line-height:1.45;color:rgba(255,255,255,0.6)">languages, chosen by the customer</p>
+        </div>
+        <div data-reveal="" style="background:#0F1926;padding:26px 24px">
+          <p style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:34px;letter-spacing:-0.04em;color:#FFFFFF">0</p>
+          <p style="margin:6px 0 0;font-size:13.5px;line-height:1.45;color:rgba(255,255,255,0.6)">messages sent that you haven't approved</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(80px,9vw,140px) 0;background:#F4F1EC">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(32px,5vw,80px);align-items:start">
+        <div data-reveal="" style="position:sticky;top:120px">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#5C6875">The problem</p>
+          <h2 style="margin:16px 0 0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(32px,4vw,52px);line-height:1.03;letter-spacing:-0.04em;color:#0C141E">Three places contracts leak out.</h2>
+          <p style="margin:20px 0 0;max-width:34em;font-size:16.5px;line-height:1.62;color:#5C6875">None of it ever shows up as a lost sale. It shows up as a quiet drop in booked jobs that nobody can trace back to a cause.</p>
+          <button onClick="{{ goBook }}" style="margin-top:30px;display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:11px;border:1.5px solid rgba(12,20,30,0.16);background:#FFFFFF;font-size:15px;font-weight:600;color:#0C141E;transition:border-color .2s ease,transform .2s cubic-bezier(.22,1,.36,1)" style-hover="border-color:#0C141E;transform:translateY(-2px)">Find my leaks <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+        </div>
+
+        <div style="display:flex;flex-direction:column">
+          <div data-reveal="" style="display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,3vw,34px);padding:34px 0;border-top:1px solid rgba(12,20,30,0.12);transition:background .25s ease" style-hover="background:rgba(255,255,255,0.6)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#A94F12;letter-spacing:0.08em;padding-top:6px">01</span>
+            <div>
+              <h3 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:clamp(21px,2.2vw,27px);letter-spacing:-0.028em;color:#0C141E">The call nobody answers</h3>
+              <p style="margin:10px 0 0;max-width:44em;font-size:16px;line-height:1.65;color:#5C6875">Your crew is up a ladder. The phone rings out. Twenty seconds later that homeowner is calling the next company on Google — and they answer.</p>
+            </div>
+          </div>
+          <div data-reveal="" style="display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,3vw,34px);padding:34px 0;border-top:1px solid rgba(12,20,30,0.12);transition:background .25s ease" style-hover="background:rgba(255,255,255,0.6)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#A94F12;letter-spacing:0.08em;padding-top:6px">02</span>
+            <div>
+              <h3 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:clamp(21px,2.2vw,27px);letter-spacing:-0.028em;color:#0C141E">The quote that goes quiet</h3>
+              <p style="margin:10px 0 0;max-width:44em;font-size:16px;line-height:1.65;color:#5C6875">You send a $9,000 estimate, get busy, and never chase it. Three weeks later they signed with the contractor who sent one polite text.</p>
+            </div>
+          </div>
+          <div data-reveal="" style="display:grid;grid-template-columns:auto 1fr;gap:clamp(18px,3vw,34px);padding:34px 0;border-top:1px solid rgba(12,20,30,0.12);border-bottom:1px solid rgba(12,20,30,0.12);transition:background .25s ease" style-hover="background:rgba(255,255,255,0.6)">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:#A94F12;letter-spacing:0.08em;padding-top:6px">03</span>
+            <div>
+              <h3 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:clamp(21px,2.2vw,27px);letter-spacing:-0.028em;color:#0C141E">The admin nobody bills for</h3>
+              <p style="margin:10px 0 0;max-width:44em;font-size:16px;line-height:1.65;color:#5C6875">Someone in your office spends half their day re-typing addresses, forwarding voicemails, chasing statuses and reminding customers. None of it is billable.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(80px,9vw,140px) 0;background:#FFFFFF;border-top:1px solid rgba(12,20,30,0.08);border-bottom:1px solid rgba(12,20,30,0.08)">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div data-reveal="" style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px">
+        <div>
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#5C6875">The system</p>
+          <h2 style="margin:16px 0 0;max-width:16em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(32px,4vw,52px);line-height:1.03;letter-spacing:-0.04em;color:#0C141E">One system, first ring to signed job.</h2>
+        </div>
+        <button onClick="{{ goHow }}" style="display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:600;color:#A94F12;padding-bottom:6px;border-bottom:1.5px solid rgba(169,79,18,0.3);transition:border-color .2s ease,color .2s ease" style-hover="border-color:#A94F12;color:#0C141E">See the full workflow <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+      </div>
+
+      <div style="margin-top:clamp(40px,5vw,64px);display:grid;grid-template-columns:repeat(auto-fit,minmax(268px,1fr));gap:1px;background:rgba(12,20,30,0.1);border:1px solid rgba(12,20,30,0.1);border-radius:18px;overflow:hidden">
+        <sc-for list="{{ systemSteps }}" as="s" hint-placeholder-count="6">
+          <div data-reveal="" style="background:#FFFFFF;padding:clamp(26px,3vw,34px);transition:background .25s ease" style-hover="background:#FAF8F5">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#A94F12">{{ s.num }}</span>
+              <span style="display:block;width:26px;height:1px;background:rgba(12,20,30,0.18)"></span>
+            </div>
+            <h3 style="margin:22px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:19.5px;letter-spacing:-0.028em;color:#0C141E">{{ s.title }}</h3>
+            <p style="margin:9px 0 0;font-size:15px;line-height:1.6;color:#5C6875">{{ s.body }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(80px,9vw,140px) 0;background:#F4F1EC">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div data-reveal="">
+        <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#5C6875">Before / after</p>
+        <h2 style="margin:16px 0 0;max-width:15em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(32px,4vw,52px);line-height:1.03;letter-spacing:-0.04em;color:#0C141E">What actually changes once it's running.</h2>
+      </div>
+
+      <div style="margin-top:clamp(36px,4vw,56px);display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:clamp(16px,2vw,28px)">
+        <div data-reveal="" style="border-radius:18px;border:1px solid rgba(12,20,30,0.12);background:rgba(255,255,255,0.5);overflow:hidden">
+          <div style="padding:20px 26px;border-bottom:1px solid rgba(12,20,30,0.1);display:flex;align-items:center;gap:10px">
+            <span style="display:block;width:7px;height:7px;border-radius:50%;background:#B4453A"></span>
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#5C6875">Handling it manually</p>
+          </div>
+          <ul style="margin:0;padding:8px 26px 22px;list-style:none">
+            <sc-for list="{{ manualRows }}" as="r" hint-placeholder-count="5">
+              <li style="padding:16px 0;border-bottom:1px solid rgba(12,20,30,0.07);font-size:15.5px;line-height:1.6;color:#5C6875">{{ r }}</li>
+            </sc-for>
+          </ul>
+        </div>
+
+        <div data-reveal="" style="border-radius:18px;border:1px solid rgba(12,20,30,0.14);background:#0C141E;overflow:hidden;box-shadow:0 40px 70px -44px rgba(12,20,30,.7)">
+          <div style="padding:20px 26px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px">
+            <span style="display:block;width:7px;height:7px;border-radius:50%;background:#2F9E68"></span>
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#E4762B">With TradeCatch installed</p>
+          </div>
+          <ul style="margin:0;padding:8px 26px 22px;list-style:none">
+            <sc-for list="{{ systemRows }}" as="r" hint-placeholder-count="5">
+              <li style="padding:16px 0;border-bottom:1px solid rgba(255,255,255,0.08);font-size:15.5px;line-height:1.6;color:rgba(255,255,255,0.86)">{{ r }}</li>
+            </sc-for>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(80px,9vw,140px) 0;background:#0C141E;color:#fff">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(32px,5vw,72px);align-items:center">
+        <div data-reveal="">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.64)">Reporting</p>
+          <h2 style="margin:16px 0 0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(32px,4vw,52px);line-height:1.03;letter-spacing:-0.04em;color:#fff">You finally see what you were missing.</h2>
+          <p style="margin:20px 0 0;max-width:34em;font-size:16.5px;line-height:1.62;color:rgba(255,255,255,0.66)">Every recovered call, every follow-up, every quote that turned into signed work — in one weekly view you can read in a minute, on a job site, on your phone.</p>
+          <button onClick="{{ goBook }}" style="margin-top:30px;display:inline-flex;align-items:center;gap:10px;padding:15px 24px;border-radius:11px;border:1px solid rgba(255,255,255,0.22);color:#fff;font-size:15.5px;font-weight:600;transition:background .2s ease,border-color .2s ease" style-hover="background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.45)">Book the audit <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+        </div>
+
+        <div data-reveal="" style="border-radius:20px;border:1px solid rgba(255,255,255,0.12);background:#0F1926;overflow:hidden;box-shadow:0 50px 80px -50px rgba(0,0,0,.9)">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.09)">
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5)">Week of 14 Apr</p>
+            <span style="display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:#2F9E68"><span style="display:block;width:6px;height:6px;border-radius:50%;background:#2F9E68;animation:tcPulse 2.4s ease-out infinite"></span>Sample data</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:1px;background:rgba(255,255,255,0.08)">
+            <sc-for list="{{ metrics }}" as="k" hint-placeholder-count="6">
+              <div style="background:#0F1926;padding:22px 20px">
+                <p data-count="" style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:30px;letter-spacing:-0.04em;color:#fff">{{ k.value }}</p>
+                <p style="margin:6px 0 0;font-size:13px;line-height:1.45;color:rgba(255,255,255,0.55)">{{ k.label }}</p>
+              </div>
+            </sc-for>
+          </div>
+          <div style="padding:16px 22px;border-top:1px solid rgba(255,255,255,0.09)">
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.08em;color:rgba(255,255,255,0.62)">Illustrative data for demonstration purposes only.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(80px,9vw,140px) 0;background:#F4F1EC">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div data-reveal="" style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px">
+        <div>
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#5C6875">Industries</p>
+          <h2 style="margin:16px 0 0;max-width:14em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(32px,4vw,52px);line-height:1.03;letter-spacing:-0.04em;color:#0C141E">Tuned to how your trade loses jobs.</h2>
+        </div>
+        <button onClick="{{ goIndustries }}" style="display:inline-flex;align-items:center;gap:9px;font-size:15px;font-weight:600;color:#A94F12;padding-bottom:6px;border-bottom:1.5px solid rgba(169,79,18,0.3);transition:border-color .2s ease,color .2s ease" style-hover="border-color:#A94F12;color:#0C141E">All industries <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+      </div>
+
+      <div style="margin-top:clamp(32px,4vw,52px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:clamp(14px,2vw,22px)">
+        <div data-reveal="" style="background:#FFFFFF;border:1px solid rgba(12,20,30,0.1);border-radius:16px;padding:clamp(26px,3vw,34px);transition:transform .28s cubic-bezier(.22,1,.36,1),box-shadow .28s ease,border-color .28s ease" style-hover="transform:translateY(-5px);box-shadow:0 26px 46px -28px rgba(12,20,30,.34);border-color:rgba(12,20,30,0.2)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:#A94F12">Primary</span>
+          <h3 style="margin:16px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.03em;color:#0C141E">Plumbing</h3>
+          <p style="margin:10px 0 0;font-size:15.5px;line-height:1.62;color:#5C6875">Catch the 9 p.m. flooding call, get a photo of the problem before anyone drives out, and put the on-call plumber on it in under two minutes.</p>
+        </div>
+        <div data-reveal="" style="background:#FFFFFF;border:1px solid rgba(12,20,30,0.1);border-radius:16px;padding:clamp(26px,3vw,34px);transition:transform .28s cubic-bezier(.22,1,.36,1),box-shadow .28s ease,border-color .28s ease" style-hover="transform:translateY(-5px);box-shadow:0 26px 46px -28px rgba(12,20,30,.34);border-color:rgba(12,20,30,0.2)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:#A94F12">Primary</span>
+          <h3 style="margin:16px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.03em;color:#0C141E">HVAC</h3>
+          <p style="margin:10px 0 0;font-size:15.5px;line-height:1.62;color:#5C6875">No-heat calls answered the moment they come in, and heat-pump quotes followed up while the customer is still shopping.</p>
+        </div>
+        <div data-reveal="" style="background:#FFFFFF;border:1px solid rgba(12,20,30,0.1);border-radius:16px;padding:clamp(26px,3vw,34px);transition:transform .28s cubic-bezier(.22,1,.36,1),box-shadow .28s ease,border-color .28s ease" style-hover="transform:translateY(-5px);box-shadow:0 26px 46px -28px rgba(12,20,30,.34);border-color:rgba(12,20,30,0.2)">
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:#A94F12">Primary</span>
+          <h3 style="margin:16px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:24px;letter-spacing:-0.03em;color:#0C141E">Electrical</h3>
+          <p style="margin:10px 0 0;font-size:15.5px;line-height:1.62;color:#5C6875">Urgent requests routed to the right technician, and panel or rewiring estimates chased until you get a yes or a no.</p>
+        </div>
+      </div>
+
+      <div data-reveal="" style="margin-top:34px;display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6875;margin-right:6px">Also built for</span>
+        <sc-for list="{{ supporting }}" as="trade" hint-placeholder-count="7">
+          <span style="padding:8px 15px;border-radius:999px;border:1px solid rgba(12,20,30,0.13);background:rgba(255,255,255,0.55);font-size:14px;color:#4B5764;transition:border-color .2s ease,background .2s ease" style-hover="border-color:#0C141E;background:#FFFFFF">{{ trade }}</span>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(80px,9vw,140px) 0;background:#FFFFFF;border-top:1px solid rgba(12,20,30,0.08)">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(36px,5vw,80px);align-items:center">
+        <div data-reveal="" style="position:relative">
+          <div style="position:relative;border-radius:20px;overflow:hidden;aspect-ratio:4/5;background:#EAE5DC;border:1px solid rgba(12,20,30,0.1)">
+            <image-slot id="ara-portrait" shape="rect" src="./assets/founder.jpg" placeholder="Photo of Ara — drop here"></image-slot>
+          </div>
+          <div style="position:absolute;right:-14px;bottom:-18px;padding:16px 20px;border-radius:14px;background:#0C141E;box-shadow:0 26px 50px -26px rgba(12,20,30,.7)">
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.64)">Builds &amp; runs your system</p>
+            <p style="margin:5px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:17px;letter-spacing:-0.028em;color:#fff">Ara Ghahramanyan</p>
+          </div>
+        </div>
+
+        <div data-reveal="">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#5C6875">Who you're actually hiring</p>
+          <h2 style="margin:16px 0 0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(30px,3.6vw,46px);line-height:1.05;letter-spacing:-0.04em;color:#0C141E">You're not buying software. You're hiring the person who builds it.</h2>
+          <p style="margin:22px 0 0;padding-left:20px;border-left:2px solid #E4762B;font-size:18px;line-height:1.6;color:#1A2430;font-weight:500">"I sit down with your team, map how calls and quotes actually move through your business, write every message with you, and test every scenario before a single customer sees it. Then I keep watching it after launch."</p>
+          <ul style="margin:26px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ founderPoints }}" as="p" hint-placeholder-count="4">
+              <li style="display:flex;gap:12px;align-items:flex-start;font-size:15.5px;line-height:1.6;color:#5C6875"><span style="display:block;width:5px;height:5px;border-radius:50%;background:#2F9E68;margin-top:9px;flex-shrink:0"></span>{{ p }}</li>
+            </sc-for>
+          </ul>
+          <div style="margin-top:30px;display:flex;flex-wrap:wrap;gap:12px">
+            <button onClick="{{ goBook }}" style="display:inline-flex;align-items:center;gap:10px;background:#0C141E;color:#fff;padding:15px 24px;border-radius:11px;font-size:15.5px;font-weight:600;transition:background .2s ease,transform .2s cubic-bezier(.22,1,.36,1)" style-hover="background:#16222F;transform:translateY(-2px)">Talk with Ara</button>
+            <a href="mailto:ara.ghahramanyan07@gmail.com" style="display:inline-flex;align-items:center;padding:15px 20px;border-radius:11px;border:1.5px solid rgba(12,20,30,0.14);font-size:15px;font-weight:600;color:#0C141E;transition:border-color .2s ease" style-hover="border-color:#0C141E">Email direct</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(80px,9vw,140px) 0;background:#F4F1EC">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(32px,5vw,72px);align-items:start">
+        <div data-reveal="">
+          <span style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:999px;background:rgba(228,118,43,0.13);font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:0.13em;text-transform:uppercase;color:#A94F12">Limited intake</span>
+          <h2 style="margin:18px 0 0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(30px,3.6vw,46px);line-height:1.05;letter-spacing:-0.04em;color:#0C141E">Be one of the first pilot companies.</h2>
+          <p style="margin:18px 0 0;max-width:34em;font-size:16.5px;line-height:1.62;color:#5C6875">TradeCatch is opening its pilot to a small number of Québec contractors. Pilot companies get hands-on onboarding, workflows built around how their team already works, and direct access to the founder while the system is tuned.</p>
+        </div>
+
+        <div data-reveal="" style="background:#FFFFFF;border:1px solid rgba(12,20,30,0.1);border-radius:18px;padding:clamp(28px,3.4vw,40px)">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6875">What pilot companies get</p>
+          <ul style="margin:22px 0 0;padding:0;list-style:none;display:flex;flex-direction:column">
+            <sc-for list="{{ pilotPoints }}" as="p" hint-placeholder-count="4">
+              <li style="display:flex;gap:14px;align-items:flex-start;padding:15px 0;border-top:1px solid rgba(12,20,30,0.08);font-size:15.5px;line-height:1.6;color:#3D4855"><span style="color:#2F9E68;font-size:14px;line-height:1.6">&#10003;</span>{{ p }}</li>
+            </sc-for>
+          </ul>
+          <p style="margin:22px 0 0;padding-top:20px;border-top:1px solid rgba(12,20,30,0.08);font-size:14px;line-height:1.6;color:#5C6875">Launch guarantee: if the agreed system isn't live because of a delay on our side, your first management month is credited.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:clamp(80px,9vw,140px) 0;background:#FFFFFF;border-top:1px solid rgba(12,20,30,0.08)">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(32px,5vw,72px);align-items:start">
+        <div data-reveal="">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#5C6875">Straight answers</p>
+          <h2 style="margin:16px 0 0;max-width:13em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(32px,4vw,52px);line-height:1.03;letter-spacing:-0.04em;color:#0C141E">What owners ask before they book.</h2>
+          <button onClick="{{ goFaq }}" style="margin-top:28px;display:inline-flex;align-items:center;gap:10px;padding:14px 22px;border-radius:11px;border:1.5px solid rgba(12,20,30,0.16);font-size:15px;font-weight:600;color:#0C141E;transition:border-color .2s ease,transform .2s cubic-bezier(.22,1,.36,1)" style-hover="border-color:#0C141E;transform:translateY(-2px)">All questions <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+        </div>
+
+        <div data-reveal="" style="border-top:1px solid rgba(12,20,30,0.12)">
+          <sc-for list="{{ faqTeaser }}" as="f" hint-placeholder-count="4">
+            <div style="border-bottom:1px solid rgba(12,20,30,0.12)">
+              <button onClick="{{ f.toggle }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:20px;text-align:left;padding:22px 0;font-family:Archivo,sans-serif;font-weight:600;font-size:17.5px;letter-spacing:-0.02em;color:#0C141E;transition:color .2s ease" style-hover="color:#A94F12">
+                {{ f.q }}
+                <span style="flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:18px;color:#A94F12">{{ f.sign }}</span>
+              </button>
+              <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+                <p style="margin:0;padding:0 0 24px;max-width:46em;font-size:16px;line-height:1.65;color:#5C6875;animation:tcIn .3s cubic-bezier(.22,1,.36,1) both">{{ f.a }}</p>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="position:relative;overflow:hidden;background:#0C141E;padding:clamp(80px,9vw,140px) 0">
+    <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(to right,rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(90% 70% at 50% 50%,#000,transparent 75%);mask-image:radial-gradient(90% 70% at 50% 50%,#000,transparent 75%)"></div>
+    <div style="position:relative;width:100%;max-width:960px;margin:0 auto;padding:0 clamp(20px,4vw,40px);text-align:center">
+      <h2 data-reveal="" style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(34px,4.8vw,64px);line-height:1.02;letter-spacing:-0.042em;color:#fff">How many jobs are you losing before you ever speak to the customer?</h2>
+      <p data-reveal="" style="margin:24px auto 0;max-width:36em;font-size:clamp(16.5px,1.4vw,19px);line-height:1.6;color:rgba(255,255,255,0.66)">Book the free audit. We'll go through how your business handles missed calls, new leads and unanswered quotes — and tell you exactly where the money is going.</p>
+      <div data-reveal="" style="margin-top:36px;display:flex;justify-content:center">
+        <button onClick="{{ goBook }}" style="display:inline-flex;align-items:center;gap:12px;background:#E4762B;color:#0C141E;padding:19px 30px;border-radius:13px;font-size:17.5px;font-weight:700;letter-spacing:-0.015em;box-shadow:0 18px 44px -16px rgba(228,118,43,.85);transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s ease" style-hover="background:#F08B45;transform:translateY(-2px)">Book the free audit <span style="font-family:'IBM Plex Mono',monospace;font-size:16px">&#8594;</span></button>
+      </div>
+      <ul data-reveal="" style="margin:34px 0 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px">
+        <sc-for list="{{ expect }}" as="e" hint-placeholder-count="4">
+          <li style="display:flex;align-items:center;gap:9px;font-size:14px;color:rgba(255,255,255,0.55)"><span style="color:#2F9E68">&#10003;</span>{{ e }}</li>
+        </sc-for>
+      </ul>
+    </div>
+  </section>
+
+</main>
+</sc-if>
+
+<sc-if value="{{ isBook }}" hint-placeholder-val="{{ false }}">
+<main style="background:#F4F1EC;min-height:calc(100vh - 86px);display:flex;flex-direction:column">
+
+  <sc-if value="{{ formRunning }}" hint-placeholder-val="{{ true }}">
+    <div style="position:sticky;top:clamp(68px,7vw,86px);z-index:30;background:rgba(244,241,236,0.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(12,20,30,0.08)">
+      <div style="width:100%;max-width:760px;margin:0 auto;padding:14px clamp(20px,4vw,40px) 13px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#5C6875">{{ counterText }}</p>
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#5C6875">{{ timeLeft }}</p>
+        </div>
+        <div style="margin-top:11px;height:3px;border-radius:3px;background:rgba(12,20,30,0.1);overflow:hidden">
+          <span style="display:block;height:100%;border-radius:3px;background:#E4762B;transition:width .45s cubic-bezier(.22,1,.36,1);width:{{ progress }}"></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding:clamp(40px,7vw,88px) clamp(20px,4vw,40px) clamp(56px,7vw,96px)">
+      <div style="width:100%;max-width:760px;animation:tcIn .42s cubic-bezier(.22,1,.36,1) both">
+
+        <sc-if value="{{ isQuestion }}" hint-placeholder-val="{{ true }}">
+          <p style="margin:0;display:flex;align-items:center;gap:10px;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:0.12em;color:#A94F12">{{ q.num }}<span style="display:block;width:22px;height:1px;background:rgba(169,79,18,0.4)"></span></p>
+          <h1 style="margin:18px 0 0;max-width:16em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(28px,4vw,46px);line-height:1.06;letter-spacing:-0.04em;color:#0C141E">{{ q.title }}</h1>
+          <sc-if value="{{ q.hasHelp }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:16px 0 0;max-width:38em;font-size:16.5px;line-height:1.62;color:#5C6875">{{ q.help }}</p>
+          </sc-if>
+        </sc-if>
+
+        <sc-if value="{{ q.isName }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:clamp(28px,4vw,44px);display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:clamp(20px,3vw,36px)">
+            <label style="display:flex;flex-direction:column;gap:10px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#5C6875">First name</span>
+              <input type="text" value="{{ value }}" onChange="{{ onInput }}" onKeyDown="{{ onKey }}" placeholder="Marc" style="width:100%;padding:12px 0;border:none;border-bottom:2px solid rgba(12,20,30,0.18);background:transparent;font-family:Archivo,sans-serif;font-size:clamp(22px,2.4vw,28px);font-weight:700;letter-spacing:-0.03em;color:#0C141E;outline:none" style-focus="border-bottom-color:#E4762B" />
+            </label>
+            <label style="display:flex;flex-direction:column;gap:10px">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#5C6875">Last name</span>
+              <input type="text" value="{{ value2 }}" onChange="{{ onInput2 }}" onKeyDown="{{ onKey }}" placeholder="Tremblay" style="width:100%;padding:12px 0;border:none;border-bottom:2px solid rgba(12,20,30,0.18);background:transparent;font-family:Archivo,sans-serif;font-size:clamp(22px,2.4vw,28px);font-weight:700;letter-spacing:-0.03em;color:#0C141E;outline:none" style-focus="border-bottom-color:#E4762B" />
+            </label>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ q.isText }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:clamp(28px,4vw,44px)">
+            <input type="{{ q.inputType }}" value="{{ value }}" onChange="{{ onInput }}" onKeyDown="{{ onKey }}" placeholder="{{ q.placeholder }}" style="width:100%;padding:12px 0;border:none;border-bottom:2px solid rgba(12,20,30,0.18);background:transparent;font-family:Archivo,sans-serif;font-size:clamp(24px,3vw,34px);font-weight:700;letter-spacing:-0.032em;color:#0C141E;outline:none" style-focus="border-bottom-color:#E4762B" />
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ q.isTextarea }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:clamp(28px,4vw,44px)">
+            <textarea value="{{ value }}" onChange="{{ onInput }}" rows="4" placeholder="{{ q.placeholder }}" style="width:100%;padding:20px;border:1.5px solid rgba(12,20,30,0.16);border-radius:14px;background:#FFFFFF;font-family:'IBM Plex Sans',sans-serif;font-size:17px;line-height:1.6;color:#1A2430;outline:none;resize:vertical" style-focus="border-color:#E4762B"></textarea>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ q.isChoice }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:clamp(28px,4vw,44px);display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));gap:10px">
+            <sc-for list="{{ options }}" as="o" hint-placeholder-count="4">
+              <div>
+                <sc-if value="{{ o.selected }}" hint-placeholder-val="{{ false }}">
+                  <button onClick="{{ o.pick }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;padding:17px 20px;border:1.5px solid #0C141E;border-radius:13px;background:#0C141E;color:#FFFFFF;font-size:16.5px;font-weight:600;letter-spacing:-0.015em">
+                    {{ o.label }}
+                    <span style="color:#E4762B;font-size:15px">&#10003;</span>
+                  </button>
+                </sc-if>
+                <sc-if value="{{ o.unselected }}" hint-placeholder-val="{{ true }}">
+                  <button onClick="{{ o.pick }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:14px;text-align:left;padding:17px 20px;border:1.5px solid rgba(12,20,30,0.14);border-radius:13px;background:#FFFFFF;color:#1A2430;font-size:16.5px;font-weight:500;letter-spacing:-0.015em;transition:border-color .18s ease,transform .18s cubic-bezier(.22,1,.36,1),box-shadow .18s ease" style-hover="border-color:#0C141E;transform:translateY(-2px);box-shadow:0 12px 24px -16px rgba(12,20,30,.5)">
+                    {{ o.label }}
+                    <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#5C6875">{{ o.key }}</span>
+                  </button>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ q.isConsent }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:clamp(28px,4vw,44px);display:flex;flex-direction:column;gap:14px">
+            <label style="display:flex;gap:14px;align-items:flex-start;padding:20px;border:1.5px solid rgba(12,20,30,0.14);border-radius:14px;background:#FFFFFF;cursor:pointer;font-size:16px;line-height:1.6;color:#1A2430">
+              <input type="checkbox" checked="{{ consent }}" onChange="{{ toggleConsent }}" style="margin-top:4px;width:18px;height:18px;accent-color:#E4762B;flex-shrink:0" />
+              I agree to be contacted about this request by phone, email or text. Message and data rates may apply. I can opt out at any time.
+            </label>
+            <label style="display:flex;gap:14px;align-items:flex-start;padding:20px;border:1.5px solid rgba(12,20,30,0.14);border-radius:14px;background:rgba(255,255,255,0.5);cursor:pointer;font-size:16px;line-height:1.6;color:#5C6875">
+              <input type="checkbox" checked="{{ marketing }}" onChange="{{ toggleMarketing }}" style="margin-top:4px;width:18px;height:18px;accent-color:#E4762B;flex-shrink:0" />
+              Optional — send me occasional tips and offers by email. Separate from the contact above.
+            </label>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isReview }}" hint-placeholder-val="{{ false }}">
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:0.12em;color:#A94F12">REVIEW</p>
+          <h1 style="margin:18px 0 0;max-width:15em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(28px,4vw,46px);line-height:1.06;letter-spacing:-0.04em;color:#0C141E">Check your answers, then send it over.</h1>
+          <div style="margin-top:clamp(28px,4vw,40px);border-top:1px solid rgba(12,20,30,0.12)">
+            <sc-for list="{{ reviewRows }}" as="r" hint-placeholder-count="8">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 20px;align-items:baseline;padding:15px 0;border-bottom:1px solid rgba(12,20,30,0.1)">
+                <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#5C6875">{{ r.label }}</p>
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px">
+                  <p style="margin:0;font-size:16.5px;line-height:1.5;color:#1A2430">{{ r.value }}</p>
+                  <button onClick="{{ r.edit }}" style="flex-shrink:0;font-size:13.5px;font-weight:600;color:#A94F12;border-bottom:1px solid rgba(169,79,18,0.35);transition:color .18s ease" style-hover="color:#0C141E">Edit</button>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div style="margin-top:clamp(32px,4vw,48px);display:flex;flex-wrap:wrap;align-items:center;gap:14px">
+          <sc-if value="{{ canContinue }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ next }}" style="display:inline-flex;align-items:center;gap:12px;background:#E4762B;color:#0C141E;padding:17px 28px;border-radius:12px;font-size:16.5px;font-weight:700;letter-spacing:-0.015em;box-shadow:0 14px 34px -16px rgba(228,118,43,.8);transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s ease" style-hover="background:#F08B45;transform:translateY(-2px)">{{ nextLabel }} <span style="font-family:'IBM Plex Mono',monospace;font-size:15px">&#8594;</span></button>
+          </sc-if>
+          <sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+            <span style="display:inline-flex;align-items:center;gap:12px;background:rgba(12,20,30,0.08);color:#5C6875;padding:17px 28px;border-radius:12px;font-size:16.5px;font-weight:700;letter-spacing:-0.015em;cursor:not-allowed">{{ nextLabel }}</span>
+          </sc-if>
+          <sc-if value="{{ showBack }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ back }}" style="padding:17px 20px;font-size:15.5px;font-weight:600;color:#5C6875;border-radius:12px;transition:color .18s ease" style-hover="color:#0C141E">Back</button>
+          </sc-if>
+          <sc-if value="{{ skippable }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ next }}" style="padding:17px 4px;font-size:15px;color:#5C6875;border-bottom:1px solid rgba(12,20,30,0.18);transition:color .18s ease" style-hover="color:#0C141E">Skip</button>
+          </sc-if>
+          <sc-if value="{{ enterHint }}" hint-placeholder-val="{{ false }}">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#5C6875">or press Enter &#8629;</span>
+          </sc-if>
+        </div>
+
+      </div>
+    </div>
+
+    <div style="border-top:1px solid rgba(12,20,30,0.1);background:rgba(255,255,255,0.5)">
+      <div style="width:100%;max-width:760px;margin:0 auto;padding:20px clamp(20px,4vw,40px);display:flex;flex-wrap:wrap;gap:10px 26px">
+        <span style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#5C6875"><span style="display:block;width:5px;height:5px;border-radius:50%;background:#1E6B47"></span>No commitment</span>
+        <span style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#5C6875"><span style="display:block;width:5px;height:5px;border-radius:50%;background:#1E6B47"></span>You get the findings either way</span>
+        <span style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#5C6875"><span style="display:block;width:5px;height:5px;border-radius:50%;background:#1E6B47"></span>Or call <a href="tel:4389936997" style="font-weight:600">438·993·6997</a></span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ formDone }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:clamp(56px,8vw,110px) clamp(20px,4vw,40px)">
+      <div style="width:100%;max-width:640px;text-align:center;animation:tcIn .5s cubic-bezier(.22,1,.36,1) both">
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border-radius:50%;background:rgba(47,158,104,0.14);color:#1E6B47;font-size:26px;animation:tcPulse 2.4s ease-out infinite">&#10003;</span>
+        <h1 style="margin:28px 0 0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(30px,4.2vw,48px);line-height:1.05;letter-spacing:-0.04em;color:#0C141E">Got it. Your audit request is in.</h1>
+        <p style="margin:20px auto 0;max-width:34em;font-size:17px;line-height:1.65;color:#5C6875">Ara will follow up shortly to confirm a time. Have your recent call volume, your open quote list and any software you currently run handy for the call.</p>
+        <div style="margin-top:34px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px">
+          <button onClick="{{ goHome }}" style="display:inline-flex;align-items:center;gap:10px;background:#0C141E;color:#fff;padding:16px 26px;border-radius:11px;font-size:16px;font-weight:600;transition:background .2s ease,transform .2s cubic-bezier(.22,1,.36,1)" style-hover="background:#16222F;transform:translateY(-2px)">Back to the site</button>
+          <button onClick="{{ restart }}" style="padding:16px 22px;border-radius:11px;border:1.5px solid rgba(12,20,30,0.14);font-size:15.5px;font-weight:600;color:#0C141E;transition:border-color .2s ease" style-hover="border-color:#0C141E">Submit another</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</main>
+</sc-if>
+
+<sc-if value="{{ isServices }}" hint-placeholder-val="{{ false }}">
+<main>
+  <section style="background:#0C141E;color:#fff;padding:clamp(56px,7vw,96px) 0 clamp(56px,7vw,88px);position:relative;overflow:hidden">
+    <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(to right,rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%);mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%)"></div>
+    <div style="position:relative;width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#E4762B">Services</p>
+      <h1 style="margin:18px 0 0;max-width:15em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(36px,4.8vw,62px);line-height:1.02;letter-spacing:-0.042em;color:#fff">One system. Five jobs it does while you work.</h1>
+      <p style="margin:22px 0 0;max-width:38em;font-size:clamp(16.5px,1.35vw,19px);line-height:1.62;color:rgba(255,255,255,0.66)">TradeCatch connects your phone, messages, email, quote process and CRM so fewer opportunities disappear between the first ring and the signed job.</p>
+    </div>
+  </section>
+
+  <section style="padding:clamp(64px,7vw,110px) 0;background:#F4F1EC">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:flex;flex-direction:column;gap:clamp(16px,2vw,24px)">
+      <sc-for list="{{ serviceGroups }}" as="g" hint-placeholder-count="5">
+        <div data-reveal="" style="background:#FFFFFF;border:1px solid rgba(12,20,30,0.1);border-radius:20px;padding:clamp(28px,3.4vw,44px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:clamp(24px,3vw,48px);transition:box-shadow .3s ease,border-color .3s ease" style-hover="box-shadow:0 28px 54px -34px rgba(12,20,30,.32);border-color:rgba(12,20,30,0.2)">
+          <div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.12em;color:#A94F12">{{ g.num }}</span>
+            <h2 style="margin:16px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:clamp(24px,2.6vw,32px);letter-spacing:-0.032em;color:#0C141E">{{ g.title }}</h2>
+            <p style="margin:12px 0 0;max-width:26em;font-size:16px;line-height:1.62;color:#5C6875">{{ g.purpose }}</p>
+          </div>
+          <ul style="margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:2px 24px;align-content:start">
+            <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="6">
+              <li style="display:flex;gap:11px;align-items:flex-start;padding:9px 0;font-size:15px;line-height:1.55;color:#3D4855"><span style="color:#2F9E68;font-size:13px;line-height:1.6;flex-shrink:0">&#10003;</span>{{ it }}</li>
+            </sc-for>
+          </ul>
+        </div>
+      </sc-for>
+
+      <div data-reveal="" style="margin-top:16px;background:#0C141E;border-radius:20px;padding:clamp(28px,3.4vw,44px);color:#fff;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:clamp(24px,3vw,48px)">
+        <div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.12em;color:rgba(255,255,255,0.64)">LATER</span>
+          <h2 style="margin:16px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:clamp(24px,2.6vw,32px);letter-spacing:-0.032em;color:#fff">Bolt-ons, once the core is earning</h2>
+          <p style="margin:12px 0 0;max-width:26em;font-size:16px;line-height:1.62;color:rgba(255,255,255,0.62)">We don't sell you these on day one. They get added when the basics are already recovering work.</p>
+        </div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:9px;align-content:start">
+          <sc-for list="{{ laterItems }}" as="l" hint-placeholder-count="7">
+            <li style="padding:8px 15px;border-radius:999px;border:1px solid rgba(255,255,255,0.16);font-size:14px;color:rgba(255,255,255,0.78)">{{ l }}</li>
+          </sc-for>
+        </ul>
+      </div>
+
+      <div data-reveal="" style="margin-top:24px;text-align:center">
+        <button onClick="{{ goBook }}" style="display:inline-flex;align-items:center;gap:11px;background:#E4762B;color:#0C141E;padding:18px 28px;border-radius:12px;font-size:16.5px;font-weight:700;box-shadow:0 14px 34px -16px rgba(228,118,43,.8);transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s ease" style-hover="background:#F08B45;transform:translateY(-2px)">See which of these you need <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+      </div>
+    </div>
+  </section>
+</main>
+</sc-if>
+
+<sc-if value="{{ isHow }}" hint-placeholder-val="{{ false }}">
+<main>
+  <section style="background:#0C141E;color:#fff;padding:clamp(56px,7vw,96px) 0 clamp(56px,7vw,88px);position:relative;overflow:hidden">
+    <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(to right,rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%);mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%)"></div>
+    <div style="position:relative;width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#E4762B">How it works</p>
+      <h1 style="margin:18px 0 0;max-width:14em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(36px,4.8vw,62px);line-height:1.02;letter-spacing:-0.042em;color:#fff">From missed call to signed job.</h1>
+      <p style="margin:22px 0 0;max-width:38em;font-size:clamp(16.5px,1.35vw,19px);line-height:1.62;color:rgba(255,255,255,0.66)">Six stages. Every one of them tested with your team, in French and English, before a single customer sees it.</p>
+    </div>
+  </section>
+
+  <section style="padding:clamp(64px,7vw,110px) 0;background:#F4F1EC">
+    <div style="width:100%;max-width:1040px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <sc-for list="{{ howStages }}" as="s" hint-placeholder-count="6">
+        <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:clamp(20px,3vw,48px);padding:clamp(28px,3vw,40px) 0;border-top:1px solid rgba(12,20,30,0.12)">
+          <div style="display:flex;gap:18px;align-items:flex-start">
+            <span style="display:flex;align-items:center;justify-content:center;flex-shrink:0;width:44px;height:44px;border-radius:12px;background:#0C141E;color:#E4762B;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600">{{ s.num }}</span>
+            <h2 style="margin:8px 0 0;font-family:Archivo,sans-serif;font-weight:700;font-size:clamp(21px,2.3vw,28px);line-height:1.15;letter-spacing:-0.03em;color:#0C141E">{{ s.title }}</h2>
+          </div>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:8px;align-content:start;align-items:flex-start">
+            <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="4">
+              <li style="padding:8px 14px;border-radius:999px;background:#FFFFFF;border:1px solid rgba(12,20,30,0.1);font-size:14px;color:#3D4855;transition:border-color .2s ease,transform .2s cubic-bezier(.22,1,.36,1)" style-hover="border-color:#0C141E;transform:translateY(-2px)">{{ it }}</li>
+            </sc-for>
+          </ul>
+        </div>
+      </sc-for>
+
+      <div data-reveal="" style="margin-top:clamp(40px,5vw,64px);background:#FFFFFF;border:1px solid rgba(12,20,30,0.1);border-radius:20px;padding:clamp(28px,3.4vw,44px)">
+        <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6875">The quote follow-up sequence</p>
+        <div style="margin-top:26px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1px;background:rgba(12,20,30,0.1);border:1px solid rgba(12,20,30,0.1);border-radius:14px;overflow:hidden">
+          <div style="background:#fff;padding:22px 20px"><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#A94F12">DAY 2</p><p style="margin:9px 0 0;font-size:15.5px;line-height:1.55;color:#1A2430">Confirm the quote landed</p></div>
+          <div style="background:#fff;padding:22px 20px"><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#A94F12">DAY 5</p><p style="margin:9px 0 0;font-size:15.5px;line-height:1.55;color:#1A2430">Send something genuinely useful</p></div>
+          <div style="background:#fff;padding:22px 20px"><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#A94F12">DAY 10</p><p style="margin:9px 0 0;font-size:15.5px;line-height:1.55;color:#1A2430">Ask about their timing</p></div>
+          <div style="background:#fff;padding:22px 20px"><p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.1em;color:#A94F12">DAY 20</p><p style="margin:9px 0 0;font-size:15.5px;line-height:1.55;color:#1A2430">Close the loop, politely</p></div>
+        </div>
+        <p style="margin:22px 0 0;font-size:15px;line-height:1.62;color:#5C6875">The sequence stops the instant the customer replies, and you're alerted if they raise a price objection or a question only you can answer.</p>
+      </div>
+
+      <div data-reveal="" style="margin-top:40px;text-align:center">
+        <button onClick="{{ goBook }}" style="display:inline-flex;align-items:center;gap:11px;background:#0C141E;color:#fff;padding:18px 28px;border-radius:12px;font-size:16.5px;font-weight:700;transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s ease" style-hover="background:#16222F;transform:translateY(-2px)">Map this to my business <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+      </div>
+    </div>
+  </section>
+</main>
+</sc-if>
+
+<sc-if value="{{ isIndustries }}" hint-placeholder-val="{{ false }}">
+<main>
+  <section style="background:#0C141E;color:#fff;padding:clamp(56px,7vw,96px) 0 clamp(56px,7vw,88px);position:relative;overflow:hidden">
+    <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(to right,rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%);mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%)"></div>
+    <div style="position:relative;width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#E4762B">Industries</p>
+      <h1 style="margin:18px 0 0;max-width:14em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(36px,4.8vw,62px);line-height:1.02;letter-spacing:-0.042em;color:#fff">Built for busy trade companies.</h1>
+      <p style="margin:22px 0 0;max-width:38em;font-size:clamp(16.5px,1.35vw,19px);line-height:1.62;color:rgba(255,255,255,0.66)">One system, tuned to the way each trade actually loses jobs.</p>
+    </div>
+  </section>
+
+  <section style="padding:clamp(48px,6vw,88px) 0 clamp(64px,8vw,120px);background:#F4F1EC">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <sc-for list="{{ industrySections }}" as="ind" hint-placeholder-count="5">
+        <div data-reveal="" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:clamp(20px,3vw,56px);padding:clamp(32px,3.6vw,48px) 0;border-bottom:1px solid rgba(12,20,30,0.12)">
+          <div>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:#A94F12">{{ ind.num }} · {{ ind.name }}</span>
+            <h2 style="margin:16px 0 0;max-width:14em;font-family:Archivo,sans-serif;font-weight:700;font-size:clamp(24px,2.8vw,34px);line-height:1.12;letter-spacing:-0.034em;color:#0C141E">{{ ind.headline }}</h2>
+          </div>
+          <div>
+            <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6875">Where it earns its keep</p>
+            <ul style="margin:16px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:2px 24px">
+              <sc-for list="{{ ind.focus }}" as="f" hint-placeholder-count="4">
+                <li style="display:flex;gap:11px;align-items:flex-start;padding:9px 0;font-size:15.5px;line-height:1.55;color:#3D4855"><span style="color:#2F9E68;font-size:13px;line-height:1.6;flex-shrink:0">&#10003;</span>{{ f }}</li>
+              </sc-for>
+            </ul>
+          </div>
+        </div>
+      </sc-for>
+
+      <div data-reveal="" style="margin-top:48px;text-align:center">
+        <button onClick="{{ goBook }}" style="display:inline-flex;align-items:center;gap:11px;background:#E4762B;color:#0C141E;padding:18px 28px;border-radius:12px;font-size:16.5px;font-weight:700;box-shadow:0 14px 34px -16px rgba(228,118,43,.8);transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s ease" style-hover="background:#F08B45;transform:translateY(-2px)">Book the audit for my trade <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+      </div>
+    </div>
+  </section>
+</main>
+</sc-if>
+
+<sc-if value="{{ isPricing }}" hint-placeholder-val="{{ false }}">
+<main>
+  <section style="background:#0C141E;color:#fff;padding:clamp(56px,7vw,96px) 0 clamp(80px,9vw,130px);position:relative;overflow:hidden">
+    <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(to right,rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%);mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%)"></div>
+    <div style="position:relative;width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#E4762B">Pricing</p>
+      <h1 style="margin:18px 0 0;max-width:14em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(36px,4.8vw,62px);line-height:1.02;letter-spacing:-0.042em;color:#fff">Priced on your call volume, not a seat count.</h1>
+      <p style="margin:22px 0 0;max-width:38em;font-size:clamp(16.5px,1.35vw,19px);line-height:1.62;color:rgba(255,255,255,0.66)">Setup builds the system around your business. The monthly fee keeps it running, monitored and improving. Here's the honest starting range.</p>
+    </div>
+  </section>
+
+  <section style="padding:0 0 clamp(64px,8vw,120px);background:#F4F1EC">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div style="margin-top:clamp(-60px,-5vw,-40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:clamp(16px,2vw,24px)">
+        <sc-for list="{{ tiers }}" as="t" hint-placeholder-count="3">
+          <div data-reveal="" style="display:flex;flex-direction:column;background:#FFFFFF;border:1px solid rgba(12,20,30,0.1);border-radius:20px;padding:clamp(28px,3vw,38px);box-shadow:0 30px 60px -46px rgba(12,20,30,.45);transition:transform .3s cubic-bezier(.22,1,.36,1),box-shadow .3s ease" style-hover="transform:translateY(-6px);box-shadow:0 40px 70px -40px rgba(12,20,30,.4)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:26px">
+              <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:700;font-size:22px;letter-spacing:-0.03em;color:#0C141E">{{ t.name }}</h2>
+              <sc-if value="{{ t.popular }}" hint-placeholder-val="{{ false }}">
+                <span style="padding:5px 11px;border-radius:999px;background:rgba(228,118,43,0.14);font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#A94F12">Most popular</span>
+              </sc-if>
+            </div>
+            <p style="margin:18px 0 0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(26px,2.6vw,32px);line-height:1.1;letter-spacing:-0.036em;color:#0C141E">{{ t.price }}</p>
+            <p style="margin:8px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#5C6875">{{ t.sub }}</p>
+            <ul style="margin:26px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;flex:1">
+              <sc-for list="{{ t.items }}" as="i" hint-placeholder-count="6">
+                <li style="display:flex;gap:12px;align-items:flex-start;padding:11px 0;border-top:1px solid rgba(12,20,30,0.08);font-size:15px;line-height:1.55;color:#3D4855"><span style="color:#2F9E68;font-size:13px;line-height:1.6;flex-shrink:0">&#10003;</span>{{ i }}</li>
+              </sc-for>
+            </ul>
+            <button onClick="{{ goBook }}" style="margin-top:26px;width:100%;padding:15px;border-radius:11px;border:1.5px solid rgba(12,20,30,0.16);font-size:15.5px;font-weight:600;color:#0C141E;transition:border-color .2s ease,background .2s ease,color .2s ease" style-hover="background:#0C141E;border-color:#0C141E;color:#FFFFFF">Book the audit</button>
+          </div>
+        </sc-for>
+      </div>
+
+      <div data-reveal="" style="margin-top:clamp(32px,4vw,48px);display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:clamp(20px,3vw,32px);padding:clamp(26px,3vw,38px);border:1px solid rgba(12,20,30,0.12);border-radius:18px;background:rgba(255,255,255,0.5)">
+        <div>
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6875">Why there's a range</p>
+          <p style="margin:14px 0 0;font-size:16px;line-height:1.65;color:#3D4855">Final pricing depends on call volume, number of technicians, quote volume, the software you already run, and how complex your on-call and escalation rules are. The audit is how we pin it down — and you get the number in writing before anything starts.</p>
+        </div>
+        <div>
+          <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6875">No surprises</p>
+          <ul style="margin:14px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px">
+            <li style="display:flex;gap:11px;font-size:15.5px;line-height:1.55;color:#3D4855"><span style="color:#2F9E68">&#10003;</span>Fixed setup fee agreed before work begins</li>
+            <li style="display:flex;gap:11px;font-size:15.5px;line-height:1.55;color:#3D4855"><span style="color:#2F9E68">&#10003;</span>Month-to-month management, cancel with notice</li>
+            <li style="display:flex;gap:11px;font-size:15.5px;line-height:1.55;color:#3D4855"><span style="color:#2F9E68">&#10003;</span>Launch guarantee: our delay, your first month credited</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</sc-if>
+
+<sc-if value="{{ isAbout }}" hint-placeholder-val="{{ false }}">
+<main>
+  <section style="background:#0C141E;color:#fff;padding:clamp(56px,7vw,96px) 0 clamp(56px,7vw,88px);position:relative;overflow:hidden">
+    <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(to right,rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%);mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%)"></div>
+    <div style="position:relative;width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#E4762B">About</p>
+      <h1 style="margin:18px 0 0;max-width:15em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(36px,4.8vw,62px);line-height:1.02;letter-spacing:-0.042em;color:#fff">For Québec contractors too busy to chase every opportunity.</h1>
+    </div>
+  </section>
+
+  <section style="padding:clamp(64px,7vw,110px) 0;background:#F4F1EC">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px);display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(36px,5vw,80px);align-items:start">
+      <div data-reveal="">
+        <div style="position:relative;border-radius:20px;overflow:hidden;aspect-ratio:4/5;background:#EAE5DC;border:1px solid rgba(12,20,30,0.1)">
+          <image-slot id="ara-about" shape="rect" src="./assets/founder.jpg" placeholder="Photo of Ara — drop here"></image-slot>
+        </div>
+        <p style="margin:18px 0 0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#5C6875">Ara Ghahramanyan · Founder</p>
+      </div>
+      <div data-reveal="">
+        <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(28px,3.2vw,42px);line-height:1.06;letter-spacing:-0.038em;color:#0C141E">No call centre. No outsourced support. The person who built it.</h2>
+        <p style="margin:20px 0 0;font-size:17px;line-height:1.65;color:#3D4855">TradeCatch is built and operated directly by its founder — a software developer with an automation background who works alongside each contractor to design, install and manage the system.</p>
+        <ul style="margin:30px 0 0;padding:0;list-style:none;display:flex;flex-direction:column">
+          <sc-for list="{{ aboutBody }}" as="b" hint-placeholder-count="6">
+            <li style="display:flex;gap:14px;align-items:flex-start;padding:15px 0;border-top:1px solid rgba(12,20,30,0.1);font-size:16px;line-height:1.6;color:#3D4855"><span style="color:#A94F12;font-family:'IBM Plex Mono',monospace;font-size:12px;padding-top:3px">{{ b.num }}</span>{{ b.text }}</li>
+          </sc-for>
+        </ul>
+        <div style="margin-top:32px;display:flex;flex-wrap:wrap;gap:12px">
+          <button onClick="{{ goBook }}" style="display:inline-flex;align-items:center;gap:10px;background:#0C141E;color:#fff;padding:16px 26px;border-radius:11px;font-size:16px;font-weight:600;transition:background .2s ease,transform .2s cubic-bezier(.22,1,.36,1)" style-hover="background:#16222F;transform:translateY(-2px)">Book the audit</button>
+          <a href="mailto:ara.ghahramanyan07@gmail.com" style="display:inline-flex;align-items:center;padding:16px 22px;border-radius:11px;border:1.5px solid rgba(12,20,30,0.14);font-size:15.5px;font-weight:600;color:#0C141E;transition:border-color .2s ease" style-hover="border-color:#0C141E">Email Ara</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+</sc-if>
+
+<sc-if value="{{ isFaq }}" hint-placeholder-val="{{ false }}">
+<main>
+  <section style="background:#0C141E;color:#fff;padding:clamp(56px,7vw,96px) 0 clamp(56px,7vw,88px);position:relative;overflow:hidden">
+    <div aria-hidden="true" style="position:absolute;inset:0;background-image:linear-gradient(to right,rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%);mask-image:radial-gradient(100% 70% at 20% 0%,#000,transparent 72%)"></div>
+    <div style="position:relative;width:100%;max-width:1280px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:#E4762B">FAQ</p>
+      <h1 style="margin:18px 0 0;max-width:14em;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(36px,4.8vw,62px);line-height:1.02;letter-spacing:-0.042em;color:#fff">Straight answers, including the uncomfortable ones.</h1>
+    </div>
+  </section>
+
+  <section style="padding:clamp(56px,6vw,96px) 0 clamp(72px,8vw,120px);background:#F4F1EC">
+    <div style="width:100%;max-width:900px;margin:0 auto;padding:0 clamp(20px,4vw,40px)">
+      <div data-reveal="" style="border-top:1px solid rgba(12,20,30,0.12)">
+        <sc-for list="{{ allFaqs }}" as="f" hint-placeholder-count="10">
+          <div style="border-bottom:1px solid rgba(12,20,30,0.12)">
+            <button onClick="{{ f.toggle }}" style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:20px;text-align:left;padding:24px 0;font-family:Archivo,sans-serif;font-weight:600;font-size:clamp(17px,1.7vw,20px);letter-spacing:-0.022em;color:#0C141E;transition:color .2s ease" style-hover="color:#A94F12">
+              {{ f.q }}
+              <span style="flex-shrink:0;font-family:'IBM Plex Mono',monospace;font-size:19px;color:#A94F12">{{ f.sign }}</span>
+            </button>
+            <sc-if value="{{ f.open }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;padding:0 0 26px;max-width:46em;font-size:16.5px;line-height:1.68;color:#5C6875;animation:tcIn .3s cubic-bezier(.22,1,.36,1) both">{{ f.a }}</p>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+
+      <div data-reveal="" style="margin-top:48px;padding:clamp(28px,3.4vw,40px);border-radius:20px;background:#0C141E;color:#fff;text-align:center">
+        <h2 style="margin:0;font-family:Archivo,sans-serif;font-weight:800;font-size:clamp(24px,2.8vw,34px);letter-spacing:-0.036em;color:#fff">Still have a question?</h2>
+        <p style="margin:14px auto 0;max-width:34em;font-size:16px;line-height:1.62;color:rgba(255,255,255,0.66)">Ask it on the audit call. Twenty minutes, no commitment, and you'll get a straight answer either way.</p>
+        <button onClick="{{ goBook }}" style="margin-top:26px;display:inline-flex;align-items:center;gap:11px;background:#E4762B;color:#0C141E;padding:16px 26px;border-radius:12px;font-size:16px;font-weight:700;transition:transform .2s cubic-bezier(.22,1,.36,1),background .2s ease" style-hover="background:#F08B45;transform:translateY(-2px)">Book the free audit <span style="font-family:'IBM Plex Mono',monospace">&#8594;</span></button>
+      </div>
+    </div>
+  </section>
+</main>
+</sc-if>
+
+<footer style="background:#0C141E;color:rgba(255,255,255,0.62);border-top:1px solid rgba(255,255,255,0.08)">
+  <div style="width:100%;max-width:1280px;margin:0 auto;padding:clamp(52px,6vw,80px) clamp(20px,4vw,40px) 40px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:clamp(28px,4vw,48px)">
+    <div style="grid-column:span 2;min-width:260px">
+      <div style="display:flex;align-items:center;gap:11px">
+        <span style="display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:#FFFFFF">
+          <span style="display:block;width:14px;height:7px;border-left:2.2px solid #0C141E;border-bottom:2.2px solid #0C141E;transform:rotate(-45deg) translate(1px,-2px)"></span>
+        </span>
+        <span style="font-family:Archivo,sans-serif;font-weight:800;font-size:19px;letter-spacing:-0.035em;color:#fff">TradeCatch</span>
+      </div>
+      <p style="margin:20px 0 0;max-width:32em;font-size:15.5px;line-height:1.65;color:rgba(255,255,255,0.7)">A bilingual system that answers missed calls, alerts the right technician, and follows up on unanswered quotes — installed and monitored by a real person.</p>
+      <p style="margin:20px 0 0;font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.05em;color:rgba(255,255,255,0.64)">Montréal · Laval · Mirabel · Vaudreuil-Dorion</p>
+      <p style="margin:12px 0 0;display:flex;flex-wrap:wrap;gap:8px 14px;font-size:14px">
+        <a href="tel:4389936997" style="color:rgba(255,255,255,0.8)" style-hover="color:#E4762B">438·993·6997</a>
+        <span style="color:rgba(255,255,255,0.25)">·</span>
+        <a href="mailto:ara.ghahramanyan07@gmail.com" style="color:rgba(255,255,255,0.8)" style-hover="color:#E4762B">ara.ghahramanyan07@gmail.com</a>
+      </p>
+    </div>
+
+    <div>
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.64)">Company</p>
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:11px;align-items:flex-start">
+        <button onClick="{{ goServices }}" style="font-size:14.5px;color:rgba(255,255,255,0.75);transition:color .18s ease" style-hover="color:#fff">Services</button>
+        <button onClick="{{ goHow }}" style="font-size:14.5px;color:rgba(255,255,255,0.75);transition:color .18s ease" style-hover="color:#fff">How it works</button>
+        <button onClick="{{ goIndustries }}" style="font-size:14.5px;color:rgba(255,255,255,0.75);transition:color .18s ease" style-hover="color:#fff">Industries</button>
+        <button onClick="{{ goPricing }}" style="font-size:14.5px;color:rgba(255,255,255,0.75);transition:color .18s ease" style-hover="color:#fff">Pricing</button>
+        <button onClick="{{ goAbout }}" style="font-size:14.5px;color:rgba(255,255,255,0.75);transition:color .18s ease" style-hover="color:#fff">About</button>
+        <button onClick="{{ goFaq }}" style="font-size:14.5px;color:rgba(255,255,255,0.75);transition:color .18s ease" style-hover="color:#fff">FAQ</button>
+      </div>
+    </div>
+
+    <div>
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.64)">Legal</p>
+      <div style="margin-top:18px;display:flex;flex-direction:column;gap:11px;align-items:flex-start">
+        <a href="#" style="font-size:14.5px;color:rgba(255,255,255,0.75)" style-hover="color:#fff">Privacy Policy</a>
+        <a href="#" style="font-size:14.5px;color:rgba(255,255,255,0.75)" style-hover="color:#fff">Terms of Service</a>
+        <a href="#" style="font-size:14.5px;color:rgba(255,255,255,0.75)" style-hover="color:#fff">Cookie Policy</a>
+        <a href="#" style="font-size:14.5px;color:rgba(255,255,255,0.75)" style-hover="color:#fff">Acceptable Use</a>
+        <a href="#" style="font-size:14.5px;color:rgba(255,255,255,0.75)" style-hover="color:#fff">Accessibility</a>
+      </div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid rgba(255,255,255,0.08)">
+    <div style="width:100%;max-width:1280px;margin:0 auto;padding:24px clamp(20px,4vw,40px);display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center">
+      <p style="margin:0;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:rgba(255,255,255,0.62)">© 2026 TradeCatch. All rights reserved.</p>
+      <p style="margin:0;max-width:60em;font-size:12.5px;line-height:1.6;color:rgba(255,255,255,0.62)">The system does not diagnose technical, electrical, plumbing, HVAC, medical or safety conditions. Emergency handling and safety instructions remain the responsibility of the contractor and qualified personnel.</p>
+    </div>
+  </div>
+</footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1000},&quot;showLangSwitch&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Navigation&quot;},&quot;loopDemo&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Hero&quot;},&quot;motionLevel&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;full&quot;,&quot;options&quot;:[&quot;full&quot;,&quot;subtle&quot;,&quot;off&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Motion&quot;}}">
+const SCRIPT = [
+  { type: "event", text: "MISSED CALL · (514) 555-0182", time: "7:42", after: 900 },
+  { type: "out", text: "Sorry we missed your call — this is Nord Plomberie. What's the issue, and what's the address?", think: 1300, after: 900 },
+  { type: "in", text: "No heat, furnace won't start. 12 Oak St.", think: 1500, after: 800 },
+  { type: "out", text: "Got it. Can you send a photo of the unit? Alerting our on-call tech now.", think: 1200, after: 1000 },
+  { type: "event", text: "ON-CALL TECH ALERTED · MARC D.", time: "7:44", after: 1100 },
+  { type: "win", text: "APPOINTMENT BOOKED · 8:15 AM", time: "7:51", after: 1000 },
+];
+
+const SYSTEM_STEPS = [
+  { num: "01", title: "Call captured", body: "Missed and after-hours calls trigger an immediate bilingual text — before the customer dials anyone else." },
+  { num: "02", title: "Details collected", body: "Name, address, service needed, urgency and photos, gathered in the customer's own language." },
+  { num: "03", title: "Technician alerted", body: "The right technician, dispatcher or owner gets a complete job card on their phone." },
+  { num: "04", title: "Lead tracked", body: "The request lands in your CRM or dashboard so nothing lives only in someone's head." },
+  { num: "05", title: "Quote chased", body: "If a quote goes quiet, personalised follow-ups go out — and stop the moment they reply." },
+  { num: "06", title: "Result measured", body: "You see which calls, quotes and follow-ups actually turned into booked work." },
+];
+
+const MANUAL = [
+  "A missed call gets a callback whenever someone remembers — sometimes hours later.",
+  "Quotes get followed up when someone has a free minute, which often means never.",
+  "The technician learns the job details secondhand, if at all.",
+  "Nobody can say how many calls or quotes actually turned into jobs.",
+  "An after-hours emergency waits until business hours.",
+];
+
+const SYSTEMD = [
+  "A missed call gets a bilingual text back within seconds, day or night.",
+  "Every quote gets a scheduled sequence that stops the second the customer replies.",
+  "The on-call technician gets a complete job summary the moment a lead comes in.",
+  "A dashboard shows exactly which calls, quotes and follow-ups became booked work.",
+  "After-hours requests are triaged immediately and escalated to a backup contact.",
+];
+
+const METRICS = [
+  { value: "18", label: "Missed calls caught" },
+  { value: "13", label: "Customers who replied" },
+  { value: "9", label: "New requests logged" },
+  { value: "5", label: "Appointments booked" },
+  { value: "22", label: "Quotes followed up" },
+  { value: "3", label: "Contracts signed" },
+  { value: "14 800 $", label: "Tracked opportunity value" },
+  { value: "4", label: "Cases needing you" },
+];
+
+const FAQS = [
+  { q: "Does the AI speak directly to customers?", a: "It sends messages you approved and collects information. Anything that matters — pricing, diagnosis, negotiation — stays with your people." },
+  { q: "Does it replace our receptionist?", a: "No. It absorbs the repetitive missed-call and follow-up work so your staff can spend their time on the conversations that actually need a human." },
+  { q: "What happens during an emergency?", a: "The request is escalated using rules your company approved in advance. The system never diagnoses a problem or gives safety instructions you haven't signed off on." },
+  { q: "Can it work with our current phone number?", a: "Usually — it depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line." },
+];
+
+const FOUNDER_POINTS = [
+  "Software developer by trade, building automations and business systems",
+  "Bilingual service, French and English",
+  "Focused on Montréal, Laval and the surrounding area",
+  "Personally involved in setup, testing and monitoring",
+];
+
+const PILOT_POINTS = [
+  "Hands-on setup with your team, not a self-serve dashboard",
+  "Workflows adjusted to your real call and quote volume",
+  "Direct line to the founder while the system is tuned",
+  "Your feedback shapes what gets built next",
+];
+
+const SERVICE_GROUPS = [
+  { num: "01", title: "Lead capture", purpose: "Stop callers from dialling your competitor thirty seconds later.", items: ["Missed-call detection", "After-hours SMS response", "French and English", "Customer-information collection", "Photo collection", "Service-area checking", "Lead creation"] },
+  { num: "02", title: "Technician alerts", purpose: "Get the complete request to the right person, fast.", items: ["On-call schedule configuration", "Technician SMS alerts", "Job cards", "Customer details", "Photos", "Urgency level", "Backup escalation", "Owner notifications"] },
+  { num: "03", title: "Qualification & booking", purpose: "Cut the admin conversations and book qualified leads sooner.", items: ["Approved qualification questions", "Project-type detection", "Service-area verification", "Appointment requests", "Calendar booking", "Confirmation messages", "Appointment reminders"] },
+  { num: "04", title: "Quote recovery", purpose: "Stop high-value estimates dying because nobody followed up.", items: ["Quote detection", "Customer and project extraction", "Follow-up sequences", "Reply detection", "Reply classification", "Contractor approval requests", "Won/lost tracking"] },
+  { num: "05", title: "Reporting", purpose: "Show, in numbers, whether any of this is working.", items: ["Weekly summaries", "Missed-call reports", "Response rates", "Jobs booked", "Quotes followed up", "Quotes won", "Cases needing attention", "Recovered opportunity value"] },
+];
+
+const LATER = ["E-signature", "Deposit collection", "Invoice reminders", "Review requests", "Old-lead reactivation", "Seasonal renewals", "Material-order automation"];
+
+const HOW_STAGES = [
+  { num: "01", title: "Customer makes contact", items: ["Phone call", "Website form", "Email", "Landing page"] },
+  { num: "02", title: "The system responds", items: ["Immediate SMS", "Language selection", "Basic information collection"] },
+  { num: "03", title: "The request is routed", items: ["Service type", "Location", "Urgency", "Correct technician", "Backup escalation"] },
+  { num: "04", title: "Your team takes the job", items: ["Calls the customer", "Diagnoses the issue", "Visits the property", "Prepares the quote"] },
+  { num: "05", title: "Quote follow-up begins", items: ["Quote detected", "Follow-ups scheduled", "Replies classified", "Contractor notified"] },
+  { num: "06", title: "The outcome is recorded", items: ["Appointment booked", "Quote accepted", "Quote lost", "Follow-up paused", "Revenue tracked"] },
+];
+
+const INDUSTRIES = [
+  { num: "01", name: "Plumbing", headline: "Catch the emergency before they call another plumber", focus: ["Missed emergency calls", "Flooding escalation", "Technician routing", "Repair and replacement quotes"] },
+  { num: "02", name: "HVAC", headline: "Capture service calls, chase the high-value install quotes", focus: ["No-heat and no-cooling calls", "Heat-pump inquiries", "Replacement quotes", "Seasonal demand spikes"] },
+  { num: "03", name: "Electrical", headline: "Route urgent requests, recover unanswered estimates", focus: ["Emergency escalation", "Service-area checks", "Panel and rewiring estimates"] },
+  { num: "04", name: "Roofing & Renovation", headline: "Follow up on every high-value project estimate", focus: ["Inspection requests", "Estimates", "Scheduling", "Quote follow-up"] },
+  { num: "05", name: "Exterior Trades", headline: "Keep leads moving while you're on the job site", focus: ["Landscaping", "Paving", "Fencing", "Excavation", "Snow-removal renewals"] },
+];
+
+const TIERS = [
+  { name: "Starter", price: "$2,500 setup", sub: "+ $750 / month", popular: false, items: ["Missed-call SMS", "Lead-information collection", "One technician alert workflow", "Quote follow-up", "Weekly reporting"] },
+  { name: "Growth", price: "$4,000 setup", sub: "+ $1,000–$1,500 / month", popular: true, items: ["Multiple technicians", "On-call rotation", "Backup escalation", "CRM integration", "Appointment booking", "Advanced quote follow-up", "Custom dashboard"] },
+  { name: "Premium", price: "Custom", sub: "Scoped on the audit call", popular: false, items: ["Multiple locations", "High call volume", "E-signatures", "Deposits", "Invoice reminders", "Review automation", "Custom integrations", "Priority support"] },
+];
+
+const ABOUT_BODY = [
+  "We work with local service and trade businesses, not enterprises.",
+  "Everything runs in French and English, chosen by the customer.",
+  "We build and manage the workflows — you don't configure anything.",
+  "We never replace licensed professionals.",
+  "Important decisions stay human, always.",
+  "The goal is practical revenue recovery, not experimental AI.",
+];
+
+const ALL_FAQS = [
+  { q: "Does the AI speak directly to customers?", a: "It sends messages you approved and collects information. Anything that matters — pricing, diagnosis, negotiation — stays with your people." },
+  { q: "Does it replace our receptionist?", a: "No. It absorbs the repetitive missed-call and follow-up work so your staff can spend their time on the conversations that actually need a human." },
+  { q: "What happens during an emergency?", a: "The request is escalated using rules your company approved in advance. The system never diagnoses a problem or gives safety instructions you haven't signed off on." },
+  { q: "Can it work with our current phone number?", a: "Usually — it depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line." },
+  { q: "Can it integrate with our CRM?", a: "It can be configured around common CRMs, calendars and email accounts, or run on a separate dashboard. We verify the specific integration during the audit rather than promising it upfront." },
+  { q: "Will customers know they're talking to automation?", a: "The messages clearly represent your business and never pretend to be a specific human employee when that would be misleading. You approve the exact wording." },
+  { q: "What happens when a customer replies?", a: "The automatic sequence stops or pauses immediately, and the reply is routed according to the rules you set." },
+  { q: "Can the system offer discounts?", a: "Not on its own. Any pricing change or discount requires your approval first." },
+  { q: "Is revenue guaranteed?", a: "No, and anyone who tells you otherwise is selling something. The system makes your response and follow-up consistent. Results still depend on demand, pricing, reputation, availability and the quality of your work." },
+  { q: "How long does installation take?", a: "We give you a realistic range after the audit. It varies with call volume, integrations and how many workflows are involved — we'd rather quote a real timeline than a flattering one." },
+];
+
+const FORM_STEPS = [
+  { id: "name", kind: "name", label: "Name", title: "First — who are we talking to?" },
+  { id: "company", kind: "text", label: "Company", title: "What's the company called?", placeholder: "Nord Plomberie" },
+  { id: "trade", kind: "choice", label: "Trade", title: "What trade are you in?", options: ["Plumbing", "HVAC", "Electrical", "Roofing", "Renovation", "Landscaping", "Paving", "Excavation", "Fencing", "Other"] },
+  { id: "city", kind: "text", label: "City", title: "Where do you operate from?", help: "The city or the area your crews actually cover.", placeholder: "Laval" },
+  { id: "language", kind: "choice", label: "Language", title: "Which language should we run the call in?", options: ["English", "Français"] },
+  { id: "email", kind: "text", inputType: "email", label: "Email", title: "Best work email?", placeholder: "marc@nordplomberie.ca" },
+  { id: "phone", kind: "text", inputType: "tel", label: "Phone", title: "And the best number to reach you?", placeholder: "514 555 0182" },
+  { id: "employees", kind: "choice", label: "Team size", title: "How many people work in the business?", options: ["Just me", "2–5", "6–15", "16–30", "30+"] },
+  { id: "calls", kind: "choice", label: "Calls / month", title: "Roughly how many calls come in each month?", options: ["Under 50", "50–150", "150–400", "400+", "Honestly, no idea"] },
+  { id: "missed", kind: "choice", label: "Missed / week", title: "How many of those go unanswered in a week?", help: "A rough guess is fine. The audit is where we get the real number.", options: ["0–5", "5–15", "15–30", "30+", "No idea"] },
+  { id: "afterHours", kind: "choice", label: "After hours", title: "Do you take after-hours calls?", options: ["Yes, always", "Sometimes", "No"] },
+  { id: "quotes", kind: "choice", label: "Quotes / month", title: "How many quotes go out in a month?", options: ["Under 10", "10–30", "30–75", "75+"] },
+  { id: "jobValue", kind: "choice", label: "Average job", title: "What's an average job worth?", options: ["Under $1,000", "$1,000–$5,000", "$5,000–$15,000", "$15,000+"] },
+  { id: "crm", kind: "text", label: "Current tools", title: "What software are you running today?", help: "CRM, invoicing, scheduling — whatever you already use. Spreadsheets count.", placeholder: "Jobber, QuickBooks, spreadsheets…", optional: true },
+  { id: "handlesCalls", kind: "choice", label: "Handles calls", title: "Who deals with missed calls right now?", options: ["Me, the owner", "Office staff", "An answering service", "Nobody, consistently"] },
+  { id: "followsQuotes", kind: "choice", label: "Chases quotes", title: "And who chases the quotes that go quiet?", options: ["Me, the owner", "Office staff", "The technician", "Nobody, consistently"] },
+  { id: "problem", kind: "textarea", label: "Biggest problem", title: "What's the one thing costing you the most jobs?", help: "Two lines is plenty — say it how you'd say it on the phone.", placeholder: "We miss most calls after 4pm and never call them back…", optional: true },
+  { id: "consent", kind: "consent", label: "Consent", title: "Last thing — can we contact you about this?" },
+];
+
+const OPT_KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"];
+
+class Component extends DCLogic {
+  state = { page: "home", shown: 0, typing: null, faq: 0, menu: false, wide: true, step: 0, answers: {}, consent: false, marketing: false, formDone: false };
+
+  constructor(props) {
+    super(props);
+    this.rootRef = React.createRef();
+    this.headerRef = React.createRef();
+    this.threadRef = React.createRef();
+    this.phoneWrapRef = React.createRef();
+    this.heroGridRef = React.createRef();
+    this.enRef = React.createRef();
+    this.frRef = React.createRef();
+    this.idx = 0;
+    this.timers = [];
+    this._lastPage = "home";
+  }
+
+  componentDidMount() {
+    this.setState({ wide: window.innerWidth >= 1080 });
+    this.onResize = () => this.setState({ wide: window.innerWidth >= 1080 });
+    window.addEventListener("resize", this.onResize, { passive: true });
+
+    this.onScroll = () => {
+      const y = window.scrollY || 0;
+      const h = this.headerRef.current;
+      if (h) {
+        const on = y > 10;
+        h.style.borderBottomColor = on ? "rgba(12,20,30,0.10)" : "rgba(12,20,30,0)";
+        h.style.boxShadow = on ? "0 8px 30px -18px rgba(12,20,30,.35)" : "none";
+        h.style.background = on ? "rgba(244,241,236,0.92)" : "rgba(244,241,236,0.82)";
+      }
+      if (!this.reduced && !this.subtle) {
+        if (this.phoneWrapRef.current && y < 1200) this.phoneWrapRef.current.style.transform = "translateY(" + (-y * 0.045).toFixed(2) + "px)";
+        if (this.heroGridRef.current && y < 1200) this.heroGridRef.current.style.transform = "translateY(" + (y * 0.12).toFixed(2) + "px)";
+      }
+    };
+    const level = this.props.motionLevel ?? "full";
+    this.subtle = level === "subtle";
+    this.reduced = level === "off" || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.addEventListener("scroll", this.onScroll, { passive: true });
+    this.onScroll();
+
+    this.setLang("EN");
+    this.play();
+    this.wireScrollFx();
+  }
+
+  componentDidUpdate() {
+    if (this._lastPage !== this.state.page) {
+      this._lastPage = this.state.page;
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      this.wireScrollFx();
+    }
+  }
+
+  componentWillUnmount() {
+    this.timers.forEach(clearTimeout);
+    window.removeEventListener("scroll", this.onScroll);
+    window.removeEventListener("resize", this.onResize);
+    if (this.io) this.io.disconnect();
+    if (this.cio) this.cio.disconnect();
+  }
+
+  wait(fn, ms) { const id = setTimeout(fn, ms); this.timers.push(id); if (this.timers.length > 60) this.timers = this.timers.slice(-30); return id; }
+
+  play() {
+    const step = () => {
+      if (this.idx >= SCRIPT.length) {
+        if ((this.props.loopDemo ?? true) === false) return;
+        this.wait(() => { this.idx = 0; this.setState({ shown: 0, typing: null }); this.wait(step, 700); }, 3800);
+        return;
+      }
+      const s = SCRIPT[this.idx];
+      const commit = () => {
+        this.idx += 1;
+        this.setState({ shown: this.idx, typing: null });
+        this.wait(step, s.after || 800);
+      };
+      if (s.type === "out" || s.type === "in") {
+        this.setState({ typing: s.type });
+        this.wait(commit, this.reduced ? 200 : (s.think || 1200));
+      } else commit();
+    };
+    step();
+  }
+
+  wireScrollFx() {
+    if (this.io) this.io.disconnect();
+    if (this.cio) this.cio.disconnect();
+    const root = this.rootRef.current;
+    if (!root || this.reduced) return;
+
+    requestAnimationFrame(() => {
+      const els = Array.from(root.querySelectorAll("[data-reveal]"));
+      els.forEach((el, i) => {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(18px)";
+        el.style.transition = "opacity .7s cubic-bezier(.22,1,.36,1) " + ((i % 5) * 60) + "ms, transform .7s cubic-bezier(.22,1,.36,1) " + ((i % 5) * 60) + "ms";
+      });
+      this.io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.style.opacity = "1";
+            e.target.style.transform = "none";
+            this.io.unobserve(e.target);
+          }
+        });
+      }, { rootMargin: "0px 0px -12% 0px", threshold: 0.05 });
+      els.forEach((el) => this.io.observe(el));
+      if (!("IntersectionObserver" in window)) els.forEach((el) => { el.style.opacity = "1"; el.style.transform = "none"; });
+
+      const counters = Array.from(root.querySelectorAll("[data-count]"));
+      this.cio = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting) return;
+          const el = e.target;
+          this.cio.unobserve(el);
+          const final = el.textContent;
+          const num = parseInt(final.replace(/[^0-9]/g, ""), 10);
+          if (!num || num > 100000) return;
+          const suffix = final.replace(/[0-9\s]/g, "");
+          const dur = 900;
+          const t0 = performance.now();
+          const tick = (now) => {
+            const p = Math.min(1, (now - t0) / dur);
+            const eased = 1 - Math.pow(1 - p, 3);
+            const v = Math.round(num * eased);
+            el.textContent = final.indexOf(" ") > -1 ? v.toLocaleString("fr-CA").replace(/,/g, " ") + " " + suffix : v + suffix;
+            if (p < 1) requestAnimationFrame(tick); else el.textContent = final;
+          };
+          requestAnimationFrame(tick);
+        });
+      }, { threshold: 0.4 });
+      counters.forEach((el) => this.cio.observe(el));
+    });
+  }
+
+  setLang(l) {
+    const on = "background:#0C141E;color:#FFFFFF";
+    const off = "color:#5C6875";
+    const a = l === "EN" ? this.enRef.current : this.frRef.current;
+    const b = l === "EN" ? this.frRef.current : this.enRef.current;
+    if (a) { a.style.background = "#0C141E"; a.style.color = "#FFFFFF"; }
+    if (b) { b.style.background = "transparent"; b.style.color = "#5C6875"; }
+    void on; void off;
+  }
+
+  go(page) {
+    return () => this.setState({ page, menu: false });
+  }
+
+  answered(step) {
+    const a = this.state.answers;
+    if (!step) return true;
+    if (step.optional) return true;
+    if (step.kind === "name") return !!(a.firstName && a.firstName.trim());
+    if (step.kind === "consent") return this.state.consent;
+    const v = a[step.id];
+    return !!(v && String(v).trim());
+  }
+
+  setAnswer(id, value) {
+    this.setState((s) => ({ answers: Object.assign({}, s.answers, { [id]: value }) }));
+  }
+
+  advance() {
+    this.setState((s) => ({ step: Math.min(s.step + 1, FORM_STEPS.length) }));
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
+  goBack() {
+    this.setState((s) => ({ step: Math.max(0, s.step - 1) }));
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
+  submitForm() {
+    this.setState({ formDone: true });
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }
+
+  wizardVals() {
+    const total = FORM_STEPS.length;
+    const i = this.state.step;
+    const onReview = i >= total;
+    const step = onReview ? null : FORM_STEPS[i];
+    const a = this.state.answers;
+    const ok = onReview ? this.state.consent : this.answered(step);
+    const mins = Math.max(1, Math.round(((total - i) * 9) / 60));
+
+    const q = step
+      ? {
+          num: String(i + 1).padStart(2, "0"),
+          title: step.title,
+          help: step.help || "",
+          hasHelp: !!step.help,
+          placeholder: step.placeholder || "",
+          inputType: step.inputType || "text",
+          isName: step.kind === "name",
+          isText: step.kind === "text",
+          isChoice: step.kind === "choice",
+          isTextarea: step.kind === "textarea",
+          isConsent: step.kind === "consent",
+        }
+      : { num: "", title: "", help: "", hasHelp: false, placeholder: "", inputType: "text", isName: false, isText: false, isChoice: false, isTextarea: false, isConsent: false };
+
+    const nextFn = () => {
+      if (onReview) this.submitForm();
+      else if (ok) this.advance();
+    };
+
+    return {
+      q,
+      isQuestion: !onReview,
+      isReview: onReview,
+      counterText: onReview ? "Review your answers" : "Question " + (i + 1) + " of " + total,
+      timeLeft: onReview ? "Almost done" : "~" + mins + " min left",
+      progress: Math.round(((onReview ? total : i) / total) * 100) + "%",
+      value: step && step.kind === "name" ? a.firstName || "" : step ? a[step.id] || "" : "",
+      value2: a.lastName || "",
+      onInput: (e) => this.setAnswer(step && step.kind === "name" ? "firstName" : step.id, e.target.value),
+      onInput2: (e) => this.setAnswer("lastName", e.target.value),
+      onKey: (e) => { if (e.key === "Enter") { e.preventDefault(); nextFn(); } },
+      options: step && step.options
+        ? step.options.map((label, n) => ({
+            label,
+            key: OPT_KEYS[n] || "",
+            selected: a[step.id] === label,
+            unselected: a[step.id] !== label,
+            pick: () => { this.setAnswer(step.id, label); this.wait(() => this.advance(), 180); },
+          }))
+        : [],
+      consent: this.state.consent,
+      marketing: this.state.marketing,
+      toggleConsent: () => this.setState((s) => ({ consent: !s.consent })),
+      toggleMarketing: () => this.setState((s) => ({ marketing: !s.marketing })),
+      canContinue: ok,
+      blocked: !ok,
+      nextLabel: onReview ? "Submit request" : step && step.kind === "consent" ? "Review answers" : "Continue",
+      next: nextFn,
+      back: () => this.goBack(),
+      showBack: i > 0,
+      skippable: !!(step && step.optional && !ok),
+      enterHint: !!(step && (step.kind === "text" || step.kind === "name") && ok),
+      reviewRows: FORM_STEPS.map((s2, n) => ({
+        label: s2.label,
+        value:
+          s2.kind === "name"
+            ? [a.firstName, a.lastName].filter(Boolean).join(" ") || "—"
+            : s2.kind === "consent"
+            ? this.state.consent ? "Agreed" : "Not yet"
+            : a[s2.id] || "—",
+        edit: () => { this.setState({ step: n }); window.scrollTo({ top: 0, left: 0, behavior: "instant" }); },
+      })),
+    };
+  }
+
+  renderVals() {
+    const p = this.state.page;
+    const thread = SCRIPT.slice(0, this.state.shown).map((m) => ({
+      text: m.text,
+      time: m.time || "",
+      isEvent: m.type === "event",
+      isWin: m.type === "win",
+      isOut: m.type === "out",
+      isIn: m.type === "in",
+    }));
+
+    return {
+      rootRef: this.rootRef,
+      headerRef: this.headerRef,
+      threadRef: this.threadRef,
+      phoneWrapRef: this.phoneWrapRef,
+      heroGridRef: this.heroGridRef,
+      enRef: this.enRef,
+      frRef: this.frRef,
+
+      showLang: (this.props.showLangSwitch ?? true) !== false,
+      wide: this.state.wide,
+      narrow: !this.state.wide,
+      menuOpen: this.state.menu,
+      toggleMenu: () => this.setState((s) => ({ menu: !s.menu })),
+
+      isHome: p === "home",
+      isServices: p === "services",
+      isHow: p === "how",
+      isIndustries: p === "industries",
+      isPricing: p === "pricing",
+      isAbout: p === "about",
+      isFaq: p === "faq",
+      isBook: p === "book",
+
+      goHome: this.go("home"),
+      goServices: this.go("services"),
+      goHow: this.go("how"),
+      goIndustries: this.go("industries"),
+      goPricing: this.go("pricing"),
+      goAbout: this.go("about"),
+      goFaq: this.go("faq"),
+      goBook: this.go("book"),
+
+      setEn: () => this.setLang("EN"),
+      setFr: () => this.setLang("FR"),
+
+      thread,
+      typingOut: this.state.typing === "out",
+      typingIn: this.state.typing === "in",
+
+      systemSteps: SYSTEM_STEPS,
+      manualRows: MANUAL,
+      systemRows: SYSTEMD,
+      metrics: METRICS,
+      supporting: ["Roofing", "Renovation", "Landscaping", "Paving", "Excavation", "Fencing", "Exterior trades"],
+      founderPoints: FOUNDER_POINTS,
+      pilotPoints: PILOT_POINTS,
+      expect: ["20-minute audit", "Analysis of your calls and quotes", "Recommendations for your process", "No commitment"],
+      formRunning: !this.state.formDone,
+      formDone: this.state.formDone,
+      restart: () => this.setState({ formDone: false, step: 0, answers: {}, consent: false, marketing: false }),
+      ...this.wizardVals(),
+
+      serviceGroups: SERVICE_GROUPS,
+      laterItems: LATER,
+      howStages: HOW_STAGES,
+      industrySections: INDUSTRIES,
+      tiers: TIERS,
+      aboutBody: ABOUT_BODY.map((text, i) => ({ num: "0" + (i + 1), text })),
+      allFaqs: ALL_FAQS.map((f, i) => ({
+        q: f.q,
+        a: f.a,
+        open: this.state.faq === i,
+        sign: this.state.faq === i ? "\u2212" : "+",
+        toggle: () => this.setState((s) => ({ faq: s.faq === i ? -1 : i })),
+      })),
+      faqTeaser: FAQS.map((f, i) => ({
+        q: f.q,
+        a: f.a,
+        open: this.state.faq === i,
+        sign: this.state.faq === i ? "\u2212" : "+",
+        toggle: () => this.setState((s) => ({ faq: s.faq === i ? -1 : i })),
+      })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
