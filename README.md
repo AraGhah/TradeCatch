@@ -6,6 +6,7 @@ Marketing site — Next.js 16 (App Router), next-intl (en/fr), Tailwind v4.
 
 ```bash
 npm install
+cp .env.example .env.local   # fill in values as needed for local email/Turnstile
 npm run dev
 ```
 
@@ -14,20 +15,23 @@ Open <http://localhost:3000> (or whatever port is printed — it auto-picks the 
 ## Before every deploy
 
 ```bash
-npx tsc --noEmit -p tsconfig.json   # type-check
-npm run lint                        # eslint
-npm run build                       # production build
+npm run check:i18n             # en/fr message key parity
+npx tsc --noEmit -p tsconfig.json
+npm run lint
+npm run test:unit
+npm run build
+npm run test:e2e               # needs Playwright browsers installed once
 ```
 
-All three must pass with zero errors. `npm run build` alone is not sufficient proof the
-site works — it only checks that the code compiles. CSP and hydration bugs only show up
-when you actually load the built output in a real browser, which is why the step below
-matters:
+CI (`.github/workflows/ci.yml`) runs the same checks on push/PR to `main` and `Ara`.
+
+`npm run build` alone is not sufficient — CSP and hydration bugs only show up when you
+load the built output in a real browser:
 
 ```bash
 rm -rf .next && npm run build
 npx next start -p 3000
-# then open http://localhost:3000 in a real browser and check the console for errors
+# then open http://localhost:3000 and check the console
 ```
 
 ## Environment variables
@@ -36,49 +40,53 @@ Copy `.env.example` to `.env.local` and fill in real values. Nothing in `.env.ex
 is a secret — it's committed on purpose as the template. `.env.local` itself is
 gitignored and must never be committed.
 
-| Variable | Required for | Behavior if unset |
+| Variable | Dev if unset | Production (`NODE_ENV=production`) |
 | - | - | - |
-| `NEXT_PUBLIC_SITE_URL` | canonical URLs, sitemap, robots.txt | falls back to `https://tradecatch.ca` |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | Google Analytics 4 | analytics script just doesn't load |
-| `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_NOTIFY_EMAIL` | audit-request confirmation + internal notification | `/api/book-audit` still accepts submissions and logs them server-side, just skips sending email (see `src/lib/email.ts`) |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | bot verification on the audit form | server-side verification is skipped with a warning log (see `src/lib/turnstile.ts`) |
+| `NEXT_PUBLIC_SITE_URL` | falls back to `https://tradecatch.ca` | same |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | analytics doesn't load | same |
+| `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_NOTIFY_EMAIL` | submissions accepted; emails skipped with a warning | **required** — `/api/book-audit` returns 503 if missing |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | verification skipped with a warning | **required** — `/api/book-audit` returns 503 if missing |
+
+### Production go-live checklist
+
+- [ ] All Resend + Turnstile vars set in the host's production environment
+- [ ] Submit a real book-audit form on the live URL and confirm both the visitor confirmation and the internal notify email arrive
+- [ ] Confirm pricing on `/pricing` matches the current offer (Starter $2,500+$750/mo, Growth $4,000+$1,000–$1,500/mo, Premium custom)
+- [ ] Confirm favicon / brand mark looks correct (not a Next.js default)
 
 ## Deployment
 
-This is a standard Next.js app — deploy it the same way regardless of host:
+1. Push the branch to `origin`.
+2. On the host (Vercel or similar), set the environment variables above for **production**.
+3. Trigger a build from the deployed branch (`npm run build`).
+4. After deploy, load the live URL in a real browser and check DevTools for CSP / console errors.
 
-1. Push the branch to `origin` (`git push origin Ara` or whatever branch you're deploying).
-2. On the hosting platform (Vercel or similar), set the environment variables above for
-   the production environment.
-3. Trigger a build from the deployed branch. The platform runs `npm run build` and
-   serves the output — no custom build command needed.
-4. After the deploy finishes, load the live URL in a real browser (not just curl) and
-   check DevTools console for errors, especially any CSP violations — that class of bug
-   passes `npm run build` silently and only shows up at runtime.
+## Known production limits
+
+- Rate limiting, idempotency keys, and duplicate-submission guards use an in-memory
+  `TimedStore` (`src/lib/store.ts`). Behind multiple instances / serverless functions
+  the effective rate limit is roughly `limit × instance count`. Swap
+  `createMemoryStore` for Upstash Redis / Vercel KV when that matters — call sites
+  already go through the shared abstraction.
+- CSP still allows `script-src 'unsafe-inline'` for static rendering. Revisit a
+  nonce-based CSP if more third-party scripts are added.
+- Automated a11y (axe / Lighthouse CI) is not wired yet; the Accessibility Statement
+  commits to WCAG 2.1 AA — keep verifying manually until CI coverage lands.
 
 ## Rollback
 
-If something ships broken:
-
-- **Platform with instant rollback (e.g. Vercel):** use the dashboard's "promote a
-  previous deployment" / rollback action — this is the fastest path and needs no git
-  operations.
-- **Manual rollback:** `git revert <bad-commit>` and push, or redeploy from the last
-  known-good commit SHA if the platform supports deploying an arbitrary ref. Avoid
-  `git reset --hard` on a shared branch — it rewrites history other people may have
-  already pulled.
-- Rate limiting, idempotency keys, and duplicate-submission guards in
-  `src/app/api/book-audit/route.ts` are in-memory (`Map`), scoped to a single server
-  process. A rollback or redeploy resets them — expected, not a bug — but if you ever
-  run multiple instances behind a load balancer, that in-memory state stops being
-  reliable across instances and would need moving to a shared store (Redis, etc.).
+- **Platform with instant rollback (e.g. Vercel):** promote a previous deployment.
+- **Manual:** `git revert <bad-commit>` and push, or redeploy a known-good SHA.
+  Avoid `git reset --hard` on a shared branch.
 
 ## Testing
 
 ```bash
+npm run check:i18n
+npm run test:unit
 npm run test:e2e
 ```
 
-Playwright specs live in `tests/`. They currently cover the book-audit API and security
-headers. There's no unit-test suite — coverage is build/lint/type-check plus these e2e
-specs plus manual browser verification.
+- **Unit:** Zod book-audit schema + rate-limit (`tests/unit/`).
+- **E2E:** book-audit API + security headers (`tests/`). Wizard UI, locale switch,
+  cookie consent, and marketing pages are still manual / CI build coverage.

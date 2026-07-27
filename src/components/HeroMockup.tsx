@@ -3,24 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 
 type Msg = {
-  type: "event" | "out" | "in" | "win";
+  type: "event" | "out" | "in" | "photo" | "win";
   text: string;
   time?: string;
 };
 
-type ScriptBeat = Msg & {
-  think?: number;
-  after: number;
-};
-
+/** Per-message timing tuned so a full cycle lands ~8–12s before restart. */
 const TIMING: { think?: number; after: number }[] = [
+  { after: 500 },
+  { think: 700, after: 900 },
+  { think: 650, after: 850 },
+  { think: 700, after: 900 },
+  { after: 750 },
+  { think: 500, after: 700 },
+  { after: 650 },
   { after: 900 },
-  { think: 1300, after: 900 },
-  { think: 1500, after: 800 },
-  { think: 1200, after: 1000 },
-  { after: 1100 },
-  { after: 1000 },
 ];
+
+const RESTART_PAUSE_MS = 2200;
 
 export function HeroMockup({
   businessName,
@@ -46,19 +46,31 @@ export function HeroMockup({
   const [shown, setShown] = useState<Msg[]>([]);
   const [typing, setTyping] = useState<"out" | "in" | null>(null);
   const [parallax, setParallax] = useState(0);
+  const [floatVisible, setFloatVisible] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
   const timers = useRef<number[]>([]);
-  const reduced = useRef(false);
+  const threadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    function sync() {
+      setReduceMotion(media.matches);
+    }
+    media.addEventListener("change", sync);
 
     function onScroll() {
-      if (reduced.current) return;
+      if (media.matches) return;
       const y = Math.min(window.scrollY, 1200);
       setParallax(y);
     }
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      media.removeEventListener("change", sync);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   useEffect(() => {
@@ -69,7 +81,7 @@ export function HeroMockup({
     };
 
     function delay(ms: number) {
-      const d = reduced.current ? Math.min(ms, 200) : ms;
+      const d = reduceMotion ? Math.min(ms, 120) : ms;
       return new Promise<void>((resolve) => {
         const id = window.setTimeout(resolve, d);
         timers.current.push(id);
@@ -80,11 +92,20 @@ export function HeroMockup({
       while (!cancelled) {
         setShown([]);
         setTyping(null);
+        setFloatVisible(false);
+
+        if (reduceMotion) {
+          setShown(messages);
+          setFloatVisible(true);
+          await delay(4000);
+          continue;
+        }
+
         for (let i = 0; i < messages.length; i++) {
           if (cancelled) return;
           const msg = messages[i];
-          const timing = TIMING[i] ?? { after: 900 };
-          const beat: ScriptBeat = { ...msg, ...timing };
+          const timing = TIMING[i] ?? { after: 800 };
+          const beat = { ...msg, ...timing };
 
           if (beat.think && (beat.type === "out" || beat.type === "in")) {
             setTyping(beat.type);
@@ -94,9 +115,13 @@ export function HeroMockup({
           }
 
           setShown((prev) => [...prev, msg]);
+          if (msg.type === "event" && /ALERT|ALERTÉ|ALERTED/i.test(msg.text)) {
+            setFloatVisible(true);
+          }
+          if (msg.type === "win") setFloatVisible(true);
           await delay(beat.after);
         }
-        await delay(3800);
+        await delay(RESTART_PAUSE_MS);
       }
     }
 
@@ -105,13 +130,14 @@ export function HeroMockup({
       cancelled = true;
       clearTimers();
     };
-  }, [messages]);
+  }, [messages, reduceMotion]);
 
   return (
     <div
-      className="relative mx-auto w-full max-w-[384px]"
+      id="missed-call-demo"
+      className="relative mx-auto w-full max-w-[384px] scroll-mt-28"
       style={{
-        transform: reduced.current
+        transform: reduceMotion
           ? undefined
           : `translateY(${parallax * -0.045}px)`,
       }}
@@ -126,7 +152,7 @@ export function HeroMockup({
       />
 
       <div
-        className="relative rounded-[46px] p-[11px] shadow-phone"
+        className="relative rounded-[46px] p-[11px]"
         style={{
           background: "linear-gradient(160deg,#2A3846,#141F2B 55%,#0A1017)",
           boxShadow:
@@ -137,7 +163,6 @@ export function HeroMockup({
           className="flex flex-col overflow-hidden rounded-[36px] bg-paper"
           style={{ height: "min(660px, 72vh)" }}
         >
-          {/* Status bar */}
           <div className="relative flex items-center justify-between bg-white px-4 pb-3 pt-3.5">
             <div className="absolute left-1/2 top-1.5 h-[22px] w-[88px] -translate-x-1/2 rounded-full bg-navy/90" />
             <span className="font-mono text-[11px] font-medium text-navy">
@@ -161,13 +186,16 @@ export function HeroMockup({
             </div>
           </div>
 
-          {/* Thread — flex-end is critical */}
           <div
-            className="flex flex-1 flex-col justify-end gap-3 overflow-hidden px-[18px] py-4"
+            ref={threadRef}
+            className="flex flex-1 flex-col justify-end gap-2.5 overflow-hidden px-[18px] py-4"
             aria-live="polite"
           >
             {shown.map((msg, i) => (
-              <MessageBubble key={`${msg.type}-${i}-${msg.text.slice(0, 12)}`} msg={msg} />
+              <MessageBubble
+                key={`${msg.type}-${i}-${msg.text.slice(0, 16)}`}
+                msg={msg}
+              />
             ))}
             {typing ? <TypingDots side={typing} /> : null}
           </div>
@@ -179,7 +207,12 @@ export function HeroMockup({
       </div>
 
       <div
-        className="absolute bottom-[54px] left-[-8px] z-10 animate-tc-drift rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-white px-4 py-3 shadow-card-hover"
+        className={`absolute bottom-[54px] left-[-8px] z-10 rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-white px-4 py-3 shadow-card-hover transition-[opacity,transform] duration-500 ${
+          floatVisible
+            ? "translate-y-0 opacity-100"
+            : "translate-y-2 opacity-0"
+        }`}
+        aria-hidden={!floatVisible}
       >
         <p className="font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
           {floatLabel}
@@ -220,11 +253,26 @@ function MessageBubble({ msg }: { msg: Msg }) {
     );
   }
 
+  if (msg.type === "photo") {
+    return (
+      <div className="animate-tc-in max-w-[78%] self-end overflow-hidden rounded-[16px] rounded-br-[5px] border border-[rgba(12,20,30,0.1)] bg-white shadow-[0_8px_20px_-14px_rgba(12,20,30,0.35)]">
+        <div
+          className="relative flex h-[108px] items-end justify-start bg-[linear-gradient(145deg,#3A4A5A_0%,#1A2430_55%,#0C141E_100%)] px-3 pb-2.5"
+          aria-hidden
+        >
+          <div className="absolute inset-0 opacity-40 [background-image:radial-gradient(circle_at_30%_40%,rgba(228,118,43,0.45),transparent_45%),radial-gradient(circle_at_70%_70%,rgba(255,255,255,0.12),transparent_40%)]" />
+          <span className="relative rounded bg-black/45 px-2 py-0.5 font-mono text-[9px] tracking-[0.06em] text-white/90 uppercase">
+            MMS
+          </span>
+        </div>
+        <p className="px-3 py-2 text-[12.5px] font-medium text-navy">{msg.text}</p>
+      </div>
+    );
+  }
+
   if (msg.type === "out") {
     return (
-      <div
-        className="animate-tc-in max-w-[86%] self-start rounded-[18px] rounded-bl-[5px] border border-[rgba(12,20,30,0.08)] bg-white px-3.5 py-2.5 text-[13.5px] leading-snug text-navy"
-      >
+      <div className="animate-tc-in max-w-[88%] self-start rounded-[18px] rounded-bl-[5px] border border-[rgba(12,20,30,0.08)] bg-white px-3.5 py-2.5 text-[13.5px] leading-snug text-navy">
         {msg.text}
       </div>
     );

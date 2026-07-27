@@ -67,7 +67,7 @@ export default async function IndustriesPage({
                 <span className="font-mono text-[11px] font-semibold tracking-[0.14em] text-ember-text uppercase">
                   {String(i + 1).padStart(2, "0")} · {section.name}
                 </span>
-                <h2 className="mt-4 max-w-[14em] font-heading text-[clamp(24px,2.8vw,34px)] font-bold leading-[1.12] tracking-[-0.034em] text-navy">
+                <h2 className="mt-4 max-w-[min(100%,28rem)] font-heading text-[clamp(24px,2.8vw,34px)] font-bold leading-[1.12] tracking-[-0.034em] text-navy">
                   {section.headline}
                 </h2>
               </div>

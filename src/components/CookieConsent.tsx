@@ -38,9 +38,16 @@ export function CookieConsent() {
 
   useEffect(() => {
     // Keep the fixed cookie bar from covering the footer copyright strip.
+    // If a mobile sticky CTA is present (also fixed bottom), it reads
+    // --tc-cookie-offset so the two don't overlap.
     document.body.style.paddingBottom = visible ? "96px" : "";
+    document.documentElement.style.setProperty(
+      "--tc-cookie-offset",
+      visible ? "96px" : "0px",
+    );
     return () => {
       document.body.style.paddingBottom = "";
+      document.documentElement.style.setProperty("--tc-cookie-offset", "0px");
     };
   }, [visible]);
 

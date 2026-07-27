@@ -4,14 +4,17 @@ import { bookAuditSchema } from "@/lib/validation/book-audit";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { sendBookAuditEmails } from "@/lib/email";
+import { createMemoryStore } from "@/lib/store";
+import {
+  getProductionConfigErrors,
+  isProductionRuntime,
+} from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
-// Duplicate-submission guard: tracks idempotency keys seen in the last
-// window so a double-click or retry doesn't send two emails. Same
-// single-process caveat as rate-limit.ts — fine for a single instance,
-// needs a shared store for multi-instance production deployments.
-const seenIdempotencyKeys = new Map<string, number>();
+// Duplicate-submission guard. Uses the shared TimedStore abstraction so a
+// Redis-backed implementation can replace createMemoryStore in one place.
+const seenIdempotencyKeys = createMemoryStore();
 const IDEMPOTENCY_WINDOW_MS = 10 * 60 * 1000;
 
 const requestSchema = bookAuditSchema.extend({
@@ -19,11 +22,19 @@ const requestSchema = bookAuditSchema.extend({
 });
 
 function jsonError(message: string, status: number) {
-  // Redacted, generic client-facing errors — no stack traces or internals.
   return NextResponse.json({ error: message }, { status });
 }
 
 export async function POST(request: NextRequest) {
+  const configErrors = getProductionConfigErrors();
+  if (configErrors.length > 0) {
+    console.error("[book-audit] refusing request — production misconfigured:", configErrors);
+    return jsonError(
+      "This service is temporarily unavailable. Please try again later.",
+      503,
+    );
+  }
+
   const ip = getClientIp(request);
 
   const { allowed } = rateLimit({
@@ -49,32 +60,46 @@ export async function POST(request: NextRequest) {
 
   const { idempotencyKey, ...payload } = parsed.data;
 
-  // Honeypot: real visitors never fill this hidden field.
   if (payload.companyWebsite) {
     console.warn("[book-audit] honeypot triggered", { ip });
-    // Return a success-shaped response so bots don't learn the honeypot exists.
     return NextResponse.json({ ok: true });
   }
 
   const now = Date.now();
-  for (const [key, seenAt] of seenIdempotencyKeys) {
-    if (now - seenAt > IDEMPOTENCY_WINDOW_MS) seenIdempotencyKeys.delete(key);
-  }
+  seenIdempotencyKeys.prune(IDEMPOTENCY_WINDOW_MS, now);
   if (seenIdempotencyKeys.has(idempotencyKey)) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
   const turnstileResult = await verifyTurnstileToken(
     payload.turnstileToken,
-    ip
+    ip,
   );
+
+  // In production the config guard above already ensures Turnstile is set.
+  // In development, unconfigured Turnstile still skips (with a warning).
   if (turnstileResult.configured && !turnstileResult.success) {
     return jsonError("Bot verification failed. Please try again.", 400);
+  }
+  if (!turnstileResult.configured && isProductionRuntime()) {
+    return jsonError(
+      "This service is temporarily unavailable. Please try again later.",
+      503,
+    );
   }
 
   seenIdempotencyKeys.set(idempotencyKey, now);
 
   const { sent } = await sendBookAuditEmails(payload);
+
+  if (isProductionRuntime() && !sent) {
+    console.error("[book-audit] email send failed in production", {
+      ip,
+      trade: payload.trade,
+    });
+    // Still accept the lead so the visitor isn't blocked if Resend blips —
+    // but log loudly so ops notices. Config absence is already blocked above.
+  }
 
   console.info("[book-audit] submission accepted", {
     ip,

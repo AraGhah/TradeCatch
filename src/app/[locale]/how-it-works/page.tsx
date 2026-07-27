@@ -85,18 +85,14 @@ export default async function HowItWorksPage({
             data-reveal
             className="mt-[clamp(40px,5vw,64px)] rounded-[20px] border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(28px,3.4vw,44px)]"
           >
-            <p className="text-mono-label text-muted">{t("sequenceTitle")}</p>
-            <div
-              className="mt-[26px] overflow-hidden rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-[rgba(12,20,30,0.1)]"
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-                gap: "1px",
-              }}
-            >
+            <p className="text-[13px] font-medium text-ember-text">{t("sequenceTitle")}</p>
+            <div className="mt-[26px] grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {sequence.map((step) => (
-                <div key={step.day} className="bg-white px-5 py-[22px]">
-                  <p className="font-mono text-[11px] font-semibold tracking-[0.1em] text-ember-text">
+                <div
+                  key={step.day}
+                  className="border border-[rgba(12,20,30,0.1)] bg-paper px-5 py-[22px]"
+                >
+                  <p className="text-[12px] font-semibold text-ember-text">
                     {step.day}
                   </p>
                   <p className="mt-[9px] text-[15.5px] leading-[1.55] text-text">
