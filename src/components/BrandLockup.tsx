@@ -12,11 +12,22 @@ export function LogoMark({
       } ${className}`}
       aria-hidden
     >
-      <span
-        className={`block h-[7px] w-[14px] origin-center -translate-y-px rotate-[-45deg] border-b-[2.2px] border-l-[2.2px] ${
-          inverted ? "border-navy" : "border-orange"
-        }`}
-      />
+      {/* Inline SVG mark — public/brand-mark.svg is the source asset for favicon/OG use */}
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 64 64"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M14 34 L27 47 L50 20"
+          stroke={inverted ? "#0C141E" : "#E4762B"}
+          strokeWidth="7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
     </span>
   );
 }

@@ -8,7 +8,6 @@ export function Footer() {
   const t = useTranslations("footer");
   const nav = useTranslations("nav");
   const site = useTranslations("site");
-  const legal = useTranslations("legal");
   const year = new Date().getFullYear();
   const phoneDisplay = site("phone").replace(/-/g, "·");
 

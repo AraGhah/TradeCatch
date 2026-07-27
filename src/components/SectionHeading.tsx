@@ -21,7 +21,7 @@ export function SectionHeading({
     ? ""
     : align === "center"
       ? "mx-auto max-w-3xl"
-      : "max-w-[20em]";
+      : "max-w-[min(100%,34rem)]";
 
   return (
     <div
@@ -31,8 +31,8 @@ export function SectionHeading({
     >
       {eyebrow ? (
         <p
-          className={`text-mono-label mb-4 ${
-            light ? "text-[rgba(255,255,255,0.64)]" : "text-muted"
+          className={`mb-3 text-[13px] font-medium tracking-[-0.01em] ${
+            light ? "text-[rgba(255,255,255,0.64)]" : "text-ember-text"
           }`}
         >
           {eyebrow}

@@ -2,20 +2,18 @@
 
 import { useLocale } from "next-intl";
 import { usePathname, useRouter } from "@/i18n/navigation";
-import { useParams } from "next/navigation";
 
 export function LocaleSwitcher({ inverted = false }: { inverted?: boolean }) {
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
-  const params = useParams();
 
   function switchTo(nextLocale: string) {
-    router.replace(
-      // @ts-expect-error - pathname is a known route pattern at runtime
-      { pathname, params },
-      { locale: nextLocale }
-    );
+    // Pass locale only via the options object. Including `locale` from
+    // useParams() in the href object can produce a soft-nav to `/en`, which
+    // next-intl then redirects away under localePrefix: "as-needed" and
+    // breaks the RSC payload fetch.
+    router.replace(pathname, { locale: nextLocale });
   }
 
   return (

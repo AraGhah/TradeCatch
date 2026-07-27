@@ -9,6 +9,8 @@ import { DashboardPreview } from "@/components/DashboardPreview";
 import { ComparisonPanel } from "@/components/ComparisonPanel";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
+import { CaseStudySection } from "@/components/CaseStudySection";
+import { WorkflowPreview } from "@/components/WorkflowPreview";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -52,15 +54,28 @@ export default async function HomePage({
   const headline = t("hero.headline");
   const accentWord = t("hero.accentWord");
   const trustChips = t.raw("hero.trustChips") as string[];
-  const stats = t.raw("stats.items") as { value: string; label: string }[];
+  const trustStrip = t.raw("trustStrip.items") as {
+    title: string;
+    body: string;
+  }[];
   const leakCards = t.raw("leaks.cards") as { title: string; body: string }[];
   const systemSteps = t.raw("system.steps") as { title: string; body: string }[];
-  const industries = t.raw("industries.priority") as { name: string; pain: string }[];
+  const systemPreview = t.raw("system.previewSteps") as string[];
+  const industries = t.raw("industries.priority") as {
+    name: string;
+    pain: string;
+  }[];
   const supporting = t.raw("industries.supporting") as string[];
   const pilotPoints = t.raw("pilot.points") as string[];
   const expect = t.raw("finalCta.whatToExpect") as string[];
+  const pricingTiers = t.raw("pricingPreview.tiers") as {
+    name: string;
+    price: string;
+    cadence: string;
+    idealFor: string;
+  }[];
   const mockMessages = t.raw("hero.mockup.messages") as {
-    type: "event" | "out" | "in" | "win";
+    type: "event" | "out" | "in" | "photo" | "win";
     text: string;
     time?: string;
   }[];
@@ -80,11 +95,11 @@ export default async function HomePage({
             className="grid items-center"
             style={{
               gap: "clamp(40px, 5vw, 72px)",
-              gridTemplateColumns: "repeat(auto-fit, minmax(400px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))",
             }}
           >
             <div>
-              <span className="inline-flex items-center gap-[9px] rounded-full border border-white/16 bg-white/[0.045] py-[7px] pr-3.5 pl-2.5 font-mono text-[11px] font-medium tracking-[0.13em] text-white/78 uppercase">
+              <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
                 <span className="block h-[7px] w-[7px] animate-tc-pulse rounded-full bg-green" />
                 {t("hero.eyebrow")}
               </span>
@@ -97,11 +112,18 @@ export default async function HomePage({
                 {t("hero.subheadline")}
               </p>
 
+              <p className="mt-4 max-w-[34em] text-[15px] leading-[1.55] text-white/52">
+                {t("hero.qualificationLine")}
+              </p>
+
               <div className="mt-[34px] flex flex-wrap gap-3">
-                <CTAButton href="/book-audit" variant="ember" size="lg">
+                <a
+                  href="#missed-call-demo"
+                  className="inline-flex items-center justify-center gap-2.5 rounded-[12px] bg-orange px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
+                >
                   {t("hero.ctaPrimary")}
-                </CTAButton>
-                <CTAButton href="/how-it-works" variant="ghost-ink" size="lg">
+                </a>
+                <CTAButton href="/book-audit" variant="ghost-ink" size="lg">
                   {t("hero.ctaSecondary")}
                 </CTAButton>
               </div>
@@ -110,14 +132,13 @@ export default async function HomePage({
                 {t("hero.reassurance")}
               </p>
 
-              <ul className="mt-9 flex flex-wrap items-center gap-x-7 gap-y-3 border-t border-white/10 pt-[26px]">
+              <ul className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-[26px]">
                 {trustChips.map((chip) => (
                   <li
                     key={chip}
-                    className="flex items-center gap-[9px] text-[14px] leading-none text-white/72"
+                    className="text-[14px] leading-none text-white/72"
                   >
-                    <span className="block h-[5px] w-[5px] shrink-0 rounded-full bg-green" />
-                    <span>{chip}</span>
+                    {chip}
                   </li>
                 ))}
               </ul>
@@ -138,33 +159,23 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 2. Stat strip */}
+      {/* 2. Trust strip */}
       <section
-        className="bg-navy"
-        style={{ padding: "0 0 clamp(28px, 4vw, 44px)" }}
+        className="border-b border-[rgba(12,20,30,0.08)] bg-white"
+        style={{ padding: "clamp(28px, 4vw, 40px) 0" }}
       >
         <Container>
-          <div
-            className="grid gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-            }}
-          >
-            {stats.map((stat, i) => (
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+            {trustStrip.map((item) => (
               <div
-                key={stat.label}
-                data-reveal
-                className="bg-ink-panel px-6 py-[26px]"
+                key={item.title}
+                className="border border-[rgba(12,20,30,0.08)] bg-paper px-4 py-4"
               >
-                <p
-                  className={`font-heading text-[34px] font-extrabold tracking-[-0.04em] ${
-                    i === 0 ? "text-orange" : "text-white"
-                  }`}
-                >
-                  {stat.value}
+                <p className="text-[14px] font-semibold tracking-[-0.01em] text-navy">
+                  {item.title}
                 </p>
-                <p className="mt-1.5 text-[13.5px] leading-snug text-white/60">
-                  {stat.label}
+                <p className="mt-1.5 text-[12.5px] leading-snug text-muted">
+                  {item.body}
                 </p>
               </div>
             ))}
@@ -172,9 +183,80 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 3. Leaks */}
+      {/* 3. Live workflow (system) */}
       <section
         className="bg-paper"
+        style={{ padding: "clamp(72px, 8vw, 96px) 0 clamp(56px, 6vw, 72px)" }}
+      >
+        <Container>
+          <div
+            data-reveal
+            className="grid items-center"
+            style={{
+              gap: "clamp(40px, 6vw, 80px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
+            }}
+          >
+            <div className="max-w-[520px]">
+              <p className="text-[13px] font-medium text-ember-text">
+                {t("system.eyebrow")}
+              </p>
+              <h2
+                className="mt-4 font-heading font-extrabold text-navy"
+                style={{
+                  fontSize: "clamp(40px, 5vw, 68px)",
+                  lineHeight: 0.95,
+                  letterSpacing: "-0.05em",
+                  maxWidth: "520px",
+                }}
+              >
+                {t("system.headline")}
+              </h2>
+              <p className="mt-6 max-w-[460px] text-[17px] leading-[1.6] text-muted">
+                {t("system.intro")}
+              </p>
+              <CTAButton
+                href="/how-it-works"
+                variant="link"
+                className="mt-7"
+              >
+                {t("system.cta")} →
+              </CTAButton>
+            </div>
+
+            <WorkflowPreview
+              steps={systemPreview}
+              label={t("system.previewLabel")}
+            />
+          </div>
+
+          <div
+            className="mt-[clamp(48px,5vw,64px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          >
+            {systemSteps.map((step, i) => (
+              <div
+                key={step.title}
+                data-reveal
+                className="border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(24px,3vw,32px)] transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[rgba(12,20,30,0.2)]"
+              >
+                <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-4 font-heading text-[19.5px] font-bold tracking-[-0.028em] text-navy">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-[15px] leading-[1.6] text-muted">
+                  {step.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* 4. Revenue leaks */}
+      <section
+        className="border-y border-[rgba(12,20,30,0.08)] bg-white"
         style={{ padding: "var(--section-y) 0" }}
         data-reveal
       >
@@ -186,15 +268,18 @@ export default async function HomePage({
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             }}
           >
-            <div className="sticky top-[120px] max-w-[28em]">
+            <div className="sticky top-[120px] max-w-[34rem]">
               <SectionHeading
                 align="left"
                 eyebrow={t("leaks.eyebrow")}
                 title={t("leaks.headline")}
                 intro={t("leaks.intro")}
-                className="max-w-[14em]"
               />
-              <CTAButton href="/book-audit" variant="secondary" className="mt-[30px]">
+              <CTAButton
+                href="/book-audit"
+                variant="secondary"
+                className="mt-[30px]"
+              >
                 {t("leaks.cta")}
               </CTAButton>
             </div>
@@ -204,7 +289,7 @@ export default async function HomePage({
                 <div
                   key={card.title}
                   data-reveal
-                  className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] transition-colors duration-200 hover:bg-white/60 ${
+                  className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] transition-colors duration-200 hover:bg-paper/80 ${
                     i === leakCards.length - 1
                       ? "border-y border-[rgba(12,20,30,0.12)]"
                       : "border-t border-[rgba(12,20,30,0.12)]"
@@ -229,67 +314,31 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 4. System */}
+      {/* 5. Case study */}
       <section
-        className="border-y border-[rgba(12,20,30,0.08)] bg-white"
+        className="bg-paper"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
-          <div
-            data-reveal
-            className="grid items-end gap-x-8 gap-y-4"
-            style={{
-              gridTemplateColumns: "minmax(0, 1fr) auto",
-            }}
-          >
-            <SectionHeading
-              align="left"
-              eyebrow={t("system.eyebrow")}
-              title={t("system.headline")}
-              className="max-w-[14em]"
-            />
-            <CTAButton
-              href="/how-it-works"
-              variant="link"
-              className="justify-self-end pb-1"
-            >
-              {t("system.cta")}
-            </CTAButton>
-          </div>
-
-          <div
-            className="mt-[clamp(40px,5vw,64px)] grid gap-px overflow-hidden rounded-[18px] border border-[rgba(12,20,30,0.1)] bg-[rgba(12,20,30,0.1)]"
-            style={{
-              gridTemplateColumns: "repeat(auto-fit, minmax(268px, 1fr))",
-            }}
-          >
-            {systemSteps.map((step, i) => (
-              <div
-                key={step.title}
-                data-reveal
-                className="bg-white p-[clamp(26px,3vw,34px)] transition-colors duration-200 hover:bg-paper-hover"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-mono text-[11px] font-semibold tracking-[0.1em] text-ember-text">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <span className="block h-px w-[26px] bg-[rgba(12,20,30,0.18)]" />
-                </div>
-                <h3 className="mt-[22px] font-heading text-[19.5px] font-bold tracking-[-0.028em] text-navy">
-                  {step.title}
-                </h3>
-                <p className="mt-[9px] text-[15px] leading-[1.6] text-muted">
-                  {step.body}
-                </p>
-              </div>
-            ))}
-          </div>
+          <CaseStudySection
+            eyebrow={t("caseStudy.eyebrow")}
+            headline={t("caseStudy.headline")}
+            client={t("caseStudy.client")}
+            problemLabel={t("caseStudy.problemLabel")}
+            systemLabel={t("caseStudy.systemLabel")}
+            problem={t("caseStudy.problem")}
+            system={t("caseStudy.system")}
+            quote={t("caseStudy.quote")}
+            disclaimer={t("caseStudy.disclaimer")}
+            metrics={t.raw("caseStudy.metrics")}
+            cta={t("caseStudy.cta")}
+          />
         </Container>
       </section>
 
-      {/* 5. Before / after */}
+      {/* 6. Before / after */}
       <section
-        className="bg-paper"
+        className="bg-white"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
@@ -298,13 +347,10 @@ export default async function HomePage({
               align="left"
               eyebrow={t("comparison.eyebrow")}
               title={t("comparison.headline")}
-              className="max-w-[15em]"
+              className="max-w-[min(100%,34rem)]"
             />
           </div>
-          <div
-            data-reveal
-            className="mt-[clamp(36px,4vw,56px)]"
-          >
+          <div data-reveal className="mt-[clamp(36px,4vw,56px)]">
             <ComparisonPanel
               manualLabel={t("comparison.manualLabel")}
               systemLabel={t("comparison.systemLabel")}
@@ -314,7 +360,7 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 6. Dashboard */}
+      {/* 7. Dashboard */}
       <section
         className="bg-navy text-white"
         style={{ padding: "var(--section-y) 0" }}
@@ -355,7 +401,7 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 7. Industries */}
+      {/* 8. Industries */}
       <section
         className="bg-paper"
         style={{ padding: "var(--section-y) 0" }}
@@ -363,24 +409,27 @@ export default async function HomePage({
         <Container>
           <div
             data-reveal
-            className="grid items-end gap-x-8 gap-y-4"
+            className="grid items-end"
             style={{
-              gridTemplateColumns: "minmax(0, 1fr) auto",
+              gap: "clamp(24px, 4vw, 48px)",
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
             }}
           >
             <SectionHeading
               align="left"
               eyebrow={t("industries.eyebrow")}
               title={t("industries.headline")}
-              className="max-w-[14em]"
+              className="max-w-[min(100%,34rem)]"
             />
-            <CTAButton
-              href="/industries"
-              variant="link"
-              className="justify-self-end pb-1"
-            >
-              {t("industries.cta")}
-            </CTAButton>
+            <div className="flex flex-col items-start gap-4 sm:items-end sm:text-right">
+              <p className="max-w-[28em] text-[16px] leading-[1.6] text-muted sm:ml-auto">
+                {t("industries.leadIn")}
+              </p>
+              <CTAButton href="/industries" variant="link">
+                {t("industries.cta")} →
+              </CTAButton>
+            </div>
           </div>
 
           <div
@@ -428,7 +477,7 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 8. Founder */}
+      {/* 9. Founder */}
       <section
         className="border-t border-[rgba(12,20,30,0.08)] bg-white"
         style={{ padding: "var(--section-y) 0" }}
@@ -449,7 +498,7 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 9. Pilot */}
+      {/* 10. Founding programme */}
       <section
         className="bg-paper"
         style={{ padding: "var(--section-y) 0" }}
@@ -487,7 +536,10 @@ export default async function HomePage({
                     key={point}
                     className="flex items-start gap-3.5 border-t border-[rgba(12,20,30,0.08)] py-[15px] text-[15.5px] leading-[1.6] text-secondary"
                   >
-                    <span className="mt-0.5 shrink-0 text-[14px] text-green" aria-hidden>
+                    <span
+                      className="mt-0.5 shrink-0 text-[14px] text-green"
+                      aria-hidden
+                    >
                       ✓
                     </span>
                     {point}
@@ -502,9 +554,65 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 10. FAQ teaser */}
+      {/* 11. Pricing preview */}
       <section
         className="border-t border-[rgba(12,20,30,0.08)] bg-white"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div data-reveal className="max-w-[36em]">
+            <SectionHeading
+              align="left"
+              eyebrow={t("pricingPreview.eyebrow")}
+              title={t("pricingPreview.headline")}
+              intro={t("pricingPreview.intro")}
+            />
+          </div>
+
+          <div
+            className="mt-[clamp(32px,4vw,48px)] grid"
+            style={{
+              gap: "clamp(14px, 2vw, 20px)",
+              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+            }}
+          >
+            {pricingTiers.map((tier) => (
+              <div
+                key={tier.name}
+                data-reveal
+                className="flex flex-col border border-[rgba(12,20,30,0.1)] bg-paper p-[clamp(22px,2.5vw,28px)] max-md:col-span-full"
+              >
+                <h3 className="font-heading text-[20px] font-bold tracking-[-0.03em] text-navy">
+                  {tier.name}
+                </h3>
+                <p className="mt-3 font-heading text-[24px] font-extrabold tracking-[-0.03em] text-navy">
+                  {tier.price}
+                </p>
+                <p className="mt-1 font-mono text-[11px] tracking-[0.08em] text-muted uppercase">
+                  {tier.cadence}
+                </p>
+                <p className="mt-4 flex-1 text-[14.5px] leading-[1.55] text-secondary">
+                  {tier.idealFor}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div
+            data-reveal
+            className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3"
+          >
+            <CTAButton href="/pricing" variant="ember">
+              {t("pricingPreview.cta")}
+            </CTAButton>
+            <p className="text-[14.5px] text-muted">{t("pricingPreview.note")}</p>
+          </div>
+        </Container>
+      </section>
+
+      {/* 12. FAQ teaser */}
+      <section
+        className="border-t border-[rgba(12,20,30,0.08)] bg-paper"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
@@ -515,25 +623,27 @@ export default async function HomePage({
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             }}
           >
-            <div data-reveal className="max-w-[22em]">
+            <div data-reveal className="max-w-[min(100%,28rem)]">
               <SectionHeading
                 align="left"
                 eyebrow={t("faqTeaser.eyebrow")}
                 title={t("faqTeaser.headline")}
-                className="max-w-[13em]"
               />
               <CTAButton href="/faq" variant="secondary" className="mt-7">
                 {t("faqTeaser.viewAll")}
               </CTAButton>
             </div>
-            <div data-reveal className="min-w-0 border-t border-[rgba(12,20,30,0.12)]">
+            <div
+              data-reveal
+              className="min-w-0 border-t border-[rgba(12,20,30,0.12)]"
+            >
               <FaqAccordion items={t.raw("faqTeaser.items")} />
             </div>
           </div>
         </Container>
       </section>
 
-      {/* 11. Final CTA */}
+      {/* 13. Final CTA */}
       <section
         className="relative overflow-hidden bg-navy"
         style={{ padding: "var(--section-y) 0" }}
@@ -564,10 +674,13 @@ export default async function HomePage({
           >
             {t("finalCta.body")}
           </p>
-          <div data-reveal className="mt-9 flex justify-center">
+          <div data-reveal className="mt-9 flex flex-col items-center gap-3">
             <CTAButton href="/book-audit" variant="ember" size="lg">
               {t("finalCta.cta")}
             </CTAButton>
+            <p className="max-w-[34em] text-[14px] leading-[1.55] text-white/50">
+              {t("finalCta.underCta")}
+            </p>
           </div>
           <ul
             data-reveal

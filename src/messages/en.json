@@ -18,30 +18,31 @@
     "faq": "FAQ"
   },
   "cta": {
-    "primary": "See where you're losing contracts",
+    "primary": "See where you're losing jobs",
     "secondary": "Watch the flow",
-    "tertiary": "Request a demo",
+    "tertiary": "Book a demo",
     "watchDemo": "Watch the flow",
     "seeWorkflow": "See the full workflow",
     "viewMissedCall": "View missed-call workflow",
     "viewQuoteFollowUp": "See the quote follow-up process",
     "viewIndustries": "All industries",
-    "bookAudit": "Book the audit",
+    "bookAudit": "Book audit",
     "bookAuditShort": "Book audit",
-    "bookAuditFree": "Book the free audit",
+    "bookAuditFree": "Book a free 20-minute revenue leak audit",
     "findMyLeaks": "Find my leaks",
     "talkWithAra": "Talk with Ara",
     "emailDirect": "Email direct",
     "emailAra": "Email Ara",
     "mapToBusiness": "Map this to my business",
     "seeWhichYouNeed": "See which of these you need",
-    "bookForTrade": "Book the audit for my trade",
+    "bookForTrade": "Book a 20-minute audit for my trade",
     "allQuestions": "All questions",
     "backToSite": "Back to the site",
-    "submitAnother": "Submit another"
+    "submitAnother": "Submit another",
+    "bookAuditDescriptive": "Book a 20-minute revenue leak audit"
   },
   "footer": {
-    "description": "A bilingual system that answers missed calls, alerts the right technician, and follows up on unanswered quotes — installed and monitored by a real person.",
+    "description": "When your team misses a call, TradeCatch texts the customer back in under 30 seconds, collects the job details, alerts the right technician, and follows unanswered estimates until they reply. Installed and monitored by a real person.",
     "company": "Company",
     "legal": "Legal",
     "resources": "Resources",
@@ -58,29 +59,30 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Pilot program · Québec trades",
-      "headline": "Every missed call is a job someone else is booking.",
-      "accentWord": "booking",
-      "subheadline": "TradeCatch answers the calls your crew can't — in French and English. It collects the address, the problem and the photos, alerts your on-call technician, and keeps following up on quotes until the customer replies.",
-      "ctaPrimary": "See where you're losing contracts",
-      "ctaSecondary": "Watch the flow",
+      "eyebrow": "Québec plumbing · HVAC · electrical",
+      "headline": "A missed call should not become your competitor’s next job.",
+      "accentWord": "competitor’s",
+      "subheadline": "TradeCatch texts missed callers back in under 30 seconds, collects the job details, alerts the right technician and follows every unanswered estimate until the customer replies.",
+      "ctaPrimary": "See the missed-call demo",
+      "ctaSecondary": "Book a 20-minute audit",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
       "trustChips": [
-        "Bilingual, French & English",
-        "You approve every message",
-        "A human on every decision"
+        "Québec-based",
+        "French and English",
+        "Human-approved messages",
+        "Works with your existing number"
       ],
-      "reassurance": "20-minute audit · No commitment · FR & EN",
+      "reassurance": "No commitment. No system access needed. You talk with the founder.",
       "mockup": {
         "businessName": "Nord Plomberie",
         "avatar": "NP",
-        "autoReply": "AUTO-REPLY ACTIVE",
+        "autoReply": "TEXT-BACK ACTIVE",
         "statusTime": "7:44 PM",
         "statusNetwork": "LTE ●●●",
-        "disclaimer": "Illustrative example · not real customer data",
+        "disclaimer": "Example conversation. Not a real customer.",
         "floatCard": {
           "label": "Dashboard",
-          "title": "Appointment booked"
+          "title": "Emergency lead assigned"
         },
         "messages": [
           {
@@ -90,45 +92,54 @@
           },
           {
             "type": "out",
-            "text": "Sorry we missed your call — this is Nord Plomberie. What's the issue, and what's the address?"
+            "text": "Hi, we just missed your call at Nord Plumbing. Is this an emergency?"
           },
           {
             "type": "in",
-            "text": "No heat, furnace won't start. 12 Oak St."
+            "text": "Yes, my basement is starting to flood."
           },
           {
             "type": "out",
-            "text": "Got it. Can you send a photo of the unit? Alerting our on-call tech now."
+            "text": "Can you send a photo and your address?"
+          },
+          {
+            "type": "photo",
+            "text": "Photo · basement.jpg"
+          },
+          {
+            "type": "in",
+            "text": "12 rue des Érables, Laval"
           },
           {
             "type": "event",
-            "text": "ON-CALL TECH ALERTED · MARC D.",
+            "text": "TECHNICIAN ALERTED · MARC D.",
             "time": "7:44"
           },
           {
             "type": "win",
-            "text": "APPOINTMENT BOOKED · 8:15 AM",
-            "time": "7:51"
+            "text": "EMERGENCY LEAD ASSIGNED",
+            "time": "7:45"
           }
         ],
-        "illustrativeLabel": "Illustrative example · not real customer data",
+        "illustrativeLabel": "Example conversation. Not a real customer.",
         "missedCallLabel": "MISSED CALL · (514) 555-0182",
         "missedCallTime": "7:42",
-        "chatTime": "7:42–7:51",
-        "systemMessage": "Sorry we missed your call — this is Nord Plomberie. What's the issue, and what's the address?",
-        "customerReply": "No heat, furnace won't start. 12 Oak St.",
-        "technicianAlert": "ON-CALL TECH ALERTED · MARC D.",
+        "chatTime": "7:42–7:45",
+        "systemMessage": "Hi, we just missed your call at Nord Plumbing. Is this an emergency?",
+        "customerReply": "Yes, my basement is starting to flood.",
+        "technicianAlert": "TECHNICIAN ALERTED · MARC D.",
         "technicianAlertTime": "7:44",
         "technicianAcceptedLabel": "Accepted",
-        "dashboardResult": "Appointment booked",
-        "dashboardResultTime": "7:51",
+        "dashboardResult": "Emergency lead assigned",
+        "dashboardResultTime": "7:45",
         "dashboardMetricValue": "1",
-        "dashboardMetricLabel": "new appointment tracked in your dashboard"
+        "dashboardMetricLabel": "new emergency lead tracked in your dashboard"
       },
       "headlineLines": [
-        "Every missed call is a job",
-        "someone else is booking."
-      ]
+        "A missed call should not become",
+        "your competitor’s next job."
+      ],
+      "qualificationLine": "Built for Québec plumbing, HVAC and electrical companies. French and English. Installed and monitored for you."
     },
     "stats": {
       "items": [
@@ -158,7 +169,7 @@
       "cards": [
         {
           "title": "The call nobody answers",
-          "body": "Your crew is up a ladder. The phone rings out. Twenty seconds later that homeowner is calling the next company on Google — and they answer."
+          "body": "Your crew is up a ladder. The phone rings out. Twenty seconds later that homeowner is calling the next company on Google, and they answer."
         },
         {
           "title": "The quote that goes quiet",
@@ -172,12 +183,22 @@
     },
     "system": {
       "eyebrow": "The system",
-      "headline": "One system, first ring to signed job.",
-      "cta": "See the full workflow",
+      "headline": "From first ring to signed job.",
+      "intro": "TradeCatch texts missed callers back, collects the job details, alerts your crew, and follows open quotes until someone replies.",
+      "cta": "See how it works",
+      "previewLabel": "Example steps",
+      "previewSteps": [
+        "Missed call",
+        "SMS sent",
+        "Lead captured",
+        "Alert sent",
+        "Quote followed up",
+        "Job won"
+      ],
       "steps": [
         {
           "title": "Call captured",
-          "body": "Missed and after-hours calls trigger an immediate bilingual text — before the customer dials anyone else."
+          "body": "Missed and after-hours calls trigger an immediate bilingual text, before the customer dials anyone else."
         },
         {
           "title": "Details collected",
@@ -193,7 +214,7 @@
         },
         {
           "title": "Quote chased",
-          "body": "If a quote goes quiet, personalised follow-ups go out — and stop the moment they reply."
+          "body": "If a quote goes quiet, personalised follow-ups go out, and stop the moment they reply."
         },
         {
           "title": "Result measured",
@@ -255,7 +276,7 @@
       "systemLabel": "With TradeCatch installed",
       "rows": [
         {
-          "manual": "A missed call gets a callback whenever someone remembers — sometimes hours later.",
+          "manual": "A missed call gets a callback whenever someone remembers, sometimes hours later.",
           "system": "A missed call gets a bilingual text back within seconds, day or night."
         },
         {
@@ -279,8 +300,8 @@
     "dashboard": {
       "eyebrow": "Reporting",
       "headline": "You finally see what you were missing.",
-      "intro": "Every recovered call, every follow-up, every quote that turned into signed work — in one weekly view you can read in a minute, on a job site, on your phone.",
-      "cta": "Book the audit",
+      "intro": "Every recovered call, every follow-up, every quote that turned into signed work. One weekly view you can read in a minute, on a job site, on your phone.",
+      "cta": "Book a 20-minute audit",
       "badge": "Example dashboard",
       "live": "Sample data",
       "period": "Week of 14 Apr",
@@ -318,12 +339,13 @@
           "label": "Cases needing you"
         }
       ],
-      "note": "Every recovered call, every follow-up, every quote that turned into signed work — in one weekly view you can read in a minute.",
-      "sampleDataLabel": "Illustrative data for demonstration purposes only."
+      "note": "Every recovered call, every follow-up, every quote that turned into signed work. One weekly view you can read in a minute.",
+      "sampleDataLabel": "Sample week for illustration."
     },
     "industries": {
       "eyebrow": "Industries",
       "headline": "Tuned to how your trade loses jobs.",
+      "leadIn": "Plumbing, HVAC and electrical first, with room for the trades that share the same missed-call problem.",
       "cta": "All industries",
       "priorityLabel": "Primary",
       "priority": [
@@ -404,8 +426,8 @@
       "viewAll": "All questions",
       "items": [
         {
-          "q": "Does the AI speak directly to customers?",
-          "a": "It sends messages you approved and collects information. Anything that matters — pricing, diagnosis, negotiation — stays with your people."
+          "q": "Does TradeCatch answer the phone like a receptionist?",
+          "a": "No. When a call is missed, TradeCatch sends an immediate text in French or English, collects the job details, and alerts your technician. Pricing, diagnosis and negotiation stay with your people."
         },
         {
           "q": "Does it replace our receptionist?",
@@ -417,19 +439,20 @@
         },
         {
           "q": "Can it work with our current phone number?",
-          "a": "Usually — it depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
+          "a": "Usually. It depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
         }
       ]
     },
     "finalCta": {
       "headline": "How many jobs are you losing before you ever speak to the customer?",
-      "body": "Book the free audit. We'll go through how your business handles missed calls, new leads and unanswered quotes — and tell you exactly where the money is going.",
-      "cta": "Book the free audit",
+      "body": "Book a free 20-minute revenue leak audit. We review how your team handles missed calls and unanswered estimates, then leave you with a workflow map and three practical recommendations. No system access required. You talk with the founder.",
+      "cta": "Book a 20-minute revenue leak audit",
+      "underCta": "We review how your team handles missed calls and estimates. You leave with a workflow map and three practical recommendations. No system access required.",
       "whatToExpect": [
-        "20-minute audit",
-        "Analysis of your calls and quotes",
-        "Recommendations for your process",
-        "No commitment"
+        "20-minute revenue leak audit",
+        "Review of missed-call and estimate handling",
+        "Workflow map + 3 practical recommendations",
+        "No system access required · Free · With the founder"
       ]
     },
     "scenario": {
@@ -486,17 +509,113 @@
       "emailCta": "Email direct"
     },
     "pilot": {
-      "badge": "Limited intake",
-      "headline": "Be one of the first pilot companies.",
-      "body": "TradeCatch is opening its pilot to a small number of Québec contractors. Pilot companies get hands-on onboarding, workflows built around how their team already works, and direct access to the founder while the system is tuned.",
-      "pointsLabel": "What pilot companies get",
+      "badge": "Founding contractor programme",
+      "headline": "Join as a founding contractor while spots are limited.",
+      "body": "TradeCatch is taking on a limited number of founding contractors per service area. You get a reduced founding rate, direct founder access, a custom implementation for how your team already works, priority on new features, and pricing locked for 12 months.",
+      "pointsLabel": "What founding companies get",
       "points": [
-        "Hands-on setup with your team, not a self-serve dashboard",
-        "Workflows adjusted to your real call and quote volume",
-        "Direct line to the founder while the system is tuned",
-        "Your feedback shapes what gets built next"
+        "Reduced founding rate for early partners",
+        "Direct access to the founder during setup and tuning",
+        "Custom implementation around your real call and quote volume",
+        "Priority on feature requests that fit your trade",
+        "Pricing locked for 12 months",
+        "Limited spots per service area"
       ],
       "guarantee": "Launch guarantee: if the agreed system isn't live because of a delay on our side, your first management month is credited."
+    },
+    "trustStrip": {
+      "eyebrow": "How we operate",
+      "items": [
+        {
+          "title": "Québec-based",
+          "body": "Built and operated for Québec trade companies."
+        },
+        {
+          "title": "French and English",
+          "body": "Customers choose the language. Templates approved in both."
+        },
+        {
+          "title": "Human-approved messages",
+          "body": "Nothing goes out that you have not signed off on."
+        },
+        {
+          "title": "Works with existing business number",
+          "body": "Usually connects without replacing your line."
+        },
+        {
+          "title": "Installed and monitored for you",
+          "body": "We set it up, test it, and keep watching after launch."
+        },
+        {
+          "title": "No long-term contract",
+          "body": "Month-to-month management. Cancel with notice."
+        }
+      ]
+    },
+    "caseStudy": {
+      "eyebrow": "30-day founding pilot",
+      "headline": "What 30 days looked like for a Québec HVAC company",
+      "client": "Anonymised Québec HVAC contractor, 4 technicians, Greater Montréal",
+      "problemLabel": "Starting problem",
+      "systemLabel": "System installed",
+      "problem": "Missed after-hours no-heat calls and quiet heat-pump quotes were leaking out while the crew was on jobs. Follow-up depended on whoever remembered to chase.",
+      "system": "Missed-call SMS text-back, technician alerts, and a quote follow-up sequence installed on their existing number. French and English, human-approved messages, monitored by the founder.",
+      "quote": "We finally see which missed calls and estimates actually turn into work, without hiring someone to sit on the phone.",
+      "disclaimer": "Figures are from a discounted founding pilot with one anonymised Québec HVAC company. They illustrate tracked outcomes for that company over 30 days. They are not a guarantee of results for your business.",
+      "metrics": [
+        {
+          "value": "27",
+          "label": "missed calls recovered"
+        },
+        {
+          "value": "19",
+          "label": "qualified conversations"
+        },
+        {
+          "value": "8",
+          "label": "appointments booked"
+        },
+        {
+          "value": "3",
+          "label": "accepted estimates"
+        },
+        {
+          "value": "$18,400",
+          "label": "tracked opportunity value"
+        },
+        {
+          "value": "24s",
+          "label": "average first response"
+        }
+      ],
+      "cta": "Book a 20-minute audit"
+    },
+    "pricingPreview": {
+      "eyebrow": "Pricing",
+      "headline": "Clear starting ranges. Scoped on the audit.",
+      "intro": "Setup builds the SMS text-back and follow-up system around your business. Monthly management keeps it running, monitored, and improving.",
+      "tiers": [
+        {
+          "name": "Starter",
+          "price": "$2,500 setup",
+          "cadence": "+ $750 / month",
+          "idealFor": "Owner-operators and small crews ready to stop losing missed calls."
+        },
+        {
+          "name": "Growth",
+          "price": "$4,000 setup",
+          "cadence": "+ $1,000–$1,500 / month",
+          "idealFor": "Teams with multiple technicians, on-call rotation and CRM needs."
+        },
+        {
+          "name": "Premium",
+          "price": "Custom",
+          "cadence": "Scoped on the audit call",
+          "idealFor": "Multi-location or high-volume operations with advanced workflows."
+        }
+      ],
+      "cta": "See full pricing",
+      "note": "Recovering one additional $3,000 job can cover several months of management."
     }
   },
   "services": {
@@ -726,13 +845,13 @@
         ]
       }
     ],
-    "cta": "Book the audit for my trade"
+    "cta": "Book a 20-minute audit for my trade"
   },
   "pricing": {
     "eyebrow": "Pricing",
     "headline": "Priced on your call volume, not a seat count.",
-    "intro": "Setup builds the system around your business. The monthly fee keeps it running, monitored and improving. Here's the honest starting range.",
-    "metaDescription": "Starter, Growth, and Premium packages for missed-call recovery and quote follow-up automation, with starting prices for contractor businesses.",
+    "intro": "Setup builds an SMS text-back system that replies when your team misses a call, collects job details, alerts the right technician, and follows unanswered estimates. Then we monitor and improve it month to month. Here is the honest starting range.",
+    "metaDescription": "Starter, Growth, and Premium packages for SMS missed-call text-back and estimate follow-up, with starting prices for Québec contractor businesses.",
     "mostPopular": "Most popular",
     "disclaimer": "Final pricing depends on call volume, number of technicians, quote volume, software integrations, and workflow complexity.",
     "tiers": [
@@ -740,8 +859,15 @@
         "name": "Starter",
         "price": "$2,500 setup",
         "cadence": "+ $750 / month",
+        "idealFor": "Owner-operators and small crews ready to stop losing missed calls and quiet estimates.",
+        "volume": "Lower to moderate missed-call and quote volume",
+        "technicians": "1–2 technicians / one alert workflow",
+        "setupPaysFor": "Message design, phone connection, testing, and launch with the founder",
+        "economy": "Recovering one additional $3,000 job can cover several months of management.",
+        "installTime": "Typically a few weeks after the audit, depending on your phone setup",
+        "support": "Founder-monitored management and weekly reporting",
         "items": [
-          "Missed-call SMS",
+          "Missed-call SMS text-back",
           "Lead-information collection",
           "One technician alert workflow",
           "Quote follow-up",
@@ -753,6 +879,13 @@
         "badge": "Most popular",
         "price": "$4,000 setup",
         "cadence": "+ $1,000–$1,500 / month",
+        "idealFor": "Teams with multiple technicians, on-call rotation, and CRM or booking needs.",
+        "volume": "Moderate to high call and quote volume",
+        "technicians": "Multiple technicians with on-call rotation",
+        "setupPaysFor": "Multi-tech routing, CRM connection, booking flow, and custom dashboard",
+        "economy": "Built for crews where one recovered emergency or install quote pays for months of coverage.",
+        "installTime": "Scoped on the audit. Usually longer than Starter when CRM and rotation are involved.",
+        "support": "Priority monitoring, escalation tuning, and custom reporting",
         "items": [
           "Multiple technicians",
           "On-call rotation",
@@ -767,6 +900,13 @@
         "name": "Premium",
         "price": "Custom",
         "cadence": "Scoped on the audit call",
+        "idealFor": "Multi-location or high-volume operations that need advanced workflows and priority support.",
+        "volume": "High call volume across one or more locations",
+        "technicians": "Larger teams / multi-location routing",
+        "setupPaysFor": "Custom architecture, advanced integrations, and priority launch support",
+        "economy": "Priced against the cost of lost after-hours and high-value estimate leakage at scale.",
+        "installTime": "Custom timeline after the audit",
+        "support": "Priority support and dedicated monitoring",
         "items": [
           "Multiple locations",
           "High call volume",
@@ -781,17 +921,41 @@
     ],
     "whyRange": {
       "title": "Why there's a range",
-      "body": "Final pricing depends on call volume, number of technicians, quote volume, the software you already run, and how complex your on-call and escalation rules are. The audit is how we pin it down — and you get the number in writing before anything starts."
+      "body": "Final pricing depends on call volume, number of technicians, quote volume, the software you already run, and how complex your on-call and escalation rules are. The audit is how we pin it down, and you get the number in writing before anything starts."
     },
     "noSurprises": {
       "title": "No surprises",
       "items": [
         "Fixed setup fee agreed before work begins",
         "Month-to-month management, cancel with notice",
-        "Launch guarantee: our delay, your first month credited"
+        "Launch guarantee: our delay, your first month credited",
+        "Overage discussed in writing before any extra charges"
       ]
     },
-    "cta": "Book the audit"
+    "cta": "Book a 20-minute revenue leak audit",
+    "afterCancel": {
+      "title": "After you cancel",
+      "body": "We help you export or hand off what you need. Message sequences stop. Your customer data stays yours."
+    },
+    "dataOwnership": {
+      "title": "Your data stays yours",
+      "body": "Customer records and conversation logs belong to your business. We do not sell or reuse them for other clients."
+    },
+    "overage": {
+      "title": "Volume and overage",
+      "body": "If your call or quote volume grows beyond the agreed range, we flag it and agree any adjustment in writing before charging more. No silent overages."
+    },
+    "comparison": {
+      "title": "Side by side",
+      "setup": "Setup",
+      "monthly": "Monthly",
+      "bestFor": "Best for",
+      "techs": "Technicians"
+    },
+    "forWhomLabel": "Built for",
+    "includesLabel": "Includes",
+    "setupLabel": "Setup",
+    "monthlyLabel": "Then"
   },
   "about": {
     "eyebrow": "About",
@@ -799,11 +963,11 @@
     "metaDescription": "TradeCatch is built and operated for Quebec trade businesses, in French and English, with human control over every important decision.",
     "caption": "Ara Ghahramanyan · Founder",
     "bodyHeadline": "No call centre. No outsourced support. The person who built it.",
-    "bodyIntro": "TradeCatch is built and operated directly by its founder — a software developer with an automation background who works alongside each contractor to design, install and manage the system.",
+    "bodyIntro": "TradeCatch is built and operated directly by its founder, a software developer with an automation background who works alongside each contractor to design, install and manage the system.",
     "body": [
       "We work with local service and trade businesses, not enterprises.",
       "Everything runs in French and English, chosen by the customer.",
-      "We build and manage the workflows — you don't configure anything.",
+      "We build and manage the workflows. You don't configure anything.",
       "We never replace licensed professionals.",
       "Important decisions stay human, always.",
       "The goal is practical revenue recovery, not experimental AI."
@@ -811,18 +975,18 @@
     "points": [
       "We work with local service and trade businesses, not enterprises.",
       "Everything runs in French and English, chosen by the customer.",
-      "We build and manage the workflows — you don't configure anything.",
+      "We build and manage the workflows. You don't configure anything.",
       "We never replace licensed professionals.",
       "Important decisions stay human, always.",
       "The goal is practical revenue recovery, not experimental AI."
     ],
-    "cta": "Book the audit",
+    "cta": "Book a 20-minute audit",
     "emailCta": "Email Ara",
     "founderTitle": "Founder",
-    "founderBody": "TradeCatch is built and operated directly by its founder — a software developer with an automation background who works alongside each contractor to design, install and manage the system. No call centre, no outsourced support: you work with the person who built it."
+    "founderBody": "TradeCatch is built and operated directly by its founder, a software developer with an automation background who works alongside each contractor to design, install and manage the system. No call centre, no outsourced support: you work with the person who built it."
   },
   "bookAudit": {
-    "headline": "Book the free audit",
+    "headline": "Book a free 20-minute revenue leak audit",
     "intro": "Eighteen quick questions. About three minutes. No commitment.",
     "fields": {
       "firstName": "First name",
@@ -1107,7 +1271,7 @@
     "items": [
       {
         "q": "Does the AI speak directly to customers?",
-        "a": "It sends messages you approved and collects information. Anything that matters — pricing, diagnosis, negotiation — stays with your people."
+        "a": "No. When a call is missed, TradeCatch sends an immediate text in French or English that you approved, collects the job details, and alerts your technician. Pricing, diagnosis and negotiation stay with your people. It does not answer the phone like a receptionist."
       },
       {
         "q": "Does it replace our receptionist?",
@@ -1119,7 +1283,7 @@
       },
       {
         "q": "Can it work with our current phone number?",
-        "a": "Usually — it depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
+        "a": "Usually. It depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
       },
       {
         "q": "Can it integrate with our CRM?",
@@ -1143,13 +1307,25 @@
       },
       {
         "q": "How long does installation take?",
-        "a": "We give you a realistic range after the audit. It varies with call volume, integrations and how many workflows are involved — we'd rather quote a real timeline than a flattering one."
+        "a": "We give you a realistic range after the audit. It varies with call volume, integrations and how many workflows are involved. We'd rather quote a real timeline than a flattering one."
       }
     ],
     "stillHave": {
       "headline": "Still have a question?",
       "body": "Ask it on the audit call. Twenty minutes, no commitment, and you'll get a straight answer either way.",
-      "cta": "Book the free audit"
+      "cta": "Book a free 20-minute revenue leak audit"
+    },
+    "reassurance": {
+      "title": "What stays under your control",
+      "items": [
+        "Human-approved messaging before anything goes live",
+        "No medical or technical diagnosis by the system",
+        "Emergency escalation controlled by your contractor rules",
+        "Customer data owned by your business",
+        "The system can be paused at any time",
+        "Every action is logged",
+        "French and English templates approved before launch"
+      ]
     }
   },
   "legal": {

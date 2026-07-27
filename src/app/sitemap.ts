@@ -3,6 +3,10 @@ import { routing } from "@/i18n/routing";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
 
+// Fixed content revision date — bump when marketing copy/structure meaningfully
+// changes. Avoid `new Date()` which reports "just modified" on every build.
+const CONTENT_LAST_MODIFIED = new Date("2026-07-26");
+
 const PATHS = Object.keys(routing.pathnames);
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -16,10 +20,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
         url: `${SITE_URL}${locale === routing.defaultLocale ? "" : `/${locale}`}${
           localizedPath === "/" ? "" : localizedPath
         }`,
-        lastModified: new Date(),
+        lastModified: CONTENT_LAST_MODIFIED,
         changeFrequency: "monthly" as const,
         priority: path === "/" ? 1 : 0.7,
       };
-    })
+    }),
   );
 }

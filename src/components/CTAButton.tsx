@@ -52,7 +52,7 @@ export function CTAButton({
 } & Omit<ComponentProps<typeof Link>, "href">) {
   const styleKey = resolveVariant(variant);
   const isLink = styleKey === "link";
-  const withDot = showDot || styleKey === "ink";
+  const withDot = showDot;
 
   return (
     <Link

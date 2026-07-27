@@ -78,7 +78,7 @@
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
-  --container-page: 1280px;
+  --container-page: 1320px;
   --container-how: 1040px;
   --container-faq: 900px;
   --container-wizard: 760px;
@@ -171,7 +171,7 @@ h4 {
 .text-mono-label {
   font-family: var(--font-mono);
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   font-weight: 500;
 }
