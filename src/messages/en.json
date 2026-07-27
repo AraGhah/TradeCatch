@@ -593,29 +593,23 @@
     "pricingPreview": {
       "eyebrow": "Pricing",
       "headline": "Clear starting ranges. Scoped on the audit.",
-      "intro": "Setup builds the SMS text-back and follow-up system around your business. Monthly management keeps it running, monitored, and improving.",
+      "intro": "Setup builds the SMS text-back and follow-up system. Monthly management keeps it running.",
       "tiers": [
         {
           "name": "Starter",
           "price": "$2,500 setup",
-          "cadence": "+ $750 / month",
-          "idealFor": "Owner-operators and small crews ready to stop losing missed calls."
+          "cadence": "$750 / month",
+          "idealFor": "Owner-operators and small crews catching missed calls."
         },
         {
           "name": "Growth",
           "price": "$4,000 setup",
-          "cadence": "+ $1,000–$1,500 / month",
-          "idealFor": "Teams with multiple technicians, on-call rotation and CRM needs."
-        },
-        {
-          "name": "Premium",
-          "price": "Custom",
-          "cadence": "Scoped on the audit call",
-          "idealFor": "Multi-location or high-volume operations with advanced workflows."
+          "cadence": "$1,000–$1,500 / month",
+          "idealFor": "Teams with multiple technicians or CRM needs."
         }
       ],
       "cta": "See full pricing",
-      "note": "Recovering one additional $3,000 job can cover several months of management."
+      "note": "Custom plans available for multi-location or high-volume operations."
     }
   },
   "services": {
@@ -702,7 +696,14 @@
       "Seasonal renewals",
       "Material-order automation"
     ],
-    "cta": "See which of these you need"
+    "cta": "See which of these you need",
+    "heroHighlights": [
+      "Lead capture",
+      "Technician routing",
+      "Quote follow-up",
+      "Appointment booking",
+      "Reporting and tracking"
+    ]
   },
   "howItWorks": {
     "eyebrow": "How it works",
@@ -786,7 +787,15 @@
       }
     ],
     "sequenceNote": "The sequence stops the instant the customer replies, and you're alerted if they raise a price objection or a question only you can answer.",
-    "cta": "Map this to my business"
+    "cta": "Map this to my business",
+    "heroSteps": [
+      "Missed call",
+      "SMS sent",
+      "Details collected",
+      "Technician alerted",
+      "Quote followed up",
+      "Job recorded"
+    ]
   },
   "industriesPage": {
     "eyebrow": "Industries",
@@ -845,117 +854,90 @@
         ]
       }
     ],
-    "cta": "Book a 20-minute audit for my trade"
+    "cta": "Book a 20-minute audit for my trade",
+    "selectLabel": "Select your trade"
   },
   "pricing": {
     "eyebrow": "Pricing",
-    "headline": "Priced on your call volume, not a seat count.",
-    "intro": "Setup builds an SMS text-back system that replies when your team misses a call, collects job details, alerts the right technician, and follows unanswered estimates. Then we monitor and improve it month to month. Here is the honest starting range.",
-    "metaDescription": "Starter, Growth, and Premium packages for SMS missed-call text-back and estimate follow-up, with starting prices for Québec contractor businesses.",
-    "mostPopular": "Most popular",
-    "disclaimer": "Final pricing depends on call volume, number of technicians, quote volume, software integrations, and workflow complexity.",
+    "headline": "Honest prices for crews that lose work between the ring and the signed job.",
+    "intro": "You pay once to install the system. You pay monthly to keep missed-call text-back, technician alerts and quote follow-up running — monitored by a real person.",
+    "reassurance": "Fixed setup. Month-to-month. Cancel with notice.",
+    "metaDescription": "Starter and Growth packages for SMS missed-call text-back and estimate follow-up for Québec contractors.",
+    "mostPopular": "Recommended",
+    "principles": [
+      "Fixed setup price, agreed in writing",
+      "Month-to-month management",
+      "Scoped to your call and quote volume"
+    ],
     "tiers": [
       {
         "name": "Starter",
         "price": "$2,500 setup",
-        "cadence": "+ $750 / month",
-        "idealFor": "Owner-operators and small crews ready to stop losing missed calls and quiet estimates.",
-        "volume": "Lower to moderate missed-call and quote volume",
-        "technicians": "1–2 technicians / one alert workflow",
-        "setupPaysFor": "Message design, phone connection, testing, and launch with the founder",
-        "economy": "Recovering one additional $3,000 job can cover several months of management.",
-        "installTime": "Typically a few weeks after the audit, depending on your phone setup",
-        "support": "Founder-monitored management and weekly reporting",
+        "setupAmount": "$2,500",
+        "cadence": "$750 / month",
+        "monthlyAmount": "$750",
+        "idealFor": "Owner-operators and small crews catching missed calls for the first time.",
         "items": [
           "Missed-call SMS text-back",
-          "Lead-information collection",
+          "Lead details and photo collection",
           "One technician alert workflow",
-          "Quote follow-up",
-          "Weekly reporting"
+          "Quote follow-up sequence",
+          "Weekly reporting",
+          "Founder-monitored launch"
         ]
       },
       {
         "name": "Growth",
         "badge": "Most popular",
         "price": "$4,000 setup",
-        "cadence": "+ $1,000–$1,500 / month",
-        "idealFor": "Teams with multiple technicians, on-call rotation, and CRM or booking needs.",
-        "volume": "Moderate to high call and quote volume",
-        "technicians": "Multiple technicians with on-call rotation",
-        "setupPaysFor": "Multi-tech routing, CRM connection, booking flow, and custom dashboard",
-        "economy": "Built for crews where one recovered emergency or install quote pays for months of coverage.",
-        "installTime": "Scoped on the audit. Usually longer than Starter when CRM and rotation are involved.",
-        "support": "Priority monitoring, escalation tuning, and custom reporting",
+        "setupAmount": "$4,000",
+        "cadence": "$1,000–$1,500 / month",
+        "monthlyAmount": "$1,000–$1,500",
+        "idealFor": "Teams with multiple technicians, on-call rotation, or CRM needs.",
         "items": [
-          "Multiple technicians",
-          "On-call rotation",
-          "Backup escalation",
-          "CRM integration",
-          "Appointment booking",
-          "Advanced quote follow-up",
+          "Everything in Starter",
+          "Multiple technician routing",
+          "On-call rotation and backup escalation",
+          "CRM connection",
+          "Appointment booking support",
           "Custom dashboard"
-        ]
-      },
-      {
-        "name": "Premium",
-        "price": "Custom",
-        "cadence": "Scoped on the audit call",
-        "idealFor": "Multi-location or high-volume operations that need advanced workflows and priority support.",
-        "volume": "High call volume across one or more locations",
-        "technicians": "Larger teams / multi-location routing",
-        "setupPaysFor": "Custom architecture, advanced integrations, and priority launch support",
-        "economy": "Priced against the cost of lost after-hours and high-value estimate leakage at scale.",
-        "installTime": "Custom timeline after the audit",
-        "support": "Priority support and dedicated monitoring",
-        "items": [
-          "Multiple locations",
-          "High call volume",
-          "E-signatures",
-          "Deposits",
-          "Invoice reminders",
-          "Review automation",
-          "Custom integrations",
-          "Priority support"
         ]
       }
     ],
-    "whyRange": {
-      "title": "Why there's a range",
-      "body": "Final pricing depends on call volume, number of technicians, quote volume, the software you already run, and how complex your on-call and escalation rules are. The audit is how we pin it down, and you get the number in writing before anything starts."
-    },
-    "noSurprises": {
-      "title": "No surprises",
-      "items": [
-        "Fixed setup fee agreed before work begins",
-        "Month-to-month management, cancel with notice",
-        "Launch guarantee: our delay, your first month credited",
-        "Overage discussed in writing before any extra charges"
-      ]
-    },
-    "cta": "Book a 20-minute revenue leak audit",
-    "afterCancel": {
-      "title": "After you cancel",
-      "body": "We help you export or hand off what you need. Message sequences stop. Your customer data stays yours."
-    },
-    "dataOwnership": {
-      "title": "Your data stays yours",
-      "body": "Customer records and conversation logs belong to your business. We do not sell or reuse them for other clients."
-    },
-    "overage": {
-      "title": "Volume and overage",
-      "body": "If your call or quote volume grows beyond the agreed range, we flag it and agree any adjustment in writing before charging more. No silent overages."
-    },
-    "comparison": {
-      "title": "Side by side",
-      "setup": "Setup",
-      "monthly": "Monthly",
-      "bestFor": "Best for",
-      "techs": "Technicians"
-    },
-    "forWhomLabel": "Built for",
-    "includesLabel": "Includes",
+    "customTitle": "Operating across locations or high volume?",
+    "customBody": "We design a custom plan for multi-location routing, advanced integrations and priority monitoring. Scoped on the audit — never sold as a surprise upgrade.",
+    "customCta": "Request a custom scope",
+    "includesTitle": "Every engagement includes",
+    "includesItems": [
+      "Setup fee fixed before work begins",
+      "Month-to-month management",
+      "Human-approved message templates",
+      "French and English",
+      "Launch guarantee if we delay",
+      "Your customer data stays yours"
+    ],
+    "details": [
+      {
+        "title": "Why prices have a range",
+        "body": "Final pricing depends on call volume, technicians, quote volume, existing software, and escalation rules. The audit locks the number in writing before work starts."
+      },
+      {
+        "title": "Volume and overages",
+        "body": "If volume grows past the agreed range, we flag it and agree any change in writing first. No silent overages."
+      },
+      {
+        "title": "Cancellation",
+        "body": "Cancel with notice. Sequences stop. We help export or hand off what you need. Customer data stays with you."
+      },
+      {
+        "title": "Data ownership",
+        "body": "Customer records and conversation logs belong to your business. We do not sell or reuse them for other clients."
+      }
+    ],
+    "cta": "Book a 20-minute audit",
     "setupLabel": "Setup",
-    "monthlyLabel": "Then"
+    "monthlyLabel": "month",
+    "thenLabel": "then"
   },
   "about": {
     "eyebrow": "About",
@@ -983,7 +965,13 @@
     "cta": "Book a 20-minute audit",
     "emailCta": "Email Ara",
     "founderTitle": "Founder",
-    "founderBody": "TradeCatch is built and operated directly by its founder, a software developer with an automation background who works alongside each contractor to design, install and manage the system. No call centre, no outsourced support: you work with the person who built it."
+    "founderBody": "TradeCatch is built and operated directly by its founder, a software developer with an automation background who works alongside each contractor to design, install and manage the system. No call centre, no outsourced support: you work with the person who built it.",
+    "heroIntro": "Built and run by the founder for Québec trade companies — no call centre, no outsourced support.",
+    "heroPoints": [
+      "Built for Québec trades",
+      "French and English",
+      "Direct founder support"
+    ]
   },
   "bookAudit": {
     "headline": "Book a free 20-minute revenue leak audit",
@@ -1326,7 +1314,13 @@
         "Every action is logged",
         "French and English templates approved before launch"
       ]
-    }
+    },
+    "heroIntro": "Straight answers about what stays human, what the system does, and what it never touches.",
+    "heroTrust": [
+      "Messages approved before launch",
+      "Human emergency routing",
+      "Your data stays yours"
+    ]
   },
   "legal": {
     "lastUpdated": "Last updated",

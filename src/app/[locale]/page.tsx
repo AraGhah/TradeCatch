@@ -573,7 +573,7 @@ export default async function HomePage({
             className="mt-[clamp(32px,4vw,48px)] grid"
             style={{
               gap: "clamp(14px, 2vw, 20px)",
-              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
             }}
           >
             {pricingTiers.map((tier) => (

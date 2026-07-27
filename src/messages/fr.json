@@ -593,35 +593,29 @@
     "pricingPreview": {
       "eyebrow": "Tarifs",
       "headline": "Fourchettes de départ claires. Précisées à l'audit.",
-      "intro": "L'installation bâtit le système SMS de retour et de relance autour de votre entreprise. La gestion mensuelle le fait tourner, le surveille et l'améliore.",
+      "intro": "L'installation bâtit le système SMS de retour et de relance. La gestion mensuelle le fait tourner.",
       "tiers": [
         {
           "name": "Démarrage",
           "price": "2 500 $ d'installation",
-          "cadence": "+ 750 $ / mois",
-          "idealFor": "Propriétaires-exploitants et petites équipes prêts à arrêter de perdre des appels manqués."
+          "cadence": "750 $ / mois",
+          "idealFor": "Propriétaires-exploitants et petites équipes qui captent les appels manqués."
         },
         {
           "name": "Croissance",
           "price": "4 000 $ d'installation",
-          "cadence": "+ 1 000 $–1 500 $ / mois",
-          "idealFor": "Équipes avec plusieurs techniciens, rotation de garde et besoins CRM."
-        },
-        {
-          "name": "Premium",
-          "price": "Sur mesure",
-          "cadence": "Défini lors de l'appel d'audit",
-          "idealFor": "Opérations multi-sites ou à volume élevé avec des processus avancés."
+          "cadence": "1 000 $–1 500 $ / mois",
+          "idealFor": "Équipes avec plusieurs techniciens ou besoins CRM."
         }
       ],
       "cta": "Voir tous les tarifs",
-      "note": "Récupérer un seul job supplémentaire de 3 000 $ peut couvrir plusieurs mois de gestion."
+      "note": "Forfaits sur mesure disponibles pour multi-sites ou volume élevé."
     }
   },
   "services": {
     "eyebrow": "Services",
-    "headline": "Un seul système. Cinq jobs qu'il fait pendant que vous travaillez.",
-    "intro": "TradeCatch connecte votre téléphone, vos messages, votre courriel, votre processus de soumission et votre CRM pour que moins d'occasions disparaissent entre la première sonnerie et le job signé.",
+    "headline": "Un système. Cinq jobs pendant que vous travaillez.",
+    "intro": "TradeCatch relie téléphone, messages, courriel, soumissions et CRM pour que moins d'occasions se perdent entre le premier appel et le job signé.",
     "groups": [
       {
         "title": "Capture de prospects",
@@ -702,7 +696,14 @@
       "Renouvellements saisonniers",
       "Automatisation des commandes de matériaux"
     ],
-    "cta": "Voir ce dont vous avez besoin"
+    "cta": "Voir ce dont vous avez besoin",
+    "heroHighlights": [
+      "Capture de leads",
+      "Routage technicien",
+      "Relance de soumissions",
+      "Prise de rendez-vous",
+      "Rapports et suivi"
+    ]
   },
   "howItWorks": {
     "eyebrow": "Fonctionnement",
@@ -786,7 +787,15 @@
       }
     ],
     "sequenceNote": "La séquence s'arrête dès que le client répond, et vous êtes alerté s'il soulève une objection de prix ou une question que seul vous pouvez trancher.",
-    "cta": "Adapter ça à mon entreprise"
+    "cta": "Adapter ça à mon entreprise",
+    "heroSteps": [
+      "Appel manqué",
+      "SMS envoyé",
+      "Détails recueillis",
+      "Technicien alerté",
+      "Soumission relancée",
+      "Job enregistré"
+    ]
   },
   "industriesPage": {
     "eyebrow": "Industries",
@@ -845,117 +854,90 @@
         ]
       }
     ],
-    "cta": "Réserver un audit de 20 minutes pour mon métier"
+    "cta": "Réserver un audit de 20 minutes pour mon métier",
+    "selectLabel": "Choisissez votre métier"
   },
   "pricing": {
     "eyebrow": "Tarifs",
-    "headline": "Tarifié selon votre volume d'appels, pas selon un nombre de sièges.",
-    "intro": "L'installation bâtit un système SMS de retour qui répond quand votre équipe manque un appel, recueille les détails du job, alerte le bon technicien et relance les estimations sans réponse. Ensuite, on le surveille et on l'améliore mois après mois. Voici la fourchette de départ, sans détour.",
-    "metaDescription": "Forfaits Démarrage, Croissance et Premium pour le SMS de retour sur appels manqués et la relance d'estimations, avec prix de départ pour les entrepreneurs québécois.",
-    "mostPopular": "Le plus populaire",
-    "disclaimer": "Le prix final dépend du volume d'appels, du nombre de techniciens, du volume de soumissions, des intégrations logicielles et de la complexité du processus.",
+    "headline": "Des prix honnêtes pour les équipes qui perdent des jobs entre la sonnerie et la signature.",
+    "intro": "Vous payez une fois pour installer le système. Vous payez chaque mois pour garder le SMS de retour, les alertes technicien et la relance de soumissions — suivis par une vraie personne.",
+    "reassurance": "Installation fixe. Mois par mois. Résiliation avec préavis.",
+    "metaDescription": "Forfaits Démarrage et Croissance pour le SMS de retour sur appels manqués et la relance d'estimations pour les entrepreneurs québécois.",
+    "mostPopular": "Recommandé",
+    "principles": [
+      "Prix d'installation fixe, convenu par écrit",
+      "Gestion mois par mois",
+      "Ajusté à votre volume d'appels et de soumissions"
+    ],
     "tiers": [
       {
         "name": "Démarrage",
         "price": "2 500 $ d'installation",
-        "cadence": "+ 750 $ / mois",
-        "idealFor": "Propriétaires-exploitants et petites équipes prêts à arrêter de perdre des appels manqués et des estimations silencieuses.",
-        "volume": "Volume d'appels manqués et de soumissions faible à modéré",
-        "technicians": "1–2 techniciens / un processus d'alerte",
-        "setupPaysFor": "Rédaction des messages, connexion téléphonique, tests et lancement avec le fondateur",
-        "economy": "Récupérer un seul job supplémentaire de 3 000 $ peut couvrir plusieurs mois de gestion.",
-        "installTime": "En général quelques semaines après l'audit, selon votre configuration téléphonique",
-        "support": "Gestion suivie par le fondateur et rapport hebdomadaire",
+        "setupAmount": "2 500 $",
+        "cadence": "750 $ / mois",
+        "monthlyAmount": "750 $",
+        "idealFor": "Propriétaires-exploitants et petites équipes qui captent les appels manqués pour la première fois.",
         "items": [
           "SMS de retour sur appels manqués",
-          "Collecte des informations de prospect",
+          "Collecte des détails et photos du prospect",
           "Un processus d'alerte technicien",
-          "Relance des soumissions",
-          "Rapport hebdomadaire"
+          "Séquence de relance des soumissions",
+          "Rapports hebdomadaires",
+          "Lancement suivi par le fondateur"
         ]
       },
       {
         "name": "Croissance",
         "badge": "Le plus populaire",
         "price": "4 000 $ d'installation",
-        "cadence": "+ 1 000 $–1 500 $ / mois",
-        "idealFor": "Équipes avec plusieurs techniciens, rotation de garde et besoins CRM ou de réservation.",
-        "volume": "Volume d'appels et de soumissions modéré à élevé",
-        "technicians": "Plusieurs techniciens avec rotation de garde",
-        "setupPaysFor": "Acheminement multi-tech, connexion CRM, prise de rendez-vous et tableau de bord personnalisé",
-        "economy": "Conçu pour les équipes où une urgence ou une soumission d'installation récupérée paie plusieurs mois de couverture.",
-        "installTime": "Défini à l'audit. En général plus long que Démarrage quand CRM et rotation sont en jeu.",
-        "support": "Suivi prioritaire, peaufinage des escalades et rapports personnalisés",
+        "setupAmount": "4 000 $",
+        "cadence": "1 000 $–1 500 $ / mois",
+        "monthlyAmount": "1 000 $–1 500 $",
+        "idealFor": "Équipes avec plusieurs techniciens, rotation de garde ou besoins CRM.",
         "items": [
-          "Plusieurs techniciens",
-          "Rotation de garde",
-          "Escalade de remplacement",
-          "Intégration CRM",
-          "Prise de rendez-vous",
-          "Relance de soumissions avancée",
+          "Tout ce qui est inclus dans Démarrage",
+          "Acheminement multi-techniciens",
+          "Rotation de garde et escalade de remplacement",
+          "Connexion CRM",
+          "Soutien à la prise de rendez-vous",
           "Tableau de bord personnalisé"
-        ]
-      },
-      {
-        "name": "Premium",
-        "price": "Sur mesure",
-        "cadence": "Défini lors de l'appel d'audit",
-        "idealFor": "Opérations multi-sites ou à volume élevé qui ont besoin de processus avancés et d'un support prioritaire.",
-        "volume": "Volume d'appels élevé sur un ou plusieurs emplacements",
-        "technicians": "Plus grandes équipes / acheminement multi-sites",
-        "setupPaysFor": "Architecture sur mesure, intégrations avancées et lancement prioritaire",
-        "economy": "Tarifié selon le coût des pertes hors heures et des estimations à haute valeur à grande échelle.",
-        "installTime": "Calendrier sur mesure après l'audit",
-        "support": "Support prioritaire et suivi dédié",
-        "items": [
-          "Plusieurs emplacements",
-          "Volume d'appels élevé",
-          "Signatures électroniques",
-          "Dépôts",
-          "Rappels de facture",
-          "Automatisation des avis",
-          "Intégrations personnalisées",
-          "Support prioritaire"
         ]
       }
     ],
-    "whyRange": {
-      "title": "Pourquoi une fourchette",
-      "body": "Le prix final dépend du volume d'appels, du nombre de techniciens, du volume de soumissions, des logiciels que vous utilisez déjà, et de la complexité de vos règles de garde et d'escalade. L'audit sert à le fixer, et vous obtenez le chiffre par écrit avant que quoi que ce soit commence."
-    },
-    "noSurprises": {
-      "title": "Pas de surprises",
-      "items": [
-        "Frais d'installation fixes convenus avant le début des travaux",
-        "Gestion mois par mois, résiliation avec préavis",
-        "Garantie de lancement : notre retard, votre premier mois crédité",
-        "Dépassement discuté par écrit avant tout frais supplémentaire"
-      ]
-    },
-    "cta": "Réserver un audit de fuites de revenus de 20 minutes",
-    "afterCancel": {
-      "title": "Après résiliation",
-      "body": "Nous vous aidons à exporter ou transférer ce dont vous avez besoin. Les séquences de messages s'arrêtent. Vos données clients restent les vôtres."
-    },
-    "dataOwnership": {
-      "title": "Vos données restent les vôtres",
-      "body": "Les dossiers clients et les journaux de conversation appartiennent à votre entreprise. Nous ne les vendons pas et ne les réutilisons pas pour d'autres clients."
-    },
-    "overage": {
-      "title": "Volume et dépassement",
-      "body": "Si votre volume d'appels ou de soumissions dépasse la fourchette convenue, nous le signalons et convenons par écrit de tout ajustement avant de facturer davantage. Pas de dépassements silencieux."
-    },
-    "comparison": {
-      "title": "Côte à côte",
-      "setup": "Installation",
-      "monthly": "Mensuel",
-      "bestFor": "Idéal pour",
-      "techs": "Techniciens"
-    },
-    "forWhomLabel": "Conçu pour",
-    "includesLabel": "Inclus",
+    "customTitle": "Plusieurs sites ou un volume élevé?",
+    "customBody": "On conçoit un forfait sur mesure pour le routage multi-sites, les intégrations avancées et le suivi prioritaire. Défini à l'audit — jamais vendu comme une surprise.",
+    "customCta": "Demander une portée sur mesure",
+    "includesTitle": "Chaque mandat inclut",
+    "includesItems": [
+      "Frais d'installation fixes avant le début",
+      "Gestion mois par mois",
+      "Modèles de messages approuvés par un humain",
+      "Français et anglais",
+      "Garantie de lancement si on retarde",
+      "Vos données clients restent les vôtres"
+    ],
+    "details": [
+      {
+        "title": "Pourquoi les prix ont une fourchette",
+        "body": "Le prix final dépend du volume d'appels, des techniciens, du volume de soumissions, des logiciels déjà en place et des règles d'escalade. L'audit fixe le chiffre par écrit avant le début des travaux."
+      },
+      {
+        "title": "Volume et dépassements",
+        "body": "Si le volume dépasse la fourchette convenue, on le signale et on convient par écrit de tout ajustement avant de facturer. Pas de dépassements silencieux."
+      },
+      {
+        "title": "Résiliation",
+        "body": "Résiliez avec préavis. Les séquences s'arrêtent. On vous aide à exporter ou transférer ce dont vous avez besoin. Les données clients restent les vôtres."
+      },
+      {
+        "title": "Propriété des données",
+        "body": "Les dossiers clients et les journaux de conversation appartiennent à votre entreprise. On ne les vend pas et on ne les réutilise pas pour d'autres clients."
+      }
+    ],
+    "cta": "Réserver un audit de 20 minutes",
     "setupLabel": "Installation",
-    "monthlyLabel": "Puis"
+    "monthlyLabel": "mois",
+    "thenLabel": "puis"
   },
   "about": {
     "eyebrow": "À propos",
@@ -983,7 +965,13 @@
     "cta": "Réserver un audit de 20 minutes",
     "emailCta": "Écrire à Ara",
     "founderTitle": "Fondateur",
-    "founderBody": "TradeCatch est bâti et exploité directement par son fondateur, un développeur logiciel avec une expertise en automatisation qui travaille aux côtés de chaque entrepreneur pour concevoir, installer et gérer le système. Pas de centre d'appels, pas de support externalisé : vous travaillez avec la personne qui l'a construit."
+    "founderBody": "TradeCatch est bâti et exploité directement par son fondateur, un développeur logiciel avec une expertise en automatisation qui travaille aux côtés de chaque entrepreneur pour concevoir, installer et gérer le système. Pas de centre d'appels, pas de support externalisé : vous travaillez avec la personne qui l'a construit.",
+    "heroIntro": "Bâti et géré par le fondateur pour les entreprises de métiers du Québec — pas de centre d'appels, pas de support externalisé.",
+    "heroPoints": [
+      "Axé sur le Québec",
+      "Bilingue FR/EN",
+      "Support direct du fondateur"
+    ]
   },
   "bookAudit": {
     "headline": "Réservez un audit gratuit de fuites de revenus de 20 minutes",
@@ -1326,7 +1314,13 @@
         "Chaque action est journalisée",
         "Modèles FR et EN approuvés avant le lancement"
       ]
-    }
+    },
+    "heroIntro": "Des réponses claires sur ce qui reste humain, ce que fait le système, et ce qu'il ne touche jamais.",
+    "heroTrust": [
+      "Messages approuvés avant le lancement",
+      "Routage d'urgence humain",
+      "Vos données restent les vôtres"
+    ]
   },
   "legal": {
     "lastUpdated": "Dernière mise à jour",

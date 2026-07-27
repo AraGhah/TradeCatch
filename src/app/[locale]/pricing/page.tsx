@@ -1,7 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Container } from "@/components/Container";
-import { SectionHeading } from "@/components/SectionHeading";
 import { StickyAuditCta } from "@/components/StickyAuditCta";
 import {
   PricingExperience,
@@ -35,51 +34,85 @@ export default async function PricingPage({
   const cta = await getTranslations("cta");
 
   const tiers = t.raw("tiers") as PricingTier[];
+  const principles = t.raw("principles") as string[];
 
   return (
     <>
-      <section className="bg-navy pt-[clamp(56px,7vw,88px)] pb-[clamp(48px,6vw,72px)]">
-        <Container>
-          <div className="max-w-[48rem]">
-            <SectionHeading
-              as="h1"
-              light
-              align="left"
-              eyebrow={t("eyebrow")}
-              title={t("headline")}
-              intro={t("intro")}
-              className="max-w-none"
-            />
+      <section className="relative overflow-hidden bg-navy pt-[clamp(80px,9vw,110px)] pb-[clamp(88px,10vw,120px)]">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
+            backgroundSize: "56px 56px",
+            maskImage:
+              "radial-gradient(70% 70% at 30% 40%, #000 10%, transparent 70%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-24 top-10 h-[420px] w-[420px] rounded-full opacity-30"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(228,118,43,0.35) 0%, transparent 68%)",
+          }}
+        />
+
+        <Container className="relative">
+          <div className="grid items-end gap-x-16 gap-y-10 lg:grid-cols-[1.2fr_0.8fr]">
+            <div>
+              <p className="text-[13px] font-medium text-orange">{t("eyebrow")}</p>
+              <h1
+                className="mt-4 max-w-[14em] font-heading font-extrabold text-white"
+                style={{
+                  fontSize: "clamp(36px, 5vw, 58px)",
+                  lineHeight: 0.98,
+                  letterSpacing: "-0.045em",
+                }}
+              >
+                {t("headline")}
+              </h1>
+              <p className="mt-5 max-w-[34em] text-[clamp(16px,1.35vw,18px)] leading-[1.6] text-white/68">
+                {t("intro")}
+              </p>
+            </div>
+
+            <div className="border-l border-white/15 pl-0 lg:pl-10">
+              <ul className="m-0 flex list-none flex-col p-0">
+                {principles.map((item) => (
+                  <li
+                    key={item}
+                    className="border-t border-white/12 py-4 text-[16px] leading-[1.45] font-medium tracking-[-0.015em] text-white/82 first:border-t-0 first:pt-0"
+                  >
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 text-[13px] leading-[1.5] text-white/45">
+                {t("reassurance")}
+              </p>
+            </div>
           </div>
         </Container>
       </section>
 
-      <section className="bg-paper pb-[clamp(72px,9vw,120px)] pt-[clamp(36px,4vw,52px)]">
+      <section className="bg-paper pb-[clamp(72px,9vw,120px)]">
         <Container>
           <PricingExperience
             tiers={tiers}
             labels={{
               mostPopular: t("mostPopular"),
               cta: t("cta"),
-              forWhomLabel: t("forWhomLabel"),
-              includesLabel: t("includesLabel"),
               setupLabel: t("setupLabel"),
               monthlyLabel: t("monthlyLabel"),
-              comparisonTitle: t("comparison.title"),
-              comparisonSetup: t("comparison.setup"),
-              comparisonMonthly: t("comparison.monthly"),
-              comparisonBestFor: t("comparison.bestFor"),
-              comparisonTechs: t("comparison.techs"),
-              whyRangeTitle: t("whyRange.title"),
-              whyRangeBody: t("whyRange.body"),
-              noSurprisesTitle: t("noSurprises.title"),
-              noSurprisesItems: t.raw("noSurprises.items") as string[],
-              overageTitle: t("overage.title"),
-              overageBody: t("overage.body"),
-              dataOwnershipTitle: t("dataOwnership.title"),
-              dataOwnershipBody: t("dataOwnership.body"),
-              afterCancelTitle: t("afterCancel.title"),
-              afterCancelBody: t("afterCancel.body"),
+              thenLabel: t("thenLabel"),
+              customTitle: t("customTitle"),
+              customBody: t("customBody"),
+              customCta: t("customCta"),
+              includesTitle: t("includesTitle"),
+              includesItems: t.raw("includesItems") as string[],
+              details: t.raw("details") as { title: string; body: string }[],
             }}
           />
         </Container>

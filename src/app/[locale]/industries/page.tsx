@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Container } from "@/components/Container";
-import { SectionHeading } from "@/components/SectionHeading";
+import { InternalHero } from "@/components/InternalHero";
 import { CTAButton } from "@/components/CTAButton";
 import { buildMetadata } from "@/lib/seo";
 
@@ -37,73 +37,71 @@ export default async function IndustriesPage({
 
   return (
     <>
-      <section className="bg-navy pt-[clamp(56px,7vw,96px)] pb-[clamp(64px,8vw,100px)]">
-        <Container>
-          <SectionHeading
-            as="h1"
-            light
-            align="left"
-            eyebrow={t("eyebrow")}
-            title={t("headline")}
-            intro={t("intro")}
-          />
-        </Container>
-      </section>
+      <InternalHero
+        eyebrow={t("eyebrow")}
+        title={t("headline")}
+        intro={t("intro")}
+        aside={
+          <div>
+            <p className="mb-3 text-[13px] text-white/50">{t("selectLabel")}</p>
+            <div className="flex flex-wrap gap-2">
+              {sections.map((section, i) => (
+                <a
+                  key={section.name}
+                  href={`#industry-${i}`}
+                  className="border border-white/15 bg-white/[0.04] px-3.5 py-2 text-[14px] text-white/80 transition-colors hover:border-orange/50 hover:text-white"
+                >
+                  {section.name}
+                </a>
+              ))}
+            </div>
+          </div>
+        }
+      />
 
-      <section className="bg-paper pt-[clamp(48px,6vw,88px)] pb-[clamp(64px,8vw,120px)]">
+      <section className="bg-paper pt-[clamp(28px,4vw,40px)] pb-[clamp(64px,8vw,100px)]">
         <Container>
           {sections.map((section, i) => (
             <div
               key={section.name}
+              id={`industry-${i}`}
               data-reveal
-              className="border-b border-[rgba(12,20,30,0.12)] py-[clamp(32px,3.6vw,48px)]"
+              className="scroll-mt-28 border-b border-[rgba(12,20,30,0.12)] py-[clamp(28px,3.4vw,40px)]"
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                gap: "clamp(20px, 3vw, 56px)",
+                gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                gap: "clamp(16px, 3vw, 40px)",
               }}
             >
               <div>
-                <span className="font-mono text-[11px] font-semibold tracking-[0.14em] text-ember-text uppercase">
-                  {String(i + 1).padStart(2, "0")} · {section.name}
-                </span>
-                <h2 className="mt-4 max-w-[min(100%,28rem)] font-heading text-[clamp(24px,2.8vw,34px)] font-bold leading-[1.12] tracking-[-0.034em] text-navy">
-                  {section.headline}
-                </h2>
-              </div>
-              <div>
-                <p className="font-mono text-[10.5px] tracking-[0.14em] text-muted uppercase">
+                <p className="text-[13px] font-medium text-ember-text">
                   {t("focusLabel")}
                 </p>
-                <ul
-                  className="mt-4 list-none p-0"
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-                    gap: "2px 24px",
-                  }}
-                >
-                  {section.focus.map((item) => (
-                    <li
-                      key={item}
-                      className="flex items-start gap-[11px] py-[9px] text-[15.5px] leading-[1.55] text-secondary"
-                    >
-                      <span
-                        aria-hidden
-                        className="shrink-0 text-[13px] leading-[1.6] text-green"
-                      >
-                        ✓
-                      </span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
+                <h2 className="mt-3 max-w-[min(100%,28rem)] font-heading text-[clamp(22px,2.6vw,32px)] font-bold leading-[1.12] tracking-[-0.03em] text-navy">
+                  {section.headline}
+                </h2>
+                <p className="mt-2 text-[15px] font-semibold text-navy">
+                  {section.name}
+                </p>
               </div>
+              <ul className="m-0 flex list-none flex-col gap-2 p-0">
+                {section.focus.map((item) => (
+                  <li
+                    key={item}
+                    className="flex gap-2.5 text-[15px] leading-[1.5] text-secondary"
+                  >
+                    <span aria-hidden className="text-green">
+                      ✓
+                    </span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
 
-          <div data-reveal className="mt-12 text-center">
-            <CTAButton href="/book-audit" variant="ember" size="lg">
+          <div data-reveal className="mt-10 text-center">
+            <CTAButton href="/book-audit" variant="ink" size="lg">
               {t("cta")}
             </CTAButton>
           </div>
