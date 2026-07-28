@@ -2,6 +2,7 @@ import { IllustrativeBadge } from "@/components/IllustrativeBadge";
 import { TechnicianAlertCard } from "@/components/TechnicianAlertCard";
 import { QuoteFollowUpTimeline } from "@/components/QuoteFollowUpTimeline";
 import { CTAButton } from "@/components/CTAButton";
+import { WatchDemoButton } from "@/components/WatchDemoButton";
 
 type QuoteStep = { day: string; title: string; body: string };
 
@@ -116,12 +117,9 @@ export function ProofExamplesSection({
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
-        <a
-          href="#missed-call-demo"
-          className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark"
-        >
+        <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2">
           {demoCta}
-        </a>
+        </WatchDemoButton>
         <CTAButton href="/one-pager" variant="secondary">
           {onePagerCta}
         </CTAButton>

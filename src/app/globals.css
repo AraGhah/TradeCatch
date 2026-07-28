@@ -289,3 +289,42 @@ h4 {
     transform: none !important;
   }
 }
+
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes phone-vibrate {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(-2px) rotate(-0.6deg);
+  }
+  75% {
+    transform: translateX(2px) rotate(0.6deg);
+  }
+}
+
+/* Full-bleed recording surface for /demo-video */
+body.demo-video-active header,
+body.demo-video-active footer,
+body.demo-video-active [role="dialog"],
+body.demo-video-active #cookie-consent,
+body.demo-video-active .sticky-audit-cta {
+  display: none !important;
+}
+
+body.demo-video-active {
+  overflow: hidden;
+}
+
+

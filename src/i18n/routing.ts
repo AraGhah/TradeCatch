@@ -36,6 +36,10 @@ export const routing = defineRouting({
       en: "/one-pager",
       fr: "/fiche-resume",
     },
+    "/demo-video": {
+      en: "/demo-video",
+      fr: "/demo-video",
+    },
   },
 });
 

@@ -1656,5 +1656,11 @@
     "cta": "Réservez un audit gratuit de 20 minutes — aucun accès système requis.",
     "contact": "438·993·6997 · tradecatch.ca",
     "footerNote": "Les exemples du site sont illustratifs. Les vrais résultats clients ne sont publiés qu'avec permission."
+  },
+  "demoVideo": {
+    "title": "Démo produit de 90 secondes",
+    "description": "Démonstration animée TradeCatch : récupération d'appels manqués et relance de soumissions pour entrepreneurs.",
+    "playerTitle": "Démo TradeCatch",
+    "close": "Fermer"
   }
 }
