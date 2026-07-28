@@ -60,8 +60,8 @@ export function PricingExperience({
       </div>
 
       <motion.section
-        initial={{ opacity: 0, y: 14 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ y: 14 }}
+        whileInView={{ y: 0 }}
         viewport={{ once: true, margin: "-40px" }}
         transition={{ duration: 0.5, ease }}
         className="relative mt-[clamp(40px,5vw,56px)] overflow-hidden bg-navy px-[clamp(28px,4vw,48px)] py-[clamp(36px,4.5vw,52px)] text-white"
@@ -93,8 +93,8 @@ export function PricingExperience({
       </motion.section>
 
       <motion.section
-        initial={{ opacity: 0, y: 12 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ y: 12 }}
+        whileInView={{ y: 0 }}
         viewport={{ once: true, margin: "-40px" }}
         transition={{ duration: 0.45, ease }}
         className="mt-[clamp(48px,6vw,72px)]"
@@ -150,8 +150,8 @@ function PlanCard({
 
   return (
     <motion.article
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ y: 20 }}
+      whileInView={{ y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.55, delay: index * 0.08, ease }}
       className={`relative flex flex-col border bg-white p-[clamp(32px,3.5vw,48px)] text-navy transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 ${

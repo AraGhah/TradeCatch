@@ -130,6 +130,19 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/cancellation-refund-policy" className={linkClass}>
+                  {t("legalLinks.cancellation")}
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/emergency-service-disclaimer"
+                  className={linkClass}
+                >
+                  {t("legalLinks.emergency")}
+                </Link>
+              </li>
+              <li>
                 <ManageCookiesButton
                   label={t("manageCookies")}
                   className={linkClass}

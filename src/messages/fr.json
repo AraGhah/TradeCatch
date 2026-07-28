@@ -18,28 +18,28 @@
     "faq": "FAQ"
   },
   "cta": {
-    "primary": "Voir où vous perdez des jobs",
-    "secondary": "Voir le déroulement",
-    "tertiary": "Réserver une démo",
-    "watchDemo": "Voir le déroulement",
+    "primary": "Réserver un audit gratuit de 20 minutes",
+    "secondary": "Voir la démo en direct",
+    "tertiary": "Réserver un audit gratuit de 20 minutes",
+    "watchDemo": "Voir la démo en direct",
     "seeWorkflow": "Voir le processus complet",
     "viewMissedCall": "Voir le processus des appels manqués",
     "viewQuoteFollowUp": "Voir le processus de relance des soumissions",
     "viewIndustries": "Toutes les industries",
     "bookAudit": "Réserver l'audit",
     "bookAuditShort": "Réserver l'audit",
-    "bookAuditFree": "Réserver un audit gratuit de fuites de revenus de 20 minutes",
-    "findMyLeaks": "Trouver mes fuites",
-    "talkWithAra": "Parler avec Ara",
+    "bookAuditFree": "Réserver un audit gratuit de 20 minutes",
+    "findMyLeaks": "Réserver un audit gratuit de 20 minutes",
+    "talkWithAra": "Réserver un audit gratuit de 20 minutes",
     "emailDirect": "Écrire directement",
     "emailAra": "Écrire à Ara",
-    "mapToBusiness": "Adapter ça à mon entreprise",
-    "seeWhichYouNeed": "Voir ce dont vous avez besoin",
-    "bookForTrade": "Réserver un audit de 20 minutes pour mon métier",
+    "mapToBusiness": "Réserver un audit gratuit de 20 minutes",
+    "seeWhichYouNeed": "Réserver un audit gratuit de 20 minutes",
+    "bookForTrade": "Réserver un audit gratuit de 20 minutes",
     "allQuestions": "Toutes les questions",
     "backToSite": "Retour au site",
     "submitAnother": "Soumettre une autre demande",
-    "bookAuditDescriptive": "Réserver un audit de fuites de revenus de 20 minutes"
+    "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes"
   },
   "footer": {
     "description": "Quand votre équipe manque un appel, TradeCatch renvoie un texto au client en moins de 30 secondes, recueille les détails du job, alerte le bon technicien et relance les estimations sans réponse jusqu'à ce qu'ils répondent. Installé et suivi par une vraie personne.",
@@ -54,18 +54,28 @@
       "terms": "Conditions d'utilisation",
       "cookies": "Politique de cookies",
       "acceptableUse": "Utilisation acceptable",
-      "accessibility": "Accessibilité"
+      "accessibility": "Accessibilité",
+      "cancellation": "Annulation et remboursements",
+      "emergency": "Avis services d'urgence"
     }
   },
   "home": {
     "hero": {
       "eyebrow": "Plomberie · CVC · électricité au Québec",
-      "headline": "Un appel manqué ne devrait pas devenir le prochain job de votre concurrent.",
-      "accentWord": "concurrent",
+      "headline": "Arrêtez de perdre des jobs à cause d'appels manqués.",
+      "accentWord": "appels manqués",
       "subheadline": "TradeCatch renvoie un texto aux appelants manqués en moins de 30 secondes, recueille les détails du job, alerte le bon technicien et relance chaque estimation sans réponse jusqu'à ce que le client réponde.",
-      "ctaPrimary": "Voir la démo d'appel manqué",
-      "ctaSecondary": "Réserver un audit de 20 minutes",
+      "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
+      "ctaSecondary": "Voir la démo en direct",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
+      "demoStripLabel": "Parcours système en direct",
+      "demoStripSteps": [
+        "Appel manqué",
+        "SMS en <30 s",
+        "Détails captés",
+        "Tech alerté",
+        "Soumission relancée"
+      ],
       "trustChips": [
         "Basé au Québec",
         "Français et anglais",
@@ -79,7 +89,7 @@
         "autoReply": "SMS DE RETOUR ACTIF",
         "statusTime": "19 h 44",
         "statusNetwork": "LTE ●●●",
-        "disclaimer": "Exemple de conversation. Pas un vrai client.",
+        "disclaimer": "Données illustratives · Exemple de conversation. Pas un vrai client.",
         "floatCard": {
           "label": "Tableau de bord",
           "title": "Lead d'urgence assigné"
@@ -136,8 +146,8 @@
         "dashboardMetricLabel": "nouveau lead d'urgence suivi dans votre tableau de bord"
       },
       "headlineLines": [
-        "Un appel manqué ne devrait pas devenir",
-        "le prochain job de votre concurrent."
+        "Arrêtez de perdre des jobs",
+        "à cause d'appels manqués."
       ],
       "qualificationLine": "Conçu pour les entreprises de plomberie, CVC et électricité au Québec. Français et anglais. Installé et suivi pour vous."
     },
@@ -165,7 +175,7 @@
       "eyebrow": "Le problème",
       "headline": "Trois endroits où les contrats s'échappent.",
       "intro": "Rien de tout cela n'apparaît comme une vente perdue. Ça se voit plutôt comme une baisse tranquille des jobs réservés, que personne n'arrive à retracer.",
-      "cta": "Trouver mes fuites",
+      "cta": "Réserver un audit gratuit de 20 minutes",
       "cards": [
         {
           "title": "L'appel auquel personne ne répond",
@@ -186,7 +196,7 @@
       "headline": "De la première sonnerie au job signé.",
       "intro": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job, alerte votre équipe et relance les soumissions ouvertes jusqu'à ce que quelqu'un réponde.",
       "cta": "Voir comment ça marche",
-      "previewLabel": "Étapes exemples",
+      "previewLabel": "Exemple de parcours — illustratif, pas un flux client en direct",
       "previewSteps": [
         "Appel manqué",
         "SMS envoyé",
@@ -301,9 +311,9 @@
       "eyebrow": "Rapports",
       "headline": "Vous voyez enfin ce qui vous échappait.",
       "intro": "Chaque appel récupéré, chaque relance, chaque soumission devenue un contrat signé. Une vue hebdomadaire que vous lisez en une minute, sur un chantier, sur votre téléphone.",
-      "cta": "Réserver un audit de 20 minutes",
-      "badge": "Exemple de tableau de bord",
-      "live": "Données d'exemple",
+      "cta": "Réserver un audit gratuit de 20 minutes",
+      "badge": "Tableau de bord illustratif",
+      "live": "Illustratif",
       "period": "Semaine du 14 avr.",
       "metrics": [
         {
@@ -340,7 +350,7 @@
         }
       ],
       "note": "Chaque appel récupéré, chaque relance, chaque soumission devenue un contrat signé. Une vue hebdomadaire que vous lisez en une minute.",
-      "sampleDataLabel": "Semaine d'exemple, à titre d'illustration."
+      "sampleDataLabel": "Données illustratives — semaine d'exemple, pas un flux client en direct. Pas une promesse de résultats."
     },
     "industries": {
       "eyebrow": "Industries",
@@ -446,7 +456,7 @@
     "finalCta": {
       "headline": "Combien de jobs perdez-vous avant même de parler au client?",
       "body": "Réservez un audit gratuit de fuites de revenus de 20 minutes. On examine comment votre équipe gère les appels manqués et les estimations sans réponse, puis on vous laisse une carte de processus et trois recommandations concrètes. Aucun accès système requis. Vous parlez avec le fondateur.",
-      "cta": "Réserver un audit de fuites de revenus de 20 minutes",
+      "cta": "Réserver un audit gratuit de 20 minutes",
       "underCta": "Nous examinons comment votre équipe gère les appels manqués et les estimations. Vous repartez avec une carte de processus et trois recommandations concrètes. Aucun accès système requis.",
       "whatToExpect": [
         "Audit de fuites de revenus de 20 minutes",
@@ -505,14 +515,14 @@
       ],
       "emailLabel": "Courriel",
       "statement": "Je m'assois avec votre équipe, je cartographie comment les appels et les soumissions circulent vraiment dans votre entreprise, j'écris chaque message avec vous, et je teste chaque scénario avant qu'un seul client le voie. Ensuite, je continue de surveiller après le lancement.",
-      "talkCta": "Parler avec Ara",
+      "talkCta": "Réserver un audit gratuit de 20 minutes",
       "emailCta": "Écrire directement"
     },
     "pilot": {
-      "badge": "Programme entrepreneur fondateur",
-      "headline": "Joignez-vous comme entrepreneur fondateur pendant que les places sont limitées.",
-      "body": "TradeCatch accepte un nombre limité d'entrepreneurs fondateurs par zone de service. Vous obtenez un tarif fondateur réduit, un accès direct au fondateur, une mise en place sur mesure selon votre façon de travailler, la priorité sur les nouvelles fonctions, et un prix verrouillé pour 12 mois.",
-      "pointsLabel": "Ce que les entreprises fondatrices obtiennent",
+      "badge": "Programme pilote",
+      "headline": "Places pilotes fondatrices — limitées par zone de service.",
+      "body": "Joignez-vous comme entrepreneur fondateur pendant que TradeCatch accepte un petit nombre de pilotes. Tarif fondateur réduit, accès direct au fondateur, mise en place selon votre façon de travailler, priorité sur les fonctions pertinentes, et prix verrouillé 12 mois. Pas de promesses de case study inventées — les résultats se suivent avec vous après le lancement.",
+      "pointsLabel": "Ce que le pilote inclut",
       "points": [
         "Tarif fondateur réduit pour les premiers partenaires",
         "Accès direct au fondateur pendant l'installation et le peaufinage",
@@ -521,7 +531,9 @@
         "Prix verrouillé pour 12 mois",
         "Places limitées par zone de service"
       ],
-      "guarantee": "Garantie de lancement : si le système convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité."
+      "guarantee": "Garantie de lancement : si le système convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité.",
+      "cta": "Réserver un audit gratuit de 20 minutes",
+      "landingNote": "Les pilotes sont de vrais mandats avec une portée signée. Les résultats publics n'apparaissent qu'avec une autorisation écrite du client."
     },
     "trustStrip": {
       "eyebrow": "Comment on fonctionne",
@@ -553,42 +565,17 @@
       ]
     },
     "caseStudy": {
-      "eyebrow": "Pilote fondateur de 30 jours",
-      "headline": "À quoi ont ressemblé 30 jours pour une entreprise CVC québécoise",
-      "client": "Entrepreneur CVC québécois anonymisé, 4 techniciens, Grand Montréal",
-      "problemLabel": "Problème de départ",
-      "systemLabel": "Système installé",
-      "problem": "Les appels sans chauffage hors heures et les soumissions de thermopompe sans réponse s'échappaient pendant que l'équipe était sur les jobs. Les relances dépendaient de qui s'en souvenait.",
-      "system": "SMS de retour sur appels manqués, alertes technicien et séquence de relance de soumissions installés sur leur numéro existant. Français et anglais, messages approuvés par un humain, suivis par le fondateur.",
-      "quote": "On voit enfin quels appels manqués et quelles estimations deviennent vraiment du travail, sans embaucher quelqu'un pour rester au téléphone.",
-      "disclaimer": "Les chiffres proviennent d'un pilote fondateur à tarif réduit avec une entreprise CVC québécoise anonymisée. Ils illustrent les résultats suivis pour cette entreprise sur 30 jours. Ce ne sont pas une garantie de résultats pour votre entreprise.",
-      "metrics": [
-        {
-          "value": "27",
-          "label": "appels manqués récupérés"
-        },
-        {
-          "value": "19",
-          "label": "conversations qualifiées"
-        },
-        {
-          "value": "8",
-          "label": "rendez-vous pris"
-        },
-        {
-          "value": "3",
-          "label": "estimations acceptées"
-        },
-        {
-          "value": "18 400 $",
-          "label": "valeur des occasions suivies"
-        },
-        {
-          "value": "24s",
-          "label": "première réponse moyenne"
-        }
-      ],
-      "cta": "Réserver un audit de 20 minutes"
+      "eyebrow": "Exemples illustratifs seulement",
+      "headline": "Pas de témoignages ni de résultats inventés.",
+      "client": "Tant qu'il n'y a pas de résultats de pilote autorisés, le site montre uniquement des exemples de produit étiquetés.",
+      "problemLabel": "Ce que vous ne verrez pas ici",
+      "systemLabel": "Ce que vous verrez plutôt",
+      "problem": "Faux logos d'entrepreneurs, fausses notes étoiles ou garanties de revenus inventées.",
+      "system": "Fils SMS d'exemple, alertes technicien, chronologies de soumission et tableaux de bord — chacun marqué Données illustratives.",
+      "quote": "Nous préférons montrer un exemple de produit clair plutôt qu'inventer une citation client.",
+      "disclaimer": "Rien dans les exemples produit n'est une garantie de jobs, de revenus ou de taux de réponse pour votre entreprise.",
+      "metrics": [],
+      "cta": "Réserver un audit gratuit de 20 minutes"
     },
     "pricingPreview": {
       "eyebrow": "Tarifs",
@@ -610,6 +597,81 @@
       ],
       "cta": "Voir tous les tarifs",
       "note": "Forfaits sur mesure disponibles pour multi-sites ou volume élevé."
+    },
+    "proofExamples": {
+      "eyebrow": "Exemples produit",
+      "headline": "Voyez le système avant de parler à qui que ce soit.",
+      "intro": "Ce sont des exemples de produit étiquetés — noms fictifs et parcours types — pour comprendre le produit. Ce ne sont pas des témoignages clients, des logos, ni des résultats promis.",
+      "illustrativeLabel": "Données illustratives",
+      "demoCta": "Lancer la démo d'appel manqué",
+      "onePagerCta": "Ouvrir la page résumé",
+      "sms": {
+        "badge": "Illustratif · Exemple SMS",
+        "title": "Texto de retour après appel manqué",
+        "lines": [
+          {
+            "who": "event",
+            "text": "APPEL MANQUÉ · (514) 555-0182 · 19 h 42"
+          },
+          {
+            "who": "system",
+            "text": "Bonjour, nous venons de manquer votre appel chez Nord Plomberie. S'agit-il d'une urgence?"
+          },
+          {
+            "who": "customer",
+            "text": "Oui — mon sous-sol commence à inonder."
+          },
+          {
+            "who": "system",
+            "text": "Pouvez-vous envoyer une photo et votre adresse?"
+          },
+          {
+            "who": "customer",
+            "text": "12 rue des Érables, Laval · photo jointe"
+          },
+          {
+            "who": "event",
+            "text": "TECHNICIEN ALERTÉ · MARC D. · 19 h 44"
+          }
+        ]
+      },
+      "alert": {
+        "badge": "Illustratif · Exemple d'alerte",
+        "title": "Alerte technicien",
+        "fromLabel": "De",
+        "jobLabel": "Résumé du job",
+        "addressLabel": "Adresse",
+        "urgencyLabel": "Urgence",
+        "from": "TradeCatch → Garde (Marc D.)",
+        "job": "Inondation sous-sol · photo reçue · client en attente de rappel",
+        "address": "12 rue des Érables, Laval",
+        "urgency": "Urgence — règle approuvée par le client",
+        "ctaLabel": "Répondre OUI pour accepter · APPEL pour joindre le client"
+      },
+      "quoteBadge": "Illustratif · Exemple de chronologie",
+      "quoteHeadline": "Séquence de relance de soumission",
+      "quoteSteps": [
+        {
+          "day": "Jour 0",
+          "title": "Soumission envoyée",
+          "body": "Vous envoyez une estimation de thermopompe à 9 000 $. Pas encore de réponse."
+        },
+        {
+          "day": "Jour 2",
+          "title": "Première relance",
+          "body": "SMS approuvé : suivi poli avec un lien vers la soumission."
+        },
+        {
+          "day": "Jour 5",
+          "title": "Deuxième relance",
+          "body": "Rappel court. La séquence s'arrête dès qu'ils répondent."
+        },
+        {
+          "day": "Jour 5+",
+          "title": "Vous êtes alerté",
+          "body": "Quand ils répondent, votre téléphone/tableau de bord montre que la conversation est relancée."
+        }
+      ]
     }
   },
   "services": {
@@ -696,7 +758,7 @@
       "Renouvellements saisonniers",
       "Automatisation des commandes de matériaux"
     ],
-    "cta": "Voir ce dont vous avez besoin",
+    "cta": "Réserver un audit gratuit de 20 minutes",
     "heroHighlights": [
       "Capture de leads",
       "Routage technicien",
@@ -787,7 +849,7 @@
       }
     ],
     "sequenceNote": "La séquence s'arrête dès que le client répond, et vous êtes alerté s'il soulève une objection de prix ou une question que seul vous pouvez trancher.",
-    "cta": "Adapter ça à mon entreprise",
+    "cta": "Réserver un audit gratuit de 20 minutes",
     "heroSteps": [
       "Appel manqué",
       "SMS envoyé",
@@ -854,7 +916,7 @@
         ]
       }
     ],
-    "cta": "Réserver un audit de 20 minutes pour mon métier",
+    "cta": "Réserver un audit gratuit de 20 minutes",
     "selectLabel": "Choisissez votre métier"
   },
   "pricing": {
@@ -906,7 +968,7 @@
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
     "customBody": "On conçoit un forfait sur mesure pour le routage multi-sites, les intégrations avancées et le suivi prioritaire. Défini à l'audit — jamais vendu comme une surprise.",
-    "customCta": "Demander une portée sur mesure",
+    "customCta": "Réserver un audit gratuit de 20 minutes",
     "includesTitle": "Chaque mandat inclut",
     "includesItems": [
       "Frais d'installation fixes avant le début",
@@ -934,7 +996,7 @@
         "body": "Les dossiers clients et les journaux de conversation appartiennent à votre entreprise. On ne les vend pas et on ne les réutilise pas pour d'autres clients."
       }
     ],
-    "cta": "Réserver un audit de 20 minutes",
+    "cta": "Réserver un audit gratuit de 20 minutes",
     "setupLabel": "Installation",
     "monthlyLabel": "mois",
     "thenLabel": "puis"
@@ -962,7 +1024,7 @@
       "Les décisions importantes restent humaines, toujours.",
       "L'objectif est la récupération pratique de revenus, pas l'expérimentation de l'IA."
     ],
-    "cta": "Réserver un audit de 20 minutes",
+    "cta": "Réserver un audit gratuit de 20 minutes",
     "emailCta": "Écrire à Ara",
     "founderTitle": "Fondateur",
     "founderBody": "TradeCatch est bâti et exploité directement par son fondateur, un développeur logiciel avec une expertise en automatisation qui travaille aux côtés de chaque entrepreneur pour concevoir, installer et gérer le système. Pas de centre d'appels, pas de support externalisé : vous travaillez avec la personne qui l'a construit.",
@@ -1076,7 +1138,9 @@
       "headline": "C'est reçu. Votre demande d'audit est en main.",
       "body": "Ara vous contactera sous peu pour confirmer un moment. Ayez sous la main votre volume d'appels récent, votre liste de soumissions ouvertes et les logiciels que vous utilisez actuellement.",
       "backToSite": "Retour au site",
-      "submitAnother": "Soumettre une autre demande"
+      "submitAnother": "Soumettre une autre demande",
+      "calendarHint": "Vous préférez choisir un horaire maintenant? Réservez un créneau de 20 minutes.",
+      "calendarCta": "Choisir un horaire au calendrier"
     },
     "reassurance": [
       "Sans engagement",
@@ -1301,7 +1365,7 @@
     "stillHave": {
       "headline": "Il vous reste une question?",
       "body": "Posez-la lors de l'appel d'audit. Vingt minutes, sans engagement, et vous aurez une réponse directe dans tous les cas.",
-      "cta": "Réserver un audit gratuit de fuites de revenus de 20 minutes"
+      "cta": "Réserver un audit gratuit de 20 minutes"
     },
     "reassurance": {
       "title": "Ce qui reste sous votre contrôle",
@@ -1474,6 +1538,66 @@
           "body": "Si vous rencontrez un obstacle à l'accessibilité sur ce site, veuillez nous écrire à ara.ghahramanyan07@gmail.com en décrivant la page et le problème. Nous nous efforcerons de corriger les obstacles réels dans un délai raisonnable."
         }
       ]
+    },
+    "cancellationRefundPolicy": {
+      "title": "Politique d'annulation et de remboursement",
+      "metaDescription": "Comment TradeCatch gère les annulations, les préavis, les frais d'installation et les remboursements pour les entrepreneurs québécois.",
+      "sections": [
+        {
+          "heading": "Portée",
+          "body": "Cette politique couvre les frais d'installation TradeCatch et les frais de gestion mensuels des systèmes de récupération de revenus. Les préavis et montants précis sont confirmés dans votre proposition écrite."
+        },
+        {
+          "heading": "Gestion mensuelle",
+          "body": "Chaque partie peut mettre fin à l'entente de gestion par avis écrit selon le délai prévu dans votre proposition (habituellement 30 jours). Le service continue pendant le préavis, sauf entente contraire."
+        },
+        {
+          "heading": "Frais d'installation",
+          "body": "Les frais d'installation couvrent la conception, la configuration, la rédaction des messages, les tests et le lancement. Une fois ce travail commencé, ces frais ne sont pas remboursables."
+        },
+        {
+          "heading": "Gestion prépayée non utilisée",
+          "body": "Les frais de gestion prépayés non utilisés pour le reste d'un préavis ne sont pas remboursés, sauf si la loi québécoise sur la protection du consommateur l'exige."
+        },
+        {
+          "heading": "Garantie de lancement fondateur",
+          "body": "Si un système fondateur convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité selon votre entente fondatrice."
+        },
+        {
+          "heading": "Comment annuler",
+          "body": "Envoyez un avis écrit à ara.ghahramanyan07@gmail.com (ou au courriel de votre proposition). Nous confirmerons la date de fin et toute facture finale par écrit."
+        },
+        {
+          "heading": "Questions",
+          "body": "Si votre proposition contredit cette page, la proposition signée prévaut. Contactez-nous avant d'annuler si vous préférez ajuster la portée."
+        }
+      ]
+    },
+    "emergencyServiceDisclaimer": {
+      "title": "Avis relatif aux services d'urgence",
+      "metaDescription": "TradeCatch ne diagnostique pas les urgences et ne remplace pas votre processus d'urgence. Voici comment fonctionne l'escalade.",
+      "sections": [
+        {
+          "heading": "Ce que TradeCatch fait",
+          "body": "TradeCatch peut envoyer un texto aux appelants manqués, recueillir les détails que vous approuvez et alerter les contacts que vous désignez selon des règles validées avant le lancement."
+        },
+        {
+          "heading": "Ce que TradeCatch ne fait pas",
+          "body": "Le système ne diagnostique pas les problèmes techniques, électriques, de plomberie, de CVC, médicaux ou de sécurité. Il ne décide pas si une situation est une urgence, ne donne pas de consignes de sécurité non approuvées, et ne remplace pas le 911 ni les services d'urgence publics."
+        },
+        {
+          "heading": "Votre responsabilité",
+          "body": "La gestion des situations urgentes ou liées à la sécurité demeure en tout temps la responsabilité de l'entrepreneur et du personnel qualifié. Vous devez maintenir votre propre processus d'urgence indépendamment de ce système."
+        },
+        {
+          "heading": "Escalade uniquement selon vos règles",
+          "body": "Les messages et escalades suivent les modèles et règles d'acheminement que vous avez validés. Modifiez-les avec nous par écrit avant qu'ils ne soient en ligne."
+        },
+        {
+          "heading": "Clarté côté client",
+          "body": "Si vos modèles mentionnent les urgences, ils doivent préciser que les situations menaçant la vie exigent d'abord d'appeler les services d'urgence locaux."
+        }
+      ]
     }
   },
   "cookieBanner": {
@@ -1485,11 +1609,52 @@
     "essentialLabel": "Essentiels",
     "essentialDescription": "Nécessaires au fonctionnement du site. Toujours actifs.",
     "analyticsLabel": "Analytiques",
-    "analyticsDescription": "Nous aide à comprendre l'utilisation du site (Google Analytics 4). Ne se charge que si vous l'autorisez."
+    "analyticsDescription": "Nous aide à comprendre l'utilisation du site (Google Analytics 4). Ne se charge que si vous l'autorisez.",
+    "policyLink": "Politique de cookies"
   },
   "notFound": {
     "title": "Page introuvable",
     "body": "La page que vous recherchez n'existe pas.",
     "cta": "Retour à l'accueil"
+  },
+  "onePager": {
+    "title": "TradeCatch — aperçu d'une page",
+    "metaDescription": "Explication d'une page de TradeCatch pour les entreprises de plomberie, CVC et électricité au Québec.",
+    "printCta": "Imprimer / enregistrer en PDF",
+    "badge": "Aperçu produit illustratif — pas une garantie de performance",
+    "headline": "Appels manqués et soumissions silencieuses, gérés pendant que vous travaillez.",
+    "lede": "TradeCatch renvoie un texto aux appelants manqués en moins de 30 secondes, recueille les détails du job, alerte le bon technicien et relance les estimations sans réponse — avec des messages que vous approuvez.",
+    "forWhomTitle": "Conçu pour",
+    "forWhom": "Les entreprises québécoises de plomberie, CVC et électricité (et métiers similaires) qui perdent du travail entre la sonnerie et le job signé.",
+    "doesTitle": "Ce que ça fait",
+    "does": [
+      "Texto de retour sur appels manqués et hors heures (FR/EN)",
+      "Détails du lead et photos dans la langue du client",
+      "Alertes technicien / propriétaire de garde",
+      "Séquences de relance de soumissions qui s'arrêtent à la réponse",
+      "Tableau de bord simple des appels et relances récupérés"
+    ],
+    "doesNotTitle": "Ce que ça ne fait pas",
+    "doesNot": [
+      "Diagnostiquer plomberie, électricité, CVC ou sécurité",
+      "Donner des consignes d'urgence non approuvées",
+      "Garantir des revenus ou que chaque appelant répondra",
+      "Remplacer les techniciens licenciés"
+    ],
+    "howTitle": "Déroulement",
+    "how": [
+      "Audit gratuit de fuites de revenus de 20 minutes",
+      "Vous approuvez chaque message, règle et zone",
+      "Installation sur votre numéro existant quand c'est possible",
+      "Lancement suivi par le fondateur et gestion mensuelle"
+    ],
+    "pricingTitle": "Fourchettes de départ",
+    "pricing": "Démarrage dès 2 500 $ d'installation + 750 $/mois. Croissance dès 4 000 $ + 1 000–1 500 $/mois. Précisé à l'audit.",
+    "pilotTitle": "Programme pilote",
+    "pilot": "Places fondatrices limitées : tarif réduit, accès fondateur, prix verrouillé 12 mois, crédit si nous retardons le lancement.",
+    "ctaTitle": "Prochaine étape",
+    "cta": "Réservez un audit gratuit de 20 minutes — aucun accès système requis.",
+    "contact": "438·993·6997 · tradecatch.ca",
+    "footerNote": "Les exemples du site sont illustratifs. Les vrais résultats clients ne sont publiés qu'avec permission."
   }
 }

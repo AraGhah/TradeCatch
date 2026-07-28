@@ -11,6 +11,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
 import { TurnstileWidget } from "@/components/TurnstileWidget";
+import { CalendarBookingCta } from "@/components/CalendarBookingCta";
 import {
   BOOK_AUDIT_STEPS,
   OPTIONAL_STEPS,
@@ -342,7 +343,15 @@ export function BookAuditForm() {
         return;
       }
 
-      trackEvent("audit_form_submitted");
+      trackEvent("audit_form_submitted", {
+        trade: parsed.data.trade,
+        preferred_language: parsed.data.preferredLanguage,
+      });
+      trackEvent("generate_lead", {
+        currency: "CAD",
+        value: 0,
+        lead_source: "book_audit",
+      });
       try {
         window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
       } catch {
@@ -436,6 +445,10 @@ export function BookAuditForm() {
           <p className="mx-auto mt-5 max-w-[34em] text-[17px] leading-[1.65] text-muted">
             {t("confirmation.body")}
           </p>
+          <CalendarBookingCta
+            label={t("confirmation.calendarCta")}
+            hint={t("confirmation.calendarHint")}
+          />
           <div className="mt-[34px] flex flex-wrap justify-center gap-3">
             <Link
               href="/"

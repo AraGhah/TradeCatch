@@ -3,6 +3,24 @@
 import { useEffect } from "react";
 import { CTAButton } from "@/components/CTAButton";
 
+async function reportClientError(error: Error & { digest?: string }) {
+  try {
+    await fetch("/api/client-error", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: error.message,
+        digest: error.digest,
+        stack: error.stack?.slice(0, 2000),
+        path: typeof window !== "undefined" ? window.location.pathname : null,
+      }),
+      keepalive: true,
+    });
+  } catch {
+    // Never block recovery UI on monitoring failure.
+  }
+}
+
 export default function Error({
   error,
   reset,
@@ -12,6 +30,7 @@ export default function Error({
 }) {
   useEffect(() => {
     console.error("[app-error]", error);
+    void reportClientError(error);
   }, [error]);
 
   return (
