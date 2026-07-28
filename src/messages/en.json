@@ -1656,5 +1656,11 @@
     "cta": "Book a free 20-minute audit — no system access required.",
     "contact": "438·993·6997 · tradecatch.ca",
     "footerNote": "Examples on the website are illustrative. Real client results are published only with permission."
+  },
+  "demoVideo": {
+    "title": "90-second product demo",
+    "description": "Animated TradeCatch demonstration: missed-call recovery and estimate follow-up for contractors.",
+    "playerTitle": "TradeCatch demo",
+    "close": "Close"
   }
 }

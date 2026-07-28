@@ -11,6 +11,7 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { ProofExamplesSection } from "@/components/ProofExamplesSection";
 import { WorkflowPreview } from "@/components/WorkflowPreview";
+import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -121,12 +122,9 @@ export default async function HomePage({
                 <CTAButton href="/book-audit" variant="ember" size="lg">
                   {t("hero.ctaPrimary")}
                 </CTAButton>
-                <a
-                  href="#missed-call-demo"
-                  className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[transform,background,border-color] duration-200 hover:translate-y-[-2px] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2"
-                >
+                <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[transform,background,border-color] duration-200 hover:translate-y-[-2px] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
                   {t("hero.ctaSecondary")}
-                </a>
+                </WatchDemoButton>
               </div>
 
               <p className="mt-[18px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
