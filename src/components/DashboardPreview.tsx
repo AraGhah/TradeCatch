@@ -1,3 +1,5 @@
+import { IllustrativeBadge } from "@/components/IllustrativeBadge";
+
 export function DashboardPreview({
   metrics,
   period,
@@ -11,9 +13,9 @@ export function DashboardPreview({
 }) {
   return (
     <div className="rounded-[20px] bg-ink-panel p-5 shadow-ink-panel sm:p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <span className="text-[13px] text-[rgba(255,255,255,0.64)]">{period}</span>
-        <span className="text-[12px] text-green">{liveLabel}</span>
+        <IllustrativeBadge label={liveLabel} light />
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -35,7 +37,7 @@ export function DashboardPreview({
         ))}
       </div>
 
-      <p className="mt-5 text-[12px] text-[rgba(255,255,255,0.42)]">
+      <p className="mt-5 text-[12px] leading-snug text-[rgba(255,255,255,0.5)]">
         {sampleDataLabel}
       </p>
     </div>

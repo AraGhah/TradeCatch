@@ -9,6 +9,24 @@ export default function GlobalError({
 }) {
   console.error("[global-error]", error);
 
+  if (typeof window !== "undefined") {
+    try {
+      void fetch("/api/client-error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          digest: error.digest,
+          stack: error.stack?.slice(0, 2000),
+          path: window.location.pathname,
+        }),
+        keepalive: true,
+      });
+    } catch {
+      // ignore
+    }
+  }
+
   return (
     <html lang="en">
       <body

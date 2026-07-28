@@ -24,6 +24,18 @@ export const routing = defineRouting({
       en: "/accessibility-statement",
       fr: "/declaration-accessibilite",
     },
+    "/cancellation-refund-policy": {
+      en: "/cancellation-refund-policy",
+      fr: "/politique-annulation-remboursement",
+    },
+    "/emergency-service-disclaimer": {
+      en: "/emergency-service-disclaimer",
+      fr: "/avis-services-urgence",
+    },
+    "/one-pager": {
+      en: "/one-pager",
+      fr: "/fiche-resume",
+    },
   },
 });
 

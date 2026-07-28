@@ -85,7 +85,7 @@ export function CookieConsent() {
           <p className="text-sm text-text/80">
             {t("text")}{" "}
             <Link href="/cookie-policy" className="underline underline-offset-2">
-              →
+              {t("policyLink")}
             </Link>
           </p>
           <div className="flex shrink-0 flex-wrap gap-2">

@@ -4,6 +4,8 @@ import { bookAuditSchema } from "@/lib/validation/book-audit";
 import { rateLimit, getClientIp } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { sendBookAuditEmails } from "@/lib/email";
+import { forwardLeadToCrm } from "@/lib/leads";
+import { reportError } from "@/lib/errors";
 import { createMemoryStore } from "@/lib/store";
 import {
   getProductionConfigErrors,
@@ -28,7 +30,10 @@ function jsonError(message: string, status: number) {
 export async function POST(request: NextRequest) {
   const configErrors = getProductionConfigErrors();
   if (configErrors.length > 0) {
-    console.error("[book-audit] refusing request — production misconfigured:", configErrors);
+    console.error(
+      "[book-audit] refusing request — production misconfigured:",
+      configErrors,
+    );
     return jsonError(
       "This service is temporarily unavailable. Please try again later.",
       503,
@@ -76,8 +81,6 @@ export async function POST(request: NextRequest) {
     ip,
   );
 
-  // In production the config guard above already ensures Turnstile is set.
-  // In development, unconfigured Turnstile still skips (with a warning).
   if (turnstileResult.configured && !turnstileResult.success) {
     return jsonError("Bot verification failed. Please try again.", 400);
   }
@@ -90,15 +93,17 @@ export async function POST(request: NextRequest) {
 
   seenIdempotencyKeys.set(idempotencyKey, now);
 
-  const { sent } = await sendBookAuditEmails(payload);
+  const [{ sent }, { forwarded }] = await Promise.all([
+    sendBookAuditEmails(payload),
+    forwardLeadToCrm(payload),
+  ]);
 
   if (isProductionRuntime() && !sent) {
-    console.error("[book-audit] email send failed in production", {
+    await reportError(new Error("book-audit email send failed"), {
       ip,
       trade: payload.trade,
+      forwarded,
     });
-    // Still accept the lead so the visitor isn't blocked if Resend blips —
-    // but log loudly so ops notices. Config absence is already blocked above.
   }
 
   console.info("[book-audit] submission accepted", {
@@ -106,7 +111,12 @@ export async function POST(request: NextRequest) {
     trade: payload.trade,
     preferredLanguage: payload.preferredLanguage,
     emailSent: sent,
+    crmForwarded: forwarded,
   });
 
-  return NextResponse.json({ ok: true, emailSent: sent });
+  return NextResponse.json({
+    ok: true,
+    emailSent: sent,
+    crmForwarded: forwarded,
+  });
 }

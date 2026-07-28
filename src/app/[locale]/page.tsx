@@ -9,7 +9,7 @@ import { DashboardPreview } from "@/components/DashboardPreview";
 import { ComparisonPanel } from "@/components/ComparisonPanel";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
-import { CaseStudySection } from "@/components/CaseStudySection";
+import { ProofExamplesSection } from "@/components/ProofExamplesSection";
 import { WorkflowPreview } from "@/components/WorkflowPreview";
 import { buildMetadata } from "@/lib/seo";
 
@@ -54,6 +54,7 @@ export default async function HomePage({
   const headline = t("hero.headline");
   const accentWord = t("hero.accentWord");
   const trustChips = t.raw("hero.trustChips") as string[];
+  const demoStripSteps = t.raw("hero.demoStripSteps") as string[];
   const trustStrip = t.raw("trustStrip.items") as {
     title: string;
     body: string;
@@ -117,31 +118,50 @@ export default async function HomePage({
               </p>
 
               <div className="mt-[34px] flex flex-wrap gap-3">
+                <CTAButton href="/book-audit" variant="ember" size="lg">
+                  {t("hero.ctaPrimary")}
+                </CTAButton>
                 <a
                   href="#missed-call-demo"
-                  className="inline-flex items-center justify-center gap-2.5 rounded-[12px] bg-orange px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
+                  className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[transform,background,border-color] duration-200 hover:translate-y-[-2px] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2"
                 >
-                  {t("hero.ctaPrimary")}
-                </a>
-                <CTAButton href="/book-audit" variant="ghost-ink" size="lg">
                   {t("hero.ctaSecondary")}
-                </CTAButton>
+                </a>
               </div>
 
               <p className="mt-[18px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
                 {t("hero.reassurance")}
               </p>
 
-              <ul className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-[26px]">
-                {trustChips.map((chip) => (
-                  <li
-                    key={chip}
-                    className="text-[14px] leading-none text-white/72"
-                  >
-                    {chip}
-                  </li>
-                ))}
-              </ul>
+              <div className="mt-9 border-t border-white/10 pt-[26px]">
+                <p className="font-mono text-[10.5px] tracking-[0.12em] text-white/45 uppercase">
+                  {t("hero.demoStripLabel")}
+                </p>
+                <ol className="mt-3.5 flex flex-wrap items-center gap-x-1.5 gap-y-2">
+                  {demoStripSteps.map((step, i) => (
+                    <li key={step} className="flex items-center gap-1.5">
+                      <span className="rounded-md border border-white/12 bg-white/[0.06] px-2.5 py-1.5 text-[12.5px] font-medium text-white/85">
+                        {step}
+                      </span>
+                      {i < demoStripSteps.length - 1 ? (
+                        <span className="text-orange/80" aria-hidden>
+                          →
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+                <ul className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+                  {trustChips.map((chip) => (
+                    <li
+                      key={chip}
+                      className="text-[13px] leading-none text-white/55"
+                    >
+                      {chip}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
 
             <HeroMockup
@@ -277,7 +297,7 @@ export default async function HomePage({
               />
               <CTAButton
                 href="/book-audit"
-                variant="secondary"
+                variant="ember"
                 className="mt-[30px]"
               >
                 {t("leaks.cta")}
@@ -314,24 +334,25 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 5. Case study */}
+      {/* 5. Proof examples (illustrative only — no fabricated results) */}
       <section
-        className="bg-paper"
+        id="proof-examples"
+        className="bg-paper scroll-mt-28"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
-          <CaseStudySection
-            eyebrow={t("caseStudy.eyebrow")}
-            headline={t("caseStudy.headline")}
-            client={t("caseStudy.client")}
-            problemLabel={t("caseStudy.problemLabel")}
-            systemLabel={t("caseStudy.systemLabel")}
-            problem={t("caseStudy.problem")}
-            system={t("caseStudy.system")}
-            quote={t("caseStudy.quote")}
-            disclaimer={t("caseStudy.disclaimer")}
-            metrics={t.raw("caseStudy.metrics")}
-            cta={t("caseStudy.cta")}
+          <ProofExamplesSection
+            eyebrow={t("proofExamples.eyebrow")}
+            headline={t("proofExamples.headline")}
+            intro={t("proofExamples.intro")}
+            illustrativeLabel={t("proofExamples.illustrativeLabel")}
+            sms={t.raw("proofExamples.sms")}
+            alert={t.raw("proofExamples.alert")}
+            quoteHeadline={t("proofExamples.quoteHeadline")}
+            quoteBadge={t("proofExamples.quoteBadge")}
+            quoteSteps={t.raw("proofExamples.quoteSteps")}
+            demoCta={t("proofExamples.demoCta")}
+            onePagerCta={t("proofExamples.onePagerCta")}
           />
         </Container>
       </section>
@@ -383,7 +404,7 @@ export default async function HomePage({
               />
               <CTAButton
                 href="/book-audit"
-                variant="ghost-ink"
+                variant="ember"
                 className="mt-[30px]"
               >
                 {t("dashboard.cta")}
@@ -498,9 +519,10 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 10. Founding programme */}
+      {/* 10. Pilot programme */}
       <section
-        className="bg-paper"
+        id="pilot"
+        className="scroll-mt-28 bg-paper"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
@@ -520,6 +542,9 @@ export default async function HomePage({
               </h2>
               <p className="text-lede mt-[18px] max-w-[34em] text-muted">
                 {t("pilot.body")}
+              </p>
+              <p className="mt-4 max-w-[34em] text-[14px] leading-[1.55] text-muted">
+                {t("pilot.landingNote")}
               </p>
             </div>
 
@@ -549,6 +574,9 @@ export default async function HomePage({
               <p className="mt-[22px] border-t border-[rgba(12,20,30,0.08)] pt-5 text-[14px] leading-[1.6] text-muted">
                 {t("pilot.guarantee")}
               </p>
+              <CTAButton href="/book-audit" variant="ember" className="mt-6">
+                {t("pilot.cta")}
+              </CTAButton>
             </div>
           </div>
         </Container>

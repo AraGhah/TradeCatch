@@ -43,16 +43,31 @@ gitignored and must never be committed.
 | Variable | Dev if unset | Production (`NODE_ENV=production`) |
 | - | - | - |
 | `NEXT_PUBLIC_SITE_URL` | falls back to `https://tradecatch.ca` | same |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | analytics doesn't load | same |
+| `NEXT_PUBLIC_GA_MEASUREMENT_ID` | analytics doesn't load | same — enable for conversion events |
 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_NOTIFY_EMAIL` | submissions accepted; emails skipped with a warning | **required** — `/api/book-audit` returns 503 if missing |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | verification skipped with a warning | **required** — `/api/book-audit` returns 503 if missing |
+| `LEADS_WEBHOOK_URL` (+ optional `LEADS_WEBHOOK_SECRET`) | CRM forward skipped | recommended — Zapier/Make/n8n/HubSpot webhook |
+| `NEXT_PUBLIC_CALENDAR_URL` | no calendar CTA after submit | recommended — Cal.com / Calendly link |
+| `ERROR_WEBHOOK_URL` | client/server errors only logged | recommended — Slack/Discord/Better Stack/Sentry webhook |
 
 ### Production go-live checklist
 
 - [ ] All Resend + Turnstile vars set in the host's production environment
 - [ ] Submit a real book-audit form on the live URL and confirm both the visitor confirmation and the internal notify email arrive
-- [ ] Confirm pricing on `/pricing` matches the current offer (Starter $2,500+$750/mo, Growth $4,000+$1,000–$1,500/mo, Premium custom)
+- [ ] Point `LEADS_WEBHOOK_URL` at your CRM/automation and confirm a test lead lands
+- [ ] Set `NEXT_PUBLIC_CALENDAR_URL` and confirm the post-submit booking CTA appears
+- [ ] Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` and mark `generate_lead` as a GA4 conversion
+- [ ] Point an uptime monitor at `https://tradecatch.ca/api/health`
+- [ ] Set `ERROR_WEBHOOK_URL` (or a Sentry/Better Stack ingest URL)
+- [ ] Confirm pricing on `/pricing` matches the current offer
 - [ ] Confirm favicon / brand mark looks correct (not a Next.js default)
+
+## Monitoring & backups
+
+- **Uptime:** monitor `GET /api/health` (returns 200 when production-critical config is present).
+- **Errors:** page error boundaries POST to `/api/client-error`, which forwards to `ERROR_WEBHOOK_URL`.
+- **Leads:** email (Resend) + optional CRM webhook are the system of record — there is no local database to back up.
+- **Site:** rely on git history + your host's deployment rollback. Keep `.env` values in the host secret store (never in git).
 
 ## Deployment
 

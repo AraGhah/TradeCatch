@@ -255,6 +255,21 @@ h4 {
   [data-reveal] {
     transform: none !important;
   }
+
+  header,
+  footer,
+  [role="dialog"],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
