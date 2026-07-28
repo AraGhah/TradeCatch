@@ -49,6 +49,11 @@ gitignored and must never be committed.
 | `LEADS_WEBHOOK_URL` (+ optional `LEADS_WEBHOOK_SECRET`) | CRM forward skipped | recommended — Zapier/Make/n8n/HubSpot webhook |
 | `NEXT_PUBLIC_CALENDAR_URL` | no calendar CTA after submit | recommended — Cal.com / Calendly link |
 | `ERROR_WEBHOOK_URL` | client/server errors only logged | recommended — Slack/Discord/Better Stack/Sentry webhook |
+| `TWILIO_*` / `MISSED_CALL_*` | Module A dry-run SMS + sandbox | see `src/product/missed-call/README.md` |
+
+## Module A — Missed-call recovery
+
+Core product path (call → SMS → collect → tech accept → notify). Domain code: `src/product/missed-call/`. Docs and Twilio setup: that folder’s README. Local dry-run without Twilio: `POST /api/missed-call/sandbox`.
 
 ### Production go-live checklist
 
