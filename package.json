@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "check:i18n": "node scripts/check-i18n-parity.js",
-    "test:unit": "tsx --test tests/unit/book-audit-and-rate-limit.test.ts",
+    "test:unit": "tsx --test tests/unit/book-audit-and-rate-limit.test.ts tests/unit/missed-call-recovery.test.ts tests/unit/missed-call-ops.test.ts",
     "test:e2e": "playwright test"
   },
   "dependencies": {
