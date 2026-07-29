@@ -31,13 +31,19 @@ export function isTwilioConfigured(): boolean {
 }
 
 export function isDurableMissedCallStoreConfigured(): boolean {
-  // Set when a durable MissedCallStore adapter is wired (e.g. DATABASE_URL +
-  // Postgres). Memory store must never count as production-ready.
-  return Boolean(process.env.DATABASE_URL?.trim());
+  // Explicit opt-in only. DATABASE_URL alone must never claim readiness —
+  // the Postgres adapter must also be selected via this flag.
+  return process.env.MISSED_CALL_DURABLE_STORE === "1";
+}
+
+/** Playwright production harness — allows book-audit without live Resend/Turnstile. */
+export function isE2eHarness(): boolean {
+  return process.env.TRADECATCH_E2E === "1";
 }
 
 export function getProductionConfigErrors(): string[] {
   if (!isProductionRuntime()) return [];
+  if (isE2eHarness()) return [];
   const errors: string[] = [];
   if (!isTurnstileConfigured()) {
     errors.push(

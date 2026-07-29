@@ -106,13 +106,11 @@ export function createTwilioSmsPort(env: NodeJS.ProcessEnv = process.env): SmsPo
       return { sid: json.sid };
     },
     async syncOptOut(input) {
-      // When the customer texts STOP/ARRET, Twilio Advanced Opt-Out (if enabled on
-      // the number / Messaging Service) already blocks further carrier traffic.
-      // Our durable suppression list is the application-level guard for retries /
-      // new workflows. Record that we observed the opt-out with credentials present.
+      // Advanced Opt-Out must be enabled on the Twilio number / Messaging Service.
+      // We do not invent a "synced" status without a provider API confirmation.
       return {
         ok: true,
-        detail: `twilio_observed:${input.phoneE164}:via:${input.fromE164}`,
+        detail: `local_observed_pending_provider_confirm:${input.phoneE164}:via:${input.fromE164}`,
       };
     },
   };

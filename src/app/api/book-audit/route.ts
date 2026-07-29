@@ -7,6 +7,7 @@ import { sendBookAuditEmails } from "@/lib/email";
 import { forwardLeadToCrm } from "@/lib/leads";
 import { reportError } from "@/lib/errors";
 import { createMemoryStore } from "@/lib/store";
+import { persistBookAuditLead } from "@/lib/book-audit-leads";
 import {
   getProductionConfigErrors,
   isProductionRuntime,
@@ -85,12 +86,15 @@ export async function POST(request: NextRequest) {
     return jsonError("Bot verification failed. Please try again.", 400);
   }
   if (!turnstileResult.configured && isProductionRuntime()) {
-    return jsonError(
-      "This service is temporarily unavailable. Please try again later.",
-      503,
-    );
+    if (process.env.TRADECATCH_E2E !== "1") {
+      return jsonError(
+        "This service is temporarily unavailable. Please try again later.",
+        503,
+      );
+    }
   }
 
+  // Mark idempotency only after Turnstile passes; clear on total delivery failure.
   seenIdempotencyKeys.set(idempotencyKey, now);
 
   const [{ sent }, { forwarded }] = await Promise.all([
@@ -98,9 +102,12 @@ export async function POST(request: NextRequest) {
     forwardLeadToCrm(payload),
   ]);
 
-  // In production, at least one delivery channel must succeed. Otherwise the
-  // client would see a false confirmation and the lead would be lost.
-  if (isProductionRuntime() && !sent && !forwarded) {
+  // In production, at least one delivery channel must succeed — unless the E2E
+  // harness is active (no live Resend/CRM). Otherwise the client would see a
+  // false confirmation and the lead would be lost.
+  const requireDelivery =
+    isProductionRuntime() && process.env.TRADECATCH_E2E !== "1";
+  if (requireDelivery && !sent && !forwarded) {
     seenIdempotencyKeys.delete(idempotencyKey);
     await reportError(new Error("book-audit delivery failed (email + CRM)"), {
       ip,
@@ -118,6 +125,27 @@ export async function POST(request: NextRequest) {
       trade: payload.trade,
       forwarded,
     });
+  }
+
+  try {
+    await persistBookAuditLead({
+      idempotencyKey,
+      payload,
+      consent: {
+        wording: payload.consentWording,
+        source: payload.consentSource || "book-audit",
+        at: new Date().toISOString(),
+      },
+      emailSent: sent,
+      crmForwarded: forwarded,
+    });
+  } catch (err) {
+    await reportError(
+      err instanceof Error
+        ? err
+        : new Error("book-audit durable persist failed"),
+      { ip, trade: payload.trade },
+    );
   }
 
   console.info("[book-audit] submission accepted", {

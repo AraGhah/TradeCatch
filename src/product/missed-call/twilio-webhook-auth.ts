@@ -42,8 +42,10 @@ export async function assertTwilioWebhook(
   const signature = request.headers.get("x-twilio-signature") ?? "";
   if (!signature) return false;
 
+  // Twilio signs the full URL including query string. Rebuild from the public
+  // base + pathname + search so reverse-proxy host rewrites still verify.
   const url = env.MISSED_CALL_PUBLIC_WEBHOOK_BASE
-    ? `${env.MISSED_CALL_PUBLIC_WEBHOOK_BASE.replace(/\/$/, "")}${request.nextUrl.pathname}`
+    ? `${env.MISSED_CALL_PUBLIC_WEBHOOK_BASE.replace(/\/$/, "")}${request.nextUrl.pathname}${request.nextUrl.search}`
     : request.url;
 
   return validateTwilioSignature({

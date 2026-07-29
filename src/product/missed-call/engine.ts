@@ -32,9 +32,10 @@ import type { MissedCallStore } from "./store";
 import {
   buildJobCardSms,
   createActionToken,
-  getEscalationChain,
+  getTechnicianChain,
   humanReviewAlertBody,
   parseTechnicianAction,
+  resolveEscalationChain,
   shouldEscalateToIndex,
   stageForEscalationIndex,
   technicianAtEscalationIndex,
@@ -47,9 +48,12 @@ import type {
   CollectionStep,
   EscalationStage,
   MissedCallWorkflow,
+  OutboundMessageRecord,
   SmsPort,
   TechnicianAlertRecord,
 } from "./types";
+
+const MAX_OUTBOUND_ATTEMPTS = 5;
 
 function id(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
@@ -87,9 +91,15 @@ export type MissedCallEngine = {
     toE164: string;
     body: string;
     mediaUrls?: string[];
+    messageSid?: string;
   }): Promise<{ handled: boolean; replies: string[] }>;
 
-  processEscalations(): Promise<{ escalated: string[]; timedOut: string[] }>;
+  processEscalations(): Promise<{
+    escalated: string[];
+    timedOut: string[];
+    outboxSent: number;
+    outboxFailed: number;
+  }>;
 };
 
 export function createMissedCallEngine(deps: {
@@ -154,11 +164,34 @@ export function createMissedCallEngine(deps: {
     pushEvent(input.workflow, "sms_queued", input.detail, clock);
     await deps.store.saveWorkflow(input.workflow);
 
-    await deps.sms.send({
+    const nowIso = clock.now().toISOString();
+    const outbox: OutboundMessageRecord = {
+      id: id("sms"),
+      workflowId: input.workflow.id,
+      clientAccountId: input.client.id,
       toE164: input.toE164,
       fromE164: input.client.smsFromNumber,
       body: input.body,
-    });
+      detail: input.detail,
+      status: "sending",
+      attempts: 0,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    };
+    await deps.store.enqueueOutbound(outbox);
+
+    try {
+      const result = await deps.sms.send({
+        toE164: input.toE164,
+        fromE164: input.client.smsFromNumber,
+        body: input.body,
+      });
+      await deps.store.markOutboundSent(outbox.id, result.sid);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      await deps.store.markOutboundFailed(outbox.id, message, "retry");
+      throw err;
+    }
 
     pushEvent(input.workflow, "sms_sent", input.detail, clock);
     await logSmsConversation({
@@ -171,6 +204,50 @@ export function createMissedCallEngine(deps: {
     });
     await deps.store.saveWorkflow(input.workflow);
     return true;
+  }
+
+  async function flushOutboundQueue(): Promise<{
+    sent: number;
+    failed: number;
+  }> {
+    let sent = 0;
+    let failed = 0;
+    const batch = await deps.store.claimOutboundForSend(25);
+    for (const msg of batch) {
+      if (await deps.store.isSmsSuppressed(msg.clientAccountId, msg.toE164)) {
+        await deps.store.markOutboundFailed(msg.id, "suppressed", "dead");
+        failed += 1;
+        continue;
+      }
+      try {
+        const result = await deps.sms.send({
+          toE164: msg.toE164,
+          fromE164: msg.fromE164,
+          body: msg.body,
+        });
+        await deps.store.markOutboundSent(msg.id, result.sid);
+        if (msg.workflowId) {
+          const wf = await deps.store.getWorkflow(msg.workflowId);
+          if (wf) {
+            const already = wf.events.some(
+              (e) => e.type === "sms_sent" && e.detail === msg.detail,
+            );
+            if (!already) {
+              pushEvent(wf, "sms_sent", msg.detail, clock);
+              await deps.store.saveWorkflow(wf);
+            }
+          }
+        }
+        sent += 1;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const next =
+          msg.attempts + 1 >= MAX_OUTBOUND_ATTEMPTS ? "dead" : "retry";
+        await deps.store.markOutboundFailed(msg.id, message, next);
+        failed += 1;
+      }
+    }
+    return { sent, failed };
   }
 
   async function sendPrompt(
@@ -276,13 +353,25 @@ export function createMissedCallEngine(deps: {
     escalationIndex: number,
   ): Promise<boolean> {
     const now = clock.now();
-    const tech = technicianAtEscalationIndex(client, escalationIndex, now);
+    if (!workflow.escalationChainIds?.length) {
+      workflow.escalationChainIds = getTechnicianChain(client, now);
+    }
+    const tech = technicianAtEscalationIndex(
+      client,
+      escalationIndex,
+      now,
+      workflow.escalationChainIds,
+    );
     if (!tech) return false;
 
-    const chain = getEscalationChain(client, now);
+    const chain = resolveEscalationChain(
+      client,
+      now,
+      workflow.escalationChainIds,
+    );
     const stage: EscalationStage = stageForEscalationIndex(
       escalationIndex,
-      chain.length,
+      chain,
     );
     const actionToken = createActionToken();
     const body = buildJobCardSms({
@@ -374,8 +463,12 @@ export function createMissedCallEngine(deps: {
       return;
     }
 
-    const chain = getEscalationChain(client, clock.now());
-    const stage = stageForEscalationIndex(nextIndex, chain.length);
+    const chain = resolveEscalationChain(
+      client,
+      clock.now(),
+      workflow.escalationChainIds,
+    );
+    const stage = stageForEscalationIndex(nextIndex, chain);
     pushEvent(workflow, "escalation_timer", stage, clock);
     await sendJobCard(workflow, client, nextIndex);
     await deps.store.saveWorkflow(workflow);
@@ -443,9 +536,7 @@ export function createMissedCallEngine(deps: {
         "accepted",
         clock.now(),
       );
-      techWorkflow.status = "completed";
-      techWorkflow.stopReason = "completed";
-      techWorkflow.outcome = "technician_accepted";
+      // Keep workflow open until the customer is notified successfully.
       techWorkflow.assignedTechnicianId = openAlert.technicianId;
       pushEvent(techWorkflow, "technician_accepted", openAlert.technicianId, clock);
 
@@ -464,14 +555,25 @@ export function createMissedCallEngine(deps: {
         techWorkflow.collected.language,
         tech?.name ?? "Le technicien",
       );
-      await sendOutboundSms({
+      const notified = await sendOutboundSms({
         workflow: techWorkflow,
         client,
         toE164: techWorkflow.callerE164,
         body: notify,
         detail: "customer_notified",
       });
+      if (!notified) {
+        await deps.store.saveWorkflow(techWorkflow);
+        await ensureLead(techWorkflow);
+        replies.push(
+          "Acceptation enregistrée, mais l'avis client a échoué. Réessayez ou appelez le client.",
+        );
+        return { handled: true, replies };
+      }
       pushEvent(techWorkflow, "customer_notified", undefined, clock);
+      techWorkflow.status = "completed";
+      techWorkflow.stopReason = "completed";
+      techWorkflow.outcome = "technician_accepted";
       pushEvent(techWorkflow, "outcome_recorded", "technician_accepted", clock);
       await deps.store.saveWorkflow(techWorkflow);
       await ensureLead(techWorkflow);
@@ -497,7 +599,11 @@ export function createMissedCallEngine(deps: {
         );
       }
 
-      const chain = getEscalationChain(client, clock.now());
+      const chain = resolveEscalationChain(
+        client,
+        clock.now(),
+        techWorkflow.escalationChainIds,
+      );
       const next = techWorkflow.escalationIndex + 1;
       if (next >= chain.length) {
         await escalateWorkflow(techWorkflow, "exhausted");
@@ -527,6 +633,46 @@ export function createMissedCallEngine(deps: {
           input.twilioCallSid,
         );
         if (existingCall) {
+          // Twilio may retry after a failed opening SMS. If the workflow exists
+          // but never recorded sms_sent for opening, retry delivery instead of
+          // permanently dropping the recovery.
+          const active = await deps.store.findActiveWorkflowByCaller(
+            existingCall.clientAccountId,
+            existingCall.callerE164,
+          );
+          const wf =
+            active?.callId === existingCall.id
+              ? active
+              : await deps.store.findRecentWorkflowByCaller(
+                  existingCall.clientAccountId,
+                  existingCall.callerE164,
+                  client.duplicateWindowMs,
+                  clock.now(),
+                );
+          if (
+            wf &&
+            wf.callId === existingCall.id &&
+            !wf.events.some(
+              (e) => e.type === "sms_sent" && e.detail === "opening_fr",
+            )
+          ) {
+            const open = openingSms(client);
+            const smsSent = await sendOutboundSms({
+              workflow: wf,
+              client,
+              toE164: wf.callerE164,
+              body: open,
+              detail: "opening_fr",
+            });
+            return {
+              call: existingCall,
+              workflow: wf,
+              smsSent,
+              suppressedReason: smsSent
+                ? undefined
+                : "opening_sms_retry_suppressed",
+            };
+          }
           return {
             call: existingCall,
             workflow: null,
@@ -647,6 +793,15 @@ export function createMissedCallEngine(deps: {
     async handleInboundSms(input) {
       const replies: string[] = [];
 
+      if (input.messageSid) {
+        const claimed = await deps.store.claimInboundMessageSid(
+          input.messageSid,
+        );
+        if (!claimed) {
+          return { handled: true, replies: [] };
+        }
+      }
+
       const parsedEarly = parseTechnicianAction(input.body);
       const techWorkflow = await deps.store.findWorkflowByTechnicianPhone(
         input.fromE164,
@@ -689,7 +844,7 @@ export function createMissedCallEngine(deps: {
             phoneE164: input.fromE164,
             fromE164: client.smsFromNumber,
           });
-          providerStatus = sync.ok ? "synced" : "error";
+          providerStatus = sync.ok ? "pending" : "error";
           providerDetail = sync.detail;
         } else {
           providerStatus = "local_only";
@@ -859,6 +1014,7 @@ export function createMissedCallEngine(deps: {
       const escalated: string[] = [];
       const timedOut: string[] = [];
       const now = clock.now();
+      const outbox = await flushOutboundQueue();
 
       const awaitingCustomer = await deps.store.listWorkflowsAwaitingCustomer();
       for (const workflow of awaitingCustomer) {
@@ -897,7 +1053,12 @@ export function createMissedCallEngine(deps: {
           escalationLocks.delete(workflow.id);
         }
       }
-      return { escalated, timedOut };
+      return {
+        escalated,
+        timedOut,
+        outboxSent: outbox.sent,
+        outboxFailed: outbox.failed,
+      };
     },
   };
 }

@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
       toE164: to,
       body,
       mediaUrls,
+      messageSid: params.MessageSid,
     });
     // Prefer REST-sent prompts (engine already sent). Only echo TwiML for
     // short tech confirmations that weren't also sent via REST.

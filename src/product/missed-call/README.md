@@ -67,15 +67,18 @@ npm run test:unit
 
 ## Persistence
 
-**Default today:** in-memory store in `runtime.ts` — **not** multi-instance / serverless safe.
+**Default:** in-memory store — **not** multi-instance / serverless safe.
+
+**Durable path:** set `DATABASE_URL`, apply `schema.sql`, then `MISSED_CALL_DURABLE_STORE=1`.
+`runtime.ts` then uses `createPostgresStore()` (workflows, leads, suppressions, MessageSid claims, SMS outbox).
 
 Before Module A go-live:
 
-1. Apply `schema.sql` to Postgres (`DATABASE_URL`), including `mc_sms_suppressions` and `mc_outbound_messages`.
-2. Implement a durable `MissedCallStore` adapter and wire it in `runtime.ts`.
-3. Load complete client config via `MISSED_CALL_CLIENT_CONFIG_JSON` (or full `MISSED_CALL_*` env). Production rejects demo fixtures and reserved numbers.
-4. Confirm `/api/health` (ops auth) reports `moduleA.ready: true`.
+1. Apply `schema.sql` to Postgres (`DATABASE_URL`), including suppressions, outbox, inbound MessageSids, and book-audit leads.
+2. Set `MISSED_CALL_DURABLE_STORE=1` so `/api/health` (ops auth) can report `moduleA.ready` only with Twilio + ops auth + this flag.
+3. Load complete client config via `MISSED_CALL_CLIENT_CONFIG_JSON` (Zod-validated) or full `MISSED_CALL_*` env. Production rejects demo fixtures and reserved numbers.
+4. Confirm cron hits `/api/missed-call/escalations/tick` (outbox flush + escalation timers).
 5. Enable Twilio Advanced Opt-Out; verify STOP persists suppression across new calls.
-6. Verify escalation chain contacts every backup before owner; inactive techs are skipped.
+6. Verify escalation chain snapshots at first alert and contacts every backup before owner.
 
 See `docs/CAPABILITY_MATRIX.md` for what may be advertised vs what is illustrative/planned.

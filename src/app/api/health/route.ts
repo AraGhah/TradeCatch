@@ -16,8 +16,9 @@ export const dynamic = "force-dynamic";
  * Public: ok / status / timestamp only.
  * Detailed checks: development, or ops bearer auth.
  *
- * `ok` covers marketing-site readiness (Resend + Turnstile).
- * Module A readiness is reported separately under checks when detailed.
+ * Top-level `ok` is false (HTTP 503) when the marketing site cannot accept leads
+ * in production. Module A readiness is never implied by DATABASE_URL alone —
+ * only by an explicitly wired durable store flag.
  */
 export async function GET(request: NextRequest) {
   const checks = {
@@ -33,10 +34,13 @@ export async function GET(request: NextRequest) {
     ),
     twilio: isTwilioConfigured(),
     durableMissedCallStore: isDurableMissedCallStoreConfigured(),
+    e2eHarness: process.env.TRADECATCH_E2E === "1",
   };
 
   const siteReady =
-    !isProductionRuntime() || (checks.resend && checks.turnstile);
+    !isProductionRuntime() ||
+    checks.e2eHarness ||
+    (checks.resend && checks.turnstile);
 
   const moduleAReady =
     checks.twilio && checks.durableMissedCallStore && checks.opsAuth;
@@ -44,30 +48,36 @@ export async function GET(request: NextRequest) {
   const includeDetails =
     !isProductionRuntime() || authorizeOpsRequest(request);
 
-  return NextResponse.json(
-    {
-      ok: siteReady,
-      status: siteReady ? "healthy" : "degraded",
-      service: "tradecatch",
-      readyMarker: "tradecatch-ready",
-      timestamp: new Date().toISOString(),
-      ...(includeDetails
+  const body = {
+    ok: siteReady,
+    status: siteReady ? "healthy" : "degraded",
+    service: "tradecatch",
+    readyMarker: siteReady ? "tradecatch-ready" : "tradecatch-not-ready",
+    timestamp: new Date().toISOString(),
+    ...(includeDetails
+      ? {
+          checks,
+          moduleA: {
+            ready: moduleAReady,
+            status: moduleAReady ? "ready" : "not_ready",
+          },
+        }
+      : {}),
+  };
+
+  return NextResponse.json(body, {
+    status: siteReady ? 200 : 503,
+    headers: {
+      "Cache-Control": "no-store",
+      ...(siteReady
         ? {
-            checks,
-            moduleA: {
-              ready: moduleAReady,
-              status: moduleAReady ? "ready" : "not_ready",
-            },
+            "x-tradecatch-ready": "1",
+            "x-tradecatch-service": "tradecatch",
           }
-        : {}),
+        : {
+            "x-tradecatch-ready": "0",
+            "x-tradecatch-service": "tradecatch",
+          }),
     },
-    {
-      status: 200,
-      headers: {
-        "Cache-Control": "no-store",
-        "x-tradecatch-ready": "1",
-        "x-tradecatch-service": "tradecatch",
-      },
-    },
-  );
+  });
 }

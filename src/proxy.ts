@@ -36,19 +36,32 @@ function buildCsp(nonce: string, isDev: boolean): string {
   ].join("; ");
 }
 
+/**
+ * Pass the original NextRequest into next-intl (never rebuild from URL alone —
+ * that drops internal routing metadata and causes self-redirect loops).
+ * Prefer mutating headers on the incoming request; fall back to cloning from
+ * the request object (not request.url) so nextUrl / cookies stay intact.
+ */
 export default function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const isDev = process.env.NODE_ENV === "development";
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
+  const csp = buildCsp(nonce, isDev);
 
-  const response = handleI18n(
-    new NextRequest(request.url, {
-      headers: requestHeaders,
-    }),
-  );
+  try {
+    request.headers.set("x-nonce", nonce);
+  } catch {
+    // Some runtimes expose immutable headers — clone from the Request object.
+    const headers = new Headers(request.headers);
+    headers.set("x-nonce", nonce);
+    const cloned = new NextRequest(request, { headers });
+    const response = handleI18n(cloned);
+    response.headers.set("Content-Security-Policy", csp);
+    response.headers.set("x-nonce", nonce);
+    return response;
+  }
 
-  response.headers.set("Content-Security-Policy", buildCsp(nonce, isDev));
+  const response = handleI18n(request);
+  response.headers.set("Content-Security-Policy", csp);
   response.headers.set("x-nonce", nonce);
   return response;
 }

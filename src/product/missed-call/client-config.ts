@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { demoClientAccount } from "./fixtures";
 import { defaultApprovedQuestions } from "./messaging";
 import { defaultUrgencyRubric } from "./urgency";
@@ -22,6 +23,106 @@ export type ClientConfigValidation = {
   ok: boolean;
   errors: string[];
 };
+
+const technicianRosterEntrySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  phone: z.string().min(1),
+  role: z.enum(["primary", "backup", "owner"]),
+  active: z.boolean(),
+});
+
+const approvedQuestionSchema = z.object({
+  id: z.enum(["language", "name", "address", "description", "photo", "done"]),
+  enabled: z.boolean(),
+  promptFr: z.string(),
+  promptEn: z.string(),
+  required: z.boolean(),
+});
+
+/** Structural validation for MISSED_CALL_CLIENT_CONFIG_JSON. */
+export const clientAccountConfigSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  contractorDisplayName: z.string().min(1),
+  timezone: z.string().min(1),
+  businessHours: z.object({
+    start: z.string(),
+    end: z.string(),
+    days: z.array(z.number().int().min(0).max(6)),
+  }),
+  serviceAreaNotes: z.string().optional(),
+  approvedServiceAreas: z.array(
+    z.object({
+      id: z.string(),
+      label: z.string(),
+      matchTokens: z.array(z.string()),
+    }),
+  ),
+  urgencyRubric: z.array(
+    z.object({
+      id: z.string(),
+      level: z.enum(["routine", "priority", "critical"]),
+      keywordsFr: z.array(z.string()),
+      keywordsEn: z.array(z.string()),
+    }),
+  ),
+  technicianRoster: z.array(technicianRosterEntrySchema).min(1),
+  mainTechnicianId: z.string().min(1),
+  backupTechnicianIds: z.array(z.string()),
+  ownerTechnicianId: z.string().optional(),
+  onCallSchedule: z.array(
+    z.object({
+      day: z.number().int().min(0).max(6),
+      start: z.string(),
+      end: z.string(),
+      technicianId: z.string(),
+    }),
+  ),
+  escalationPolicy: z.object({
+    primaryResponseMs: z.number().positive(),
+    backupResponseMs: z.number().positive(),
+    ownerResponseMs: z.number().positive(),
+  }),
+  timeouts: z
+    .object({
+      customerCollectionMs: z.number().positive(),
+    })
+    .optional(),
+  onCallTechnicians: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string(),
+      phone: z.string(),
+      active: z.boolean(),
+    }),
+  ),
+  approvedQuestions: z.array(approvedQuestionSchema).min(1),
+  smsFromNumber: z.string().min(1),
+  optOutKeywords: z.array(z.string()).min(1),
+  duplicateWindowMs: z.number().positive(),
+  humanReviewPhone: z.string().optional(),
+});
+
+export function parseClientConfigJson(raw: string): ClientAccount {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    throw new Error("[missed-call] MISSED_CALL_CLIENT_CONFIG_JSON is not valid JSON");
+  }
+  const result = clientAccountConfigSchema.safeParse(parsed);
+  if (!result.success) {
+    const detail = result.error.issues
+      .slice(0, 8)
+      .map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`)
+      .join("; ");
+    throw new Error(
+      `[missed-call] MISSED_CALL_CLIENT_CONFIG_JSON failed schema validation: ${detail}`,
+    );
+  }
+  return result.data as ClientAccount;
+}
 
 export function validateClientConfig(client: ClientAccount): ClientConfigValidation {
   const errors: string[] = [];
@@ -85,9 +186,7 @@ export function loadClientAccountFromEnv(
   const allowDemo = env.MISSED_CALL_ALLOW_DEMO === "1";
 
   if (env.MISSED_CALL_CLIENT_CONFIG_JSON?.trim()) {
-    const parsed = JSON.parse(
-      env.MISSED_CALL_CLIENT_CONFIG_JSON,
-    ) as ClientAccount;
+    const parsed = parseClientConfigJson(env.MISSED_CALL_CLIENT_CONFIG_JSON);
     if (isProd && !allowDemo) {
       const v = validateClientConfig(parsed);
       if (!v.ok) {
@@ -120,6 +219,12 @@ export function loadClientAccountFromEnv(
         "[missed-call] Production requires MISSED_CALL_CLIENT_ID, MISSED_CALL_SMS_FROM, MISSED_CALL_TECH_PHONE (or MISSED_CALL_CLIENT_CONFIG_JSON). Demo fixtures are disabled.",
       );
     }
+  }
+
+  if (isProd && allowDemo) {
+    console.error(
+      "[missed-call] MISSED_CALL_ALLOW_DEMO=1 is set in production — demo contacts may be reachable. Remove this flag before real traffic.",
+    );
   }
 
   if (!canBuildFromEnv) {
