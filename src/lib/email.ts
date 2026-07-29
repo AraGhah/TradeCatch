@@ -91,6 +91,9 @@ export async function sendBookAuditEmails(
       ${row("Handles missed calls", payload.handlesMissedCalls)}
       ${row("Follows up quotes", payload.followsUpQuotes)}
       ${row("Main problem", payload.mainProblem)}
+      ${row("Service consent", payload.serviceConsent)}
+      ${row("Consent wording", payload.consentWording)}
+      ${row("Consent source", payload.consentSource)}
       ${row("Marketing consent", payload.marketingConsent)}
     </table>`,
   );

@@ -30,6 +30,9 @@ export const bookAuditSchema = z.object({
   mainProblem: z.string().trim().max(1000).optional().or(z.literal("")),
   serviceConsent: z.literal(true),
   marketingConsent: z.boolean(),
+  /** Exact consent checkbox wording shown to the user (CASL record-keeping). */
+  consentWording: z.string().trim().min(1).max(2000),
+  consentSource: z.string().trim().min(1).max(120).default("book-audit"),
   companyWebsite: z.string().max(500).optional().default(""),
   turnstileToken: z.string().min(1),
 });

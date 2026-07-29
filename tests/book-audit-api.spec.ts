@@ -33,6 +33,9 @@ function validPayload(overrides: Record<string, unknown> = {}) {
     mainProblem: "",
     serviceConsent: true,
     marketingConsent: false,
+    consentWording:
+      "I agree to be contacted about this request by phone, email or text.",
+    consentSource: "book-audit",
     companyWebsite: "",
     turnstileToken: "test-token",
     idempotencyKey: crypto.randomUUID(),

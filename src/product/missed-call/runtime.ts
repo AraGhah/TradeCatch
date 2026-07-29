@@ -1,28 +1,50 @@
 import { loadClientAccountFromEnv } from "./client-config";
 import { createMissedCallEngine, type MissedCallEngine } from "./engine";
 import { createMemoryStore, type MissedCallStore } from "./store";
+import { createPostgresStore } from "./postgres-store";
 import { createTwilioSmsPort } from "./twilio";
+import { isDurableMissedCallStoreConfigured } from "@/lib/config";
 
 /**
  * Process-local singleton for Module A.
- * Replace createMemoryStore with a durable DB adapter before multi-instance production.
+ * Uses Postgres when MISSED_CALL_DURABLE_STORE=1 and DATABASE_URL are set;
+ * otherwise falls back to in-memory (dev / incomplete prod).
  */
 const globalForMissedCall = globalThis as unknown as {
   __tradecatchMissedCall?: {
     store: MissedCallStore;
     engine: MissedCallEngine;
     ready: Promise<void>;
+    durable: boolean;
   };
 };
 
-function bootstrap() {
-  const store = createMemoryStore();
-  if (process.env.NODE_ENV === "production") {
-    console.warn(
-      "[missed-call] Using in-memory store — NOT production-safe for multi-instance. Set DATABASE_URL and wire a durable MissedCallStore before go-live. See docs/CAPABILITY_MATRIX.md.",
+function createStore(): { store: MissedCallStore; durable: boolean } {
+  const url = process.env.DATABASE_URL?.trim();
+  const wantDurable = isDurableMissedCallStoreConfigured();
+
+  if (wantDurable && url) {
+    console.info("[missed-call] Using Postgres MissedCallStore");
+    return { store: createPostgresStore(url), durable: true };
+  }
+
+  if (wantDurable && !url) {
+    throw new Error(
+      "[missed-call] MISSED_CALL_DURABLE_STORE=1 requires DATABASE_URL",
     );
   }
 
+  if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "[missed-call] Using in-memory store — NOT production-safe for multi-instance. Set DATABASE_URL + MISSED_CALL_DURABLE_STORE=1 and apply schema.sql before go-live.",
+    );
+  }
+
+  return { store: createMemoryStore(), durable: false };
+}
+
+function bootstrap() {
+  const { store, durable } = createStore();
   const { client, source } = loadClientAccountFromEnv();
   if (source === "demo") {
     console.warn(
@@ -36,7 +58,7 @@ function bootstrap() {
     sms: createTwilioSmsPort(),
   });
 
-  return { store, engine, ready };
+  return { store, engine, ready, durable };
 }
 
 export function getMissedCallRuntime() {
@@ -50,4 +72,8 @@ export async function ensureMissedCallReady() {
   const runtime = getMissedCallRuntime();
   await runtime.ready;
   return runtime;
+}
+
+export function isRuntimeUsingDurableStore(): boolean {
+  return getMissedCallRuntime().durable;
 }

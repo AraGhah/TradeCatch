@@ -48,6 +48,10 @@ next-env.d.ts
 # local design reference (not part of the shipped app)
 /TradeCatch UI redesign/
 
+# local runtime noise
+.dev-server.log
+.dev-server*.log
+
 # demo recording intermediates / exports (masters live in object storage)
 /public/demo-video/exports/
 /public/demo-video/**/.tmp/

@@ -295,7 +295,7 @@
         },
         {
           "manual": "Les soumissions sont relancées quand quelqu'un a une minute libre, ce qui veut souvent dire jamais.",
-          "system": "Chaque soumission reçoit une séquence planifiée qui s'arrête dès que le client répond."
+          "system": "Les séquences de relance de soumissions sont prévues pour des pilotes ultérieurs — aujourd'hui on se concentre sur la récupération d'appels manqués et les alertes technicien."
         },
         {
           "manual": "Le technicien apprend les détails de la demande de seconde main, si jamais il les apprend.",
@@ -303,7 +303,7 @@
         },
         {
           "manual": "Personne ne peut dire combien d'appels ou de soumissions sont réellement devenus des jobs.",
-          "system": "Un tableau de bord montre exactement quels appels, soumissions et relances sont devenus des jobs réservés."
+          "system": "L'équipe ops peut revoir les leads récupérés du pilote contrôlé ; un tableau de bord client est prévu, pas encore livré."
         },
         {
           "manual": "Une urgence hors des heures d'ouverture attend l'ouverture.",
@@ -680,8 +680,8 @@
   },
   "services": {
     "eyebrow": "Services",
-    "headline": "Un système. Cinq jobs pendant que vous travaillez.",
-    "intro": "TradeCatch relie téléphone, messages, courriel, soumissions et CRM pour que moins d'occasions se perdent entre le premier appel et le job signé.",
+    "headline": "Un système. Les jobs qu'il fait pendant que vous travaillez.",
+    "intro": "TradeCatch commence par le texto d'appel manqué, la collecte de lead et les alertes technicien. Relance de soumissions, sync CRM et tableaux de bord sont cadrés séparément après un pilote contrôlé.",
     "groups": [
       {
         "title": "Capture de prospects",
@@ -926,14 +926,14 @@
   "pricing": {
     "eyebrow": "Tarifs",
     "headline": "Des prix honnêtes pour les équipes qui perdent des jobs entre la sonnerie et la signature.",
-    "intro": "Vous payez une fois pour installer le système. Vous payez chaque mois pour garder le SMS de retour, les alertes technicien et la relance de soumissions — suivis par une vraie personne.",
+    "intro": "Vous payez une fois pour installer la récupération d'appels manqués. Vous payez chaque mois pour garder le SMS de retour et les alertes technicien — suivis par une vraie personne. Relance de soumissions et CRM sont cadrés seulement quand ces modules existent.",
     "reassurance": "Installation fixe. Mois par mois. Résiliation avec préavis.",
-    "metaDescription": "Forfaits Démarrage et Croissance pour le SMS de retour sur appels manqués et la relance d'estimations pour les entrepreneurs québécois.",
+    "metaDescription": "Forfaits Démarrage et Croissance pour le SMS de retour sur appels manqués et les alertes technicien pour les entrepreneurs québécois. Relance de soumissions vendue seulement quand elle est en ligne.",
     "mostPopular": "Recommandé",
     "principles": [
       "Prix d'installation fixe, convenu par écrit",
       "Gestion mois par mois",
-      "Ajusté à votre volume d'appels et de soumissions"
+      "Ajusté à votre volume d'appels et vos techniciens"
     ],
     "tiers": [
       {
@@ -947,9 +947,9 @@
           "SMS de retour sur appels manqués",
           "Collecte des détails et photos du prospect",
           "Un processus d'alerte technicien",
-          "Séquence de relance des soumissions",
-          "Rapports hebdomadaires",
-          "Lancement suivi par le fondateur"
+          "Lancement suivi par le fondateur",
+          "Point ops hebdomadaire (manuel)",
+          "Relance de soumissions — quand ce module sera livré"
         ]
       },
       {
@@ -959,14 +959,14 @@
         "setupAmount": "4 000 $",
         "cadence": "1 000 $–1 500 $ / mois",
         "monthlyAmount": "1 000 $–1 500 $",
-        "idealFor": "Équipes avec plusieurs techniciens, rotation de garde ou besoins CRM.",
+        "idealFor": "Équipes avec plusieurs techniciens ou rotation de garde.",
         "items": [
           "Tout ce qui est inclus dans Démarrage",
           "Acheminement multi-techniciens",
           "Rotation de garde et escalade de remplacement",
-          "Connexion CRM",
-          "Soutien à la prise de rendez-vous",
-          "Tableau de bord personnalisé"
+          "Connexion CRM — quand le sync sera livré",
+          "Prise de rendez-vous — lien calendrier externe aujourd'hui",
+          "Tableau de bord personnalisé — prévu après le reporting durable"
         ]
       }
     ],

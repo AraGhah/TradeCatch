@@ -24,6 +24,9 @@ const validBase = {
   mainProblem: "",
   serviceConsent: true as const,
   marketingConsent: false,
+  consentWording:
+    "I agree to be contacted about this request by phone, email or text.",
+  consentSource: "book-audit",
   companyWebsite: "",
   turnstileToken: "test-token",
 };

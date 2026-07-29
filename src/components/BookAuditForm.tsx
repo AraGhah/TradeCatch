@@ -312,6 +312,8 @@ export function BookAuditForm() {
           ? answers.preferredLanguage
           : locale,
       turnstileToken,
+      consentWording: t("consent"),
+      consentSource: "book-audit",
     };
     const parsed = bookAuditSchema.safeParse(payload);
     if (!parsed.success) {

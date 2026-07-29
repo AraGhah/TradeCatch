@@ -3,6 +3,7 @@ import type {
   ClientAccount,
   LeadRecord,
   MissedCallWorkflow,
+  OutboundMessageRecord,
   SmsSuppressionRecord,
 } from "./types";
 
@@ -41,6 +42,17 @@ export type MissedCallStore = {
   listLeads(clientAccountId?: string): Promise<LeadRecord[]>;
   isSmsSuppressed(clientAccountId: string, phoneE164: string): Promise<boolean>;
   addSmsSuppression(record: SmsSuppressionRecord): Promise<void>;
+  /** Returns true if newly claimed; false if this MessageSid was already processed. */
+  claimInboundMessageSid(messageSid: string): Promise<boolean>;
+  enqueueOutbound(message: OutboundMessageRecord): Promise<void>;
+  /** Atomically claim queued/retry rows for sending (SKIP LOCKED on Postgres). */
+  claimOutboundForSend(limit: number): Promise<OutboundMessageRecord[]>;
+  markOutboundSent(id: string, providerSid: string): Promise<void>;
+  markOutboundFailed(
+    id: string,
+    error: string,
+    nextStatus: "retry" | "dead",
+  ): Promise<void>;
 };
 
 function isActiveWorkflowStatus(w: MissedCallWorkflow): boolean {
@@ -65,6 +77,9 @@ export function createMemoryStore(): MissedCallStore {
   const leads = new Map<string, LeadRecord>();
   const leadByWorkflow = new Map<string, string>();
   const suppressions = new Map<string, SmsSuppressionRecord>();
+  const inboundMessageSids = new Set<string>();
+  const outbound = new Map<string, OutboundMessageRecord>();
+  const outboundClaimed = new Set<string>();
 
   function suppressionKey(clientAccountId: string, phoneE164: string) {
     return `${clientAccountId}:${normalizePhone(phoneE164)}`;
@@ -203,6 +218,57 @@ export function createMemoryStore(): MissedCallStore {
         suppressionKey(record.clientAccountId, record.phoneE164),
         record,
       );
+    },
+    async claimInboundMessageSid(messageSid) {
+      if (inboundMessageSids.has(messageSid)) return false;
+      inboundMessageSids.add(messageSid);
+      return true;
+    },
+    async enqueueOutbound(message) {
+      outbound.set(message.id, { ...message });
+    },
+    async claimOutboundForSend(limit) {
+      const claimed: OutboundMessageRecord[] = [];
+      for (const msg of outbound.values()) {
+        if (claimed.length >= limit) break;
+        if (msg.status !== "queued" && msg.status !== "retry") continue;
+        if (outboundClaimed.has(msg.id)) continue;
+        outboundClaimed.add(msg.id);
+        const sending = {
+          ...msg,
+          status: "sending" as const,
+          updatedAt: new Date().toISOString(),
+        };
+        outbound.set(msg.id, sending);
+        claimed.push({ ...sending });
+      }
+      return claimed;
+    },
+    async markOutboundSent(id, providerSid) {
+      const msg = outbound.get(id);
+      if (!msg) return;
+      const now = new Date().toISOString();
+      outbound.set(id, {
+        ...msg,
+        status: "sent",
+        providerSid,
+        attempts: msg.attempts + 1,
+        updatedAt: now,
+        sentAt: now,
+      });
+      outboundClaimed.delete(id);
+    },
+    async markOutboundFailed(id, error, nextStatus) {
+      const msg = outbound.get(id);
+      if (!msg) return;
+      outbound.set(id, {
+        ...msg,
+        status: nextStatus,
+        lastError: error,
+        attempts: msg.attempts + 1,
+        updatedAt: new Date().toISOString(),
+      });
+      outboundClaimed.delete(id);
     },
   };
 }

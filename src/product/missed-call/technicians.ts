@@ -115,12 +115,37 @@ export function getTechnicianChain(client: ClientAccount, at: Date): string[] {
   return getEscalationChain(client, at).map((t) => t.id);
 }
 
+/**
+ * Prefer the workflow snapshot so on-call rotation mid-job does not reshuffle
+ * the remaining escalation targets.
+ */
+export function resolveEscalationChain(
+  client: ClientAccount,
+  at: Date,
+  chainIds?: string[],
+): TechnicianRosterEntry[] {
+  if (chainIds && chainIds.length > 0) {
+    const resolved = chainIds
+      .map(
+        (id) =>
+          isEligibleTechnician(client, id) ??
+          client.technicianRoster.find((t) => t.id === id) ??
+          null,
+      )
+      .filter((t): t is TechnicianRosterEntry => Boolean(t));
+    if (resolved.length > 0) return resolved;
+  }
+  return getEscalationChain(client, at);
+}
+
 export function stageForEscalationIndex(
   index: number,
-  chainLength: number,
+  chain: { role?: string }[],
 ): EscalationStage {
-  if (index <= 0) return "primary";
-  if (index >= chainLength - 1 && chainLength > 1) return "owner";
+  const entry = chain[index];
+  if (entry?.role === "owner") return "owner";
+  if (entry?.role === "primary" || index <= 0) return "primary";
+  if (index >= chain.length - 1 && entry?.role !== "backup") return "owner";
   return "backup";
 }
 
@@ -128,8 +153,9 @@ export function technicianAtEscalationIndex(
   client: ClientAccount,
   index: number,
   at: Date,
+  chainIds?: string[],
 ): TechnicianRosterEntry | null {
-  const chain = getEscalationChain(client, at);
+  const chain = resolveEscalationChain(client, at, chainIds);
   return chain[index] ?? null;
 }
 
@@ -285,6 +311,7 @@ export function shouldEscalateToIndex(
     status: string;
     technicianAlertedAt?: string;
     escalationIndex: number;
+    escalationChainIds?: string[];
   },
   client: ClientAccount,
   now: Date,
@@ -298,7 +325,11 @@ export function shouldEscalateToIndex(
   if (!workflow.technicianAlertedAt) return null;
   if (workflow.escalationIndex < 0) return null;
 
-  const chain = getEscalationChain(client, now);
+  const chain = resolveEscalationChain(
+    client,
+    now,
+    workflow.escalationChainIds,
+  );
   if (chain.length === 0) return "exhausted";
 
   const elapsed =
@@ -339,7 +370,7 @@ export function shouldEscalate(
   if (next === null) return null;
   if (next === "exhausted") return "exhausted";
   const chain = getEscalationChain(client, now);
-  return stageForEscalationIndex(next, chain.length);
+  return stageForEscalationIndex(next, chain);
 }
 
 export function afterHoursNote(client: ClientAccount, at: Date): boolean {

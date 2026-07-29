@@ -295,7 +295,7 @@
         },
         {
           "manual": "Quotes get followed up when someone has a free minute, which often means never.",
-          "system": "Every quote gets a scheduled sequence that stops the second the customer replies."
+          "system": "Quote follow-up sequences are planned for later pilots — today we focus on missed-call recovery and technician alerts."
         },
         {
           "manual": "The technician learns the job details secondhand, if at all.",
@@ -303,7 +303,7 @@
         },
         {
           "manual": "Nobody can say how many calls or quotes actually turned into jobs.",
-          "system": "A dashboard shows exactly which calls, quotes and follow-ups became booked work."
+          "system": "Ops can review recovered leads from the controlled pilot; a client dashboard is planned, not shipping yet."
         },
         {
           "manual": "An after-hours emergency waits until business hours.",
@@ -680,8 +680,8 @@
   },
   "services": {
     "eyebrow": "Services",
-    "headline": "One system. Five jobs it does while you work.",
-    "intro": "TradeCatch connects your phone, messages, email, quote process and CRM so fewer opportunities disappear between the first ring and the signed job.",
+    "headline": "One system. The jobs it does while you work.",
+    "intro": "TradeCatch starts with missed-call text-back, lead collection and technician alerts. Quote follow-up, CRM sync and dashboards are scoped separately after a controlled pilot.",
     "groups": [
       {
         "title": "Lead capture",
@@ -926,14 +926,14 @@
   "pricing": {
     "eyebrow": "Pricing",
     "headline": "Honest prices for crews that lose work between the ring and the signed job.",
-    "intro": "You pay once to install the system. You pay monthly to keep missed-call text-back, technician alerts and quote follow-up running — monitored by a real person.",
+    "intro": "You pay once to install missed-call recovery. You pay monthly to keep text-back and technician alerts running — monitored by a real person. Quote follow-up and CRM modules are scoped only after they ship.",
     "reassurance": "Fixed setup. Month-to-month. Cancel with notice.",
-    "metaDescription": "Starter and Growth packages for SMS missed-call text-back and estimate follow-up for Québec contractors.",
+    "metaDescription": "Starter and Growth packages for SMS missed-call text-back and technician alerts for Québec contractors. Quote follow-up sold only when live.",
     "mostPopular": "Recommended",
     "principles": [
       "Fixed setup price, agreed in writing",
       "Month-to-month management",
-      "Scoped to your call and quote volume"
+      "Scoped to your call volume and technicians"
     ],
     "tiers": [
       {
@@ -947,9 +947,9 @@
           "Missed-call SMS text-back",
           "Lead details and photo collection",
           "One technician alert workflow",
-          "Quote follow-up sequence",
-          "Weekly reporting",
-          "Founder-monitored launch"
+          "Founder-monitored launch",
+          "Weekly ops check-in (manual)",
+          "Quote follow-up — available when that module ships"
         ]
       },
       {
@@ -959,14 +959,14 @@
         "setupAmount": "$4,000",
         "cadence": "$1,000–$1,500 / month",
         "monthlyAmount": "$1,000–$1,500",
-        "idealFor": "Teams with multiple technicians, on-call rotation, or CRM needs.",
+        "idealFor": "Teams with multiple technicians or on-call rotation.",
         "items": [
           "Everything in Starter",
           "Multiple technician routing",
           "On-call rotation and backup escalation",
-          "CRM connection",
-          "Appointment booking support",
-          "Custom dashboard"
+          "CRM connection — when the sync module ships",
+          "Appointment booking — external calendar link today",
+          "Custom dashboard — planned after durable reporting"
         ]
       }
     ],

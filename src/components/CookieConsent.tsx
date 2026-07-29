@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
@@ -18,6 +18,7 @@ export function CookieConsent() {
   const [visible, setVisible] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [analytics, setAnalytics] = useState(false);
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Reading localStorage requires the client mount; can't be done during SSR render.
@@ -37,20 +38,37 @@ export function CookieConsent() {
   }, []);
 
   useEffect(() => {
-    // Keep fixed bottom UI (cookie banner + sticky CTA) from covering content.
-    // Heights are shared via CSS variables so either component can update safely.
-    document.documentElement.style.setProperty(
-      "--tc-cookie-offset",
-      visible ? "96px" : "0px",
-    );
-    document.body.style.paddingBottom =
-      "calc(var(--tc-cookie-offset, 0px) + var(--tc-sticky-cta-offset, 0px))";
-    return () => {
-      document.documentElement.style.setProperty("--tc-cookie-offset", "0px");
+    function applyOffset(px: number) {
+      document.documentElement.style.setProperty(
+        "--tc-cookie-offset",
+        `${Math.max(0, Math.ceil(px))}px`,
+      );
       document.body.style.paddingBottom =
         "calc(var(--tc-cookie-offset, 0px) + var(--tc-sticky-cta-offset, 0px))";
+    }
+
+    if (!visible) {
+      applyOffset(0);
+      return () => applyOffset(0);
+    }
+
+    const el = bannerRef.current;
+    if (!el) {
+      applyOffset(96);
+      return () => applyOffset(0);
+    }
+
+    const measure = () => applyOffset(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+      applyOffset(0);
     };
-  }, [visible]);
+  }, [visible, expanded]);
 
   useEffect(() => {
     if (!visible) return;
@@ -86,6 +104,7 @@ export function CookieConsent() {
 
   return (
     <motion.div
+      ref={bannerRef}
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}

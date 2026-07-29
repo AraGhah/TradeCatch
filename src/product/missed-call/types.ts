@@ -183,9 +183,11 @@ export type MissedCallWorkflow = {
   urgency?: UrgencyClassification;
   humanReviewRequired?: boolean;
   assignedTechnicianId?: string;
-  /** Index into getEscalationChain(client); -1 before first alert. */
+  /** Index into escalationChainIds (or live getEscalationChain); -1 before first alert. */
   escalationIndex: number;
   escalationStage: EscalationStage;
+  /** Snapshot of technician IDs at first alert — do not re-resolve from schedule mid-workflow. */
+  escalationChainIds?: string[];
   technicianAlertedAt?: string;
   technicianAlerts: TechnicianAlertRecord[];
   leadId?: string;
@@ -274,6 +276,28 @@ export type OutboundSms = {
   fromE164: string;
   body: string;
   mediaUrl?: string;
+};
+
+export type OutboundMessageStatus =
+  "queued" | "sending" | "retry" | "sent" | "dead";
+
+/** Durable SMS outbox row (Postgres mc_outbound_messages / memory mirror). */
+export type OutboundMessageRecord = {
+  id: string;
+  workflowId?: string;
+  clientAccountId: string;
+  toE164: string;
+  fromE164: string;
+  body: string;
+  status: OutboundMessageStatus;
+  providerSid?: string;
+  attempts: number;
+  lastError?: string;
+  /** Correlates with workflow event detail (e.g. opening_fr). */
+  detail?: string;
+  createdAt: string;
+  updatedAt: string;
+  sentAt?: string;
 };
 
 export type SmsPort = {
