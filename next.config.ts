@@ -6,18 +6,13 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const isDev = process.env.NODE_ENV === "development";
 
-// Static (non-nonce) CSP: keeps pages statically rendered/cacheable, which
-// matters more for this marketing site than nonce-level script isolation.
-// 'unsafe-inline' on script-src is required in every environment, not just
-// dev: Next's App Router streams the RSC payload and hydration bootstrap
-// through inline <script> tags on every request, and without a nonce
-// mechanism (which would force these pages off static rendering) the
-// browser blocks those tags outright, breaking hydration for the whole
-// site. 'unsafe-eval' stays dev-only since it's only needed for Turbopack's
-// dev-time module runtime.
-const cspDirectives = [
+// Document CSP (with per-request nonce + strict-dynamic) is applied in
+// `src/proxy.ts`. API/static responses still get the remaining headers here.
+// Production script-src must NOT include 'unsafe-eval'.
+const apiFallbackCsp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' https://www.googletagmanager.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ""}`,
+  "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://www.google-analytics.com",
   "font-src 'self'",
@@ -28,10 +23,11 @@ const cspDirectives = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   "upgrade-insecure-requests",
-];
+].join("; ");
 
 const securityHeaders = [
-  { key: "Content-Security-Policy", value: cspDirectives.join("; ") },
+  // Pages matched by proxy overwrite this with a nonce CSP.
+  { key: "Content-Security-Policy", value: apiFallbackCsp },
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",

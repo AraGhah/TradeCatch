@@ -1,6 +1,6 @@
 import type { OutboundSms, SmsPort } from "./types";
 
-/** In-memory SMS port for tests and local dry-runs. */
+/** In-memory SMS port for tests and explicitly selected local dry-runs. */
 export function createMemorySmsPort(): SmsPort & {
   sent: OutboundSms[];
 } {
@@ -11,27 +11,72 @@ export function createMemorySmsPort(): SmsPort & {
       sent.push(message);
       return { sid: `SM_mem_${sent.length}` };
     },
+    async syncOptOut() {
+      return { ok: true, detail: "memory" };
+    },
   };
 }
 
 /**
- * Twilio REST SMS sender. Requires TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN.
- * Falls back to logging when unset (non-production dry-run).
+ * Explicit dry-run adapter. Only used when MISSED_CALL_SMS_MODE=dry-run
+ * (or when createTwilioSmsPort is constructed in non-production without credentials).
+ * Never silently selected in production.
  */
-export function createTwilioSmsPort(env = process.env): SmsPort {
+export function createDryRunSmsPort(): SmsPort {
+  return {
+    async send(message) {
+      console.info("[missed-call] SMS dry-run", {
+        to: message.toE164,
+        body: message.body.slice(0, 80),
+      });
+      return { sid: `SM_dry_${Date.now()}` };
+    },
+    async syncOptOut(input) {
+      console.info("[missed-call] SMS opt-out dry-run", input.phoneE164);
+      return { ok: true, detail: "dry-run" };
+    },
+  };
+}
+
+export function isTwilioSmsConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(
+    env.TWILIO_ACCOUNT_SID?.trim() && env.TWILIO_AUTH_TOKEN?.trim(),
+  );
+}
+
+/**
+ * Twilio REST SMS sender.
+ *
+ * Production: requires TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN; missing config
+ * throws on send (never returns a fake success SID).
+ * Development: falls back to dry-run only when credentials are unset.
+ * Set MISSED_CALL_SMS_MODE=dry-run to force dry-run outside production.
+ */
+export function createTwilioSmsPort(env: NodeJS.ProcessEnv = process.env): SmsPort {
   const sid = env.TWILIO_ACCOUNT_SID?.trim();
   const token = env.TWILIO_AUTH_TOKEN?.trim();
+  const forceDryRun = env.MISSED_CALL_SMS_MODE === "dry-run";
+  const isProd = env.NODE_ENV === "production";
+
+  if (forceDryRun && !isProd) {
+    return createDryRunSmsPort();
+  }
+
+  if (!sid || !token) {
+    if (isProd) {
+      return {
+        async send() {
+          throw new Error(
+            "Twilio SMS is not configured in production (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN).",
+          );
+        },
+      };
+    }
+    return createDryRunSmsPort();
+  }
 
   return {
     async send(message) {
-      if (!sid || !token) {
-        console.info("[missed-call] SMS dry-run (Twilio unset)", {
-          to: message.toE164,
-          body: message.body.slice(0, 80),
-        });
-        return { sid: `SM_dry_${Date.now()}` };
-      }
-
       const auth = Buffer.from(`${sid}:${token}`).toString("base64");
       const body = new URLSearchParams({
         To: message.toE164,
@@ -49,6 +94,7 @@ export function createTwilioSmsPort(env = process.env): SmsPort {
             "Content-Type": "application/x-www-form-urlencoded",
           },
           body,
+          signal: AbortSignal.timeout(15_000),
         },
       );
 
@@ -58,6 +104,16 @@ export function createTwilioSmsPort(env = process.env): SmsPort {
       }
       const json = (await res.json()) as { sid: string };
       return { sid: json.sid };
+    },
+    async syncOptOut(input) {
+      // When the customer texts STOP/ARRET, Twilio Advanced Opt-Out (if enabled on
+      // the number / Messaging Service) already blocks further carrier traffic.
+      // Our durable suppression list is the application-level guard for retries /
+      // new workflows. Record that we observed the opt-out with credentials present.
+      return {
+        ok: true,
+        detail: `twilio_observed:${input.phoneE164}:via:${input.fromE164}`,
+      };
     },
   };
 }

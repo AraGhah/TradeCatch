@@ -37,19 +37,32 @@ export function CookieConsent() {
   }, []);
 
   useEffect(() => {
-    // Keep the fixed cookie bar from covering the footer copyright strip.
-    // If a mobile sticky CTA is present (also fixed bottom), it reads
-    // --tc-cookie-offset so the two don't overlap.
-    document.body.style.paddingBottom = visible ? "96px" : "";
+    // Keep fixed bottom UI (cookie banner + sticky CTA) from covering content.
+    // Heights are shared via CSS variables so either component can update safely.
     document.documentElement.style.setProperty(
       "--tc-cookie-offset",
       visible ? "96px" : "0px",
     );
+    document.body.style.paddingBottom =
+      "calc(var(--tc-cookie-offset, 0px) + var(--tc-sticky-cta-offset, 0px))";
     return () => {
-      document.body.style.paddingBottom = "";
       document.documentElement.style.setProperty("--tc-cookie-offset", "0px");
+      document.body.style.paddingBottom =
+        "calc(var(--tc-cookie-offset, 0px) + var(--tc-sticky-cta-offset, 0px))";
     };
   }, [visible]);
+
+  useEffect(() => {
+    if (!visible) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      writeConsent(false, t("rejectNonEssential"));
+      setVisible(false);
+      setExpanded(false);
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [visible, t]);
 
   function acceptAll() {
     writeConsent(true, t("acceptAll"));
@@ -76,7 +89,7 @@ export function CookieConsent() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.25 }}
-      role="dialog"
+      role="region"
       aria-label={t("managePreferences")}
       className="fixed inset-x-0 bottom-0 z-50 border-t border-navy/10 bg-white/98 p-4 shadow-[0_-4px_16px_rgba(18,32,51,0.12)]"
     >

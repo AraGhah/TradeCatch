@@ -1,0 +1,9 @@
+[
+  {
+    "id": "GHSA-mh99-v99m-4gvg",
+    "package": "brace-expansion",
+    "via": "eslint / minimatch (dev tooling only)",
+    "mitigation": "npm overrides pin brace-expansion to patched 1.1.17 / 5.0.8; CI runs check:brace-expansion (npm audit may still list the GHSA against eslint ranges)",
+    "expiresOn": "2026-10-29"
+  }
+]

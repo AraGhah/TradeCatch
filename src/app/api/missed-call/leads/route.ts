@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  authorizeOpsRequest,
+  unauthorizedOpsResponse,
+} from "@/lib/ops-auth";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  if (!authorizeOpsRequest(request)) {
+    return unauthorizedOpsResponse();
+  }
+
   const clientId =
     request.nextUrl.searchParams.get("clientAccountId")?.trim() ||
     process.env.MISSED_CALL_CLIENT_ID?.trim() ||

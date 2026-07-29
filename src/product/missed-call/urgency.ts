@@ -12,26 +12,28 @@ export const HARDCODED_CRITICAL_TRIGGERS: {
   {
     id: "critical_gas",
     patterns: [
-      /\b(gaz|gas|odeur de gaz|smell of gas|fuite de gaz|gas leak)\b/i,
+      /\b(gazs?|gases?|odeur de gaz|smell of gas|fuite de gaz|gas leak)\b/i,
       /\b(propane|monoxyde|carbon monoxide|co detector)\b/i,
     ],
   },
   {
     id: "critical_fire",
     patterns: [
-      /\b(feu|fire|flamme|flame|fumee|fumée|smoke|brule|brûle|burning)\b/i,
+      /\b(feu|fire|flammes?|fumee|smoke|brule|burning)\b/i,
     ],
   },
   {
     id: "critical_flood",
     patterns: [
-      /\b(inondation|flooding|flood|debordement|débordement|sewer backup|refoulement)\b/i,
+      /\b(inondation|flooding|flood|debordement|sewer backup|refoulement)\b/i,
     ],
   },
   {
     id: "critical_electrical",
     patterns: [
-      /\b(electrique expose|exposed wire|fil nu|sparks|etincelle|étincelle|arc electrique)\b/i,
+      /\b(electrique expose|exposed wire|fil nu|fils nus)\b/i,
+      /\b(etincelles?|sparks?|arc electrique|arcing)\b/i,
+      /\b(panneau electrique|electrical panel|breaker(s)? spark)/i,
       /\b(panne electrique totale|power outage everywhere|compteur brule)\b/i,
     ],
   },
@@ -46,7 +48,10 @@ function normalize(text: string): string {
     .trim()
     .toLowerCase()
     .normalize("NFD")
-    .replace(/\p{M}/gu, "");
+    .replace(/\p{M}/gu, "")
+    .replace(/[’']/g, "'")
+    .replace(/[^a-z0-9\s']/g, " ")
+    .replace(/\s+/g, " ");
 }
 
 function matchRubric(
@@ -73,11 +78,12 @@ export function classifyUrgency(input: {
   at?: Date;
 }): { classification: UrgencyClassification; log: UrgencyLogEntry } {
   const text = input.issueDescription.trim();
+  const normalized = normalize(text);
   const at = (input.at ?? new Date()).toISOString();
 
   for (const trigger of HARDCODED_CRITICAL_TRIGGERS) {
     for (const pattern of trigger.patterns) {
-      if (pattern.test(text)) {
+      if (pattern.test(normalized) || pattern.test(text)) {
         const classification: UrgencyClassification = {
           level: "critical",
           source: trigger.id,
@@ -102,7 +108,7 @@ export function classifyUrgency(input: {
   };
 
   for (const entry of input.rubric) {
-    const kw = matchRubric(text, entry);
+    const kw = matchRubric(normalized, entry);
     if (!kw) continue;
     if (!best || rank[entry.level] > rank[best.level]) {
       best = { level: entry.level, entry, kw };

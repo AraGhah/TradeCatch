@@ -1,7 +1,14 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type MouseEvent } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+  type ComponentType,
+  type MouseEvent,
+} from "react";
 import { useLocale } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import {
   getCopy,
   sceneAt,
@@ -78,16 +85,17 @@ function safeFullscreen(enter: boolean) {
   }
 }
 
-export function DemoVideoExperience() {
+function DemoVideoExperienceInner() {
   const rawLocale = useLocale();
   const locale: DemoLocale = rawLocale === "fr" ? "fr" : "en";
   const copy = getCopy(locale);
+  const searchParams = useSearchParams();
+  const recording = searchParams.get("record") === "1";
+  const voiceFromUrl = searchParams.get("voice") !== "0";
 
   const clock = useTimelineClock(totalDurationMs(locale));
-  const [presentation, setPresentation] = useState(false);
-  /** ?record=1 — chrome-free output for the MP4 export. */
-  const [recording, setRecording] = useState(false);
-  const [voiceOn, setVoiceOn] = useState(true);
+  const [presentation, setPresentation] = useState(recording);
+  const [voiceOn, setVoiceOn] = useState(voiceFromUrl);
   const [audioArmed, setAudioArmed] = useState(false);
   const audio = useDemoAudio(audioArmed && voiceOn, locale);
 
@@ -107,16 +115,6 @@ export function DemoVideoExperience() {
   useEffect(() => {
     void audio.onTimeline(clock.timeSec, sceneId, clock.playing);
   }, [audio, clock.playing, clock.timeSec, sceneId]);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("record") === "1") {
-      setPresentation(true);
-      setRecording(true);
-    }
-    // The exporter mutes the page and muxes narration from the MP3s instead.
-    if (params.get("voice") === "0") setVoiceOn(false);
-  }, []);
 
   const armAndPlay = () => {
     setAudioArmed(true);
@@ -280,5 +278,13 @@ export function DemoVideoExperience() {
         </>
       )}
     </div>
+  );
+}
+
+export function DemoVideoExperience() {
+  return (
+    <Suspense fallback={<div className="fixed inset-0 z-[200] bg-[#0c141e]" />}>
+      <DemoVideoExperienceInner />
+    </Suspense>
   );
 }

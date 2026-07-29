@@ -47,3 +47,15 @@ next-env.d.ts
 
 # local design reference (not part of the shipped app)
 /TradeCatch UI redesign/
+
+# demo recording intermediates / exports (masters live in object storage)
+/public/demo-video/exports/
+/public/demo-video/**/.tmp/
+/public/demo-video/**/*.wav
+/public/demo-video/**/*.webm
+/TradeCatch-Demo-*.mp4
+/TradeCatch-Demo-*.webm
+*.wav
+
+# prettier
+.prettiercache

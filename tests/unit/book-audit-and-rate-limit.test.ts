@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { bookAuditSchema } from "../../src/lib/validation/book-audit";
-import { rateLimit } from "../../src/lib/rate-limit";
+import { rateLimit, getClientIp } from "../../src/lib/rate-limit";
 
 const validBase = {
   firstName: "Jean",
@@ -69,5 +69,40 @@ describe("rateLimit", () => {
     assert.equal(rateLimit({ key, limit, windowMs }).allowed, true);
     assert.equal(rateLimit({ key, limit, windowMs }).allowed, true);
     assert.equal(rateLimit({ key, limit, windowMs }).allowed, false);
+  });
+});
+
+describe("getClientIp", () => {
+  it("uses x-vercel-forwarded-for on Vercel and ignores spoofed x-forwarded-for", () => {
+    const req = new Request("https://example.com", {
+      headers: {
+        "x-forwarded-for": "1.2.3.4",
+        "x-vercel-forwarded-for": "9.9.9.9",
+      },
+    });
+    assert.equal(getClientIp(req, { VERCEL: "1" }), "9.9.9.9");
+  });
+
+  it("does not trust public forwarding headers in direct production", () => {
+    const req = new Request("https://example.com", {
+      headers: {
+        "x-forwarded-for": "1.2.3.4",
+        "x-real-ip": "5.5.5.5",
+      },
+    });
+    assert.equal(
+      getClientIp(req, { NODE_ENV: "production" }),
+      "unknown",
+    );
+  });
+
+  it("uses cf-connecting-ip when present", () => {
+    const req = new Request("https://example.com", {
+      headers: {
+        "cf-connecting-ip": "8.8.8.8",
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+    assert.equal(getClientIp(req, { NODE_ENV: "production" }), "8.8.8.8");
   });
 });

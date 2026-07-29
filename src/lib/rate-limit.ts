@@ -57,10 +57,53 @@ export function rateLimit({
   };
 }
 
-export function getClientIp(request: Request): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) return forwardedFor.split(",")[0]!.trim();
-  const realIp = request.headers.get("x-real-ip");
-  if (realIp) return realIp.trim();
+function firstForwardedIp(headerValue: string): string | null {
+  const first = headerValue.split(",")[0]?.trim();
+  return first || null;
+}
+
+/**
+ * Resolve the client IP only from headers the *current* hosting platform
+ * is known to sanitize.
+ *
+ * - Vercel (`VERCEL=1`): `x-vercel-forwarded-for`, then platform `x-real-ip`
+ * - Cloudflare (`CF-Connecting-IP` present): that header alone
+ * - Explicit trust (`TRUST_PROXY_HEADERS=1`): classic proxy chain
+ * - Non-production: allow forwarded headers for local/dev/e2e
+ * - Otherwise: never trust public forwarding headers → `"unknown"`
+ */
+export function getClientIp(
+  request: Request,
+  env: Record<string, string | undefined> = process.env,
+): string {
+  const onVercel = env.VERCEL === "1" || Boolean(env.VERCEL_ENV);
+
+  if (onVercel) {
+    const vercelForwarded = request.headers.get("x-vercel-forwarded-for");
+    if (vercelForwarded) {
+      const ip = firstForwardedIp(vercelForwarded);
+      if (ip) return ip;
+    }
+    const realIp = request.headers.get("x-real-ip")?.trim();
+    if (realIp) return realIp;
+    return "unknown";
+  }
+
+  const cfIp = request.headers.get("cf-connecting-ip")?.trim();
+  if (cfIp) return cfIp;
+
+  const trustProxy =
+    env.TRUST_PROXY_HEADERS === "1" || env.NODE_ENV !== "production";
+
+  if (trustProxy) {
+    const realIp = request.headers.get("x-real-ip")?.trim();
+    if (realIp) return realIp;
+    const forwardedFor = request.headers.get("x-forwarded-for");
+    if (forwardedFor) {
+      const ip = firstForwardedIp(forwardedFor);
+      if (ip) return ip;
+    }
+  }
+
   return "unknown";
 }

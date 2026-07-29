@@ -15,10 +15,11 @@ export default function GlobalError({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: error.message,
-          digest: error.digest,
-          stack: error.stack?.slice(0, 2000),
+          message: String(error.message ?? "client_error").slice(0, 300),
+          digest: error.digest?.slice(0, 80),
+          stack: error.digest ? undefined : error.stack?.slice(0, 800),
           path: window.location.pathname,
+          buildId: process.env.NEXT_PUBLIC_BUILD_ID?.slice(0, 64),
         }),
         keepalive: true,
       });

@@ -98,6 +98,20 @@ export async function POST(request: NextRequest) {
     forwardLeadToCrm(payload),
   ]);
 
+  // In production, at least one delivery channel must succeed. Otherwise the
+  // client would see a false confirmation and the lead would be lost.
+  if (isProductionRuntime() && !sent && !forwarded) {
+    seenIdempotencyKeys.delete(idempotencyKey);
+    await reportError(new Error("book-audit delivery failed (email + CRM)"), {
+      ip,
+      trade: payload.trade,
+    });
+    return jsonError(
+      "We couldn't save your request. Please try again or call us.",
+      503,
+    );
+  }
+
   if (isProductionRuntime() && !sent) {
     await reportError(new Error("book-audit email send failed"), {
       ip,

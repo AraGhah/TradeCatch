@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  authorizeOpsRequest,
+  unauthorizedOpsResponse,
+} from "@/lib/ops-auth";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +11,7 @@ export const dynamic = "force-dynamic";
 /**
  * Local / staging sandbox to drive Module A without Twilio.
  * Disabled in production unless MISSED_CALL_SANDBOX=1.
+ * Always requires ops bearer auth when enabled in production.
  */
 const callSchema = z.object({
   action: z.literal("call"),
@@ -26,12 +31,19 @@ const smsSchema = z.object({
 
 const schema = z.discriminatedUnion("action", [callSchema, smsSchema]);
 
-export async function POST(request: NextRequest) {
-  const sandboxOk =
+function sandboxEnabled() {
+  return (
     process.env.MISSED_CALL_SANDBOX === "1" ||
-    process.env.NODE_ENV !== "production";
-  if (!sandboxOk) {
+    process.env.NODE_ENV !== "production"
+  );
+}
+
+export async function POST(request: NextRequest) {
+  if (!sandboxEnabled()) {
     return NextResponse.json({ error: "Sandbox disabled" }, { status: 404 });
+  }
+  if (!authorizeOpsRequest(request)) {
+    return unauthorizedOpsResponse();
   }
 
   let body: unknown;
@@ -102,12 +114,12 @@ export async function POST(request: NextRequest) {
   });
 }
 
-export async function GET() {
-  const sandboxOk =
-    process.env.MISSED_CALL_SANDBOX === "1" ||
-    process.env.NODE_ENV !== "production";
-  if (!sandboxOk) {
+export async function GET(request: NextRequest) {
+  if (!sandboxEnabled()) {
     return NextResponse.json({ error: "Sandbox disabled" }, { status: 404 });
+  }
+  if (!authorizeOpsRequest(request)) {
+    return unauthorizedOpsResponse();
   }
   return NextResponse.json({
     ok: true,

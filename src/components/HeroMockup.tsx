@@ -83,7 +83,10 @@ export function HeroMockup({
     function delay(ms: number) {
       const d = reduceMotion ? Math.min(ms, 120) : ms;
       return new Promise<void>((resolve) => {
-        const id = window.setTimeout(resolve, d);
+        const id = window.setTimeout(() => {
+          timers.current = timers.current.filter((t) => t !== id);
+          resolve();
+        }, d);
         timers.current.push(id);
       });
     }
@@ -132,6 +135,12 @@ export function HeroMockup({
     };
   }, [messages, reduceMotion]);
 
+  const staticDescription = messages
+    .map((m) => m.text)
+    .filter(Boolean)
+    .slice(0, 6)
+    .join(" · ");
+
   return (
     <div
       id="missed-call-demo"
@@ -142,6 +151,7 @@ export function HeroMockup({
           : `translateY(${parallax * -0.045}px)`,
       }}
     >
+      <p className="sr-only">{staticDescription || disclaimer}</p>
       <div
         aria-hidden
         className="pointer-events-none absolute -right-16 -top-20 h-[520px] w-[520px] rounded-full opacity-40"
@@ -189,7 +199,7 @@ export function HeroMockup({
           <div
             ref={threadRef}
             className="flex flex-1 flex-col justify-end gap-2.5 overflow-hidden px-[18px] py-4"
-            aria-live="polite"
+            aria-hidden="true"
           >
             {shown.map((msg, i) => (
               <MessageBubble

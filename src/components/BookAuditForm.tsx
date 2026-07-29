@@ -137,7 +137,6 @@ export function BookAuditForm() {
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const idempotencyKey = useRef<string>(crypto.randomUUID());
   const hydrated = useRef(false);
-  const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const step = BOOK_AUDIT_STEPS[stepIndex];
   const onReview = step === "review";
@@ -178,12 +177,6 @@ export function BookAuditForm() {
       // Storage may be unavailable (private browsing quota) — draft just won't persist.
     }
   }, [answers, phase]);
-
-  useEffect(() => {
-    return () => {
-      if (advanceTimer.current) clearTimeout(advanceTimer.current);
-    };
-  }, []);
 
   function update<K extends keyof Answers>(key: K, value: Answers[K]) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
@@ -287,7 +280,6 @@ export function BookAuditForm() {
   }
 
   function goToStep(index: number) {
-    if (advanceTimer.current) clearTimeout(advanceTimer.current);
     setErrors({});
     setStepIndex(index);
     scrollTop();
@@ -377,20 +369,10 @@ export function BookAuditForm() {
 
   function handleChoice(field: keyof Answers, label: string) {
     update(field, label as Answers[typeof field]);
-    if (advanceTimer.current) clearTimeout(advanceTimer.current);
-    advanceTimer.current = setTimeout(() => {
-      trackEvent("audit_step_completed", { step: stepIndex + 1 });
-      goToStep(stepIndex + 1);
-    }, 180);
   }
 
   function handleLanguageChoice(code: "en" | "fr") {
     update("preferredLanguage", code);
-    if (advanceTimer.current) clearTimeout(advanceTimer.current);
-    advanceTimer.current = setTimeout(() => {
-      trackEvent("audit_step_completed", { step: stepIndex + 1 });
-      goToStep(stepIndex + 1);
-    }, 180);
   }
 
   function handleTextKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -401,7 +383,6 @@ export function BookAuditForm() {
   }
 
   function resetForm() {
-    if (advanceTimer.current) clearTimeout(advanceTimer.current);
     idempotencyKey.current = crypto.randomUUID();
     setAnswers(emptyAnswers());
     setErrors({});
@@ -484,6 +465,8 @@ export function BookAuditForm() {
           onReview ? t("wizard.almostDone") : t("wizard.minLeft", { minutes: minutesLeft })
         }
         progressPct={progressPct}
+        currentStep={onReview ? TOTAL_QUESTIONS : stepIndex}
+        totalSteps={TOTAL_QUESTIONS}
       />
 
       <div className="flex flex-1 justify-center px-[clamp(20px,4vw,40px)] pt-[clamp(40px,7vw,88px)] pb-[clamp(56px,7vw,96px)]">
@@ -519,7 +502,10 @@ export function BookAuditForm() {
                     className="block h-px w-[22px] bg-[rgba(169,79,18,0.4)]"
                   />
                 </p>
-                <h1 className="mt-[18px] max-w-[16em] font-heading text-[clamp(28px,4vw,46px)] leading-[1.06] font-extrabold tracking-[-0.04em] text-navy">
+                <h1
+                  id="audit-step-title"
+                  className="mt-[18px] max-w-[16em] font-heading text-[clamp(28px,4vw,46px)] leading-[1.06] font-extrabold tracking-[-0.04em] text-navy"
+                >
                   {t(`wizard.questions.${step}.title`)}
                 </h1>
                 {t.has(`wizard.questions.${step}.help`) ? (
@@ -540,6 +526,20 @@ export function BookAuditForm() {
             )}
 
             <div className="mt-[clamp(28px,4vw,44px)]">
+              {Object.keys(errors).length > 0 ? (
+                <div
+                  role="alert"
+                  id="audit-error-summary"
+                  className="mb-5 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                >
+                  <p className="m-0 font-semibold">{t("wizard.errorSummary")}</p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                    {Object.entries(errors).map(([field, message]) => (
+                      <li key={field}>{message}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
               <StepBody
                 step={step}
                 kind={kind}
@@ -568,10 +568,14 @@ export function BookAuditForm() {
           </div>
 
           <div className="mt-[clamp(32px,4vw,48px)] flex flex-wrap items-center gap-3.5">
-            {satisfied && !(onReview && submitStatus === "submitting") ? (
+            {satisfied ? (
               <button
                 type="submit"
-                disabled={onReview && (!turnstileToken || submitStatus === "submitting")}
+                disabled={
+                  onReview &&
+                  (submitStatus === "submitting" || !turnstileToken)
+                }
+                aria-busy={onReview && submitStatus === "submitting"}
                 className="inline-flex items-center gap-3 rounded-[12px] bg-orange px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
               >
                 {nextLabel}
@@ -582,12 +586,13 @@ export function BookAuditForm() {
                 ) : null}
               </button>
             ) : (
-              <span
-                aria-disabled
+              <button
+                type="button"
+                disabled
                 className="inline-flex cursor-not-allowed items-center gap-3 rounded-[12px] bg-[rgba(12,20,30,0.08)] px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-muted"
               >
                 {nextLabel}
-              </span>
+              </button>
             )}
 
             {stepIndex > 0 ? (
@@ -626,23 +631,39 @@ function ProgressBar({
   counterText,
   timeLeft,
   progressPct,
+  currentStep,
+  totalSteps,
 }: {
   counterText: string;
   timeLeft: string;
   progressPct: number;
+  currentStep: number;
+  totalSteps: number;
 }) {
+  const summaryId = "audit-progress-summary";
   return (
     <div className="sticky top-(--header-h) z-30 border-b border-[rgba(12,20,30,0.08)] bg-[rgba(244,241,236,0.92)] backdrop-blur-[12px]">
       <div className="mx-auto w-full max-w-(--container-wizard) px-[clamp(20px,4vw,40px)] pt-3.5 pb-[13px]">
         <div className="flex items-center justify-between gap-4">
-          <p className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
+          <p
+            id={summaryId}
+            className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase"
+          >
             {counterText}
           </p>
           <p className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
             {timeLeft}
           </p>
         </div>
-        <div className="mt-[11px] h-[3px] overflow-hidden rounded-[3px] bg-[rgba(12,20,30,0.1)]">
+        <div
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={totalSteps}
+          aria-valuenow={currentStep}
+          aria-valuetext={counterText}
+          aria-describedby={summaryId}
+          className="mt-[11px] h-[3px] overflow-hidden rounded-[3px] bg-[rgba(12,20,30,0.1)]"
+        >
           <span
             className="block h-full rounded-[3px] bg-orange transition-[width] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
             style={{ width: `${progressPct}%` }}
@@ -684,6 +705,8 @@ function StepBody({
     return (
       <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-[clamp(20px,3vw,36px)]">
         <UnderlineField
+          name="firstName"
+          autoComplete="given-name"
           label={t("fields.firstName")}
           value={answers.firstName}
           placeholder={t("wizard.questions.name.firstPlaceholder")}
@@ -694,6 +717,8 @@ function StepBody({
           autoFocus
         />
         <UnderlineField
+          name="lastName"
+          autoComplete="family-name"
           label={t("fields.lastName")}
           value={answers.lastName}
           placeholder={t("wizard.questions.name.lastPlaceholder")}
@@ -710,9 +735,21 @@ function StepBody({
     const field = primaryField(step)!;
     const inputType =
       step === "email" ? "email" : step === "phone" ? "tel" : "text";
+    const autoComplete =
+      step === "email"
+        ? "email"
+        : step === "phone"
+          ? "tel"
+          : step === "company"
+            ? "organization"
+            : step === "city"
+              ? "address-level2"
+              : "on";
     return (
       <div>
         <UnderlineField
+          name={String(field)}
+          autoComplete={autoComplete}
           value={String(answers[field] ?? "")}
           placeholder={
             t.has(`wizard.questions.${step}.placeholder`)
@@ -731,15 +768,29 @@ function StepBody({
   }
 
   if (kind === "textarea") {
+    const errorId = errors.mainProblem ? "audit-field-mainProblem-error" : undefined;
     return (
       <div>
         <textarea
+          name="mainProblem"
           value={answers.mainProblem}
           onChange={(e) => update("mainProblem", e.target.value)}
           rows={4}
           placeholder={t("wizard.questions.problem.placeholder")}
+          aria-labelledby="audit-step-title"
+          aria-invalid={Boolean(errors.mainProblem)}
+          aria-describedby={errorId}
           className="w-full resize-y rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.16)] bg-white px-5 py-5 font-sans text-[17px] leading-[1.6] text-text outline-none focus:border-orange"
         />
+        {errors.mainProblem ? (
+          <span
+            id={errorId}
+            role="alert"
+            className="mt-2 block text-xs font-medium text-red-600"
+          >
+            {errors.mainProblem}
+          </span>
+        ) : null}
       </div>
     );
   }
@@ -778,25 +829,38 @@ function StepBody({
   }
 
   if (kind === "consent") {
+    const consentErrorId = "audit-field-serviceConsent-error";
     return (
       <div className="flex flex-col gap-3.5">
         <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white p-5 text-[16px] leading-[1.6] text-text">
           <input
             type="checkbox"
+            name="serviceConsent"
             checked={answers.serviceConsent}
             onChange={(e) => update("serviceConsent", e.target.checked)}
+            aria-invalid={Boolean(consentTouched && errors.serviceConsent)}
+            aria-describedby={
+              consentTouched && errors.serviceConsent
+                ? consentErrorId
+                : undefined
+            }
             className="mt-1 h-[18px] w-[18px] shrink-0 accent-orange"
           />
           <span>{t("consent")}</span>
         </label>
         {consentTouched && errors.serviceConsent ? (
-          <p role="alert" className="text-sm font-medium text-red-600">
+          <p
+            id={consentErrorId}
+            role="alert"
+            className="text-sm font-medium text-red-600"
+          >
             {t("consentRequired")}
           </p>
         ) : null}
         <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white/50 p-5 text-[16px] leading-[1.6] text-muted">
           <input
             type="checkbox"
+            name="marketingConsent"
             checked={answers.marketingConsent}
             onChange={(e) => update("marketingConsent", e.target.checked)}
             className="mt-1 h-[18px] w-[18px] shrink-0 accent-orange"
@@ -862,6 +926,7 @@ function ChoiceGrid({
           key={option.label}
           type="button"
           onClick={option.onPick}
+          aria-pressed={option.selected}
           className={
             option.selected
               ? "flex w-full items-center justify-between gap-3.5 rounded-[13px] border-[1.5px] border-navy bg-navy px-5 py-[17px] text-left text-[16.5px] font-semibold tracking-[-0.015em] text-white"
@@ -894,6 +959,8 @@ function UnderlineField({
   size,
   type = "text",
   autoFocus,
+  name,
+  autoComplete,
 }: {
   label?: string;
   value: string;
@@ -904,11 +971,14 @@ function UnderlineField({
   size: "name" | "text";
   type?: string;
   autoFocus?: boolean;
+  name?: string;
+  autoComplete?: string;
 }) {
   const sizeClass =
     size === "name"
       ? "text-[clamp(22px,2.4vw,28px)] tracking-[-0.03em]"
       : "text-[clamp(24px,3vw,34px)] tracking-[-0.032em]";
+  const errorId = name ? `audit-field-${name}-error` : undefined;
 
   return (
     <label className="flex flex-col gap-2.5">
@@ -919,16 +989,24 @@ function UnderlineField({
       ) : null}
       <input
         type={type}
+        name={name}
+        autoComplete={autoComplete}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
         autoFocus={autoFocus}
+        aria-labelledby={label ? undefined : "audit-step-title"}
         aria-invalid={Boolean(error)}
+        aria-describedby={error && errorId ? errorId : undefined}
         className={`w-full border-0 border-b-2 border-[rgba(12,20,30,0.18)] bg-transparent py-3 font-heading font-bold text-navy outline-none placeholder:text-[rgba(12,20,30,0.28)] focus:border-orange ${sizeClass}`}
       />
       {error ? (
-        <span role="alert" className="text-xs font-medium text-red-600">
+        <span
+          id={errorId}
+          role="alert"
+          className="text-xs font-medium text-red-600"
+        >
           {error}
         </span>
       ) : null}

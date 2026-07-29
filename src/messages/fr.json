@@ -15,7 +15,11 @@
     "industries": "Industries",
     "pricing": "Tarifs",
     "about": "À propos",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "menu": "Menu",
+    "closeMenu": "Fermer le menu",
+    "mobileNav": "Navigation mobile",
+    "close": "Fermer"
   },
   "cta": {
     "primary": "Réserver un audit gratuit de 20 minutes",
@@ -42,7 +46,7 @@
     "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes"
   },
   "footer": {
-    "description": "Quand votre équipe manque un appel, TradeCatch renvoie un texto au client en moins de 30 secondes, recueille les détails du job, alerte le bon technicien et relance les estimations sans réponse jusqu'à ce qu'ils répondent. Installé et suivi par une vraie personne.",
+    "description": "Quand votre équipe manque un appel, TradeCatch renvoie un texto au client, recueille les détails du job et alerte le bon technicien. Les relances de soumissions et tableaux de bord sur ce site sont des exemples illustratifs de pilote. Installé et suivi par une vraie personne.",
     "company": "Entreprise",
     "legal": "Légal",
     "resources": "Ressources",
@@ -64,7 +68,7 @@
       "eyebrow": "Plomberie · CVC · électricité au Québec",
       "headline": "Arrêtez de perdre des jobs à cause d'appels manqués.",
       "accentWord": "appels manqués",
-      "subheadline": "TradeCatch renvoie un texto aux appelants manqués en moins de 30 secondes, recueille les détails du job, alerte le bon technicien et relance chaque estimation sans réponse jusqu'à ce que le client réponde.",
+      "subheadline": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien. Les séquences de relance de soumissions montrées ailleurs sur ce site sont illustratives — pas encore un module produit en production.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la démo en direct",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
@@ -74,7 +78,7 @@
         "SMS en <30 s",
         "Détails captés",
         "Tech alerté",
-        "Soumission relancée"
+        "Parcours pilote"
       ],
       "trustChips": [
         "Basé au Québec",
@@ -202,7 +206,7 @@
         "SMS envoyé",
         "Lead capté",
         "Alerte envoyée",
-        "Soumission relancée",
+        "Parcours pilote",
         "Job gagné"
       ],
       "steps": [
@@ -220,15 +224,15 @@
         },
         {
           "title": "Demande suivie",
-          "body": "La demande arrive dans votre CRM ou tableau de bord pour que rien ne vive seulement dans la tête de quelqu'un."
+          "body": "La demande est enregistrée comme fiche lead structurée pour le parcours ops entrepreneur (pilote) — pas encore un tableau de bord SaaS client complet."
         },
         {
-          "title": "Soumission relancée",
-          "body": "Si une soumission tombe dans le silence, des relances personnalisées partent, et s'arrêtent dès qu'ils répondent."
+          "title": "Parcours pilote",
+          "body": "Les séquences de relance de soumissions sont sur la feuille de route ; les exemples sur ce site sont illustratifs seulement."
         },
         {
           "title": "Résultat mesuré",
-          "body": "Vous voyez quels appels, soumissions et relances sont réellement devenus des jobs réservés."
+          "body": "Les vues de reporting sur ce site sont des exemples illustratifs — l'analytique de revenus récupérés n'est pas encore un module produit en production."
         }
       ]
     },
@@ -855,7 +859,7 @@
       "SMS envoyé",
       "Détails recueillis",
       "Technicien alerté",
-      "Soumission relancée",
+      "Parcours pilote",
       "Job enregistré"
     ]
   },
@@ -1171,6 +1175,7 @@
       "verifyingHuman": "Vérification en cours…",
       "genericError": "Une erreur est survenue de notre côté. Veuillez réessayer.",
       "networkError": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
+      "errorSummary": "Veuillez corriger les points suivants avant de continuer :",
       "reviewNote": "Vérifiez vos réponses ci-dessous, puis soumettez votre demande.",
       "questions": {
         "name": {
@@ -1388,14 +1393,14 @@
   },
   "legal": {
     "lastUpdated": "Dernière mise à jour",
-    "reviewNotice": "Ébauche à usage interne — non encore révisée par un avocat. Ce document doit être révisé par un professionnel du droit québécois qualifié avant que ce site ne serve de vrais clients, et chaque espace réservé [TODO] doit d'abord être complété.",
+    "reviewNotice": "Exploitée par Ara Ghahramanyan sous le nom TradeCatch (Grand Montréal, Québec). Une révision par un conseiller juridique est recommandée avant toute modification importante de ces politiques. Contact : ara.ghahramanyan07@gmail.com.",
     "privacyPolicy": {
       "title": "Politique de confidentialité",
       "metaDescription": "Comment TradeCatch recueille, utilise et protège les informations soumises via ce site et les systèmes que nous gérons.",
       "sections": [
         {
           "heading": "Portée de cette politique",
-          "body": "Cette politique s'applique à TradeCatch [TODO : confirmer la dénomination sociale et le numéro d'entreprise], exploitée depuis [TODO : adresse d'affaires], à l'égard des renseignements personnels recueillis via ce site et les systèmes que nous gérons pour nos clients entrepreneurs. Elle reflète la Loi sur la protection des renseignements personnels dans le secteur privé du Québec, telle que modifiée par la Loi 25, ainsi que la loi fédérale applicable (LPRPDE)."
+          "body": "Cette politique s'applique à TradeCatch, exploitée par Ara Ghahramanyan depuis la région du Grand Montréal, Québec, Canada, à l'égard des renseignements personnels recueillis via ce site et les systèmes que nous gérons pour nos clients entrepreneurs. Elle reflète la Loi sur la protection des renseignements personnels dans le secteur privé du Québec, telle que modifiée par la Loi 25, ainsi que la loi fédérale applicable (LPRPDE)."
         },
         {
           "heading": "Informations que nous recueillons",
@@ -1411,7 +1416,7 @@
         },
         {
           "heading": "Partage des données et fournisseurs de services",
-          "body": "Nous partageons des informations avec des fournisseurs de services qui soutiennent nos opérations, en vertu d'ententes exigeant qu'ils protègent vos données et ne les utilisent qu'aux fins précisées. À ce jour, il s'agit de : Resend (envoi de courriels transactionnels), Google Analytics 4 (analytique du site, uniquement après consentement aux cookies), Cloudflare Turnstile (prévention des abus automatisés sur nos formulaires) et notre fournisseur d'hébergement [TODO : nommer le fournisseur d'hébergement]. Nous ne partageons pas vos informations à des fins de publicité tierce."
+          "body": "Nous partageons des informations avec des fournisseurs de services qui soutiennent nos opérations, en vertu d'ententes exigeant qu'ils protègent vos données et ne les utilisent qu'aux fins précisées. À ce jour, il s'agit de : Resend (envoi de courriels transactionnels), Google Analytics 4 (analytique du site, uniquement après consentement aux cookies), Cloudflare Turnstile (prévention des abus automatisés sur nos formulaires), Twilio (SMS/voix pour la récupération d'appels manqués lorsque activé) et Vercel (hébergement du site). Nous ne partageons pas vos informations à des fins de publicité tierce."
         },
         {
           "heading": "Transferts de données hors Québec",
@@ -1419,7 +1424,7 @@
         },
         {
           "heading": "Calendrier de conservation des données",
-          "body": "Les soumissions de demande d'audit et de formulaire de contact sont conservées jusqu'à 24 mois après votre dernière interaction avec nous, sauf si vous devenez client (les dossiers clients sont alors conservés selon notre entente de service et les exigences fiscales et comptables applicables) ou si vous demandez une suppression anticipée. Les données analytiques sont conservées selon les paramètres par défaut de Google Analytics. [TODO : confirmer les périodes de conservation finales avec un conseiller juridique et mettre à jour cette section en conséquence.]"
+          "body": "Les soumissions de demande d'audit et de formulaire de contact sont conservées jusqu'à 24 mois après votre dernière interaction avec nous, sauf si vous devenez client (les dossiers clients sont alors conservés selon notre entente de service et les exigences fiscales et comptables applicables) ou si vous demandez une suppression anticipée. Les dossiers opérationnels d'appels manqués, lorsqu'un stockage durable est activé, suivent le même délai de 24 mois sauf entente client contraire. Les données analytiques sont conservées selon les paramètres par défaut de Google Analytics."
         },
         {
           "heading": "Vos droits en matière de confidentialité",
@@ -1661,6 +1666,16 @@
     "title": "Démo produit de 90 secondes",
     "description": "Démonstration animée TradeCatch : récupération d'appels manqués et relance de soumissions pour entrepreneurs.",
     "playerTitle": "Démo TradeCatch",
-    "close": "Fermer"
+    "close": "Fermer",
+    "captionsLabel": "Sous-titres français",
+    "transcriptTitle": "Transcription",
+    "transcript": "Un entrepreneur manque un appel. TradeCatch envoie un texto au client, recueille le nom, l'adresse et le problème, alerte le technicien de garde avec une fiche job, puis avise le client quand le technicien accepte. Démonstration illustrative — pas une vraie conversation client."
+  },
+  "errors": {
+    "eyebrow": "Une erreur est survenue",
+    "headline": "Impossible de charger cette page.",
+    "support": "Réessayez. Si le problème continue, appelez <phone>438·993·6997</phone>.",
+    "retry": "Réessayer",
+    "home": "Retour à l'accueil"
   }
 }

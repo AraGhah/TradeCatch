@@ -1,5 +1,5 @@
+import { loadClientAccountFromEnv } from "./client-config";
 import { createMissedCallEngine, type MissedCallEngine } from "./engine";
-import { demoClientAccount } from "./fixtures";
 import { createMemoryStore, type MissedCallStore } from "./store";
 import { createTwilioSmsPort } from "./twilio";
 
@@ -17,35 +17,20 @@ const globalForMissedCall = globalThis as unknown as {
 
 function bootstrap() {
   const store = createMemoryStore();
-  const clientId =
-    process.env.MISSED_CALL_CLIENT_ID?.trim() || "client_demo";
-  const smsFrom =
-    process.env.MISSED_CALL_SMS_FROM?.trim() || "+15145550100";
-  const techPhone =
-    process.env.MISSED_CALL_TECH_PHONE?.trim() || "+15145550199";
-  const contractor =
-    process.env.MISSED_CALL_CONTRACTOR_NAME?.trim() || "Nord Plomberie";
-  const techName =
-    process.env.MISSED_CALL_TECH_NAME?.trim() || "Technicien de garde";
-
-  const base = demoClientAccount({
-    id: clientId,
-    smsFromNumber: smsFrom,
-    contractorDisplayName: contractor,
-    name: contractor,
-  });
-
-  if (techPhone !== "+15145550199") {
-    base.technicianRoster = base.technicianRoster.map((t) =>
-      t.role === "primary" ? { ...t, phone: techPhone, name: techName } : t,
+  if (process.env.NODE_ENV === "production") {
+    console.warn(
+      "[missed-call] Using in-memory store — NOT production-safe for multi-instance. Set DATABASE_URL and wire a durable MissedCallStore before go-live. See docs/CAPABILITY_MATRIX.md.",
     );
-    base.onCallTechnicians = [
-      { id: base.mainTechnicianId, name: techName, phone: techPhone, active: true },
-    ];
   }
 
-  const ready = store.saveClient(base);
+  const { client, source } = loadClientAccountFromEnv();
+  if (source === "demo") {
+    console.warn(
+      "[missed-call] Loaded demo client fixture — set MISSED_CALL_* env vars for real routing.",
+    );
+  }
 
+  const ready = store.saveClient(client);
   const engine = createMissedCallEngine({
     store,
     sms: createTwilioSmsPort(),

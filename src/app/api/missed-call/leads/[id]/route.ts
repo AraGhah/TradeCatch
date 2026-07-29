@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import {
+  authorizeOpsRequest,
+  unauthorizedOpsResponse,
+} from "@/lib/ops-auth";
 import { applyManualCorrection } from "@/product/missed-call/crm";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 
@@ -35,9 +39,13 @@ const patchSchema = z.object({
 });
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  if (!authorizeOpsRequest(request)) {
+    return unauthorizedOpsResponse();
+  }
+
   const { id } = await context.params;
   const { store } = await ensureMissedCallReady();
   const lead = await store.getLead(id);
@@ -51,6 +59,10 @@ export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ id: string }> },
 ) {
+  if (!authorizeOpsRequest(request)) {
+    return unauthorizedOpsResponse();
+  }
+
   const sandboxOk =
     process.env.MISSED_CALL_SANDBOX === "1" ||
     process.env.NODE_ENV !== "production";

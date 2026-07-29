@@ -122,6 +122,42 @@ describe("technician escalation + CRM", () => {
     assert.ok(lead);
     assert.ok(lead.techniciansAlerted.length >= 2);
     assert.ok(lead.conversation.length > 0);
+
+    // Primary (Marc) must not be able to accept after escalation to Sophie.
+    const marcStale = await engine.handleInboundSms({
+      fromE164: "+15145550199",
+      toE164: to,
+      body: "OUI",
+    });
+    assert.equal(marcStale.handled, true);
+    assert.match(marcStale.replies.join(" "), /plus active/i);
+
+    const stillOpen = await store.getWorkflow(start.workflow!.id);
+    assert.equal(stillOpen?.status, "awaiting_technician");
+    assert.equal(stillOpen?.assignedTechnicianId, "tech_sophie");
+    assert.notEqual(stillOpen?.outcome, "technician_accepted");
+
+    const sophieCard = [...sms.sent]
+      .reverse()
+      .find((m) => m.toE164 === "+15145550288" && /Code:/i.test(m.body));
+    assert.ok(sophieCard);
+    const code = sophieCard.body.match(/Code:\s*([A-Z0-9]+)/i)?.[1];
+    assert.ok(code);
+
+    await engine.handleInboundSms({
+      fromE164: "+15145550288",
+      toE164: to,
+      body: `ACCEPTER ${code}`,
+    });
+    const done = await store.getWorkflow(start.workflow!.id);
+    assert.equal(done?.outcome, "technician_accepted");
+    assert.equal(done?.assignedTechnicianId, "tech_sophie");
+    const notify = sms.sent.find(
+      (m) =>
+        m.toE164 === "+15145551001" && /Sophie|accepté votre demande/i.test(m.body),
+    );
+    assert.ok(notify);
+    assert.match(notify.body, /Sophie/);
   });
 
   it("supports manual CRM corrections", () => {

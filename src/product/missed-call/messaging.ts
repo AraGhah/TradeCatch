@@ -112,15 +112,66 @@ export function applyAnswer(
       break;
     case "photo":
       if (mediaUrls.length) next.photoUrls.push(...mediaUrls);
-      else if (!/^pass|skip|non|no|plus tard|later$/i.test(text)) {
-        // Treat text as note if no media; still advance via caller
-        next.photoUrls = next.photoUrls;
-      }
       break;
     default:
       break;
   }
   return next;
+}
+
+export function validateCollectionAnswer(input: {
+  step: CollectionStep;
+  body: string;
+  mediaUrls: string[];
+  question?: ApprovedQuestion;
+  lang: ConversationLanguage;
+}): { ok: true } | { ok: false; message: string } {
+  const text = input.body.trim();
+  const required = input.question?.required ?? false;
+  const fr = input.lang === "fr";
+
+  if (input.step === "photo") {
+    if (input.mediaUrls.length > 0) return { ok: true };
+    if (!required && isPhotoSkip(input.body)) return { ok: true };
+    if (required) {
+      return {
+        ok: false,
+        message: fr
+          ? "Une photo est requise. Envoyez une image en MMS."
+          : "A photo is required. Please send an MMS image.",
+      };
+    }
+    return {
+      ok: false,
+      message: fr
+        ? "Envoyez une photo en MMS, ou répondez NON pour passer."
+        : "Please send a photo as an MMS image, or reply NO to skip.",
+    };
+  }
+
+  if (!text || text.length < 2) {
+    return {
+      ok: false,
+      message: fr
+        ? "Réponse trop courte. Merci de préciser."
+        : "That reply is too short. Please try again.",
+    };
+  }
+  if (text.length > 500) {
+    return {
+      ok: false,
+      message: fr
+        ? "Réponse trop longue (max 500 caractères)."
+        : "Reply is too long (max 500 characters).",
+    };
+  }
+  if (required && text.length < 2) {
+    return {
+      ok: false,
+      message: fr ? "Cette information est requise." : "This field is required.",
+    };
+  }
+  return { ok: true };
 }
 
 export function isPhotoSkip(body: string): boolean {

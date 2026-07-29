@@ -52,6 +52,13 @@ export function demoClientAccount(
         active: true,
       },
       {
+        id: "tech_backup_2",
+        name: "Jules B.",
+        phone: "+15145550299",
+        role: "backup",
+        active: true,
+      },
+      {
         id: ownerId,
         name: "Alex Propriétaire",
         phone: "+15145550377",
@@ -60,7 +67,7 @@ export function demoClientAccount(
       },
     ],
     mainTechnicianId: mainId,
-    backupTechnicianIds: [backupId],
+    backupTechnicianIds: [backupId, "tech_backup_2"],
     ownerTechnicianId: ownerId,
     onCallSchedule: [
       { day: 1, start: "08:00", end: "17:00", technicianId: mainId },
