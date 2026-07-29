@@ -162,11 +162,25 @@ describe("Module A end-to-end workflow", () => {
     assert.ok(techAlert);
     assert.match(techAlert.body, /FICHE JOB/);
     assert.match(techAlert.body, /ACCEPTER/);
+    const codeMatch = techAlert.body.match(/Code:\s*([A-Z0-9]+)/i);
+    assert.ok(codeMatch);
+    const code = codeMatch[1];
 
+    // Bare OUI without code must not complete the job.
     await engine.handleInboundSms({
       fromE164: "+15145550199",
       toE164: to,
       body: "OUI",
+    });
+    assert.equal(
+      (await store.getWorkflow(start.workflow!.id))?.status,
+      "awaiting_technician",
+    );
+
+    await engine.handleInboundSms({
+      fromE164: "+15145550199",
+      toE164: to,
+      body: `OUI ${code}`,
     });
 
     const done = await store.getWorkflow(start.workflow!.id);
@@ -181,6 +195,7 @@ describe("Module A end-to-end workflow", () => {
         /accepté votre demande/i.test(m.body),
     );
     assert.ok(customerNotify);
+    assert.match(customerNotify.body, /Marc/);
   });
 
   it("suppresses duplicate workflows for repeat calls", async () => {

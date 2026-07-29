@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { BrandLockup } from "@/components/BrandLockup";
+import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2";
@@ -19,9 +21,13 @@ export function MobileNav({
   phone: string;
   phoneHref: string;
 }) {
+  const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -42,8 +48,27 @@ export function MobileNav({
 
   useEffect(() => {
     if (!open) return;
+    closeButtonRef.current?.focus();
+
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape") {
+        close();
+        return;
+      }
+      if (e.key !== "Tab" || !panelRef.current) return;
+      const focusable = panelRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) return;
+      const first = focusable[0]!;
+      const last = focusable[focusable.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
@@ -51,16 +76,21 @@ export function MobileNav({
 
   const overlay = open ? (
     <div
+      ref={panelRef}
       role="dialog"
       aria-modal="true"
-      aria-label="Mobile navigation"
+      aria-labelledby={titleId}
       className="fixed inset-0 z-[80] flex flex-col bg-navy animate-tc-in"
     >
       <div className="flex h-(--header-h) items-center justify-between px-[clamp(20px,4vw,40px)]">
         <BrandLockup inverted />
+        <span id={titleId} className="sr-only">
+          {t("mobileNav")}
+        </span>
         <button
+          ref={closeButtonRef}
           type="button"
-          aria-label="Close"
+          aria-label={t("close")}
           onClick={close}
           className={`flex h-[42px] w-[42px] items-center justify-center rounded-[10px] text-white ${FOCUS_RING}`}
         >
@@ -85,6 +115,9 @@ export function MobileNav({
       </nav>
 
       <div className="px-[clamp(20px,4vw,40px)] pb-10 pt-6">
+        <div className="mb-5">
+          <LocaleSwitcher inverted />
+        </div>
         <a
           href={`tel:${phoneHref}`}
           onClick={close}
@@ -108,7 +141,7 @@ export function MobileNav({
       <button
         ref={toggleButtonRef}
         type="button"
-        aria-label={open ? "Close menu" : "Menu"}
+        aria-label={open ? t("closeMenu") : t("menu")}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className={`flex h-[42px] w-[42px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[rgba(12,20,30,0.14)] ${FOCUS_RING}`}

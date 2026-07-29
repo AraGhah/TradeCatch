@@ -26,6 +26,18 @@ jobs:
       - name: i18n parity
         run: npm run check:i18n
 
+      - name: Legal placeholder check
+        run: npm run check:legal
+
+      - name: Media budget check
+        run: npm run check:media
+
+      - name: Dev audit exception expiry
+        run: npm run check:dev-audit
+
+      - name: Format check (core Module A files)
+        run: npm run format:check
+
       - name: Typecheck
         run: npx tsc --noEmit -p tsconfig.json
 
@@ -38,8 +50,8 @@ jobs:
       - name: Audit production deps (high+)
         run: npm audit --omit=dev --audit-level=high
 
-      - name: Audit all deps (report only)
-        run: npm audit --audit-level=high || true
+      - name: Verify patched brace-expansion overrides
+        run: node scripts/check-brace-expansion.js
 
       - name: Build
         run: npm run build

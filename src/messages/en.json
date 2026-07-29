@@ -15,7 +15,11 @@
     "industries": "Industries",
     "pricing": "Pricing",
     "about": "About",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "menu": "Menu",
+    "closeMenu": "Close menu",
+    "mobileNav": "Mobile navigation",
+    "close": "Close"
   },
   "cta": {
     "primary": "Book a free 20-minute audit",
@@ -42,7 +46,7 @@
     "bookAuditDescriptive": "Book a free 20-minute audit"
   },
   "footer": {
-    "description": "When your team misses a call, TradeCatch texts the customer back in under 30 seconds, collects the job details, alerts the right technician, and follows unanswered estimates until they reply. Installed and monitored by a real person.",
+    "description": "When your team misses a call, TradeCatch texts the customer back, collects the job details, and alerts the right technician. Quote follow-up and dashboards shown on this site are illustrative pilot examples. Installed and monitored by a real person.",
     "company": "Company",
     "legal": "Legal",
     "resources": "Resources",
@@ -64,7 +68,7 @@
       "eyebrow": "Québec plumbing · HVAC · electrical",
       "headline": "Stop losing jobs to missed calls.",
       "accentWord": "missed calls",
-      "subheadline": "TradeCatch texts missed callers back in under 30 seconds, collects the job details, alerts the right technician and follows every unanswered estimate until the customer replies.",
+      "subheadline": "TradeCatch texts missed callers back, collects the job details, and alerts the right technician. Quote follow-up sequences shown elsewhere on this site are illustrative — not a live product module yet.",
       "ctaPrimary": "Book a free 20-minute audit",
       "ctaSecondary": "See the live demo",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
@@ -74,7 +78,7 @@
         "SMS in <30s",
         "Details captured",
         "Tech alerted",
-        "Quote followed up"
+        "Pilot path"
       ],
       "trustChips": [
         "Québec-based",
@@ -202,7 +206,7 @@
         "SMS sent",
         "Lead captured",
         "Alert sent",
-        "Quote followed up",
+        "Pilot path",
         "Job won"
       ],
       "steps": [
@@ -220,15 +224,15 @@
         },
         {
           "title": "Lead tracked",
-          "body": "The request lands in your CRM or dashboard so nothing lives only in someone's head."
+          "body": "The request is logged as a structured lead record for the contractor ops path (pilot) — not a full client SaaS dashboard yet."
         },
         {
           "title": "Quote chased",
-          "body": "If a quote goes quiet, personalised follow-ups go out, and stop the moment they reply."
+          "body": "Quote follow-up sequences are on the roadmap; examples on this site are illustrative only."
         },
         {
           "title": "Result measured",
-          "body": "You see which calls, quotes and follow-ups actually turned into booked work."
+          "body": "Reporting views on this site are illustrative samples — recovered-revenue analytics are not a live product module yet."
         }
       ]
     },
@@ -855,7 +859,7 @@
       "SMS sent",
       "Details collected",
       "Technician alerted",
-      "Quote followed up",
+      "Pilot path",
       "Job recorded"
     ]
   },
@@ -1171,6 +1175,7 @@
       "verifyingHuman": "Verifying you're human…",
       "genericError": "Something went wrong on our end. Please try again.",
       "networkError": "We couldn't reach the server. Check your connection and try again.",
+      "errorSummary": "Please fix the following before continuing:",
       "reviewNote": "Check your answers below, then submit your request.",
       "questions": {
         "name": {
@@ -1388,14 +1393,14 @@
   },
   "legal": {
     "lastUpdated": "Last updated",
-    "reviewNotice": "Draft for internal use — not yet reviewed by a lawyer. This document must be reviewed by a qualified Quebec legal professional before this site is used to serve real clients, and every bracketed [TODO] placeholder must be filled in first.",
+    "reviewNotice": "Operated by Ara Ghahramanyan under the TradeCatch name (Greater Montreal, Quebec). Counsel review is recommended before material changes to these policies. Contact: ara.ghahramanyan07@gmail.com.",
     "privacyPolicy": {
       "title": "Privacy Policy",
       "metaDescription": "How TradeCatch collects, uses, and protects information submitted through this website and the systems we manage.",
       "sections": [
         {
           "heading": "Who this policy covers",
-          "body": "This policy applies to TradeCatch [TODO: confirm legal entity name and business number], operating from [TODO: business address], with respect to personal information collected through this website and the systems we manage on behalf of contractor clients. It is written to reflect Quebec's private-sector privacy legislation (the Act respecting the protection of personal information in the private sector, as amended by Law 25) and applicable federal privacy law (PIPEDA)."
+          "body": "This policy applies to TradeCatch, operated by Ara Ghahramanyan from the Greater Montreal area, Quebec, Canada, with respect to personal information collected through this website and the systems we manage on behalf of contractor clients. It is written to reflect Quebec's private-sector privacy legislation (the Act respecting the protection of personal information in the private sector, as amended by Law 25) and applicable federal privacy law (PIPEDA)."
         },
         {
           "heading": "Information we collect",
@@ -1411,7 +1416,7 @@
         },
         {
           "heading": "Data sharing and service providers",
-          "body": "We share information with service providers that support our operations under agreements requiring them to protect your data and use it only for the purpose we specify. As of this writing that includes: Resend (transactional email delivery), Google Analytics 4 (site analytics, only after cookie consent), Cloudflare Turnstile (bot-abuse prevention on our forms), and our hosting provider [TODO: name hosting provider]. We do not share your information for third-party advertising."
+          "body": "We share information with service providers that support our operations under agreements requiring them to protect your data and use it only for the purpose we specify. As of this writing that includes: Resend (transactional email delivery), Google Analytics 4 (site analytics, only after cookie consent), Cloudflare Turnstile (bot-abuse prevention on our forms), Twilio (SMS/voice for missed-call recovery when enabled), and Vercel (website hosting). We do not share your information for third-party advertising."
         },
         {
           "heading": "Cross-border data transfers",
@@ -1419,7 +1424,7 @@
         },
         {
           "heading": "Data retention schedule",
-          "body": "Audit-request and contact-form submissions are retained for up to 24 months after your last interaction with us, unless you become a client (in which case client records are retained per our service agreement and applicable tax/accounting requirements) or you request earlier deletion. Analytics data is retained per Google Analytics' default retention settings. [TODO: confirm final retention periods with counsel and update this section to match actual practice.]"
+          "body": "Audit-request and contact-form submissions are retained for up to 24 months after your last interaction with us, unless you become a client (in which case client records are retained per our service agreement and applicable tax/accounting requirements) or you request earlier deletion. Missed-call operational records, when a durable store is enabled, follow the same 24-month default unless a client agreement specifies otherwise. Analytics data is retained per Google Analytics' default retention settings."
         },
         {
           "heading": "Your privacy rights",
@@ -1623,7 +1628,7 @@
     "printCta": "Print / save as PDF",
     "badge": "Illustrative product overview — not a performance guarantee",
     "headline": "Missed calls and quiet quotes, handled while you work.",
-    "lede": "TradeCatch texts missed callers back in under 30 seconds, collects job details, alerts the right technician, and follows unanswered estimates — with messages you approve.",
+    "lede": "TradeCatch texts missed callers back, collects job details, and alerts the right technician — with messages you approve. Quote follow-up examples on this page are illustrative.",
     "forWhomTitle": "Built for",
     "forWhom": "Québec plumbing, HVAC and electrical companies (and similar trades) that lose work between the ring and the signed job.",
     "doesTitle": "What it does",
@@ -1661,6 +1666,16 @@
     "title": "90-second product demo",
     "description": "Animated TradeCatch demonstration: missed-call recovery and estimate follow-up for contractors.",
     "playerTitle": "TradeCatch demo",
-    "close": "Close"
+    "close": "Close",
+    "captionsLabel": "English captions",
+    "transcriptTitle": "Transcript",
+    "transcript": "A contractor misses a call. TradeCatch texts the caller, collects name, address, and issue details, alerts the on-call technician with a job card, and notifies the customer when the technician accepts. This is an illustrative product demo, not a live customer conversation."
+  },
+  "errors": {
+    "eyebrow": "Something went wrong",
+    "headline": "We hit a snag loading this page.",
+    "support": "Try again. If it keeps happening, call <phone>438·993·6997</phone>.",
+    "retry": "Try again",
+    "home": "Back to home"
   }
 }

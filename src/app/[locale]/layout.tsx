@@ -3,6 +3,7 @@ import { Archivo, IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { Header } from "@/components/Header";
@@ -68,6 +69,8 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
 
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -93,9 +96,16 @@ export default async function LocaleLayout({
       <body className="flex min-h-full flex-col">
         <script
           type="application/ld+json"
+          nonce={nonce}
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
-        <Analytics />
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});`,
+          }}
+        />
+        <Analytics nonce={nonce} />
         <MotionConfig reducedMotion="user">
           <NextIntlClientProvider>
             <ScrollReveal />

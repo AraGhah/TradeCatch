@@ -49,7 +49,7 @@ gitignored and must never be committed.
 | `LEADS_WEBHOOK_URL` (+ optional `LEADS_WEBHOOK_SECRET`) | CRM forward skipped | recommended — Zapier/Make/n8n/HubSpot webhook |
 | `NEXT_PUBLIC_CALENDAR_URL` | no calendar CTA after submit | recommended — Cal.com / Calendly link |
 | `ERROR_WEBHOOK_URL` | client/server errors only logged | recommended — Slack/Discord/Better Stack/Sentry webhook |
-| `TWILIO_*` / `MISSED_CALL_*` | Module A dry-run SMS + sandbox | see `src/product/missed-call/README.md` |
+| `TWILIO_*` / `MISSED_CALL_*` | Module A dry-run SMS + sandbox | see `src/product/missed-call/README.md` — set `MISSED_CALL_OPS_SECRET` (or `CRON_SECRET`) in production |
 
 ## Module A — Missed-call recovery
 
@@ -57,7 +57,9 @@ Core product path (call → SMS → collect → tech accept → notify). Domain 
 
 ### Production go-live checklist
 
+**Site**
 - [ ] All Resend + Turnstile vars set in the host's production environment
+- [ ] Set `MISSED_CALL_OPS_SECRET` (or `CRON_SECRET`) for Module A leads / escalations APIs
 - [ ] Submit a real book-audit form on the live URL and confirm both the visitor confirmation and the internal notify email arrive
 - [ ] Point `LEADS_WEBHOOK_URL` at your CRM/automation and confirm a test lead lands
 - [ ] Set `NEXT_PUBLIC_CALENDAR_URL` and confirm the post-submit booking CTA appears
@@ -66,6 +68,17 @@ Core product path (call → SMS → collect → tech accept → notify). Domain 
 - [ ] Set `ERROR_WEBHOOK_URL` (or a Sentry/Better Stack ingest URL)
 - [ ] Confirm pricing on `/pricing` matches the current offer
 - [ ] Confirm favicon / brand mark looks correct (not a Next.js default)
+- [ ] `npm run check:legal` passes (no TODO / draft notices on public legal pages)
+
+**Module A (missed-call) — required before real customer traffic**
+- [ ] Durable store wired (`DATABASE_URL` + Postgres adapter; not in-memory)
+- [ ] Full client config from env/JSON (`MISSED_CALL_CLIENT_CONFIG_JSON` or complete `MISSED_CALL_*` vars) — demo fixtures rejected in production
+- [ ] Every escalation contact validated (primary, all backups, owner, human-review) — no reserved/555 demo numbers
+- [ ] Twilio credentials live; `MISSED_CALL_SMS_MODE` is **not** dry-run in production
+- [ ] Twilio Advanced Opt-Out enabled; STOP/ARRET writes durable suppression and blocks new workflows
+- [ ] Escalation timers / cron hitting `POST /api/missed-call/escalations/tick` with ops auth
+- [ ] Opt-out, duplicate CallSid, overnight schedule, and inactive-tech cases verified in staging
+- [ ] Québec legal review of privacy / contracts before claiming compliance (engineering checklist ≠ legal advice)
 
 ## Monitoring & backups
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 
 export function FaqAccordion({
   items,
@@ -10,6 +10,7 @@ export function FaqAccordion({
   bordered?: boolean;
 }) {
   const [open, setOpen] = useState<number>(-1);
+  const baseId = useId();
 
   return (
     <div
@@ -21,6 +22,8 @@ export function FaqAccordion({
     >
       {items.map((item, i) => {
         const isOpen = open === i;
+        const panelId = `${baseId}-panel-${i}`;
+        const buttonId = `${baseId}-button-${i}`;
         return (
           <div
             key={item.q}
@@ -28,8 +31,10 @@ export function FaqAccordion({
           >
             <button
               type="button"
+              id={buttonId}
               onClick={() => setOpen(isOpen ? -1 : i)}
               aria-expanded={isOpen}
+              aria-controls={panelId}
               className="flex w-full items-center justify-between gap-4 py-[22px] text-left"
             >
               <span className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-navy sm:text-[18.5px]">
@@ -43,7 +48,12 @@ export function FaqAccordion({
               </span>
             </button>
             {isOpen ? (
-              <p className="animate-tc-in pb-6 text-[15px] leading-[1.65] text-muted">
+              <p
+                id={panelId}
+                role="region"
+                aria-labelledby={buttonId}
+                className="animate-tc-in pb-6 text-[15px] leading-[1.65] text-muted"
+              >
                 {item.a}
               </p>
             ) : null}

@@ -23,6 +23,19 @@ export function isResendConfigured(): boolean {
   );
 }
 
+export function isTwilioConfigured(): boolean {
+  return Boolean(
+    process.env.TWILIO_ACCOUNT_SID?.trim() &&
+      process.env.TWILIO_AUTH_TOKEN?.trim(),
+  );
+}
+
+export function isDurableMissedCallStoreConfigured(): boolean {
+  // Set when a durable MissedCallStore adapter is wired (e.g. DATABASE_URL +
+  // Postgres). Memory store must never count as production-ready.
+  return Boolean(process.env.DATABASE_URL?.trim());
+}
+
 export function getProductionConfigErrors(): string[] {
   if (!isProductionRuntime()) return [];
   const errors: string[] = [];

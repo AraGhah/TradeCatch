@@ -31,10 +31,7 @@ export function Footer() {
             gap: "clamp(28px, 4vw, 48px)",
           }}
         >
-          <div
-            className="min-w-0"
-            style={{ gridColumn: "span 2", minWidth: "min(100%, 260px)" }}
-          >
+          <div className="min-w-0 [grid-column:1/-1] min-[700px]:[grid-column:span_2]">
             <BrandLockup inverted />
             <p className="mt-5 max-w-[32em] text-[15.5px] leading-[1.65] text-[rgba(255,255,255,0.7)]">
               {t("description")}

@@ -7,6 +7,7 @@ import {
 import {
   appendConversation,
   createLeadFromWorkflow,
+  findOpenAlertForPhone,
   logUrgencyOnLead,
   markAlertResponse,
   pushTechnicianAlert,
@@ -24,15 +25,19 @@ import {
   nextCollectionStep,
   openingSms,
   promptForStep,
+  validateCollectionAnswer,
 } from "./messaging";
 import { checkServiceArea } from "./service-area";
 import type { MissedCallStore } from "./store";
 import {
   buildJobCardSms,
+  createActionToken,
+  getEscalationChain,
   humanReviewAlertBody,
   parseTechnicianAction,
-  shouldEscalate,
-  technicianForStage,
+  shouldEscalateToIndex,
+  stageForEscalationIndex,
+  technicianAtEscalationIndex,
 } from "./technicians";
 import { classifyUrgency, rosterTechnician } from "./urgency";
 import type {
@@ -43,6 +48,7 @@ import type {
   EscalationStage,
   MissedCallWorkflow,
   SmsPort,
+  TechnicianAlertRecord,
 } from "./types";
 
 function id(prefix: string): string {
@@ -83,7 +89,7 @@ export type MissedCallEngine = {
     mediaUrls?: string[];
   }): Promise<{ handled: boolean; replies: string[] }>;
 
-  processEscalations(): Promise<{ escalated: string[] }>;
+  processEscalations(): Promise<{ escalated: string[]; timedOut: string[] }>;
 };
 
 export function createMissedCallEngine(deps: {
@@ -92,6 +98,8 @@ export function createMissedCallEngine(deps: {
   clock?: Clock;
 }): MissedCallEngine {
   const clock = deps.clock ?? { now: () => new Date() };
+  /** Same-process claim so concurrent processEscalations ticks cannot double-alert. */
+  const escalationLocks = new Set<string>();
 
   async function ensureLead(workflow: MissedCallWorkflow): Promise<void> {
     let lead = await deps.store.getLeadByWorkflowId(workflow.id);
@@ -128,6 +136,43 @@ export function createMissedCallEngine(deps: {
     await deps.store.saveLead(lead);
   }
 
+  async function sendOutboundSms(input: {
+    workflow: MissedCallWorkflow;
+    client: ClientAccount;
+    toE164: string;
+    body: string;
+    detail?: string;
+    allowWhenSuppressed?: boolean;
+  }): Promise<boolean> {
+    if (
+      !input.allowWhenSuppressed &&
+      (await deps.store.isSmsSuppressed(input.client.id, input.toE164))
+    ) {
+      return false;
+    }
+
+    pushEvent(input.workflow, "sms_queued", input.detail, clock);
+    await deps.store.saveWorkflow(input.workflow);
+
+    await deps.sms.send({
+      toE164: input.toE164,
+      fromE164: input.client.smsFromNumber,
+      body: input.body,
+    });
+
+    pushEvent(input.workflow, "sms_sent", input.detail, clock);
+    await logSmsConversation({
+      workflow: input.workflow,
+      direction: "outbound",
+      fromE164: input.client.smsFromNumber,
+      toE164: input.toE164,
+      body: input.body,
+      actor: "system",
+    });
+    await deps.store.saveWorkflow(input.workflow);
+    return true;
+  }
+
   async function sendPrompt(
     workflow: MissedCallWorkflow,
     clientId: string,
@@ -137,21 +182,14 @@ export function createMissedCallEngine(deps: {
     if (!client) return null;
     const body = promptForStep(client, step, workflow.collected.language);
     if (!body) return null;
-    await deps.sms.send({
-      toE164: workflow.callerE164,
-      fromE164: client.smsFromNumber,
-      body,
-    });
-    pushEvent(workflow, "sms_sent", step, clock);
-    await logSmsConversation({
+    const sent = await sendOutboundSms({
       workflow,
-      direction: "outbound",
-      fromE164: client.smsFromNumber,
+      client,
       toE164: workflow.callerE164,
       body,
-      actor: "system",
+      detail: step,
     });
-    return body;
+    return sent ? body : null;
   }
 
   function applyServiceArea(workflow: MissedCallWorkflow, client: ClientAccount) {
@@ -174,7 +212,10 @@ export function createMissedCallEngine(deps: {
     }
   }
 
-  function applyUrgency(workflow: MissedCallWorkflow, client: ClientAccount) {
+  async function applyUrgency(
+    workflow: MissedCallWorkflow,
+    client: ClientAccount,
+  ): Promise<void> {
     const desc = workflow.collected.issueDescription;
     if (!desc) return;
     const { classification, log } = classifyUrgency({
@@ -195,12 +236,12 @@ export function createMissedCallEngine(deps: {
     if (classification.escalated) {
       pushEvent(workflow, "urgency_escalated", classification.source, clock);
     }
-    void deps.store.getLeadByWorkflowId(workflow.id).then((lead) => {
-      if (lead) {
-        logUrgencyOnLead(lead, log);
-        void deps.store.saveLead(lead);
-      }
-    });
+    await ensureLead(workflow);
+    const lead = await deps.store.getLeadByWorkflowId(workflow.id);
+    if (lead) {
+      logUrgencyOnLead(lead, log);
+      await deps.store.saveLead(lead);
+    }
   }
 
   async function notifyHumanReview(
@@ -218,10 +259,12 @@ export function createMissedCallEngine(deps: {
       reason,
       workflow.id,
     );
-    await deps.sms.send({
+    await sendOutboundSms({
+      workflow,
+      client,
       toE164: phone,
-      fromE164: client.smsFromNumber,
       body,
+      detail: reason,
     });
     pushEvent(workflow, "human_review_alerted", reason, clock);
     workflow.status = "awaiting_human";
@@ -230,11 +273,18 @@ export function createMissedCallEngine(deps: {
   async function sendJobCard(
     workflow: MissedCallWorkflow,
     client: ClientAccount,
-    stage: EscalationStage,
+    escalationIndex: number,
   ): Promise<boolean> {
-    const tech = technicianForStage(client, stage, clock.now());
+    const now = clock.now();
+    const tech = technicianAtEscalationIndex(client, escalationIndex, now);
     if (!tech) return false;
 
+    const chain = getEscalationChain(client, now);
+    const stage: EscalationStage = stageForEscalationIndex(
+      escalationIndex,
+      chain.length,
+    );
+    const actionToken = createActionToken();
     const body = buildJobCardSms({
       client,
       collected: workflow.collected,
@@ -243,33 +293,34 @@ export function createMissedCallEngine(deps: {
       serviceAreaFlagged: workflow.serviceAreaFlagged,
       humanReviewRequired: workflow.humanReviewRequired,
       workflowId: workflow.id,
+      actionToken,
     });
 
-    const sentAt = clock.now().toISOString();
-    await deps.sms.send({
+    const sentAt = now.toISOString();
+    const sent = await sendOutboundSms({
+      workflow,
+      client,
       toE164: tech.phone,
-      fromE164: client.smsFromNumber,
       body,
+      detail: `${stage}:${tech.id}`,
     });
+    if (!sent) return false;
 
-    pushTechnicianAlert(workflow, {
-      technicianId: tech.id,
-      phone: tech.phone,
-      sentAt,
-      stage,
-    });
+    pushTechnicianAlert(
+      workflow,
+      {
+        technicianId: tech.id,
+        phone: tech.phone,
+        sentAt,
+        stage,
+        actionToken,
+      },
+      escalationIndex,
+    );
     pushEvent(workflow, "technician_alerted", `${stage}:${tech.id}`, clock);
     workflow.status = workflow.humanReviewRequired
       ? "awaiting_human"
       : "awaiting_technician";
-    await logSmsConversation({
-      workflow,
-      direction: "outbound",
-      fromE164: client.smsFromNumber,
-      toE164: tech.phone,
-      body,
-      actor: "system",
-    });
     return true;
   }
 
@@ -291,7 +342,7 @@ export function createMissedCallEngine(deps: {
       );
     }
 
-    const sent = await sendJobCard(workflow, client, "primary");
+    const sent = await sendJobCard(workflow, client, 0);
     if (!sent) {
       workflow.status = "stopped";
       workflow.stopReason = "manual_stop";
@@ -303,12 +354,12 @@ export function createMissedCallEngine(deps: {
 
   async function escalateWorkflow(
     workflow: MissedCallWorkflow,
-    nextStage: EscalationStage,
+    nextIndex: number | "exhausted",
   ): Promise<void> {
     const client = await deps.store.getClient(workflow.clientAccountId);
     if (!client) return;
 
-    if (nextStage === "exhausted") {
+    if (nextIndex === "exhausted") {
       workflow.status = "stopped";
       workflow.stopReason = "technician_timeout";
       workflow.outcome = "human_review";
@@ -323,8 +374,10 @@ export function createMissedCallEngine(deps: {
       return;
     }
 
-    pushEvent(workflow, "escalation_timer", nextStage, clock);
-    await sendJobCard(workflow, client, nextStage);
+    const chain = getEscalationChain(client, clock.now());
+    const stage = stageForEscalationIndex(nextIndex, chain.length);
+    pushEvent(workflow, "escalation_timer", stage, clock);
+    await sendJobCard(workflow, client, nextIndex);
     await deps.store.saveWorkflow(workflow);
     await ensureLead(workflow);
   }
@@ -332,21 +385,47 @@ export function createMissedCallEngine(deps: {
   async function handleTechnicianSms(
     techWorkflow: MissedCallWorkflow,
     input: { fromE164: string; body: string },
+    openAlert: TechnicianAlertRecord,
   ): Promise<{ handled: boolean; replies: string[] }> {
     const replies: string[] = [];
     const client = await deps.store.getClient(techWorkflow.clientAccountId);
     if (!client) return { handled: false, replies };
 
-    const action = parseTechnicianAction(input.body);
-    const tech = rosterTechnician(
-      client,
-      techWorkflow.assignedTechnicianId ?? "",
-    );
+    const parsed = parseTechnicianAction(input.body);
+    if (!parsed) {
+      replies.push(
+        `Répondez ACCEPTER ${openAlert.actionToken}, REFUSER ${openAlert.actionToken} ou APPELER ${openAlert.actionToken}.`,
+      );
+      return { handled: true, replies };
+    }
+
+    // Token is required once a job card was issued with a Code.
+    if (
+      !parsed.actionToken ||
+      parsed.actionToken.toUpperCase() !== openAlert.actionToken.toUpperCase()
+    ) {
+      replies.push(
+        `Code requis. Répondez ACCEPTER ${openAlert.actionToken} (ou REFUSER / APPELER + code).`,
+      );
+      return { handled: true, replies };
+    }
+
+    // Bind identity to the SMS sender's open alert — never to a stale assignee.
+    if (openAlert.technicianId !== techWorkflow.assignedTechnicianId) {
+      replies.push("Cette alerte n'est plus active. Attendez la fiche à jour.");
+      return { handled: true, replies };
+    }
+
+    const tech =
+      rosterTechnician(client, openAlert.technicianId) ??
+      client.technicianRoster.find((t) => t.id === openAlert.technicianId) ??
+      null;
+    const action = parsed.action;
 
     if (action === "call") {
       markAlertResponse(
         techWorkflow,
-        techWorkflow.assignedTechnicianId ?? "",
+        openAlert.technicianId,
         "call_customer",
         clock.now(),
       );
@@ -360,14 +439,15 @@ export function createMissedCallEngine(deps: {
     if (action === "accept") {
       markAlertResponse(
         techWorkflow,
-        techWorkflow.assignedTechnicianId ?? "",
+        openAlert.technicianId,
         "accepted",
         clock.now(),
       );
       techWorkflow.status = "completed";
       techWorkflow.stopReason = "completed";
       techWorkflow.outcome = "technician_accepted";
-      pushEvent(techWorkflow, "technician_accepted", tech?.id, clock);
+      techWorkflow.assignedTechnicianId = openAlert.technicianId;
+      pushEvent(techWorkflow, "technician_accepted", openAlert.technicianId, clock);
 
       const lead = await deps.store.getLeadByWorkflowId(techWorkflow.id);
       if (lead && techWorkflow.technicianAlertedAt) {
@@ -384,10 +464,12 @@ export function createMissedCallEngine(deps: {
         techWorkflow.collected.language,
         tech?.name ?? "Le technicien",
       );
-      await deps.sms.send({
+      await sendOutboundSms({
+        workflow: techWorkflow,
+        client,
         toE164: techWorkflow.callerE164,
-        fromE164: client.smsFromNumber,
         body: notify,
+        detail: "customer_notified",
       });
       pushEvent(techWorkflow, "customer_notified", undefined, clock);
       pushEvent(techWorkflow, "outcome_recorded", "technician_accepted", clock);
@@ -400,11 +482,11 @@ export function createMissedCallEngine(deps: {
     if (action === "decline") {
       markAlertResponse(
         techWorkflow,
-        techWorkflow.assignedTechnicianId ?? "",
+        openAlert.technicianId,
         "declined",
         clock.now(),
       );
-      pushEvent(techWorkflow, "technician_declined", tech?.id, clock);
+      pushEvent(techWorkflow, "technician_declined", openAlert.technicianId, clock);
       const lead = await deps.store.getLeadByWorkflowId(techWorkflow.id);
       if (lead && techWorkflow.technicianAlertedAt) {
         recordTechnicianResponse(
@@ -414,28 +496,22 @@ export function createMissedCallEngine(deps: {
           false,
         );
       }
-      let nextStage: EscalationStage = "exhausted";
-      if (techWorkflow.escalationStage === "primary") {
-        nextStage = client.backupTechnicianIds.length ? "backup" : "owner";
-      } else if (techWorkflow.escalationStage === "backup") {
-        nextStage = client.ownerTechnicianId ? "owner" : "exhausted";
-      }
-      if (nextStage === "exhausted") {
-        techWorkflow.status = "stopped";
-        techWorkflow.stopReason = "technician_declined";
-        techWorkflow.outcome = "technician_declined";
-        pushEvent(techWorkflow, "outcome_recorded", "technician_declined", clock);
-        await deps.store.saveWorkflow(techWorkflow);
-        await ensureLead(techWorkflow);
+
+      const chain = getEscalationChain(client, clock.now());
+      const next = techWorkflow.escalationIndex + 1;
+      if (next >= chain.length) {
+        await escalateWorkflow(techWorkflow, "exhausted");
         replies.push("Refus enregistré.");
         return { handled: true, replies };
       }
-      await escalateWorkflow(techWorkflow, nextStage);
+      await escalateWorkflow(techWorkflow, next);
       replies.push("Refus enregistré. Relais au prochain technicien.");
       return { handled: true, replies };
     }
 
-    replies.push("Répondez ACCEPTER, REFUSER ou APPELER.");
+    replies.push(
+      `Répondez ACCEPTER ${openAlert.actionToken}, REFUSER ${openAlert.actionToken} ou APPELER ${openAlert.actionToken}.`,
+    );
     return { handled: true, replies };
   }
 
@@ -444,6 +520,20 @@ export function createMissedCallEngine(deps: {
       const client = await deps.store.getClient(input.clientAccountId);
       if (!client) {
         throw new Error(`Unknown client account: ${input.clientAccountId}`);
+      }
+
+      if (input.twilioCallSid) {
+        const existingCall = await deps.store.findCallByTwilioSid(
+          input.twilioCallSid,
+        );
+        if (existingCall) {
+          return {
+            call: existingCall,
+            workflow: null,
+            smsSent: false,
+            suppressedReason: "duplicate_call_sid",
+          };
+        }
       }
 
       const calledAt = input.calledAt ?? clock.now();
@@ -479,6 +569,32 @@ export function createMissedCallEngine(deps: {
         };
       }
 
+      if (await deps.store.isSmsSuppressed(client.id, input.callerE164)) {
+        return {
+          call,
+          workflow: null,
+          smsSent: false,
+          suppressedReason: "opt_out",
+        };
+      }
+
+      const recent = await deps.store.findRecentWorkflowByCaller(
+        client.id,
+        input.callerE164,
+        client.duplicateWindowMs,
+        clock.now(),
+      );
+      if (recent) {
+        pushEvent(recent, "duplicate_call_suppressed", call.id, clock);
+        await deps.store.saveWorkflow(recent);
+        return {
+          call,
+          workflow: recent,
+          smsSent: false,
+          suppressedReason: "duplicate_suppressed",
+        };
+      }
+
       const bucket = dedupeWindowBucket(calledAt, client.duplicateWindowMs);
       const dedupeKey = buildDedupeKey(client.id, input.callerE164, bucket);
       const existing =
@@ -503,6 +619,7 @@ export function createMissedCallEngine(deps: {
         status: "awaiting_customer",
         currentStep: "language",
         collected: { language: "fr", photoUrls: [] },
+        escalationIndex: -1,
         escalationStage: "primary",
         technicianAlerts: [],
         outcome: "open",
@@ -510,39 +627,90 @@ export function createMissedCallEngine(deps: {
         createdAt: now,
         updatedAt: now,
         dedupeKey,
+        collectionStartedAt: now,
       };
       pushEvent(workflow, "workflow_started", disposition, clock);
-
-      const open = openingSms(client);
-      await deps.sms.send({
-        toE164: input.callerE164,
-        fromE164: client.smsFromNumber,
-        body: open,
-      });
-      pushEvent(workflow, "sms_sent", "opening_fr", clock);
       await deps.store.saveWorkflow(workflow);
 
-      return { call, workflow, smsSent: true };
+      const open = openingSms(client);
+      const smsSent = await sendOutboundSms({
+        workflow,
+        client,
+        toE164: input.callerE164,
+        body: open,
+        detail: "opening_fr",
+      });
+
+      return { call, workflow, smsSent };
     },
 
     async handleInboundSms(input) {
       const replies: string[] = [];
 
+      const parsedEarly = parseTechnicianAction(input.body);
       const techWorkflow = await deps.store.findWorkflowByTechnicianPhone(
         input.fromE164,
+        parsedEarly?.actionToken,
       );
       if (techWorkflow) {
-        return handleTechnicianSms(techWorkflow, input);
+        const openAlert = findOpenAlertForPhone(
+          techWorkflow,
+          input.fromE164,
+          parsedEarly?.actionToken,
+        );
+        if (openAlert) {
+          return handleTechnicianSms(techWorkflow, input, openAlert);
+        }
+      }
+
+      // Known technician phone with only timed-out / wrong-code alerts.
+      const awaiting = await deps.store.listWorkflowsAwaitingTechnician();
+      const staleTech = awaiting.some((w) =>
+        w.technicianAlerts.some((a) => a.phone === input.fromE164),
+      );
+      if (staleTech) {
+        return {
+          handled: true,
+          replies: [
+            "Cette alerte n'est plus active. Répondez uniquement à la fiche job la plus récente (avec son code).",
+          ],
+        };
       }
 
       const client = await deps.store.findClientBySmsFromNumber(input.toE164);
       if (!client) return { handled: false, replies };
 
       if (isOptOut(input.body, client)) {
+        let providerStatus: "local_only" | "synced" | "pending" | "error" =
+          "pending";
+        let providerDetail: string | undefined;
+        if (deps.sms.syncOptOut) {
+          const sync = await deps.sms.syncOptOut({
+            phoneE164: input.fromE164,
+            fromE164: client.smsFromNumber,
+          });
+          providerStatus = sync.ok ? "synced" : "error";
+          providerDetail = sync.detail;
+        } else {
+          providerStatus = "local_only";
+        }
+
+        await deps.store.addSmsSuppression({
+          clientAccountId: client.id,
+          phoneE164: input.fromE164,
+          channel: "sms",
+          source: "customer_keyword",
+          at: clock.now().toISOString(),
+          providerStatus,
+          providerDetail,
+        });
+
         const wf = await deps.store.findActiveWorkflowByCaller(
           client.id,
           input.fromE164,
         );
+        const bye =
+          "Vous êtes désabonné. Vous ne recevrez plus de textos de notre part. / You are unsubscribed.";
         if (wf) {
           wf.status = "stopped";
           wf.stopReason = "opt_out";
@@ -551,14 +719,21 @@ export function createMissedCallEngine(deps: {
           pushEvent(wf, "outcome_recorded", "cancelled", clock);
           await deps.store.saveWorkflow(wf);
           await ensureLead(wf);
+          await sendOutboundSms({
+            workflow: wf,
+            client,
+            toE164: input.fromE164,
+            body: bye,
+            detail: "opt_out_confirm",
+            allowWhenSuppressed: true,
+          });
+        } else {
+          await deps.sms.send({
+            toE164: input.fromE164,
+            fromE164: client.smsFromNumber,
+            body: bye,
+          });
         }
-        const bye =
-          "Vous êtes désabonné. Vous ne recevrez plus de textos de notre part. / You are unsubscribed.";
-        await deps.sms.send({
-          toE164: input.fromE164,
-          fromE164: client.smsFromNumber,
-          body: bye,
-        });
         return { handled: true, replies };
       }
 
@@ -603,35 +778,54 @@ export function createMissedCallEngine(deps: {
 
       const step = workflow.currentStep;
       const media = input.mediaUrls ?? [];
+      const question = enabledQuestions(client).find((x) => x.id === step);
 
       if (step === "photo" && media.length === 0 && isPhotoSkip(input.body)) {
-        const q = enabledQuestions(client).find((x) => x.id === "photo");
-        if (q && !q.required) {
-          const next = nextCollectionStep(client, workflow.collected, "photo");
-          workflow.currentStep = next;
-          pushEvent(workflow, "photo_skipped", undefined, clock);
-          if (next === "done") {
-            await finalizeAndDispatch(workflow);
-            return { handled: true, replies };
-          }
-          const prompt = await sendPrompt(workflow, client.id, next);
-          if (prompt) replies.push(prompt);
+        if (question?.required) {
+          const message =
+            workflow.collected.language === "en"
+              ? "A photo is required. Please send an MMS image."
+              : "Une photo est requise. Envoyez une image en MMS.";
+          await sendOutboundSms({
+            workflow,
+            client,
+            toE164: input.fromE164,
+            body: message,
+            detail: "photo_required",
+          });
+          replies.push(message);
           await deps.store.saveWorkflow(workflow);
           return { handled: true, replies };
         }
+        const next = nextCollectionStep(client, workflow.collected, "photo");
+        workflow.currentStep = next;
+        pushEvent(workflow, "photo_skipped", undefined, clock);
+        if (next === "done") {
+          await finalizeAndDispatch(workflow);
+          return { handled: true, replies };
+        }
+        const prompt = await sendPrompt(workflow, client.id, next);
+        if (prompt) replies.push(prompt);
+        await deps.store.saveWorkflow(workflow);
+        return { handled: true, replies };
       }
 
-      if (step === "photo" && media.length === 0 && !isPhotoSkip(input.body)) {
-        const remind =
-          workflow.collected.language === "en"
-            ? "Please send a photo as an MMS image, or reply NO to skip."
-            : "Envoyez une photo en MMS, ou répondez NON pour passer.";
-        await deps.sms.send({
+      const validation = validateCollectionAnswer({
+        step,
+        body: input.body,
+        mediaUrls: media,
+        question,
+        lang: workflow.collected.language,
+      });
+      if (!validation.ok) {
+        await sendOutboundSms({
+          workflow,
+          client,
           toE164: input.fromE164,
-          fromE164: client.smsFromNumber,
-          body: remind,
+          body: validation.message,
+          detail: `validation_failed:${step}`,
         });
-        replies.push(remind);
+        replies.push(validation.message);
         await deps.store.saveWorkflow(workflow);
         return { handled: true, replies };
       }
@@ -645,7 +839,7 @@ export function createMissedCallEngine(deps: {
       pushEvent(workflow, "answer_recorded", step, clock);
 
       if (step === "address") applyServiceArea(workflow, client);
-      if (step === "description") applyUrgency(workflow, client);
+      if (step === "description") await applyUrgency(workflow, client);
 
       const next = nextCollectionStep(client, workflow.collected, step);
       workflow.currentStep = next;
@@ -663,16 +857,47 @@ export function createMissedCallEngine(deps: {
 
     async processEscalations() {
       const escalated: string[] = [];
-      const pending = await deps.store.listWorkflowsAwaitingTechnician();
-      for (const workflow of pending) {
+      const timedOut: string[] = [];
+      const now = clock.now();
+
+      const awaitingCustomer = await deps.store.listWorkflowsAwaitingCustomer();
+      for (const workflow of awaitingCustomer) {
         const client = await deps.store.getClient(workflow.clientAccountId);
         if (!client) continue;
-        const nextStage = shouldEscalate(workflow, client, clock.now());
-        if (!nextStage) continue;
-        await escalateWorkflow(workflow, nextStage);
-        escalated.push(workflow.id);
+        const startedAt = workflow.collectionStartedAt ?? workflow.createdAt;
+        const limitMs =
+          client.timeouts?.customerCollectionMs ?? 2 * 60 * 60 * 1000;
+        if (now.getTime() - new Date(startedAt).getTime() <= limitMs) {
+          continue;
+        }
+        workflow.status = "stopped";
+        workflow.stopReason = "customer_timeout";
+        workflow.outcome = "customer_unreachable";
+        pushEvent(workflow, "customer_collection_timeout", undefined, clock);
+        pushEvent(workflow, "outcome_recorded", "customer_unreachable", clock);
+        await deps.store.saveWorkflow(workflow);
+        await ensureLead(workflow);
+        timedOut.push(workflow.id);
       }
-      return { escalated };
+
+      const pending = await deps.store.listWorkflowsAwaitingTechnician();
+      for (const workflow of pending) {
+        if (escalationLocks.has(workflow.id)) continue;
+        escalationLocks.add(workflow.id);
+        try {
+          const fresh = await deps.store.getWorkflow(workflow.id);
+          if (!fresh) continue;
+          const client = await deps.store.getClient(fresh.clientAccountId);
+          if (!client) continue;
+          const nextIndex = shouldEscalateToIndex(fresh, client, now);
+          if (nextIndex === null) continue;
+          await escalateWorkflow(fresh, nextIndex);
+          escalated.push(fresh.id);
+        } finally {
+          escalationLocks.delete(workflow.id);
+        }
+      }
+      return { escalated, timedOut };
     },
   };
 }

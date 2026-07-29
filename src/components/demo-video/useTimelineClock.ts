@@ -10,6 +10,8 @@ export function useTimelineClock(durationMs: number) {
   const timeRef = useRef(0);
   const rafRef = useRef<number | null>(null);
   const lastRef = useRef<number | null>(null);
+  const durationRef = useRef(durationMs);
+  const tickRef = useRef<(now: number) => void>(() => {});
 
   const stopRaf = useCallback(() => {
     if (rafRef.current != null) {
@@ -19,26 +21,30 @@ export function useTimelineClock(durationMs: number) {
     lastRef.current = null;
   }, []);
 
-  const tick = useCallback(
-    (now: number) => {
+  useEffect(() => {
+    durationRef.current = durationMs;
+  }, [durationMs]);
+
+  useEffect(() => {
+    tickRef.current = (now: number) => {
       if (!playingRef.current) return;
       if (lastRef.current == null) lastRef.current = now;
       const delta = now - lastRef.current;
       lastRef.current = now;
-      const next = Math.min(durationMs, timeRef.current + delta);
+      const limit = durationRef.current;
+      const next = Math.min(limit, timeRef.current + delta);
       timeRef.current = next;
       setTimeMs(next);
-      if (next >= durationMs) {
+      if (next >= limit) {
         playingRef.current = false;
         setPlaying(false);
         setEnded(true);
         stopRaf();
         return;
       }
-      rafRef.current = requestAnimationFrame(tick);
-    },
-    [durationMs, stopRaf],
-  );
+      rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
+    };
+  }, [stopRaf]);
 
   const play = useCallback(() => {
     if (timeRef.current >= durationMs) {
@@ -50,8 +56,8 @@ export function useTimelineClock(durationMs: number) {
     setPlaying(true);
     setEnded(false);
     stopRaf();
-    rafRef.current = requestAnimationFrame(tick);
-  }, [durationMs, stopRaf, tick]);
+    rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
+  }, [durationMs, stopRaf]);
 
   const pause = useCallback(() => {
     playingRef.current = false;
@@ -66,8 +72,8 @@ export function useTimelineClock(durationMs: number) {
     setEnded(false);
     playingRef.current = true;
     setPlaying(true);
-    rafRef.current = requestAnimationFrame(tick);
-  }, [stopRaf, tick]);
+    rafRef.current = requestAnimationFrame((t) => tickRef.current(t));
+  }, [stopRaf]);
 
   const seek = useCallback(
     (ms: number) => {

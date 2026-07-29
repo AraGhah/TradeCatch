@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
-import { validateTwilioSignature } from "@/product/missed-call/twilio";
+import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
 
 export const dynamic = "force-dynamic";
 
@@ -31,25 +31,6 @@ async function parseForm(request: NextRequest): Promise<Record<string, string>> 
   return params;
 }
 
-async function assertTwilioOrDev(request: NextRequest, params: Record<string, string>) {
-  const token = process.env.TWILIO_AUTH_TOKEN?.trim();
-  const skip =
-    process.env.MISSED_CALL_SKIP_TWILIO_VALIDATE === "1" ||
-    process.env.NODE_ENV !== "production";
-  if (!token || skip) return true;
-
-  const signature = request.headers.get("x-twilio-signature") ?? "";
-  const url = process.env.MISSED_CALL_PUBLIC_WEBHOOK_BASE
-    ? `${process.env.MISSED_CALL_PUBLIC_WEBHOOK_BASE}${request.nextUrl.pathname}`
-    : request.url;
-  return validateTwilioSignature({
-    authToken: token,
-    signature,
-    url,
-    params,
-  });
-}
-
 /**
  * Twilio Messaging webhook — customer + technician SMS replies for Module A.
  * Outbound prompts are primarily sent via REST; TwiML Message used for
@@ -63,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid form" }, { status: 400 });
   }
 
-  const ok = await assertTwilioOrDev(request, params);
+  const ok = await assertTwilioWebhook(request, params);
   if (!ok) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { LogoMark } from "@/components/BrandLockup";
+import { Link } from "@/i18n/navigation";
 import { DEMO_DATA } from "../timeline";
 import type { SceneProps } from "../DemoVideoExperience";
 
@@ -38,12 +39,12 @@ export function Scene8Closing({ p, copy }: SceneProps) {
           {copy.closingCtaLine}
         </p>
 
-        <a
+        <Link
           href="/book-audit"
           className="mt-7 inline-flex rounded-md bg-orange px-8 py-4 text-[20px] font-semibold text-navy"
         >
           {copy.bookDemo}
-        </a>
+        </Link>
 
         {/* One destination to remember; the phone number stays secondary. */}
         <p className="mt-8 font-heading text-[clamp(28px,2.6vw,40px)] font-extrabold tracking-[-0.03em] text-white">

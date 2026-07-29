@@ -38,14 +38,25 @@ export function isAfterHours(
   const day = weekdayMap[weekday] ?? at.getDay();
   const mins = hour * 60 + minute;
 
-  if (!client.businessHours.days.includes(day)) return true;
-
   const start = timeToMinutes(client.businessHours.start);
   const end = timeToMinutes(client.businessHours.end);
-  if (start === end) return false; // 24h
-  if (start < end) return mins < start || mins >= end;
-  // overnight window e.g. 22:00–06:00
-  return mins < start && mins >= end;
+
+  if (start === end) {
+    // 24h on configured days only
+    return !client.businessHours.days.includes(day);
+  }
+
+  if (start < end) {
+    if (!client.businessHours.days.includes(day)) return true;
+    return mins < start || mins >= end;
+  }
+
+  // Overnight e.g. Mon 22:00–06:00 → Mon ≥22:00 OR Tue <06:00 (carryover).
+  const prevDay = (day + 6) % 7;
+  const inHours =
+    (client.businessHours.days.includes(day) && mins >= start) ||
+    (client.businessHours.days.includes(prevDay) && mins < end);
+  return !inHours;
 }
 
 /**

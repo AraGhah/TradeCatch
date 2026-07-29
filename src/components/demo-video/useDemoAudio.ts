@@ -24,7 +24,10 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
   const narrationCache = useRef<Map<string, HTMLAudioElement>>(new Map());
   const mp3Available = useRef<Map<string, boolean>>(new Map());
   const localeRef = useRef(locale);
-  localeRef.current = locale;
+
+  useEffect(() => {
+    localeRef.current = locale;
+  }, [locale]);
 
   const ensureCtx = useCallback(async () => {
     if (typeof window === "undefined") return null;

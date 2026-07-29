@@ -92,6 +92,41 @@ const LEAD_PATCH_FIELDS = new Set([
   "outcome",
 ]);
 
+const OUTCOME_VALUES = new Set([
+  "open",
+  "technician_accepted",
+  "technician_declined",
+  "customer_unreachable",
+  "resolved",
+  "cancelled",
+  "human_review",
+]);
+
+function isValidCorrectionValue(field: string, value: unknown): boolean {
+  switch (field) {
+    case "customerName":
+    case "serviceAddress":
+    case "issueDescription":
+      return typeof value === "string" && value.length <= 500;
+    case "serviceAreaFlagged":
+    case "jobAccepted":
+    case "becameBooking":
+      return typeof value === "boolean";
+    case "estimatedValue":
+    case "finalValue":
+      return (
+        typeof value === "number" &&
+        Number.isFinite(value) &&
+        value >= 0 &&
+        value <= 1_000_000
+      );
+    case "outcome":
+      return typeof value === "string" && OUTCOME_VALUES.has(value);
+    default:
+      return false;
+  }
+}
+
 export function applyManualCorrection(
   lead: LeadRecord,
   field: string,
@@ -99,6 +134,7 @@ export function applyManualCorrection(
   note?: string,
 ): boolean {
   if (!LEAD_PATCH_FIELDS.has(field)) return false;
+  if (!isValidCorrectionValue(field, newValue)) return false;
   const key = field as keyof LeadRecord;
   const previousValue = lead[key];
   const correction = {
@@ -134,11 +170,20 @@ export function logUrgencyOnLead(lead: LeadRecord, log: UrgencyLogEntry): void {
 export function pushTechnicianAlert(
   workflow: MissedCallWorkflow,
   record: TechnicianAlertRecord,
+  escalationIndex: number,
 ): void {
+  const now = record.sentAt;
+  for (const alert of workflow.technicianAlerts) {
+    if (!alert.respondedAt) {
+      alert.respondedAt = now;
+      alert.response = "timed_out";
+    }
+  }
   workflow.technicianAlerts.push(record);
   workflow.assignedTechnicianId = record.technicianId;
   workflow.technicianAlertedAt = record.sentAt;
   workflow.escalationStage = record.stage;
+  workflow.escalationIndex = escalationIndex;
 }
 
 export function markAlertResponse(
@@ -154,4 +199,20 @@ export function markAlertResponse(
     alert.respondedAt = at.toISOString();
     alert.response = response;
   }
+}
+
+/** Current open alert for a technician phone (post-escalation stale alerts excluded). */
+export function findOpenAlertForPhone(
+  workflow: MissedCallWorkflow,
+  techPhoneE164: string,
+  actionToken?: string | null,
+): TechnicianAlertRecord | null {
+  const open = [...workflow.technicianAlerts]
+    .reverse()
+    .find((a) => a.phone === techPhoneE164 && !a.respondedAt);
+  if (!open) return null;
+  if (actionToken && open.actionToken.toUpperCase() !== actionToken.toUpperCase()) {
+    return null;
+  }
+  return open;
 }
