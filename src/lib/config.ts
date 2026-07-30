@@ -37,8 +37,13 @@ export function isDurableMissedCallStoreConfigured(): boolean {
 }
 
 /** Playwright production harness — allows book-audit without live Resend/Turnstile. */
-export function isE2eHarness(): boolean {
-  return process.env.TRADECATCH_E2E === "1";
+export function isE2eHarness(
+  env: Record<string, string | undefined> = process.env,
+): boolean {
+  return (
+    env.TRADECATCH_E2E === "1" &&
+    env.VERCEL_ENV?.toLowerCase() !== "production"
+  );
 }
 
 export function getProductionConfigErrors(): string[] {

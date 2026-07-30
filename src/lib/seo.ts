@@ -25,8 +25,9 @@ export function buildMetadata({
     alternates: {
       canonical: `${SITE_URL}${currentPath}`,
       languages: {
-        en: `${SITE_URL}${enPath}`,
-        fr: `${SITE_URL}${frPath}`,
+        "en-CA": `${SITE_URL}${enPath}`,
+        "fr-CA": `${SITE_URL}${frPath}`,
+        "x-default": `${SITE_URL}${enPath}`,
       },
     },
     openGraph: {
@@ -34,8 +35,10 @@ export function buildMetadata({
       description,
       url: `${SITE_URL}${currentPath}`,
       siteName: "TradeCatch",
-      locale,
+      locale: locale === "fr" ? "fr_CA" : "en_CA",
       type: "website",
+      // No public OG image asset exists yet; omit images rather than publish a
+      // broken or misleading social preview URL.
     },
     twitter: {
       card: "summary_large_image",

@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
   }
 
-  const status = (params.CallStatus || params.DialCallStatus || "").toLowerCase();
+  const status = (params.DialCallStatus || params.CallStatus || "").toLowerCase();
   const from = params.From || params.Caller || "";
   const callSid = params.CallSid;
   const duration = params.CallDuration

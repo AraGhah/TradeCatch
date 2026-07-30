@@ -198,6 +198,10 @@ export type MissedCallWorkflow = {
   dedupeKey: string;
   /** ISO timestamp when customer collection started (for timeout). */
   collectionStartedAt?: string;
+  /** ISO timestamp until which another worker holds the escalation lease. */
+  escalationClaimUntil?: string;
+  /** True while accept is recorded but customer notify SMS has not succeeded. */
+  acceptNotifyPending?: boolean;
 };
 
 export type ConversationMessage = {

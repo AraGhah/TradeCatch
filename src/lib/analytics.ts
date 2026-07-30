@@ -1,6 +1,8 @@
 export const CONSENT_STORAGE_KEY = "tradecatch-cookie-consent";
 export const CONSENT_EVENT = "tradecatch:consent";
 export const MANAGE_COOKIES_EVENT = "tradecatch:manage-cookies";
+export const CONSENT_VERSION = 1;
+const CONSENT_TTL_MS = 180 * 24 * 60 * 60 * 1000;
 
 type GtagWindow = Window & {
   gtag?: (...args: unknown[]) => void;
@@ -8,11 +10,13 @@ type GtagWindow = Window & {
 };
 
 export type ConsentRecord = {
+  version: number;
   analytics: boolean;
   // Wording + timestamp of the choice, kept for consent record-keeping
   // (see the Privacy Policy's SMS/email consent and CASL sections).
   wording: string;
   decidedAt: string;
+  expiresAt: string;
 };
 
 const GA_COOKIE_PREFIXES = ["_ga", "_gid", "_gat"];
@@ -79,7 +83,15 @@ export function readConsent(): ConsentRecord | null {
     const raw = window.localStorage.getItem(CONSENT_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (typeof parsed?.analytics === "boolean") return parsed as ConsentRecord;
+    if (
+      parsed?.version === CONSENT_VERSION &&
+      typeof parsed.analytics === "boolean" &&
+      typeof parsed.expiresAt === "string" &&
+      Date.parse(parsed.expiresAt) > Date.now()
+    ) {
+      return parsed as ConsentRecord;
+    }
+    window.localStorage.removeItem(CONSENT_STORAGE_KEY);
     return null;
   } catch {
     // Storage blocked / quota / private mode — treat as no consent.
@@ -90,9 +102,11 @@ export function readConsent(): ConsentRecord | null {
 export function writeConsent(analytics: boolean, wording: string) {
   if (typeof window === "undefined") return;
   const record: ConsentRecord = {
+    version: CONSENT_VERSION,
     analytics,
     wording,
     decidedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + CONSENT_TTL_MS).toISOString(),
   };
   try {
     window.localStorage.setItem(CONSENT_STORAGE_KEY, JSON.stringify(record));

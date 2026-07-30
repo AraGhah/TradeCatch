@@ -91,11 +91,23 @@ describe("getClientIp", () => {
       headers: {
         "x-forwarded-for": "1.2.3.4",
         "x-real-ip": "5.5.5.5",
+        "user-agent": "TradeCatchUnitTest/1.0",
+      },
+    });
+    const ip = getClientIp(req, { NODE_ENV: "production" });
+    assert.match(ip, /^unknown:/);
+    assert.notEqual(ip, "unknown");
+  });
+
+  it("trusts x-forwarded-for when TRADECATCH_E2E is set in production", () => {
+    const req = new Request("https://example.com", {
+      headers: {
+        "x-forwarded-for": "1.2.3.4",
       },
     });
     assert.equal(
-      getClientIp(req, { NODE_ENV: "production" }),
-      "unknown",
+      getClientIp(req, { NODE_ENV: "production", TRADECATCH_E2E: "1" }),
+      "1.2.3.4",
     );
   });
 

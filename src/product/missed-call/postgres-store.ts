@@ -195,6 +195,17 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
       return null;
     },
 
+    async findWorkflowByCallId(callId) {
+      const { rows } = await q<{ payload: MissedCallWorkflow }>(
+        db,
+        `SELECT payload FROM mc_workflows
+         WHERE call_id = $1 AND deleted_at IS NULL
+         ORDER BY updated_at DESC LIMIT 1`,
+        [callId],
+      );
+      return rows[0]?.payload ?? null;
+    },
+
     async listWorkflowsAwaitingTechnician() {
       const { rows } = await q<{ payload: MissedCallWorkflow }>(
         db,
@@ -255,6 +266,51 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
         [id],
       );
       return rows[0]?.payload ?? null;
+    },
+
+    async claimWorkflowEscalation(workflowId, leaseMs, now) {
+      const at = now ?? new Date();
+      const untilIso = new Date(at.getTime() + leaseMs).toISOString();
+      const client = await db.connect();
+      try {
+        await client.query("BEGIN");
+        const { rows } = await client.query<{ payload: MissedCallWorkflow }>(
+          `SELECT payload FROM mc_workflows
+           WHERE id = $1
+             AND status IN ('awaiting_technician', 'awaiting_human')
+             AND deleted_at IS NULL
+           FOR UPDATE`,
+          [workflowId],
+        );
+        const wf = rows[0]?.payload;
+        if (!wf) {
+          await client.query("ROLLBACK");
+          return null;
+        }
+        const heldUntil = wf.escalationClaimUntil
+          ? new Date(wf.escalationClaimUntil).getTime()
+          : 0;
+        if (heldUntil > at.getTime()) {
+          await client.query("ROLLBACK");
+          return null;
+        }
+        wf.escalationClaimUntil = untilIso;
+        wf.updatedAt = at.toISOString();
+        await client.query(
+          `UPDATE mc_workflows
+           SET payload = $2::jsonb,
+               updated_at = $3::timestamptz
+           WHERE id = $1`,
+          [workflowId, JSON.stringify(wf), wf.updatedAt],
+        );
+        await client.query("COMMIT");
+        return wf;
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
     },
 
     async saveLead(lead) {
@@ -363,6 +419,12 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
       return (rowCount ?? 0) > 0;
     },
 
+    async releaseInboundMessageSid(messageSid) {
+      await q(db, `DELETE FROM mc_inbound_message_sids WHERE message_sid = $1`, [
+        messageSid,
+      ]);
+    },
+
     async enqueueOutbound(message) {
       await q(
         db,
@@ -392,7 +454,53 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
       );
     },
 
-    async claimOutboundForSend(limit) {
+    async claimOutboundById(id) {
+      const { rows } = await q<{
+        id: string;
+        workflow_id: string | null;
+        client_account_id: string;
+        to_e164: string;
+        from_e164: string;
+        body: string;
+        detail: string | null;
+        status: string;
+        provider_sid: string | null;
+        attempts: number;
+        last_error: string | null;
+        created_at: Date;
+        updated_at: Date;
+        sent_at: Date | null;
+      }>(
+        db,
+        `UPDATE mc_outbound_messages
+         SET status = 'sending', updated_at = now()
+         WHERE id = $1 AND status IN ('queued', 'retry')
+         RETURNING id, workflow_id, client_account_id, to_e164, from_e164,
+                   body, detail, status, provider_sid, attempts, last_error,
+                   created_at, updated_at, sent_at`,
+        [id],
+      );
+      const row = rows[0];
+      if (!row) return null;
+      return {
+        id: row.id,
+        workflowId: row.workflow_id ?? undefined,
+        clientAccountId: row.client_account_id,
+        toE164: row.to_e164,
+        fromE164: row.from_e164,
+        body: row.body,
+        detail: row.detail ?? undefined,
+        status: row.status as OutboundMessageRecord["status"],
+        providerSid: row.provider_sid ?? undefined,
+        attempts: row.attempts,
+        lastError: row.last_error ?? undefined,
+        createdAt: row.created_at.toISOString(),
+        updatedAt: row.updated_at.toISOString(),
+        sentAt: row.sent_at?.toISOString(),
+      };
+    },
+
+    async claimOutboundForSend(limit, staleSendingMs = 5 * 60 * 1000) {
       const client = await db.connect();
       try {
         await client.query("BEGIN");
@@ -417,6 +525,10 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
            FROM (
              SELECT id FROM mc_outbound_messages
              WHERE status IN ('queued', 'retry')
+                OR (
+                  status = 'sending'
+                  AND updated_at < now() - ($2::bigint * interval '1 millisecond')
+                )
              ORDER BY created_at ASC
              FOR UPDATE SKIP LOCKED
              LIMIT $1
@@ -425,7 +537,7 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
            RETURNING m.id, m.workflow_id, m.client_account_id, m.to_e164, m.from_e164,
                      m.body, m.detail, m.status, m.provider_sid, m.attempts, m.last_error,
                      m.created_at, m.updated_at, m.sent_at`,
-          [limit],
+          [limit, staleSendingMs],
         );
         await client.query("COMMIT");
         return rows.map((row) => ({

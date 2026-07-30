@@ -10,6 +10,8 @@ import { createMemoryStore } from "@/lib/store";
 import { persistBookAuditLead } from "@/lib/book-audit-leads";
 import {
   getProductionConfigErrors,
+  isDurableMissedCallStoreConfigured,
+  isE2eHarness,
   isProductionRuntime,
 } from "@/lib/config";
 
@@ -23,6 +25,11 @@ const IDEMPOTENCY_WINDOW_MS = 10 * 60 * 1000;
 const requestSchema = bookAuditSchema.extend({
   idempotencyKey: z.string().uuid(),
 });
+
+const CANONICAL_CONSENT_WORDING = {
+  en: "I agree to be contacted about this request by phone, email or text. Message and data rates may apply. I can opt out at any time.",
+  fr: "J'accepte d'être contacté au sujet de cette demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Je peux me désabonner en tout temps.",
+} as const;
 
 function jsonError(message: string, status: number) {
   return NextResponse.json({ error: message }, { status });
@@ -64,7 +71,15 @@ export async function POST(request: NextRequest) {
     return jsonError("Invalid form data.", 400);
   }
 
-  const { idempotencyKey, ...payload } = parsed.data;
+  const { idempotencyKey, ...clientPayload } = parsed.data;
+  const payload = {
+    ...clientPayload,
+    // Consent evidence must be controlled by the server, not supplied by a
+    // client that can invent or alter the displayed legal wording.
+    consentWording:
+      CANONICAL_CONSENT_WORDING[clientPayload.preferredLanguage],
+    consentSource: "book-audit",
+  };
 
   if (payload.companyWebsite) {
     console.warn("[book-audit] honeypot triggered", { ip });
@@ -83,10 +98,14 @@ export async function POST(request: NextRequest) {
   );
 
   if (turnstileResult.configured && !turnstileResult.success) {
+    console.warn("[book-audit] Turnstile rejected", {
+      ip,
+      reason: turnstileResult.error,
+    });
     return jsonError("Bot verification failed. Please try again.", 400);
   }
   if (!turnstileResult.configured && isProductionRuntime()) {
-    if (process.env.TRADECATCH_E2E !== "1") {
+    if (!isE2eHarness()) {
       return jsonError(
         "This service is temporarily unavailable. Please try again later.",
         503,
@@ -97,16 +116,67 @@ export async function POST(request: NextRequest) {
   // Mark idempotency only after Turnstile passes; clear on total delivery failure.
   seenIdempotencyKeys.set(idempotencyKey, now);
 
+  const durableConfigured = isDurableMissedCallStoreConfigured();
+  let persisted:
+    | { id: string; duplicate: boolean }
+    | null
+    | undefined;
+
+  // Durable-first: write the lead before email/CRM so a later crash cannot
+  // confirm success to the visitor while dropping the record.
+  try {
+    persisted = await persistBookAuditLead({
+      idempotencyKey,
+      payload,
+      consent: {
+        wording: payload.consentWording,
+        source: payload.consentSource || "book-audit",
+        at: new Date().toISOString(),
+      },
+      emailSent: false,
+      crmForwarded: false,
+    });
+  } catch (err) {
+    seenIdempotencyKeys.delete(idempotencyKey);
+    await reportError(
+      err instanceof Error
+        ? err
+        : new Error("book-audit durable persist failed"),
+      { ip, trade: payload.trade },
+    );
+    return jsonError(
+      "We couldn't save your request. Please try again or call us.",
+      503,
+    );
+  }
+
+  if (durableConfigured && !persisted) {
+    seenIdempotencyKeys.delete(idempotencyKey);
+    await reportError(new Error("book-audit durable persist returned null"), {
+      ip,
+      trade: payload.trade,
+    });
+    return jsonError(
+      "We couldn't save your request. Please try again or call us.",
+      503,
+    );
+  }
+
+  if (persisted?.duplicate) {
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
+
   const [{ sent }, { forwarded }] = await Promise.all([
     sendBookAuditEmails(payload),
     forwardLeadToCrm(payload),
   ]);
 
   // In production, at least one delivery channel must succeed — unless the E2E
-  // harness is active (no live Resend/CRM). Otherwise the client would see a
-  // false confirmation and the lead would be lost.
+  // harness is active (no live Resend/CRM) or the lead is already durable.
   const requireDelivery =
-    isProductionRuntime() && process.env.TRADECATCH_E2E !== "1";
+    isProductionRuntime() &&
+    !isE2eHarness() &&
+    !persisted;
   if (requireDelivery && !sent && !forwarded) {
     seenIdempotencyKeys.delete(idempotencyKey);
     await reportError(new Error("book-audit delivery failed (email + CRM)"), {
@@ -119,33 +189,17 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (isProductionRuntime() && !sent) {
+  if (
+    isProductionRuntime() &&
+    !isE2eHarness() &&
+    !sent
+  ) {
     await reportError(new Error("book-audit email send failed"), {
       ip,
       trade: payload.trade,
       forwarded,
+      persisted: Boolean(persisted),
     });
-  }
-
-  try {
-    await persistBookAuditLead({
-      idempotencyKey,
-      payload,
-      consent: {
-        wording: payload.consentWording,
-        source: payload.consentSource || "book-audit",
-        at: new Date().toISOString(),
-      },
-      emailSent: sent,
-      crmForwarded: forwarded,
-    });
-  } catch (err) {
-    await reportError(
-      err instanceof Error
-        ? err
-        : new Error("book-audit durable persist failed"),
-      { ip, trade: payload.trade },
-    );
   }
 
   console.info("[book-audit] submission accepted", {
@@ -154,6 +208,7 @@ export async function POST(request: NextRequest) {
     preferredLanguage: payload.preferredLanguage,
     emailSent: sent,
     crmForwarded: forwarded,
+    persisted: Boolean(persisted),
   });
 
   return NextResponse.json({

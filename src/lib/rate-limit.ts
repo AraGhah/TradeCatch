@@ -1,4 +1,5 @@
 import { createMemoryStore, type TimedStore } from "./store";
+import { isE2eHarness } from "./config";
 
 // In-memory sliding-window rate limiter, keyed by IP + route.
 //
@@ -62,6 +63,18 @@ function firstForwardedIp(headerValue: string): string | null {
   return first || null;
 }
 
+/** Weak per-request hint so unidentified clients do not share one bucket. */
+function softClientHint(request: Request): string {
+  const ua = request.headers.get("user-agent")?.trim() ?? "";
+  const al = request.headers.get("accept-language")?.trim() ?? "";
+  const raw = `${ua}|${al}`;
+  let hash = 0;
+  for (let i = 0; i < raw.length; i += 1) {
+    hash = (hash * 31 + raw.charCodeAt(i)) >>> 0;
+  }
+  return hash.toString(16);
+}
+
 /**
  * Resolve the client IP only from headers the *current* hosting platform
  * is known to sanitize.
@@ -92,8 +105,12 @@ export function getClientIp(
   const cfIp = request.headers.get("cf-connecting-ip")?.trim();
   if (cfIp) return cfIp;
 
+  // E2E production builds set NODE_ENV=production but still inject synthetic
+  // x-forwarded-for values so parallel tests do not share one rate-limit bucket.
   const trustProxy =
-    env.TRUST_PROXY_HEADERS === "1" || env.NODE_ENV !== "production";
+    env.TRUST_PROXY_HEADERS === "1" ||
+    env.NODE_ENV !== "production" ||
+    isE2eHarness(env);
 
   if (trustProxy) {
     const realIp = request.headers.get("x-real-ip")?.trim();
@@ -105,5 +122,8 @@ export function getClientIp(
     }
   }
 
-  return "unknown";
+  // Never collapse every unidentified visitor into one shared bucket — that
+  // rate-limits unrelated prospects together on hosts without sanitized proxy
+  // headers. Prefer configuring TRUST_PROXY_HEADERS=1 behind your reverse proxy.
+  return `unknown:${softClientHint(request)}`;
 }

@@ -7,7 +7,7 @@ const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 export async function verifyTurnstileToken(
   token: string,
   remoteIp?: string
-): Promise<{ configured: boolean; success: boolean }> {
+): Promise<{ configured: boolean; success: boolean; error?: string }> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
     console.warn(
@@ -24,11 +24,52 @@ export async function verifyTurnstileToken(
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body,
+      signal: AbortSignal.timeout(5_000),
     });
-    const data = (await res.json()) as { success: boolean };
-    return { configured: true, success: Boolean(data.success) };
+    if (!res.ok) {
+      throw new Error(`Cloudflare returned HTTP ${res.status}`);
+    }
+
+    const data = (await res.json()) as {
+      success?: unknown;
+      hostname?: unknown;
+      "error-codes"?: unknown;
+    };
+    if (typeof data.success !== "boolean") {
+      throw new Error("Cloudflare returned an invalid verification response");
+    }
+    if (!data.success) {
+      return {
+        configured: true,
+        success: false,
+        error: Array.isArray(data["error-codes"])
+          ? data["error-codes"].join(", ")
+          : "challenge rejected",
+      };
+    }
+
+    const allowedHosts = new Set(["localhost"]);
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+    if (siteUrl) {
+      try {
+        allowedHosts.add(new URL(siteUrl).hostname.toLowerCase());
+      } catch {
+        throw new Error("NEXT_PUBLIC_SITE_URL is not a valid URL");
+      }
+    }
+    const hostname =
+      typeof data.hostname === "string" ? data.hostname.toLowerCase() : "";
+    if (!hostname || !allowedHosts.has(hostname)) {
+      return {
+        configured: true,
+        success: false,
+        error: `unexpected hostname: ${hostname || "missing"}`,
+      };
+    }
+    return { configured: true, success: true };
   } catch (error) {
-    console.error("[turnstile] verification request failed", error);
-    return { configured: true, success: false };
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[turnstile] verification failed unexpectedly: ${message}`);
+    return { configured: true, success: false, error: message };
   }
 }

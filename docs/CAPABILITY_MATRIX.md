@@ -7,7 +7,7 @@ Status legend:
 | Status | Meaning |
 | --- | --- |
 | **live** | Implemented end-to-end with tests; suitable for a controlled pilot once durable storage + Twilio are configured |
-| **pilot** | Domain logic exists; not multi-tenant / not durable / not SaaS-ready |
+| **pilot** | Domain logic exists with an optional durable Postgres adapter; not multi-tenant or SaaS-ready |
 | **illustrative** | UI demo / marketing example only — not a product feature |
 | **planned** | Roadmap; must not be advertised as shipping |
 
@@ -15,19 +15,19 @@ Status legend:
 
 | Claim | Status | Runtime | Storage | Tests | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Missed-call detection (Twilio voice status) | pilot | `/api/twilio/voice/status` | memory Map | unit | Single-tenant |
-| Customer SMS recovery + collection | pilot | `/api/twilio/sms/inbound`, engine | memory | unit | FR/EN, opt-out |
-| Technician job card + ACCEPTER/REFUSER/APPELER | pilot | engine + tech alerts | memory | unit | Bound by action token + open alert |
-| Technician escalation timers | pilot | `/api/missed-call/escalations/tick` | memory | unit | Ops bearer required |
-| Ops lead list / CRM correction API | pilot | `/api/missed-call/leads*` | memory | unit | Not a client dashboard |
-| Book-audit lead capture (marketing) | live | `/api/book-audit` | email + optional webhook | unit + e2e | Site lead gen |
+| Missed-call detection (Twilio voice status) | pilot | `/api/twilio/voice/status` | Postgres when enabled; memory fallback | unit | Single-tenant |
+| Customer SMS recovery + collection | pilot | `/api/twilio/sms/inbound`, engine | Postgres when enabled; memory fallback | unit | FR/EN, opt-out |
+| Technician job card + ACCEPTER/REFUSER/APPELER | pilot | engine + tech alerts | Postgres when enabled; memory fallback | unit | Bound by action token + open alert |
+| Technician escalation timers | pilot | `/api/missed-call/escalations/tick` | Postgres when enabled; memory fallback | unit | Ops bearer required |
+| Ops lead list / CRM correction API | pilot | `/api/missed-call/leads*` | Postgres when enabled; memory fallback | unit | Not a client dashboard |
+| Book-audit lead capture (marketing) | live | `/api/book-audit` | Postgres when enabled + email/webhook | unit + e2e | Site lead gen |
 | Quote ingestion / identification | planned | — | — | — | Do not claim |
 | Scheduled quote follow-up sequences | illustrative / planned | UI only | — | — | Demo components |
 | Stop quote sequence on reply | planned | — | — | — | Do not claim |
 | Client dashboard / recovered-revenue reporting | illustrative | UI only | — | — | Marked Illustrative |
 | Appointment / calendar booking product | planned | optional `NEXT_PUBLIC_CALENDAR_URL` CTA | — | — | External link only |
 | Multi-tenant SaaS | planned | — | — | — | Single-tenant v1 |
-| Durable workflows across restarts | planned | schema draft in `schema.sql` | **memory today** | — | **Launch blocker** |
+| Durable workflows across restarts | pilot | Postgres adapter + `schema.sql` | PostgreSQL | unit | Requires `DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1` and applied schema |
 | Quote recovery (ingestion, sequences, opt-out, retries) | planned | — | — | — | Phase 4 — do not advertise |
 | CRM sync (credentials, mapping, DLQ, conflict handling) | planned | — | — | — | Phase 4 — do not advertise |
 | Dashboard / revenue attribution / exports | planned | — | — | — | Phase 4 — do not advertise |
@@ -52,7 +52,7 @@ See README production go-live checklist. Do not call TradeCatch production-ready
 
 ## P0 launch blockers (engineering)
 
-1. Wire `MissedCallStore` to PostgreSQL (`DATABASE_URL`) using `schema.sql`.
+1. Configure PostgreSQL (`DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1`) and apply `schema.sql`; the memory fallback is development-only.
 2. Never advertise quote follow-up as live until sequences exist.
 3. Production Twilio must be configured; dry-run SIDs are forbidden in production.
 4. Technician replies must stay bound to the current open alert + action token (implemented).

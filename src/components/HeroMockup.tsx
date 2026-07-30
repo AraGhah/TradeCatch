@@ -56,20 +56,25 @@ export function HeroMockup({
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let frameId: number | null = null;
     function sync() {
       setReduceMotion(media.matches);
+      if (media.matches) setParallax(0);
     }
     media.addEventListener("change", sync);
 
     function onScroll() {
-      if (media.matches) return;
-      const y = Math.min(window.scrollY, 1200);
-      setParallax(y);
+      if (media.matches || frameId !== null) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        setParallax(Math.min(window.scrollY, 1200));
+      });
     }
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       media.removeEventListener("change", sync);
       window.removeEventListener("scroll", onScroll);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
     };
   }, []);
 
