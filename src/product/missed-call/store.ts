@@ -32,10 +32,20 @@ export type MissedCallStore = {
     techPhoneE164: string,
     actionToken?: string | null,
   ): Promise<MissedCallWorkflow | null>;
+  findWorkflowByCallId(callId: string): Promise<MissedCallWorkflow | null>;
   listWorkflowsAwaitingTechnician(): Promise<MissedCallWorkflow[]>;
   listWorkflowsAwaitingCustomer(): Promise<MissedCallWorkflow[]>;
   saveWorkflow(workflow: MissedCallWorkflow): Promise<void>;
   getWorkflow(id: string): Promise<MissedCallWorkflow | null>;
+  /**
+   * Cross-instance escalation lease. Returns the workflow when this caller
+   * acquired the lease; null if another worker already holds a live lease.
+   */
+  claimWorkflowEscalation(
+    workflowId: string,
+    leaseMs: number,
+    now?: Date,
+  ): Promise<MissedCallWorkflow | null>;
   saveLead(lead: LeadRecord): Promise<void>;
   getLead(id: string): Promise<LeadRecord | null>;
   getLeadByWorkflowId(workflowId: string): Promise<LeadRecord | null>;
@@ -44,9 +54,19 @@ export type MissedCallStore = {
   addSmsSuppression(record: SmsSuppressionRecord): Promise<void>;
   /** Returns true if newly claimed; false if this MessageSid was already processed. */
   claimInboundMessageSid(messageSid: string): Promise<boolean>;
+  /** Release a claim so Twilio retries can reprocess after a failed handler. */
+  releaseInboundMessageSid(messageSid: string): Promise<void>;
   enqueueOutbound(message: OutboundMessageRecord): Promise<void>;
-  /** Atomically claim queued/retry rows for sending (SKIP LOCKED on Postgres). */
-  claimOutboundForSend(limit: number): Promise<OutboundMessageRecord[]>;
+  /** Atomically move one row queued/retry → sending (inline send path). */
+  claimOutboundById(id: string): Promise<OutboundMessageRecord | null>;
+  /**
+   * Atomically claim queued/retry rows for sending (SKIP LOCKED on Postgres).
+   * Also reclaims stale `sending` rows older than staleSendingMs.
+   */
+  claimOutboundForSend(
+    limit: number,
+    staleSendingMs?: number,
+  ): Promise<OutboundMessageRecord[]>;
   markOutboundSent(id: string, providerSid: string): Promise<void>;
   markOutboundFailed(
     id: string,
@@ -54,6 +74,9 @@ export type MissedCallStore = {
     nextStatus: "retry" | "dead",
   ): Promise<void>;
 };
+
+/** Default age after which a stuck `sending` outbox row may be reclaimed. */
+export const OUTBOUND_STALE_SENDING_MS = 5 * 60 * 1000;
 
 function isActiveWorkflowStatus(w: MissedCallWorkflow): boolean {
   return (
@@ -174,6 +197,14 @@ export function createMemoryStore(): MissedCallStore {
       }
       return best;
     },
+    async findWorkflowByCallId(callId) {
+      let latest: MissedCallWorkflow | null = null;
+      for (const w of workflows.values()) {
+        if (w.callId !== callId) continue;
+        if (!latest || w.updatedAt > latest.updatedAt) latest = w;
+      }
+      return latest;
+    },
     async listWorkflowsAwaitingTechnician() {
       return [...workflows.values()].filter(
         (w) =>
@@ -190,6 +221,23 @@ export function createMemoryStore(): MissedCallStore {
     },
     async getWorkflow(id) {
       return workflows.get(id) ?? null;
+    },
+    async claimWorkflowEscalation(workflowId, leaseMs, now = new Date()) {
+      const w = workflows.get(workflowId);
+      if (!w) return null;
+      if (
+        w.status !== "awaiting_technician" &&
+        w.status !== "awaiting_human"
+      ) {
+        return null;
+      }
+      const until = w.escalationClaimUntil
+        ? new Date(w.escalationClaimUntil).getTime()
+        : 0;
+      if (until > now.getTime()) return null;
+      w.escalationClaimUntil = new Date(now.getTime() + leaseMs).toISOString();
+      w.updatedAt = now.toISOString();
+      return w;
     },
     async saveLead(lead) {
       leads.set(lead.id, lead);
@@ -224,15 +272,37 @@ export function createMemoryStore(): MissedCallStore {
       inboundMessageSids.add(messageSid);
       return true;
     },
+    async releaseInboundMessageSid(messageSid) {
+      inboundMessageSids.delete(messageSid);
+    },
     async enqueueOutbound(message) {
       outbound.set(message.id, { ...message });
     },
-    async claimOutboundForSend(limit) {
+    async claimOutboundById(id) {
+      const msg = outbound.get(id);
+      if (!msg) return null;
+      if (msg.status !== "queued" && msg.status !== "retry") return null;
+      if (outboundClaimed.has(id)) return null;
+      outboundClaimed.add(id);
+      const sending = {
+        ...msg,
+        status: "sending" as const,
+        updatedAt: new Date().toISOString(),
+      };
+      outbound.set(id, sending);
+      return { ...sending };
+    },
+    async claimOutboundForSend(limit, staleSendingMs = OUTBOUND_STALE_SENDING_MS) {
       const claimed: OutboundMessageRecord[] = [];
+      const now = Date.now();
       for (const msg of outbound.values()) {
         if (claimed.length >= limit) break;
-        if (msg.status !== "queued" && msg.status !== "retry") continue;
-        if (outboundClaimed.has(msg.id)) continue;
+        const isQueued = msg.status === "queued" || msg.status === "retry";
+        const isStaleSending =
+          msg.status === "sending" &&
+          now - new Date(msg.updatedAt).getTime() >= staleSendingMs;
+        if (!isQueued && !isStaleSending) continue;
+        if (outboundClaimed.has(msg.id) && !isStaleSending) continue;
         outboundClaimed.add(msg.id);
         const sending = {
           ...msg,

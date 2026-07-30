@@ -49,7 +49,7 @@ gitignored and must never be committed.
 | `LEADS_WEBHOOK_URL` (+ optional `LEADS_WEBHOOK_SECRET`) | CRM forward skipped | recommended — Zapier/Make/n8n/HubSpot webhook |
 | `NEXT_PUBLIC_CALENDAR_URL` | no calendar CTA after submit | recommended — Cal.com / Calendly link |
 | `ERROR_WEBHOOK_URL` | client/server errors only logged | recommended — Slack/Discord/Better Stack/Sentry webhook |
-| `TWILIO_*` / `MISSED_CALL_*` | Module A dry-run SMS + sandbox | see `src/product/missed-call/README.md` — set `MISSED_CALL_OPS_SECRET` (or `CRON_SECRET`) in production |
+| `TWILIO_*` / `MISSED_CALL_*` | Module A dry-run SMS + in-memory sandbox | see `src/product/missed-call/README.md` — set `DATABASE_URL`, `MISSED_CALL_DURABLE_STORE=1`, and `MISSED_CALL_OPS_SECRET` (or `CRON_SECRET`) in production |
 
 ## Module A — Missed-call recovery
 
@@ -71,7 +71,7 @@ Core product path (call → SMS → collect → tech accept → notify). Domain 
 - [ ] `npm run check:legal` passes (no TODO / draft notices on public legal pages)
 
 **Module A (missed-call) — required before real customer traffic**
-- [ ] Durable store wired (`DATABASE_URL` + Postgres adapter; not in-memory)
+- [ ] Durable store enabled (`DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1`), schema applied, and `/api/health` database check green
 - [ ] Full client config from env/JSON (`MISSED_CALL_CLIENT_CONFIG_JSON` or complete `MISSED_CALL_*` vars) — demo fixtures rejected in production
 - [ ] Every escalation contact validated (primary, all backups, owner, human-review) — no reserved/555 demo numbers
 - [ ] Twilio credentials live; `MISSED_CALL_SMS_MODE` is **not** dry-run in production
@@ -84,7 +84,7 @@ Core product path (call → SMS → collect → tech accept → notify). Domain 
 
 - **Uptime:** monitor `GET /api/health` (returns 200 when production-critical config is present).
 - **Errors:** page error boundaries POST to `/api/client-error`, which forwards to `ERROR_WEBHOOK_URL`.
-- **Leads:** email (Resend) + optional CRM webhook are the system of record — there is no local database to back up.
+- **Leads/workflows:** when the durable flag is enabled, PostgreSQL is the system of record and must be backed up; email and the optional CRM webhook remain delivery channels. The in-memory fallback is for local development only.
 - **Site:** rely on git history + your host's deployment rollback. Keep `.env` values in the host secret store (never in git).
 
 ## Deployment

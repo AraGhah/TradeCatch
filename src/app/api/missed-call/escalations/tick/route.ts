@@ -8,7 +8,7 @@ import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 export const dynamic = "force-dynamic";
 
 /** Process escalation timers (cron or manual). Requires ops bearer auth. */
-export async function POST(request: NextRequest) {
+async function tick(request: NextRequest) {
   if (!authorizeOpsRequest(request)) {
     return unauthorizedOpsResponse();
   }
@@ -17,3 +17,7 @@ export async function POST(request: NextRequest) {
   const result = await engine.processEscalations();
   return NextResponse.json({ ok: true, ...result });
 }
+
+// Vercel Cron invokes routes with GET; POST remains available for manual ops.
+export const GET = tick;
+export const POST = tick;

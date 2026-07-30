@@ -312,6 +312,8 @@ export function shouldEscalateToIndex(
     technicianAlertedAt?: string;
     escalationIndex: number;
     escalationChainIds?: string[];
+    acceptNotifyPending?: boolean;
+    technicianAlerts?: { response?: string | null; respondedAt?: string }[];
   },
   client: ClientAccount,
   now: Date,
@@ -319,6 +321,15 @@ export function shouldEscalateToIndex(
   if (
     workflow.status !== "awaiting_technician" &&
     workflow.status !== "awaiting_human"
+  ) {
+    return null;
+  }
+  if (workflow.acceptNotifyPending) return null;
+  // An accepted alert (even mid-notify legacy) must not escalate further.
+  if (
+    workflow.technicianAlerts?.some(
+      (a) => a.response === "accepted" && a.respondedAt,
+    )
   ) {
     return null;
   }

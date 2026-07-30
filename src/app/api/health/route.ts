@@ -5,8 +5,10 @@ import {
   isTurnstileConfigured,
   isTwilioConfigured,
   isProductionRuntime,
+  isE2eHarness,
 } from "@/lib/config";
 import { authorizeOpsRequest } from "@/lib/ops-auth";
+import { getPgPool } from "@/product/missed-call/postgres-store";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +23,21 @@ export const dynamic = "force-dynamic";
  * only by an explicitly wired durable store flag.
  */
 export async function GET(request: NextRequest) {
+  const durableConfigured = isDurableMissedCallStoreConfigured();
+  const databaseUrl = process.env.DATABASE_URL?.trim();
+  let database: boolean | null = null;
+  if (durableConfigured) {
+    database = false;
+    if (databaseUrl) {
+      try {
+        await getPgPool(databaseUrl).query("SELECT 1");
+        database = true;
+      } catch (error) {
+        console.error("[health] durable database check failed", error);
+      }
+    }
+  }
+
   const checks = {
     resend: isResendConfigured(),
     turnstile: isTurnstileConfigured(),
@@ -33,8 +50,9 @@ export async function GET(request: NextRequest) {
         process.env.CRON_SECRET?.trim(),
     ),
     twilio: isTwilioConfigured(),
-    durableMissedCallStore: isDurableMissedCallStoreConfigured(),
-    e2eHarness: process.env.TRADECATCH_E2E === "1",
+    durableMissedCallStore: durableConfigured,
+    database,
+    e2eHarness: isE2eHarness(),
   };
 
   const siteReady =
@@ -43,14 +61,19 @@ export async function GET(request: NextRequest) {
     (checks.resend && checks.turnstile);
 
   const moduleAReady =
-    checks.twilio && checks.durableMissedCallStore && checks.opsAuth;
+    checks.twilio &&
+    checks.durableMissedCallStore &&
+    checks.database === true &&
+    checks.opsAuth;
+  const degraded = !siteReady || (checks.durableMissedCallStore && !moduleAReady);
 
   const includeDetails =
     !isProductionRuntime() || authorizeOpsRequest(request);
 
   const body = {
     ok: siteReady,
-    status: siteReady ? "healthy" : "degraded",
+    degraded,
+    status: degraded ? "degraded" : "healthy",
     service: "tradecatch",
     readyMarker: siteReady ? "tradecatch-ready" : "tradecatch-not-ready",
     timestamp: new Date().toISOString(),

@@ -41,6 +41,11 @@ function buildCsp(nonce: string, isDev: boolean): string {
  * that drops internal routing metadata and causes self-redirect loops).
  * Prefer mutating headers on the incoming request; fall back to cloning from
  * the request object (not request.url) so nextUrl / cookies stay intact.
+ *
+ * Production note: do not bind `next start` to `127.0.0.1` / `0.0.0.0` when
+ * using next-intl locale/pathname rewrites. Next.js 16.2.6+ can leak those
+ * rewrites as 307 self-redirects (vercel/next.js#94745). Prefer the default
+ * hostname (`localhost`) or omit `--hostname`.
  */
 export default function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");

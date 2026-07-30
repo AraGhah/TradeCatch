@@ -39,51 +39,33 @@ export const bookAuditSchema = z.object({
 
 export type BookAuditPayload = z.infer<typeof bookAuditSchema>;
 
-/** One-question-per-screen wizard steps (presentation), plus review. */
+/**
+ * Short capture wizard for outreach / founding-pilot intake.
+ * Deep qualification belongs on the audit call — keep the public form short.
+ */
 export const BOOK_AUDIT_STEPS = [
   "name",
   "company",
   "trade",
-  "city",
-  "language",
   "email",
   "phone",
-  "employees",
-  "calls",
-  "missed",
-  "afterHours",
-  "quotes",
-  "jobValue",
-  "crm",
-  "handlesCalls",
-  "followsQuotes",
-  "problem",
+  "city",
   "consent",
   "review",
 ] as const;
 
 export type BookAuditStep = (typeof BOOK_AUDIT_STEPS)[number];
 
-export const OPTIONAL_STEPS: BookAuditStep[] = ["crm", "problem"];
+/** Steps the visitor may skip (none in the short capture flow). */
+export const OPTIONAL_STEPS: BookAuditStep[] = [];
 
 export const STEP_FIELDS: Record<BookAuditStep, (keyof BookAuditPayload)[]> = {
   name: ["firstName", "lastName"],
   company: ["company"],
   trade: ["trade"],
-  city: ["city"],
-  language: ["preferredLanguage"],
   email: ["email"],
   phone: ["phone"],
-  employees: ["employees"],
-  calls: ["callsPerMonth"],
-  missed: ["missedCallsPerWeek"],
-  afterHours: ["afterHours"],
-  quotes: ["quotesPerMonth"],
-  jobValue: ["averageJobValue"],
-  crm: ["currentCrm"],
-  handlesCalls: ["handlesMissedCalls"],
-  followsQuotes: ["followsUpQuotes"],
-  problem: ["mainProblem"],
+  city: ["city"],
   consent: ["serviceConsent", "marketingConsent"],
   review: [],
 };

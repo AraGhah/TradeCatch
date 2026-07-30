@@ -163,7 +163,7 @@
         },
         {
           "value": "4",
-          "label": "relances par soumission, arrêtées dès qu'ils répondent"
+          "label": "relances illustratives dans une séquence prévue"
         },
         {
           "value": "2",
@@ -198,7 +198,7 @@
     "system": {
       "eyebrow": "Le système",
       "headline": "De la première sonnerie au job signé.",
-      "intro": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job, alerte votre équipe et relance les soumissions ouvertes jusqu'à ce que quelqu'un réponde.",
+      "intro": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte votre équipe. Les séquences de relance de soumissions sur ce site sont illustratives — pas encore un module produit en production.",
       "cta": "Voir comment ça marche",
       "previewLabel": "Exemple de parcours — illustratif, pas un flux client en direct",
       "previewSteps": [
@@ -253,16 +253,16 @@
       "note": "Le système recueille et achemine la demande. Vos techniciens licenciés continuent de diagnostiquer le problème, confirmer les prix et effectuer les travaux."
     },
     "quoteFollowUp": {
-      "headline": "Chaque soumission fait l'objet d'une relance",
+      "headline": "Un processus de relance de soumissions prévu",
       "items": [
-        "Détecte la soumission",
-        "Enregistre les informations du client et du projet",
-        "Envoie des relances personnalisées",
-        "S'arrête lorsque le client répond",
-        "Classe la réponse",
-        "Alerte l'entrepreneur en cas d'objection de prix ou de question",
-        "Suit si la soumission devient un contrat signé",
-        "Peut ensuite se connecter à des outils de signature électronique et de dépôt"
+        "Détecterait une soumission importée",
+        "Enregistrerait les informations du client et du projet",
+        "Enverrait des relances approuvées par le client",
+        "S'arrêterait lorsque le client répond",
+        "Classerait la réponse",
+        "Alerterait l'entrepreneur en cas d'objection ou de question",
+        "Suivrait les résultats gagnés ou perdus",
+        "Pourrait ensuite se connecter à des outils de signature électronique et de dépôt"
       ],
       "sequence": [
         {
@@ -314,7 +314,7 @@
     "dashboard": {
       "eyebrow": "Rapports",
       "headline": "Vous voyez enfin ce qui vous échappait.",
-      "intro": "Chaque appel récupéré, chaque relance, chaque soumission devenue un contrat signé. Une vue hebdomadaire que vous lisez en une minute, sur un chantier, sur votre téléphone.",
+      "intro": "Chaque appel récupéré et chaque alerte technicien du pilote d'appels manqués. Les vues de reporting sur ce site sont des exemples illustratifs — pas encore un tableau de bord client en production.",
       "cta": "Réserver un audit gratuit de 20 minutes",
       "badge": "Tableau de bord illustratif",
       "live": "Illustratif",
@@ -353,7 +353,7 @@
           "label": "Cas qui vous attendent"
         }
       ],
-      "note": "Chaque appel récupéré, chaque relance, chaque soumission devenue un contrat signé. Une vue hebdomadaire que vous lisez en une minute.",
+      "note": "Chaque appel récupéré et chaque alerte technicien du pilote d'appels manqués. Les vues de reporting sur ce site sont des exemples illustratifs.",
       "sampleDataLabel": "Données illustratives — semaine d'exemple, pas un flux client en direct. Pas une promesse de résultats."
     },
     "industries": {
@@ -418,7 +418,7 @@
         "Les contacts de remplacement",
         "Le moment des escalades",
         "Les limites de la zone de service",
-        "Les séquences de relance de soumission",
+        "Les séquences de relance de soumission prévues",
         "Les conditions d'arrêt",
         "Les règles d'approbation humaine"
       ],
@@ -724,16 +724,16 @@
         ]
       },
       {
-        "title": "Récupération des soumissions",
-        "purpose": "Empêcher les estimations à haute valeur de mourir faute de relance.",
+        "title": "Récupération des soumissions (prévue)",
+        "purpose": "Un futur module cadré séparément pour les estimations à haute valeur.",
         "items": [
-          "Détection de la soumission",
-          "Extraction des informations client et projet",
-          "Séquences de relance",
-          "Détection des réponses",
-          "Classification des réponses",
-          "Demandes d'approbation à l'entrepreneur",
-          "Suivi gagné/perdu"
+          "Importation de soumissions prévue",
+          "Extraction client et projet prévue",
+          "Séquences de relance prévues",
+          "Détection des réponses prévue",
+          "Classification des réponses prévue",
+          "Demandes d'approbation prévues",
+          "Suivi gagné/perdu prévu"
         ]
       },
       {
@@ -744,8 +744,8 @@
           "Rapports sur les appels manqués",
           "Taux de réponse",
           "Jobs réservés",
-          "Soumissions relancées",
-          "Soumissions gagnées",
+          "Relances de soumissions illustratives",
+          "Résultats de soumissions illustratifs",
           "Cas nécessitant votre attention",
           "Valeur des occasions récupérées"
         ]
@@ -766,7 +766,7 @@
     "heroHighlights": [
       "Capture de leads",
       "Routage technicien",
-      "Relance de soumissions",
+      "Relance de soumissions (prévue)",
       "Prise de rendez-vous",
       "Rapports et suivi"
     ]
@@ -1628,7 +1628,7 @@
     "printCta": "Imprimer / enregistrer en PDF",
     "badge": "Aperçu produit illustratif — pas une garantie de performance",
     "headline": "Appels manqués et soumissions silencieuses, gérés pendant que vous travaillez.",
-    "lede": "TradeCatch renvoie un texto aux appelants manqués en moins de 30 secondes, recueille les détails du job, alerte le bon technicien et relance les estimations sans réponse — avec des messages que vous approuvez.",
+    "lede": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien — avec des messages que vous approuvez. Les relances de soumissions montrées ici sont illustratives et prévues pour plus tard.",
     "forWhomTitle": "Conçu pour",
     "forWhom": "Les entreprises québécoises de plomberie, CVC et électricité (et métiers similaires) qui perdent du travail entre la sonnerie et le job signé.",
     "doesTitle": "Ce que ça fait",
@@ -1636,8 +1636,8 @@
       "Texto de retour sur appels manqués et hors heures (FR/EN)",
       "Détails du lead et photos dans la langue du client",
       "Alertes technicien / propriétaire de garde",
-      "Séquences de relance de soumissions qui s'arrêtent à la réponse",
-      "Tableau de bord simple des appels et relances récupérés"
+      "Séquences de relance prévues (exemples illustratifs seulement)",
+      "Vue de rapports illustrative; aucun tableau de bord client en production"
     ],
     "doesNotTitle": "Ce que ça ne fait pas",
     "doesNot": [

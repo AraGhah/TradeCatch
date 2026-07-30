@@ -99,20 +99,30 @@ export async function sendBookAuditEmails(
   );
 
   try {
-    await resend.emails.send({
+    // Resend resolves `{ data, error }` for many API failures instead of throwing.
+    // Treating a non-throwing call as success loses leads (bad key, domain, quota).
+    const leadResult = await resend.emails.send({
       from: fromEmail,
       to: payload.email,
       subject: leadSubject,
       html: brandedShell(leadSubject, leadInner),
     });
+    if (leadResult.error) {
+      console.error("[email] lead confirmation rejected by Resend", leadResult.error);
+      return { sent: false };
+    }
 
-    await resend.emails.send({
+    const notifyResult = await resend.emails.send({
       from: fromEmail,
       to: notifyEmail,
       replyTo: payload.email,
       subject: `New audit request: ${payload.company} (${payload.trade})`,
       html: notifyHtml,
     });
+    if (notifyResult.error) {
+      console.error("[email] notify email rejected by Resend", notifyResult.error);
+      return { sent: false };
+    }
 
     return { sent: true };
   } catch (error) {

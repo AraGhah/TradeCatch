@@ -163,7 +163,7 @@
         },
         {
           "value": "4",
-          "label": "follow-ups per quote, stopping the second they reply"
+          "label": "illustrative follow-ups in a planned quote sequence"
         },
         {
           "value": "2",
@@ -198,7 +198,7 @@
     "system": {
       "eyebrow": "The system",
       "headline": "From first ring to signed job.",
-      "intro": "TradeCatch texts missed callers back, collects the job details, alerts your crew, and follows open quotes until someone replies.",
+      "intro": "TradeCatch texts missed callers back, collects the job details, and alerts your crew. Quote follow-up sequences shown on this site are illustrative — not a live product module yet.",
       "cta": "See how it works",
       "previewLabel": "Example workflow — illustrative, not a live client feed",
       "previewSteps": [
@@ -253,16 +253,16 @@
       "note": "The system collects and routes the request. Your licensed technicians still diagnose the problem, confirm pricing, and perform the work."
     },
     "quoteFollowUp": {
-      "headline": "Every quote gets followed up",
+      "headline": "A planned quote follow-up workflow",
       "items": [
-        "Detects the quote",
-        "Saves the customer and project information",
-        "Sends personalized follow-ups",
-        "Stops when the customer responds",
-        "Classifies the response",
-        "Alerts the contractor about price objections or questions",
-        "Tracks whether the quote becomes a signed job",
-        "Can later connect to e-signature and deposit tools"
+        "Would detect an imported quote",
+        "Would save customer and project information",
+        "Would send client-approved follow-ups",
+        "Would stop when the customer responds",
+        "Would classify the response",
+        "Would alert the contractor about objections or questions",
+        "Would track signed or lost outcomes",
+        "Could later connect to e-signature and deposit tools"
       ],
       "sequence": [
         {
@@ -314,7 +314,7 @@
     "dashboard": {
       "eyebrow": "Reporting",
       "headline": "You finally see what you were missing.",
-      "intro": "Every recovered call, every follow-up, every quote that turned into signed work. One weekly view you can read in a minute, on a job site, on your phone.",
+      "intro": "Every recovered call and technician alert from the missed-call pilot. Reporting views on this site are illustrative samples — not a live client dashboard yet.",
       "cta": "Book a free 20-minute audit",
       "badge": "Illustrative dashboard",
       "live": "Illustrative",
@@ -353,7 +353,7 @@
           "label": "Cases needing you"
         }
       ],
-      "note": "Every recovered call, every follow-up, every quote that turned into signed work. One weekly view you can read in a minute.",
+      "note": "Every recovered call and technician alert from the missed-call pilot. Reporting views on this site are illustrative samples.",
       "sampleDataLabel": "Illustrative data — example week, not a live client feed. Not a promise of results."
     },
     "industries": {
@@ -418,7 +418,7 @@
         "Backup contacts",
         "Escalation timing",
         "Service area boundaries",
-        "Quote follow-up sequences",
+        "Planned quote follow-up sequences",
         "Stop conditions",
         "Human-approval rules"
       ],
@@ -724,16 +724,16 @@
         ]
       },
       {
-        "title": "Quote recovery",
-        "purpose": "Stop high-value estimates dying because nobody followed up.",
+        "title": "Quote recovery (planned)",
+        "purpose": "A separately scoped future module for high-value estimates.",
         "items": [
-          "Quote detection",
-          "Customer and project extraction",
-          "Follow-up sequences",
-          "Reply detection",
-          "Reply classification",
-          "Contractor approval requests",
-          "Won/lost tracking"
+          "Planned quote ingestion",
+          "Planned customer and project extraction",
+          "Planned follow-up sequences",
+          "Planned reply detection",
+          "Planned reply classification",
+          "Planned contractor approval requests",
+          "Planned won/lost tracking"
         ]
       },
       {
@@ -744,8 +744,8 @@
           "Missed-call reports",
           "Response rates",
           "Jobs booked",
-          "Quotes followed up",
-          "Quotes won",
+          "Illustrative quote follow-ups",
+          "Illustrative quote outcomes",
           "Cases needing attention",
           "Recovered opportunity value"
         ]
@@ -766,7 +766,7 @@
     "heroHighlights": [
       "Lead capture",
       "Technician routing",
-      "Quote follow-up",
+      "Quote follow-up (planned)",
       "Appointment booking",
       "Reporting and tracking"
     ]
@@ -1636,8 +1636,8 @@
       "Missed-call and after-hours SMS text-back (FR/EN)",
       "Lead details and photos collected in the customer’s language",
       "On-call technician / owner alerts",
-      "Quote follow-up sequences that stop when they reply",
-      "Simple dashboard of recovered calls and follow-ups"
+      "Planned quote follow-up sequences (illustrative examples only)",
+      "Illustrative reporting view; no live client dashboard yet"
     ],
     "doesNotTitle": "What it does not do",
     "doesNot": [

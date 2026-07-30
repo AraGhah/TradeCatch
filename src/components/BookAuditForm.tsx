@@ -10,7 +10,10 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
-import { TurnstileWidget } from "@/components/TurnstileWidget";
+import {
+  TurnstileWidget,
+  type TurnstileWidgetHandle,
+} from "@/components/TurnstileWidget";
 import { CalendarBookingCta } from "@/components/CalendarBookingCta";
 import {
   BOOK_AUDIT_STEPS,
@@ -86,7 +89,6 @@ type SubmitStatus = "idle" | "submitting" | "error";
 type StepKind =
   | "name"
   | "text"
-  | "textarea"
   | "choice"
   | "consent"
   | "review";
@@ -95,18 +97,7 @@ function stepKind(step: BookAuditStep): StepKind {
   switch (step) {
     case "name":
       return "name";
-    case "problem":
-      return "textarea";
     case "trade":
-    case "language":
-    case "employees":
-    case "calls":
-    case "missed":
-    case "afterHours":
-    case "quotes":
-    case "jobValue":
-    case "handlesCalls":
-    case "followsQuotes":
       return "choice";
     case "consent":
       return "consent";
@@ -136,6 +127,7 @@ export function BookAuditForm() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const idempotencyKey = useRef<string>(crypto.randomUUID());
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const hydrated = useRef(false);
 
   const step = BOOK_AUDIT_STEPS[stepIndex];
@@ -194,7 +186,6 @@ export function BookAuditForm() {
     if (current === "review") return answers.serviceConsent && Boolean(turnstileToken);
     if (current === "name") return Boolean(answers.firstName.trim());
     if (current === "consent") return answers.serviceConsent;
-    if (current === "language") return answers.preferredLanguage === "en" || answers.preferredLanguage === "fr";
     const field = primaryField(current);
     if (!field) return true;
     const value = answers[field];
@@ -304,6 +295,12 @@ export function BookAuditForm() {
   async function submitAudit() {
     if (!turnstileToken || !answers.serviceConsent) return;
 
+    function failSubmission() {
+      setSubmitStatus("error");
+      setTurnstileToken("");
+      turnstileRef.current?.reset();
+    }
+
     // Full-payload guard before POST — API re-validates anyway.
     const payload = {
       ...answers,
@@ -317,7 +314,7 @@ export function BookAuditForm() {
     };
     const parsed = bookAuditSchema.safeParse(payload);
     if (!parsed.success) {
-      setSubmitStatus("error");
+      failSubmission();
       return;
     }
 
@@ -333,7 +330,7 @@ export function BookAuditForm() {
       });
 
       if (!response.ok) {
-        setSubmitStatus("error");
+        failSubmission();
         return;
       }
 
@@ -355,7 +352,7 @@ export function BookAuditForm() {
       setPhase("confirmed");
       scrollTop();
     } catch {
-      setSubmitStatus("error");
+      failSubmission();
     }
   }
 
@@ -371,10 +368,6 @@ export function BookAuditForm() {
 
   function handleChoice(field: keyof Answers, label: string) {
     update(field, label as Answers[typeof field]);
-  }
-
-  function handleLanguageChoice(code: "en" | "fr") {
-    update("preferredLanguage", code);
   }
 
   function handleTextKeyDown(e: KeyboardEvent<HTMLInputElement>) {
@@ -551,7 +544,6 @@ export function BookAuditForm() {
                 update={update}
                 onTextKeyDown={handleTextKeyDown}
                 onChoice={handleChoice}
-                onLanguageChoice={handleLanguageChoice}
                 onEditStep={goToStep}
                 t={t}
               />
@@ -559,7 +551,10 @@ export function BookAuditForm() {
 
             {onReview ? (
               <div className="mt-6">
-                <TurnstileWidget onToken={setTurnstileToken} />
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  onToken={setTurnstileToken}
+                />
                 {submitStatus === "error" ? (
                   <p role="alert" className="mt-3 text-sm font-medium text-red-600">
                     {t("wizard.genericError")}
@@ -687,7 +682,6 @@ function StepBody({
   update,
   onTextKeyDown,
   onChoice,
-  onLanguageChoice,
   onEditStep,
   t,
 }: {
@@ -699,7 +693,6 @@ function StepBody({
   update: <K extends keyof Answers>(key: K, value: Answers[K]) => void;
   onTextKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
   onChoice: (field: keyof Answers, label: string) => void;
-  onLanguageChoice: (code: "en" | "fr") => void;
   onEditStep: (index: number) => void;
   t: Translator;
 }) {
@@ -769,51 +762,7 @@ function StepBody({
     );
   }
 
-  if (kind === "textarea") {
-    const errorId = errors.mainProblem ? "audit-field-mainProblem-error" : undefined;
-    return (
-      <div>
-        <textarea
-          name="mainProblem"
-          value={answers.mainProblem}
-          onChange={(e) => update("mainProblem", e.target.value)}
-          rows={4}
-          placeholder={t("wizard.questions.problem.placeholder")}
-          aria-labelledby="audit-step-title"
-          aria-invalid={Boolean(errors.mainProblem)}
-          aria-describedby={errorId}
-          className="w-full resize-y rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.16)] bg-white px-5 py-5 font-sans text-[17px] leading-[1.6] text-text outline-none focus:border-orange"
-        />
-        {errors.mainProblem ? (
-          <span
-            id={errorId}
-            role="alert"
-            className="mt-2 block text-xs font-medium text-red-600"
-          >
-            {errors.mainProblem}
-          </span>
-        ) : null}
-      </div>
-    );
-  }
-
   if (kind === "choice") {
-    if (step === "language") {
-      const options: { code: "en" | "fr"; label: string }[] = [
-        { code: "en", label: t("options.language.en") },
-        { code: "fr", label: t("options.language.fr") },
-      ];
-      return (
-        <ChoiceGrid
-          options={options.map((o) => ({
-            label: o.label,
-            selected: answers.preferredLanguage === o.code,
-            onPick: () => onLanguageChoice(o.code),
-          }))}
-        />
-      );
-    }
-
     const optionsKey = t(`wizard.questions.${step}.optionsKey`);
     const options = t.raw(`options.${optionsKey}`) as string[];
     const field = primaryField(step)!;
@@ -900,10 +849,6 @@ function formatReviewValue(
       const name = [answers.firstName, answers.lastName].filter(Boolean).join(" ");
       return name || empty;
     }
-    case "language":
-      if (answers.preferredLanguage === "en") return t("options.language.en");
-      if (answers.preferredLanguage === "fr") return t("options.language.fr");
-      return empty;
     case "consent":
       return answers.serviceConsent ? t("wizard.agreed") : t("wizard.notYet");
     default: {
@@ -921,6 +866,34 @@ function ChoiceGrid({
 }: {
   options: { label: string; selected: boolean; onPick: () => void }[];
 }) {
+  const optionsRef = useRef(options);
+
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
+
+  useEffect(() => {
+    function onKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const index = OPT_KEYS.indexOf(event.key.toUpperCase());
+      const current = optionsRef.current;
+      if (index < 0 || index >= current.length) return;
+      event.preventDefault();
+      current[index]?.onPick();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(232px,1fr))] gap-2.5">
       {options.map((option, n) => (
