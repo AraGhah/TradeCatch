@@ -40,5 +40,14 @@ test.describe("route matrix", () => {
         `${path} redirected to itself (${location}) — redirect loop`,
       ).not.toBe(path);
     });
+
+    test(`${path} renders successfully (no 500)`, async ({ request }) => {
+      const response = await request.get(path);
+      expect(
+        response.status(),
+        `${path} returned ${response.status()}`,
+      ).toBeLessThan(500);
+      expect(response.status()).toBeLessThan(400);
+    });
   }
 });

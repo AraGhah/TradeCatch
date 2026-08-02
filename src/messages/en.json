@@ -23,9 +23,9 @@
   },
   "cta": {
     "primary": "Book a free 20-minute audit",
-    "secondary": "See the live demo",
+    "secondary": "See the interactive walkthrough",
     "tertiary": "Book a free 20-minute audit",
-    "watchDemo": "See the live demo",
+    "watchDemo": "See the interactive walkthrough",
     "seeWorkflow": "See the full workflow",
     "viewMissedCall": "View missed-call workflow",
     "viewQuoteFollowUp": "See the quote follow-up process",
@@ -70,12 +70,12 @@
       "accentWord": "missed calls",
       "subheadline": "TradeCatch texts missed callers back, collects the job details, and alerts the right technician. Quote follow-up sequences shown elsewhere on this site are illustrative — not a live product module yet.",
       "ctaPrimary": "Book a free 20-minute audit",
-      "ctaSecondary": "See the live demo",
+      "ctaSecondary": "See the interactive walkthrough",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
-      "demoStripLabel": "Live system path",
+      "demoStripLabel": "Product simulation path",
       "demoStripSteps": [
         "Missed call",
-        "SMS in <30s",
+        "SMS back (typical: ~30s)",
         "Details captured",
         "Tech alerted",
         "Pilot path"
@@ -84,7 +84,7 @@
         "Québec-based",
         "French and English",
         "Human-approved messages",
-        "Works with your existing number"
+        "Often works with your existing number"
       ],
       "reassurance": "No commitment. No system access needed. You talk with the founder.",
       "mockup": {
@@ -158,8 +158,8 @@
     "stats": {
       "items": [
         {
-          "value": "<30s",
-          "label": "to the first reply on a missed call"
+          "value": "~30s",
+          "label": "typical target for the first reply on a missed call"
         },
         {
           "value": "4",
@@ -197,7 +197,7 @@
     },
     "system": {
       "eyebrow": "The system",
-      "headline": "From first ring to signed job.",
+      "headline": "From missed call to booked job — example path.",
       "intro": "TradeCatch texts missed callers back, collects the job details, and alerts your crew. Quote follow-up sequences shown on this site are illustrative — not a live product module yet.",
       "cta": "See how it works",
       "previewLabel": "Example workflow — illustrative, not a live client feed",
@@ -207,7 +207,7 @@
         "Lead captured",
         "Alert sent",
         "Pilot path",
-        "Job won"
+        "Outcome tracked (example)"
       ],
       "steps": [
         {
@@ -607,7 +607,7 @@
       "headline": "See the system before you talk to anyone.",
       "intro": "These are labelled product examples — fictional names and sample flows — so you can understand the product. They are not client testimonials, logos, or promised results.",
       "illustrativeLabel": "Illustrative data",
-      "demoCta": "Play the live missed-call demo",
+      "demoCta": "Try the interactive missed-call walkthrough",
       "onePagerCta": "Open the one-page overview",
       "sms": {
         "badge": "Illustrative · Example SMS",
@@ -775,7 +775,7 @@
     "eyebrow": "How it works",
     "headline": "From missed call to signed job.",
     "intro": "Six stages. Every one of them tested with your team, in French and English, before a single customer sees it.",
-    "metaDescription": "See exactly how the system takes a missed call or new lead through to a booked appointment, quote follow-up, and a tracked outcome.",
+    "metaDescription": "See how missed-call text-back collects job details and alerts a technician. Quote follow-up and booked-appointment scenes are illustrative walkthroughs.",
     "stages": [
       {
         "title": "Customer makes contact",
@@ -1173,9 +1173,12 @@
       "agreed": "Agreed",
       "notYet": "Not yet",
       "verifyingHuman": "Verifying you're human…",
-      "genericError": "Something went wrong on our end. Please try again.",
+      "genericError": "We couldn't submit your audit request. Check your answers and try again. If it keeps failing, call 438·993·6997.",
       "networkError": "We couldn't reach the server. Check your connection and try again.",
       "errorSummary": "Please fix the following before continuing:",
+      "fixField": "Go to {field}",
+      "turnstileRequired": "Complete the security check before submitting.",
+      "turnstileLabel": "Security check",
       "reviewNote": "Check your answers below, then submit your request.",
       "questions": {
         "name": {
@@ -1352,7 +1355,7 @@
       },
       {
         "q": "What happens when a customer replies?",
-        "a": "The automatic sequence stops or pauses immediately, and the reply is routed according to the rules you set."
+        "a": "For the live missed-call text-back flow, the reply continues the intake questions or is handed to your team. Automatic stop-on-reply for quote follow-up sequences is planned, not shipping yet."
       },
       {
         "q": "Can the system offer discounts?",
@@ -1420,11 +1423,11 @@
         },
         {
           "heading": "Cross-border data transfers",
-          "body": "Some service providers listed above may process or store data outside Quebec or Canada, including in the United States. Where this occurs, the provider is contractually required to protect the information to a standard comparable to Quebec law, and we conduct the privacy impact assessment required before using a service provider outside Quebec, per Law 25."
+          "body": "Some service providers listed above may process or store data outside Quebec or Canada, including in the United States. Where this occurs, we require contractual protections comparable to Quebec law. Privacy impact assessments for out-of-Quebec providers are conducted before those providers are used for client personal information in a live engagement; this public site alone does not constitute completion of every PIA."
         },
         {
           "heading": "Data retention schedule",
-          "body": "Audit-request and contact-form submissions are retained for up to 24 months after your last interaction with us, unless you become a client (in which case client records are retained per our service agreement and applicable tax/accounting requirements) or you request earlier deletion. Missed-call operational records, when a durable store is enabled, follow the same 24-month default unless a client agreement specifies otherwise. Analytics data is retained per Google Analytics' default retention settings."
+          "body": "Our target retention for audit-request and contact-form submissions is up to 24 months after your last interaction with us, unless you become a client (in which case client records are retained per our service agreement and applicable tax/accounting requirements) or you request earlier deletion. Automated purge jobs for that schedule are being rolled out; until then, deletion and access requests are handled manually via our privacy contact. Missed-call operational records, when a durable store is enabled, follow the same target unless a client agreement specifies otherwise. Analytics data is retained per Google Analytics' default retention settings."
         },
         {
           "heading": "Your privacy rights",
@@ -1450,7 +1453,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch designs, installs, and manages automated communication workflows (missed-call response, lead qualification, technician alerting, and quote follow-up) for contractor businesses. Services are scoped and priced individually following an audit and confirmed in a written proposal."
+          "body": "TradeCatch designs, installs, and manages automated communication workflows for contractor businesses. The live product module today is missed-call response with lead qualification and technician alerting. Quote follow-up and related modules are offered only when explicitly included in a written proposal after they ship. Services are scoped and priced individually following an audit and confirmed in that proposal."
         },
         {
           "heading": "Client responsibilities",
@@ -1669,7 +1672,10 @@
     "close": "Close",
     "captionsLabel": "English captions",
     "transcriptTitle": "Transcript",
-    "transcript": "A contractor misses a call. TradeCatch texts the caller, collects name, address, and issue details, alerts the on-call technician with a job card, and notifies the customer when the technician accepts. This is an illustrative product demo, not a live customer conversation."
+    "transcript": "A contractor misses a call. TradeCatch texts the caller, collects name, address, and issue details, alerts the on-call technician with a job card, and notifies the customer when the technician accepts. This is an illustrative product demo, not a live customer conversation.",
+    "timelineProgress": "Timeline progress",
+    "play": "Play",
+    "pause": "Pause"
   },
   "errors": {
     "eyebrow": "Something went wrong",

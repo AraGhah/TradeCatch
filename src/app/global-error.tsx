@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+
 export default function GlobalError({
   error,
   reset,
@@ -7,9 +9,8 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  console.error("[global-error]", error);
-
-  if (typeof window !== "undefined") {
+  useEffect(() => {
+    console.error("[global-error]", error);
     try {
       void fetch("/api/client-error", {
         method: "POST",
@@ -26,7 +27,7 @@ export default function GlobalError({
     } catch {
       // ignore
     }
-  }
+  }, [error]);
 
   return (
     <html lang="en">
@@ -45,7 +46,7 @@ export default function GlobalError({
           textAlign: "center",
         }}
       >
-        <div>
+        <main>
           <p
             style={{
               fontFamily: "ui-monospace, monospace",
@@ -87,7 +88,7 @@ export default function GlobalError({
           >
             Try again
           </button>
-        </div>
+        </main>
       </body>
     </html>
   );

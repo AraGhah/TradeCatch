@@ -109,7 +109,9 @@ export function parseClientConfigJson(raw: string): ClientAccount {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    throw new Error("[missed-call] MISSED_CALL_CLIENT_CONFIG_JSON is not valid JSON");
+    throw new Error(
+      "[missed-call] MISSED_CALL_CLIENT_CONFIG_JSON is not valid JSON",
+    );
   }
   const result = clientAccountConfigSchema.safeParse(parsed);
   if (!result.success) {
@@ -124,7 +126,9 @@ export function parseClientConfigJson(raw: string): ClientAccount {
   return result.data as ClientAccount;
 }
 
-export function validateClientConfig(client: ClientAccount): ClientConfigValidation {
+export function validateClientConfig(
+  client: ClientAccount,
+): ClientConfigValidation {
   const errors: string[] = [];
   if (!client.id || client.id === "client_demo") {
     errors.push("client id must not be the demo id in production");
@@ -153,10 +157,7 @@ export function validateClientConfig(client: ClientAccount): ClientConfigValidat
     }
   }
 
-  if (
-    client.humanReviewPhone &&
-    isReservedDemoPhone(client.humanReviewPhone)
-  ) {
+  if (client.humanReviewPhone && isReservedDemoPhone(client.humanReviewPhone)) {
     errors.push("humanReviewPhone is a reserved demo number");
   }
   if (!client.humanReviewPhone && !client.ownerTechnicianId) {
@@ -201,15 +202,12 @@ export function loadClientAccountFromEnv(
   const clientId = env.MISSED_CALL_CLIENT_ID?.trim();
   const smsFrom = env.MISSED_CALL_SMS_FROM?.trim();
   const primaryPhone = env.MISSED_CALL_TECH_PHONE?.trim();
-  const primaryName =
-    env.MISSED_CALL_TECH_NAME?.trim() || "Primary technician";
-  const contractor =
-    env.MISSED_CALL_CONTRACTOR_NAME?.trim() || "Contractor";
+  const primaryName = env.MISSED_CALL_TECH_NAME?.trim() || "Primary technician";
+  const contractor = env.MISSED_CALL_CONTRACTOR_NAME?.trim() || "Contractor";
   const backupRaw = env.MISSED_CALL_TECH_BACKUP_PHONES?.trim() || "";
   const ownerPhone = env.MISSED_CALL_TECH_OWNER_PHONE?.trim();
   const ownerName = env.MISSED_CALL_TECH_OWNER_NAME?.trim() || "Owner";
-  const humanReview =
-    env.MISSED_CALL_HUMAN_REVIEW_PHONE?.trim() || ownerPhone;
+  const humanReview = env.MISSED_CALL_HUMAN_REVIEW_PHONE?.trim() || ownerPhone;
 
   const canBuildFromEnv = Boolean(clientId && smsFrom && primaryPhone);
 

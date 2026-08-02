@@ -19,7 +19,10 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function row(label: string, value: string | undefined | null | boolean): string {
+function row(
+  label: string,
+  value: string | undefined | null | boolean,
+): string {
   if (value === undefined || value === null || value === "") {
     return `<tr><td style="padding:6px 12px 6px 0;color:#5C6875;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:6px 0;color:#1A2430;">—</td></tr>`;
   }
@@ -39,11 +42,7 @@ function brandedShell(title: string, inner: string): string {
 </body></html>`;
 }
 
-// Sends the lead confirmation + internal notification for a book-audit
-// submission. If RESEND_API_KEY / RESEND_FROM_EMAIL / RESEND_NOTIFY_EMAIL
-// aren't configured yet, this no-ops and logs a warning instead of throwing —
-// the API route still records the submission attempt server-side.
-export async function sendBookAuditEmails(
+export async function sendBookAuditNotifyEmail(
   payload: BookAuditPayload,
 ): Promise<{ sent: boolean }> {
   const resend = getClient();
@@ -52,24 +51,10 @@ export async function sendBookAuditEmails(
 
   if (!resend || !fromEmail || !notifyEmail) {
     console.warn(
-      "[email] Resend is not fully configured (RESEND_API_KEY / RESEND_FROM_EMAIL / RESEND_NOTIFY_EMAIL) — skipping email send.",
+      "[email] Resend is not fully configured — skipping notify email.",
     );
     return { sent: false };
   }
-
-  const isFrench = payload.preferredLanguage === "fr";
-  const leadSubject = isFrench
-    ? "Votre demande d'audit a bien été reçue"
-    : "Your audit request has been received";
-  const leadInner = isFrench
-    ? `<p>Bonjour ${escapeHtml(payload.firstName)},</p>
-       <p>Nous avons bien reçu votre demande d'audit pour <strong>${escapeHtml(payload.company)}</strong>.</p>
-       <p>Ara vous contactera sous peu pour confirmer un moment. Ayez sous la main votre volume d'appels récent, vos soumissions ouvertes et les logiciels que vous utilisez déjà.</p>
-       <p>Des questions en attendant? Répondez à ce courriel ou composez le <a href="tel:+14389936997">438·993·6997</a>.</p>`
-    : `<p>Hi ${escapeHtml(payload.firstName)},</p>
-       <p>We received your audit request for <strong>${escapeHtml(payload.company)}</strong>.</p>
-       <p>Ara will follow up shortly to confirm a time. Have your recent call volume, open quotes and any software you already run handy for the call.</p>
-       <p>Questions in the meantime? Reply to this email or call <a href="tel:+14389936997">438·993·6997</a>.</p>`;
 
   const notifyHtml = brandedShell(
     `New audit request: ${payload.company}`,
@@ -99,19 +84,6 @@ export async function sendBookAuditEmails(
   );
 
   try {
-    // Resend resolves `{ data, error }` for many API failures instead of throwing.
-    // Treating a non-throwing call as success loses leads (bad key, domain, quota).
-    const leadResult = await resend.emails.send({
-      from: fromEmail,
-      to: payload.email,
-      subject: leadSubject,
-      html: brandedShell(leadSubject, leadInner),
-    });
-    if (leadResult.error) {
-      console.error("[email] lead confirmation rejected by Resend", leadResult.error);
-      return { sent: false };
-    }
-
     const notifyResult = await resend.emails.send({
       from: fromEmail,
       to: notifyEmail,
@@ -120,13 +92,89 @@ export async function sendBookAuditEmails(
       html: notifyHtml,
     });
     if (notifyResult.error) {
-      console.error("[email] notify email rejected by Resend", notifyResult.error);
+      console.error(
+        "[email] notify email rejected by Resend",
+        notifyResult.error,
+      );
       return { sent: false };
     }
-
     return { sent: true };
   } catch (error) {
-    console.error("[email] failed to send book-audit emails", error);
+    console.error("[email] failed to send notify email", error);
     return { sent: false };
   }
+}
+
+export async function sendBookAuditCustomerEmail(
+  payload: BookAuditPayload,
+): Promise<{ sent: boolean }> {
+  const resend = getClient();
+  const fromEmail = process.env.RESEND_FROM_EMAIL;
+
+  if (!resend || !fromEmail) {
+    console.warn(
+      "[email] Resend is not fully configured — skipping customer confirmation.",
+    );
+    return { sent: false };
+  }
+
+  const isFrench = payload.preferredLanguage === "fr";
+  const leadSubject = isFrench
+    ? "Votre demande d'audit a bien été reçue"
+    : "Your audit request has been received";
+  const leadInner = isFrench
+    ? `<p>Bonjour ${escapeHtml(payload.firstName)},</p>
+       <p>Nous avons bien reçu votre demande d'audit pour <strong>${escapeHtml(payload.company)}</strong>.</p>
+       <p>Ara vous contactera sous peu pour confirmer un moment. Ayez sous la main votre volume d'appels récent, vos soumissions ouvertes et les logiciels que vous utilisez déjà.</p>
+       <p>Des questions en attendant? Répondez à ce courriel ou composez le <a href="tel:+14389936997">438·993·6997</a>.</p>`
+    : `<p>Hi ${escapeHtml(payload.firstName)},</p>
+       <p>We received your audit request for <strong>${escapeHtml(payload.company)}</strong>.</p>
+       <p>Ara will follow up shortly to confirm a time. Have your recent call volume, open quotes and any software you already run handy for the call.</p>
+       <p>Questions in the meantime? Reply to this email or call <a href="tel:+14389936997">438·993·6997</a>.</p>`;
+
+  try {
+    const leadResult = await resend.emails.send({
+      from: fromEmail,
+      to: payload.email,
+      subject: leadSubject,
+      html: brandedShell(leadSubject, leadInner),
+    });
+    if (leadResult.error) {
+      console.error(
+        "[email] lead confirmation rejected by Resend",
+        leadResult.error,
+      );
+      return { sent: false };
+    }
+    return { sent: true };
+  } catch (error) {
+    console.error("[email] failed to send customer confirmation", error);
+    return { sent: false };
+  }
+}
+
+/**
+ * Sends internal notification first, then customer confirmation.
+ * `sent` reflects the ops-critical notify channel so retries do not
+ * re-spam the customer when only the notify leg failed previously.
+ */
+export async function sendBookAuditEmails(
+  payload: BookAuditPayload,
+): Promise<{ sent: boolean; customerSent: boolean; notifySent: boolean }> {
+  const notify = await sendBookAuditNotifyEmail(payload);
+  const customer = notify.sent
+    ? await sendBookAuditCustomerEmail(payload)
+    : { sent: false };
+
+  if (notify.sent && !customer.sent) {
+    console.error(
+      "[email] notify succeeded but customer confirmation failed — lead is still actionable",
+    );
+  }
+
+  return {
+    sent: notify.sent,
+    notifySent: notify.sent,
+    customerSent: customer.sent,
+  };
 }

@@ -6,12 +6,13 @@ const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 // callers must decide how to treat an unconfigured verifier (see route.ts).
 export async function verifyTurnstileToken(
   token: string,
-  remoteIp?: string
+  remoteIp?: string,
+  expectedAction = "book-audit",
 ): Promise<{ configured: boolean; success: boolean; error?: string }> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
     console.warn(
-      "[turnstile] TURNSTILE_SECRET_KEY is not set — skipping bot verification."
+      "[turnstile] TURNSTILE_SECRET_KEY is not set — skipping bot verification.",
     );
     return { configured: false, success: false };
   }
@@ -33,6 +34,7 @@ export async function verifyTurnstileToken(
     const data = (await res.json()) as {
       success?: unknown;
       hostname?: unknown;
+      action?: unknown;
       "error-codes"?: unknown;
     };
     if (typeof data.success !== "boolean") {
@@ -66,6 +68,25 @@ export async function verifyTurnstileToken(
         error: `unexpected hostname: ${hostname || "missing"}`,
       };
     }
+
+    const action = typeof data.action === "string" ? data.action : "";
+    if (expectedAction && action && action !== expectedAction) {
+      return {
+        configured: true,
+        success: false,
+        error: `unexpected action: ${action}`,
+      };
+    }
+    // When Cloudflare returns no action (misconfigured widget), fail closed in
+    // production-shaped verifies that requested a specific action.
+    if (expectedAction && !action) {
+      return {
+        configured: true,
+        success: false,
+        error: "missing action",
+      };
+    }
+
     return { configured: true, success: true };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

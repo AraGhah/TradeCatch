@@ -38,7 +38,9 @@ export function createDryRunSmsPort(): SmsPort {
   };
 }
 
-export function isTwilioSmsConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
+export function isTwilioSmsConfigured(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
   return Boolean(
     env.TWILIO_ACCOUNT_SID?.trim() && env.TWILIO_AUTH_TOKEN?.trim(),
   );
@@ -52,7 +54,9 @@ export function isTwilioSmsConfigured(env: NodeJS.ProcessEnv = process.env): boo
  * Development: falls back to dry-run only when credentials are unset.
  * Set MISSED_CALL_SMS_MODE=dry-run to force dry-run outside production.
  */
-export function createTwilioSmsPort(env: NodeJS.ProcessEnv = process.env): SmsPort {
+export function createTwilioSmsPort(
+  env: NodeJS.ProcessEnv = process.env,
+): SmsPort {
   const sid = env.TWILIO_ACCOUNT_SID?.trim();
   const token = env.TWILIO_AUTH_TOKEN?.trim();
   const forceDryRun = env.MISSED_CALL_SMS_MODE === "dry-run";
@@ -84,6 +88,12 @@ export function createTwilioSmsPort(env: NodeJS.ProcessEnv = process.env): SmsPo
         Body: message.body,
       });
       if (message.mediaUrl) body.set("MediaUrl", message.mediaUrl);
+
+      const siteUrl = env.NEXT_PUBLIC_SITE_URL?.trim()?.replace(/\/$/, "");
+      if (siteUrl) {
+        body.set("StatusCallback", `${siteUrl}/api/twilio/sms/status`);
+        body.set("StatusCallbackMethod", "POST");
+      }
 
       const res = await fetch(
         `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,

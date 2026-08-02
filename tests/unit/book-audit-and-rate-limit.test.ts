@@ -95,8 +95,7 @@ describe("getClientIp", () => {
       },
     });
     const ip = getClientIp(req, { NODE_ENV: "production" });
-    assert.match(ip, /^unknown:/);
-    assert.notEqual(ip, "unknown");
+    assert.equal(ip, "unknown");
   });
 
   it("trusts x-forwarded-for when TRADECATCH_E2E is set in production", () => {
@@ -111,13 +110,26 @@ describe("getClientIp", () => {
     );
   });
 
-  it("uses cf-connecting-ip when present", () => {
+  it("ignores cf-connecting-ip unless explicitly trusted", () => {
     const req = new Request("https://example.com", {
       headers: {
         "cf-connecting-ip": "8.8.8.8",
         "x-forwarded-for": "1.2.3.4",
       },
     });
-    assert.equal(getClientIp(req, { NODE_ENV: "production" }), "8.8.8.8");
+    assert.equal(getClientIp(req, { NODE_ENV: "production" }), "unknown");
+  });
+
+  it("uses cf-connecting-ip when CF_TRUSTED=1", () => {
+    const req = new Request("https://example.com", {
+      headers: {
+        "cf-connecting-ip": "8.8.8.8",
+        "x-forwarded-for": "1.2.3.4",
+      },
+    });
+    assert.equal(
+      getClientIp(req, { NODE_ENV: "production", CF_TRUSTED: "1" }),
+      "8.8.8.8",
+    );
   });
 });

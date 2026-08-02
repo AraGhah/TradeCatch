@@ -53,7 +53,8 @@ export function syncLeadFromWorkflow(
   workflow: MissedCallWorkflow,
 ): void {
   lead.customerName = workflow.collected.customerName ?? lead.customerName;
-  lead.serviceAddress = workflow.collected.serviceAddress ?? lead.serviceAddress;
+  lead.serviceAddress =
+    workflow.collected.serviceAddress ?? lead.serviceAddress;
   lead.issueDescription =
     workflow.collected.issueDescription ?? lead.issueDescription;
   lead.photoUrls = [...workflow.collected.photoUrls];
@@ -211,7 +212,10 @@ export function findOpenAlertForPhone(
     .reverse()
     .find((a) => a.phone === techPhoneE164 && !a.respondedAt);
   if (!open) return null;
-  if (actionToken && open.actionToken.toUpperCase() !== actionToken.toUpperCase()) {
+  if (
+    actionToken &&
+    open.actionToken.toUpperCase() !== actionToken.toUpperCase()
+  ) {
     return null;
   }
   return open;

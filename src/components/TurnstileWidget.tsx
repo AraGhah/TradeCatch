@@ -16,6 +16,7 @@ type TurnstileWindow = Window & {
       container: HTMLElement,
       options: {
         sitekey: string;
+        action?: string;
         callback: (token: string) => void;
         "expired-callback"?: () => void;
         "error-callback"?: () => void;
@@ -78,6 +79,7 @@ export const TurnstileWidget = forwardRef<
 
       widgetIdRef.current = turnstile.render(container, {
         sitekey: SITE_KEY,
+        action: "book-audit",
         callback: (token) => onTokenRef.current(token),
         "expired-callback": () => onTokenRef.current(""),
         "error-callback": () => onTokenRef.current(""),

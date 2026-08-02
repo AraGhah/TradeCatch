@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  authorizeOpsRequest,
-  unauthorizedOpsResponse,
-} from "@/lib/ops-auth";
+import { authorizeOpsRequest, unauthorizedOpsResponse } from "@/lib/ops-auth";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 
 export const dynamic = "force-dynamic";
@@ -59,8 +56,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { engine, store } = await ensureMissedCallReady();
-  const clientId =
-    process.env.MISSED_CALL_CLIENT_ID?.trim() || "client_demo";
+  const clientId = process.env.MISSED_CALL_CLIENT_ID?.trim() || "client_demo";
   const client = await store.getClient(clientId);
 
   if (parsed.data.action === "call") {
@@ -83,8 +79,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const toE164 =
-    parsed.data.toE164 || client?.smsFromNumber || "+15145550100";
+  const toE164 = parsed.data.toE164 || client?.smsFromNumber || "+15145550100";
   const result = await engine.handleInboundSms({
     fromE164: parsed.data.fromE164,
     toE164,
@@ -125,7 +120,12 @@ export async function GET(request: NextRequest) {
     ok: true,
     module: "missed-call-recovery",
     endpoints: {
-      call: { action: "call", callerE164: "+1…", answered: false, abandoned: false },
+      call: {
+        action: "call",
+        callerE164: "+1…",
+        answered: false,
+        abandoned: false,
+      },
       sms: { action: "sms", fromE164: "+1…", body: "…" },
     },
   });

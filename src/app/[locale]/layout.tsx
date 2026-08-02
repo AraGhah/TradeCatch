@@ -10,6 +10,7 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CookieConsent } from "@/components/CookieConsent";
 import { Analytics } from "@/components/Analytics";
+import { HeadInlineScripts } from "@/components/HeadInlineScripts";
 import { ScrollReveal } from "@/components/motion/ScrollReveal";
 import "../globals.css";
 
@@ -17,18 +18,26 @@ const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
   weight: ["700", "800"],
+  display: "swap",
+  fallback: ["Arial", "Helvetica Neue", "sans-serif"],
+  // Offline/CI builds: set NEXT_FONT_GOOGLE_MOCKED_RESPONSES or pre-cache fonts.
+  // Prefer self-hosting under public/fonts for fully air-gapped builds.
 });
 
 const plexSans = IBM_Plex_Sans({
   variable: "--font-plex-sans",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+  fallback: ["Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
 });
 
 const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+  display: "swap",
+  fallback: ["Consolas", "Menlo", "monospace"],
 });
 
 export function generateStaticParams() {
@@ -94,20 +103,14 @@ export default async function LocaleLayout({
       className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <script
-          type="application/ld+json"
+        <HeadInlineScripts
           nonce={nonce}
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          organizationJsonLd={JSON.stringify(organizationSchema)}
         />
-        <script
-          nonce={nonce}
-          dangerouslySetInnerHTML={{
-            __html: `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}window.gtag=gtag;gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});`,
-          }}
-        />
-        <Analytics nonce={nonce} />
         <MotionConfig reducedMotion="user">
           <NextIntlClientProvider>
+            {/* Must sit inside the intl provider — usePathname/useLocale need it. */}
+            <Analytics nonce={nonce} />
             <ScrollReveal />
             <Header />
             <main className="flex-1">{children}</main>

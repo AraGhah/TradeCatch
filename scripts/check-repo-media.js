@@ -8,6 +8,8 @@ const path = require("node:path");
 
 const ROOT = path.join(__dirname, "..");
 const MAX_TRACKED_DEMO_MB = 80;
+// Prefer CDN/object-storage + modern WebM/AV1 variants for delivery; keep
+// git-tracked MP4s under this budget for repo size only.
 
 function trackedFiles() {
   try {

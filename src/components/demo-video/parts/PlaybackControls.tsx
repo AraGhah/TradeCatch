@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { formatClock, type DemoCopy } from "../timeline";
 
 export function PlaybackControls({
@@ -31,6 +32,7 @@ export function PlaybackControls({
   onTogglePresentation: () => void;
   onToggleVoice: () => void;
 }) {
+  const t = useTranslations("demoVideo");
   if (presentation) return null;
 
   const btn =
@@ -48,7 +50,7 @@ export function PlaybackControls({
           value={timeMs}
           onChange={(e) => onSeek(Number(e.target.value))}
           className="h-3 w-full cursor-pointer accent-orange"
-          aria-label="Timeline progress"
+          aria-label={t("timelineProgress")}
         />
         <div className="flex flex-wrap items-center gap-3">
           <button

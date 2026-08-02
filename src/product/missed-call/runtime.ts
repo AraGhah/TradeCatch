@@ -3,12 +3,16 @@ import { createMissedCallEngine, type MissedCallEngine } from "./engine";
 import { createMemoryStore, type MissedCallStore } from "./store";
 import { createPostgresStore } from "./postgres-store";
 import { createTwilioSmsPort } from "./twilio";
-import { isDurableMissedCallStoreConfigured } from "@/lib/config";
+import {
+  isDurableMissedCallStoreConfigured,
+  isE2eHarness,
+  isProductionRuntime,
+} from "@/lib/config";
 
 /**
  * Process-local singleton for Module A.
- * Uses Postgres when MISSED_CALL_DURABLE_STORE=1 and DATABASE_URL are set;
- * otherwise falls back to in-memory (dev / incomplete prod).
+ * Uses Postgres when MISSED_CALL_DURABLE_STORE=1 and DATABASE_URL are set.
+ * Production (non-E2E) refuses memory fallback — webhooks must fail closed.
  */
 const globalForMissedCall = globalThis as unknown as {
   __tradecatchMissedCall?: {
@@ -34,9 +38,9 @@ function createStore(): { store: MissedCallStore; durable: boolean } {
     );
   }
 
-  if (process.env.NODE_ENV === "production") {
-    console.warn(
-      "[missed-call] Using in-memory store — NOT production-safe for multi-instance. Set DATABASE_URL + MISSED_CALL_DURABLE_STORE=1 and apply schema.sql before go-live.",
+  if (isProductionRuntime() && !isE2eHarness()) {
+    throw new Error(
+      "[missed-call] Refusing in-memory store in production. Set DATABASE_URL + MISSED_CALL_DURABLE_STORE=1 and apply schema.sql before accepting traffic.",
     );
   }
 

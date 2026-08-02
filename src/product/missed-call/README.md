@@ -1,8 +1,26 @@
 # Module A — Missed-call recovery
 
+**Deployment model:** single-tenant / single client config per deployment
+(`MISSED_CALL_CLIENT_ID` + env JSON). Multi-tenant SaaS isolation, billing, and
+client dashboards are not shipped yet.
+
 Workflow: **Missed call → SMS → collect → classify → job card → tech actions → customer notify → CRM outcome**
 
 Domain: `src/product/missed-call/`. Webhooks: `src/app/api/twilio/`.
+
+## Production prerequisites
+
+- `DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1`
+- Apply schema: `npm run db:schema`
+- Twilio voice status + SMS inbound + SMS status (`/api/twilio/sms/status`)
+- Ops secret + `X-Ops-Actor` on manual PII API calls
+- Cron: escalations every minute; retention daily (`vercel.json`)
+
+## Retention
+
+- Target: 24 months (privacy policy)
+- Soft-delete tick: `GET/POST /api/missed-call/retention/tick`
+- DSAR export/delete remains manual via privacy contact until a full DSAR API ships
 
 ## Service-area checking
 

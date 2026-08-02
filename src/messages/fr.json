@@ -23,9 +23,9 @@
   },
   "cta": {
     "primary": "Réserver un audit gratuit de 20 minutes",
-    "secondary": "Voir la démo en direct",
+    "secondary": "Voir la visite interactive",
     "tertiary": "Réserver un audit gratuit de 20 minutes",
-    "watchDemo": "Voir la démo en direct",
+    "watchDemo": "Voir la visite interactive",
     "seeWorkflow": "Voir le processus complet",
     "viewMissedCall": "Voir le processus des appels manqués",
     "viewQuoteFollowUp": "Voir le processus de relance des soumissions",
@@ -70,12 +70,12 @@
       "accentWord": "appels manqués",
       "subheadline": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien. Les séquences de relance de soumissions montrées ailleurs sur ce site sont illustratives — pas encore un module produit en production.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
-      "ctaSecondary": "Voir la démo en direct",
+      "ctaSecondary": "Voir la visite interactive",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
-      "demoStripLabel": "Parcours système en direct",
+      "demoStripLabel": "Parcours de simulation produit",
       "demoStripSteps": [
         "Appel manqué",
-        "SMS en <30 s",
+        "SMS de retour (souvent ~30 s)",
         "Détails captés",
         "Tech alerté",
         "Parcours pilote"
@@ -84,7 +84,7 @@
         "Basé au Québec",
         "Français et anglais",
         "Messages approuvés par un humain",
-        "Fonctionne avec votre numéro existant"
+        "Souvent compatible avec votre numéro existant"
       ],
       "reassurance": "Sans engagement. Aucun accès système requis. Vous parlez avec le fondateur.",
       "mockup": {
@@ -158,8 +158,8 @@
     "stats": {
       "items": [
         {
-          "value": "<30s",
-          "label": "pour la première réponse à un appel manqué"
+          "value": "~30 s",
+          "label": "cible typique pour la première réponse à un appel manqué"
         },
         {
           "value": "4",
@@ -197,7 +197,7 @@
     },
     "system": {
       "eyebrow": "Le système",
-      "headline": "De la première sonnerie au job signé.",
+      "headline": "De l'appel manqué au job réservé — exemple de parcours.",
       "intro": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte votre équipe. Les séquences de relance de soumissions sur ce site sont illustratives — pas encore un module produit en production.",
       "cta": "Voir comment ça marche",
       "previewLabel": "Exemple de parcours — illustratif, pas un flux client en direct",
@@ -207,7 +207,7 @@
         "Lead capté",
         "Alerte envoyée",
         "Parcours pilote",
-        "Job gagné"
+        "Résultat suivi (exemple)"
       ],
       "steps": [
         {
@@ -607,7 +607,7 @@
       "headline": "Voyez le système avant de parler à qui que ce soit.",
       "intro": "Ce sont des exemples de produit étiquetés — noms fictifs et parcours types — pour comprendre le produit. Ce ne sont pas des témoignages clients, des logos, ni des résultats promis.",
       "illustrativeLabel": "Données illustratives",
-      "demoCta": "Lancer la démo d'appel manqué",
+      "demoCta": "Essayer la visite interactive d'appel manqué",
       "onePagerCta": "Ouvrir la page résumé",
       "sms": {
         "badge": "Illustratif · Exemple SMS",
@@ -775,7 +775,7 @@
     "eyebrow": "Fonctionnement",
     "headline": "De l'appel manqué au job signé.",
     "intro": "Six étapes. Chacune testée avec votre équipe, en français et en anglais, avant qu'un seul client la voie.",
-    "metaDescription": "Découvrez comment le système transforme un appel manqué ou un nouveau prospect en rendez-vous réservé, relance de soumission et résultat suivi.",
+    "metaDescription": "Découvrez le texto d'appel manqué, la collecte de détails et l'alerte technicien. Les scènes de relance et de rendez-vous sont des walkthroughs illustratifs.",
     "stages": [
       {
         "title": "Le client contacte l'entreprise",
@@ -1173,9 +1173,12 @@
       "agreed": "Accepté",
       "notYet": "Pas encore",
       "verifyingHuman": "Vérification en cours…",
-      "genericError": "Une erreur est survenue de notre côté. Veuillez réessayer.",
+      "genericError": "Impossible d'envoyer votre demande d'audit. Vérifiez vos réponses et réessayez. Si le problème persiste, appelez le 438·993·6997.",
       "networkError": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
       "errorSummary": "Veuillez corriger les points suivants avant de continuer :",
+      "fixField": "Aller à {field}",
+      "turnstileRequired": "Complétez la vérification de sécurité avant d'envoyer.",
+      "turnstileLabel": "Vérification de sécurité",
       "reviewNote": "Vérifiez vos réponses ci-dessous, puis soumettez votre demande.",
       "questions": {
         "name": {
@@ -1352,7 +1355,7 @@
       },
       {
         "q": "Que se passe-t-il quand un client répond?",
-        "a": "La séquence automatique s'arrête ou se met en pause immédiatement, et la réponse est acheminée selon les règles que vous avez fixées."
+        "a": "Pour le texto d'appel manqué en production, la réponse poursuit les questions de collecte ou est transmise à votre équipe. L'arrêt automatique des séquences de relance de soumissions est prévu, pas encore livré."
       },
       {
         "q": "Le système peut-il offrir des rabais?",
@@ -1420,11 +1423,11 @@
         },
         {
           "heading": "Transferts de données hors Québec",
-          "body": "Certains fournisseurs ci-dessus peuvent traiter ou stocker des données hors Québec ou du Canada, notamment aux États-Unis. Le cas échéant, le fournisseur est contractuellement tenu de protéger les informations selon une norme comparable à la loi québécoise, et nous réalisons l'évaluation des facteurs relatifs à la vie privée exigée avant de recourir à un fournisseur hors Québec, conformément à la Loi 25."
+          "body": "Certains fournisseurs ci-dessus peuvent traiter ou stocker des données hors Québec ou du Canada, notamment aux États-Unis. Le cas échéant, nous exigeons des protections contractuelles comparables à la loi québécoise. Les évaluations des facteurs relatifs à la vie privée pour les fournisseurs hors Québec sont réalisées avant leur utilisation pour des renseignements personnels de clients en exploitation réelle; ce site public ne constitue pas à lui seul l'achèvement de chaque EFVP."
         },
         {
           "heading": "Calendrier de conservation des données",
-          "body": "Les soumissions de demande d'audit et de formulaire de contact sont conservées jusqu'à 24 mois après votre dernière interaction avec nous, sauf si vous devenez client (les dossiers clients sont alors conservés selon notre entente de service et les exigences fiscales et comptables applicables) ou si vous demandez une suppression anticipée. Les dossiers opérationnels d'appels manqués, lorsqu'un stockage durable est activé, suivent le même délai de 24 mois sauf entente client contraire. Les données analytiques sont conservées selon les paramètres par défaut de Google Analytics."
+          "body": "Notre objectif de conservation pour les soumissions de demande d'audit et de formulaire de contact est d'au plus 24 mois après votre dernière interaction avec nous, sauf si vous devenez client (les dossiers clients sont alors conservés selon notre entente de service et les exigences fiscales et comptables applicables) ou si vous demandez une suppression anticipée. Les tâches automatiques de purge pour ce calendrier sont en déploiement; d'ici là, les demandes d'accès et de suppression sont traitées manuellement via notre contact vie privée. Les dossiers opérationnels d'appels manqués, lorsqu'un stockage durable est activé, suivent le même objectif sauf entente client contraire. Les données analytiques sont conservées selon les paramètres par défaut de Google Analytics."
         },
         {
           "heading": "Vos droits en matière de confidentialité",
@@ -1450,7 +1453,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés (réponse aux appels manqués, qualification de prospects, alertes aux techniciens et relance des soumissions) pour les entreprises de service. Les services sont définis et tarifés individuellement après un audit et confirmés dans une proposition écrite."
+          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Le module produit en service aujourd'hui est la réponse aux appels manqués avec qualification de prospects et alertes aux techniciens. La relance des soumissions et les modules connexes ne sont offerts que lorsqu'ils sont explicitement inclus dans une proposition écrite après leur mise en service. Les services sont définis et tarifés individuellement après un audit et confirmés dans cette proposition."
         },
         {
           "heading": "Responsabilités du client",
@@ -1669,7 +1672,10 @@
     "close": "Fermer",
     "captionsLabel": "Sous-titres français",
     "transcriptTitle": "Transcription",
-    "transcript": "Un entrepreneur manque un appel. TradeCatch envoie un texto au client, recueille le nom, l'adresse et le problème, alerte le technicien de garde avec une fiche job, puis avise le client quand le technicien accepte. Démonstration illustrative — pas une vraie conversation client."
+    "transcript": "Un entrepreneur manque un appel. TradeCatch envoie un texto au client, recueille le nom, l'adresse et le problème, alerte le technicien de garde avec une fiche job, puis avise le client quand le technicien accepte. Démonstration illustrative — pas une vraie conversation client.",
+    "timelineProgress": "Progression de la timeline",
+    "play": "Lecture",
+    "pause": "Pause"
   },
   "errors": {
     "eyebrow": "Une erreur est survenue",

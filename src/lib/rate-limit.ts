@@ -84,6 +84,10 @@ function softClientHint(request: Request): string {
  * - Explicit trust (`TRUST_PROXY_HEADERS=1`): classic proxy chain
  * - Non-production: allow forwarded headers for local/dev/e2e
  * - Otherwise: never trust public forwarding headers → `"unknown"`
+ *
+ * In production, unidentified clients collapse to `"unknown"` (not a
+ * rotatable UA/language hash) so attackers cannot bypass limits by rotating
+ * headers. Callers should use a stricter limit for the `unknown` bucket.
  */
 export function getClientIp(
   request: Request,
@@ -103,7 +107,10 @@ export function getClientIp(
   }
 
   const cfIp = request.headers.get("cf-connecting-ip")?.trim();
-  if (cfIp) return cfIp;
+  // Only trust CF-Connecting-IP when the origin is explicitly Cloudflare-fronted.
+  if (cfIp && (env.CF_TRUSTED === "1" || env.CF_CONNECTING_IP_TRUSTED === "1")) {
+    return cfIp;
+  }
 
   // E2E production builds set NODE_ENV=production but still inject synthetic
   // x-forwarded-for values so parallel tests do not share one rate-limit bucket.
@@ -120,10 +127,11 @@ export function getClientIp(
       const ip = firstForwardedIp(forwardedFor);
       if (ip) return ip;
     }
+    // Dev/e2e only: soft hint avoids collapsing every local client together.
+    if (env.NODE_ENV !== "production" || isE2eHarness(env)) {
+      return `unknown:${softClientHint(request)}`;
+    }
   }
 
-  // Never collapse every unidentified visitor into one shared bucket — that
-  // rate-limits unrelated prospects together on hosts without sanitized proxy
-  // headers. Prefer configuring TRUST_PROXY_HEADERS=1 behind your reverse proxy.
-  return `unknown:${softClientHint(request)}`;
+  return "unknown";
 }

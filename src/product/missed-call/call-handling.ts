@@ -93,9 +93,6 @@ export function buildDedupeKey(
   return `${clientAccountId}:${callerE164}:${windowBucket}`;
 }
 
-export function dedupeWindowBucket(
-  at: Date,
-  windowMs: number,
-): number {
+export function dedupeWindowBucket(at: Date, windowMs: number): number {
   return Math.floor(at.getTime() / windowMs);
 }

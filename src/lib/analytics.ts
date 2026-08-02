@@ -61,7 +61,9 @@ function clearAnalyticsCookies() {
   for (const raw of document.cookie.split(";")) {
     const name = raw.split("=")[0]?.trim();
     if (!name) continue;
-    if (!GA_COOKIE_PREFIXES.some((p) => name === p || name.startsWith(`${p}_`))) {
+    if (
+      !GA_COOKIE_PREFIXES.some((p) => name === p || name.startsWith(`${p}_`))
+    ) {
       continue;
     }
     for (const domain of domains) {
@@ -71,10 +73,23 @@ function clearAnalyticsCookies() {
   }
 }
 
+const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
+
 export function trackEvent(name: string, params?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
   if (!hasAnalyticsConsent()) return;
   (window as GtagWindow).gtag?.("event", name, params);
+}
+
+/** Fires GA4 page_view on client navigations (locale + route changes). */
+export function trackPageView(pagePath: string, locale?: string) {
+  if (typeof window === "undefined") return;
+  if (!hasAnalyticsConsent() || !GA_MEASUREMENT_ID) return;
+  gtag("event", "page_view", {
+    page_path: pagePath,
+    page_location: window.location.href,
+    ...(locale ? { language: locale } : {}),
+  });
 }
 
 export function readConsent(): ConsentRecord | null {

@@ -5,11 +5,17 @@ import { demoClientAccount } from "../../src/product/missed-call/fixtures";
 import { createMemoryStore } from "../../src/product/missed-call/store";
 import { createMemorySmsPort } from "../../src/product/missed-call/twilio";
 
+/** Wednesday 14:00 America/Toronto — Marc (primary) is on-call, not weekend Sophie. */
+function wednesdayBusinessHours(): Date {
+  return new Date("2026-07-22T18:00:00.000Z");
+}
+
 describe("P0 durability fixes", () => {
   it("releases inbound MessageSid after handler failure so Twilio can retry", async () => {
     const store = createMemoryStore();
     const client = demoClientAccount();
     await store.saveClient(client);
+    const now = wednesdayBusinessHours();
 
     let calls = 0;
     const sms = {
@@ -23,12 +29,17 @@ describe("P0 durability fixes", () => {
       },
     };
 
-    const engine = createMissedCallEngine({ store, sms });
+    const engine = createMissedCallEngine({
+      store,
+      sms,
+      clock: { now: () => now },
+    });
     await engine.handleCallEvent({
       clientAccountId: client.id,
       callerE164: "+15145551111",
       answered: false,
       abandoned: false,
+      calledAt: now,
     });
 
     await assert.rejects(() =>
@@ -74,6 +85,7 @@ describe("P0 durability fixes", () => {
     const store = createMemoryStore();
     const client = demoClientAccount();
     await store.saveClient(client);
+    const now = wednesdayBusinessHours();
     let failJobCard = true;
     const primary = client.technicianRoster.find((t) => t.role === "primary");
     assert.ok(primary);
@@ -86,12 +98,17 @@ describe("P0 durability fixes", () => {
         return { sid: "SM_ok" };
       },
     };
-    const engine = createMissedCallEngine({ store, sms });
+    const engine = createMissedCallEngine({
+      store,
+      sms,
+      clock: { now: () => now },
+    });
     await engine.handleCallEvent({
       clientAccountId: client.id,
       callerE164: "+15145553301",
       answered: false,
       abandoned: false,
+      calledAt: now,
     });
     const to = client.smsFromNumber;
     const from = "+15145553301";
@@ -122,13 +139,19 @@ describe("P0 durability fixes", () => {
     const store = createMemoryStore();
     const client = demoClientAccount();
     await store.saveClient(client);
+    const now = wednesdayBusinessHours();
     const sms = createMemorySmsPort();
-    const engine = createMissedCallEngine({ store, sms });
+    const engine = createMissedCallEngine({
+      store,
+      sms,
+      clock: { now: () => now },
+    });
     await engine.handleCallEvent({
       clientAccountId: client.id,
       callerE164: "+15145553302",
       answered: false,
       abandoned: false,
+      calledAt: now,
     });
     const to = client.smsFromNumber;
     const from = "+15145553302";
@@ -140,7 +163,7 @@ describe("P0 durability fixes", () => {
       phoneE164: from,
       channel: "sms",
       source: "manual",
-      at: new Date().toISOString(),
+      at: now.toISOString(),
       providerStatus: "local_only",
     });
     const wf = (await store.listWorkflowsAwaitingTechnician())[0];
@@ -162,8 +185,13 @@ describe("P0 durability fixes", () => {
     const store = createMemoryStore();
     const client = demoClientAccount();
     await store.saveClient(client);
+    const now = wednesdayBusinessHours();
     const sms = createMemorySmsPort();
-    const engine = createMissedCallEngine({ store, sms });
+    const engine = createMissedCallEngine({
+      store,
+      sms,
+      clock: { now: () => now },
+    });
 
     const first = await engine.handleCallEvent({
       clientAccountId: client.id,
@@ -171,6 +199,7 @@ describe("P0 durability fixes", () => {
       answered: false,
       abandoned: false,
       twilioCallSid: "CA_orphan",
+      calledAt: now,
     });
     assert.ok(first.workflow);
     const call = first.call;
@@ -179,13 +208,18 @@ describe("P0 durability fixes", () => {
     await store2.saveClient(client);
     await store2.saveCall(call);
 
-    const engine2 = createMissedCallEngine({ store: store2, sms });
+    const engine2 = createMissedCallEngine({
+      store: store2,
+      sms,
+      clock: { now: () => now },
+    });
     const retry = await engine2.handleCallEvent({
       clientAccountId: client.id,
       callerE164: "+15145554444",
       answered: false,
       abandoned: false,
       twilioCallSid: "CA_orphan",
+      calledAt: now,
     });
     assert.ok(retry.workflow);
     assert.equal(retry.workflow?.callId, call.id);
@@ -196,7 +230,7 @@ describe("P0 durability fixes", () => {
     const store = createMemoryStore();
     const client = demoClientAccount();
     await store.saveClient(client);
-    const now = new Date("2026-07-22T18:00:00.000Z");
+    const now = wednesdayBusinessHours();
     const sms = createMemorySmsPort();
     const engine = createMissedCallEngine({
       store,

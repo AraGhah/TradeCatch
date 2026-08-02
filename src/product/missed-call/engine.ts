@@ -29,6 +29,7 @@ import {
 } from "./messaging";
 import { checkServiceArea } from "./service-area";
 import type { MissedCallStore } from "./store";
+import { DuplicateActiveWorkflowError } from "./store";
 import {
   buildJobCardSms,
   createActionToken,
@@ -57,6 +58,23 @@ const MAX_OUTBOUND_ATTEMPTS = 5;
 
 function id(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
+}
+
+function normalizePhoneKey(n: string): string {
+  return n.replace(/[^\d+]/g, "");
+}
+
+/** Deterministic outbox id so Twilio retries cannot enqueue duplicate purposes. */
+function outboxPurposeId(
+  workflowId: string,
+  toE164: string,
+  detail: string | undefined,
+): string {
+  const purpose = (detail ?? "sms")
+    .toLowerCase()
+    .replace(/[^a-z0-9:_-]+/g, "_")
+    .slice(0, 80);
+  return `sms_${workflowId}_${normalizePhoneKey(toE164)}_${purpose || "sms"}`;
 }
 
 function pushEvent(
@@ -154,36 +172,50 @@ export function createMissedCallEngine(deps: {
     detail?: string;
     allowWhenSuppressed?: boolean;
   }): Promise<boolean> {
+    const rosterPhones = new Set(
+      input.client.technicianRoster.map((t) => normalizePhoneKey(t.phone)),
+    );
+    if (input.client.humanReviewPhone) {
+      rosterPhones.add(normalizePhoneKey(input.client.humanReviewPhone));
+    }
+    const sendingToStaff = rosterPhones.has(normalizePhoneKey(input.toE164));
+
     if (
       !input.allowWhenSuppressed &&
-      (await deps.store.isSmsSuppressed(input.client.id, input.toE164))
+      (await deps.store.isSmsSuppressed(input.client.id, input.toE164, {
+        asCustomer: !sendingToStaff,
+      }))
     ) {
       return false;
     }
 
+    const purposeId = outboxPurposeId(
+      input.workflow.id,
+      input.toE164,
+      input.detail,
+    );
+
     pushEvent(input.workflow, "sms_queued", input.detail, clock);
-    await deps.store.saveWorkflow(input.workflow);
 
     const nowIso = clock.now().toISOString();
     const outbox: OutboundMessageRecord = {
-      id: id("sms"),
+      id: purposeId,
       workflowId: input.workflow.id,
       clientAccountId: input.client.id,
       toE164: input.toE164,
       fromE164: input.client.smsFromNumber,
       body: input.body,
       detail: input.detail,
-      // Queue first so a crash before send leaves a reclaimable row.
       status: "queued",
       attempts: 0,
       createdAt: nowIso,
       updatedAt: nowIso,
     };
-    await deps.store.enqueueOutbound(outbox);
+    await deps.store.saveWorkflowAndEnqueueOutbound(input.workflow, outbox);
 
     const claimed = await deps.store.claimOutboundById(outbox.id);
     if (!claimed) {
-      // Another worker already claimed this row — avoid double-send.
+      // Already accepted, delivered, or claimed — do not create a second send.
       return true;
     }
 
@@ -276,7 +308,10 @@ export function createMissedCallEngine(deps: {
     return sent ? body : null;
   }
 
-  function applyServiceArea(workflow: MissedCallWorkflow, client: ClientAccount) {
+  function applyServiceArea(
+    workflow: MissedCallWorkflow,
+    client: ClientAccount,
+  ) {
     const addr = workflow.collected.serviceAddress;
     if (!addr) return;
     const result = checkServiceArea(addr, client.approvedServiceAreas);
@@ -332,7 +367,16 @@ export function createMissedCallEngine(deps: {
     workflow: MissedCallWorkflow,
     client: ClientAccount,
     reason: string,
+    opts?: { terminal?: boolean },
   ): Promise<void> {
+    // Idempotent: never re-alert for the same exhaustion/review reason.
+    if (
+      workflow.events.some(
+        (e) => e.type === "human_review_alerted" && e.detail === reason,
+      )
+    ) {
+      return;
+    }
     const phone =
       client.humanReviewPhone ??
       rosterTechnician(client, client.ownerTechnicianId ?? "")?.phone;
@@ -348,10 +392,14 @@ export function createMissedCallEngine(deps: {
       client,
       toE164: phone,
       body,
-      detail: reason,
+      detail: `human_review:${reason}`.slice(0, 80),
     });
     pushEvent(workflow, "human_review_alerted", reason, clock);
-    workflow.status = "awaiting_human";
+    // Exhaustion must remain a terminal stopped state — never bounce back to
+    // awaiting_human or cron will loop alerts forever.
+    if (!opts?.terminal) {
+      workflow.status = "awaiting_human";
+    }
   }
 
   async function sendJobCard(
@@ -392,38 +440,71 @@ export function createMissedCallEngine(deps: {
       actionToken,
     });
 
-    const sentAt = now.toISOString();
-    // Register the action token before send so outbox retries remain actionable.
+    // Persist the action token before send so outbox retries stay actionable,
+    // but do NOT start the escalation timer until Twilio accepts the message.
+    const provisionalAt = clock.now().toISOString();
     pushTechnicianAlert(
       workflow,
       {
         technicianId: tech.id,
         phone: tech.phone,
-        sentAt,
+        sentAt: provisionalAt,
         stage,
         actionToken,
       },
       escalationIndex,
     );
+    // Clear timer until provider accept — pushTechnicianAlert sets it early.
+    workflow.technicianAlertedAt = undefined;
     pushEvent(workflow, "technician_alerted", `${stage}:${tech.id}`, clock);
     workflow.status = workflow.humanReviewRequired
       ? "awaiting_human"
       : "awaiting_technician";
     await deps.store.saveWorkflow(workflow);
 
-    const sent = await sendOutboundSms({
-      workflow,
-      client,
-      toE164: tech.phone,
-      body,
-      detail: `${stage}:${tech.id}`,
-    });
-    if (!sent) return false;
+    let sent = false;
+    try {
+      sent = await sendOutboundSms({
+        workflow,
+        client,
+        toE164: tech.phone,
+        body,
+        detail: `${stage}:${tech.id}`,
+      });
+    } catch {
+      // Provider rejected the send but the outbox is in `retry` with this
+      // action token embedded in the body — keep the alert open without
+      // starting the escalation timer so cron can resend and ACCEPTER works.
+      await deps.store.saveWorkflow(workflow);
+      return true;
+    }
+    if (!sent) {
+      // Suppressed / not deliverable — close alert; do not escalate on silence.
+      const open = workflow.technicianAlerts.find(
+        (a) => a.actionToken === actionToken && !a.respondedAt,
+      );
+      if (open) {
+        open.respondedAt = clock.now().toISOString();
+        open.response = "timed_out";
+      }
+      workflow.technicianAlertedAt = undefined;
+      await deps.store.saveWorkflow(workflow);
+      return false;
+    }
 
+    const acceptedAt = clock.now().toISOString();
+    const alert = workflow.technicianAlerts.find(
+      (a) => a.actionToken === actionToken,
+    );
+    if (alert) alert.sentAt = acceptedAt;
+    workflow.technicianAlertedAt = acceptedAt;
+    await deps.store.saveWorkflow(workflow);
     return true;
   }
 
-  async function finalizeAndDispatch(workflow: MissedCallWorkflow): Promise<void> {
+  async function finalizeAndDispatch(
+    workflow: MissedCallWorkflow,
+  ): Promise<void> {
     const client = await deps.store.getClient(workflow.clientAccountId);
     if (!client) return;
 
@@ -433,7 +514,8 @@ export function createMissedCallEngine(deps: {
     if (workflow.humanReviewRequired) {
       const reasons: string[] = [];
       if (workflow.serviceAreaFlagged) reasons.push("zone de service");
-      if (workflow.urgency?.requiresHuman) reasons.push("urgence critique/incertaine");
+      if (workflow.urgency?.requiresHuman)
+        reasons.push("urgence critique/incertaine");
       await notifyHumanReview(
         workflow,
         client,
@@ -443,9 +525,22 @@ export function createMissedCallEngine(deps: {
 
     const sent = await sendJobCard(workflow, client, 0);
     if (!sent) {
+      const hasTech = Boolean(
+        technicianAtEscalationIndex(
+          client,
+          0,
+          clock.now(),
+          workflow.escalationChainIds,
+        ),
+      );
       workflow.status = "stopped";
       workflow.stopReason = "manual_stop";
-      pushEvent(workflow, "no_technician_configured", undefined, clock);
+      pushEvent(
+        workflow,
+        hasTech ? "technician_alert_failed" : "no_technician_configured",
+        undefined,
+        clock,
+      );
     }
     await deps.store.saveWorkflow(workflow);
     await ensureLead(workflow);
@@ -467,6 +562,7 @@ export function createMissedCallEngine(deps: {
         workflow,
         client,
         "aucun technicien n'a accepté",
+        { terminal: true },
       );
       await deps.store.saveWorkflow(workflow);
       await ensureLead(workflow);
@@ -544,7 +640,12 @@ export function createMissedCallEngine(deps: {
       // and a second ACCEPTER remain actionable.
       techWorkflow.acceptNotifyPending = true;
       techWorkflow.assignedTechnicianId = openAlert.technicianId;
-      pushEvent(techWorkflow, "technician_accepted", openAlert.technicianId, clock);
+      pushEvent(
+        techWorkflow,
+        "technician_accepted",
+        openAlert.technicianId,
+        clock,
+      );
       await deps.store.saveWorkflow(techWorkflow);
 
       const notify = customerNotifyAccepted(
@@ -609,7 +710,12 @@ export function createMissedCallEngine(deps: {
         "declined",
         clock.now(),
       );
-      pushEvent(techWorkflow, "technician_declined", openAlert.technicianId, clock);
+      pushEvent(
+        techWorkflow,
+        "technician_declined",
+        openAlert.technicianId,
+        clock,
+      );
       const lead = await deps.store.getLeadByWorkflowId(techWorkflow.id);
       if (lead && techWorkflow.technicianAlertedAt) {
         recordTechnicianResponse(
@@ -783,7 +889,7 @@ export function createMissedCallEngine(deps: {
         abandoned: input.abandoned,
       });
 
-      const call: CallRecord = {
+      const callDraft: CallRecord = {
         id: id("call"),
         clientAccountId: client.id,
         callerE164: input.callerE164,
@@ -792,7 +898,7 @@ export function createMissedCallEngine(deps: {
         durationSeconds: input.durationSeconds,
         twilioCallSid: input.twilioCallSid,
       };
-      await deps.store.saveCall(call);
+      const call = await deps.store.saveCall(callDraft);
 
       if (!shouldStartRecovery(disposition)) {
         return {
@@ -869,7 +975,23 @@ export function createMissedCallEngine(deps: {
         collectionStartedAt: now,
       };
       pushEvent(workflow, "workflow_started", disposition, clock);
-      await deps.store.saveWorkflow(workflow);
+      try {
+        await deps.store.saveWorkflow(workflow);
+      } catch (err) {
+        if (err instanceof DuplicateActiveWorkflowError) {
+          const winner =
+            await deps.store.findActiveWorkflowByDedupeKey(dedupeKey);
+          if (winner) {
+            return {
+              call,
+              workflow: winner,
+              smsSent: false,
+              suppressedReason: "duplicate_suppressed",
+            };
+          }
+        }
+        throw err;
+      }
 
       const open = openingSms(client);
       const smsSent = await sendOutboundSms({
@@ -888,225 +1010,252 @@ export function createMissedCallEngine(deps: {
       let claimedSid: string | undefined;
 
       try {
-      if (input.messageSid) {
-        const claimed = await deps.store.claimInboundMessageSid(
-          input.messageSid,
-        );
-        if (!claimed) {
-          return { handled: true, replies: [] };
+        if (input.messageSid) {
+          const claimed = await deps.store.claimInboundMessageSid(
+            input.messageSid,
+          );
+          if (!claimed) {
+            return { handled: true, replies: [] };
+          }
+          claimedSid = input.messageSid;
         }
-        claimedSid = input.messageSid;
-      }
 
-      const client = await deps.store.findClientBySmsFromNumber(input.toE164);
+        const client = await deps.store.findClientBySmsFromNumber(input.toE164);
 
-      // Opt-out / STOP must run before technician command routing so a tech
-      // (or customer) replying STOP is suppressed, not told "invalid command".
-      if (client && isOptOut(input.body, client)) {
-        let providerStatus: "local_only" | "synced" | "pending" | "error" =
-          "local_only";
-        let providerDetail: string | undefined;
-        if (deps.sms.syncOptOut) {
-          const sync = await deps.sms.syncOptOut({
+        // Opt-out / STOP must run before technician command routing so a tech
+        // (or customer) replying STOP is suppressed, not told "invalid command".
+        if (client && isOptOut(input.body, client)) {
+          let providerStatus: "local_only" | "synced" | "pending" | "error" =
+            "local_only";
+          let providerDetail: string | undefined;
+          if (deps.sms.syncOptOut) {
+            const sync = await deps.sms.syncOptOut({
+              phoneE164: input.fromE164,
+              fromE164: client.smsFromNumber,
+            });
+            // syncOptOut is currently a local observation helper — never claim
+            // provider sync until a real Twilio Messaging Opt-Out API is wired.
+            providerStatus = sync.ok ? "local_only" : "error";
+            providerDetail = sync.detail ?? "provider_sync_not_implemented";
+          }
+
+          const isTechnician = client.technicianRoster.some(
+            (t) =>
+              normalizePhoneKey(t.phone) === normalizePhoneKey(input.fromE164),
+          );
+          const isHumanReview =
+            Boolean(client.humanReviewPhone) &&
+            normalizePhoneKey(client.humanReviewPhone!) ===
+              normalizePhoneKey(input.fromE164);
+
+          await deps.store.addSmsSuppression({
+            clientAccountId: client.id,
             phoneE164: input.fromE164,
-            fromE164: client.smsFromNumber,
+            channel: "sms",
+            source:
+              isTechnician || isHumanReview
+                ? "technician_keyword"
+                : "customer_keyword",
+            scope:
+              isTechnician || isHumanReview ? "customer_outbound" : "all",
+            at: clock.now().toISOString(),
+            providerStatus,
+            providerDetail,
+            note:
+              isTechnician || isHumanReview
+                ? "STOP from roster/review phone — job cards still allowed"
+                : undefined,
           });
-          // syncOptOut is currently a local observation helper — never claim
-          // provider sync until a real Twilio Messaging Opt-Out API is wired.
-          providerStatus = sync.ok ? "local_only" : "error";
-          providerDetail = sync.detail ?? "provider_sync_not_implemented";
+
+          const wf = await deps.store.findActiveWorkflowByCaller(
+            client.id,
+            input.fromE164,
+          );
+          const bye =
+            "Vous êtes désabonné. Vous ne recevrez plus de textos de notre part. / You are unsubscribed.";
+          if (wf) {
+            wf.status = "stopped";
+            wf.stopReason = "opt_out";
+            wf.outcome = "cancelled";
+            pushEvent(wf, "opt_out", undefined, clock);
+            pushEvent(wf, "outcome_recorded", "cancelled", clock);
+            await deps.store.saveWorkflow(wf);
+            await ensureLead(wf);
+            await sendOutboundSms({
+              workflow: wf,
+              client,
+              toE164: input.fromE164,
+              body: bye,
+              detail: "opt_out_confirm",
+              allowWhenSuppressed: true,
+            });
+          } else {
+            await deps.sms.send({
+              toE164: input.fromE164,
+              fromE164: client.smsFromNumber,
+              body: bye,
+            });
+          }
+          return { handled: true, replies };
         }
 
-        await deps.store.addSmsSuppression({
-          clientAccountId: client.id,
-          phoneE164: input.fromE164,
-          channel: "sms",
-          source: "customer_keyword",
-          at: clock.now().toISOString(),
-          providerStatus,
-          providerDetail,
-        });
-
-        const wf = await deps.store.findActiveWorkflowByCaller(
-          client.id,
-          input.fromE164,
-        );
-        const bye =
-          "Vous êtes désabonné. Vous ne recevrez plus de textos de notre part. / You are unsubscribed.";
-        if (wf) {
-          wf.status = "stopped";
-          wf.stopReason = "opt_out";
-          wf.outcome = "cancelled";
-          pushEvent(wf, "opt_out", undefined, clock);
-          pushEvent(wf, "outcome_recorded", "cancelled", clock);
-          await deps.store.saveWorkflow(wf);
-          await ensureLead(wf);
-          await sendOutboundSms({
-            workflow: wf,
-            client,
-            toE164: input.fromE164,
-            body: bye,
-            detail: "opt_out_confirm",
-            allowWhenSuppressed: true,
-          });
-        } else {
-          await deps.sms.send({
-            toE164: input.fromE164,
-            fromE164: client.smsFromNumber,
-            body: bye,
-          });
-        }
-        return { handled: true, replies };
-      }
-
-      const parsedEarly = parseTechnicianAction(input.body);
-      const techWorkflow = await deps.store.findWorkflowByTechnicianPhone(
-        input.fromE164,
-        parsedEarly?.actionToken,
-      );
-      if (techWorkflow) {
-        const openAlert = findOpenAlertForPhone(
-          techWorkflow,
+        const parsedEarly = parseTechnicianAction(input.body);
+        const techWorkflow = await deps.store.findWorkflowByTechnicianPhone(
           input.fromE164,
           parsedEarly?.actionToken,
         );
-        if (openAlert) {
-          return handleTechnicianSms(techWorkflow, input, openAlert);
+        if (techWorkflow) {
+          const openAlert = findOpenAlertForPhone(
+            techWorkflow,
+            input.fromE164,
+            parsedEarly?.actionToken,
+          );
+          if (openAlert) {
+            return handleTechnicianSms(techWorkflow, input, openAlert);
+          }
         }
-      }
 
-      // Known technician phone with only timed-out / wrong-code alerts.
-      const awaiting = await deps.store.listWorkflowsAwaitingTechnician();
-      const staleTech = awaiting.some((w) =>
-        w.technicianAlerts.some((a) => a.phone === input.fromE164),
-      );
-      if (staleTech) {
-        return {
-          handled: true,
-          replies: [
-            "Cette alerte n'est plus active. Répondez uniquement à la fiche job la plus récente (avec son code).",
-          ],
-        };
-      }
-
-      if (!client) return { handled: false, replies };
-
-      const workflow = await deps.store.findActiveWorkflowByCaller(
-        client.id,
-        input.fromE164,
-      );
-      if (!workflow || workflow.status !== "awaiting_customer") {
-        return { handled: false, replies };
-      }
-
-      await logSmsConversation({
-        workflow,
-        direction: "inbound",
-        fromE164: input.fromE164,
-        toE164: input.toE164,
-        body: input.body,
-        mediaUrls: input.mediaUrls,
-        actor: "customer",
-      });
-
-      if (workflow.currentStep === "language") {
-        if (isEnglishRequest(input.body)) {
-          workflow.collected.language = "en";
-        } else if (isFrenchRequest(input.body)) {
-          workflow.collected.language = "fr";
-        } else {
-          workflow.collected.language = "fr";
+        // Known technician phone with only timed-out / wrong-code alerts.
+        const awaiting = await deps.store.listWorkflowsAwaitingTechnician();
+        const staleTech = awaiting.some((w) =>
+          w.technicianAlerts.some((a) => a.phone === input.fromE164),
+        );
+        if (staleTech) {
+          return {
+            handled: true,
+            replies: [
+              "Cette alerte n'est plus active. Répondez uniquement à la fiche job la plus récente (avec son code).",
+            ],
+          };
         }
-        const next = nextCollectionStep(client, workflow.collected, "language");
-        workflow.currentStep = next;
-        pushEvent(workflow, "language_set", workflow.collected.language, clock);
-        if (next === "done") {
-          await finalizeAndDispatch(workflow);
+
+        if (!client) return { handled: false, replies };
+
+        const workflow = await deps.store.findActiveWorkflowByCaller(
+          client.id,
+          input.fromE164,
+        );
+        if (!workflow || workflow.status !== "awaiting_customer") {
+          return { handled: false, replies };
+        }
+
+        await logSmsConversation({
+          workflow,
+          direction: "inbound",
+          fromE164: input.fromE164,
+          toE164: input.toE164,
+          body: input.body,
+          mediaUrls: input.mediaUrls,
+          actor: "customer",
+        });
+
+        if (workflow.currentStep === "language") {
+          if (isEnglishRequest(input.body)) {
+            workflow.collected.language = "en";
+          } else if (isFrenchRequest(input.body)) {
+            workflow.collected.language = "fr";
+          } else {
+            workflow.collected.language = "fr";
+          }
+          const next = nextCollectionStep(
+            client,
+            workflow.collected,
+            "language",
+          );
+          workflow.currentStep = next;
+          pushEvent(
+            workflow,
+            "language_set",
+            workflow.collected.language,
+            clock,
+          );
+          if (next === "done") {
+            await finalizeAndDispatch(workflow);
+            return { handled: true, replies };
+          }
+          const prompt = await sendPrompt(workflow, client.id, next);
+          if (prompt) replies.push(prompt);
+          await deps.store.saveWorkflow(workflow);
           return { handled: true, replies };
         }
-        const prompt = await sendPrompt(workflow, client.id, next);
-        if (prompt) replies.push(prompt);
-        await deps.store.saveWorkflow(workflow);
-        return { handled: true, replies };
-      }
 
-      const step = workflow.currentStep;
-      const media = input.mediaUrls ?? [];
-      const question = enabledQuestions(client).find((x) => x.id === step);
+        const step = workflow.currentStep;
+        const media = input.mediaUrls ?? [];
+        const question = enabledQuestions(client).find((x) => x.id === step);
 
-      if (step === "photo" && media.length === 0 && isPhotoSkip(input.body)) {
-        if (question?.required) {
-          const message =
-            workflow.collected.language === "en"
-              ? "A photo is required. Please send an MMS image."
-              : "Une photo est requise. Envoyez une image en MMS.";
+        if (step === "photo" && media.length === 0 && isPhotoSkip(input.body)) {
+          if (question?.required) {
+            const message =
+              workflow.collected.language === "en"
+                ? "A photo is required. Please send an MMS image."
+                : "Une photo est requise. Envoyez une image en MMS.";
+            await sendOutboundSms({
+              workflow,
+              client,
+              toE164: input.fromE164,
+              body: message,
+              detail: "photo_required",
+            });
+            replies.push(message);
+            await deps.store.saveWorkflow(workflow);
+            return { handled: true, replies };
+          }
+          const next = nextCollectionStep(client, workflow.collected, "photo");
+          workflow.currentStep = next;
+          pushEvent(workflow, "photo_skipped", undefined, clock);
+          if (next === "done") {
+            await finalizeAndDispatch(workflow);
+            return { handled: true, replies };
+          }
+          const prompt = await sendPrompt(workflow, client.id, next);
+          if (prompt) replies.push(prompt);
+          await deps.store.saveWorkflow(workflow);
+          return { handled: true, replies };
+        }
+
+        const validation = validateCollectionAnswer({
+          step,
+          body: input.body,
+          mediaUrls: media,
+          question,
+          lang: workflow.collected.language,
+        });
+        if (!validation.ok) {
           await sendOutboundSms({
             workflow,
             client,
             toE164: input.fromE164,
-            body: message,
-            detail: "photo_required",
+            body: validation.message,
+            detail: `validation_failed:${step}`,
           });
-          replies.push(message);
+          replies.push(validation.message);
           await deps.store.saveWorkflow(workflow);
           return { handled: true, replies };
         }
-        const next = nextCollectionStep(client, workflow.collected, "photo");
+
+        workflow.collected = applyAnswer(
+          step,
+          input.body,
+          media,
+          workflow.collected,
+        );
+        pushEvent(workflow, "answer_recorded", step, clock);
+
+        if (step === "address") applyServiceArea(workflow, client);
+        if (step === "description") await applyUrgency(workflow, client);
+
+        const next = nextCollectionStep(client, workflow.collected, step);
         workflow.currentStep = next;
-        pushEvent(workflow, "photo_skipped", undefined, clock);
+
         if (next === "done") {
           await finalizeAndDispatch(workflow);
           return { handled: true, replies };
         }
+
         const prompt = await sendPrompt(workflow, client.id, next);
         if (prompt) replies.push(prompt);
         await deps.store.saveWorkflow(workflow);
         return { handled: true, replies };
-      }
-
-      const validation = validateCollectionAnswer({
-        step,
-        body: input.body,
-        mediaUrls: media,
-        question,
-        lang: workflow.collected.language,
-      });
-      if (!validation.ok) {
-        await sendOutboundSms({
-          workflow,
-          client,
-          toE164: input.fromE164,
-          body: validation.message,
-          detail: `validation_failed:${step}`,
-        });
-        replies.push(validation.message);
-        await deps.store.saveWorkflow(workflow);
-        return { handled: true, replies };
-      }
-
-      workflow.collected = applyAnswer(
-        step,
-        input.body,
-        media,
-        workflow.collected,
-      );
-      pushEvent(workflow, "answer_recorded", step, clock);
-
-      if (step === "address") applyServiceArea(workflow, client);
-      if (step === "description") await applyUrgency(workflow, client);
-
-      const next = nextCollectionStep(client, workflow.collected, step);
-      workflow.currentStep = next;
-
-      if (next === "done") {
-        await finalizeAndDispatch(workflow);
-        return { handled: true, replies };
-      }
-
-      const prompt = await sendPrompt(workflow, client.id, next);
-      if (prompt) replies.push(prompt);
-      await deps.store.saveWorkflow(workflow);
-      return { handled: true, replies };
       } catch (err) {
         if (claimedSid) {
           await deps.store.releaseInboundMessageSid(claimedSid);

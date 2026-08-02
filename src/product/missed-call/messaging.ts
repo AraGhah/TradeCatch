@@ -6,7 +6,14 @@ import type {
   CollectedLead,
 } from "./types";
 
-const OPT_OUT_DEFAULT = ["stop", "arret", "arrêt", "unsubscribe", "desabonner", "désabonner"];
+const OPT_OUT_DEFAULT = [
+  "stop",
+  "arret",
+  "arrêt",
+  "unsubscribe",
+  "desabonner",
+  "désabonner",
+];
 
 export function isOptOut(body: string, client: ClientAccount): boolean {
   const normalized = body
@@ -15,12 +22,11 @@ export function isOptOut(body: string, client: ClientAccount): boolean {
     .normalize("NFD")
     .replace(/\p{M}/gu, "");
   const keywords = [...client.optOutKeywords, ...OPT_OUT_DEFAULT].map((k) =>
-    k
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/\p{M}/gu, ""),
+    k.toLowerCase().normalize("NFD").replace(/\p{M}/gu, ""),
   );
-  return keywords.some((k) => normalized === k || normalized.startsWith(`${k} `));
+  return keywords.some(
+    (k) => normalized === k || normalized.startsWith(`${k} `),
+  );
 }
 
 /** Customer asked to switch to English. */
@@ -168,7 +174,9 @@ export function validateCollectionAnswer(input: {
   if (required && text.length < 2) {
     return {
       ok: false,
-      message: fr ? "Cette information est requise." : "This field is required.",
+      message: fr
+        ? "Cette information est requise."
+        : "This field is required.",
     };
   }
   return { ok: true };
@@ -188,7 +196,9 @@ export function technicianAlertBody(
     `Appelant: ${callerE164}`,
     collected.customerName ? `Nom: ${collected.customerName}` : null,
     collected.serviceAddress ? `Adresse: ${collected.serviceAddress}` : null,
-    collected.issueDescription ? `Problème: ${collected.issueDescription}` : null,
+    collected.issueDescription
+      ? `Problème: ${collected.issueDescription}`
+      : null,
     collected.photoUrls.length
       ? `Photos: ${collected.photoUrls.length}`
       : "Photos: aucune",
