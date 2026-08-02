@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   authorizeOpsRequest,
+  logOpsAccess,
+  missingOpsActorResponse,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
@@ -10,6 +12,10 @@ export const dynamic = "force-dynamic";
 export async function GET(request: NextRequest) {
   if (!authorizeOpsRequest(request)) {
     return unauthorizedOpsResponse();
+  }
+  const audit = logOpsAccess(request, "leads.list");
+  if (audit.missingActor) {
+    return missingOpsActorResponse();
   }
 
   const clientId =

@@ -195,6 +195,11 @@ export type MissedCallWorkflow = {
   events: WorkflowEvent[];
   createdAt: string;
   updatedAt: string;
+  /**
+   * Optimistic-concurrency token. Stores increment on each successful save;
+   * concurrent writers with a stale version fail closed.
+   */
+  version?: number;
   dedupeKey: string;
   /** ISO timestamp when customer collection started (for timeout). */
   collectionStartedAt?: string;
@@ -218,7 +223,13 @@ export type SmsSuppressionRecord = {
   clientAccountId: string;
   phoneE164: string;
   channel: "sms";
-  source: "customer_keyword" | "manual" | "provider";
+  /**
+   * customer_outbound — blocks recovery texts to this number as a customer.
+   * all — blocks every SMS to this number (rare; explicit manual).
+   * Technician STOP defaults to customer_outbound so job cards still deliver.
+   */
+  scope?: "customer_outbound" | "all";
+  source: "customer_keyword" | "manual" | "provider" | "technician_keyword";
   at: string;
   /** Local vs provider sync state for Twilio Advanced Opt-Out / Messaging. */
   providerStatus: "local_only" | "synced" | "pending" | "error";
@@ -283,7 +294,14 @@ export type OutboundSms = {
 };
 
 export type OutboundMessageStatus =
-  "queued" | "sending" | "retry" | "sent" | "dead";
+  | "queued"
+  | "sending"
+  | "retry"
+  /** Twilio REST accepted the message (not yet carrier-delivered). */
+  | "sent"
+  | "delivered"
+  | "undelivered"
+  | "dead";
 
 /** Durable SMS outbox row (Postgres mc_outbound_messages / memory mirror). */
 export type OutboundMessageRecord = {
@@ -295,6 +313,8 @@ export type OutboundMessageRecord = {
   body: string;
   status: OutboundMessageStatus;
   providerSid?: string;
+  /** Last Twilio MessageStatus callback value when known. */
+  providerStatus?: string;
   attempts: number;
   lastError?: string;
   /** Correlates with workflow event detail (e.g. opening_fr). */
@@ -302,6 +322,7 @@ export type OutboundMessageRecord = {
   createdAt: string;
   updatedAt: string;
   sentAt?: string;
+  deliveredAt?: string;
 };
 
 export type SmsPort = {

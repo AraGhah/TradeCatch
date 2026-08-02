@@ -1,8 +1,18 @@
 import type { Metadata } from "next";
-import { getPathname } from "@/i18n/navigation";
+import { getPathname } from "@/i18n/pathname";
 import type { AppPathnames } from "@/i18n/routing";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
+
+const OG_IMAGE_PATH = "/og.svg";
+
+export function getSiteUrl() {
+  return SITE_URL.replace(/\/$/, "");
+}
+
+function absoluteOgImageUrl() {
+  return `${getSiteUrl()}${OG_IMAGE_PATH}`;
+}
 
 export function buildMetadata({
   locale,
@@ -37,13 +47,20 @@ export function buildMetadata({
       siteName: "TradeCatch",
       locale: locale === "fr" ? "fr_CA" : "en_CA",
       type: "website",
-      // No public OG image asset exists yet; omit images rather than publish a
-      // broken or misleading social preview URL.
+      images: [
+        {
+          url: absoluteOgImageUrl(),
+          width: 1200,
+          height: 630,
+          alt: "TradeCatch",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [absoluteOgImageUrl()],
     },
   };
 }

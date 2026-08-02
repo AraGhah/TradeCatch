@@ -11,22 +11,22 @@ export function isProductionRuntime(): boolean {
 export function isTurnstileConfigured(): boolean {
   return Boolean(
     process.env.TURNSTILE_SECRET_KEY &&
-      process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
   );
 }
 
 export function isResendConfigured(): boolean {
   return Boolean(
     process.env.RESEND_API_KEY &&
-      process.env.RESEND_FROM_EMAIL &&
-      process.env.RESEND_NOTIFY_EMAIL,
+    process.env.RESEND_FROM_EMAIL &&
+    process.env.RESEND_NOTIFY_EMAIL,
   );
 }
 
 export function isTwilioConfigured(): boolean {
   return Boolean(
     process.env.TWILIO_ACCOUNT_SID?.trim() &&
-      process.env.TWILIO_AUTH_TOKEN?.trim(),
+    process.env.TWILIO_AUTH_TOKEN?.trim(),
   );
 }
 
@@ -41,8 +41,7 @@ export function isE2eHarness(
   env: Record<string, string | undefined> = process.env,
 ): boolean {
   return (
-    env.TRADECATCH_E2E === "1" &&
-    env.VERCEL_ENV?.toLowerCase() !== "production"
+    env.TRADECATCH_E2E === "1" && env.VERCEL_ENV?.toLowerCase() !== "production"
   );
 }
 

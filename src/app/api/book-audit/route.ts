@@ -7,7 +7,12 @@ import { sendBookAuditEmails } from "@/lib/email";
 import { forwardLeadToCrm } from "@/lib/leads";
 import { reportError } from "@/lib/errors";
 import { createMemoryStore } from "@/lib/store";
-import { persistBookAuditLead } from "@/lib/book-audit-leads";
+import {
+  claimBookAuditDelivery,
+  persistBookAuditLead,
+  releaseBookAuditDeliveryClaim,
+  updateBookAuditDelivery,
+} from "@/lib/book-audit-leads";
 import {
   getProductionConfigErrors,
   isDurableMissedCallStoreConfigured,
@@ -49,10 +54,11 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request);
+  const unknownIp = ip === "unknown" || ip.startsWith("unknown:");
 
   const { allowed } = rateLimit({
     key: `book-audit:${ip}`,
-    limit: 5,
+    limit: unknownIp ? 2 : 5,
     windowMs: 10 * 60 * 1000,
   });
   if (!allowed) {
@@ -76,8 +82,7 @@ export async function POST(request: NextRequest) {
     ...clientPayload,
     // Consent evidence must be controlled by the server, not supplied by a
     // client that can invent or alter the displayed legal wording.
-    consentWording:
-      CANONICAL_CONSENT_WORDING[clientPayload.preferredLanguage],
+    consentWording: CANONICAL_CONSENT_WORDING[clientPayload.preferredLanguage],
     consentSource: "book-audit",
   };
 
@@ -86,15 +91,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const now = Date.now();
-  seenIdempotencyKeys.prune(IDEMPOTENCY_WINDOW_MS, now);
-  if (seenIdempotencyKeys.has(idempotencyKey)) {
-    return NextResponse.json({ ok: true, duplicate: true });
-  }
-
+  // Verify Turnstile before any idempotency side effects so concurrent
+  // unverified requests cannot burn the duplicate key.
   const turnstileResult = await verifyTurnstileToken(
     payload.turnstileToken,
     ip,
+    "book-audit",
   );
 
   if (turnstileResult.configured && !turnstileResult.success) {
@@ -113,12 +115,23 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const now = Date.now();
+  seenIdempotencyKeys.prune(IDEMPOTENCY_WINDOW_MS, now);
+  if (seenIdempotencyKeys.has(idempotencyKey)) {
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
+
   // Mark idempotency only after Turnstile passes; clear on total delivery failure.
   seenIdempotencyKeys.set(idempotencyKey, now);
 
   const durableConfigured = isDurableMissedCallStoreConfigured();
   let persisted:
-    | { id: string; duplicate: boolean }
+    | {
+        id: string;
+        duplicate: boolean;
+        emailSent: boolean;
+        crmForwarded: boolean;
+      }
     | null
     | undefined;
 
@@ -162,38 +175,78 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (persisted?.duplicate) {
+  // Fully delivered on a prior attempt — clean duplicate response.
+  if (
+    persisted?.duplicate &&
+    persisted.emailSent &&
+    persisted.crmForwarded
+  ) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  const [{ sent }, { forwarded }] = await Promise.all([
-    sendBookAuditEmails(payload),
-    forwardLeadToCrm(payload),
-  ]);
+  let sent = false;
+  let forwarded = false;
 
-  // In production, at least one delivery channel must succeed — unless the E2E
-  // harness is active (no live Resend/CRM) or the lead is already durable.
-  const requireDelivery =
-    isProductionRuntime() &&
-    !isE2eHarness() &&
-    !persisted;
+  if (persisted?.id && durableConfigured) {
+    // Only one concurrent worker may attempt undelivered channels.
+    const claim = await claimBookAuditDelivery(persisted.id);
+    if (!claim) {
+      return NextResponse.json({ ok: true, duplicate: true });
+    }
+    const needEmail = !claim.emailSent;
+    const needCrm = !claim.crmForwarded;
+    const results = await Promise.all([
+      needEmail
+        ? sendBookAuditEmails(payload)
+        : Promise.resolve({ sent: true }),
+      needCrm
+        ? forwardLeadToCrm(payload)
+        : Promise.resolve({ forwarded: true }),
+    ]);
+    sent = results[0].sent;
+    forwarded = results[1].forwarded;
+    try {
+      await updateBookAuditDelivery(persisted.id, {
+        emailSent: sent,
+        crmForwarded: forwarded,
+      });
+    } catch (err) {
+      await reportError(
+        err instanceof Error
+          ? err
+          : new Error("book-audit delivery status update failed"),
+        { ip, trade: payload.trade, leadId: persisted.id },
+      );
+    }
+    if (!sent || !forwarded) {
+      await releaseBookAuditDeliveryClaim(persisted.id);
+    }
+  } else {
+    const results = await Promise.all([
+      sendBookAuditEmails(payload),
+      forwardLeadToCrm(payload),
+    ]);
+    sent = results[0].sent;
+    forwarded = results[1].forwarded;
+  }
+
+  // Require at least one delivery channel in production — including when the
+  // row was persisted first. A DB-only lead with nobody notified is a loss.
+  const requireDelivery = isProductionRuntime() && !isE2eHarness();
   if (requireDelivery && !sent && !forwarded) {
     seenIdempotencyKeys.delete(idempotencyKey);
     await reportError(new Error("book-audit delivery failed (email + CRM)"), {
       ip,
       trade: payload.trade,
+      persisted: Boolean(persisted),
     });
     return jsonError(
-      "We couldn't save your request. Please try again or call us.",
+      "We couldn't deliver your request. Please try again or call us.",
       503,
     );
   }
 
-  if (
-    isProductionRuntime() &&
-    !isE2eHarness() &&
-    !sent
-  ) {
+  if (isProductionRuntime() && !isE2eHarness() && !sent) {
     await reportError(new Error("book-audit email send failed"), {
       ip,
       trade: payload.trade,
@@ -215,5 +268,6 @@ export async function POST(request: NextRequest) {
     ok: true,
     emailSent: sent,
     crmForwarded: forwarded,
+    ...(persisted?.duplicate ? { duplicate: true } : {}),
   });
 }

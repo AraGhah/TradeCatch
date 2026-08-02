@@ -18,9 +18,7 @@ export const HARDCODED_CRITICAL_TRIGGERS: {
   },
   {
     id: "critical_fire",
-    patterns: [
-      /\b(feu|fire|flammes?|fumee|smoke|brule|burning)\b/i,
-    ],
+    patterns: [/\b(feu|fire|flammes?|fumee|smoke|brule|burning)\b/i],
   },
   {
     id: "critical_flood",
@@ -99,8 +97,11 @@ export function classifyUrgency(input: {
     }
   }
 
-  let best: { level: UrgencyLevel; entry: UrgencyRubricEntry; kw: string } | null =
-    null;
+  let best: {
+    level: UrgencyLevel;
+    entry: UrgencyRubricEntry;
+    kw: string;
+  } | null = null;
   const rank: Record<UrgencyLevel, number> = {
     routine: 0,
     priority: 1,
@@ -182,9 +183,15 @@ export function rosterTechnician(
   client: ClientAccount,
   id: string,
 ): { id: string; name: string; phone: string } | null {
-  const fromRoster = client.technicianRoster.find((t) => t.id === id && t.active);
+  const fromRoster = client.technicianRoster.find(
+    (t) => t.id === id && t.active,
+  );
   if (fromRoster) {
-    return { id: fromRoster.id, name: fromRoster.name, phone: fromRoster.phone };
+    return {
+      id: fromRoster.id,
+      name: fromRoster.name,
+      phone: fromRoster.phone,
+    };
   }
   const legacy = client.onCallTechnicians.find((t) => t.id === id && t.active);
   if (legacy) return legacy;

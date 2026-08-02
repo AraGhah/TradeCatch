@@ -16,8 +16,8 @@ Applies to managed services during a paid monthly management term under an activ
 | Expectation | Target |
 | --- | --- |
 | First Client-approved SMS after a detected missed call | Typically under **30 seconds** when telephony/SMS providers are operating normally |
-| Quote follow-up sends | Per the Client-approved schedule |
-| Stop follow-ups on customer reply | As soon as a reply is detected by the connected channel |
+| Quote follow-up sends | **Not in scope** for live Module A — only when a signed SOW explicitly includes a shipped quote-follow-up module |
+| Stop follow-ups on customer reply | Applies only to modules that are live under the SOW (missed-call recovery stops on STOP/opt-out; quote follow-up reply-stop is not live until that module ships) |
 
 Delays caused by carriers, SMS gateways, Client phone configuration, or force majeure do not breach this Schedule.
 

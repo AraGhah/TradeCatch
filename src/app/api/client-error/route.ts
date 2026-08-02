@@ -100,8 +100,7 @@ export async function POST(request: NextRequest) {
   recentFingerprints.set(fingerprint, now);
 
   // Always keep framework digests; sample anonymous free-text noise.
-  const sampleBucket =
-    Number.parseInt(fingerprint.slice(0, 2), 16) / 255;
+  const sampleBucket = Number.parseInt(fingerprint.slice(0, 2), 16) / 255;
   if (!digest && sampleBucket > SAMPLE_RATE) {
     return NextResponse.json({ ok: true, sampled: false });
   }

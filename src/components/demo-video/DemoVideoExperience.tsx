@@ -7,7 +7,7 @@ import {
   type ComponentType,
   type MouseEvent,
 } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
   getCopy,
@@ -88,6 +88,7 @@ function safeFullscreen(enter: boolean) {
 function DemoVideoExperienceInner() {
   const rawLocale = useLocale();
   const locale: DemoLocale = rawLocale === "fr" ? "fr" : "en";
+  const tDemo = useTranslations("demoVideo");
   const copy = getCopy(locale);
   const searchParams = useSearchParams();
   const recording = searchParams.get("record") === "1";
@@ -191,7 +192,7 @@ function DemoVideoExperienceInner() {
         <div
           role="button"
           tabIndex={0}
-          aria-label={clock.playing ? copy.pause : copy.play}
+          aria-label={clock.playing ? tDemo("pause") : tDemo("play")}
           onClick={onStageClick}
           onKeyDown={(e) => {
             if (e.key === "Enter") togglePlayPause();

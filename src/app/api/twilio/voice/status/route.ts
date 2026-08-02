@@ -5,13 +5,18 @@ import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
 export const dynamic = "force-dynamic";
 
 function twimlEmpty() {
-  return new NextResponse(`<?xml version="1.0" encoding="UTF-8"?><Response></Response>`, {
-    status: 200,
-    headers: { "Content-Type": "text/xml; charset=utf-8" },
-  });
+  return new NextResponse(
+    `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`,
+    {
+      status: 200,
+      headers: { "Content-Type": "text/xml; charset=utf-8" },
+    },
+  );
 }
 
-async function parseForm(request: NextRequest): Promise<Record<string, string>> {
+async function parseForm(
+  request: NextRequest,
+): Promise<Record<string, string>> {
   const form = await request.formData();
   const params: Record<string, string> = {};
   for (const [k, v] of form.entries()) {
@@ -38,7 +43,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
   }
 
-  const status = (params.DialCallStatus || params.CallStatus || "").toLowerCase();
+  const status = (
+    params.DialCallStatus ||
+    params.CallStatus ||
+    ""
+  ).toLowerCase();
   const from = params.From || params.Caller || "";
   const callSid = params.CallSid;
   const duration = params.CallDuration
@@ -60,12 +69,22 @@ export async function POST(request: NextRequest) {
     return twimlEmpty();
   }
 
+  const answeredBy = (params.AnsweredBy || "").toLowerCase();
+  const machineOrNonHuman = new Set([
+    "machine_start",
+    "machine_end_beep",
+    "machine_end_silence",
+    "machine_end_other",
+    "fax",
+  ]);
+  // Prefer explicit AMD "human". Without AnsweredBy, do not invent answered
+  // from duration alone — short completed legs stay eligible for recovery.
   const answered =
     status === "completed" &&
     typeof duration === "number" &&
     duration > 0 &&
-    params.AnsweredBy !== "machine_start" &&
-    params.AnsweredBy !== "fax";
+    answeredBy === "human" &&
+    !machineOrNonHuman.has(answeredBy);
 
   // Abandoned: very short unanswered ring / canceled quickly
   const abandoned =

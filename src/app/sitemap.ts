@@ -7,7 +7,9 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
 // changes. Avoid `new Date()` which reports "just modified" on every build.
 const CONTENT_LAST_MODIFIED = new Date("2026-07-27");
 
-const PATHS = Object.keys(routing.pathnames);
+const PATHS = Object.keys(routing.pathnames).filter(
+  (path) => path !== "/demo-video",
+);
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return routing.locales.flatMap((locale) =>

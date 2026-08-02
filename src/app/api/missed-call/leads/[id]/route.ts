@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
   authorizeOpsRequest,
+  logOpsAccess,
+  missingOpsActorResponse,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
 import { applyManualCorrection } from "@/product/missed-call/crm";
@@ -45,6 +47,10 @@ export async function GET(
   if (!authorizeOpsRequest(request)) {
     return unauthorizedOpsResponse();
   }
+  const audit = logOpsAccess(request, "leads.get");
+  if (audit.missingActor) {
+    return missingOpsActorResponse();
+  }
 
   const { id } = await context.params;
   const { store } = await ensureMissedCallReady();
@@ -52,6 +58,7 @@ export async function GET(
   if (!lead) {
     return NextResponse.json({ error: "Lead not found" }, { status: 404 });
   }
+  logOpsAccess(request, "leads.get.ok", { leadId: id });
   return NextResponse.json({ ok: true, lead });
 }
 
@@ -62,12 +69,21 @@ export async function PATCH(
   if (!authorizeOpsRequest(request)) {
     return unauthorizedOpsResponse();
   }
+  const audit = logOpsAccess(request, "leads.patch");
+  if (audit.missingActor) {
+    return missingOpsActorResponse();
+  }
 
-  const sandboxOk =
-    process.env.MISSED_CALL_SANDBOX === "1" ||
+  // Production corrections use a dedicated flag — do not couple to sandbox
+  // traffic injection (MISSED_CALL_SANDBOX).
+  const correctionsOk =
+    process.env.MISSED_CALL_ALLOW_CORRECTIONS === "1" ||
     process.env.NODE_ENV !== "production";
-  if (!sandboxOk) {
-    return NextResponse.json({ error: "Corrections disabled" }, { status: 403 });
+  if (!correctionsOk) {
+    return NextResponse.json(
+      { error: "Corrections disabled" },
+      { status: 403 },
+    );
   }
 
   const { id } = await context.params;
@@ -99,5 +115,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Field not allowed" }, { status: 400 });
   }
   await store.saveLead(lead);
+  logOpsAccess(request, "leads.patch.ok", {
+    leadId: id,
+    field: parsed.data.field,
+  });
   return NextResponse.json({ ok: true, lead });
 }

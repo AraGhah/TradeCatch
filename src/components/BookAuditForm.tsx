@@ -128,7 +128,13 @@ export function BookAuditForm() {
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const idempotencyKey = useRef<string>(crypto.randomUUID());
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+  const errorSummaryRef = useRef<HTMLDivElement>(null);
+  const focusErrorSummary = useRef(false);
   const hydrated = useRef(false);
+  const [submitError, setSubmitError] = useState<"generic" | "network" | null>(
+    null,
+  );
+  const [stepAnnouncement, setStepAnnouncement] = useState("");
 
   const step = BOOK_AUDIT_STEPS[stepIndex];
   const onReview = step === "review";
@@ -169,6 +175,54 @@ export function BookAuditForm() {
       // Storage may be unavailable (private browsing quota) — draft just won't persist.
     }
   }, [answers, phase]);
+
+  useEffect(() => {
+    const title = onReview
+      ? t("wizard.reviewHeadline")
+      : t(`wizard.questions.${step}.title`);
+    setStepAnnouncement(title);
+  }, [stepIndex, onReview, step, t]);
+
+  useEffect(() => {
+    if (!focusErrorSummary.current || Object.keys(errors).length === 0) return;
+    focusErrorSummary.current = false;
+    errorSummaryRef.current?.focus();
+  }, [errors]);
+
+  function focusAuditField(field: string) {
+    const id =
+      field === "serviceConsent"
+        ? "audit-field-serviceConsent"
+        : field === "turnstile"
+          ? "audit-field-turnstile"
+          : `audit-field-${field}`;
+    document.getElementById(id)?.focus();
+  }
+
+  function errorFieldLabel(field: string): string {
+    if (field === "serviceConsent") return t("wizard.questions.consent.label");
+    if (field === "turnstile") return t("wizard.turnstileLabel");
+    if (t.has(`fields.${field}`)) return t(`fields.${field}`);
+    return field;
+  }
+
+  function validateReview(): boolean {
+    const nextErrors: Record<string, string> = {};
+    if (!answers.serviceConsent) {
+      setConsentTouched(true);
+      nextErrors.serviceConsent = t("consentRequired");
+    }
+    if (!turnstileToken) {
+      nextErrors.turnstile = t("wizard.turnstileRequired");
+    }
+    if (Object.keys(nextErrors).length > 0) {
+      setErrors(nextErrors);
+      focusErrorSummary.current = true;
+      return false;
+    }
+    setErrors({});
+    return true;
+  }
 
   function update<K extends keyof Answers>(key: K, value: Answers[K]) {
     setAnswers((prev) => ({ ...prev, [key]: value }));
@@ -295,12 +349,14 @@ export function BookAuditForm() {
   async function submitAudit() {
     if (!turnstileToken || !answers.serviceConsent) return;
 
-    function failSubmission() {
+    function failSubmission(kind: "generic" | "network") {
       setSubmitStatus("error");
+      setSubmitError(kind);
       setTurnstileToken("");
       turnstileRef.current?.reset();
     }
 
+    setSubmitError(null);
     // Full-payload guard before POST — API re-validates anyway.
     const payload = {
       ...answers,
@@ -314,10 +370,9 @@ export function BookAuditForm() {
     };
     const parsed = bookAuditSchema.safeParse(payload);
     if (!parsed.success) {
-      failSubmission();
+      failSubmission("generic");
       return;
     }
-
     setSubmitStatus("submitting");
     try {
       const response = await fetch("/api/book-audit", {
@@ -330,10 +385,9 @@ export function BookAuditForm() {
       });
 
       if (!response.ok) {
-        failSubmission();
+        failSubmission("generic");
         return;
       }
-
       trackEvent("audit_form_submitted", {
         trade: parsed.data.trade,
         preferred_language: parsed.data.preferredLanguage,
@@ -349,20 +403,25 @@ export function BookAuditForm() {
         // Nothing to clean up if storage was never available.
       }
       setSubmitStatus("idle");
+      setSubmitError(null);
       setPhase("confirmed");
       scrollTop();
     } catch {
-      failSubmission();
+      failSubmission("network");
     }
   }
 
   function handleContinue(e?: FormEvent) {
     e?.preventDefault();
     if (onReview) {
+      if (!validateReview()) return;
       void submitAudit();
       return;
     }
-    if (!validateStep(step)) return;
+    if (!validateStep(step)) {
+      focusErrorSummary.current = true;
+      return;
+    }
     goNext();
   }
 
@@ -384,6 +443,7 @@ export function BookAuditForm() {
     setConsentTouched(false);
     setTurnstileToken("");
     setSubmitStatus("idle");
+    setSubmitError(null);
     setStepIndex(0);
     setPhase("wizard");
     try {
@@ -470,6 +530,9 @@ export function BookAuditForm() {
           noValidate
           className="w-full max-w-(--container-wizard)"
         >
+          <p aria-live="polite" aria-atomic="true" className="sr-only">
+            {stepAnnouncement}
+          </p>
           <input
             type="text"
             name="company_website"
@@ -525,12 +588,25 @@ export function BookAuditForm() {
                 <div
                   role="alert"
                   id="audit-error-summary"
-                  className="mb-5 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+                  ref={errorSummaryRef}
+                  tabIndex={-1}
+                  className="mb-5 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 outline-none focus:ring-2 focus:ring-red-400"
                 >
                   <p className="m-0 font-semibold">{t("wizard.errorSummary")}</p>
-                  <ul className="mt-2 list-disc space-y-1 pl-5">
+                  <ul className="mt-2 list-none space-y-2 pl-0">
                     {Object.entries(errors).map(([field, message]) => (
-                      <li key={field}>{message}</li>
+                      <li key={field}>
+                        <span>{message}</span>{" "}
+                        <button
+                          type="button"
+                          onClick={() => focusAuditField(field)}
+                          className="font-semibold underline decoration-red-400/80 underline-offset-2 hover:text-red-950"
+                        >
+                          {t("wizard.fixField", {
+                            field: errorFieldLabel(field),
+                          })}
+                        </button>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -551,13 +627,21 @@ export function BookAuditForm() {
 
             {onReview ? (
               <div className="mt-6">
-                <TurnstileWidget
-                  ref={turnstileRef}
-                  onToken={setTurnstileToken}
-                />
+                <div
+                  id="audit-field-turnstile"
+                  tabIndex={-1}
+                  className="outline-none"
+                >
+                  <TurnstileWidget
+                    ref={turnstileRef}
+                    onToken={setTurnstileToken}
+                  />
+                </div>
                 {submitStatus === "error" ? (
                   <p role="alert" className="mt-3 text-sm font-medium text-red-600">
-                    {t("wizard.genericError")}
+                    {submitError === "network"
+                      ? t("wizard.networkError")
+                      : t("wizard.genericError")}
                   </p>
                 ) : null}
               </div>
@@ -565,32 +649,24 @@ export function BookAuditForm() {
           </div>
 
           <div className="mt-[clamp(32px,4vw,48px)] flex flex-wrap items-center gap-3.5">
-            {satisfied ? (
-              <button
-                type="submit"
-                disabled={
-                  onReview &&
-                  (submitStatus === "submitting" || !turnstileToken)
-                }
-                aria-busy={onReview && submitStatus === "submitting"}
-                className="inline-flex items-center gap-3 rounded-[12px] bg-orange px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-              >
-                {nextLabel}
-                {!onReview ? (
-                  <span aria-hidden className="font-mono text-[15px]">
-                    →
-                  </span>
-                ) : null}
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled
-                className="inline-flex cursor-not-allowed items-center gap-3 rounded-[12px] bg-[rgba(12,20,30,0.08)] px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-muted"
-              >
-                {nextLabel}
-              </button>
-            )}
+            <button
+              type="submit"
+              disabled={onReview && submitStatus === "submitting"}
+              aria-disabled={!satisfied || undefined}
+              aria-busy={onReview && submitStatus === "submitting"}
+              className={
+                satisfied
+                  ? "inline-flex items-center gap-3 rounded-[12px] bg-orange px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
+                  : "inline-flex cursor-pointer items-center gap-3 rounded-[12px] bg-[rgba(12,20,30,0.08)] px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-muted"
+              }
+            >
+              {nextLabel}
+              {satisfied && !onReview ? (
+                <span aria-hidden className="font-mono text-[15px]">
+                  →
+                </span>
+              ) : null}
+            </button>
 
             {stepIndex > 0 ? (
               <button
@@ -786,6 +862,7 @@ function StepBody({
         <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white p-5 text-[16px] leading-[1.6] text-text">
           <input
             type="checkbox"
+            id="audit-field-serviceConsent"
             name="serviceConsent"
             checked={answers.serviceConsent}
             onChange={(e) => update("serviceConsent", e.target.checked)}
@@ -880,7 +957,12 @@ function ChoiceGrid({
         target &&
         (target.tagName === "INPUT" ||
           target.tagName === "TEXTAREA" ||
-          target.isContentEditable)
+          target.tagName === "BUTTON" ||
+          target.tagName === "A" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable ||
+          target.getAttribute("role") === "radio" ||
+          target.getAttribute("role") === "button")
       ) {
         return;
       }
@@ -894,14 +976,54 @@ function ChoiceGrid({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  const selectedIndex = options.findIndex((o) => o.selected);
+  const focusIndex = selectedIndex >= 0 ? selectedIndex : 0;
+
+  function onRadioKeyDown(
+    event: KeyboardEvent<HTMLButtonElement>,
+    index: number,
+  ) {
+    if (event.key !== "ArrowRight" && event.key !== "ArrowDown" &&
+        event.key !== "ArrowLeft" && event.key !== "ArrowUp" &&
+        event.key !== "Home" && event.key !== "End") {
+      return;
+    }
+    event.preventDefault();
+    let next = index;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      next = (index + 1) % options.length;
+    } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+      next = (index - 1 + options.length) % options.length;
+    } else if (event.key === "Home") {
+      next = 0;
+    } else if (event.key === "End") {
+      next = options.length - 1;
+    }
+    options[next]?.onPick();
+    // Focus moves via re-render tabIndex; requestAnimationFrame for reliability.
+    requestAnimationFrame(() => {
+      const radios = event.currentTarget.parentElement?.querySelectorAll(
+        '[role="radio"]',
+      );
+      (radios?.[next] as HTMLElement | undefined)?.focus();
+    });
+  }
+
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(232px,1fr))] gap-2.5">
+    <div
+      role="radiogroup"
+      aria-labelledby="audit-step-title"
+      className="grid grid-cols-[repeat(auto-fit,minmax(232px,1fr))] gap-2.5"
+    >
       {options.map((option, n) => (
         <button
           key={option.label}
           type="button"
+          role="radio"
           onClick={option.onPick}
-          aria-pressed={option.selected}
+          onKeyDown={(e) => onRadioKeyDown(e, n)}
+          aria-checked={option.selected}
+          tabIndex={n === focusIndex ? 0 : -1}
           className={
             option.selected
               ? "flex w-full items-center justify-between gap-3.5 rounded-[13px] border-[1.5px] border-navy bg-navy px-5 py-[17px] text-left text-[16.5px] font-semibold tracking-[-0.015em] text-white"
@@ -963,6 +1085,7 @@ function UnderlineField({
         </span>
       ) : null}
       <input
+        id={name ? `audit-field-${name}` : undefined}
         type={type}
         name={name}
         autoComplete={autoComplete}

@@ -16,13 +16,13 @@ function twimlMessages(bodies: string[]) {
   if (bodies.length === 0) {
     return `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`;
   }
-  const msgs = bodies
-    .map((b) => `<Message>${escapeXml(b)}</Message>`)
-    .join("");
+  const msgs = bodies.map((b) => `<Message>${escapeXml(b)}</Message>`).join("");
   return `<?xml version="1.0" encoding="UTF-8"?><Response>${msgs}</Response>`;
 }
 
-async function parseForm(request: NextRequest): Promise<Record<string, string>> {
+async function parseForm(
+  request: NextRequest,
+): Promise<Record<string, string>> {
   const form = await request.formData();
   const params: Record<string, string> = {};
   for (const [k, v] of form.entries()) {
@@ -76,11 +76,9 @@ export async function POST(request: NextRequest) {
       mediaUrls,
       messageSid: params.MessageSid,
     });
-    // Prefer REST-sent prompts (engine already sent). Only echo TwiML for
-    // short tech confirmations that weren't also sent via REST.
-    replies = result.replies.filter((r) =>
-      /acceptée|enregistré|Répondez OUI|désabonné|unsubscribed/i.test(r),
-    );
+    // Return every engine reply via TwiML — technician guidance ("Code requis",
+    // APPELER with the customer number, stale-alert notices) must not be dropped.
+    replies = result.replies;
   } catch (err) {
     console.error("[missed-call/sms]", err);
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });

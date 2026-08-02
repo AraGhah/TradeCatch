@@ -29,7 +29,7 @@ function resolveLocale(raw: string): LocaleKey {
 
 /**
  * Opens the locale-matched TradeCatch demo MP4 in an accessible dialog.
- * Used by the homepage “See the live demo” CTAs.
+ * Used by the homepage “See the interactive walkthrough” CTAs.
  */
 export function WatchDemoButton({
   children,
@@ -47,6 +47,7 @@ export function WatchDemoButton({
   const closeRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const wasOpenRef = useRef(false);
 
   const close = useCallback(() => {
     const video = videoRef.current;
@@ -63,10 +64,13 @@ export function WatchDemoButton({
   }, [locale]);
 
   useEffect(() => {
-    if (!open) {
+    // Only restore focus when the modal closes after having been open —
+    // never steal focus on initial mount.
+    if (!open && wasOpenRef.current) {
       openerRef.current?.focus();
-      return;
     }
+    wasOpenRef.current = open;
+    if (!open) return;
 
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
