@@ -38,6 +38,10 @@ const plexMono = IBM_Plex_Mono({
   weight: ["400", "500", "600"],
   display: "swap",
   fallback: ["Consolas", "Menlo", "monospace"],
+  // Only used for small decorative labels/badges, never headline or body
+  // copy — not part of the LCP path, so skip the eager preload hint that
+  // was flagging as "preloaded but not used within a few seconds".
+  preload: false,
 });
 
 export function generateStaticParams() {
