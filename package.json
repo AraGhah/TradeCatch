@@ -3,9 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "node scripts/build.js",
-    "build:next": "next build",
-    "build:worker": "opennextjs-cloudflare build",
+    "build": "next build",
     "dev": "next dev",
     "start": "next start",
     "lint": "eslint",
@@ -26,7 +24,6 @@
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.2",
     "framer-motion": "^12.42.2",
     "next": "^16.2.12",
     "next-intl": "^4.13.2",
@@ -43,6 +40,7 @@
     "brace-expansion@5": "5.0.8"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "^1.20.2",
     "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
