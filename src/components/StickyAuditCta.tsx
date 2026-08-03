@@ -42,7 +42,7 @@ export function StickyAuditCta({ label }: { label: string }) {
       className="pointer-events-none fixed inset-x-0 z-40 p-3 md:hidden"
       style={{ bottom: "var(--tc-cookie-offset, 0px)" }}
     >
-      <div className="pointer-events-auto mx-auto max-w-lg border border-[rgba(12,20,30,0.12)] bg-white/95 p-3 shadow-[0_-8px_30px_-18px_rgba(12,20,30,0.35)] backdrop-blur-sm">
+      <div className="pointer-events-auto mx-auto max-w-lg border border-[rgb(var(--ink-rgb)/0.12)] bg-surface/95 p-3 shadow-[0_-8px_30px_-18px_rgb(var(--ink-rgb)/0.35)] backdrop-blur-sm">
         <CTAButton href="/book-audit" variant="ember" className="w-full">
           {label}
         </CTAButton>

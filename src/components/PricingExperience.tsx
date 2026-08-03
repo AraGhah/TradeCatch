@@ -99,15 +99,15 @@ export function PricingExperience({
         transition={{ duration: 0.45, ease }}
         className="mt-[clamp(48px,6vw,72px)]"
       >
-        <div className="flex flex-col gap-6 border-t border-[rgba(12,20,30,0.14)] pt-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
-          <h2 className="m-0 max-w-[10em] font-heading text-[clamp(24px,2.6vw,32px)] font-extrabold tracking-[-0.035em] text-navy">
+        <div className="flex flex-col gap-6 border-t border-[rgb(var(--ink-rgb)/0.14)] pt-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+          <h2 className="m-0 max-w-[10em] font-heading text-[clamp(24px,2.6vw,32px)] font-extrabold tracking-[-0.035em] text-heading">
             {labels.includesTitle}
           </h2>
           <ul className="m-0 grid flex-1 list-none gap-x-8 gap-y-0 p-0 sm:grid-cols-2 lg:grid-cols-3">
             {labels.includesItems.map((item) => (
               <li
                 key={item}
-                className="border-t border-[rgba(12,20,30,0.1)] py-4 text-[15px] leading-[1.5] text-secondary"
+                className="border-t border-[rgb(var(--ink-rgb)/0.1)] py-4 text-[15px] leading-[1.5] text-secondary"
               >
                 {item}
               </li>
@@ -115,7 +115,7 @@ export function PricingExperience({
           </ul>
         </div>
 
-        <div className="mt-10 border-t border-[rgba(12,20,30,0.14)]">
+        <div className="mt-10 border-t border-[rgb(var(--ink-rgb)/0.14)]">
           {labels.details.map((detail) => (
             <DetailAccordion key={detail.title} title={detail.title} body={detail.body} />
           ))}
@@ -154,10 +154,10 @@ function PlanCard({
       whileInView={{ y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.55, delay: index * 0.08, ease }}
-      className={`relative flex flex-col border bg-white p-[clamp(32px,3.5vw,48px)] text-navy transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 ${
+      className={`relative flex flex-col border bg-surface p-[clamp(32px,3.5vw,48px)] text-heading transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 ${
         featured
           ? "border-orange/55 shadow-[0_32px_64px_-40px_rgba(228,118,43,0.45)] ring-1 ring-orange/20"
-          : "border-[rgba(12,20,30,0.1)] shadow-[0_20px_48px_-40px_rgba(12,20,30,0.28)]"
+          : "border-[rgb(var(--ink-rgb)/0.1)] shadow-[0_20px_48px_-40px_rgb(var(--ink-rgb)/0.28)]"
       }`}
     >
       {featured ? (
@@ -168,7 +168,7 @@ function PlanCard({
       ) : null}
 
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="m-0 font-heading text-[clamp(28px,2.8vw,36px)] font-extrabold tracking-[-0.04em] text-navy">
+        <h2 className="m-0 font-heading text-[clamp(28px,2.8vw,36px)] font-extrabold tracking-[-0.04em] text-heading">
           {tier.name}
         </h2>
         {featured ? (
@@ -182,25 +182,25 @@ function PlanCard({
         {tier.idealFor}
       </p>
 
-      <div className="mt-9 border-t border-[rgba(12,20,30,0.1)] pt-8">
+      <div className="mt-7 border-t border-[rgb(var(--ink-rgb)/0.1)] pt-6">
         <p className="text-[12px] tracking-[0.08em] text-muted uppercase">
           {setupLabel}
         </p>
-        <p className="mt-2 font-heading text-[clamp(42px,4.5vw,56px)] font-extrabold leading-[0.95] tracking-[-0.05em] text-navy">
+        <p className="mt-1.5 font-heading text-[clamp(26px,2.6vw,32px)] font-extrabold leading-[1.05] tracking-[-0.03em] text-heading">
           {setupDisplay}
         </p>
-        <p className="mt-4 text-[16px] text-secondary">
+        <p className="mt-2 text-[15px] text-secondary">
           <span className="text-muted">{thenLabel} </span>
-          <span className="font-semibold text-navy">{monthlyDisplay}</span>
+          <span className="font-semibold text-heading">{monthlyDisplay}</span>
           <span className="text-muted"> / {monthlyLabel.toLowerCase()}</span>
         </p>
       </div>
 
-      <ul className="mt-9 flex flex-1 list-none flex-col p-0">
+      <ul className="mt-7 flex flex-1 list-none flex-col p-0">
         {features.map((item) => (
           <li
             key={item}
-            className="border-t border-[rgba(12,20,30,0.08)] py-3.5 text-[15.5px] leading-[1.45] text-secondary"
+            className="border-t border-[rgb(var(--ink-rgb)/0.08)] py-3.5 text-[15.5px] leading-[1.45] text-secondary"
           >
             {item}
           </li>
@@ -223,14 +223,14 @@ function DetailAccordion({ title, body }: { title: string; body: string }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-b border-[rgba(12,20,30,0.1)]">
+    <div className="border-b border-[rgb(var(--ink-rgb)/0.1)]">
       <button
         type="button"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between gap-6 py-5 text-left"
       >
-        <span className="font-heading text-[18px] font-bold tracking-[-0.02em] text-navy">
+        <span className="font-heading text-[18px] font-bold tracking-[-0.02em] text-heading">
           {title}
         </span>
         <span

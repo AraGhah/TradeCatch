@@ -44,7 +44,7 @@ export function BrandLockup({
       <LogoMark inverted={inverted} />
       <span
         className={`font-heading text-[19px] font-extrabold tracking-[-0.035em] ${
-          inverted ? "text-white" : "text-navy"
+          inverted ? "text-white" : "text-heading"
         }`}
       >
         TradeCatch

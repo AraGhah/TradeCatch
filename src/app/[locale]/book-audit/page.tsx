@@ -32,7 +32,7 @@ export default async function BookAuditPage({
     <div className="flex min-h-[calc(100vh-var(--header-h))] flex-col bg-paper">
       <BookAuditForm />
 
-      <div className="border-t border-[rgba(12,20,30,0.1)] bg-white/50">
+      <div className="border-t border-[rgb(var(--ink-rgb)/0.1)] bg-surface/50">
         <div className="mx-auto flex w-full max-w-(--container-wizard) flex-wrap gap-2.5 gap-x-[26px] px-[clamp(20px,4vw,40px)] py-5">
           {reassurance.map((item) => (
             <span
@@ -65,7 +65,7 @@ function ReassuranceText({ text }: { text: string }) {
   return (
     <>
       {before}
-      <a href={`tel:${tel}`} className="font-semibold text-muted hover:text-navy">
+      <a href={`tel:${tel}`} className="font-semibold text-muted hover:text-heading">
         {phone}
       </a>
       {after}

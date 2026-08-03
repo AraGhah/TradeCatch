@@ -175,7 +175,7 @@ export function HeroMockup({
         }}
       >
         <div
-          className="flex flex-col overflow-hidden rounded-[36px] bg-paper"
+          className="flex flex-col overflow-hidden rounded-[36px] bg-[#F4F1EC]"
           style={{ height: "min(660px, 72vh)" }}
         >
           <div className="relative flex items-center justify-between bg-white px-4 pb-3 pt-3.5">
@@ -183,7 +183,7 @@ export function HeroMockup({
             <span className="font-mono text-[11px] font-medium text-navy">
               {statusTime}
             </span>
-            <span className="font-mono text-[10px] text-muted">{statusNetwork}</span>
+            <span className="font-mono text-[10px] text-[#5C6875]">{statusNetwork}</span>
           </div>
 
           <div className="flex items-center gap-3 border-b border-[rgba(12,20,30,0.08)] bg-white px-4 py-3">
@@ -194,7 +194,7 @@ export function HeroMockup({
               <p className="truncate text-[14px] font-semibold text-navy">
                 {businessName}
               </p>
-              <p className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[0.06em] text-signal-text">
+              <p className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[0.06em] text-[#1E6B47]">
                 <span className="h-1.5 w-1.5 animate-tc-pulse rounded-full bg-green" />
                 {autoReply}
               </p>
@@ -215,21 +215,21 @@ export function HeroMockup({
             {typing ? <TypingDots side={typing} /> : null}
           </div>
 
-          <p className="border-t border-[rgba(12,20,30,0.08)] px-4 py-2.5 text-center font-mono text-[10px] tracking-[0.04em] text-muted">
+          <p className="border-t border-[rgba(12,20,30,0.08)] px-4 py-2.5 text-center font-mono text-[10px] tracking-[0.04em] text-[#5C6875]">
             {disclaimer}
           </p>
         </div>
       </div>
 
       <div
-        className={`absolute bottom-[54px] left-[-8px] z-10 rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-white px-4 py-3 shadow-card-hover transition-[opacity,transform] duration-500 ${
+        className={`absolute bottom-[54px] left-[-8px] z-10 rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-white px-4 py-3 shadow-[0_26px_46px_-28px_rgba(12,20,30,0.34)] transition-[opacity,transform] duration-500 ${
           floatVisible
             ? "translate-y-0 opacity-100"
             : "translate-y-2 opacity-0"
         }`}
         aria-hidden={!floatVisible}
       >
-        <p className="font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
+        <p className="font-mono text-[10px] tracking-[0.1em] text-[#5C6875] uppercase">
           {floatLabel}
         </p>
         <p className="mt-0.5 text-[14px] font-semibold text-navy">{floatTitle}</p>
@@ -251,18 +251,18 @@ function MessageBubble({ msg }: { msg: Msg }) {
       >
         <span
           className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-            win ? "bg-green" : "bg-muted"
+            win ? "bg-green" : "bg-[#5C6875]"
           }`}
         />
         <span
           className={`flex-1 font-mono text-[10.5px] font-medium tracking-[0.04em] ${
-            win ? "text-signal-text" : "text-secondary"
+            win ? "text-[#1E6B47]" : "text-[#3D4855]"
           }`}
         >
           {msg.text}
         </span>
         {msg.time ? (
-          <span className="font-mono text-[10px] text-muted">{msg.time}</span>
+          <span className="font-mono text-[10px] text-[#5C6875]">{msg.time}</span>
         ) : null}
       </div>
     );
@@ -311,7 +311,7 @@ function TypingDots({ side }: { side: "out" | "in" }) {
         <span
           key={i}
           className={`h-1.5 w-1.5 rounded-full ${
-            side === "out" ? "bg-muted" : "bg-navy/40"
+            side === "out" ? "bg-[#5C6875]" : "bg-navy/40"
           } animate-tc-blink`}
           style={{ animationDelay: `${i * 0.2}s` }}
         />

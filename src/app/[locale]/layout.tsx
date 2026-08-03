@@ -100,6 +100,11 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       data-scroll-behavior="smooth"
+      // The theme-init inline script (HeadInlineScripts) may add "dark" to
+      // this element before hydration to avoid a light-then-dark flash —
+      // that intentional client/server className mismatch is exactly what
+      // suppressHydrationWarning exists for.
+      suppressHydrationWarning
       className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">

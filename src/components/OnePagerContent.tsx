@@ -26,13 +26,13 @@ export function OnePagerContent() {
           </button>
         </div>
 
-        <article className="border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(28px,4vw,48px)] print:border-0 print:p-0">
+        <article className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(28px,4vw,48px)] print:border-0 print:bg-white print:p-0">
           <div className="print:mb-6">
             <div className="hidden print:block">
               <BrandLockup />
             </div>
             <IllustrativeBadge label={t("badge")} className="mt-4 print:mt-6" />
-            <h1 className="mt-4 font-heading text-[clamp(28px,4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy">
+            <h1 className="mt-4 font-heading text-[clamp(28px,4vw,40px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-heading">
               {t("headline")}
             </h1>
             <p className="mt-4 text-[16.5px] leading-[1.65] text-secondary">
@@ -40,8 +40,8 @@ export function OnePagerContent() {
             </p>
           </div>
 
-          <section className="mt-8 border-t border-[rgba(12,20,30,0.1)] pt-6">
-            <h2 className="font-heading text-[18px] font-bold text-navy">
+          <section className="mt-8 border-t border-[rgb(var(--ink-rgb)/0.1)] pt-6">
+            <h2 className="font-heading text-[18px] font-bold text-heading">
               {t("forWhomTitle")}
             </h2>
             <p className="mt-2 text-[15px] leading-[1.6] text-secondary">
@@ -51,7 +51,7 @@ export function OnePagerContent() {
 
           <div className="mt-8 grid gap-8 sm:grid-cols-2">
             <section>
-              <h2 className="font-heading text-[18px] font-bold text-navy">
+              <h2 className="font-heading text-[18px] font-bold text-heading">
                 {t("doesTitle")}
               </h2>
               <ul className="mt-3 space-y-2">
@@ -69,7 +69,7 @@ export function OnePagerContent() {
               </ul>
             </section>
             <section>
-              <h2 className="font-heading text-[18px] font-bold text-navy">
+              <h2 className="font-heading text-[18px] font-bold text-heading">
                 {t("doesNotTitle")}
               </h2>
               <ul className="mt-3 space-y-2">
@@ -88,8 +88,8 @@ export function OnePagerContent() {
             </section>
           </div>
 
-          <section className="mt-8 border-t border-[rgba(12,20,30,0.1)] pt-6">
-            <h2 className="font-heading text-[18px] font-bold text-navy">
+          <section className="mt-8 border-t border-[rgb(var(--ink-rgb)/0.1)] pt-6">
+            <h2 className="font-heading text-[18px] font-bold text-heading">
               {t("howTitle")}
             </h2>
             <ol className="mt-3 space-y-2">
@@ -107,9 +107,9 @@ export function OnePagerContent() {
             </ol>
           </section>
 
-          <section className="mt-8 grid gap-6 border-t border-[rgba(12,20,30,0.1)] pt-6 sm:grid-cols-2">
+          <section className="mt-8 grid gap-6 border-t border-[rgb(var(--ink-rgb)/0.1)] pt-6 sm:grid-cols-2">
             <div>
-              <h2 className="font-heading text-[18px] font-bold text-navy">
+              <h2 className="font-heading text-[18px] font-bold text-heading">
                 {t("pricingTitle")}
               </h2>
               <p className="mt-2 text-[14.5px] leading-[1.55] text-secondary">
@@ -117,7 +117,7 @@ export function OnePagerContent() {
               </p>
             </div>
             <div>
-              <h2 className="font-heading text-[18px] font-bold text-navy">
+              <h2 className="font-heading text-[18px] font-bold text-heading">
                 {t("pilotTitle")}
               </h2>
               <p className="mt-2 text-[14.5px] leading-[1.55] text-secondary">

@@ -71,22 +71,22 @@ export default async function AboutPage({
               gap: "clamp(28px, 4vw, 64px)",
             }}
           >
-            <div data-reveal className="-mt-10 max-lg:mt-0 lg:-mt-16">
-              <div className="relative aspect-[4/5] overflow-hidden border border-[rgba(12,20,30,0.1)] bg-paper-deep shadow-[0_28px_50px_-36px_rgba(12,20,30,0.45)]">
+            <div data-reveal className="mx-auto w-full max-w-[360px] -mt-10 max-lg:mt-0 lg:-mt-16">
+              <div className="relative aspect-[4/5] overflow-hidden border border-[rgb(var(--ink-rgb)/0.1)] bg-paper-deep shadow-[0_28px_50px_-36px_rgb(var(--ink-rgb)/0.45)]">
                 <Image
                   src="/images/founder.jpg"
                   alt={t("caption")}
                   width={720}
                   height={900}
                   className="h-full w-full object-cover"
-                  priority={false}
+                  priority
                 />
               </div>
               <p className="mt-4 text-[13px] text-muted">{t("caption")}</p>
             </div>
 
             <div data-reveal>
-              <h2 className="m-0 font-heading text-[clamp(26px,3vw,38px)] font-extrabold leading-[1.06] tracking-[-0.038em] text-navy">
+              <h2 className="m-0 font-heading text-[clamp(26px,3vw,38px)] font-extrabold leading-[1.06] tracking-[-0.038em] text-heading">
                 {t("bodyHeadline")}
               </h2>
               <p className="mt-4 text-[16.5px] leading-[1.65] text-secondary">
@@ -96,7 +96,7 @@ export default async function AboutPage({
                 {body.map((line, i) => (
                   <li
                     key={line}
-                    className="flex items-start gap-3 border-t border-[rgba(12,20,30,0.1)] py-3.5 text-[15.5px] leading-[1.55] text-secondary"
+                    className="flex items-start gap-3 border-t border-[rgb(var(--ink-rgb)/0.1)] py-3.5 text-[15.5px] leading-[1.55] text-secondary"
                   >
                     <span className="pt-0.5 font-mono text-[11px] text-ember-text">
                       {String(i + 1).padStart(2, "0")}
@@ -111,7 +111,7 @@ export default async function AboutPage({
                 </CTAButton>
                 <a
                   href={`mailto:${email}`}
-                  className="inline-flex items-center border-[1.5px] border-[rgba(12,20,30,0.14)] px-[22px] py-3.5 text-[15px] font-semibold text-navy transition-colors hover:border-navy"
+                  className="inline-flex items-center border-[1.5px] border-[rgb(var(--ink-rgb)/0.14)] px-[22px] py-3.5 text-[15px] font-semibold text-heading transition-colors hover:border-navy"
                 >
                   {t("emailCta")}
                 </a>

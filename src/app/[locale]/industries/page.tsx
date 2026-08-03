@@ -66,7 +66,7 @@ export default async function IndustriesPage({
               key={section.name}
               id={`industry-${i}`}
               data-reveal
-              className="scroll-mt-28 border-b border-[rgba(12,20,30,0.12)] py-[clamp(28px,3.4vw,40px)]"
+              className="scroll-mt-28 border-b border-[rgb(var(--ink-rgb)/0.12)] py-[clamp(28px,3.4vw,40px)]"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
@@ -77,10 +77,10 @@ export default async function IndustriesPage({
                 <p className="text-[13px] font-medium text-ember-text">
                   {t("focusLabel")}
                 </p>
-                <h2 className="mt-3 max-w-[min(100%,28rem)] font-heading text-[clamp(22px,2.6vw,32px)] font-bold leading-[1.12] tracking-[-0.03em] text-navy">
+                <h2 className="mt-3 max-w-[min(100%,28rem)] font-heading text-[clamp(22px,2.6vw,32px)] font-bold leading-[1.12] tracking-[-0.03em] text-heading">
                   {section.headline}
                 </h2>
-                <p className="mt-2 text-[15px] font-semibold text-navy">
+                <p className="mt-2 text-[15px] font-semibold text-heading">
                   {section.name}
                 </p>
               </div>

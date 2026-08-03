@@ -59,7 +59,7 @@ export default function Error({
   return (
     <section className="flex min-h-[60vh] flex-col items-center justify-center bg-paper px-[clamp(20px,4vw,40px)] py-20 text-center">
       <p className="text-mono-label text-muted">{t("eyebrow")}</p>
-      <h1 className="text-page-hero mt-4 max-w-[16em] text-navy">
+      <h1 className="text-page-hero mt-4 max-w-[16em] text-heading">
         {t("headline")}
       </h1>
       <p className="text-lede mt-5 max-w-[32em] text-muted">

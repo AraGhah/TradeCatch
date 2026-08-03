@@ -75,7 +75,7 @@ export default async function FaqPage({
         <Container size="faq">
           <div
             data-reveal
-            className="border-t border-[rgba(12,20,30,0.12)]"
+            className="border-t border-[rgb(var(--ink-rgb)/0.12)]"
           >
             <FaqAccordion items={items} />
           </div>

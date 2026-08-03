@@ -12,7 +12,7 @@ export function Footer() {
   const phoneDisplay = site("phone").replace(/-/g, "·");
 
   const linkClass =
-    "text-left text-[14.5px] text-[rgba(255,255,255,0.75)] transition-colors duration-150 hover:text-white";
+    "block py-1.5 text-left text-[14.5px] text-[rgba(255,255,255,0.75)] transition-colors duration-150 hover:text-white";
 
   return (
     <footer className="border-t border-white/[0.08] bg-navy text-[rgba(255,255,255,0.62)]">
@@ -62,7 +62,7 @@ export function Footer() {
             <p className="m-0 font-mono text-[10.5px] font-medium tracking-[0.14em] text-[rgba(255,255,255,0.64)] uppercase">
               {t("company")}
             </p>
-            <ul className="mt-[18px] flex list-none flex-col items-start gap-[11px] p-0">
+            <ul className="mt-[18px] flex list-none flex-col items-start gap-0.5 p-0">
               <li>
                 <Link href="/services" className={linkClass}>
                   {nav("services")}
@@ -100,7 +100,7 @@ export function Footer() {
             <p className="m-0 font-mono text-[10.5px] font-medium tracking-[0.14em] text-[rgba(255,255,255,0.64)] uppercase">
               {t("legal")}
             </p>
-            <ul className="mt-[18px] flex list-none flex-col items-start gap-[11px] p-0">
+            <ul className="mt-[18px] flex list-none flex-col items-start gap-0.5 p-0">
               <li>
                 <Link href="/privacy-policy" className={linkClass}>
                   {t("legalLinks.privacy")}

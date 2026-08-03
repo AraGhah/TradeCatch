@@ -166,7 +166,7 @@ export default async function HomePage({
 
       {/* 2. Trust strip */}
       <section
-        className="border-b border-[rgba(12,20,30,0.08)] bg-white"
+        className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "clamp(28px, 4vw, 40px) 0" }}
       >
         <Container>
@@ -174,9 +174,9 @@ export default async function HomePage({
             {trustStrip.map((item) => (
               <div
                 key={item.title}
-                className="border border-[rgba(12,20,30,0.08)] bg-paper px-4 py-4"
+                className="border border-[rgb(var(--ink-rgb)/0.08)] bg-paper px-4 py-4"
               >
-                <p className="text-[14px] font-semibold tracking-[-0.01em] text-navy">
+                <p className="text-[14px] font-semibold tracking-[-0.01em] text-heading">
                   {item.title}
                 </p>
                 <p className="mt-1.5 text-[12.5px] leading-snug text-muted">
@@ -207,7 +207,7 @@ export default async function HomePage({
                 {t("system.eyebrow")}
               </p>
               <h2
-                className="mt-4 font-heading font-extrabold text-navy"
+                className="mt-4 font-heading font-extrabold text-heading"
                 style={{
                   fontSize: "clamp(40px, 5vw, 68px)",
                   lineHeight: 0.95,
@@ -242,12 +242,12 @@ export default async function HomePage({
               <div
                 key={step.title}
                 data-reveal
-                className="border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(24px,3vw,32px)] transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[rgba(12,20,30,0.2)]"
+                className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)] transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[rgb(var(--ink-rgb)/0.2)]"
               >
                 <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <h3 className="mt-4 font-heading text-[19.5px] font-bold tracking-[-0.028em] text-navy">
+                <h3 className="mt-4 font-heading text-[19.5px] font-bold tracking-[-0.028em] text-heading">
                   {step.title}
                 </h3>
                 <p className="mt-2 text-[15px] leading-[1.6] text-muted">
@@ -261,7 +261,7 @@ export default async function HomePage({
 
       {/* 4. Revenue leaks */}
       <section
-        className="border-y border-[rgba(12,20,30,0.08)] bg-white"
+        className="border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
         data-reveal
       >
@@ -273,7 +273,7 @@ export default async function HomePage({
               gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             }}
           >
-            <div className="sticky top-[120px] max-w-[34rem]">
+            <div className="max-w-[34rem] lg:sticky lg:top-[120px]">
               <SectionHeading
                 align="left"
                 eyebrow={t("leaks.eyebrow")}
@@ -296,8 +296,8 @@ export default async function HomePage({
                   data-reveal
                   className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] transition-colors duration-200 hover:bg-paper/80 ${
                     i === leakCards.length - 1
-                      ? "border-y border-[rgba(12,20,30,0.12)]"
-                      : "border-t border-[rgba(12,20,30,0.12)]"
+                      ? "border-y border-[rgb(var(--ink-rgb)/0.12)]"
+                      : "border-t border-[rgb(var(--ink-rgb)/0.12)]"
                   }`}
                   style={{ gridTemplateColumns: "auto 1fr" }}
                 >
@@ -305,7 +305,7 @@ export default async function HomePage({
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <div>
-                    <h3 className="font-heading text-[clamp(21px,2.2vw,27px)] font-bold tracking-[-0.028em] text-navy">
+                    <h3 className="font-heading text-[clamp(21px,2.2vw,27px)] font-bold tracking-[-0.028em] text-heading">
                       {card.title}
                     </h3>
                     <p className="mt-2.5 max-w-[44em] text-[16px] leading-[1.65] text-muted">
@@ -344,7 +344,7 @@ export default async function HomePage({
 
       {/* 6. Industries (slim — detail lives on /industries) */}
       <section
-        className="border-y border-[rgba(12,20,30,0.08)] bg-white"
+        className="border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "clamp(40px, 5vw, 56px) 0" }}
       >
         <Container>
@@ -356,7 +356,7 @@ export default async function HomePage({
               <p className="text-[13px] font-medium text-ember-text">
                 {t("industries.eyebrow")}
               </p>
-              <h2 className="mt-2 font-heading text-[clamp(24px,3vw,32px)] font-bold tracking-[-0.03em] text-navy">
+              <h2 className="mt-2 font-heading text-[clamp(24px,3vw,32px)] font-bold tracking-[-0.03em] text-heading">
                 {t("industries.headline")}
               </h2>
               <p className="mt-2 text-[15px] leading-[1.55] text-muted">
@@ -372,7 +372,7 @@ export default async function HomePage({
 
       {/* 7. Founder */}
       <section
-        className="border-t border-[rgba(12,20,30,0.08)] bg-white"
+        className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
         data-reveal
       >
@@ -409,7 +409,7 @@ export default async function HomePage({
               <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(228,118,43,0.13)] px-[13px] py-1.5 font-mono text-[10.5px] font-semibold tracking-[0.13em] text-ember-text uppercase">
                 {t("pilot.badge")}
               </span>
-              <h2 className="mt-[18px] font-heading text-[clamp(30px,3.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy">
+              <h2 className="mt-[18px] font-heading text-[clamp(30px,3.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-heading">
                 {t("pilot.headline")}
               </h2>
               <p className="text-lede mt-[18px] max-w-[34em] text-muted">
@@ -422,7 +422,7 @@ export default async function HomePage({
 
             <div
               data-reveal
-              className="rounded-[18px] border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(28px,3.4vw,40px)]"
+              className="rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(28px,3.4vw,40px)]"
             >
               <p className="font-mono text-[11px] tracking-[0.14em] text-muted uppercase">
                 {t("pilot.pointsLabel")}
@@ -431,7 +431,7 @@ export default async function HomePage({
                 {pilotPoints.map((point) => (
                   <li
                     key={point}
-                    className="flex items-start gap-3.5 border-t border-[rgba(12,20,30,0.08)] py-[15px] text-[15.5px] leading-[1.6] text-secondary"
+                    className="flex items-start gap-3.5 border-t border-[rgb(var(--ink-rgb)/0.08)] py-[15px] text-[15.5px] leading-[1.6] text-secondary"
                   >
                     <span
                       className="mt-0.5 shrink-0 text-[14px] text-green"
@@ -443,7 +443,7 @@ export default async function HomePage({
                   </li>
                 ))}
               </ul>
-              <p className="mt-[22px] border-t border-[rgba(12,20,30,0.08)] pt-5 text-[14px] leading-[1.6] text-muted">
+              <p className="mt-[22px] border-t border-[rgb(var(--ink-rgb)/0.08)] pt-5 text-[14px] leading-[1.6] text-muted">
                 {t("pilot.guarantee")}
               </p>
               <CTAButton href="/book-audit" variant="ember" className="mt-6">
@@ -456,7 +456,7 @@ export default async function HomePage({
 
       {/* 9. FAQ teaser */}
       <section
-        className="border-t border-[rgba(12,20,30,0.08)] bg-paper"
+        className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
@@ -479,7 +479,7 @@ export default async function HomePage({
             </div>
             <div
               data-reveal
-              className="min-w-0 border-t border-[rgba(12,20,30,0.12)]"
+              className="min-w-0 border-t border-[rgb(var(--ink-rgb)/0.12)]"
             >
               <FaqAccordion items={t.raw("faqTeaser.items")} />
             </div>

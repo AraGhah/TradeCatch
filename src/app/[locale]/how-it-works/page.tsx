@@ -64,7 +64,7 @@ export default async function HowItWorksPage({
             <div
               key={stage.title}
               data-reveal
-              className="border-t border-[rgba(12,20,30,0.12)] py-[clamp(24px,3vw,36px)]"
+              className="border-t border-[rgb(var(--ink-rgb)/0.12)] py-[clamp(24px,3vw,36px)]"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
@@ -75,7 +75,7 @@ export default async function HowItWorksPage({
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center bg-navy font-mono text-[12px] font-semibold text-orange">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <h2 className="mt-1.5 font-heading text-[clamp(20px,2.2vw,26px)] font-bold leading-[1.15] tracking-[-0.03em] text-navy">
+                <h2 className="mt-1.5 font-heading text-[clamp(20px,2.2vw,26px)] font-bold leading-[1.15] tracking-[-0.03em] text-heading">
                   {stage.title}
                 </h2>
               </div>
@@ -83,7 +83,7 @@ export default async function HowItWorksPage({
                 {stage.items.map((item) => (
                   <li
                     key={item}
-                    className="border border-[rgba(12,20,30,0.1)] bg-white px-3.5 py-2 text-[14px] text-secondary"
+                    className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface px-3.5 py-2 text-[14px] text-secondary"
                   >
                     {item}
                   </li>
@@ -94,7 +94,7 @@ export default async function HowItWorksPage({
 
           <div
             data-reveal
-            className="mt-[clamp(28px,4vw,44px)] border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(24px,3vw,36px)]"
+            className="mt-[clamp(28px,4vw,44px)] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,36px)]"
           >
             <p className="text-[13px] font-medium text-ember-text">
               {t("sequenceTitle")}
@@ -103,7 +103,7 @@ export default async function HowItWorksPage({
               {sequence.map((step) => (
                 <div
                   key={step.day}
-                  className="border border-[rgba(12,20,30,0.1)] bg-paper px-4 py-5"
+                  className="border border-[rgb(var(--ink-rgb)/0.1)] bg-paper px-4 py-5"
                 >
                   <p className="text-[12px] font-semibold text-ember-text">
                     {step.day}

@@ -9,6 +9,7 @@ import { CTAButton } from "@/components/CTAButton";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNav } from "@/components/MobileNav";
 import { BrandLockup } from "@/components/BrandLockup";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
@@ -54,18 +55,18 @@ export function Header() {
     <header
       className={`sticky top-0 z-[60] transition-all duration-300 ${
         scrolled
-          ? "border-b border-[rgba(12,20,30,0.10)] bg-[rgba(244,241,236,0.92)] shadow-header"
-          : "border-b border-transparent bg-[rgba(244,241,236,0.82)]"
+          ? "border-b border-[rgb(var(--ink-rgb)/0.10)] bg-[rgb(var(--paper-rgb)/0.92)] shadow-header"
+          : "border-b border-transparent bg-[rgb(var(--paper-rgb)/0.82)]"
       }`}
       style={{ backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
     >
       <Container className="flex h-(--header-h) items-center justify-between gap-4">
         <div className="flex h-full w-full items-center justify-between gap-4">
-          <Link href="/" className={`rounded-md py-1 ${FOCUS_RING}`}>
+          <Link href="/" className={`flex items-center rounded-md py-2.5 ${FOCUS_RING}`}>
             <BrandLockup />
           </Link>
 
-          <nav className="hidden items-center gap-0.5 min-[1080px]:flex">
+          <nav className="hidden items-center gap-1.5 min-[1080px]:flex">
             {links.map((link) => {
               const active = pathname === link.href;
               return (
@@ -73,8 +74,8 @@ export function Header() {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`group relative rounded-md px-3.5 py-2 text-[14.5px] font-medium transition-colors ${FOCUS_RING} ${
-                    active ? "text-navy" : "text-muted hover:text-navy"
+                  className={`group relative flex items-center rounded-md px-3.5 py-2.5 text-[14.5px] font-medium transition-colors ${FOCUS_RING} ${
+                    active ? "text-heading" : "text-muted hover:text-heading"
                   }`}
                 >
                   {link.label}
@@ -91,11 +92,15 @@ export function Header() {
           <div className="hidden items-center gap-4 min-[1080px]:flex">
             <a
               href={`tel:${site("phoneHref")}`}
-              className={`font-mono text-[13px] font-medium text-navy transition-colors hover:text-ember-text ${FOCUS_RING}`}
+              className={`flex items-center rounded-md px-1 py-2.5 font-mono text-[13px] font-medium text-heading transition-colors hover:text-ember-text ${FOCUS_RING}`}
             >
               {phoneDisplay}
             </a>
             <LocaleSwitcher />
+            <ThemeToggle
+              labelToDark={t("toggleThemeToDark")}
+              labelToLight={t("toggleThemeToLight")}
+            />
             <CTAButton href="/book-audit" variant="ink" size="sm">
               {cta("bookAudit")}
             </CTAButton>

@@ -15,8 +15,13 @@ export function Scene3CustomerQualification({ p, copy }: SceneProps) {
   ];
 
   const extracted = [
-    { label: copy.emergency, show: p >= 0.14 },
-    { label: copy.pipeLeak, show: p >= 0.26 },
+    // Row order stays severity-first (Emergency leads); reveal timing is
+    // independent and must match when each fact actually appears on screen.
+    // Pipe leak is stated in the customer's first message (0.04); emergency
+    // status isn't confirmed until they reply "no" to "is the water shut
+    // off?" (0.32) — so Emergency lights up after Pipe leak, not before.
+    { label: copy.emergency, show: p >= 0.38 },
+    { label: copy.pipeLeak, show: p >= 0.1 },
     { label: "Laval", show: p >= 0.64 },
     { label: copy.photoReceived, show: p >= 0.76 },
   ];

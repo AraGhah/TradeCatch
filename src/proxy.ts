@@ -27,7 +27,10 @@ function buildCsp(nonce: string, isDev: boolean): string {
     "img-src 'self' data: https://www.google-analytics.com",
     "font-src 'self'",
     "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://challenges.cloudflare.com",
-    "frame-src https://challenges.cloudflare.com",
+    // Only for the optional post-audit calendar embed (CalendarBookingCta) —
+    // limited to the two hosts it actually allows iframing (cal.com,
+    // calendly.com); anything else falls back to a plain new-tab link.
+    "frame-src https://challenges.cloudflare.com https://cal.com https://calendly.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
