@@ -12,12 +12,12 @@ const isDev = process.env.NODE_ENV === "development";
 // Production script-src must NOT include 'unsafe-eval'.
 const apiFallbackCsp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com https://static.cloudflareinsights.com${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://www.google-analytics.com",
   "font-src 'self'",
-  "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://challenges.cloudflare.com https://cloudflareinsights.com",
+  "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://challenges.cloudflare.com",
   "frame-src https://challenges.cloudflare.com https://cal.com https://calendly.com",
   "object-src 'none'",
   "base-uri 'self'",
