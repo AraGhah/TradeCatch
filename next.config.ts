@@ -54,6 +54,15 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
+  // pg loads pg-cloudflare only under Cloudflare Workers; NFT traces the
+  // default empty.js export, so esbuild then fails on workerd's dist/index.js.
+  // See https://github.com/opennextjs/opennextjs-cloudflare/issues/1214
+  outputFileTracingIncludes: {
+    "/**": [
+      "./node_modules/pg-cloudflare/dist/**",
+      "./node_modules/pg-cloudflare/esm/**",
+    ],
+  },
   async headers() {
     return [
       {
