@@ -4,46 +4,13 @@ import { routing } from "./i18n/routing";
 
 const handleI18n = createMiddleware(routing);
 
-function buildCsp(nonce: string, isDev: boolean): string {
-  // Nonce + strict-dynamic: trusted scripts may load further scripts (e.g. gtag).
-  // style-src keeps 'unsafe-inline' for Tailwind/runtime styles until hashed
-  // style extraction is complete — tracked as hardening, not a known XSS vector.
-  const scriptSrc = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    "'strict-dynamic'",
-    "https://www.googletagmanager.com",
-    "https://challenges.cloudflare.com",
-    isDev ? "'unsafe-eval'" : null,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  return [
-    "default-src 'self'",
-    `script-src ${scriptSrc}`,
-    "script-src-attr 'none'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https://www.google-analytics.com",
-    "font-src 'self'",
-    "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://challenges.cloudflare.com",
-    // Only for the optional post-audit calendar embed (CalendarBookingCta) —
-    // limited to the two hosts it actually allows iframing (cal.com,
-    // calendly.com); anything else falls back to a plain new-tab link.
-    "frame-src https://challenges.cloudflare.com https://cal.com https://calendly.com",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
-  ].join("; ");
-}
-
 /**
- * Pass the original NextRequest into next-intl (never rebuild from URL alone —
- * that drops internal routing metadata and causes self-redirect loops).
- * Prefer mutating headers on the incoming request; fall back to cloning from
- * the request object (not request.url) so nextUrl / cookies stay intact.
+ * Locale routing only.
+ *
+ * Do NOT set a per-request CSP nonce here. On OpenNext Cloudflare, HTML/assets
+ * can be served with a different nonce than the middleware CSP header; with
+ * 'strict-dynamic' that mismatch blocks all client JS (dead buttons/menus).
+ * Document CSP lives in next.config.ts instead.
  *
  * Production note: do not bind `next start` to `127.0.0.1` / `0.0.0.0` when
  * using next-intl locale/pathname rewrites. Next.js 16.2.6+ can leak those
@@ -51,28 +18,7 @@ function buildCsp(nonce: string, isDev: boolean): string {
  * hostname (`localhost`) or omit `--hostname`.
  */
 export default function middleware(request: NextRequest) {
-  // Edge-compatible nonce (avoid Node Buffer — OpenNext Cloudflare uses Edge Middleware).
-  const nonce = btoa(crypto.randomUUID());
-  const isDev = process.env.NODE_ENV === "development";
-  const csp = buildCsp(nonce, isDev);
-
-  try {
-    request.headers.set("x-nonce", nonce);
-  } catch {
-    // Some runtimes expose immutable headers — clone from the Request object.
-    const headers = new Headers(request.headers);
-    headers.set("x-nonce", nonce);
-    const cloned = new NextRequest(request, { headers });
-    const response = handleI18n(cloned);
-    response.headers.set("Content-Security-Policy", csp);
-    response.headers.set("x-nonce", nonce);
-    return response;
-  }
-
-  const response = handleI18n(request);
-  response.headers.set("Content-Security-Policy", csp);
-  response.headers.set("x-nonce", nonce);
-  return response;
+  return handleI18n(request);
 }
 
 export const config = {
