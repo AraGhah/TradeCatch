@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
     "build": "next build",
+    "dev": "next dev",
     "start": "next start",
     "lint": "eslint",
     "format": "prettier --write \"src/product/missed-call/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\" \"src/app/api/**/*.{ts,tsx}\"",
@@ -32,13 +32,7 @@
     "sharp": "^0.35.0",
     "postcss": "^8.5.10",
     "brace-expansion@1": "1.1.17",
-    "brace-expansion@5": "5.0.8",
-    "minimatch@3": {
-      "brace-expansion": "1.1.17"
-    },
-    "minimatch@10": {
-      "brace-expansion": "5.0.8"
-    }
+    "brace-expansion@5": "5.0.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",

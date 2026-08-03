@@ -16,7 +16,7 @@ for (const match of out.matchAll(/brace-expansion@([\w.-]+)/g)) {
   versions.add(match[1]);
 }
 
-const allowed = new Set(["1.1.17", "2.1.3", "3.0.3", "5.0.8"]);
+const allowed = new Set(["1.1.17", "2.1.3", "2.1.4", "3.0.3", "5.0.8"]);
 const bad = [...versions].filter((v) => !allowed.has(v));
 if (bad.length || versions.size === 0) {
   console.error("Unpatched brace-expansion detected:", [...versions]);
