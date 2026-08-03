@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("security headers", () => {
-  test("home page sets nonce CSP, HSTS, and framing/content-type protections", async ({
+  test("home page sets CSP, HSTS, and framing/content-type protections", async ({
     request,
   }) => {
     const response = await request.get("/");
@@ -10,11 +10,13 @@ test.describe("security headers", () => {
 
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("frame-ancestors 'none'");
-    expect(csp).toContain("strict-dynamic");
-    expect(csp).toMatch(/nonce-[A-Za-z0-9+/=]+/);
+    // OpenNext Cloudflare: static CSP with unsafe-inline (no per-request nonce).
+    // Nonce + strict-dynamic mismatched asset hashes and blocked all client JS.
+    expect(csp).toMatch(/script-src[^;]*'self'/);
+    expect(csp).toMatch(/script-src[^;]*'unsafe-inline'/);
+    expect(csp).not.toContain("strict-dynamic");
+    expect(csp).not.toMatch(/nonce-[A-Za-z0-9+/=]+/);
     expect(csp).not.toContain("unsafe-eval");
-    // Document CSP uses nonces instead of script unsafe-inline.
-    expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
     expect(headers["strict-transport-security"]).toContain("max-age=");
     expect(headers["x-content-type-options"]).toBe("nosniff");
     expect(headers["x-frame-options"]).toBe("DENY");

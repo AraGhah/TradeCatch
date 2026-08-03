@@ -19,6 +19,15 @@ test.describe("accessibility smoke", () => {
     page,
   }) => {
     await page.goto("/book-audit");
+
+    // Wizard starts on name + company text steps; trade is the first choice.
+    await page.locator("#audit-field-firstName").fill("Jean");
+    await page.locator("#audit-field-lastName").fill("Dupont");
+    await page.getByRole("button", { name: /continue/i }).click();
+
+    await page.locator("#audit-field-company").fill("TradeCatch HVAC");
+    await page.getByRole("button", { name: /continue/i }).click();
+
     const group = page.locator("[role='radiogroup']").first();
     await expect(group).toBeVisible({ timeout: 15_000 });
     await expect(group.locator("[role='radio']").first()).toBeVisible();
