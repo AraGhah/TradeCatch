@@ -50,8 +50,9 @@ function buildCsp(nonce: string, isDev: boolean): string {
  * rewrites as 307 self-redirects (vercel/next.js#94745). Prefer the default
  * hostname (`localhost`) or omit `--hostname`.
  */
-export default function proxy(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+export default function middleware(request: NextRequest) {
+  // Edge-compatible nonce (avoid Node Buffer — OpenNext Cloudflare uses Edge Middleware).
+  const nonce = btoa(crypto.randomUUID());
   const isDev = process.env.NODE_ENV === "development";
   const csp = buildCsp(nonce, isDev);
 

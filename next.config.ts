@@ -7,7 +7,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const isDev = process.env.NODE_ENV === "development";
 
 // Document CSP (with per-request nonce + strict-dynamic) is applied in
-// `src/proxy.ts`. API/static responses still get the remaining headers here.
+// `src/middleware.ts`. API/static responses still get the remaining headers here.
 // Production script-src must NOT include 'unsafe-eval'.
 const apiFallbackCsp = [
   "default-src 'self'",

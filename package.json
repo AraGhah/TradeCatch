@@ -7,6 +7,7 @@
     "dev": "next dev",
     "start": "next start",
     "lint": "eslint",
+    "postinstall": "node scripts/patch-opennext-windows.js",
     "format": "prettier --write \"src/product/missed-call/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\" \"src/app/api/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/product/missed-call/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\" \"src/app/api/**/*.{ts,tsx}\"",
     "db:schema": "node scripts/apply-missed-call-schema.js",
