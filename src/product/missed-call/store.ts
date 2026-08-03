@@ -339,7 +339,9 @@ export function createMemoryStore(): MissedCallStore {
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     },
     async isSmsSuppressed(clientAccountId, phoneE164, opts) {
-      const record = suppressions.get(suppressionKey(clientAccountId, phoneE164));
+      const record = suppressions.get(
+        suppressionKey(clientAccountId, phoneE164),
+      );
       if (!record) return false;
       const scope = record.scope ?? "all";
       // Default historical rows behave as full suppress. New technician STOP
@@ -464,8 +466,7 @@ export function createMemoryStore(): MissedCallStore {
           status,
           providerStatus: normalized,
           // Clear SID so a retry can claim and resend without unique conflicts.
-          providerSid:
-            status === "retry" ? undefined : msg.providerSid,
+          providerSid: status === "retry" ? undefined : msg.providerSid,
           deliveredAt,
           updatedAt: new Date().toISOString(),
         };

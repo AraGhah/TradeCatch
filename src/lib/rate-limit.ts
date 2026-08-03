@@ -108,7 +108,10 @@ export function getClientIp(
 
   const cfIp = request.headers.get("cf-connecting-ip")?.trim();
   // Only trust CF-Connecting-IP when the origin is explicitly Cloudflare-fronted.
-  if (cfIp && (env.CF_TRUSTED === "1" || env.CF_CONNECTING_IP_TRUSTED === "1")) {
+  if (
+    cfIp &&
+    (env.CF_TRUSTED === "1" || env.CF_CONNECTING_IP_TRUSTED === "1")
+  ) {
     return cfIp;
   }
 

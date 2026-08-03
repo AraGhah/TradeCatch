@@ -1056,8 +1056,7 @@ export function createMissedCallEngine(deps: {
               isTechnician || isHumanReview
                 ? "technician_keyword"
                 : "customer_keyword",
-            scope:
-              isTechnician || isHumanReview ? "customer_outbound" : "all",
+            scope: isTechnician || isHumanReview ? "customer_outbound" : "all",
             at: clock.now().toISOString(),
             providerStatus,
             providerDetail,
