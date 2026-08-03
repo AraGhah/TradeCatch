@@ -13,6 +13,7 @@ export type PricingTier = {
   idealFor: string;
   setupAmount?: string;
   monthlyAmount?: string;
+  reassuranceLine?: string;
 };
 
 type Labels = {
@@ -194,6 +195,11 @@ function PlanCard({
           <span className="font-semibold text-heading">{monthlyDisplay}</span>
           <span className="text-muted"> / {monthlyLabel.toLowerCase()}</span>
         </p>
+        {tier.reassuranceLine ? (
+          <p className="mt-3 text-[13.5px] leading-[1.5] text-muted">
+            {tier.reassuranceLine}
+          </p>
+        ) : null}
       </div>
 
       <ul className="mt-7 flex flex-1 list-none flex-col p-0">

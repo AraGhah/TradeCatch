@@ -590,7 +590,7 @@
       "tiers": [
         {
           "name": "Démarrage",
-          "price": "1 250 $ d'installation",
+          "price": "799 $ d'installation",
           "cadence": "375 $ / mois",
           "idealFor": "Propriétaires-exploitants et petites équipes qui captent les appels manqués."
         },
@@ -940,11 +940,12 @@
     "tiers": [
       {
         "name": "Démarrage",
-        "price": "1 250 $ d'installation",
-        "setupAmount": "1 250 $",
+        "price": "799 $ d'installation",
+        "setupAmount": "799 $",
         "cadence": "375 $ / mois",
         "monthlyAmount": "375 $",
         "idealFor": "Propriétaires-exploitants et petites équipes qui captent les appels manqués pour la première fois.",
+        "reassuranceLine": "Couvre l'acheminement, les modèles bilingues et la configuration technicien — avec une garantie de lancement si on retarde. Souvent moins que la valeur d'une seule job récupérée.",
         "items": [
           "SMS de retour sur appels manqués",
           "Collecte des détails et photos du prospect",
@@ -962,6 +963,7 @@
         "cadence": "500 $–750 $ / mois",
         "monthlyAmount": "500 $–750 $",
         "idealFor": "Équipes avec plusieurs techniciens ou rotation de garde.",
+        "reassuranceLine": "Ajusté à votre nombre de techniciens et votre volume d'appels — le chiffre exact est fixé par écrit à l'audit, avant tout engagement.",
         "items": [
           "Tout ce qui est inclus dans Démarrage",
           "Acheminement multi-techniciens",
