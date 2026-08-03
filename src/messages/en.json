@@ -590,7 +590,7 @@
       "tiers": [
         {
           "name": "Starter",
-          "price": "$1,250 setup",
+          "price": "$799 setup",
           "cadence": "$375 / month",
           "idealFor": "Owner-operators and small crews catching missed calls."
         },
@@ -940,11 +940,12 @@
     "tiers": [
       {
         "name": "Starter",
-        "price": "$1,250 setup",
-        "setupAmount": "$1,250",
+        "price": "$799 setup",
+        "setupAmount": "$799",
         "cadence": "$375 / month",
         "monthlyAmount": "$375",
         "idealFor": "Owner-operators and small crews catching missed calls for the first time.",
+        "reassuranceLine": "Covers routing, bilingual templates, and technician setup — with a launch guarantee if we delay. Often less than the value of one recovered job.",
         "items": [
           "Missed-call SMS text-back",
           "Lead details and photo collection",
@@ -962,6 +963,7 @@
         "cadence": "$500–$750 / month",
         "monthlyAmount": "$500–$750",
         "idealFor": "Teams with multiple technicians or on-call rotation.",
+        "reassuranceLine": "Scoped to your technician count and call volume — the exact number is locked in writing at the audit, before you commit.",
         "items": [
           "Everything in Starter",
           "Multiple technician routing",
