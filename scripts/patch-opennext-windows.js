@@ -1,6 +1,6 @@
 /**
- * Windows-only: patch @opennextjs/aws copyTracedFiles to use NTFS junctions
- * instead of symlinks (EPERM without Developer Mode / admin).
+ * Windows-only: patch @opennextjs/aws copyTracedFiles to copy instead of
+ * creating symlinks/junctions (EPERM under OneDrive / without Developer Mode).
  * Safe no-op on non-Windows and when already patched / package missing.
  */
 const fs = require("node:fs");
@@ -27,11 +27,11 @@ if (!fs.existsSync(target)) {
 
 let source = fs.readFileSync(target, "utf8");
 
-if (source.includes('symlinkSync(target, to, "junction")')) {
+if (source.includes("Windows/OneDrive: symlinks and junctions often hit EPERM")) {
   process.exit(0);
 }
 
-const needle = [
+const unpatchedNeedle = [
   "        if (symlink) {",
   "            try {",
   "                symlinkSync(symlink, to);",
@@ -44,20 +44,20 @@ const needle = [
   "        }",
 ].join("\n");
 
-const longPathPrefix = ["\\", "\\", "?", "\\"].join("");
+const junctionNeedle = [
+  "        if (symlink) {",
+  "            try {",
+  '                if (process.platform === "win32") {',
+  "                    // Windows: recreate as junction (no admin/Developer Mode).",
+].join("\n");
 
 const replacement = [
   "        if (symlink) {",
   "            try {",
   '                if (process.platform === "win32") {',
-  "                    // Windows: recreate as junction (no admin/Developer Mode).",
-  `                    const rawTarget = symlink.startsWith(${JSON.stringify(longPathPrefix)})`,
-  "                        ? symlink.slice(4)",
-  "                        : symlink;",
-  "                    const target = path.isAbsolute(rawTarget)",
-  "                        ? rawTarget",
-  "                        : path.resolve(path.dirname(to), rawTarget);",
-  '                    symlinkSync(target, to, "junction");',
+  "                    // Windows/OneDrive: symlinks and junctions often hit EPERM.",
+  "                    // Always dereference and copy instead of linking.",
+  "                    cpSync(from, to, { recursive: true, dereference: true });",
   "                }",
   "                else {",
   "                    symlinkSync(symlink, to);",
@@ -83,12 +83,25 @@ const replacement = [
   "        }",
 ].join("\n");
 
-if (!source.includes(needle)) {
-  console.warn(
-    "[patch-opennext-windows] Unexpected @opennextjs/aws layout; skip patch."
-  );
+if (source.includes(unpatchedNeedle)) {
+  fs.writeFileSync(target, source.replace(unpatchedNeedle, replacement));
+  console.log("[patch-opennext-windows] Applied Windows copy patch.");
   process.exit(0);
 }
 
-fs.writeFileSync(target, source.replace(needle, replacement));
-console.log("[patch-opennext-windows] Applied Windows junction patch.");
+// Upgrade older junction patch → copy patch
+if (source.includes(junctionNeedle)) {
+  const start = source.indexOf(junctionNeedle);
+  const endMarker = "        else {\n            // Adding this inside a try-catch to handle errors on Next 16+";
+  const end = source.indexOf(endMarker, start);
+  if (start !== -1 && end !== -1) {
+    const updated = source.slice(0, start) + replacement + "\n" + source.slice(end);
+    fs.writeFileSync(target, updated);
+    console.log("[patch-opennext-windows] Upgraded junction patch to copy patch.");
+    process.exit(0);
+  }
+}
+
+console.warn(
+  "[patch-opennext-windows] Unexpected @opennextjs/aws layout; skip patch."
+);
