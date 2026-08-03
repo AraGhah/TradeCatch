@@ -176,11 +176,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Fully delivered on a prior attempt — clean duplicate response.
-  if (
-    persisted?.duplicate &&
-    persisted.emailSent &&
-    persisted.crmForwarded
-  ) {
+  if (persisted?.duplicate && persisted.emailSent && persisted.crmForwarded) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 

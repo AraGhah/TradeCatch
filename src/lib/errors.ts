@@ -1,4 +1,5 @@
-const DISCORD_WEBHOOK_RE = /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//i;
+const DISCORD_WEBHOOK_RE =
+  /^https:\/\/(discord|discordapp)\.com\/api\/webhooks\//i;
 const SLACK_WEBHOOK_RE = /^https:\/\/hooks\.slack\.com\/services\//i;
 
 /** Discord embed field value/name limits — truncate so a long stack never gets the whole webhook rejected. */
@@ -29,7 +30,11 @@ function buildDiscordPayload(
 ) {
   const fields = contextFields(context);
   if (stack) {
-    fields.push({ name: "Stack", value: clip(`\`\`\`${stack}\`\`\``, 1024), inline: false });
+    fields.push({
+      name: "Stack",
+      value: clip(`\`\`\`${stack}\`\`\``, 1024),
+      inline: false,
+    });
   }
   return {
     content: null,
