@@ -6,18 +6,19 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const isDev = process.env.NODE_ENV === "development";
 
-// Document CSP (with per-request nonce + strict-dynamic) is applied in
-// `src/middleware.ts`. API/static responses still get the remaining headers here.
+// Single document CSP for OpenNext Cloudflare. Do not use per-request nonces
+// in middleware: asset/HTML nonce mismatch + 'strict-dynamic' blocks all JS.
+// 'unsafe-inline' covers bootstrap + GA init inline scripts (no nonce path).
 // Production script-src must NOT include 'unsafe-eval'.
 const apiFallbackCsp = [
   "default-src 'self'",
-  `script-src 'self' https://www.googletagmanager.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval' 'unsafe-inline'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://challenges.cloudflare.com${isDev ? " 'unsafe-eval'" : ""}`,
   "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://www.google-analytics.com",
   "font-src 'self'",
   "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://challenges.cloudflare.com",
-  "frame-src https://challenges.cloudflare.com",
+  "frame-src https://challenges.cloudflare.com https://cal.com https://calendly.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -26,7 +27,6 @@ const apiFallbackCsp = [
 ].join("; ");
 
 const securityHeaders = [
-  // Pages matched by proxy overwrite this with a nonce CSP.
   { key: "Content-Security-Policy", value: apiFallbackCsp },
   {
     key: "Strict-Transport-Security",
