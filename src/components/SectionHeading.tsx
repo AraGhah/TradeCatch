@@ -38,7 +38,7 @@ export function SectionHeading({
           {eyebrow}
         </p>
       ) : null}
-      <Heading className={`${titleClass} ${light ? "text-white" : "text-navy"}`}>
+      <Heading className={`${titleClass} ${light ? "text-white" : "text-heading"}`}>
         {title}
       </Heading>
       {intro ? (

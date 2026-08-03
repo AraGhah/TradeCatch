@@ -134,7 +134,6 @@ export function BookAuditForm() {
   const [submitError, setSubmitError] = useState<"generic" | "network" | null>(
     null,
   );
-  const [stepAnnouncement, setStepAnnouncement] = useState("");
 
   const step = BOOK_AUDIT_STEPS[stepIndex];
   const onReview = step === "review";
@@ -176,12 +175,9 @@ export function BookAuditForm() {
     }
   }, [answers, phase]);
 
-  useEffect(() => {
-    const title = onReview
-      ? t("wizard.reviewHeadline")
-      : t(`wizard.questions.${step}.title`);
-    setStepAnnouncement(title);
-  }, [stepIndex, onReview, step, t]);
+  const stepAnnouncement = onReview
+    ? t("wizard.reviewHeadline")
+    : t(`wizard.questions.${step}.title`);
 
   useEffect(() => {
     if (!focusErrorSummary.current || Object.keys(errors).length === 0) return;
@@ -475,7 +471,7 @@ export function BookAuditForm() {
           >
             ✓
           </span>
-          <h1 className="mt-7 font-heading text-[clamp(30px,4.2vw,48px)] leading-[1.05] font-extrabold tracking-[-0.04em] text-navy">
+          <h1 className="mt-7 font-heading text-[clamp(30px,4.2vw,48px)] leading-[1.05] font-extrabold tracking-[-0.04em] text-heading">
             {t("confirmation.headline")}
           </h1>
           <p className="mx-auto mt-5 max-w-[34em] text-[17px] leading-[1.65] text-muted">
@@ -484,6 +480,7 @@ export function BookAuditForm() {
           <CalendarBookingCta
             label={t("confirmation.calendarCta")}
             hint={t("confirmation.calendarHint")}
+            openInNewTabLabel={t("confirmation.calendarOpenNewTab")}
           />
           <div className="mt-[34px] flex flex-wrap justify-center gap-3">
             <Link
@@ -495,7 +492,7 @@ export function BookAuditForm() {
             <button
               type="button"
               onClick={resetForm}
-              className="rounded-[11px] border-[1.5px] border-[rgba(12,20,30,0.14)] px-[22px] py-4 text-[15.5px] font-semibold text-navy transition-colors duration-200 hover:border-navy"
+              className="rounded-[11px] border-[1.5px] border-[rgb(var(--ink-rgb)/0.14)] px-[22px] py-4 text-[15.5px] font-semibold text-heading transition-colors duration-200 hover:border-navy"
             >
               {t("confirmation.submitAnother")}
             </button>
@@ -562,7 +559,7 @@ export function BookAuditForm() {
                 </p>
                 <h1
                   id="audit-step-title"
-                  className="mt-[18px] max-w-[16em] font-heading text-[clamp(28px,4vw,46px)] leading-[1.06] font-extrabold tracking-[-0.04em] text-navy"
+                  className="mt-[18px] max-w-[16em] font-heading text-[clamp(28px,4vw,46px)] leading-[1.06] font-extrabold tracking-[-0.04em] text-heading"
                 >
                   {t(`wizard.questions.${step}.title`)}
                 </h1>
@@ -577,7 +574,7 @@ export function BookAuditForm() {
                 <p className="m-0 font-mono text-[12px] font-semibold tracking-[0.12em] text-ember-text">
                   {t("wizard.reviewLabel")}
                 </p>
-                <h1 className="mt-[18px] max-w-[15em] font-heading text-[clamp(28px,4vw,46px)] leading-[1.06] font-extrabold tracking-[-0.04em] text-navy">
+                <h1 className="mt-[18px] max-w-[15em] font-heading text-[clamp(28px,4vw,46px)] leading-[1.06] font-extrabold tracking-[-0.04em] text-heading">
                   {t("wizard.reviewHeadline")}
                 </h1>
               </>
@@ -657,7 +654,7 @@ export function BookAuditForm() {
               className={
                 satisfied
                   ? "inline-flex items-center gap-3 rounded-[12px] bg-orange px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
-                  : "inline-flex cursor-pointer items-center gap-3 rounded-[12px] bg-[rgba(12,20,30,0.08)] px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-muted"
+                  : "inline-flex cursor-pointer items-center gap-3 rounded-[12px] bg-[rgb(var(--ink-rgb)/0.08)] px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-muted"
               }
             >
               {nextLabel}
@@ -672,7 +669,7 @@ export function BookAuditForm() {
               <button
                 type="button"
                 onClick={goBack}
-                className="rounded-[12px] px-5 py-[17px] text-[15.5px] font-semibold text-muted transition-colors duration-200 hover:text-navy"
+                className="rounded-[12px] px-5 py-[17px] text-[15.5px] font-semibold text-muted transition-colors duration-200 hover:text-heading"
               >
                 {t("wizard.back")}
               </button>
@@ -682,7 +679,7 @@ export function BookAuditForm() {
               <button
                 type="button"
                 onClick={skipOptional}
-                className="border-b border-[rgba(12,20,30,0.18)] px-1 py-[17px] text-[15px] text-muted transition-colors duration-200 hover:text-navy"
+                className="border-b border-[rgb(var(--ink-rgb)/0.18)] px-1 py-[17px] text-[15px] text-muted transition-colors duration-200 hover:text-heading"
               >
                 {t("wizard.skip")}
               </button>
@@ -715,7 +712,7 @@ function ProgressBar({
 }) {
   const summaryId = "audit-progress-summary";
   return (
-    <div className="sticky top-(--header-h) z-30 border-b border-[rgba(12,20,30,0.08)] bg-[rgba(244,241,236,0.92)] backdrop-blur-[12px]">
+    <div className="sticky top-(--header-h) z-30 border-b border-[rgb(var(--ink-rgb)/0.08)] bg-[rgb(var(--paper-rgb)/0.92)] backdrop-blur-[12px]">
       <div className="mx-auto w-full max-w-(--container-wizard) px-[clamp(20px,4vw,40px)] pt-3.5 pb-[13px]">
         <div className="flex items-center justify-between gap-4">
           <p
@@ -735,7 +732,7 @@ function ProgressBar({
           aria-valuenow={currentStep}
           aria-valuetext={counterText}
           aria-describedby={summaryId}
-          className="mt-[11px] h-[3px] overflow-hidden rounded-[3px] bg-[rgba(12,20,30,0.1)]"
+          className="mt-[11px] h-[3px] overflow-hidden rounded-[3px] bg-[rgb(var(--ink-rgb)/0.1)]"
         >
           <span
             className="block h-full rounded-[3px] bg-orange transition-[width] duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -859,7 +856,7 @@ function StepBody({
     const consentErrorId = "audit-field-serviceConsent-error";
     return (
       <div className="flex flex-col gap-3.5">
-        <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white p-5 text-[16px] leading-[1.6] text-text">
+        <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgb(var(--ink-rgb)/0.14)] bg-surface p-5 text-[16px] leading-[1.6] text-text">
           <input
             type="checkbox"
             id="audit-field-serviceConsent"
@@ -885,7 +882,7 @@ function StepBody({
             {t("consentRequired")}
           </p>
         ) : null}
-        <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white/50 p-5 text-[16px] leading-[1.6] text-muted">
+        <label className="flex cursor-pointer items-start gap-3.5 rounded-[14px] border-[1.5px] border-[rgb(var(--ink-rgb)/0.14)] bg-surface/50 p-5 text-[16px] leading-[1.6] text-muted">
           <input
             type="checkbox"
             name="marketingConsent"
@@ -901,7 +898,7 @@ function StepBody({
 
   // Review
   return (
-    <div className="border-t border-[rgba(12,20,30,0.12)]">
+    <div className="border-t border-[rgb(var(--ink-rgb)/0.12)]">
       {QUESTION_STEPS.map((s, n) => (
         <ReviewRow
           key={s}
@@ -1027,7 +1024,7 @@ function ChoiceGrid({
           className={
             option.selected
               ? "flex w-full items-center justify-between gap-3.5 rounded-[13px] border-[1.5px] border-navy bg-navy px-5 py-[17px] text-left text-[16.5px] font-semibold tracking-[-0.015em] text-white"
-              : "flex w-full items-center justify-between gap-3.5 rounded-[13px] border-[1.5px] border-[rgba(12,20,30,0.14)] bg-white px-5 py-[17px] text-left text-[16.5px] font-medium tracking-[-0.015em] text-text transition-[border-color,transform,box-shadow] duration-200 hover:translate-y-[-2px] hover:border-navy hover:shadow-[0_12px_24px_-16px_rgba(12,20,30,0.5)]"
+              : "flex w-full items-center justify-between gap-3.5 rounded-[13px] border-[1.5px] border-[rgb(var(--ink-rgb)/0.14)] bg-surface px-5 py-[17px] text-left text-[16.5px] font-medium tracking-[-0.015em] text-text transition-[border-color,transform,box-shadow] duration-200 hover:translate-y-[-2px] hover:border-navy hover:shadow-[0_12px_24px_-16px_rgb(var(--ink-rgb)/0.5)]"
           }
         >
           {option.label}
@@ -1097,7 +1094,7 @@ function UnderlineField({
         aria-labelledby={label ? undefined : "audit-step-title"}
         aria-invalid={Boolean(error)}
         aria-describedby={error && errorId ? errorId : undefined}
-        className={`w-full border-0 border-b-2 border-[rgba(12,20,30,0.18)] bg-transparent py-3 font-heading font-bold text-navy outline-none placeholder:text-[rgba(12,20,30,0.28)] focus:border-orange ${sizeClass}`}
+        className={`w-full border-0 border-b-2 border-[rgb(var(--ink-rgb)/0.18)] bg-transparent py-3 font-heading font-bold text-heading outline-none placeholder:text-[rgb(var(--ink-rgb)/0.28)] focus:border-orange ${sizeClass}`}
       />
       {error ? (
         <span
@@ -1124,7 +1121,7 @@ function ReviewRow({
   editLabel: string;
 }) {
   return (
-    <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] items-baseline gap-2 gap-x-5 border-b border-[rgba(12,20,30,0.1)] py-[15px]">
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] items-baseline gap-2 gap-x-5 border-b border-[rgb(var(--ink-rgb)/0.1)] py-[15px]">
       <p className="m-0 font-mono text-[11px] tracking-[0.1em] text-muted uppercase">
         {label}
       </p>
@@ -1133,7 +1130,7 @@ function ReviewRow({
         <button
           type="button"
           onClick={onEdit}
-          className="shrink-0 border-b border-[rgba(169,79,18,0.35)] text-[13.5px] font-semibold text-ember-text transition-colors duration-200 hover:text-navy"
+          className="shrink-0 border-b border-[rgba(169,79,18,0.35)] text-[13.5px] font-semibold text-ember-text transition-colors duration-200 hover:text-heading"
         >
           {editLabel}
         </button>

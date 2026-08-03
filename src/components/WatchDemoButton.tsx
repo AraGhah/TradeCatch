@@ -172,7 +172,6 @@ export function WatchDemoButton({
                   srcLang={locale}
                   label={t("captionsLabel")}
                   src={CAPTION_SRC[locale]}
-                  default
                 />
               </video>
             </div>

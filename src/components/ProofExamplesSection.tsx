@@ -59,7 +59,7 @@ export function ProofExamplesSection({
         </p>
         <IllustrativeBadge label={illustrativeLabel} />
       </div>
-      <h2 className="mt-3 max-w-[min(100%,36rem)] font-heading text-[clamp(28px,3.4vw,44px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-navy">
+      <h2 className="mt-3 max-w-[min(100%,36rem)] font-heading text-[clamp(28px,3.4vw,44px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-heading">
         {headline}
       </h2>
       <p className="mt-4 max-w-[40em] text-[16.5px] leading-[1.65] text-muted">
@@ -73,9 +73,9 @@ export function ProofExamplesSection({
           gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
         }}
       >
-        <div className="rounded-[18px] border border-[rgba(12,20,30,0.1)] bg-paper p-5">
+        <div className="rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-paper p-5">
           <IllustrativeBadge label={sms.badge} />
-          <h3 className="mt-3 font-heading text-[18px] font-bold tracking-[-0.03em] text-navy">
+          <h3 className="mt-3 font-heading text-[18px] font-bold tracking-[-0.03em] text-heading">
             {sms.title}
           </h3>
           <div className="mt-5 flex flex-col gap-2.5">
@@ -84,7 +84,7 @@ export function ProofExamplesSection({
                 return (
                   <p
                     key={`${line.text}-${i}`}
-                    className="rounded-full bg-[rgba(12,20,30,0.05)] px-3 py-2 text-center font-mono text-[11px] tracking-[0.04em] text-secondary"
+                    className="rounded-full bg-[rgb(var(--ink-rgb)/0.05)] px-3 py-2 text-center font-mono text-[11px] tracking-[0.04em] text-secondary"
                   >
                     {line.text}
                   </p>
@@ -96,7 +96,7 @@ export function ProofExamplesSection({
                   key={`${line.text}-${i}`}
                   className={`max-w-[92%] rounded-[16px] px-3.5 py-2.5 text-[13.5px] leading-snug ${
                     outbound
-                      ? "self-start rounded-bl-[5px] border border-[rgba(12,20,30,0.08)] bg-white text-navy"
+                      ? "self-start rounded-bl-[5px] border border-[rgb(var(--ink-rgb)/0.08)] bg-surface text-heading"
                       : "self-end rounded-br-[5px] bg-navy text-white"
                   }`}
                 >

@@ -9,15 +9,17 @@ type Size = "sm" | "md" | "lg";
 
 const styles: Record<string, string> = {
   ember:
+    // Fixed dark text — the orange fill doesn't change between themes, so
+    // its text must not flip to the light dark-mode heading color either.
     "bg-orange text-navy shadow-cta hover:bg-orange-dark hover:translate-y-[-2px]",
-  ink: "bg-navy text-white shadow-[0_8px_20px_-10px_rgba(12,20,30,.6)] hover:bg-navy-light hover:translate-y-[-1px]",
+  ink: "bg-navy text-white shadow-[0_8px_20px_-10px_rgb(var(--ink-rgb)/.6)] hover:bg-navy-light hover:translate-y-[-1px]",
   ghost:
-    "bg-white text-navy border-[1.5px] border-[rgba(12,20,30,0.16)] hover:border-navy hover:translate-y-[-2px]",
+    "bg-surface text-heading border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] hover:border-navy hover:translate-y-[-2px]",
   "ghost-ink":
     "bg-transparent text-white border border-white/20 hover:bg-white/[0.07] hover:border-white/40",
   outline:
-    "bg-transparent text-navy border-[1.5px] border-[rgba(12,20,30,0.16)] w-full hover:bg-navy hover:text-white hover:border-navy",
-  link: "bg-transparent text-ember-text underline underline-offset-[6px] decoration-[1.5px] decoration-ember-text/40 hover:text-navy hover:decoration-navy px-0 py-0 rounded-none",
+    "bg-transparent text-heading border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] w-full hover:bg-navy hover:text-white hover:border-navy",
+  link: "bg-transparent text-ember-text underline underline-offset-[6px] decoration-[1.5px] decoration-ember-text/40 hover:text-heading hover:decoration-navy px-0 py-0 rounded-none",
 };
 
 const sizes: Record<Size, string> = {

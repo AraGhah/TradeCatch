@@ -16,7 +16,7 @@ export function FaqAccordion({
     <div
       className={
         bordered
-          ? "rounded-[18px] border border-[rgba(12,20,30,0.1)] bg-white px-6"
+          ? "rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface px-6"
           : ""
       }
     >
@@ -27,7 +27,7 @@ export function FaqAccordion({
         return (
           <div
             key={item.q}
-            className="border-b border-[rgba(12,20,30,0.12)] last:border-b-0"
+            className="border-b border-[rgb(var(--ink-rgb)/0.12)] last:border-b-0"
           >
             <button
               type="button"
@@ -37,7 +37,7 @@ export function FaqAccordion({
               aria-controls={panelId}
               className="flex w-full items-center justify-between gap-4 py-[22px] text-left"
             >
-              <span className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-navy sm:text-[18.5px]">
+              <span className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-heading sm:text-[18.5px]">
                 {item.q}
               </span>
               <span

@@ -1,22 +1,45 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: toggled by adding/removing `.dark` on <html>,
+   independent of the OS/browser color-scheme preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  /* Ink */
+  /* Ink — background fill for hero/dark sections. Deliberately identical in
+     light and dark mode: these sections are already dark, so the alternating
+     ink/paper rhythm survives as near-black vs. dark-charcoal in dark mode. */
   --color-navy: #0c141e;
   --color-navy-light: #16222f;
   --color-ink-panel: #0f1926;
 
-  /* Paper */
+  /* Paper — page background. Swaps to charcoal in dark mode. */
   --color-bg: #f4f1ec;
   --color-paper: #f4f1ec;
   --color-paper-deep: #eae5dc;
   --color-paper-hover: #faf8f5;
   --color-white: #ffffff;
 
+  /* RGB triplet of --color-paper, for translucent/backdrop-blur uses
+     (e.g. the sticky header) that need an alpha channel a plain hex custom
+     property can't provide. Keep in sync with --color-paper above. */
+  --paper-rgb: 244 241 236;
+
+  /* Surface — content-card background, decoupled from --color-white so the
+     literal white accent chips (phone-screen mockup, floating cards) that
+     must stay bright in both themes can keep using bg-white untouched. */
+  --color-surface: #ffffff;
+
+  /* Heading/ink text color, decoupled from --color-navy so headings can
+     flip to a light color in dark mode without altering ink backgrounds. */
+  --color-heading: #0c141e;
+
   /* Ember */
   --color-orange: #e4762b;
   --color-orange-dark: #f08b45;
-  --color-ember-text: #a94f12;
+  /* Was #a94f12 — measured 4.32:1 (fails AA) against the ember-tinted badge
+     fill (rgba(228,118,43,0.13)) used for pills like "Pilot programme";
+     darkened slightly to clear 4.5:1 with margin everywhere it's used. */
+  --color-ember-text: #96460f;
 
   /* Signal green */
   --color-green: #2f9e68;
@@ -24,14 +47,24 @@
 
   /* Text */
   --color-text: #1a2430;
-  --color-muted: #5c6875;
+  /* Was #5c6875 — measured 4.47:1 (fails AA) against the ink-tinted badge
+     background used on the "Illustrative data" chips; darkened slightly to
+     clear 4.5:1 with margin everywhere it's used. */
+  --color-muted: #566276;
   --color-secondary: #3d4855;
 
   /* Deprecated blue → ember (focus / leftover refs) */
   --color-blue: #e4762b;
   --color-blue-light: #f08b45;
 
-  /* Hairlines */
+  /* Ink tint used by every rgb(var(--ink-rgb)/alpha) hairline, border, and
+     shadow across the site. Flipping this one triplet in dark mode turns
+     every "dark hairline on paper" into a "light hairline on charcoal"
+     without touching each component. */
+  --ink-rgb: 12 20 30;
+
+  /* Hairlines (legacy fixed values — most components now use
+     rgb(var(--ink-rgb)/alpha) directly; these remain for any lingering refs) */
   --rule: rgba(12, 20, 30, 0.1);
   --rule-08: rgba(12, 20, 30, 0.08);
   --rule-10: rgba(12, 20, 30, 0.1);
@@ -42,17 +75,45 @@
   --mono-on-ink: rgba(255, 255, 255, 0.64);
 
   /* Shadows */
-  --shadow-card: 0 1px 2px rgba(12, 20, 30, 0.04), 0 8px 24px -8px rgba(12, 20, 30, 0.08);
-  --shadow-card-hover: 0 26px 46px -28px rgba(12, 20, 30, 0.34);
+  --shadow-card: 0 1px 2px rgb(var(--ink-rgb) / 0.04), 0 8px 24px -8px rgb(var(--ink-rgb) / 0.08);
+  --shadow-card-hover: 0 26px 46px -28px rgb(var(--ink-rgb) / 0.34);
   --shadow-cta: 0 14px 34px -16px rgba(228, 118, 43, 0.8);
-  --shadow-ink-panel: 0 40px 70px -44px rgba(12, 20, 30, 0.7);
+  --shadow-ink-panel: 0 40px 70px -44px rgb(var(--ink-rgb) / 0.7);
   --shadow-phone: 0 60px 90px -50px rgba(0, 0, 0, 0.9);
-  --shadow-header: 0 8px 30px -18px rgba(12, 20, 30, 0.35);
+  --shadow-header: 0 8px 30px -18px rgb(var(--ink-rgb) / 0.35);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --header-h: clamp(68px, 7vw, 86px);
   --section-y: clamp(80px, 9vw, 140px);
   --pad-x: clamp(20px, 4vw, 40px);
+}
+
+:root {
+  color-scheme: light;
+}
+
+:root.dark {
+  color-scheme: dark;
+  --color-bg: #16191e;
+  --color-paper: #16191e;
+  --color-paper-deep: #0f1215;
+  --color-paper-hover: #1d2127;
+  --color-surface: #1c2027;
+  --paper-rgb: 22 25 30;
+
+  --color-heading: #f1eee8;
+  --color-text: #e6e2da;
+  --color-muted: #9aa2ab;
+  --color-secondary: #c3c9d0;
+
+  /* Dark-mode-safe tints: the light-mode values are tuned for 4.5:1 AA on
+     paper/white and fail badly on charcoal, so both get a lighter variant. */
+  --color-ember-text: #ff9a5c;
+  --color-signal-text: #4fcf94;
+
+  --ink-rgb: 255 255 255;
+
+  --shadow-phone: 0 60px 90px -50px rgba(0, 0, 0, 0.95);
 }
 
 @theme inline {
@@ -68,6 +129,8 @@
   --color-paper: var(--color-paper);
   --color-paper-deep: var(--color-paper-deep);
   --color-paper-hover: var(--color-paper-hover);
+  --color-surface: var(--color-surface);
+  --color-heading: var(--color-heading);
   --color-text: var(--color-text);
   --color-muted: var(--color-muted);
   --color-secondary: var(--color-secondary);
@@ -101,6 +164,13 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-wrap: pretty;
+  transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
 }
 
 h1,

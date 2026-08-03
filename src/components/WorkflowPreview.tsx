@@ -36,7 +36,7 @@ export function WorkflowPreview({
   const row2 = steps.slice(3, 6);
 
   return (
-    <div className="relative rounded-[20px] border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(18px,2.5vw,28px)]">
+    <div className="relative rounded-[20px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(18px,2.5vw,28px)]">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 rounded-[20px] opacity-70"
@@ -51,7 +51,7 @@ export function WorkflowPreview({
       <div className="relative my-2.5 flex justify-center" aria-hidden>
         <span
           className={`block h-7 w-px transition-colors duration-300 ${
-            active >= 3 ? "bg-orange" : "bg-[rgba(12,20,30,0.14)]"
+            active >= 3 ? "bg-orange" : "bg-[rgb(var(--ink-rgb)/0.14)]"
           }`}
         />
       </div>
@@ -90,7 +90,7 @@ function FlowRow({
                   ? "border-orange/50 bg-[rgba(228,118,43,0.1)] shadow-[0_12px_28px_-18px_rgba(228,118,43,0.55)]"
                   : isDone
                     ? "border-[rgba(47,158,104,0.28)] bg-[rgba(47,158,104,0.06)]"
-                    : "border-[rgba(12,20,30,0.1)] bg-paper"
+                    : "border-[rgb(var(--ink-rgb)/0.1)] bg-paper"
               }`}
             >
               <span
@@ -104,7 +104,7 @@ function FlowRow({
               >
                 {String(stepIndex + 1).padStart(2, "0")}
               </span>
-              <span className="mt-1 text-[13.5px] font-semibold leading-snug tracking-[-0.015em] text-navy">
+              <span className="mt-1 text-[13.5px] font-semibold leading-snug tracking-[-0.015em] text-heading">
                 {label}
               </span>
               {isActive ? (
@@ -114,7 +114,7 @@ function FlowRow({
             {showArrow ? (
               <span
                 className={`mx-1 shrink-0 font-mono text-[14px] transition-colors duration-300 ${
-                  active > stepIndex ? "text-orange" : "text-[rgba(12,20,30,0.22)]"
+                  active > stepIndex ? "text-orange" : "text-[rgb(var(--ink-rgb)/0.22)]"
                 }`}
                 aria-hidden
               >

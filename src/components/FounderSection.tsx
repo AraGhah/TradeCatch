@@ -50,8 +50,8 @@ export function FounderSection({
 
       <div>
         <p className="text-mono-label text-muted">{eyebrow}</p>
-        <h2 className="text-section mt-4 text-navy">{headline}</h2>
-        <blockquote className="mt-6 border-l-2 border-orange pl-5 text-[17px] leading-[1.65] text-navy">
+        <h2 className="text-section mt-4 text-heading">{headline}</h2>
+        <blockquote className="mt-6 border-l-2 border-orange pl-5 text-[17px] leading-[1.65] text-heading">
           {statement}
         </blockquote>
         <ul className="mt-7 space-y-3">
@@ -71,7 +71,7 @@ export function FounderSection({
           </CTAButton>
           <a
             href={`mailto:${email}`}
-            className="text-[15px] font-semibold text-ember-text underline decoration-ember-text/40 underline-offset-4 transition-colors hover:text-navy"
+            className="text-[15px] font-semibold text-ember-text underline decoration-ember-text/40 underline-offset-4 transition-colors hover:text-heading"
           >
             {emailLabel}
           </a>

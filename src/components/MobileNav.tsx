@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { BrandLockup } from "@/components/BrandLockup";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2";
@@ -115,8 +116,13 @@ export function MobileNav({
       </nav>
 
       <div className="px-[clamp(20px,4vw,40px)] pb-10 pt-6">
-        <div className="mb-5">
+        <div className="mb-5 flex items-center justify-between gap-3">
           <LocaleSwitcher inverted />
+          <ThemeToggle
+            inverted
+            labelToDark={t("toggleThemeToDark")}
+            labelToLight={t("toggleThemeToLight")}
+          />
         </div>
         <a
           href={`tel:${phoneHref}`}
@@ -144,7 +150,7 @@ export function MobileNav({
         aria-label={open ? t("closeMenu") : t("menu")}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className={`flex h-[42px] w-[42px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[rgba(12,20,30,0.14)] ${FOCUS_RING}`}
+        className={`flex h-[42px] w-[42px] flex-col items-center justify-center gap-[6px] rounded-[10px] border border-[rgb(var(--ink-rgb)/0.14)] ${FOCUS_RING}`}
       >
         <span className="block h-[1.8px] w-[17px] rounded-full bg-navy" />
         <span className="block h-[1.8px] w-[17px] rounded-full bg-navy" />

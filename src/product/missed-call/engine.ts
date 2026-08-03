@@ -1311,11 +1311,21 @@ export function createMissedCallEngine(deps: {
             escalated.push(claimed.id);
           } finally {
             // Release lease after the tick so later timer-based escalations
-            // are not blocked for the full lease window.
-            const latest = await deps.store.getWorkflow(workflow.id);
-            if (latest?.escalationClaimUntil) {
-              latest.escalationClaimUntil = undefined;
-              await deps.store.saveWorkflow(latest);
+            // are not blocked for the full lease window. A concurrent write
+            // (e.g. a technician reply landing mid-tick) can make this save
+            // lose a version race — that must not abort the rest of the
+            // batch, since the lease will simply expire on its own.
+            try {
+              const latest = await deps.store.getWorkflow(workflow.id);
+              if (latest?.escalationClaimUntil) {
+                latest.escalationClaimUntil = undefined;
+                await deps.store.saveWorkflow(latest);
+              }
+            } catch (err) {
+              console.error(
+                `[missed-call] failed to release escalation lease for ${workflow.id}`,
+                err,
+              );
             }
           }
         } finally {

@@ -19,7 +19,9 @@
     "menu": "Menu",
     "closeMenu": "Close menu",
     "mobileNav": "Mobile navigation",
-    "close": "Close"
+    "close": "Close",
+    "toggleThemeToDark": "Switch to dark mode",
+    "toggleThemeToLight": "Switch to light mode"
   },
   "cta": {
     "primary": "Book a free 20-minute audit",
@@ -68,7 +70,7 @@
       "eyebrow": "Québec plumbing · HVAC · electrical",
       "headline": "Stop losing jobs to missed calls.",
       "accentWord": "missed calls",
-      "subheadline": "TradeCatch texts missed callers back, collects the job details, and alerts the right technician. Quote follow-up sequences shown elsewhere on this site are illustrative — not a live product module yet.",
+      "subheadline": "TradeCatch texts missed callers back, collects the job details, and alerts the right technician. Quote follow-up sequences shown elsewhere on this site are illustrative, not a live product module yet.",
       "ctaPrimary": "Book a free 20-minute audit",
       "ctaSecondary": "See the interactive walkthrough",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
@@ -197,10 +199,10 @@
     },
     "system": {
       "eyebrow": "The system",
-      "headline": "From missed call to booked job — example path.",
-      "intro": "TradeCatch texts missed callers back, collects the job details, and alerts your crew. Quote follow-up sequences shown on this site are illustrative — not a live product module yet.",
+      "headline": "From missed call to booked job: example path.",
+      "intro": "Each step below runs the same way for every missed call: automatic, bilingual, and handed to your team the moment a technician is needed.",
       "cta": "See how it works",
-      "previewLabel": "Example workflow — illustrative, not a live client feed",
+      "previewLabel": "Example workflow (illustrative, not a live client feed)",
       "previewSteps": [
         "Missed call",
         "SMS sent",
@@ -224,7 +226,7 @@
         },
         {
           "title": "Lead tracked",
-          "body": "The request is logged as a structured lead record for the contractor ops path (pilot) — not a full client SaaS dashboard yet."
+          "body": "The request is logged as a structured lead record for the contractor ops path (pilot), not yet a full client SaaS dashboard."
         },
         {
           "title": "Quote chased",
@@ -232,7 +234,7 @@
         },
         {
           "title": "Result measured",
-          "body": "Reporting views on this site are illustrative samples — recovered-revenue analytics are not a live product module yet."
+          "body": "Reporting views on this site are illustrative samples. Recovered-revenue analytics are not a live product module yet."
         }
       ]
     },
@@ -295,7 +297,7 @@
         },
         {
           "manual": "Quotes get followed up when someone has a free minute, which often means never.",
-          "system": "Quote follow-up sequences are planned for later pilots — today we focus on missed-call recovery and technician alerts."
+          "system": "Quote follow-up sequences are planned for later pilots. Today we focus on missed-call recovery and technician alerts."
         },
         {
           "manual": "The technician learns the job details secondhand, if at all.",
@@ -314,7 +316,7 @@
     "dashboard": {
       "eyebrow": "Reporting",
       "headline": "You finally see what you were missing.",
-      "intro": "Every recovered call and technician alert from the missed-call pilot. Reporting views on this site are illustrative samples — not a live client dashboard yet.",
+      "intro": "Every recovered call and technician alert from the missed-call pilot. Reporting views on this site are illustrative samples, not a live client dashboard yet.",
       "cta": "Book a free 20-minute audit",
       "badge": "Illustrative dashboard",
       "live": "Illustrative",
@@ -354,7 +356,7 @@
         }
       ],
       "note": "Every recovered call and technician alert from the missed-call pilot. Reporting views on this site are illustrative samples.",
-      "sampleDataLabel": "Illustrative data — example week, not a live client feed. Not a promise of results."
+      "sampleDataLabel": "Illustrative data: example week, not a live client feed. Not a promise of results."
     },
     "industries": {
       "eyebrow": "Industries",
@@ -524,8 +526,8 @@
     },
     "pilot": {
       "badge": "Pilot programme",
-      "headline": "Founding pilot openings — limited seats per service area.",
-      "body": "Join as a founding contractor while TradeCatch is taking a small number of pilots. You get a reduced founding rate, direct founder access, implementation around how your crew already works, priority on fitting features, and pricing locked for 12 months. No fabricated case-study promises — results are tracked with you after launch.",
+      "headline": "Founding pilot openings. Limited seats per service area.",
+      "body": "Join as a founding contractor while TradeCatch is taking a small number of pilots. You get a reduced founding rate, direct founder access, implementation around how your crew already works, priority on fitting features, and pricing locked for 12 months. No fabricated case-study promises. Results are tracked with you after launch.",
       "pointsLabel": "What the pilot includes",
       "points": [
         "Reduced founding rate for early partners",
@@ -543,20 +545,20 @@
       "eyebrow": "How we operate",
       "items": [
         {
-          "title": "Québec-based",
-          "body": "Built and operated for Québec trade companies."
+          "title": "Nothing goes live untested",
+          "body": "Messages, escalation rules, and stop conditions are all verified with you before launch."
         },
         {
-          "title": "French and English",
-          "body": "Customers choose the language. Templates approved in both."
+          "title": "You stay in control",
+          "body": "Diagnosis, discounts, and emergency calls stay with your team, never the system."
         },
         {
-          "title": "Human-approved messages",
-          "body": "Nothing goes out that you have not signed off on."
+          "title": "Your data stays yours",
+          "body": "We never sell customer data, and you keep it if you ever leave."
         },
         {
-          "title": "Works with existing business number",
-          "body": "Usually connects without replacing your line."
+          "title": "Launch guarantee",
+          "body": "If we delay the agreed launch date, your first management month is credited."
         },
         {
           "title": "Installed and monitored for you",
@@ -575,7 +577,7 @@
       "problemLabel": "What you will not see here",
       "systemLabel": "What you will see instead",
       "problem": "Fake contractor logos, invented star ratings, or made-up revenue guarantees.",
-      "system": "Example SMS threads, technician alerts, quote timelines, and dashboards — each marked Illustrative data.",
+      "system": "Example SMS threads, technician alerts, quote timelines, and dashboards, each marked Illustrative data.",
       "quote": "We would rather show a clear product example than invent a customer quote.",
       "disclaimer": "Nothing in the product examples is a guarantee of jobs, revenue, or response rates for your business.",
       "metrics": [],
@@ -588,14 +590,14 @@
       "tiers": [
         {
           "name": "Starter",
-          "price": "$2,500 setup",
-          "cadence": "$750 / month",
+          "price": "$1,250 setup",
+          "cadence": "$375 / month",
           "idealFor": "Owner-operators and small crews catching missed calls."
         },
         {
           "name": "Growth",
-          "price": "$4,000 setup",
-          "cadence": "$1,000–$1,500 / month",
+          "price": "$2,000 setup",
+          "cadence": "$500–$750 / month",
           "idealFor": "Teams with multiple technicians or CRM needs."
         }
       ],
@@ -605,7 +607,7 @@
     "proofExamples": {
       "eyebrow": "Product examples",
       "headline": "See the system before you talk to anyone.",
-      "intro": "These are labelled product examples — fictional names and sample flows — so you can understand the product. They are not client testimonials, logos, or promised results.",
+      "intro": "These are labelled product examples, built with fictional names and sample flows, so you can understand the product. They are not client testimonials, logos, or promised results.",
       "illustrativeLabel": "Illustrative data",
       "demoCta": "Try the interactive missed-call walkthrough",
       "onePagerCta": "Open the one-page overview",
@@ -623,7 +625,7 @@
           },
           {
             "who": "customer",
-            "text": "Yes — basement starting to flood."
+            "text": "Yes, basement's starting to flood."
           },
           {
             "who": "system",
@@ -649,7 +651,7 @@
         "from": "TradeCatch → On-call (Marc D.)",
         "job": "Basement flooding · photo received · customer awaiting callback",
         "address": "12 rue des Érables, Laval",
-        "urgency": "Emergency — Client-approved rule",
+        "urgency": "Emergency · Client-approved rule",
         "ctaLabel": "Reply YES to accept · CALL to dial customer"
       },
       "quoteBadge": "Illustrative · Example timeline",
@@ -774,7 +776,7 @@
   "howItWorks": {
     "eyebrow": "How it works",
     "headline": "From missed call to signed job.",
-    "intro": "Six stages. Every one of them tested with your team, in French and English, before a single customer sees it.",
+    "intro": "Six stages, from missed call to tracked outcome. What's live today is tested with your team, in French and English, before a single customer sees it; quote follow-up is a planned module, shown here for the full picture.",
     "metaDescription": "See how missed-call text-back collects job details and alerts a technician. Quote follow-up and booked-appointment scenes are illustrative walkthroughs.",
     "stages": [
       {
@@ -814,7 +816,7 @@
         ]
       },
       {
-        "title": "Quote follow-up begins",
+        "title": "Quote follow-up begins (planned)",
         "items": [
           "Quote detected",
           "Follow-ups scheduled",
@@ -833,7 +835,7 @@
         ]
       }
     ],
-    "sequenceTitle": "The quote follow-up sequence",
+    "sequenceTitle": "The quote follow-up sequence (planned)",
     "sequence": [
       {
         "day": "DAY 2",
@@ -926,7 +928,7 @@
   "pricing": {
     "eyebrow": "Pricing",
     "headline": "Honest prices for crews that lose work between the ring and the signed job.",
-    "intro": "You pay once to install missed-call recovery. You pay monthly to keep text-back and technician alerts running — monitored by a real person. Quote follow-up and CRM modules are scoped only after they ship.",
+    "intro": "You pay once to install missed-call recovery. You pay monthly to keep text-back and technician alerts running, monitored by a real person. Quote follow-up and CRM modules are scoped only after they ship.",
     "reassurance": "Fixed setup. Month-to-month. Cancel with notice.",
     "metaDescription": "Starter and Growth packages for SMS missed-call text-back and technician alerts for Québec contractors. Quote follow-up sold only when live.",
     "mostPopular": "Recommended",
@@ -938,10 +940,10 @@
     "tiers": [
       {
         "name": "Starter",
-        "price": "$2,500 setup",
-        "setupAmount": "$2,500",
-        "cadence": "$750 / month",
-        "monthlyAmount": "$750",
+        "price": "$1,250 setup",
+        "setupAmount": "$1,250",
+        "cadence": "$375 / month",
+        "monthlyAmount": "$375",
         "idealFor": "Owner-operators and small crews catching missed calls for the first time.",
         "items": [
           "Missed-call SMS text-back",
@@ -949,29 +951,29 @@
           "One technician alert workflow",
           "Founder-monitored launch",
           "Weekly ops check-in (manual)",
-          "Quote follow-up — available when that module ships"
+          "Quote follow-up (available when that module ships)"
         ]
       },
       {
         "name": "Growth",
         "badge": "Most popular",
-        "price": "$4,000 setup",
-        "setupAmount": "$4,000",
-        "cadence": "$1,000–$1,500 / month",
-        "monthlyAmount": "$1,000–$1,500",
+        "price": "$2,000 setup",
+        "setupAmount": "$2,000",
+        "cadence": "$500–$750 / month",
+        "monthlyAmount": "$500–$750",
         "idealFor": "Teams with multiple technicians or on-call rotation.",
         "items": [
           "Everything in Starter",
           "Multiple technician routing",
           "On-call rotation and backup escalation",
-          "CRM connection — when the sync module ships",
-          "Appointment booking — external calendar link today",
-          "Custom dashboard — planned after durable reporting"
+          "CRM connection (when the sync module ships)",
+          "Appointment booking (external calendar link today)",
+          "Custom dashboard (planned after durable reporting)"
         ]
       }
     ],
     "customTitle": "Operating across locations or high volume?",
-    "customBody": "We design a custom plan for multi-location routing, advanced integrations and priority monitoring. Scoped on the audit — never sold as a surprise upgrade.",
+    "customBody": "We design a custom plan for multi-location routing, advanced integrations and priority monitoring. Scoped on the audit, never sold as a surprise upgrade.",
     "customCta": "Book a free 20-minute audit",
     "includesTitle": "Every engagement includes",
     "includesItems": [
@@ -1032,7 +1034,7 @@
     "emailCta": "Email Ara",
     "founderTitle": "Founder",
     "founderBody": "TradeCatch is built and operated directly by its founder, a software developer with an automation background who works alongside each contractor to design, install and manage the system. No call centre, no outsourced support: you work with the person who built it.",
-    "heroIntro": "Built and run by the founder for Québec trade companies — no call centre, no outsourced support.",
+    "heroIntro": "Built and run by the founder for Québec trade companies: no call centre, no outsourced support.",
     "heroPoints": [
       "Built for Québec trades",
       "French and English",
@@ -1135,7 +1137,7 @@
       ]
     },
     "consent": "I agree to be contacted about this request by phone, email or text. Message and data rates may apply. I can opt out at any time.",
-    "marketingConsent": "Optional — send me occasional tips and offers by email. Separate from the contact above.",
+    "marketingConsent": "Optional: send me occasional tips and offers by email. Separate from the contact above.",
     "consentRequired": "Please agree to be contacted so we can follow up on your request.",
     "submit": "Submit request",
     "confirmation": {
@@ -1144,7 +1146,8 @@
       "backToSite": "Back to the site",
       "submitAnother": "Submit another",
       "calendarHint": "Prefer to pick a time now? Book a 20-minute slot on the calendar.",
-      "calendarCta": "Choose a time on the calendar"
+      "calendarCta": "Choose a time on the calendar",
+      "calendarOpenNewTab": "Having trouble? Open the calendar in a new tab"
     },
     "reassurance": [
       "No commitment",
@@ -1411,11 +1414,11 @@
         },
         {
           "heading": "Purposes and legal basis for collection",
-          "body": "We use your information to respond to your audit request, schedule and conduct calls, prepare proposals, and — if you become a client — to design and operate your revenue recovery system. Collection is based on your consent (for optional communications) and on what is necessary to take steps at your request before entering a service agreement. We do not sell your personal information."
+          "body": "We use your information to respond to your audit request, schedule and conduct calls, prepare proposals, and, if you become a client, to design and operate your revenue recovery system. Collection is based on your consent (for optional communications) and on what is necessary to take steps at your request before entering a service agreement. We do not sell your personal information."
         },
         {
           "heading": "SMS and email communication consent",
-          "body": "Contacting you about your specific audit request (by phone, email, or text) is a necessary service communication, not optional marketing — it is covered by the required consent checkbox on our forms. Marketing emails (tips, offers, updates) are separate, optional, opt-in, and never pre-checked, consistent with Canada's Anti-Spam Legislation (CASL). Message and data rates may apply to SMS. We record the exact wording, source form, and timestamp of each consent given, and honour opt-out or unsubscribe requests without delay."
+          "body": "Contacting you about your specific audit request (by phone, email, or text) is a necessary service communication, not optional marketing. It is covered by the required consent checkbox on our forms. Marketing emails (tips, offers, updates) are separate, optional, opt-in, and never pre-checked, consistent with Canada's Anti-Spam Legislation (CASL). Message and data rates may apply to SMS. We record the exact wording, source form, and timestamp of each consent given, and honour opt-out or unsubscribe requests without delay."
         },
         {
           "heading": "Data sharing and service providers",
@@ -1503,7 +1506,7 @@
         },
         {
           "heading": "Managing your cookie choice",
-          "body": "You can accept all cookies, reject non-essential cookies, or open detailed preferences using the banner shown on your first visit — all three options are equally easy to choose. You can change your choice at any time using the \"Manage cookies\" link in the footer, or by changing your browser settings to block or delete cookies."
+          "body": "You can accept all cookies, reject non-essential cookies, or open detailed preferences using the banner shown on your first visit. All three options are equally easy to choose. You can change your choice at any time using the \"Manage cookies\" link in the footer, or by changing your browser settings to block or delete cookies."
         }
       ]
     },
@@ -1629,9 +1632,9 @@
     "title": "TradeCatch — one-page overview",
     "metaDescription": "One-page explanation of TradeCatch for Québec plumbing, HVAC and electrical companies.",
     "printCta": "Print / save as PDF",
-    "badge": "Illustrative product overview — not a performance guarantee",
+    "badge": "Illustrative product overview: not a performance guarantee",
     "headline": "Missed calls and quiet quotes, handled while you work.",
-    "lede": "TradeCatch texts missed callers back, collects job details, and alerts the right technician — with messages you approve. Quote follow-up examples on this page are illustrative.",
+    "lede": "TradeCatch texts missed callers back, collects job details, and alerts the right technician, with messages you approve. Quote follow-up examples on this page are illustrative.",
     "forWhomTitle": "Built for",
     "forWhom": "Québec plumbing, HVAC and electrical companies (and similar trades) that lose work between the ring and the signed job.",
     "doesTitle": "What it does",
@@ -1657,11 +1660,11 @@
       "Founder-monitored launch and monthly management"
     ],
     "pricingTitle": "Starting ranges",
-    "pricing": "Starter from $2,500 setup + $750/month. Growth from $4,000 setup + $1,000–$1,500/month. Scoped on the audit.",
+    "pricing": "Starter from $1,250 setup + $375/month. Growth from $2,000 setup + $500–$750/month. Scoped on the audit.",
     "pilotTitle": "Pilot programme",
     "pilot": "Limited founding seats per area: reduced rate, direct founder access, 12-month price lock, launch credit if we delay go-live.",
     "ctaTitle": "Next step",
-    "cta": "Book a free 20-minute audit — no system access required.",
+    "cta": "Book a free 20-minute audit. No system access required.",
     "contact": "438·993·6997 · tradecatch.ca",
     "footerNote": "Examples on the website are illustrative. Real client results are published only with permission."
   },

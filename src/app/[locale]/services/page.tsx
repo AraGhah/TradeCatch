@@ -66,7 +66,7 @@ export default async function ServicesPage({
             <div
               key={group.title}
               data-reveal
-              className="border border-[rgba(12,20,30,0.1)] bg-white p-[clamp(24px,3vw,36px)] transition-[box-shadow,border-color] duration-300 hover:border-[rgba(12,20,30,0.2)] hover:shadow-[0_24px_48px_-34px_rgba(12,20,30,0.28)]"
+              className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,36px)] transition-[box-shadow,border-color] duration-300 hover:border-[rgb(var(--ink-rgb)/0.2)] hover:shadow-[0_24px_48px_-34px_rgb(var(--ink-rgb)/0.28)]"
               style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
@@ -77,7 +77,7 @@ export default async function ServicesPage({
                 <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <h2 className="mt-3 font-heading text-[clamp(22px,2.4vw,30px)] font-bold tracking-[-0.03em] text-navy">
+                <h2 className="mt-3 font-heading text-[clamp(22px,2.4vw,30px)] font-bold tracking-[-0.03em] text-heading">
                   {group.title}
                 </h2>
                 <p className="mt-2.5 max-w-[32em] text-[15.5px] leading-[1.6] text-muted">
@@ -110,7 +110,7 @@ export default async function ServicesPage({
 
           <div
             data-reveal
-            className="mt-4 border border-[rgba(12,20,30,0.1)] bg-navy p-[clamp(28px,3.4vw,40px)] text-white"
+            className="mt-4 border border-[rgb(var(--ink-rgb)/0.1)] bg-navy p-[clamp(28px,3.4vw,40px)] text-white"
           >
             <h2 className="m-0 font-heading text-[clamp(22px,2.5vw,30px)] font-bold tracking-[-0.03em]">
               {t("laterTitle")}

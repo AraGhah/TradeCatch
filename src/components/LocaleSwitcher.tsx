@@ -21,7 +21,7 @@ export function LocaleSwitcher({ inverted = false }: { inverted?: boolean }) {
       className={`inline-flex items-center rounded-full p-0.5 ${
         inverted
           ? "bg-white/10"
-          : "bg-[rgba(12,20,30,0.06)]"
+          : "bg-[rgb(var(--ink-rgb)/0.06)]"
       }`}
       role="group"
       aria-label="Language"
@@ -42,7 +42,7 @@ export function LocaleSwitcher({ inverted = false }: { inverted?: boolean }) {
                   : "bg-navy text-white"
                 : inverted
                   ? "text-white/70 hover:text-white"
-                  : "text-muted hover:text-navy"
+                  : "text-muted hover:text-heading"
             }`}
           >
             {code.toUpperCase()}

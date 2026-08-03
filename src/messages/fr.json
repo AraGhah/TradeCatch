@@ -19,7 +19,9 @@
     "menu": "Menu",
     "closeMenu": "Fermer le menu",
     "mobileNav": "Navigation mobile",
-    "close": "Fermer"
+    "close": "Fermer",
+    "toggleThemeToDark": "Passer au mode sombre",
+    "toggleThemeToLight": "Passer au mode clair"
   },
   "cta": {
     "primary": "Réserver un audit gratuit de 20 minutes",
@@ -68,7 +70,7 @@
       "eyebrow": "Plomberie · CVC · électricité au Québec",
       "headline": "Arrêtez de perdre des jobs à cause d'appels manqués.",
       "accentWord": "appels manqués",
-      "subheadline": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien. Les séquences de relance de soumissions montrées ailleurs sur ce site sont illustratives — pas encore un module produit en production.",
+      "subheadline": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien. Les séquences de relance de soumissions montrées ailleurs sur ce site sont illustratives, pas encore un module produit en production.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la visite interactive",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
@@ -197,10 +199,10 @@
     },
     "system": {
       "eyebrow": "Le système",
-      "headline": "De l'appel manqué au job réservé — exemple de parcours.",
-      "intro": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte votre équipe. Les séquences de relance de soumissions sur ce site sont illustratives — pas encore un module produit en production.",
+      "headline": "De l'appel manqué au job réservé : exemple de parcours.",
+      "intro": "Chaque étape ci-dessous se déroule de la même façon pour chaque appel manqué : automatique, bilingue, et remise à votre équipe dès qu'un technicien est nécessaire.",
       "cta": "Voir comment ça marche",
-      "previewLabel": "Exemple de parcours — illustratif, pas un flux client en direct",
+      "previewLabel": "Exemple de parcours (illustratif, pas un flux client en direct)",
       "previewSteps": [
         "Appel manqué",
         "SMS envoyé",
@@ -224,7 +226,7 @@
         },
         {
           "title": "Demande suivie",
-          "body": "La demande est enregistrée comme fiche lead structurée pour le parcours ops entrepreneur (pilote) — pas encore un tableau de bord SaaS client complet."
+          "body": "La demande est enregistrée comme fiche lead structurée pour le parcours ops entrepreneur (pilote), pas encore un tableau de bord SaaS client complet."
         },
         {
           "title": "Parcours pilote",
@@ -232,7 +234,7 @@
         },
         {
           "title": "Résultat mesuré",
-          "body": "Les vues de reporting sur ce site sont des exemples illustratifs — l'analytique de revenus récupérés n'est pas encore un module produit en production."
+          "body": "Les vues de reporting sur ce site sont des exemples illustratifs. L'analytique de revenus récupérés n'est pas encore un module produit en production."
         }
       ]
     },
@@ -295,7 +297,7 @@
         },
         {
           "manual": "Les soumissions sont relancées quand quelqu'un a une minute libre, ce qui veut souvent dire jamais.",
-          "system": "Les séquences de relance de soumissions sont prévues pour des pilotes ultérieurs — aujourd'hui on se concentre sur la récupération d'appels manqués et les alertes technicien."
+          "system": "Les séquences de relance de soumissions sont prévues pour des pilotes ultérieurs. Aujourd'hui on se concentre sur la récupération d'appels manqués et les alertes technicien."
         },
         {
           "manual": "Le technicien apprend les détails de la demande de seconde main, si jamais il les apprend.",
@@ -314,7 +316,7 @@
     "dashboard": {
       "eyebrow": "Rapports",
       "headline": "Vous voyez enfin ce qui vous échappait.",
-      "intro": "Chaque appel récupéré et chaque alerte technicien du pilote d'appels manqués. Les vues de reporting sur ce site sont des exemples illustratifs — pas encore un tableau de bord client en production.",
+      "intro": "Chaque appel récupéré et chaque alerte technicien du pilote d'appels manqués. Les vues de reporting sur ce site sont des exemples illustratifs, pas encore un tableau de bord client en production.",
       "cta": "Réserver un audit gratuit de 20 minutes",
       "badge": "Tableau de bord illustratif",
       "live": "Illustratif",
@@ -354,7 +356,7 @@
         }
       ],
       "note": "Chaque appel récupéré et chaque alerte technicien du pilote d'appels manqués. Les vues de reporting sur ce site sont des exemples illustratifs.",
-      "sampleDataLabel": "Données illustratives — semaine d'exemple, pas un flux client en direct. Pas une promesse de résultats."
+      "sampleDataLabel": "Données illustratives : semaine d'exemple, pas un flux client en direct. Pas une promesse de résultats."
     },
     "industries": {
       "eyebrow": "Industries",
@@ -524,8 +526,8 @@
     },
     "pilot": {
       "badge": "Programme pilote",
-      "headline": "Places pilotes fondatrices — limitées par zone de service.",
-      "body": "Joignez-vous comme entrepreneur fondateur pendant que TradeCatch accepte un petit nombre de pilotes. Tarif fondateur réduit, accès direct au fondateur, mise en place selon votre façon de travailler, priorité sur les fonctions pertinentes, et prix verrouillé 12 mois. Pas de promesses de case study inventées — les résultats se suivent avec vous après le lancement.",
+      "headline": "Places pilotes fondatrices. Limitées par zone de service.",
+      "body": "Joignez-vous comme entrepreneur fondateur pendant que TradeCatch accepte un petit nombre de pilotes. Tarif fondateur réduit, accès direct au fondateur, mise en place selon votre façon de travailler, priorité sur les fonctions pertinentes, et prix verrouillé 12 mois. Pas de promesses de case study inventées. Les résultats se suivent avec vous après le lancement.",
       "pointsLabel": "Ce que le pilote inclut",
       "points": [
         "Tarif fondateur réduit pour les premiers partenaires",
@@ -543,20 +545,20 @@
       "eyebrow": "Comment on fonctionne",
       "items": [
         {
-          "title": "Basé au Québec",
-          "body": "Conçu et exploité pour les entreprises de métiers québécoises."
+          "title": "Rien ne part sans être testé",
+          "body": "Messages, règles d'escalade et conditions d'arrêt sont tous vérifiés avec vous avant le lancement."
         },
         {
-          "title": "Français et anglais",
-          "body": "Le client choisit la langue. Modèles approuvés dans les deux."
+          "title": "Vous gardez le contrôle",
+          "body": "Diagnostic, rabais et appels d'urgence restent avec votre équipe, jamais avec le système."
         },
         {
-          "title": "Messages approuvés par un humain",
-          "body": "Rien ne part sans votre validation."
+          "title": "Vos données restent les vôtres",
+          "body": "On ne vend jamais les données clients, et vous les gardez si vous partez."
         },
         {
-          "title": "Fonctionne avec votre numéro d'affaires",
-          "body": "Se connecte en général sans remplacer votre ligne."
+          "title": "Garantie de lancement",
+          "body": "Si on retarde la date de lancement convenue, votre premier mois de gestion est crédité."
         },
         {
           "title": "Installé et suivi pour vous",
@@ -575,7 +577,7 @@
       "problemLabel": "Ce que vous ne verrez pas ici",
       "systemLabel": "Ce que vous verrez plutôt",
       "problem": "Faux logos d'entrepreneurs, fausses notes étoiles ou garanties de revenus inventées.",
-      "system": "Fils SMS d'exemple, alertes technicien, chronologies de soumission et tableaux de bord — chacun marqué Données illustratives.",
+      "system": "Fils SMS d'exemple, alertes technicien, chronologies de soumission et tableaux de bord, chacun marqué Données illustratives.",
       "quote": "Nous préférons montrer un exemple de produit clair plutôt qu'inventer une citation client.",
       "disclaimer": "Rien dans les exemples produit n'est une garantie de jobs, de revenus ou de taux de réponse pour votre entreprise.",
       "metrics": [],
@@ -588,14 +590,14 @@
       "tiers": [
         {
           "name": "Démarrage",
-          "price": "2 500 $ d'installation",
-          "cadence": "750 $ / mois",
+          "price": "1 250 $ d'installation",
+          "cadence": "375 $ / mois",
           "idealFor": "Propriétaires-exploitants et petites équipes qui captent les appels manqués."
         },
         {
           "name": "Croissance",
-          "price": "4 000 $ d'installation",
-          "cadence": "1 000 $–1 500 $ / mois",
+          "price": "2 000 $ d'installation",
+          "cadence": "500 $–750 $ / mois",
           "idealFor": "Équipes avec plusieurs techniciens ou besoins CRM."
         }
       ],
@@ -605,7 +607,7 @@
     "proofExamples": {
       "eyebrow": "Exemples produit",
       "headline": "Voyez le système avant de parler à qui que ce soit.",
-      "intro": "Ce sont des exemples de produit étiquetés — noms fictifs et parcours types — pour comprendre le produit. Ce ne sont pas des témoignages clients, des logos, ni des résultats promis.",
+      "intro": "Ce sont des exemples de produit étiquetés, construits avec des noms fictifs et des parcours types, pour comprendre le produit. Ce ne sont pas des témoignages clients, des logos, ni des résultats promis.",
       "illustrativeLabel": "Données illustratives",
       "demoCta": "Essayer la visite interactive d'appel manqué",
       "onePagerCta": "Ouvrir la page résumé",
@@ -623,7 +625,7 @@
           },
           {
             "who": "customer",
-            "text": "Oui — mon sous-sol commence à inonder."
+            "text": "Oui, mon sous-sol commence à inonder."
           },
           {
             "who": "system",
@@ -649,7 +651,7 @@
         "from": "TradeCatch → Garde (Marc D.)",
         "job": "Inondation sous-sol · photo reçue · client en attente de rappel",
         "address": "12 rue des Érables, Laval",
-        "urgency": "Urgence — règle approuvée par le client",
+        "urgency": "Urgence · règle approuvée par le client",
         "ctaLabel": "Répondre OUI pour accepter · APPEL pour joindre le client"
       },
       "quoteBadge": "Illustratif · Exemple de chronologie",
@@ -774,7 +776,7 @@
   "howItWorks": {
     "eyebrow": "Fonctionnement",
     "headline": "De l'appel manqué au job signé.",
-    "intro": "Six étapes. Chacune testée avec votre équipe, en français et en anglais, avant qu'un seul client la voie.",
+    "intro": "Six étapes, de l'appel manqué au résultat suivi. Ce qui est en production aujourd'hui est testé avec votre équipe, en français et en anglais, avant qu'un seul client le voie ; la relance de soumissions est un module prévu, montré ici pour le portrait complet.",
     "metaDescription": "Découvrez le texto d'appel manqué, la collecte de détails et l'alerte technicien. Les scènes de relance et de rendez-vous sont des walkthroughs illustratifs.",
     "stages": [
       {
@@ -814,7 +816,7 @@
         ]
       },
       {
-        "title": "La relance de la soumission commence",
+        "title": "La relance de la soumission commence (prévu)",
         "items": [
           "Soumission détectée",
           "Relances planifiées",
@@ -833,7 +835,7 @@
         ]
       }
     ],
-    "sequenceTitle": "La séquence de relance des soumissions",
+    "sequenceTitle": "La séquence de relance des soumissions (prévu)",
     "sequence": [
       {
         "day": "JOUR 2",
@@ -926,7 +928,7 @@
   "pricing": {
     "eyebrow": "Tarifs",
     "headline": "Des prix honnêtes pour les équipes qui perdent des jobs entre la sonnerie et la signature.",
-    "intro": "Vous payez une fois pour installer la récupération d'appels manqués. Vous payez chaque mois pour garder le SMS de retour et les alertes technicien — suivis par une vraie personne. Relance de soumissions et CRM sont cadrés seulement quand ces modules existent.",
+    "intro": "Vous payez une fois pour installer la récupération d'appels manqués. Vous payez chaque mois pour garder le SMS de retour et les alertes technicien, suivis par une vraie personne. Relance de soumissions et CRM sont cadrés seulement quand ces modules existent.",
     "reassurance": "Installation fixe. Mois par mois. Résiliation avec préavis.",
     "metaDescription": "Forfaits Démarrage et Croissance pour le SMS de retour sur appels manqués et les alertes technicien pour les entrepreneurs québécois. Relance de soumissions vendue seulement quand elle est en ligne.",
     "mostPopular": "Recommandé",
@@ -938,10 +940,10 @@
     "tiers": [
       {
         "name": "Démarrage",
-        "price": "2 500 $ d'installation",
-        "setupAmount": "2 500 $",
-        "cadence": "750 $ / mois",
-        "monthlyAmount": "750 $",
+        "price": "1 250 $ d'installation",
+        "setupAmount": "1 250 $",
+        "cadence": "375 $ / mois",
+        "monthlyAmount": "375 $",
         "idealFor": "Propriétaires-exploitants et petites équipes qui captent les appels manqués pour la première fois.",
         "items": [
           "SMS de retour sur appels manqués",
@@ -949,29 +951,29 @@
           "Un processus d'alerte technicien",
           "Lancement suivi par le fondateur",
           "Point ops hebdomadaire (manuel)",
-          "Relance de soumissions — quand ce module sera livré"
+          "Relance de soumissions (quand ce module sera livré)"
         ]
       },
       {
         "name": "Croissance",
         "badge": "Le plus populaire",
-        "price": "4 000 $ d'installation",
-        "setupAmount": "4 000 $",
-        "cadence": "1 000 $–1 500 $ / mois",
-        "monthlyAmount": "1 000 $–1 500 $",
+        "price": "2 000 $ d'installation",
+        "setupAmount": "2 000 $",
+        "cadence": "500 $–750 $ / mois",
+        "monthlyAmount": "500 $–750 $",
         "idealFor": "Équipes avec plusieurs techniciens ou rotation de garde.",
         "items": [
           "Tout ce qui est inclus dans Démarrage",
           "Acheminement multi-techniciens",
           "Rotation de garde et escalade de remplacement",
-          "Connexion CRM — quand le sync sera livré",
-          "Prise de rendez-vous — lien calendrier externe aujourd'hui",
-          "Tableau de bord personnalisé — prévu après le reporting durable"
+          "Connexion CRM (quand le sync sera livré)",
+          "Prise de rendez-vous (lien calendrier externe aujourd'hui)",
+          "Tableau de bord personnalisé (prévu après le reporting durable)"
         ]
       }
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
-    "customBody": "On conçoit un forfait sur mesure pour le routage multi-sites, les intégrations avancées et le suivi prioritaire. Défini à l'audit — jamais vendu comme une surprise.",
+    "customBody": "On conçoit un forfait sur mesure pour le routage multi-sites, les intégrations avancées et le suivi prioritaire. Défini à l'audit, jamais vendu comme une surprise.",
     "customCta": "Réserver un audit gratuit de 20 minutes",
     "includesTitle": "Chaque mandat inclut",
     "includesItems": [
@@ -1032,7 +1034,7 @@
     "emailCta": "Écrire à Ara",
     "founderTitle": "Fondateur",
     "founderBody": "TradeCatch est bâti et exploité directement par son fondateur, un développeur logiciel avec une expertise en automatisation qui travaille aux côtés de chaque entrepreneur pour concevoir, installer et gérer le système. Pas de centre d'appels, pas de support externalisé : vous travaillez avec la personne qui l'a construit.",
-    "heroIntro": "Bâti et géré par le fondateur pour les entreprises de métiers du Québec — pas de centre d'appels, pas de support externalisé.",
+    "heroIntro": "Bâti et géré par le fondateur pour les entreprises de métiers du Québec : pas de centre d'appels, pas de support externalisé.",
     "heroPoints": [
       "Axé sur le Québec",
       "Bilingue FR/EN",
@@ -1135,7 +1137,7 @@
       ]
     },
     "consent": "J'accepte d'être contacté au sujet de cette demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Je peux me désabonner en tout temps.",
-    "marketingConsent": "Optionnel — m'envoyer occasionnellement des conseils et des offres par courriel. Distinct du contact ci-dessus.",
+    "marketingConsent": "Optionnel : m'envoyer occasionnellement des conseils et des offres par courriel. Distinct du contact ci-dessus.",
     "consentRequired": "Veuillez accepter d'être contacté pour que nous puissions donner suite à votre demande.",
     "submit": "Soumettre la demande",
     "confirmation": {
@@ -1144,7 +1146,8 @@
       "backToSite": "Retour au site",
       "submitAnother": "Soumettre une autre demande",
       "calendarHint": "Vous préférez choisir un horaire maintenant? Réservez un créneau de 20 minutes.",
-      "calendarCta": "Choisir un horaire au calendrier"
+      "calendarCta": "Choisir un horaire au calendrier",
+      "calendarOpenNewTab": "Un problème? Ouvrez le calendrier dans un nouvel onglet"
     },
     "reassurance": [
       "Sans engagement",
@@ -1411,11 +1414,11 @@
         },
         {
           "heading": "Finalités et fondement du traitement",
-          "body": "Nous utilisons vos informations pour répondre à votre demande d'audit, planifier et mener des appels, préparer des propositions et — si vous devenez client — concevoir et exploiter votre système de récupération de revenus. La collecte repose sur votre consentement (pour les communications optionnelles) et sur ce qui est nécessaire pour donner suite à votre demande avant la conclusion d'une entente de service. Nous ne vendons pas vos informations personnelles."
+          "body": "Nous utilisons vos informations pour répondre à votre demande d'audit, planifier et mener des appels, préparer des propositions et, si vous devenez client, concevoir et exploiter votre système de récupération de revenus. La collecte repose sur votre consentement (pour les communications optionnelles) et sur ce qui est nécessaire pour donner suite à votre demande avant la conclusion d'une entente de service. Nous ne vendons pas vos informations personnelles."
         },
         {
           "heading": "Consentement aux communications SMS et courriel",
-          "body": "Vous contacter au sujet de votre demande d'audit précise (par téléphone, courriel ou texto) est une communication de service nécessaire, non optionnelle — elle est couverte par la case de consentement obligatoire de nos formulaires. Les courriels de marketing (conseils, offres, mises à jour) sont distincts, optionnels, à adhésion explicite et jamais précochés, conformément à la Loi canadienne anti-pourriel (LCAP). Des frais de messagerie et de données peuvent s'appliquer aux SMS. Nous conservons le libellé exact, le formulaire source et l'horodatage de chaque consentement, et donnons suite sans délai à toute demande de retrait ou de désabonnement."
+          "body": "Vous contacter au sujet de votre demande d'audit précise (par téléphone, courriel ou texto) est une communication de service nécessaire, non optionnelle. Elle est couverte par la case de consentement obligatoire de nos formulaires. Les courriels de marketing (conseils, offres, mises à jour) sont distincts, optionnels, à adhésion explicite et jamais précochés, conformément à la Loi canadienne anti-pourriel (LCAP). Des frais de messagerie et de données peuvent s'appliquer aux SMS. Nous conservons le libellé exact, le formulaire source et l'horodatage de chaque consentement, et donnons suite sans délai à toute demande de retrait ou de désabonnement."
         },
         {
           "heading": "Partage des données et fournisseurs de services",
@@ -1503,7 +1506,7 @@
         },
         {
           "heading": "Gérer votre choix de cookies",
-          "body": "Vous pouvez tout accepter, refuser les cookies non essentiels, ou ouvrir les préférences détaillées à l'aide de la bannière affichée lors de votre première visite — les trois options sont également faciles à choisir. Vous pouvez modifier votre choix en tout temps via le lien « Gérer les cookies » dans le pied de page, ou en modifiant les paramètres de votre navigateur."
+          "body": "Vous pouvez tout accepter, refuser les cookies non essentiels, ou ouvrir les préférences détaillées à l'aide de la bannière affichée lors de votre première visite. Les trois options sont également faciles à choisir. Vous pouvez modifier votre choix en tout temps via le lien « Gérer les cookies » dans le pied de page, ou en modifiant les paramètres de votre navigateur."
         }
       ]
     },
@@ -1629,9 +1632,9 @@
     "title": "TradeCatch — aperçu d'une page",
     "metaDescription": "Explication d'une page de TradeCatch pour les entreprises de plomberie, CVC et électricité au Québec.",
     "printCta": "Imprimer / enregistrer en PDF",
-    "badge": "Aperçu produit illustratif — pas une garantie de performance",
+    "badge": "Aperçu produit illustratif : pas une garantie de performance",
     "headline": "Appels manqués et soumissions silencieuses, gérés pendant que vous travaillez.",
-    "lede": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien — avec des messages que vous approuvez. Les relances de soumissions montrées ici sont illustratives et prévues pour plus tard.",
+    "lede": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien, avec des messages que vous approuvez. Les relances de soumissions montrées ici sont illustratives et prévues pour plus tard.",
     "forWhomTitle": "Conçu pour",
     "forWhom": "Les entreprises québécoises de plomberie, CVC et électricité (et métiers similaires) qui perdent du travail entre la sonnerie et le job signé.",
     "doesTitle": "Ce que ça fait",
@@ -1657,11 +1660,11 @@
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
     "pricingTitle": "Fourchettes de départ",
-    "pricing": "Démarrage dès 2 500 $ d'installation + 750 $/mois. Croissance dès 4 000 $ + 1 000–1 500 $/mois. Précisé à l'audit.",
+    "pricing": "Démarrage dès 1 250 $ d'installation + 375 $/mois. Croissance dès 2 000 $ + 500–750 $/mois. Précisé à l'audit.",
     "pilotTitle": "Programme pilote",
     "pilot": "Places fondatrices limitées : tarif réduit, accès fondateur, prix verrouillé 12 mois, crédit si nous retardons le lancement.",
     "ctaTitle": "Prochaine étape",
-    "cta": "Réservez un audit gratuit de 20 minutes — aucun accès système requis.",
+    "cta": "Réservez un audit gratuit de 20 minutes. Aucun accès système requis.",
     "contact": "438·993·6997 · tradecatch.ca",
     "footerNote": "Les exemples du site sont illustratifs. Les vrais résultats clients ne sont publiés qu'avec permission."
   },
@@ -1672,7 +1675,7 @@
     "close": "Fermer",
     "captionsLabel": "Sous-titres français",
     "transcriptTitle": "Transcription",
-    "transcript": "Un entrepreneur manque un appel. TradeCatch envoie un texto au client, recueille le nom, l'adresse et le problème, alerte le technicien de garde avec une fiche job, puis avise le client quand le technicien accepte. Démonstration illustrative — pas une vraie conversation client.",
+    "transcript": "Un entrepreneur manque un appel. TradeCatch envoie un texto au client, recueille le nom, l'adresse et le problème, alerte le technicien de garde avec une fiche job, puis avise le client quand le technicien accepte. Démonstration illustrative, pas une vraie conversation client.",
     "timelineProgress": "Progression de la timeline",
     "play": "Lecture",
     "pause": "Pause"

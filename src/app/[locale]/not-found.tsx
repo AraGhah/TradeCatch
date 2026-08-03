@@ -8,7 +8,7 @@ export default function NotFound() {
   return (
     <section className="py-24">
       <Container className="text-center">
-        <h1 className="text-3xl font-bold text-navy">{t("title")}</h1>
+        <h1 className="text-3xl font-bold text-heading">{t("title")}</h1>
         <p className="mt-4 text-text/80">{t("body")}</p>
         <div className="mt-8">
           <CTAButton href="/">{t("cta")}</CTAButton>
