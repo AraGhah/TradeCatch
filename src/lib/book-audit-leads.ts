@@ -1,5 +1,6 @@
 import type { BookAuditPayload } from "@/lib/validation/book-audit";
 import { isDurableMissedCallStoreConfigured } from "@/lib/config";
+import { createId } from "@/lib/id";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 
 export type BookAuditConsentRecord = {
@@ -46,7 +47,7 @@ export async function persistBookAuditLead(
   if (!url) return null;
 
   const pool = getPgPool(url);
-  const id = `bal_${crypto.randomUUID()}`;
+  const id = createId("bal");
   const now = new Date().toISOString();
 
   const inserted = await pool.query<{
