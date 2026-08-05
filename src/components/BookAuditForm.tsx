@@ -22,6 +22,7 @@ import {
   bookAuditSchema,
   type BookAuditStep,
 } from "@/lib/validation/book-audit";
+import { randomUUID } from "@/lib/id";
 
 const DRAFT_STORAGE_KEY = "tradecatch-book-audit-draft";
 const OPT_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -126,7 +127,7 @@ export function BookAuditForm() {
   const [consentTouched, setConsentTouched] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState("");
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
-  const idempotencyKey = useRef<string>(crypto.randomUUID());
+  const idempotencyKey = useRef<string>(randomUUID());
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const focusErrorSummary = useRef(false);
@@ -433,7 +434,7 @@ export function BookAuditForm() {
   }
 
   function resetForm() {
-    idempotencyKey.current = crypto.randomUUID();
+    idempotencyKey.current = randomUUID();
     setAnswers(emptyAnswers());
     setErrors({});
     setConsentTouched(false);
