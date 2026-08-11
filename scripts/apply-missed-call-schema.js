@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Apply Module A + SaaS schemas to DATABASE_URL.
+ * Apply Module A + SaaS + Starter + Growth schemas to DATABASE_URL.
  * Usage: npm run db:schema
  */
 const fs = require("node:fs");
@@ -38,6 +38,16 @@ async function main() {
       client,
       ["src", "product", "saas", "schema.sql"],
       "002_saas_foundation",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "starter", "schema.sql"],
+      "003_starter_features",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "growth", "schema.sql"],
+      "004_growth_and_settings",
     );
   } finally {
     await client.end();

@@ -20,6 +20,12 @@ export default async function AppDashboardPage({
   const clientId = auth.ctx.organization.missedCallClientId;
   let metrics = computeStarterDashboardMetrics([]);
   let linked = false;
+  let growthMetrics: {
+    openPipelineValue: number;
+    attributedRevenue: number;
+    upcomingAppointments: number;
+    reviewsSent: number;
+  } | null = null;
 
   if (clientId && orgHasFeature(auth.ctx.organization.plan, "BASIC_ANALYTICS")) {
     try {
@@ -29,6 +35,24 @@ export default async function AppDashboardPage({
       linked = true;
     } catch {
       linked = false;
+    }
+  }
+
+  if (orgHasFeature(auth.ctx.organization.plan, "ADVANCED_ANALYTICS")) {
+    try {
+      const { getGrowthStore, getGrowthServices } = await import(
+        "@/product/growth"
+      );
+      const store = getGrowthStore();
+      const services = getGrowthServices();
+      growthMetrics = services.computeAdvancedAnalytics({
+        pipeline: await store.listPipeline(auth.ctx.organization.id),
+        revenue: await store.listRevenue(auth.ctx.organization.id),
+        appointments: await store.listAppointments(auth.ctx.organization.id),
+        reviews: await store.listReviewRequests(auth.ctx.organization.id),
+      });
+    } catch {
+      growthMetrics = null;
     }
   }
 
@@ -89,6 +113,49 @@ export default async function AppDashboardPage({
           </div>
         ) : null}
       </div>
+
+      {growthMetrics ? (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="rounded-md border border-navy/10 bg-white px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.06em] text-navy/50">
+              {t("metrics.growthPipeline")}
+            </p>
+            <p className="mt-2 font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
+              {growthMetrics.openPipelineValue.toLocaleString(
+                locale === "fr" ? "fr-CA" : "en-CA",
+                { style: "currency", currency: "CAD", maximumFractionDigits: 0 },
+              )}
+            </p>
+          </div>
+          <div className="rounded-md border border-navy/10 bg-white px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.06em] text-navy/50">
+              {t("metrics.attributedRevenue")}
+            </p>
+            <p className="mt-2 font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
+              {growthMetrics.attributedRevenue.toLocaleString(
+                locale === "fr" ? "fr-CA" : "en-CA",
+                { style: "currency", currency: "CAD", maximumFractionDigits: 0 },
+              )}
+            </p>
+          </div>
+          <div className="rounded-md border border-navy/10 bg-white px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.06em] text-navy/50">
+              {t("metrics.upcomingAppointments")}
+            </p>
+            <p className="mt-2 font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
+              {growthMetrics.upcomingAppointments}
+            </p>
+          </div>
+          <div className="rounded-md border border-navy/10 bg-white px-4 py-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.06em] text-navy/50">
+              {t("metrics.reviewsSent")}
+            </p>
+            <p className="mt-2 font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
+              {growthMetrics.reviewsSent}
+            </p>
+          </div>
+        </div>
+      ) : null}
 
       {auth.ctx.organization.plan === "starter" ? <GrowthUpsell /> : null}
     </div>

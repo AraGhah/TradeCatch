@@ -6,6 +6,7 @@ import {
   orgHasFeature,
 } from "@/product/saas/entitlements";
 import { requireTenantContext } from "@/product/saas/tenant";
+import { ApiKeyCreateButton } from "@/components/app/ApiKeyCreateButton";
 
 export default async function AppSettingsPage({
   params,
@@ -87,6 +88,16 @@ export default async function AppSettingsPage({
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {orgHasFeature(auth.ctx.organization.plan, "WEBSITE_LEAD_CAPTURE") ? (
+        <section className="rounded-md border border-navy/10 bg-white px-5 py-4">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">
+            {t("settings.apiKeyTitle")}
+          </h2>
+          <p className="mt-2 text-sm text-navy/70">{t("settings.apiKeyIntro")}</p>
+          <ApiKeyCreateButton />
         </section>
       ) : null}
     </div>

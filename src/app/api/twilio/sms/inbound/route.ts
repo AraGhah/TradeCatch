@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
+import { isOptOut } from "@/product/missed-call/messaging";
+import { demoClientAccount } from "@/product/missed-call/fixtures";
+import { orgHasFeature } from "@/product/saas/entitlements";
+import {
+  getStarterServices,
+  resolveOrganizationFromSmsTo,
+} from "@/product/starter/org-context";
 
 export const dynamic = "force-dynamic";
 
@@ -68,6 +75,7 @@ export async function POST(request: NextRequest) {
 
   const { engine } = await ensureMissedCallReady();
   let replies: string[] = [];
+  let moduleAHandled = false;
   try {
     const result = await engine.handleInboundSms({
       fromE164: from,
@@ -79,9 +87,30 @@ export async function POST(request: NextRequest) {
     // Return every engine reply via TwiML — technician guidance ("Code requis",
     // APPELER with the customer number, stale-alert notices) must not be dropped.
     replies = result.replies;
+    moduleAHandled = result.handled;
   } catch (err) {
     console.error("[missed-call/sms]", err);
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });
+  }
+
+  // Quote follow-up: stop on reply / opt-out when Module A did not claim the SMS,
+  // or always on STOP keywords so dual workflows still honour opt-out.
+  try {
+    const org = await resolveOrganizationFromSmsTo(to);
+    if (
+      org &&
+      orgHasFeature(org.plan, "QUOTE_FOLLOW_UP") &&
+      (!moduleAHandled || isOptOut(body, demoClientAccount()))
+    ) {
+      await getStarterServices().handleInboundSms({
+        fromE164: from,
+        toE164: to,
+        body,
+        organizationId: org.id,
+      });
+    }
+  } catch (err) {
+    console.warn("[starter/sms] quote dispatcher skipped", err);
   }
 
   return new NextResponse(twimlMessages(replies), {

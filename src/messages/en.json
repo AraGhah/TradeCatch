@@ -68,10 +68,10 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Québec plumbing · HVAC · electrical",
-      "headline": "Stop losing jobs to missed calls.",
-      "accentWord": "missed calls",
-      "subheadline": "TradeCatch texts missed callers back, collects the job details, and alerts the right technician. Quote follow-up sequences shown elsewhere on this site are illustrative, not a live product module yet.",
+      "eyebrow": "Revenue recovery for Québec trades",
+      "headline": "Recover the jobs you're already paying to generate.",
+      "accentWord": "Recover",
+      "subheadline": "Missed calls, website leads, and quote follow-ups — recovered into conversations your crew can close. Starter recovers leads; Growth helps convert them. Pilots are founder-led, not self-serve SaaS.",
       "ctaPrimary": "Book a free 20-minute audit",
       "ctaSecondary": "Watch the 90-second demo",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
@@ -256,33 +256,31 @@
       "note": "The system collects and routes the request. Your licensed technicians still diagnose the problem, confirm pricing, and perform the work."
     },
     "quoteFollowUp": {
-      "headline": "A planned quote follow-up workflow",
+      "headline": "Quote follow-up that stops when they reply",
       "items": [
-        "Would detect an imported quote",
-        "Would save customer and project information",
-        "Would send client-approved follow-ups",
-        "Would stop when the customer responds",
-        "Would classify the response",
-        "Would alert the contractor about objections or questions",
-        "Would track signed or lost outcomes",
-        "Could later connect to e-signature and deposit tools"
+        "Ingest a quote into the Starter workspace",
+        "Run day 1 / 3 / 7 / 14 follow-ups",
+        "Stop on reply, STOP, won/lost, or human takeover",
+        "Open an inbox item when the customer answers",
+        "Optional Growth pipeline stage + revenue when marked won",
+        "Founder-led pilot — not self-serve CRM sync yet"
       ],
       "sequence": [
         {
-          "day": "Day 2",
-          "action": "Confirm the quote landed"
+          "day": "Day 1",
+          "action": "Confirm they got the estimate"
         },
         {
-          "day": "Day 5",
-          "action": "Send something genuinely useful"
+          "day": "Day 3",
+          "action": "Offer to walk through the quote"
         },
         {
-          "day": "Day 10",
-          "action": "Ask about their timing"
+          "day": "Day 7",
+          "action": "Check interest and timing"
         },
         {
-          "day": "Day 20",
-          "action": "Close the loop, politely"
+          "day": "Day 14",
+          "action": "Last follow-up — close or archive"
         }
       ]
     },
@@ -586,20 +584,20 @@
     },
     "pricingPreview": {
       "eyebrow": "Pricing",
-      "headline": "Clear starting ranges. Scoped on the audit.",
-      "intro": "Setup builds the SMS text-back and follow-up system. Monthly management keeps it running.",
+      "headline": "Recover leads. Or convert them further.",
+      "intro": "Starter stops leads from disappearing. Growth books, tracks and proves revenue impact. Scoped on the audit.",
       "tiers": [
         {
           "name": "Starter",
           "price": "$799 setup",
           "cadence": "$375 / month",
-          "idealFor": "Owner-operators and small crews catching missed calls."
+          "idealFor": "Recover More Leads — missed calls, website inquiries, quote follow-up."
         },
         {
           "name": "Growth",
           "price": "$2,000 setup",
           "cadence": "$500–$750 / month",
-          "idealFor": "Teams with multiple technicians or CRM needs."
+          "idealFor": "Convert More Leads — booking, pipeline, attribution, reviews."
         }
       ],
       "cta": "See full pricing",
@@ -928,50 +926,103 @@
   },
   "pricing": {
     "eyebrow": "Pricing",
-    "headline": "Honest prices for crews that lose work between the ring and the signed job.",
-    "intro": "You pay once to install missed-call recovery. You pay monthly to keep text-back and technician alerts running, monitored by a real person. Quote follow-up and CRM modules are scoped only after they ship.",
+    "headline": "Two plans. One goal: stop losing leads you already paid to generate.",
+    "intro": "Starter recovers missed calls, website inquiries and forgotten quotes. Growth converts those leads further — booking, pipeline, revenue proof and reviews. Founder-led install either way.",
     "reassurance": "Fixed setup. Month-to-month. Cancel with notice.",
-    "metaDescription": "Starter and Growth packages for SMS missed-call text-back and technician alerts for Québec contractors. Quote follow-up sold only when live.",
+    "metaDescription": "Starter recovers leads. Growth converts them — appointments, pipeline, revenue tracking and reviews for Québec contractors.",
     "mostPopular": "Recommended",
     "principles": [
-      "Fixed setup price, agreed in writing",
-      "Month-to-month management",
-      "Scoped to your call volume and technicians"
+      "Starter = recover more leads",
+      "Growth = convert more leads (includes Starter)",
+      "Scoped on the audit before you commit"
     ],
     "tiers": [
       {
         "name": "Starter",
+        "tagline": "Recover More Leads",
+        "outcome": "Stop missed calls, website inquiries and forgotten quotes from disappearing.",
         "price": "$799 setup",
         "setupAmount": "$799",
         "cadence": "$375 / month",
         "monthlyAmount": "$375",
-        "idealFor": "Owner-operators and small crews catching missed calls for the first time.",
-        "reassuranceLine": "Covers routing, bilingual templates, and technician setup — with a launch guarantee if we delay. Often less than the value of one recovered job.",
-        "items": [
-          "Missed-call SMS text-back",
-          "Lead details and photo collection",
-          "One technician alert workflow",
-          "Founder-monitored launch",
-          "Weekly ops check-in (manual)",
-          "Quote follow-up (available when that module ships)"
+        "idealFor": "Owner-operators and small crews who need recovery working before they scale conversion.",
+        "reassuranceLine": "Human takeover and basic notifications are included — not locked behind Growth. Often less than one recovered job.",
+        "groups": [
+          {
+            "title": "Capture",
+            "items": [
+              "Missed-call recovery",
+              "Website lead response"
+            ]
+          },
+          {
+            "title": "Qualify",
+            "items": [
+              "Lead qualification"
+            ]
+          },
+          {
+            "title": "Follow up",
+            "items": [
+              "Automated quote follow-up"
+            ]
+          },
+          {
+            "title": "Respond",
+            "items": [
+              "Human takeover",
+              "Business notifications"
+            ]
+          },
+          {
+            "title": "Measure",
+            "items": [
+              "Basic performance dashboard"
+            ]
+          }
         ]
       },
       {
         "name": "Growth",
         "badge": "Most popular",
+        "tagline": "Convert More Leads",
+        "outcome": "Go beyond recovery — book appointments, track opportunities, prove revenue impact and request reviews.",
         "price": "$2,000 setup",
         "setupAmount": "$2,000",
         "cadence": "$500–$750 / month",
         "monthlyAmount": "$500–$750",
-        "idealFor": "Teams with multiple technicians or on-call rotation.",
-        "reassuranceLine": "Scoped to your technician count and call volume — the exact number is locked in writing at the audit, before you commit.",
-        "items": [
-          "Everything in Starter",
-          "Multiple technician routing",
-          "On-call rotation and backup escalation",
-          "CRM connection (when the sync module ships)",
-          "Appointment booking (external calendar link today)",
-          "Custom dashboard (planned after durable reporting)"
+        "idealFor": "Teams ready to push recovered leads further toward booked jobs and closed revenue.",
+        "reassuranceLine": "Exact monthly rate locked in writing at the audit from technician count and volume. Growth includes everything in Starter.",
+        "everythingInStarter": "Everything in Starter, plus:",
+        "groups": [
+          {
+            "title": "Book",
+            "items": [
+              "Appointment booking",
+              "Calendar integration",
+              "Appointment reminders"
+            ]
+          },
+          {
+            "title": "Manage",
+            "items": [
+              "Advanced lead pipeline",
+              "Multi-technician routing & escalation"
+            ]
+          },
+          {
+            "title": "Measure",
+            "items": [
+              "Revenue attribution",
+              "Advanced analytics"
+            ]
+          },
+          {
+            "title": "Grow",
+            "items": [
+              "Google review automation"
+            ]
+          }
         ]
       }
     ],
@@ -988,6 +1039,10 @@
       "Your customer data stays yours"
     ],
     "details": [
+      {
+        "title": "What ships today vs what Growth unlocks next",
+        "body": "Missed-call recovery, technician alerts, human review and the pilot workspace are live in controlled pilots. Website lead capture, quote follow-up, booking, pipeline and review automation are included in the plan you buy and activated with the founder as each module ships — never sold as already live if it is not."
+      },
       {
         "title": "Why prices have a range",
         "body": "Final pricing depends on call volume, technicians, quote volume, existing software, and escalation rules. The audit locks the number in writing before work starts."
@@ -1709,7 +1764,15 @@
   "app": {
     "nav": {
       "dashboard": "Dashboard",
-      "leads": "Leads",
+      "leads": "Missed calls",
+      "websiteLeads": "Website",
+      "quotes": "Quotes",
+      "bookings": "Bookings",
+      "pipeline": "Pipeline",
+      "reviews": "Reviews",
+      "timeline": "Timeline",
+      "onboarding": "Onboarding",
+      "inbox": "Inbox",
       "settings": "Settings",
       "logout": "Sign out"
     },
@@ -1729,7 +1792,11 @@
       "needsAttention": "Needs attention",
       "jobsAccepted": "Jobs accepted by tech",
       "pipelineValue": "Pipeline value on file",
-      "pipelineValueNote": "Sum of estimated/final values present on leads — not claimed recovered revenue."
+      "pipelineValueNote": "Sum of estimated/final values present on leads — not claimed recovered revenue.",
+      "growthPipeline": "Open Growth pipeline",
+      "attributedRevenue": "Attributed revenue",
+      "upcomingAppointments": "Upcoming appointments",
+      "reviewsSent": "Review requests sent"
     },
     "leads": {
       "headline": "Recovered leads",
@@ -1745,7 +1812,108 @@
       "plan": "Current plan",
       "included": "Included in your plan",
       "growthOnly": "Available on Growth",
-      "clientLinked": "Linked missed-call client"
+      "clientLinked": "Linked missed-call client",
+      "notifyEmail": "Notify email",
+      "notifyEmailPlaceholder": "you@company.com",
+      "notifyEmailIntro": "Where TradeCatch sends owner alerts (new leads, takeover, bookings).",
+      "googleReviewUrl": "Google review URL",
+      "googleReviewUrlIntro": "Used when sending post-job review request SMS.",
+      "apiKeyTitle": "Website capture API key",
+      "apiKeyIntro": "Use this key on your contractor website form to POST leads to TradeCatch (not the marketing book-audit form).",
+      "apiKeyCreate": "Generate API key",
+      "apiKeyCreating": "Generating…",
+      "apiKeyOnce": "Copy this key now",
+      "apiKeyHint": "POST /api/website-leads with header X-TradeCatch-Key. The plaintext is shown once.",
+      "apiKeyError": "Could not create API key."
+    },
+    "bookings": {
+      "headline": "Appointments",
+      "intro": "Book jobs and send confirmation SMS when a customer phone and Twilio number are linked.",
+      "empty": "No appointments yet. Book one below.",
+      "entitlement": "Appointment booking is not on your plan.",
+      "add": "Book an appointment",
+      "title": "Title",
+      "startsAt": "Starts",
+      "endsAt": "Ends (optional)",
+      "customerName": "Customer name",
+      "customerPhone": "Customer phone (E.164)",
+      "notes": "Notes",
+      "submit": "Book",
+      "saving": "Saving…",
+      "error": "Could not book appointment."
+    },
+    "pipeline": {
+      "headline": "Pipeline",
+      "intro": "Move cards through stages. Marking won can record attributed revenue when a value is set.",
+      "empty": "No pipeline cards yet. Booking an appointment creates one.",
+      "entitlement": "Advanced pipeline is not on your plan.",
+      "error": "Could not move card."
+    },
+    "reviews": {
+      "headline": "Review requests",
+      "intro": "After a job is marked complete, TradeCatch can schedule a Google review SMS when a review URL is set.",
+      "empty": "No review requests yet.",
+      "entitlement": "Review automation is not on your plan.",
+      "setUrl": "Google review link",
+      "saveUrl": "Save URL",
+      "complete": "Complete an appointment",
+      "appointment": "Appointment",
+      "markComplete": "Mark complete & schedule review",
+      "scheduled": "Scheduled for",
+      "saving": "Saving…",
+      "error": "Could not update reviews."
+    },
+    "timeline": {
+      "headline": "Activity timeline",
+      "intro": "Recent bookings, pipeline moves, and other workspace events for this organization.",
+      "empty": "No timeline events yet.",
+      "entitlement": "Timeline is not available on your plan."
+    },
+    "onboarding": {
+      "headline": "Workspace setup",
+      "intro": "A short checklist so notifications and Growth tools work for your team.",
+      "stepNotify": "Where should we notify you?",
+      "stepNotifyIntro": "Set an email for owner alerts. You can change it later in Settings.",
+      "stepReview": "Google review link",
+      "stepReviewIntro": "Optional on Growth — used for post-job review SMS.",
+      "stepFinish": "Mark setup complete",
+      "stepFinishIntro": "Confirm onboarding so the team knows this workspace is ready.",
+      "done": "You’re set",
+      "doneIntro": "Generate a website capture API key in Settings if you need form leads.",
+      "goSettings": "Open Settings",
+      "next": "Continue",
+      "skip": "Skip for now",
+      "complete": "Complete onboarding",
+      "saving": "Saving…",
+      "error": "Could not save onboarding."
+    },
+    "websiteLeads": {
+      "headline": "Website leads",
+      "intro": "Leads captured from your contractor site via the TradeCatch API key — isolated to this organization.",
+      "empty": "No website leads yet. Generate an API key in Settings and wire your form to POST /api/website-leads.",
+      "entitlement": "Website lead capture is not on your plan."
+    },
+    "quotes": {
+      "headline": "Quote follow-up",
+      "intro": "Sequences at day 1 / 3 / 7 / 14 after the quote is sent. Automation stops on reply, opt-out, won/lost, or human takeover.",
+      "empty": "No quote threads yet. Add a customer phone below to start a follow-up sequence.",
+      "entitlement": "Quote follow-up is not on your plan.",
+      "add": "Start a follow-up sequence",
+      "phone": "Customer phone (E.164)",
+      "name": "Name (optional)",
+      "ref": "Quote ref (optional)",
+      "submit": "Start sequence",
+      "saving": "Saving…",
+      "error": "Could not start quote follow-up."
+    },
+    "inbox": {
+      "headline": "Human takeover inbox",
+      "intro": "Items that need a person: website replies, quote replies, and missed-call leads flagged for review. Claiming pauses quote/website automation.",
+      "empty": "Inbox is clear.",
+      "entitlement": "Human takeover is not on your plan.",
+      "claim": "Claim",
+      "takeover": "Take over",
+      "resolve": "Resolve"
     },
     "upsell": {
       "title": "Want booking and deeper revenue tracking later?",

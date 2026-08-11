@@ -21,18 +21,25 @@ Status legend:
 | Technician escalation timers | pilot | `/api/missed-call/escalations/tick` | Postgres when enabled; memory fallback | unit | Ops bearer required |
 | Ops lead list / CRM correction API | pilot | `/api/missed-call/leads*` | Postgres when enabled; memory fallback | unit | Founder/ops tools — not public marketing |
 | Book-audit lead capture (marketing) | live | `/api/book-audit` | Postgres when enabled + email/webhook | unit + e2e | Site lead gen |
-| Quote ingestion / identification | planned | — | — | — | Do not claim |
-| Scheduled quote follow-up sequences | illustrative / planned | UI only | — | — | Demo components |
-| Stop quote sequence on reply | planned | — | — | — | Do not claim |
+| Website lead capture (contractor org API key) | pilot | `POST /api/website-leads`, `/app/website-leads` | `tc_website_leads` + memory | unit | Not book-audit; entitlement `WEBSITE_LEAD_CAPTURE` |
+| Quote ingestion / identification | pilot | `POST /api/app/quotes`, `/app/quotes` | `tc_quote_threads` + memory | unit | Founder/ops ingest in workspace |
+| Scheduled quote follow-up sequences | pilot | `/api/starter/quotes/tick` (1/3/7/14d) | Postgres when durable | unit | Cron every 15m; dry-run SMS without Twilio |
+| Stop quote sequence on reply | pilot | Twilio SMS inbound dispatcher | same | unit | Also stops on opt-out / won / lost / human takeover |
+| Human takeover inbox | pilot | `/app/inbox`, `/api/app/inbox` | `tc_inbox_items` | unit | Syncs Module A `humanReviewRequired` leads |
 | Marketing dashboard mockups | illustrative | UI only | — | — | Hero/demo Illustrative badges |
-| Appointment / calendar booking product | planned | optional `NEXT_PUBLIC_CALENDAR_URL` CTA | — | — | External link only |
+| Appointment / calendar booking product | pilot | `/app/bookings`, `/api/app/bookings`, `/api/growth/reminders/tick` | growth appointments + memory | unit | SMS confirm + 24h/2h reminders; not Google/Outlook sync |
+| Advanced pipeline (stage moves) | pilot | `/app/pipeline`, `/api/app/pipeline` | growth pipeline cards | unit | Growth entitlement `ADVANCED_PIPELINE` |
+| Revenue attribution (won deals) | pilot | `/api/app/analytics` (+ pipeline won) | growth revenue events | unit | Recorded when pipeline moves to won with value |
+| Google review automation | pilot | `/app/reviews`, `/api/app/reviews`, `/api/growth/reviews/tick` | growth review requests | unit | Post-complete SMS when `googleReviewUrl` set |
+| Activity timeline | pilot | `/app/timeline`, `/api/app/timeline` | growth timeline events | unit | Org-scoped; Starter+ via takeover/analytics features |
+| Owner notifications (notify email) | pilot | `/api/app/settings`, growth `notifyOwner` | org settings | unit | Email alerts when notify email configured |
 | Multi-tenant SaaS foundation | pilot | `/login`, `/app/*`, `/api/auth/*`, `/api/app/*` | Postgres `tc_*` + memory fallback | unit | Founder-gated pilot workspace — not self-serve SaaS launch |
 | Plan entitlements (Starter/Growth) | pilot | `src/product/saas/entitlements.ts` | org.plan | unit | Backend assert; UI mirrors |
 | Pilot client workspace (basic) | pilot | `/app` | Module A leads when linked | unit | No fabricated recovered revenue; audit-first sales motion |
 | Durable workflows across restarts | pilot | Postgres adapter + `schema.sql` | PostgreSQL | unit | Requires `DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1` and applied schema |
-| Quote recovery (ingestion, sequences, opt-out, retries) | planned | — | — | — | Phase 4 — do not advertise |
+| Quote recovery (ingestion, sequences, opt-out, retries) | pilot | `/api/app/quotes`, `/api/starter/quotes/tick`, SMS inbound | `tc_quote_*` | unit | Starter core — not Growth booking/CRM |
 | CRM sync (credentials, mapping, DLQ, conflict handling) | planned | — | — | — | Phase 4 — do not advertise |
-| Dashboard / revenue attribution / exports | planned | — | — | — | Phase 4 — do not advertise |
+| Advanced analytics dashboard / exports | pilot | `/api/app/analytics` | growth lists | unit | API metrics; no public marketing export UI yet |
 | Real calendar provider scheduling | planned | — | — | — | Phase 4 — do not advertise |
 
 ## Recommended repair order
@@ -48,13 +55,14 @@ See README production go-live checklist. Do not call TradeCatch production-ready
 ## Marketing rules
 
 1. Hero and footer must describe **missed-call text-back + collection + technician alert** as the shipping pilot path.
-2. Quote follow-up, dashboards, and recovered-revenue numbers must stay labelled **Illustrative** or **planned for pilots**.
+2. Growth modules (booking, pipeline, revenue attribution, Google reviews, timeline) may be described as **pilot** for entitled orgs — not as self-serve SaaS launch or calendar-provider sync.
 3. Do not restore a claim to “live” until: route + durable store + monitoring + acceptance tests exist.
 4. Module A must not be marketed as production SaaS until `durableMissedCallStore` and Twilio are green in `/api/health` (ops view).
+5. Starter quote follow-up / website capture may be described as **pilot** for linked orgs — not as self-serve SaaS launch.
 
 ## P0 launch blockers (engineering)
 
 1. Configure PostgreSQL (`DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1`) and apply `schema.sql`; the memory fallback is development-only.
-2. Never advertise quote follow-up as live until sequences exist.
+2. Never advertise Growth booking / revenue attribution / Google reviews as production-ready SaaS; keep status **pilot** until durable store + monitoring + acceptance tests are green.
 3. Production Twilio must be configured; dry-run SIDs are forbidden in production.
 4. Technician replies must stay bound to the current open alert + action token (implemented).

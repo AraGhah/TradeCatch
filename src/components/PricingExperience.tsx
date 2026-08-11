@@ -4,16 +4,28 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CTAButton } from "@/components/CTAButton";
 
+export type PricingOutcomeGroup = {
+  title: string;
+  items: string[];
+};
+
 export type PricingTier = {
   name: string;
+  /** Short outcome line, e.g. "Recover More Leads" */
+  tagline: string;
+  /** One-sentence core outcome */
+  outcome: string;
   price: string;
   cadence: string;
-  items: string[];
+  /** @deprecated Prefer outcome groups; kept for older callers */
+  items?: string[];
+  groups?: PricingOutcomeGroup[];
   badge?: string;
   idealFor: string;
   setupAmount?: string;
   monthlyAmount?: string;
   reassuranceLine?: string;
+  everythingInStarter?: string;
 };
 
 type Labels = {
@@ -43,7 +55,6 @@ export function PricingExperience({
 
   return (
     <div className="w-full">
-      {/* Cards sit clearly on paper — Growth stays light so it never merges with the navy hero */}
       <div className="relative z-[1] -mt-[clamp(24px,3vw,40px)] grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
         {primary.map((tier, i) => (
           <PlanCard
@@ -145,9 +156,13 @@ function PlanCard({
   monthlyLabel: string;
   thenLabel: string;
 }) {
-  const features = tier.items.slice(0, 6);
   const setupDisplay = tier.setupAmount ?? tier.price;
   const monthlyDisplay = tier.monthlyAmount ?? tier.cadence.replace(/^\+\s*/, "");
+  const groups = tier.groups?.length
+    ? tier.groups
+    : tier.items?.length
+      ? [{ title: "", items: tier.items.slice(0, 6) }]
+      : [];
 
   return (
     <motion.article
@@ -155,7 +170,7 @@ function PlanCard({
       whileInView={{ y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.55, delay: index * 0.08, ease }}
-      className={`relative flex flex-col border bg-surface p-[clamp(32px,3.5vw,48px)] text-heading transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 ${
+      className={`relative flex flex-col border bg-surface p-[clamp(28px,3.2vw,44px)] text-heading transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 ${
         featured
           ? "border-orange/55 shadow-[0_32px_64px_-40px_rgba(228,118,43,0.45)] ring-1 ring-orange/20"
           : "border-[rgb(var(--ink-rgb)/0.1)] shadow-[0_20px_48px_-40px_rgb(var(--ink-rgb)/0.28)]"
@@ -169,9 +184,14 @@ function PlanCard({
       ) : null}
 
       <div className="flex items-baseline justify-between gap-4">
-        <h2 className="m-0 font-heading text-[clamp(28px,2.8vw,36px)] font-extrabold tracking-[-0.04em] text-heading">
-          {tier.name}
-        </h2>
+        <div>
+          <h2 className="m-0 font-heading text-[clamp(28px,2.8vw,36px)] font-extrabold tracking-[-0.04em] text-heading">
+            {tier.name}
+          </h2>
+          <p className="mt-2 text-[15px] font-semibold tracking-[-0.01em] text-orange">
+            {tier.tagline}
+          </p>
+        </div>
         {featured ? (
           <span className="shrink-0 bg-[rgba(228,118,43,0.12)] px-2.5 py-1 text-[12px] font-semibold tracking-[0.04em] text-ember-text">
             {popularLabel}
@@ -179,7 +199,10 @@ function PlanCard({
         ) : null}
       </div>
 
-      <p className="mt-4 max-w-[28em] text-[16px] leading-[1.55] text-muted">
+      <p className="mt-4 max-w-[32em] text-[16px] leading-[1.55] text-heading/85">
+        {tier.outcome}
+      </p>
+      <p className="mt-2 max-w-[28em] text-[14.5px] leading-[1.5] text-muted">
         {tier.idealFor}
       </p>
 
@@ -202,16 +225,35 @@ function PlanCard({
         ) : null}
       </div>
 
-      <ul className="mt-7 flex flex-1 list-none flex-col p-0">
-        {features.map((item) => (
-          <li
-            key={item}
-            className="border-t border-[rgb(var(--ink-rgb)/0.08)] py-3.5 text-[15.5px] leading-[1.45] text-secondary"
+      <div className="mt-7 flex flex-1 flex-col gap-5">
+        {tier.everythingInStarter ? (
+          <p className="border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4 text-[14.5px] font-semibold text-heading">
+            {tier.everythingInStarter}
+          </p>
+        ) : null}
+        {groups.map((group) => (
+          <div
+            key={group.title || group.items.join("|")}
+            className="border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4"
           >
-            {item}
-          </li>
+            {group.title ? (
+              <p className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
+                {group.title}
+              </p>
+            ) : null}
+            <ul className="mt-2 flex list-none flex-col p-0">
+              {group.items.map((item) => (
+                <li
+                  key={item}
+                  className="py-1.5 text-[15px] leading-[1.45] text-secondary"
+                >
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
         ))}
-      </ul>
+      </div>
 
       <CTAButton
         href="/book-audit"
