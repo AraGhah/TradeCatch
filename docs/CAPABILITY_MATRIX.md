@@ -15,18 +15,20 @@ Status legend:
 
 | Claim | Status | Runtime | Storage | Tests | Notes |
 | --- | --- | --- | --- | --- | --- |
-| Missed-call detection (Twilio voice status) | pilot | `/api/twilio/voice/status` | Postgres when enabled; memory fallback | unit | Single-tenant |
-| Customer SMS recovery + collection | pilot | `/api/twilio/sms/inbound`, engine | Postgres when enabled; memory fallback | unit | FR/EN, opt-out |
+| Missed-call detection (Twilio voice status) | pilot | `/api/twilio/voice/status` | Postgres when enabled; memory fallback | unit | To-number client resolve + env fallback |
+| Customer SMS recovery + collection | pilot | `/api/twilio/sms/inbound`, engine | Postgres when enabled; memory fallback | unit | FR/EN, opt-out, caller eligibility filters |
 | Technician job card + ACCEPTER/REFUSER/APPELER | pilot | engine + tech alerts | Postgres when enabled; memory fallback | unit | Bound by action token + open alert |
 | Technician escalation timers | pilot | `/api/missed-call/escalations/tick` | Postgres when enabled; memory fallback | unit | Ops bearer required |
-| Ops lead list / CRM correction API | pilot | `/api/missed-call/leads*` | Postgres when enabled; memory fallback | unit | Not a client dashboard |
+| Ops lead list / CRM correction API | pilot | `/api/missed-call/leads*` | Postgres when enabled; memory fallback | unit | Founder/ops tools — not public marketing |
 | Book-audit lead capture (marketing) | live | `/api/book-audit` | Postgres when enabled + email/webhook | unit + e2e | Site lead gen |
 | Quote ingestion / identification | planned | — | — | — | Do not claim |
 | Scheduled quote follow-up sequences | illustrative / planned | UI only | — | — | Demo components |
 | Stop quote sequence on reply | planned | — | — | — | Do not claim |
-| Client dashboard / recovered-revenue reporting | illustrative | UI only | — | — | Marked Illustrative |
+| Marketing dashboard mockups | illustrative | UI only | — | — | Hero/demo Illustrative badges |
 | Appointment / calendar booking product | planned | optional `NEXT_PUBLIC_CALENDAR_URL` CTA | — | — | External link only |
-| Multi-tenant SaaS | planned | — | — | — | Single-tenant v1 |
+| Multi-tenant SaaS foundation | pilot | `/login`, `/app/*`, `/api/auth/*`, `/api/app/*` | Postgres `tc_*` + memory fallback | unit | Founder-gated pilot workspace — not self-serve SaaS launch |
+| Plan entitlements (Starter/Growth) | pilot | `src/product/saas/entitlements.ts` | org.plan | unit | Backend assert; UI mirrors |
+| Pilot client workspace (basic) | pilot | `/app` | Module A leads when linked | unit | No fabricated recovered revenue; audit-first sales motion |
 | Durable workflows across restarts | pilot | Postgres adapter + `schema.sql` | PostgreSQL | unit | Requires `DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1` and applied schema |
 | Quote recovery (ingestion, sequences, opt-out, retries) | planned | — | — | — | Phase 4 — do not advertise |
 | CRM sync (credentials, mapping, DLQ, conflict handling) | planned | — | — | — | Phase 4 — do not advertise |

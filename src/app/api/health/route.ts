@@ -114,6 +114,11 @@ export async function GET(request: NextRequest) {
       process.env.MISSED_CALL_OPS_SECRET?.trim() ||
       process.env.CRON_SECRET?.trim(),
     ),
+    authSecret: Boolean(
+      process.env.AUTH_SECRET?.trim() ||
+        process.env.SESSION_SECRET?.trim() ||
+        process.env.MISSED_CALL_OPS_SECRET?.trim(),
+    ),
     twilio: isTwilioConfigured(),
     durableMissedCallStore: durableConfigured,
     database,

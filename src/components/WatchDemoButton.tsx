@@ -29,7 +29,8 @@ function resolveLocale(raw: string): LocaleKey {
 
 /**
  * Opens the locale-matched TradeCatch demo MP4 in an accessible dialog.
- * Used by the homepage “See the interactive walkthrough” CTAs.
+ * Used by homepage / proof CTAs labelled as the 90-second demo (not the
+ * interactive /demo-video experience).
  */
 export function WatchDemoButton({
   children,

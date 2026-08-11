@@ -85,6 +85,69 @@ export function shouldStartRecovery(disposition: CallDisposition): boolean {
   return disposition === "missed" || disposition === "after_hours_missed";
 }
 
+const ANONYMOUS_CALLER =
+  /^(anonymous|restricted|unknown|private|unavailable)$/i;
+
+const NANP_TOLL_FREE = new Set([
+  "800",
+  "888",
+  "877",
+  "866",
+  "855",
+  "844",
+  "833",
+]);
+
+export type CallerEligibility =
+  | { ok: true }
+  | {
+      ok: false;
+      reason:
+        | "empty_caller"
+        | "anonymous_caller"
+        | "caller_too_short"
+        | "caller_too_long"
+        | "caller_is_own_line"
+        | "toll_free_caller";
+    };
+
+/**
+ * Reject numbers that must never receive automated recovery SMS.
+ * Does not attempt landline detection (needs a carrier Lookup API).
+ */
+export function isEligibleRecoveryCaller(input: {
+  callerE164: string;
+  smsFromE164?: string;
+}): CallerEligibility {
+  const raw = input.callerE164.trim();
+  if (!raw) return { ok: false, reason: "empty_caller" };
+  if (ANONYMOUS_CALLER.test(raw) || ANONYMOUS_CALLER.test(raw.replace(/^\+/, ""))) {
+    return { ok: false, reason: "anonymous_caller" };
+  }
+
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length < 10) return { ok: false, reason: "caller_too_short" };
+  if (digits.length > 15) return { ok: false, reason: "caller_too_long" };
+
+  if (input.smsFromE164) {
+    const callerKey = digits.replace(/^1(?=\d{10}$)/, "");
+    const fromKey = input.smsFromE164
+      .replace(/\D/g, "")
+      .replace(/^1(?=\d{10}$)/, "");
+    if (callerKey && fromKey && callerKey === fromKey) {
+      return { ok: false, reason: "caller_is_own_line" };
+    }
+  }
+
+  const national =
+    digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  if (national.length === 10 && NANP_TOLL_FREE.has(national.slice(0, 3))) {
+    return { ok: false, reason: "toll_free_caller" };
+  }
+
+  return { ok: true };
+}
+
 export function buildDedupeKey(
   clientAccountId: string,
   callerE164: string,

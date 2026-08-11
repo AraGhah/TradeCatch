@@ -176,4 +176,6 @@ ALTER TABLE mc_outbound_messages
   ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;
 ALTER TABLE mc_sms_suppressions
   ADD COLUMN IF NOT EXISTS scope TEXT NOT NULL DEFAULT 'all';
+ALTER TABLE mc_clients
+  ADD COLUMN IF NOT EXISTS organization_id TEXT;
 

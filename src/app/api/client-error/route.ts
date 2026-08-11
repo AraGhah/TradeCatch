@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { reportError } from "@/lib/errors";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -51,7 +51,7 @@ function pruneDedupe(now: number) {
  */
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const { allowed } = rateLimit({
+  const { allowed } = await rateLimitAsync({
     key: `client-error:${ip}`,
     limit: 12,
     windowMs: 10 * 60 * 1000,

@@ -116,11 +116,13 @@ export function createTwilioSmsPort(
       return { sid: json.sid };
     },
     async syncOptOut(input) {
-      // Advanced Opt-Out must be enabled on the Twilio number / Messaging Service.
-      // We do not invent a "synced" status without a provider API confirmation.
+      // Durable suppression is written locally by the engine. Twilio Advanced
+      // Opt-Out (Console → phone number / Messaging Service) must be enabled
+      // before go-live so carrier-level STOP is also honored. This adapter does
+      // not call a separate Opt-Out REST API and must never report "synced".
       return {
         ok: true,
-        detail: `local_observed_pending_provider_confirm:${input.phoneE164}:via:${input.fromE164}`,
+        detail: `local_only:enable_twilio_advanced_opt_out:${input.phoneE164}:via:${input.fromE164}`,
       };
     },
   };

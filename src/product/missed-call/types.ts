@@ -328,8 +328,10 @@ export type OutboundMessageRecord = {
 export type SmsPort = {
   send(message: OutboundSms): Promise<{ sid: string }>;
   /**
-   * Best-effort sync of an opt-out to the provider (Twilio Advanced Opt-Out /
-   * Messaging). Implementations may no-op when credentials are absent.
+   * Best-effort provider hook after a local STOP/ARRET suppression is recorded.
+   * Twilio Advanced Opt-Out (Console) must be enabled for carrier-level STOP;
+   * this hook does not claim provider sync unless a real Opt-Out API confirms it.
+   * Implementations may no-op when credentials are absent.
    */
   syncOptOut?(input: {
     phoneE164: string;

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { bookAuditSchema } from "@/lib/validation/book-audit";
-import { rateLimit, getClientIp } from "@/lib/rate-limit";
+import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { sendBookAuditEmails } from "@/lib/email";
 import { forwardLeadToCrm } from "@/lib/leads";
 import { reportError } from "@/lib/errors";
 import { createMemoryStore } from "@/lib/store";
+import {
+  isUpstashConfigured,
+  upstashClaimIdempotencyKey,
+} from "@/lib/upstash";
 import {
   claimBookAuditDelivery,
   persistBookAuditLead,
@@ -22,8 +26,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// Duplicate-submission guard. Uses the shared TimedStore abstraction so a
-// Redis-backed implementation can replace createMemoryStore in one place.
+// Duplicate-submission guard (per-instance). When Upstash is configured,
+// claims also go through Redis so multi-instance deploys share the window.
 const seenIdempotencyKeys = createMemoryStore();
 const IDEMPOTENCY_WINDOW_MS = 10 * 60 * 1000;
 
@@ -56,7 +60,7 @@ export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
   const unknownIp = ip === "unknown" || ip.startsWith("unknown:");
 
-  const { allowed } = rateLimit({
+  const { allowed } = await rateLimitAsync({
     key: `book-audit:${ip}`,
     limit: unknownIp ? 2 : 5,
     windowMs: 10 * 60 * 1000,
@@ -116,6 +120,23 @@ export async function POST(request: NextRequest) {
   }
 
   const now = Date.now();
+  if (isUpstashConfigured()) {
+    try {
+      const claimed = await upstashClaimIdempotencyKey({
+        key: `book-audit:${idempotencyKey}`,
+        ttlMs: IDEMPOTENCY_WINDOW_MS,
+      });
+      if (!claimed) {
+        return NextResponse.json({ ok: true, duplicate: true });
+      }
+    } catch (err) {
+      console.error(
+        "[book-audit] Upstash idempotency failed; using memory",
+        err,
+      );
+    }
+  }
+
   seenIdempotencyKeys.prune(IDEMPOTENCY_WINDOW_MS, now);
   if (seenIdempotencyKeys.has(idempotencyKey)) {
     return NextResponse.json({ ok: true, duplicate: true });

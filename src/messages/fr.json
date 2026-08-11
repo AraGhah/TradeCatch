@@ -25,9 +25,9 @@
   },
   "cta": {
     "primary": "Réserver un audit gratuit de 20 minutes",
-    "secondary": "Voir la visite interactive",
+    "secondary": "Voir la démo de 90 secondes",
     "tertiary": "Réserver un audit gratuit de 20 minutes",
-    "watchDemo": "Voir la visite interactive",
+    "watchDemo": "Voir la démo de 90 secondes",
     "seeWorkflow": "Voir le processus complet",
     "viewMissedCall": "Voir le processus des appels manqués",
     "viewQuoteFollowUp": "Voir le processus de relance des soumissions",
@@ -52,6 +52,7 @@
     "company": "Entreprise",
     "legal": "Légal",
     "resources": "Ressources",
+    "pilotLogin": "Connexion pilote",
     "rightsReserved": "Tous droits réservés.",
     "disclaimer": "Le système ne diagnostique pas les problèmes techniques, électriques, de plomberie, de CVC, médicaux ou de sécurité. La gestion des urgences et les consignes de sécurité demeurent la responsabilité de l'entrepreneur et du personnel qualifié.",
     "manageCookies": "Gérer les cookies",
@@ -72,7 +73,7 @@
       "accentWord": "appels manqués",
       "subheadline": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien. Les séquences de relance de soumissions montrées ailleurs sur ce site sont illustratives, pas encore un module produit en production.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
-      "ctaSecondary": "Voir la visite interactive",
+      "ctaSecondary": "Voir la démo de 90 secondes",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
       "demoStripLabel": "Parcours de simulation produit",
       "demoStripSteps": [
@@ -249,8 +250,8 @@
         "Identifie les demandes potentiellement urgentes",
         "Alerte le technicien de garde",
         "Escalade vers un contact de remplacement",
-        "Crée une demande dans le CRM",
-        "Suit si l'appel est devenu un rendez-vous"
+        "Crée un enregistrement de lead ops (pilote)",
+        "Suit l'acceptation / le résultat technicien (pilote)"
       ],
       "note": "Le système recueille et achemine la demande. Vos techniciens licenciés continuent de diagnostiquer le problème, confirmer les prix et effectuer les travaux."
     },
@@ -305,7 +306,7 @@
         },
         {
           "manual": "Personne ne peut dire combien d'appels ou de soumissions sont réellement devenus des jobs.",
-          "system": "L'équipe ops peut revoir les leads récupérés du pilote contrôlé ; un tableau de bord client est prévu, pas encore livré."
+          "system": "Les pilotes fondateurs obtiennent un espace lié sur /app après l'installation ; les tableaux de bord marketing restent illustratifs."
         },
         {
           "manual": "Une urgence hors des heures d'ouverture attend l'ouverture.",
@@ -609,7 +610,7 @@
       "headline": "Voyez le système avant de parler à qui que ce soit.",
       "intro": "Ce sont des exemples de produit étiquetés, construits avec des noms fictifs et des parcours types, pour comprendre le produit. Ce ne sont pas des témoignages clients, des logos, ni des résultats promis.",
       "illustrativeLabel": "Données illustratives",
-      "demoCta": "Essayer la visite interactive d'appel manqué",
+      "demoCta": "Voir la démo produit de 90 secondes",
       "onePagerCta": "Ouvrir la page résumé",
       "sms": {
         "badge": "Illustratif · Exemple SMS",
@@ -713,16 +714,16 @@
         ]
       },
       {
-        "title": "Qualification et prise de rendez-vous",
-        "purpose": "Réduire les conversations administratives et réserver plus vite les prospects qualifiés.",
+        "title": "Qualification des leads",
+        "purpose": "Recueillir assez de détails pour que votre équipe réponde intelligemment.",
         "items": [
           "Questions de qualification approuvées",
           "Détection du type de projet",
           "Vérification de la zone de service",
-          "Demandes de rendez-vous",
-          "Réservation au calendrier",
-          "Messages de confirmation",
-          "Rappels de rendez-vous"
+          "Signalement d'urgence",
+          "Revue humaine au besoin",
+          "Prise de rendez-vous (prévue)",
+          "Rappels calendrier (prévus)"
         ]
       },
       {
@@ -740,16 +741,16 @@
       },
       {
         "title": "Rapports",
-        "purpose": "Montrer, en chiffres, si tout ça fonctionne.",
+        "purpose": "Montrer si la récupération fonctionne — pilote ops aujourd'hui ; tableau de bord client prévu.",
         "items": [
-          "Résumés hebdomadaires",
-          "Rapports sur les appels manqués",
-          "Taux de réponse",
-          "Jobs réservés",
+          "Liste de leads ops (API pilote)",
+          "Résultats des workflows d'appels manqués (pilote)",
+          "Suivi acceptation / refus technicien (pilote)",
+          "Résumés hebdomadaires illustratifs (pas de tableau de bord client live)",
           "Relances de soumissions illustratives",
           "Résultats de soumissions illustratifs",
-          "Cas nécessitant votre attention",
-          "Valeur des occasions récupérées"
+          "Cas nécessitant une revue humaine (pilote)",
+          "Métriques de revenus récupérés (illustratives — pas d'attribution live)"
         ]
       }
     ],
@@ -769,8 +770,8 @@
       "Capture de leads",
       "Routage technicien",
       "Relance de soumissions (prévue)",
-      "Prise de rendez-vous",
-      "Rapports et suivi"
+      "Prise de rendez-vous (prévue)",
+      "Rapports (pilote / illustratif)"
     ]
   },
   "howItWorks": {
@@ -1045,7 +1046,7 @@
   },
   "bookAudit": {
     "headline": "Réservez un audit gratuit de fuites de revenus de 20 minutes",
-    "intro": "Dix-huit questions rapides. Environ trois minutes. Sans engagement.",
+    "intro": "Un formulaire court — nom, entreprise, métier et comment vous joindre. Environ une minute. Sans engagement.",
     "fields": {
       "firstName": "Prénom",
       "lastName": "Nom de famille",
@@ -1352,7 +1353,7 @@
       },
       {
         "q": "Peut-il s'intégrer à notre CRM?",
-        "a": "Il peut être configuré autour des CRM, calendriers et comptes courriel courants, ou tourner sur un tableau de bord distinct. Nous vérifions l'intégration précise lors de l'audit plutôt que de la promettre d'emblée."
+        "a": "Aujourd'hui, les leads récupérés vivent dans le parcours ops du pilote contrôlé. Les clients fondateurs peuvent aussi utiliser un espace pilote lié (/app) après l'installation. Les demandes d'audit marketing peuvent être transmises à un webhook que vous configurez (Zapier, Make, HubSpot, etc.). La sync CRM bidirectionnelle native est encore prévue — nous confirmons ce qui convient lors de l'audit."
       },
       {
         "q": "Les clients sauront-ils qu'ils communiquent avec de l'automatisation?",
@@ -1662,7 +1663,7 @@
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
     "pricingTitle": "Fourchettes de départ",
-    "pricing": "Démarrage dès 1 250 $ d'installation + 375 $/mois. Croissance dès 2 000 $ + 500–750 $/mois. Précisé à l'audit.",
+    "pricing": "Démarrage dès 799 $ d'installation + 375 $/mois. Croissance dès 2 000 $ + 500–750 $/mois. Précisé à l'audit.",
     "pilotTitle": "Programme pilote",
     "pilot": "Places fondatrices limitées : tarif réduit, accès fondateur, prix verrouillé 12 mois, crédit si nous retardons le lancement.",
     "ctaTitle": "Prochaine étape",
@@ -1688,5 +1689,68 @@
     "support": "Réessayez. Si le problème continue, appelez <phone>438·993·6997</phone>.",
     "retry": "Réessayer",
     "home": "Retour à l'accueil"
+  },
+  "login": {
+    "eyebrow": "Accès pilote fondateur",
+    "headline": "Connexion à votre espace TradeCatch",
+    "intro": "Pour les entrepreneurs déjà en pilote avec le fondateur. Nous envoyons un lien à usage unique — pas de mot de passe. Nouveaux clients : réservez d'abord un audit.",
+    "email": "Courriel professionnel",
+    "companyOptional": "Nom de l'entreprise (première connexion pilote)",
+    "companyPlaceholder": "Nord Plomberie",
+    "companyHelp": "Nécessaire seulement la première fois pour créer votre espace Starter après l'audit.",
+    "submit": "M'envoyer un lien de connexion",
+    "sending": "Envoi…",
+    "sent": "Si ce courriel peut se connecter, un lien est en route. Vérifiez votre boîte de réception.",
+    "devLink": "Lien de connexion local/dev :",
+    "devLinkCta": "Ouvrir l'espace",
+    "errorGeneric": "Une erreur est survenue. Réessayez.",
+    "preferAudit": "Pas encore en pilote ? Réservez un audit gratuit."
+  },
+  "app": {
+    "nav": {
+      "dashboard": "Tableau de bord",
+      "leads": "Leads",
+      "settings": "Réglages",
+      "logout": "Déconnexion"
+    },
+    "plan": {
+      "starter": "Starter — Récupération de leads",
+      "growth": "Growth — Conversion de leads"
+    },
+    "dashboard": {
+      "headline": "Ce que TradeCatch a fait pour vous",
+      "intro": "Indicateurs de récupération de votre espace d'appels manqués lié. Les montants n'apparaissent que lorsqu'une valeur réelle existe sur un lead.",
+      "notLinked": "Votre client Twilio / appels manqués n'est pas encore lié. Demandez au fondateur de connecter votre numéro, ou définissez MISSED_CALL_CLIENT_ID à la création de l'espace."
+    },
+    "metrics": {
+      "leadsCaptured": "Leads capturés",
+      "missedCallsRecovered": "Appels manqués récupérés",
+      "leadsReplied": "Leads qui ont répondu",
+      "needsAttention": "À traiter",
+      "jobsAccepted": "Jobs acceptés par un tech",
+      "pipelineValue": "Valeur pipeline enregistrée",
+      "pipelineValueNote": "Somme des valeurs estimées/finales présentes sur les leads — pas un revenu récupéré revendiqué."
+    },
+    "leads": {
+      "headline": "Leads récupérés",
+      "intro": "Leads de votre espace de récupération d'appels manqués uniquement. Les autres organisations ne voient pas ces dossiers.",
+      "empty": "Aucun lead récupéré pour l'instant. Quand un appel manqué sera récupéré, il apparaîtra ici.",
+      "needsAttention": "À traiter",
+      "noAddress": "Pas encore d'adresse",
+      "entitlement": "La récupération d'appels manqués n'est pas dans votre forfait."
+    },
+    "settings": {
+      "headline": "Réglages de l'espace",
+      "intro": "Les droits du forfait sont appliqués côté serveur — cacher un bouton ne suffit pas.",
+      "plan": "Forfait actuel",
+      "included": "Inclus dans votre forfait",
+      "growthOnly": "Disponible avec Growth",
+      "clientLinked": "Client appels manqués lié"
+    },
+    "upsell": {
+      "title": "Vous voudrez plus tard la prise de rendez-vous et un suivi revenus plus clair ?",
+      "body": "Growth ajoute la prise de rendez-vous, les vues pipeline et les demandes d'avis — cadré avec le fondateur une fois que votre récupération rapporte déjà.",
+      "cta": "Voir Growth sur la page tarifs"
+    }
   }
 }
