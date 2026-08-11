@@ -45,7 +45,9 @@ gitignored and must never be committed.
 | `NEXT_PUBLIC_SITE_URL` | falls back to `https://tradecatch.ca` | same |
 | `NEXT_PUBLIC_GA_MEASUREMENT_ID` | analytics doesn't load | same — enable for conversion events |
 | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_NOTIFY_EMAIL` | submissions accepted; emails skipped with a warning | **required** — `/api/book-audit` returns 503 if missing |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | verification skipped with a warning | **required** — `/api/book-audit` returns 503 if missing |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | verification skipped with a warning | **required** — `/api/book-audit` returns 503 if missing. Never commit real keys; rotate in Cloudflare if they were ever exposed |
+| `AUTH_SECRET` | required for `/app` session cookies | **required** for SaaS portal — falls back to `MISSED_CALL_OPS_SECRET` if unset |
+| `SAAS_DEV_LOGIN` | unset | set `1` locally to return a clickable magic-link token when Resend is unavailable |
 | `LEADS_WEBHOOK_URL` (+ optional `LEADS_WEBHOOK_SECRET`) | CRM forward skipped | recommended — Zapier/Make/n8n/HubSpot webhook |
 | `NEXT_PUBLIC_CALENDAR_URL` | no calendar CTA after submit | recommended — Cal.com / Calendly link |
 | `ERROR_WEBHOOK_URL` | client/server errors only logged | recommended — Slack/Discord/Better Stack/Sentry webhook |
@@ -75,10 +77,20 @@ Core product path (call → SMS → collect → tech accept → notify). Domain 
 - [ ] Full client config from env/JSON (`MISSED_CALL_CLIENT_CONFIG_JSON` or complete `MISSED_CALL_*` vars) — demo fixtures rejected in production
 - [ ] Every escalation contact validated (primary, all backups, owner, human-review) — no reserved/555 demo numbers
 - [ ] Twilio credentials live; `MISSED_CALL_SMS_MODE` is **not** dry-run in production
-- [ ] Twilio Advanced Opt-Out enabled; STOP/ARRET writes durable suppression and blocks new workflows
+- [ ] Twilio Advanced Opt-Out enabled in Console on the number / Messaging Service; STOP/ARRET writes durable local suppression (`provider_status=local_only` until a real provider sync API exists) and blocks new workflows
 - [ ] Escalation timers / cron hitting `POST /api/missed-call/escalations/tick` with ops auth
 - [ ] Opt-out, duplicate CallSid, overnight schedule, and inactive-tech cases verified in staging
 - [ ] Québec legal review of privacy / contracts before claiming compliance (engineering checklist ≠ legal advice)
+- [ ] (Recommended multi-instance) `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` set so book-audit rate-limit and idempotency are shared across serverless instances
+
+### SaaS portal (founder-gated pilot — Voie A sales motion)
+
+- Primary acquisition remains **Book a free audit** (founder-led).
+- Magic-link login: `/login` (FR `/connexion`) for contractors already in a pilot.
+- Workspace: `/app` after the founder links `missedCallClientId` (`POST /api/missed-call/ops/link-organization`).
+- Entitlements: `src/product/saas/entitlements.ts` — enforced on `/api/app/*`.
+- Apply schemas: `npm run db:schema` · readiness: `npm run check:module-a`
+- Set `AUTH_SECRET` (and optionally `SAAS_DEV_LOGIN=1` for local sign-in without email)
 
 ## Monitoring & backups
 
@@ -96,11 +108,11 @@ Core product path (call → SMS → collect → tech accept → notify). Domain 
 
 ## Known production limits
 
-- Rate limiting, idempotency keys, and duplicate-submission guards use an in-memory
-  `TimedStore` (`src/lib/store.ts`). Behind multiple instances / serverless functions
-  the effective rate limit is roughly `limit × instance count`. Swap
-  `createMemoryStore` for Upstash Redis / Vercel KV when that matters — call sites
-  already go through the shared abstraction.
+- Rate limiting and short-window idempotency keys use in-memory state by default
+  (`src/lib/rate-limit.ts`, `src/lib/store.ts`). Behind multiple instances /
+  serverless functions the effective limit is roughly `limit × instance count`.
+  Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` to share counters
+  and idempotency claims across instances (see `src/lib/upstash.ts`).
 - CSP still allows `script-src 'unsafe-inline'` for static rendering. Revisit a
   nonce-based CSP if more third-party scripts are added.
 - Automated a11y (axe / Lighthouse CI) is not wired yet; the Accessibility Statement

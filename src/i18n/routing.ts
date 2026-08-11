@@ -40,6 +40,22 @@ export const routing = defineRouting({
       en: "/demo-video",
       fr: "/demo-video",
     },
+    "/login": {
+      en: "/login",
+      fr: "/connexion",
+    },
+    "/app": {
+      en: "/app",
+      fr: "/app",
+    },
+    "/app/leads": {
+      en: "/app/leads",
+      fr: "/app/leads",
+    },
+    "/app/settings": {
+      en: "/app/settings",
+      fr: "/app/parametres",
+    },
   },
 });
 

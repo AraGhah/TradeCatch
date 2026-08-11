@@ -2,8 +2,8 @@
  * Tiny key/value store used by rate limiting and idempotency.
  *
  * Default: in-memory (single Node process). For multi-instance / serverless
- * production, swap `createMemoryStore` for an Upstash Redis / Vercel KV
- * implementation without touching call sites.
+ * production, set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN and use
+ * `rateLimitAsync` / `upstashClaimIdempotencyKey` (see src/lib/upstash.ts).
  */
 
 export type TimedStore = {

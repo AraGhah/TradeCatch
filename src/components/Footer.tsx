@@ -93,6 +93,11 @@ export function Footer() {
                   {nav("faq")}
                 </Link>
               </li>
+              <li>
+                <Link href="/login" className={linkClass}>
+                  {t("pilotLogin")}
+                </Link>
+              </li>
             </ul>
           </div>
 

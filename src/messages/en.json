@@ -25,9 +25,9 @@
   },
   "cta": {
     "primary": "Book a free 20-minute audit",
-    "secondary": "See the interactive walkthrough",
+    "secondary": "Watch the 90-second demo",
     "tertiary": "Book a free 20-minute audit",
-    "watchDemo": "See the interactive walkthrough",
+    "watchDemo": "Watch the 90-second demo",
     "seeWorkflow": "See the full workflow",
     "viewMissedCall": "View missed-call workflow",
     "viewQuoteFollowUp": "See the quote follow-up process",
@@ -52,6 +52,7 @@
     "company": "Company",
     "legal": "Legal",
     "resources": "Resources",
+    "pilotLogin": "Pilot login",
     "rightsReserved": "All rights reserved.",
     "disclaimer": "The system does not diagnose technical, electrical, plumbing, HVAC, medical, or safety conditions. Emergency handling and safety instructions remain the responsibility of the contractor and qualified personnel.",
     "manageCookies": "Manage cookies",
@@ -72,7 +73,7 @@
       "accentWord": "missed calls",
       "subheadline": "TradeCatch texts missed callers back, collects the job details, and alerts the right technician. Quote follow-up sequences shown elsewhere on this site are illustrative, not a live product module yet.",
       "ctaPrimary": "Book a free 20-minute audit",
-      "ctaSecondary": "See the interactive walkthrough",
+      "ctaSecondary": "Watch the 90-second demo",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
       "demoStripLabel": "Product simulation path",
       "demoStripSteps": [
@@ -249,8 +250,8 @@
         "Identifies potentially urgent requests",
         "Alerts the on-call technician",
         "Escalates to a backup contact",
-        "Creates a CRM lead",
-        "Tracks whether the call became a booking"
+        "Creates an ops lead record (pilot)",
+        "Tracks technician accept / outcome (pilot)"
       ],
       "note": "The system collects and routes the request. Your licensed technicians still diagnose the problem, confirm pricing, and perform the work."
     },
@@ -305,7 +306,7 @@
         },
         {
           "manual": "Nobody can say how many calls or quotes actually turned into jobs.",
-          "system": "Ops can review recovered leads from the controlled pilot; a client dashboard is planned, not shipping yet."
+          "system": "Founding pilots get a linked workspace at /app after install; public marketing dashboards remain illustrative."
         },
         {
           "manual": "An after-hours emergency waits until business hours.",
@@ -609,7 +610,7 @@
       "headline": "See the system before you talk to anyone.",
       "intro": "These are labelled product examples, built with fictional names and sample flows, so you can understand the product. They are not client testimonials, logos, or promised results.",
       "illustrativeLabel": "Illustrative data",
-      "demoCta": "Try the interactive missed-call walkthrough",
+      "demoCta": "Watch the 90-second product demo",
       "onePagerCta": "Open the one-page overview",
       "sms": {
         "badge": "Illustrative · Example SMS",
@@ -713,16 +714,16 @@
         ]
       },
       {
-        "title": "Qualification & booking",
-        "purpose": "Cut the admin conversations and book qualified leads sooner.",
+        "title": "Lead qualification",
+        "purpose": "Collect enough job details for your team to respond intelligently.",
         "items": [
           "Approved qualification questions",
           "Project-type detection",
           "Service-area verification",
-          "Appointment requests",
-          "Calendar booking",
-          "Confirmation messages",
-          "Appointment reminders"
+          "Urgency flagging",
+          "Human review when needed",
+          "Appointment booking (planned)",
+          "Calendar reminders (planned)"
         ]
       },
       {
@@ -740,16 +741,16 @@
       },
       {
         "title": "Reporting",
-        "purpose": "Show, in numbers, whether any of this is working.",
+        "purpose": "Show whether recovery is working — ops pilot today; client dashboard planned.",
         "items": [
-          "Weekly summaries",
-          "Missed-call reports",
-          "Response rates",
-          "Jobs booked",
+          "Ops lead list (pilot API)",
+          "Missed-call workflow outcomes (pilot)",
+          "Technician accept / decline tracking (pilot)",
+          "Illustrative weekly summaries (not a live client dashboard)",
           "Illustrative quote follow-ups",
           "Illustrative quote outcomes",
-          "Cases needing attention",
-          "Recovered opportunity value"
+          "Cases needing human review (pilot)",
+          "Recovered-revenue metrics (illustrative — not live attribution)"
         ]
       }
     ],
@@ -769,8 +770,8 @@
       "Lead capture",
       "Technician routing",
       "Quote follow-up (planned)",
-      "Appointment booking",
-      "Reporting and tracking"
+      "Appointment booking (planned)",
+      "Reporting (pilot / illustrative)"
     ]
   },
   "howItWorks": {
@@ -1045,7 +1046,7 @@
   },
   "bookAudit": {
     "headline": "Book a free 20-minute revenue leak audit",
-    "intro": "Eighteen quick questions. About three minutes. No commitment.",
+    "intro": "A short form — name, company, trade, and how to reach you. About one minute. No commitment.",
     "fields": {
       "firstName": "First name",
       "lastName": "Last name",
@@ -1352,7 +1353,7 @@
       },
       {
         "q": "Can it integrate with our CRM?",
-        "a": "It can be configured around common CRMs, calendars and email accounts, or run on a separate dashboard. We verify the specific integration during the audit rather than promising it upfront."
+        "a": "Today, recovered leads live in the controlled pilot ops path. Founding clients can also use a linked pilot workspace (/app) after install. Marketing audit leads can forward to a webhook you configure (Zapier, Make, HubSpot, etc.). Native two-way CRM sync is still planned — we confirm what fits during the audit."
       },
       {
         "q": "Will customers know they're talking to automation?",
@@ -1662,7 +1663,7 @@
       "Founder-monitored launch and monthly management"
     ],
     "pricingTitle": "Starting ranges",
-    "pricing": "Starter from $1,250 setup + $375/month. Growth from $2,000 setup + $500–$750/month. Scoped on the audit.",
+    "pricing": "Starter from $799 setup + $375/month. Growth from $2,000 setup + $500–$750/month. Scoped on the audit.",
     "pilotTitle": "Pilot programme",
     "pilot": "Limited founding seats per area: reduced rate, direct founder access, 12-month price lock, launch credit if we delay go-live.",
     "ctaTitle": "Next step",
@@ -1688,5 +1689,68 @@
     "support": "Try again. If it keeps happening, call <phone>438·993·6997</phone>.",
     "retry": "Try again",
     "home": "Back to home"
+  },
+  "login": {
+    "eyebrow": "Founding pilot access",
+    "headline": "Sign in to your TradeCatch workspace",
+    "intro": "For contractors already in a founder-led pilot. We’ll email a one-time link — no password. New customers: book an audit first.",
+    "email": "Work email",
+    "companyOptional": "Company name (first pilot login)",
+    "companyPlaceholder": "Nord Plumbing",
+    "companyHelp": "Only needed the first time we create your Starter workspace after the audit.",
+    "submit": "Email me a sign-in link",
+    "sending": "Sending…",
+    "sent": "If that email can sign in, a link is on its way. Check your inbox.",
+    "devLink": "Local/dev sign-in link:",
+    "devLinkCta": "Open workspace",
+    "errorGeneric": "Something went wrong. Try again.",
+    "preferAudit": "Not a pilot yet? Book a free audit instead."
+  },
+  "app": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "leads": "Leads",
+      "settings": "Settings",
+      "logout": "Sign out"
+    },
+    "plan": {
+      "starter": "Starter — Lead Recovery",
+      "growth": "Growth — Lead Conversion"
+    },
+    "dashboard": {
+      "headline": "What TradeCatch did for you",
+      "intro": "High-level recovery metrics from your linked missed-call workspace. Revenue is shown only when a real amount exists on a lead.",
+      "notLinked": "Your Twilio / missed-call client is not linked yet. Ask the founder to connect your number, or set MISSED_CALL_CLIENT_ID when creating the workspace."
+    },
+    "metrics": {
+      "leadsCaptured": "Leads captured",
+      "missedCallsRecovered": "Missed calls recovered",
+      "leadsReplied": "Leads that replied",
+      "needsAttention": "Needs attention",
+      "jobsAccepted": "Jobs accepted by tech",
+      "pipelineValue": "Pipeline value on file",
+      "pipelineValueNote": "Sum of estimated/final values present on leads — not claimed recovered revenue."
+    },
+    "leads": {
+      "headline": "Recovered leads",
+      "intro": "Leads from your missed-call recovery workspace only. Other organizations cannot see these records.",
+      "empty": "No recovered leads yet. When a missed call is recovered, it will show up here.",
+      "needsAttention": "Needs attention",
+      "noAddress": "No address yet",
+      "entitlement": "Missed-call recovery is not on your plan."
+    },
+    "settings": {
+      "headline": "Workspace settings",
+      "intro": "Plan entitlements are enforced on the server — hiding a button is not enough.",
+      "plan": "Current plan",
+      "included": "Included in your plan",
+      "growthOnly": "Available on Growth",
+      "clientLinked": "Linked missed-call client"
+    },
+    "upsell": {
+      "title": "Want booking and deeper revenue tracking later?",
+      "body": "Growth adds appointment booking, pipeline views, and review requests — scoped with the founder when your recovery flow is already earning.",
+      "cta": "See Growth on pricing"
+    }
   }
 }

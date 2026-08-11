@@ -2,6 +2,7 @@ import {
   buildDedupeKey,
   classifyCall,
   dedupeWindowBucket,
+  isEligibleRecoveryCaller,
   shouldStartRecovery,
 } from "./call-handling";
 import {
@@ -911,6 +912,19 @@ export function createMissedCallEngine(deps: {
               : disposition === "abandoned"
                 ? "call_abandoned_no_sms"
                 : "not_eligible",
+        };
+      }
+
+      const callerEligibility = isEligibleRecoveryCaller({
+        callerE164: input.callerE164,
+        smsFromE164: client.smsFromNumber,
+      });
+      if (!callerEligibility.ok) {
+        return {
+          call,
+          workflow: null,
+          smsSent: false,
+          suppressedReason: callerEligibility.reason,
         };
       }
 

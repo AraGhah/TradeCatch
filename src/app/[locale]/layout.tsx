@@ -12,6 +12,7 @@ import { CookieConsent } from "@/components/CookieConsent";
 import { Analytics } from "@/components/Analytics";
 import { HeadInlineScripts } from "@/components/HeadInlineScripts";
 import { ScrollReveal } from "@/components/motion/ScrollReveal";
+import { MarketingChrome } from "@/components/MarketingChrome";
 import "../globals.css";
 
 const archivo = Archivo({
@@ -121,9 +122,9 @@ export default async function LocaleLayout({
             {/* Must sit inside the intl provider — usePathname/useLocale need it. */}
             <Analytics nonce={nonce} />
             <ScrollReveal />
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
+            <MarketingChrome header={<Header />} footer={<Footer />}>
+              {children}
+            </MarketingChrome>
             <CookieConsent />
           </NextIntlClientProvider>
         </MotionConfig>

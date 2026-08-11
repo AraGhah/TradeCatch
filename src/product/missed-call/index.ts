@@ -7,6 +7,7 @@ export type {
 export {
   classifyCall,
   shouldStartRecovery,
+  isEligibleRecoveryCaller,
   isAfterHours,
 } from "./call-handling";
 export { checkServiceArea } from "./service-area";

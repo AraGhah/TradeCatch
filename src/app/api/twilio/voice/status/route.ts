@@ -28,7 +28,7 @@ async function parseForm(
 /**
  * Twilio StatusCallback / voice webhook for Module A.
  * Expects CallStatus, From, To, CallSid, CallDuration (optional).
- * Map Twilio To-number → client via MISSED_CALL_CLIENT_ID (single-tenant v1).
+ * Resolves client by Twilio To-number (multi-tenant) with MISSED_CALL_CLIENT_ID fallback.
  */
 export async function POST(request: NextRequest) {
   let params: Record<string, string>;
@@ -49,6 +49,7 @@ export async function POST(request: NextRequest) {
     ""
   ).toLowerCase();
   const from = params.From || params.Caller || "";
+  const to = params.To || params.Called || "";
   const callSid = params.CallSid;
   const duration = params.CallDuration
     ? Number(params.CallDuration)
@@ -103,9 +104,43 @@ export async function POST(request: NextRequest) {
     return twimlEmpty();
   }
 
-  const clientAccountId =
+  const { engine, store } = await ensureMissedCallReady();
+
+  let clientAccountId =
     process.env.MISSED_CALL_CLIENT_ID?.trim() || "client_demo";
-  const { engine } = await ensureMissedCallReady();
+  if (to) {
+    const byNumber = await store.findClientBySmsFromNumber(to);
+    if (byNumber) {
+      clientAccountId = byNumber.id;
+    }
+  }
+
+  // Enforce plan entitlement when the client is linked to a SaaS org.
+  try {
+    const { getSaasStore } = await import("@/product/saas/runtime");
+    const { orgHasFeature } = await import("@/product/saas/entitlements");
+    const org =
+      await getSaasStore().findOrganizationByMissedCallClientId(clientAccountId);
+    if (org && org.status === "active" && !orgHasFeature(org.plan, "MISSED_CALL_RECOVERY")) {
+      console.warn("[missed-call/voice] blocked — plan missing MISSED_CALL_RECOVERY", {
+        clientAccountId,
+        orgId: org.id,
+        plan: org.plan,
+      });
+      return twimlEmpty();
+    }
+    if (org && org.status !== "active") {
+      console.warn("[missed-call/voice] blocked — org not active", {
+        clientAccountId,
+        orgId: org.id,
+        status: org.status,
+      });
+      return twimlEmpty();
+    }
+  } catch (err) {
+    // SaaS store unavailable must not break single-tenant Module A pilots.
+    console.warn("[missed-call/voice] saas entitlement check skipped", err);
+  }
 
   try {
     await engine.handleCallEvent({

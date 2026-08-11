@@ -1,12 +1,15 @@
 # Module A — Missed-call recovery
 
-**Deployment model:** single-tenant / single client config per deployment
-(`MISSED_CALL_CLIENT_ID` + env JSON). Multi-tenant SaaS isolation, billing, and
-client dashboards are not shipped yet.
+**Deployment model (Voie A):** founder-led pilot. One primary client config per
+deployment (`MISSED_CALL_CLIENT_ID` + env JSON) remains the default. When multiple
+Twilio numbers are stored in `mc_clients`, voice webhooks resolve by `To` number.
+A linked `/app` workspace exists for founding pilots after install — this is **not**
+a self-serve SaaS launch. Billing and full multi-tenant ops are still incomplete.
 
 Workflow: **Missed call → SMS → collect → classify → job card → tech actions → customer notify → CRM outcome**
 
 Domain: `src/product/missed-call/`. Webhooks: `src/app/api/twilio/`.
+Ops link org↔client: `POST /api/missed-call/ops/link-organization` (bearer + actor).
 
 ## Production prerequisites
 
@@ -15,6 +18,7 @@ Domain: `src/product/missed-call/`. Webhooks: `src/app/api/twilio/`.
 - Twilio voice status + SMS inbound + SMS status (`/api/twilio/sms/status`)
 - Ops secret + `X-Ops-Actor` on manual PII API calls
 - Cron: escalations every minute; retention daily (`vercel.json`)
+- Readiness script: `npm run check:module-a`
 
 ## Retention
 
@@ -96,7 +100,11 @@ Before Module A go-live:
 2. Set `MISSED_CALL_DURABLE_STORE=1` so `/api/health` (ops auth) can report `moduleA.ready` only with Twilio + ops auth + this flag.
 3. Load complete client config via `MISSED_CALL_CLIENT_CONFIG_JSON` (Zod-validated) or full `MISSED_CALL_*` env. Production rejects demo fixtures and reserved numbers.
 4. Confirm cron hits `/api/missed-call/escalations/tick` (outbox flush + escalation timers).
-5. Enable Twilio Advanced Opt-Out; verify STOP persists suppression across new calls.
+5. Enable Twilio Advanced Opt-Out on the Messaging Service / phone number in
+   Twilio Console. Local STOP/ARRET always writes `mc_sms_suppressions`; the
+   Twilio SMS adapter does **not** call a separate Opt-Out REST API and stores
+   `provider_status=local_only`. Without Advanced Opt-Out, carrier-level STOP
+   may not apply across Twilio — treat Console enablement as a go-live blocker.
 6. Verify escalation chain snapshots at first alert and contacts every backup before owner.
 
 See `docs/CAPABILITY_MATRIX.md` for what may be advertised vs what is illustrative/planned.

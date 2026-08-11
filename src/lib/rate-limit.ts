@@ -1,13 +1,14 @@
 import { createMemoryStore, type TimedStore } from "./store";
 import { isE2eHarness } from "./config";
+import { isUpstashConfigured, upstashRateLimit } from "./upstash";
 
 // In-memory sliding-window rate limiter, keyed by IP + route.
 //
 // Residual risk: this state lives in a single Node process. Behind multiple
 // server instances (most production deployments, including Vercel's
 // serverless functions) each instance has its own counters, so the effective
-// limit is (per-instance limit × instance count). Swap `buckets` for a
-// Redis-backed TimedStore when that matters — see src/lib/store.ts.
+// limit is (per-instance limit × instance count). Set UPSTASH_REDIS_REST_* and
+// call `rateLimitAsync` so counters are shared — see src/lib/upstash.ts.
 
 type Bucket = { count: number; resetAt: number };
 
@@ -56,6 +57,28 @@ export function rateLimit({
     remaining: Math.max(0, limit - existing.count),
     resetAt: existing.resetAt,
   };
+}
+
+/**
+ * Prefer shared Upstash counters when configured; otherwise in-memory.
+ * Fail closed to in-memory if Redis errors so a Redis outage does not take
+ * the form offline (still rate-limits per instance).
+ */
+export async function rateLimitAsync(input: {
+  key: string;
+  limit: number;
+  windowMs: number;
+  env?: Record<string, string | undefined>;
+}): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const env = input.env ?? process.env;
+  if (isUpstashConfigured(env)) {
+    try {
+      return await upstashRateLimit({ ...input, env });
+    } catch (err) {
+      console.error("[rate-limit] Upstash failed; falling back to memory", err);
+    }
+  }
+  return rateLimit(input);
 }
 
 function firstForwardedIp(headerValue: string): string | null {
