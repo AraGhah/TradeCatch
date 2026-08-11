@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS tc_org_settings (
   organization_id TEXT PRIMARY KEY REFERENCES tc_organizations (id) ON DELETE CASCADE,
   notify_email TEXT,
   google_review_url TEXT,
+  crm_webhook_url TEXT,
   qualification_json JSONB NOT NULL DEFAULT '[]'::jsonb,
   onboarding_completed_at TIMESTAMPTZ,
   locale_default TEXT NOT NULL DEFAULT 'en' CHECK (locale_default IN ('en', 'fr')),

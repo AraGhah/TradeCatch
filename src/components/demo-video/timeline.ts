@@ -170,8 +170,8 @@ const CAPTION_PIECES: Record<SceneId, CaptionPiece[]> = {
     {
       from: 0.02,
       to: 0.48,
-      en: "Accept the job — the technician is alerted with the lead details. (Appointment confirmation is planned, not live yet.)",
-      fr: "Acceptez le job — le technicien reçoit la fiche. (La confirmation de rendez-vous est prévue, pas encore en production.)",
+      en: "Accept the job — the technician is alerted with the lead details. Growth pilots can also book appointments in the workspace.",
+      fr: "Acceptez le job — le technicien reçoit la fiche. Les pilotes Growth peuvent aussi booker des rendez-vous dans l'espace.",
       highlightsEn: ["alerted"],
       highlightsFr: ["technicien"],
     },
@@ -186,10 +186,10 @@ const CAPTION_PIECES: Record<SceneId, CaptionPiece[]> = {
     {
       from: 0.02,
       to: 0.6,
-      en: "Quote follow-up on unanswered estimates is planned — this walkthrough is illustrative, not live product behavior.",
-      fr: "La relance de soumissions sans réponse est prévue — ce walkthrough est illustratif, pas le comportement produit live.",
-      highlightsEn: ["planned"],
-      highlightsFr: ["prévue"],
+      en: "Quote follow-up runs in Starter pilots (day 1/3/7/14) and stops when the customer replies.",
+      fr: "La relance de soumissions tourne en pilote Starter (J+1/3/7/14) et s'arrête quand le client répond.",
+      highlightsEn: ["stops when the customer replies"],
+      highlightsFr: ["s'arrête"],
     },
     {
       from: 0.62,
@@ -204,10 +204,10 @@ const CAPTION_PIECES: Record<SceneId, CaptionPiece[]> = {
     {
       from: 0.02,
       to: 0.52,
-      en: "Illustrative view: recovered / booked / reactivated metrics are demo data — not a live reporting module.",
-      fr: "Vue illustrative : les métriques récupéré / réservé / réactivé sont des données démo — pas un module de reporting live.",
-      highlightsEn: ["demo data"],
-      highlightsFr: ["données démo"],
+      en: "Demo metrics on this screen are illustrative; the pilot workspace shows real counts from your linked data only.",
+      fr: "Les métriques de cette scène sont illustratives ; l'espace pilote n'affiche que des compteurs réels de vos données liées.",
+      highlightsEn: ["illustrative"],
+      highlightsFr: ["illustratives"],
     },
     {
       from: 0.54,

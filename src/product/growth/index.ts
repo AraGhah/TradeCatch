@@ -23,5 +23,7 @@ export {
   type ReviewRequest,
   type TimelineEvent,
   type PipelineStage,
+  type CrmDlqItem,
 } from "./memory-store";
+export { createPostgresGrowthStore } from "./postgres-store";
 export { createGrowthServices } from "./services";

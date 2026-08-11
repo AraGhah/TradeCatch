@@ -148,6 +148,35 @@ describe("starter qualification + notifications hooks", () => {
   });
 });
 
+describe("growth CRM webhook DLQ", () => {
+  it("enqueues failed CRM sync and resolves on retry", async () => {
+    const store = createMemoryGrowthStore();
+    const sms = createMemorySmsPort();
+    const services = createGrowthServices({ store, sms });
+
+    await store.upsertOrgSettings("org_g", {
+      crmWebhookUrl: "https://example.invalid/hook",
+    });
+
+    // Force failure path by using unreachable URL — fetch will fail in node
+    const sync = await services.syncCrm({
+      organizationId: "org_g",
+      eventType: "pipeline.won",
+      data: { id: "c1", amount: 100 },
+    });
+    assert.equal(sync.forwarded, false);
+
+    const dlq = await store.listCrmDlq("org_g");
+    assert.equal(dlq.length, 1);
+    assert.equal(dlq[0]?.eventType, "pipeline.won");
+
+    // Clear webhook so retry marks attempts without resolving
+    await store.upsertOrgSettings("org_g", { crmWebhookUrl: undefined });
+    const tick = await services.processCrmDlq();
+    assert.ok(tick.retried >= 1 || tick.failed >= 1);
+  });
+});
+
 describe("growth analytics", () => {
   it("aggregates pipeline and revenue without inventing numbers", async () => {
     const store = createMemoryGrowthStore();

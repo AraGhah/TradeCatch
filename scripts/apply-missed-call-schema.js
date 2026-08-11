@@ -49,6 +49,11 @@ async function main() {
       ["src", "product", "growth", "schema.sql"],
       "004_growth_and_settings",
     );
+    await applyFile(
+      client,
+      ["src", "product", "growth", "schema-crm.sql"],
+      "005_crm_webhook_dlq",
+    );
   } finally {
     await client.end();
   }
