@@ -91,6 +91,18 @@ export type TimelineEvent = {
   at: string;
 };
 
+export type CrmDlqItem = {
+  id: string;
+  organizationId: string;
+  eventType: string;
+  payload: Record<string, unknown>;
+  lastError?: string;
+  attempts: number;
+  createdAt: string;
+  updatedAt: string;
+  resolved?: boolean;
+};
+
 export type GrowthStore = {
   getOrgSettings(organizationId: string): Promise<OrgSettings>;
   upsertOrgSettings(
@@ -100,6 +112,7 @@ export type GrowthStore = {
         OrgSettings,
         | "notifyEmail"
         | "googleReviewUrl"
+        | "crmWebhookUrl"
         | "qualificationQuestions"
         | "onboardingCompletedAt"
         | "localeDefault"
@@ -167,6 +180,17 @@ export type GrowthStore = {
     organizationId: string,
     limit?: number,
   ): Promise<TimelineEvent[]>;
+
+  enqueueCrmDlq(
+    input: Omit<CrmDlqItem, "id" | "createdAt" | "updatedAt"> & { id?: string },
+  ): Promise<CrmDlqItem>;
+  listCrmDlq(organizationId: string, limit?: number): Promise<CrmDlqItem[]>;
+  listDueCrmDlq(limit: number): Promise<CrmDlqItem[]>;
+  updateCrmDlq(
+    id: string,
+    organizationId: string,
+    patch: Partial<Pick<CrmDlqItem, "lastError" | "attempts" | "resolved">>,
+  ): Promise<CrmDlqItem | null>;
 };
 
 function nowIso() {
@@ -184,6 +208,7 @@ export function createMemoryGrowthStore(): GrowthStore {
   const revenue = new Map<string, RevenueEvent>();
   const reviews = new Map<string, ReviewRequest>();
   const timeline = new Map<string, TimelineEvent>();
+  const crmDlq = new Map<string, CrmDlqItem>();
 
   return {
     async getOrgSettings(organizationId) {
@@ -402,6 +427,48 @@ export function createMemoryGrowthStore(): GrowthStore {
         .filter((e) => e.organizationId === organizationId)
         .sort((a, b) => b.at.localeCompare(a.at))
         .slice(0, limit);
+    },
+
+    async enqueueCrmDlq(input) {
+      const createdAt = nowIso();
+      const row: CrmDlqItem = {
+        id: input.id ?? createId("crmdlq"),
+        organizationId: input.organizationId,
+        eventType: input.eventType,
+        payload: input.payload,
+        lastError: input.lastError,
+        attempts: input.attempts ?? 1,
+        createdAt,
+        updatedAt: createdAt,
+      };
+      crmDlq.set(row.id, row);
+      return row;
+    },
+
+    async listCrmDlq(organizationId, limit = 50) {
+      return [...crmDlq.values()]
+        .filter((i) => i.organizationId === organizationId && !i.resolved)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .slice(0, limit);
+    },
+
+    async listDueCrmDlq(limit) {
+      return [...crmDlq.values()]
+        .filter((i) => !i.resolved && i.attempts < 8)
+        .sort((a, b) => a.updatedAt.localeCompare(b.updatedAt))
+        .slice(0, limit);
+    },
+
+    async updateCrmDlq(id, organizationId, patch) {
+      const item = crmDlq.get(id);
+      if (!item || item.organizationId !== organizationId) return null;
+      if (patch.resolved) {
+        crmDlq.delete(id);
+        return { ...item, resolved: true, updatedAt: nowIso() };
+      }
+      const next = { ...item, ...patch, updatedAt: nowIso() };
+      crmDlq.set(id, next);
+      return next;
     },
   };
 }

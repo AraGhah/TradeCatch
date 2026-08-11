@@ -1,5 +1,6 @@
 import type { SmsPort } from "@/product/missed-call/types";
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
+import { forwardProductEventToCrm } from "@/lib/product-crm";
 import type { GrowthStore, PipelineStage } from "./memory-store";
 
 export function createGrowthServices(deps: {
@@ -8,7 +9,49 @@ export function createGrowthServices(deps: {
 }) {
   const { store, sms } = deps;
 
+  async function syncCrm(input: {
+    organizationId: string;
+    eventType: string;
+    data: Record<string, unknown>;
+  }) {
+    const settings = await store.getOrgSettings(input.organizationId);
+    if (!settings.crmWebhookUrl) return { forwarded: false as const };
+    const result = await forwardProductEventToCrm(settings.crmWebhookUrl, {
+      eventType: input.eventType,
+      organizationId: input.organizationId,
+      data: input.data,
+    }, process.env.LEADS_WEBHOOK_SECRET);
+    if (!result.ok) {
+      await store.enqueueCrmDlq({
+        organizationId: input.organizationId,
+        eventType: input.eventType,
+        payload: input.data,
+        lastError: result.error,
+        attempts: 1,
+      });
+      await store.addTimelineEvent({
+        organizationId: input.organizationId,
+        kind: "crm_failed",
+        title: `CRM sync failed: ${input.eventType}`,
+        detail: result.error,
+        actor: "system",
+        at: new Date().toISOString(),
+      });
+      return { forwarded: false as const, error: result.error };
+    }
+    await store.addTimelineEvent({
+      organizationId: input.organizationId,
+      kind: "crm_synced",
+      title: `CRM sync: ${input.eventType}`,
+      actor: "system",
+      at: new Date().toISOString(),
+    });
+    return { forwarded: true as const };
+  }
+
   return {
+    syncCrm,
+
     async bookAppointment(input: {
       organizationId: string;
       title: string;
@@ -69,6 +112,18 @@ export function createGrowthServices(deps: {
           body: `${input.businessName || "TradeCatch"}: your appointment "${input.title}" is booked for ${when}. Reply STOP to opt out.`,
         });
       }
+
+      await syncCrm({
+        organizationId: input.organizationId,
+        eventType: "appointment.booked",
+        data: {
+          id: appt.id,
+          title: appt.title,
+          startsAt: appt.startsAt,
+          customerName: appt.customerName,
+          customerPhoneE164: appt.customerPhoneE164,
+        },
+      });
 
       return appt;
     },
@@ -229,7 +284,62 @@ export function createGrowthServices(deps: {
           occurredAt: new Date().toISOString(),
         });
       }
+
+      await syncCrm({
+        organizationId: input.organizationId,
+        eventType: `pipeline.${input.stage}`,
+        data: {
+          id: card.id,
+          title: card.title,
+          stage: card.stage,
+          source: card.source,
+          estimatedValue: card.estimatedValue,
+          customerPhoneE164: card.customerPhoneE164,
+        },
+      });
+
       return card;
+    },
+
+    async processCrmDlq() {
+      const due = await store.listDueCrmDlq(40);
+      let retried = 0;
+      let resolved = 0;
+      let failed = 0;
+      for (const item of due) {
+        const settings = await store.getOrgSettings(item.organizationId);
+        if (!settings.crmWebhookUrl) {
+          await store.updateCrmDlq(item.id, item.organizationId, {
+            attempts: item.attempts + 1,
+            lastError: "missing_crm_webhook",
+          });
+          failed += 1;
+          continue;
+        }
+        const result = await forwardProductEventToCrm(
+          settings.crmWebhookUrl,
+          {
+            eventType: item.eventType,
+            organizationId: item.organizationId,
+            data: item.payload,
+          },
+          process.env.LEADS_WEBHOOK_SECRET,
+        );
+        retried += 1;
+        if (result.ok) {
+          await store.updateCrmDlq(item.id, item.organizationId, {
+            resolved: true,
+          });
+          resolved += 1;
+        } else {
+          await store.updateCrmDlq(item.id, item.organizationId, {
+            attempts: item.attempts + 1,
+            lastError: result.error,
+          });
+          failed += 1;
+        }
+      }
+      return { retried, resolved, failed };
     },
 
     async notifyOwner(input: {

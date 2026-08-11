@@ -7,6 +7,8 @@ import {
 } from "@/product/saas/entitlements";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { ApiKeyCreateButton } from "@/components/app/ApiKeyCreateButton";
+import { SettingsIntegrationsForm } from "@/components/app/SettingsIntegrationsForm";
+import { getGrowthStore } from "@/product/growth";
 
 export default async function AppSettingsPage({
   params,
@@ -24,6 +26,9 @@ export default async function AppSettingsPage({
   const included = featuresForPlan(auth.ctx.organization.plan);
   const locked = growthUpsellFeatures().filter(
     (f) => !orgHasFeature(auth.ctx.organization.plan, f),
+  );
+  const settings = await getGrowthStore().getOrgSettings(
+    auth.ctx.organization.id,
   );
 
   return (
@@ -90,6 +95,19 @@ export default async function AppSettingsPage({
           </ul>
         </section>
       ) : null}
+
+      <section className="rounded-md border border-navy/10 bg-white px-5 py-4">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">
+          {t("settings.integrations")}
+        </h2>
+        <p className="mt-2 text-sm text-navy/70">{t("settings.integrationsIntro")}</p>
+        <SettingsIntegrationsForm
+          initialNotifyEmail={settings.notifyEmail}
+          initialGoogleReviewUrl={settings.googleReviewUrl}
+          initialCrmWebhookUrl={settings.crmWebhookUrl}
+          isGrowth={auth.ctx.organization.plan === "growth"}
+        />
+      </section>
 
       {orgHasFeature(auth.ctx.organization.plan, "WEBSITE_LEAD_CAPTURE") ? (
         <section className="rounded-md border border-navy/10 bg-white px-5 py-4">

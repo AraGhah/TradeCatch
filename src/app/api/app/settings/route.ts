@@ -54,6 +54,14 @@ export async function PATCH(request: NextRequest) {
               : parsed.data.googleReviewUrl,
         }
       : {}),
+    ...(parsed.data.crmWebhookUrl !== undefined
+      ? {
+          crmWebhookUrl:
+            parsed.data.crmWebhookUrl === null
+              ? undefined
+              : parsed.data.crmWebhookUrl,
+        }
+      : {}),
     ...(parsed.data.qualificationQuestions !== undefined
       ? { qualificationQuestions: parsed.data.qualificationQuestions }
       : {}),

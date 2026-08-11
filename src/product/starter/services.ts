@@ -3,6 +3,7 @@ import { isOptOut } from "@/product/missed-call/messaging";
 import { demoClientAccount } from "@/product/missed-call/fixtures";
 import type { GrowthStore } from "@/product/growth/memory-store";
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
+import { forwardProductEventToCrm } from "@/lib/product-crm";
 import {
   enabledQualification,
   promptForQualification,
@@ -229,6 +230,36 @@ export function createStarterServices(deps: {
               : undefined,
             ctaLabel: "View leads",
           });
+        }
+
+        if (settings.crmWebhookUrl) {
+          const crm = await forwardProductEventToCrm(settings.crmWebhookUrl, {
+            eventType: "website_lead.created",
+            organizationId: input.organizationId,
+            data: {
+              id: lead.id,
+              name: lead.name,
+              phoneE164: lead.phoneE164,
+              email: lead.email,
+              message: lead.message,
+              serviceRequested: lead.serviceRequested,
+              sourceUrl: lead.sourceUrl,
+            },
+          }, process.env.LEADS_WEBHOOK_SECRET);
+          if (!crm.ok) {
+            await growth.enqueueCrmDlq({
+              organizationId: input.organizationId,
+              eventType: "website_lead.created",
+              payload: {
+                id: lead.id,
+                name: lead.name,
+                phoneE164: lead.phoneE164,
+                email: lead.email,
+              },
+              lastError: crm.error,
+              attempts: 1,
+            });
+          }
         }
       }
 

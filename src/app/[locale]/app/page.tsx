@@ -115,7 +115,8 @@ export default async function AppDashboardPage({
       </div>
 
       {growthMetrics ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="flex flex-col gap-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-md border border-navy/10 bg-white px-4 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.06em] text-navy/50">
               {t("metrics.growthPipeline")}
@@ -154,6 +155,13 @@ export default async function AppDashboardPage({
               {growthMetrics.reviewsSent}
             </p>
           </div>
+          </div>
+          <a
+            href="/api/app/analytics?format=csv"
+            className="self-start text-sm font-medium text-navy underline-offset-2 hover:underline"
+          >
+            {t("metrics.exportCsv")}
+          </a>
         </div>
       ) : null}
 

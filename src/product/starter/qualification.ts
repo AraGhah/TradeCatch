@@ -14,6 +14,7 @@ export type QualificationQuestion = z.infer<typeof qualificationQuestionSchema>;
 export const orgSettingsSchema = z.object({
   notifyEmail: z.string().email().optional().nullable(),
   googleReviewUrl: z.string().url().optional().nullable(),
+  crmWebhookUrl: z.string().url().optional().nullable(),
   qualificationQuestions: z.array(qualificationQuestionSchema).max(12).optional(),
   onboardingCompletedAt: z.string().datetime().optional().nullable(),
   localeDefault: z.enum(["en", "fr"]).optional(),
@@ -23,6 +24,7 @@ export type OrgSettings = {
   organizationId: string;
   notifyEmail?: string;
   googleReviewUrl?: string;
+  crmWebhookUrl?: string;
   qualificationQuestions: QualificationQuestion[];
   onboardingCompletedAt?: string;
   localeDefault: "en" | "fr";

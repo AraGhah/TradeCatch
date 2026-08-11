@@ -36,11 +36,11 @@ Status legend:
 | Multi-tenant SaaS foundation | pilot | `/login`, `/app/*`, `/api/auth/*`, `/api/app/*` | Postgres `tc_*` + memory fallback | unit | Founder-gated pilot workspace — not self-serve SaaS launch |
 | Plan entitlements (Starter/Growth) | pilot | `src/product/saas/entitlements.ts` | org.plan | unit | Backend assert; UI mirrors |
 | Pilot client workspace (basic) | pilot | `/app` | Module A leads when linked | unit | No fabricated recovered revenue; audit-first sales motion |
-| Durable workflows across restarts | pilot | Postgres adapter + `schema.sql` | PostgreSQL | unit | Requires `DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1` and applied schema |
+| Durable workflows across restarts | pilot | Postgres adapter + `schema.sql` | PostgreSQL | unit | Requires `DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1` (or `SAAS_DURABLE_STORE=1`) and applied schema through `005_crm_webhook_dlq` |
 | Quote recovery (ingestion, sequences, opt-out, retries) | pilot | `/api/app/quotes`, `/api/starter/quotes/tick`, SMS inbound | `tc_quote_*` | unit | Starter core — not Growth booking/CRM |
-| CRM sync (credentials, mapping, DLQ, conflict handling) | planned | — | — | — | Phase 4 — do not advertise |
-| Advanced analytics dashboard / exports | pilot | `/api/app/analytics` | growth lists | unit | API metrics; no public marketing export UI yet |
-| Real calendar provider scheduling | planned | — | — | — | Phase 4 — do not advertise |
+| CRM sync (credentials, mapping, DLQ, conflict handling) | pilot | org `crmWebhookUrl` + `/api/growth/crm/tick` DLQ | `tc_crm_dlq` + memory | unit | Outbound webhook (Zapier/Make/HubSpot); not native HubSpot OAuth mapping |
+| Advanced analytics dashboard / exports | pilot | `/api/app/analytics` (+ `?format=csv`) | growth lists | unit | CSV export for entitled Growth orgs |
+| Real calendar provider scheduling | planned | — | — | — | Phase 4 — Google/Outlook sync not built; in-app booking is pilot |
 
 ## Recommended repair order
 
