@@ -50,6 +50,54 @@ export function AppShell({
               {t("nav.leads")}
             </Link>
             <Link
+              href="/app/website-leads"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              {t("nav.websiteLeads")}
+            </Link>
+            <Link
+              href="/app/quotes"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              {t("nav.quotes")}
+            </Link>
+            <Link
+              href="/app/bookings"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              {t("nav.bookings")}
+            </Link>
+            <Link
+              href="/app/pipeline"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              {t("nav.pipeline")}
+            </Link>
+            <Link
+              href="/app/reviews"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              {t("nav.reviews")}
+            </Link>
+            <Link
+              href="/app/timeline"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              {t("nav.timeline")}
+            </Link>
+            <Link
+              href="/app/inbox"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              {t("nav.inbox")}
+            </Link>
+            <Link
+              href="/app/onboarding"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              {t("nav.onboarding")}
+            </Link>
+            <Link
               href="/app/settings"
               className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
             >

@@ -68,10 +68,10 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Plomberie · CVC · électricité au Québec",
-      "headline": "Arrêtez de perdre des jobs à cause d'appels manqués.",
-      "accentWord": "appels manqués",
-      "subheadline": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien. Les séquences de relance de soumissions montrées ailleurs sur ce site sont illustratives, pas encore un module produit en production.",
+      "eyebrow": "Récupération de revenus pour les métiers au Québec",
+      "headline": "Récupérez les jobs que vous payez déjà pour générer.",
+      "accentWord": "Récupérez",
+      "subheadline": "Appels manqués, leads web et relances de soumissions — remis en conversation pour que votre équipe puisse closer. Starter récupère les leads ; Growth aide à les convertir. Les pilotes sont menés avec le fondateur, pas en SaaS libre-service.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la démo de 90 secondes",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
@@ -256,33 +256,31 @@
       "note": "Le système recueille et achemine la demande. Vos techniciens licenciés continuent de diagnostiquer le problème, confirmer les prix et effectuer les travaux."
     },
     "quoteFollowUp": {
-      "headline": "Un processus de relance de soumissions prévu",
+      "headline": "Relance de soumissions qui s'arrête quand ils répondent",
       "items": [
-        "Détecterait une soumission importée",
-        "Enregistrerait les informations du client et du projet",
-        "Enverrait des relances approuvées par le client",
-        "S'arrêterait lorsque le client répond",
-        "Classerait la réponse",
-        "Alerterait l'entrepreneur en cas d'objection ou de question",
-        "Suivrait les résultats gagnés ou perdus",
-        "Pourrait ensuite se connecter à des outils de signature électronique et de dépôt"
+        "Injecter une soumission dans l'espace Starter",
+        "Enchaîner les relances J+1 / 3 / 7 / 14",
+        "Stop sur réponse, STOP, gagné/perdu ou prise en charge humaine",
+        "Ouvrir un item inbox quand le client répond",
+        "Pipeline Growth + revenu optionnels quand marqué gagné",
+        "Pilote mené avec le fondateur — pas encore de sync CRM libre-service"
       ],
       "sequence": [
         {
-          "day": "Jour 2",
-          "action": "Confirmer que la soumission est bien arrivée"
+          "day": "Jour 1",
+          "action": "Confirmer qu'ils ont reçu l'estimation"
         },
         {
-          "day": "Jour 5",
-          "action": "Envoyer quelque chose de vraiment utile"
+          "day": "Jour 3",
+          "action": "Proposer de passer la soumission ensemble"
         },
         {
-          "day": "Jour 10",
-          "action": "Demander où ils en sont dans le temps"
+          "day": "Jour 7",
+          "action": "Vérifier l'intérêt et le timing"
         },
         {
-          "day": "Jour 20",
-          "action": "Clore la boucle, poliment"
+          "day": "Jour 14",
+          "action": "Dernière relance — closer ou archiver"
         }
       ]
     },
@@ -586,20 +584,20 @@
     },
     "pricingPreview": {
       "eyebrow": "Tarifs",
-      "headline": "Fourchettes de départ claires. Précisées à l'audit.",
-      "intro": "L'installation bâtit le système SMS de retour et de relance. La gestion mensuelle le fait tourner.",
+      "headline": "Récupérer des leads. Ou les convertir plus loin.",
+      "intro": "Starter empêche les leads de disparaître. Growth réserve, suit et prouve l'impact revenus. Précisé à l'audit.",
       "tiers": [
         {
-          "name": "Démarrage",
+          "name": "Starter",
           "price": "799 $ d'installation",
           "cadence": "375 $ / mois",
-          "idealFor": "Propriétaires-exploitants et petites équipes qui captent les appels manqués."
+          "idealFor": "Récupérer plus de leads — appels manqués, web, relance de soumissions."
         },
         {
-          "name": "Croissance",
+          "name": "Growth",
           "price": "2 000 $ d'installation",
           "cadence": "500 $–750 $ / mois",
-          "idealFor": "Équipes avec plusieurs techniciens ou besoins CRM."
+          "idealFor": "Convertir plus de leads — rendez-vous, pipeline, attribution, avis."
         }
       ],
       "cta": "Voir tous les tarifs",
@@ -928,50 +926,103 @@
   },
   "pricing": {
     "eyebrow": "Tarifs",
-    "headline": "Des prix honnêtes pour les équipes qui perdent des jobs entre la sonnerie et la signature.",
-    "intro": "Vous payez une fois pour installer la récupération d'appels manqués. Vous payez chaque mois pour garder le SMS de retour et les alertes technicien, suivis par une vraie personne. Relance de soumissions et CRM sont cadrés seulement quand ces modules existent.",
+    "headline": "Deux forfaits. Un objectif : arrêter de perdre les leads que vous payez déjà à générer.",
+    "intro": "Starter récupère les appels manqués, demandes web et soumissions oubliées. Growth pousse plus loin la conversion — rendez-vous, pipeline, preuve de revenus et avis. Installation menée par le fondateur dans les deux cas.",
     "reassurance": "Installation fixe. Mois par mois. Résiliation avec préavis.",
-    "metaDescription": "Forfaits Démarrage et Croissance pour le SMS de retour sur appels manqués et les alertes technicien pour les entrepreneurs québécois. Relance de soumissions vendue seulement quand elle est en ligne.",
+    "metaDescription": "Starter récupère les leads. Growth les convertit — rendez-vous, pipeline, suivi des revenus et avis pour les entrepreneurs québécois.",
     "mostPopular": "Recommandé",
     "principles": [
-      "Prix d'installation fixe, convenu par écrit",
-      "Gestion mois par mois",
-      "Ajusté à votre volume d'appels et vos techniciens"
+      "Starter = récupérer plus de leads",
+      "Growth = convertir plus de leads (inclut Starter)",
+      "Cadré à l'audit avant tout engagement"
     ],
     "tiers": [
       {
-        "name": "Démarrage",
+        "name": "Starter",
+        "tagline": "Récupérer plus de leads",
+        "outcome": "Empêchez les appels manqués, demandes web et soumissions oubliées de disparaître.",
         "price": "799 $ d'installation",
         "setupAmount": "799 $",
         "cadence": "375 $ / mois",
         "monthlyAmount": "375 $",
-        "idealFor": "Propriétaires-exploitants et petites équipes qui captent les appels manqués pour la première fois.",
-        "reassuranceLine": "Couvre l'acheminement, les modèles bilingues et la configuration technicien — avec une garantie de lancement si on retarde. Souvent moins que la valeur d'une seule job récupérée.",
-        "items": [
-          "SMS de retour sur appels manqués",
-          "Collecte des détails et photos du prospect",
-          "Un processus d'alerte technicien",
-          "Lancement suivi par le fondateur",
-          "Point ops hebdomadaire (manuel)",
-          "Relance de soumissions (quand ce module sera livré)"
+        "idealFor": "Propriétaires-exploitants et petites équipes qui ont besoin d'une récupération solide avant d'accélérer la conversion.",
+        "reassuranceLine": "La prise en charge humaine et les notifications de base sont incluses — pas réservées à Growth. Souvent moins qu'une seule job récupérée.",
+        "groups": [
+          {
+            "title": "Capturer",
+            "items": [
+              "Récupération d'appels manqués",
+              "Réponse aux leads web"
+            ]
+          },
+          {
+            "title": "Qualifier",
+            "items": [
+              "Qualification des leads"
+            ]
+          },
+          {
+            "title": "Relancer",
+            "items": [
+              "Relance automatisée de soumissions"
+            ]
+          },
+          {
+            "title": "Répondre",
+            "items": [
+              "Prise en charge humaine",
+              "Notifications métier"
+            ]
+          },
+          {
+            "title": "Mesurer",
+            "items": [
+              "Tableau de bord de performance de base"
+            ]
+          }
         ]
       },
       {
-        "name": "Croissance",
+        "name": "Growth",
         "badge": "Le plus populaire",
+        "tagline": "Convertir plus de leads",
+        "outcome": "Allez au-delà de la récupération — réservation, suivi d'occasions, impact revenus et demandes d'avis.",
         "price": "2 000 $ d'installation",
         "setupAmount": "2 000 $",
         "cadence": "500 $–750 $ / mois",
         "monthlyAmount": "500 $–750 $",
-        "idealFor": "Équipes avec plusieurs techniciens ou rotation de garde.",
-        "reassuranceLine": "Ajusté à votre nombre de techniciens et votre volume d'appels — le chiffre exact est fixé par écrit à l'audit, avant tout engagement.",
-        "items": [
-          "Tout ce qui est inclus dans Démarrage",
-          "Acheminement multi-techniciens",
-          "Rotation de garde et escalade de remplacement",
-          "Connexion CRM (quand le sync sera livré)",
-          "Prise de rendez-vous (lien calendrier externe aujourd'hui)",
-          "Tableau de bord personnalisé (prévu après le reporting durable)"
+        "idealFor": "Équipes prêtes à pousser les leads récupérés jusqu'aux jobs réservés et au revenu encaissé.",
+        "reassuranceLine": "Le tarif mensuel exact est fixé par écrit à l'audit selon le nombre de techniciens et le volume. Growth inclut tout Starter.",
+        "everythingInStarter": "Tout ce qui est dans Starter, plus :",
+        "groups": [
+          {
+            "title": "Réserver",
+            "items": [
+              "Prise de rendez-vous",
+              "Intégration calendrier",
+              "Rappels de rendez-vous"
+            ]
+          },
+          {
+            "title": "Gérer",
+            "items": [
+              "Pipeline de leads avancé",
+              "Routage multi-techniciens et escalade"
+            ]
+          },
+          {
+            "title": "Mesurer",
+            "items": [
+              "Attribution de revenus",
+              "Analytique avancée"
+            ]
+          },
+          {
+            "title": "Grandir",
+            "items": [
+              "Automatisation des avis Google"
+            ]
+          }
         ]
       }
     ],
@@ -988,6 +1039,10 @@
       "Vos données clients restent les vôtres"
     ],
     "details": [
+      {
+        "title": "Ce qui tourne aujourd'hui vs ce que Growth débloque ensuite",
+        "body": "La récupération d'appels manqués, les alertes technicien, la revue humaine et l'espace pilote sont en production dans des pilotes contrôlés. Capture web, relance de soumissions, réservation, pipeline et avis sont inclus dans le forfait acheté et activés avec le fondateur à mesure que chaque module est livré — jamais présentés comme déjà en ligne s'ils ne le sont pas."
+      },
       {
         "title": "Pourquoi les prix ont une fourchette",
         "body": "Le prix final dépend du volume d'appels, des techniciens, du volume de soumissions, des logiciels déjà en place et des règles d'escalade. L'audit fixe le chiffre par écrit avant le début des travaux."
@@ -1709,7 +1764,15 @@
   "app": {
     "nav": {
       "dashboard": "Tableau de bord",
-      "leads": "Leads",
+      "leads": "Appels manqués",
+      "websiteLeads": "Site web",
+      "quotes": "Soumissions",
+      "bookings": "Rendez-vous",
+      "pipeline": "Pipeline",
+      "reviews": "Avis",
+      "timeline": "Chronologie",
+      "onboarding": "Démarrage",
+      "inbox": "Boîte",
       "settings": "Réglages",
       "logout": "Déconnexion"
     },
@@ -1729,7 +1792,11 @@
       "needsAttention": "À traiter",
       "jobsAccepted": "Jobs acceptés par un tech",
       "pipelineValue": "Valeur pipeline enregistrée",
-      "pipelineValueNote": "Somme des valeurs estimées/finales présentes sur les leads — pas un revenu récupéré revendiqué."
+      "pipelineValueNote": "Somme des valeurs estimées/finales présentes sur les leads — pas un revenu récupéré revendiqué.",
+      "growthPipeline": "Pipeline Growth ouvert",
+      "attributedRevenue": "Revenu attribué",
+      "upcomingAppointments": "Rendez-vous à venir",
+      "reviewsSent": "Demandes d'avis envoyées"
     },
     "leads": {
       "headline": "Leads récupérés",
@@ -1745,7 +1812,108 @@
       "plan": "Forfait actuel",
       "included": "Inclus dans votre forfait",
       "growthOnly": "Disponible avec Growth",
-      "clientLinked": "Client appels manqués lié"
+      "clientLinked": "Client appels manqués lié",
+      "notifyEmail": "Courriel de notification",
+      "notifyEmailPlaceholder": "vous@entreprise.com",
+      "notifyEmailIntro": "Où TradeCatch envoie les alertes propriétaire (nouveaux leads, prise en charge, rendez-vous).",
+      "googleReviewUrl": "URL d'avis Google",
+      "googleReviewUrlIntro": "Utilisée pour les SMS de demande d'avis après un job.",
+      "apiKeyTitle": "Clé API capture site web",
+      "apiKeyIntro": "Utilisez cette clé sur le formulaire du site de l'entrepreneur pour envoyer des leads à TradeCatch (pas le formulaire marketing d'audit).",
+      "apiKeyCreate": "Générer une clé API",
+      "apiKeyCreating": "Génération…",
+      "apiKeyOnce": "Copiez cette clé maintenant",
+      "apiKeyHint": "POST /api/website-leads avec l'en-tête X-TradeCatch-Key. Le texte en clair n'est montré qu'une fois.",
+      "apiKeyError": "Impossible de créer la clé API."
+    },
+    "bookings": {
+      "headline": "Rendez-vous",
+      "intro": "Réservez des jobs et envoyez un SMS de confirmation quand un téléphone client et un numéro Twilio sont liés.",
+      "empty": "Aucun rendez-vous pour l'instant. Réservez-en un ci-dessous.",
+      "entitlement": "La prise de rendez-vous n'est pas dans votre forfait.",
+      "add": "Réserver un rendez-vous",
+      "title": "Titre",
+      "startsAt": "Début",
+      "endsAt": "Fin (optionnel)",
+      "customerName": "Nom du client",
+      "customerPhone": "Téléphone client (E.164)",
+      "notes": "Notes",
+      "submit": "Réserver",
+      "saving": "Enregistrement…",
+      "error": "Impossible de réserver le rendez-vous."
+    },
+    "pipeline": {
+      "headline": "Pipeline",
+      "intro": "Déplacez les cartes d'étape en étape. Gagné peut enregistrer un revenu attribué si une valeur est définie.",
+      "empty": "Aucune carte pipeline. Réserver un rendez-vous en crée une.",
+      "entitlement": "Le pipeline avancé n'est pas dans votre forfait.",
+      "error": "Impossible de déplacer la carte."
+    },
+    "reviews": {
+      "headline": "Demandes d'avis",
+      "intro": "Après un job marqué terminé, TradeCatch peut planifier un SMS d'avis Google si une URL est définie.",
+      "empty": "Aucune demande d'avis pour l'instant.",
+      "entitlement": "L'automatisation des avis n'est pas dans votre forfait.",
+      "setUrl": "Lien d'avis Google",
+      "saveUrl": "Enregistrer l'URL",
+      "complete": "Terminer un rendez-vous",
+      "appointment": "Rendez-vous",
+      "markComplete": "Marquer terminé et planifier l'avis",
+      "scheduled": "Prévu pour",
+      "saving": "Enregistrement…",
+      "error": "Impossible de mettre à jour les avis."
+    },
+    "timeline": {
+      "headline": "Chronologie d'activité",
+      "intro": "Rendez-vous récents, mouvements pipeline et autres événements de cet espace.",
+      "empty": "Aucun événement pour l'instant.",
+      "entitlement": "La chronologie n'est pas disponible dans votre forfait."
+    },
+    "onboarding": {
+      "headline": "Configuration de l'espace",
+      "intro": "Une courte checklist pour que les notifications et outils Growth fonctionnent pour votre équipe.",
+      "stepNotify": "Où vous notifier ?",
+      "stepNotifyIntro": "Définissez un courriel pour les alertes propriétaire. Modifiable plus tard dans Réglages.",
+      "stepReview": "Lien d'avis Google",
+      "stepReviewIntro": "Optionnel sur Growth — utilisé pour les SMS d'avis après un job.",
+      "stepFinish": "Marquer la config terminée",
+      "stepFinishIntro": "Confirmez le démarrage pour indiquer que cet espace est prêt.",
+      "done": "C'est prêt",
+      "doneIntro": "Générez une clé API de capture site web dans Réglages si vous avez besoin de leads formulaire.",
+      "goSettings": "Ouvrir Réglages",
+      "next": "Continuer",
+      "skip": "Passer pour l'instant",
+      "complete": "Terminer le démarrage",
+      "saving": "Enregistrement…",
+      "error": "Impossible d'enregistrer le démarrage."
+    },
+    "websiteLeads": {
+      "headline": "Leads site web",
+      "intro": "Leads capturés depuis le site de l'entrepreneur via la clé API TradeCatch — isolés à cette organisation.",
+      "empty": "Aucun lead web pour l'instant. Générez une clé API dans Réglages et branchez votre formulaire sur POST /api/website-leads.",
+      "entitlement": "La capture de leads web n'est pas dans votre forfait."
+    },
+    "quotes": {
+      "headline": "Relance de soumissions",
+      "intro": "Séquences à J+1 / J+3 / J+7 / J+14 après l'envoi. L'automatisation s'arrête sur réponse, désabonnement, gagné/perdu ou prise en charge humaine.",
+      "empty": "Aucun fil de soumission. Ajoutez un téléphone client ci-dessous pour démarrer une séquence.",
+      "entitlement": "La relance de soumissions n'est pas dans votre forfait.",
+      "add": "Démarrer une séquence de relance",
+      "phone": "Téléphone client (E.164)",
+      "name": "Nom (optionnel)",
+      "ref": "Réf. soumission (optionnel)",
+      "submit": "Démarrer",
+      "saving": "Enregistrement…",
+      "error": "Impossible de démarrer la relance."
+    },
+    "inbox": {
+      "headline": "Boîte de prise en charge",
+      "intro": "Dossiers qui nécessitent une personne : réponses web, réponses soumission, et leads appels manqués à revoir. Claim pause l'automatisation web/soumission.",
+      "empty": "La boîte est vide.",
+      "entitlement": "La prise en charge humaine n'est pas dans votre forfait.",
+      "claim": "Prendre",
+      "takeover": "Reprendre",
+      "resolve": "Résoudre"
     },
     "upsell": {
       "title": "Vous voudrez plus tard la prise de rendez-vous et un suivi revenus plus clair ?",

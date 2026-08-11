@@ -7,6 +7,18 @@
     {
       "path": "/api/missed-call/retention/tick",
       "schedule": "15 6 * * *"
+    },
+    {
+      "path": "/api/starter/quotes/tick",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/growth/reminders/tick",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/growth/reviews/tick",
+      "schedule": "*/15 * * * *"
     }
   ]
 }

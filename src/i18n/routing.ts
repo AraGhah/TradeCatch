@@ -52,6 +52,38 @@ export const routing = defineRouting({
       en: "/app/leads",
       fr: "/app/leads",
     },
+    "/app/website-leads": {
+      en: "/app/website-leads",
+      fr: "/app/leads-web",
+    },
+    "/app/quotes": {
+      en: "/app/quotes",
+      fr: "/app/soumissions",
+    },
+    "/app/bookings": {
+      en: "/app/bookings",
+      fr: "/app/rendez-vous",
+    },
+    "/app/pipeline": {
+      en: "/app/pipeline",
+      fr: "/app/pipeline",
+    },
+    "/app/reviews": {
+      en: "/app/reviews",
+      fr: "/app/avis",
+    },
+    "/app/timeline": {
+      en: "/app/timeline",
+      fr: "/app/chronologie",
+    },
+    "/app/onboarding": {
+      en: "/app/onboarding",
+      fr: "/app/demarrage",
+    },
+    "/app/inbox": {
+      en: "/app/inbox",
+      fr: "/app/boite-reception",
+    },
     "/app/settings": {
       en: "/app/settings",
       fr: "/app/parametres",
