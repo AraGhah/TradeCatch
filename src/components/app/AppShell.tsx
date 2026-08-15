@@ -1,7 +1,24 @@
 "use client";
 
-import { Link } from "@/i18n/navigation";
+import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+
+const NAV_ITEMS = [
+  { href: "/app", key: "dashboard" },
+  { href: "/app/leads", key: "leads" },
+  { href: "/app/website-leads", key: "websiteLeads" },
+  { href: "/app/quotes", key: "quotes" },
+  { href: "/app/bookings", key: "bookings" },
+  { href: "/app/pipeline", key: "pipeline" },
+  { href: "/app/reviews", key: "reviews" },
+  { href: "/app/timeline", key: "timeline" },
+  { href: "/app/inbox", key: "inbox" },
+  { href: "/app/onboarding", key: "onboarding" },
+  { href: "/app/settings", key: "settings" },
+] as const;
+
+const FOCUS_RING =
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
 
 export function AppShell({
   children,
@@ -17,6 +34,7 @@ export function AppShell({
   locale: "en" | "fr";
 }) {
   const t = useTranslations("app");
+  const pathname = usePathname();
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -36,77 +54,29 @@ export function AppShell({
               {userName} · {plan === "growth" ? t("plan.growth") : t("plan.starter")}
             </p>
           </div>
-          <nav className="flex flex-wrap items-center gap-2 text-sm font-medium">
-            <Link
-              href="/app"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.dashboard")}
-            </Link>
-            <Link
-              href="/app/leads"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.leads")}
-            </Link>
-            <Link
-              href="/app/website-leads"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.websiteLeads")}
-            </Link>
-            <Link
-              href="/app/quotes"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.quotes")}
-            </Link>
-            <Link
-              href="/app/bookings"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.bookings")}
-            </Link>
-            <Link
-              href="/app/pipeline"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.pipeline")}
-            </Link>
-            <Link
-              href="/app/reviews"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.reviews")}
-            </Link>
-            <Link
-              href="/app/timeline"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.timeline")}
-            </Link>
-            <Link
-              href="/app/inbox"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.inbox")}
-            </Link>
-            <Link
-              href="/app/onboarding"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.onboarding")}
-            </Link>
-            <Link
-              href="/app/settings"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              {t("nav.settings")}
-            </Link>
+          <nav
+            aria-label={t("nav.dashboard")}
+            className="flex flex-wrap items-center gap-2 text-sm font-medium"
+          >
+            {NAV_ITEMS.map((item) => {
+              const active = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={active ? "page" : undefined}
+                  className={`rounded-md px-3 py-2 ${FOCUS_RING} ${
+                    active ? "bg-navy/10 text-navy" : "text-navy hover:bg-navy/5"
+                  }`}
+                >
+                  {t(`nav.${item.key}`)}
+                </Link>
+              );
+            })}
             <button
               type="button"
               onClick={() => void logout()}
-              className="rounded-md px-3 py-2 text-navy/70 hover:bg-navy/5"
+              className={`rounded-md px-3 py-2 text-navy/70 hover:bg-navy/5 ${FOCUS_RING}`}
             >
               {t("nav.logout")}
             </button>

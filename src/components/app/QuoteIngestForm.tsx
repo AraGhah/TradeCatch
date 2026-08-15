@@ -78,7 +78,11 @@ export function QuoteIngestForm({ locale }: { locale: "en" | "fr" }) {
           />
         </label>
       </div>
-      {error ? <p className="mt-2 text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <p className="mt-2 text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      ) : null}
       <button
         type="submit"
         disabled={busy}

@@ -95,7 +95,11 @@ export function SettingsIntegrationsForm({
           {t("settings.crmWebhookIntro")}
         </span>
       </label>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      ) : null}
       {saved ? (
         <p className="text-sm text-green-800">{t("settings.saved")}</p>
       ) : null}

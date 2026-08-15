@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CTAButton } from "@/components/CTAButton";
 
@@ -269,12 +269,17 @@ function PlanCard({
 
 function DetailAccordion({ title, body }: { title: string; body: string }) {
   const [open, setOpen] = useState(false);
+  const baseId = useId();
+  const buttonId = `${baseId}-button`;
+  const panelId = `${baseId}-panel`;
 
   return (
     <div className="border-b border-[rgb(var(--ink-rgb)/0.1)]">
       <button
         type="button"
+        id={buttonId}
         aria-expanded={open}
+        aria-controls={panelId}
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between gap-6 py-5 text-left"
       >
@@ -294,6 +299,9 @@ function DetailAccordion({ title, body }: { title: string; body: string }) {
       <AnimatePresence initial={false}>
         {open ? (
           <motion.div
+            id={panelId}
+            role="region"
+            aria-labelledby={buttonId}
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
