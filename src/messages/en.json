@@ -21,7 +21,8 @@
     "mobileNav": "Mobile navigation",
     "close": "Close",
     "toggleThemeToDark": "Switch to dark mode",
-    "toggleThemeToLight": "Switch to light mode"
+    "toggleThemeToLight": "Switch to light mode",
+    "skipToContent": "Skip to main content"
   },
   "cta": {
     "primary": "Book a free 20-minute audit",
@@ -1596,15 +1597,27 @@
       "sections": [
         {
           "heading": "Our commitment",
-          "body": "We aim for this website to conform to the Web Content Accessibility Guidelines (WCAG) 2.1 at Level AA, including keyboard navigability, visible focus states, sufficient colour contrast, semantic heading structure, and support for reduced-motion preferences."
+          "body": "We aim to provide a website that is accessible to the widest possible audience and are working toward conformance with the Web Content Accessibility Guidelines (WCAG) 2.2 at Level AA. WCAG is a technical standard, not a legal designation — we treat conformance with it as our working benchmark rather than a claim of legal compliance in any particular jurisdiction."
+        },
+        {
+          "heading": "Accessibility features implemented",
+          "body": "Semantic landmarks and heading structure on every page; a skip-to-main-content link; full keyboard operability for the navigation, mobile menu, forms, and the audit-booking wizard, including a focus trap and Escape-to-close in the mobile menu and returning focus to the trigger on close; visible focus indicators on all interactive elements; support for the prefers-reduced-motion setting; form fields with programmatic labels, required-state and error messaging that is announced to assistive technology and linked to the relevant field; and alt text on informative images with decorative graphics hidden from assistive technology."
         },
         {
           "heading": "Known limitations",
-          "body": "This site is under active development. Some third-party embeds (such as the Cloudflare Turnstile widget or a future calendar-booking embed) are provided by external vendors and may not fully match our own accessibility standard. We review and address issues as they're identified."
+          "body": "This site is under active development. Some third-party embeds (such as the Cloudflare Turnstile widget or a future calendar-booking embed) are provided by external vendors and may not fully match our own accessibility standard. Automated and manual testing cannot catch every barrier — we review and address issues as they're identified rather than treating any point-in-time audit as a guarantee of full conformance."
         },
         {
-          "heading": "Feedback and contact",
-          "body": "If you encounter an accessibility barrier on this site, please contact us at ara.ghahramanyan07@gmail.com describing the page and the issue. We will work to address genuine barriers in a reasonable timeframe."
+          "heading": "Standards and legal compliance",
+          "body": "TradeCatch is based in Québec and primarily serves contractors in Québec; we may also serve clients elsewhere in Canada and in the United States. Accessibility legal obligations vary by jurisdiction (for example, Québec's rules under the Act to secure handicapped persons in the exercise of their rights, and — where applicable to U.S. visitors — the Americans with Disabilities Act) and can differ from the WCAG technical standard described above. We do not claim certified legal compliance with any specific accessibility law, and we recommend anyone with a specific legal question consult qualified counsel in the relevant jurisdiction."
+        },
+        {
+          "heading": "Feedback, alternate formats, and contact",
+          "body": "If you encounter an accessibility barrier on this site, or need information from this site in another format, please contact us at ara.ghahramanyan07@gmail.com describing the page and the issue (or the format you need). We will work to address genuine barriers and respond to format requests in a reasonable timeframe."
+        },
+        {
+          "heading": "Date of this statement",
+          "body": "This statement was last reviewed on August 15, 2026, alongside a review of the site's HTML structure, keyboard behaviour, forms, and colour contrast."
         }
       ]
     },

@@ -21,7 +21,8 @@
     "mobileNav": "Navigation mobile",
     "close": "Fermer",
     "toggleThemeToDark": "Passer au mode sombre",
-    "toggleThemeToLight": "Passer au mode clair"
+    "toggleThemeToLight": "Passer au mode clair",
+    "skipToContent": "Passer au contenu principal"
   },
   "cta": {
     "primary": "Réserver un audit gratuit de 20 minutes",
@@ -1596,15 +1597,27 @@
       "sections": [
         {
           "heading": "Notre engagement",
-          "body": "Nous visons la conformité de ce site aux Règles pour l'accessibilité des contenus Web (WCAG) 2.1 de niveau AA, notamment la navigabilité au clavier, des états de focus visibles, un contraste de couleurs suffisant, une structure de titres sémantique et la prise en charge des préférences de mouvement réduit."
+          "body": "Nous souhaitons offrir un site accessible au plus grand nombre et visons la conformité aux Règles pour l'accessibilité des contenus Web (WCAG) 2.2 de niveau AA. Les WCAG constituent une norme technique, et non une désignation légale — nous les utilisons comme référence de travail plutôt que comme une déclaration de conformité légale dans une juridiction donnée."
+        },
+        {
+          "heading": "Fonctionnalités d'accessibilité mises en place",
+          "body": "Repères sémantiques et structure de titres cohérente sur chaque page; un lien « passer au contenu principal »; une navigation entièrement au clavier pour le menu, le menu mobile, les formulaires et l'assistant de réservation d'audit, y compris un piège de focus et la fermeture par Échap dans le menu mobile, avec retour du focus au bouton déclencheur; des indicateurs de focus visibles sur tous les éléments interactifs; la prise en charge du réglage de mouvement réduit; des champs de formulaire avec étiquettes programmatiques, indication des champs requis et messages d'erreur annoncés aux technologies d'assistance et liés au champ concerné; et un texte alternatif sur les images informatives, les graphiques décoratifs étant masqués aux technologies d'assistance."
         },
         {
           "heading": "Limites connues",
-          "body": "Ce site est en développement actif. Certains éléments intégrés de tiers (comme le module Cloudflare Turnstile ou un futur module de réservation de calendrier) proviennent de fournisseurs externes et peuvent ne pas correspondre entièrement à notre propre norme d'accessibilité. Nous examinons et corrigeons les problèmes au fur et à mesure qu'ils sont signalés."
+          "body": "Ce site est en développement actif. Certains éléments intégrés de tiers (comme le module Cloudflare Turnstile ou un futur module de réservation de calendrier) proviennent de fournisseurs externes et peuvent ne pas correspondre entièrement à notre propre norme d'accessibilité. Les tests automatisés et manuels ne peuvent pas détecter tous les obstacles — nous examinons et corrigeons les problèmes au fur et à mesure qu'ils sont signalés, sans considérer un audit ponctuel comme une garantie de conformité totale."
         },
         {
-          "heading": "Commentaires et contact",
-          "body": "Si vous rencontrez un obstacle à l'accessibilité sur ce site, veuillez nous écrire à ara.ghahramanyan07@gmail.com en décrivant la page et le problème. Nous nous efforcerons de corriger les obstacles réels dans un délai raisonnable."
+          "heading": "Normes et conformité légale",
+          "body": "TradeCatch est basée au Québec et sert principalement des entrepreneurs québécois; nous pouvons aussi servir des clients ailleurs au Canada et aux États-Unis. Les obligations légales en matière d'accessibilité varient selon la juridiction (par exemple, les règles québécoises en vertu de la Loi assurant l'exercice des droits des personnes handicapées, et — le cas échéant pour les visiteurs américains — l'Americans with Disabilities Act) et peuvent différer de la norme technique WCAG décrite ci-dessus. Nous ne déclarons pas être en conformité légale certifiée avec une loi d'accessibilité en particulier, et nous recommandons à quiconque a une question juridique précise de consulter un conseiller juridique qualifié dans la juridiction concernée."
+        },
+        {
+          "heading": "Commentaires, formats alternatifs et contact",
+          "body": "Si vous rencontrez un obstacle à l'accessibilité sur ce site, ou si vous avez besoin de l'information de ce site dans un autre format, veuillez nous écrire à ara.ghahramanyan07@gmail.com en décrivant la page et le problème (ou le format requis). Nous nous efforcerons de corriger les obstacles réels et de répondre aux demandes de format dans un délai raisonnable."
+        },
+        {
+          "heading": "Date de cette déclaration",
+          "body": "Cette déclaration a été révisée pour la dernière fois le 15 août 2026, à l'occasion d'une revue de la structure HTML du site, du comportement au clavier, des formulaires et du contraste des couleurs."
         }
       ]
     },

@@ -75,7 +75,11 @@ export function ReviewsActions({
 
   return (
     <div className="flex flex-col gap-4">
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      ) : null}
       <form
         onSubmit={(e) => void saveUrl(e)}
         className="rounded-md border border-navy/10 bg-white px-4 py-4"

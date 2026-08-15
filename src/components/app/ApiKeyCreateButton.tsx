@@ -42,7 +42,11 @@ export function ApiKeyCreateButton() {
       >
         {busy ? t("settings.apiKeyCreating") : t("settings.apiKeyCreate")}
       </button>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <p className="text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      ) : null}
       {token ? (
         <div className="rounded-md border border-amber-300/60 bg-amber-50 px-3 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-navy/60">

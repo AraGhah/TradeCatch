@@ -105,7 +105,11 @@ export function OnboardingWizard({
 
   return (
     <div className="rounded-md border border-navy/10 bg-white px-5 py-5">
-      {error ? <p className="mb-3 text-sm text-red-700">{error}</p> : null}
+      {error ? (
+        <p className="mb-3 text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       {step === 0 ? (
         <div className="flex flex-col gap-3">

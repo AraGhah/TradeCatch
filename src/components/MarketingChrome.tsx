@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
 
 /**
@@ -15,6 +16,7 @@ export function MarketingChrome({
   footer: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const isPilotShell =
     pathname === "/login" ||
@@ -23,8 +25,16 @@ export function MarketingChrome({
 
   return (
     <>
+      <a
+        href="#main-content"
+        className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-3 focus-visible:left-3 focus-visible:z-[100] focus-visible:rounded-md focus-visible:bg-navy focus-visible:px-4 focus-visible:py-3 focus-visible:text-sm focus-visible:font-semibold focus-visible:text-white focus-visible:shadow-lg focus-visible:outline-2 focus-visible:outline-orange focus-visible:outline-offset-2"
+      >
+        {t("skipToContent")}
+      </a>
       {isPilotShell ? null : header}
-      <main className="flex-1">{children}</main>
+      <main id="main-content" tabIndex={-1} className="flex-1">
+        {children}
+      </main>
       {isPilotShell ? null : footer}
     </>
   );
