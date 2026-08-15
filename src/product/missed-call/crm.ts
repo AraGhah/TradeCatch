@@ -6,9 +6,10 @@ import type {
   TechnicianAlertRecord,
 } from "./types";
 import type { UrgencyLogEntry } from "./urgency";
+import { createId } from "@/lib/id";
 
 function id(prefix: string): string {
-  return `${prefix}_${crypto.randomUUID()}`;
+  return createId(prefix);
 }
 
 export function createLeadFromWorkflow(
