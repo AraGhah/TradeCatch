@@ -54,11 +54,12 @@ import type {
   SmsPort,
   TechnicianAlertRecord,
 } from "./types";
+import { createId } from "@/lib/id";
 
 const MAX_OUTBOUND_ATTEMPTS = 5;
 
 function id(prefix: string): string {
-  return `${prefix}_${crypto.randomUUID()}`;
+  return createId(prefix);
 }
 
 function normalizePhoneKey(n: string): string {

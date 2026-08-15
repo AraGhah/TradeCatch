@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { CTAButton } from "@/components/CTAButton";
+import { randomUUID } from "@/lib/id";
 
 const SESSION_KEY = "tradecatch-error-session";
 
@@ -10,10 +11,7 @@ function getOrCreateSessionId(): string | undefined {
   try {
     const existing = window.sessionStorage.getItem(SESSION_KEY);
     if (existing) return existing.slice(0, 64);
-    const id =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? crypto.randomUUID()
-        : `s_${Date.now()}`;
+    const id = randomUUID();
     window.sessionStorage.setItem(SESSION_KEY, id);
     return id.slice(0, 64);
   } catch {
