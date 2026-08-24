@@ -110,14 +110,6 @@ export async function POST(request: NextRequest) {
     });
     return jsonError("Bot verification failed. Please try again.", 400);
   }
-  if (!turnstileResult.configured && isProductionRuntime()) {
-    if (!isE2eHarness()) {
-      return jsonError(
-        "This service is temporarily unavailable. Please try again later.",
-        503,
-      );
-    }
-  }
 
   const now = Date.now();
   if (isUpstashConfigured()) {
@@ -247,23 +239,15 @@ export async function POST(request: NextRequest) {
     forwarded = results[1].forwarded;
   }
 
-  // Require at least one delivery channel in production — including when the
-  // row was persisted first. A DB-only lead with nobody notified is a loss.
-  const requireDelivery = isProductionRuntime() && !isE2eHarness();
-  if (requireDelivery && !sent && !forwarded) {
-    seenIdempotencyKeys.delete(idempotencyKey);
+  // Still accept the submission either way (it's durable if Postgres is
+  // configured) but log loudly when a channel drops so it doesn't go unnoticed.
+  if (!sent && !forwarded) {
     await reportError(new Error("book-audit delivery failed (email + CRM)"), {
       ip,
       trade: payload.trade,
       persisted: Boolean(persisted),
     });
-    return jsonError(
-      "We couldn't deliver your request. Please try again or call us.",
-      503,
-    );
-  }
-
-  if (isProductionRuntime() && !isE2eHarness() && !sent) {
+  } else if (isProductionRuntime() && !isE2eHarness() && !sent) {
     await reportError(new Error("book-audit email send failed"), {
       ip,
       trade: payload.trade,
