@@ -596,7 +596,7 @@
         },
         {
           "name": "Growth",
-          "price": "$2,000 setup",
+          "price": "$1,499 setup",
           "cadence": "$500–$750 / month",
           "idealFor": "Convert More Leads — booking, pipeline, attribution, reviews."
         }
@@ -988,8 +988,8 @@
         "badge": "Most popular",
         "tagline": "Convert More Leads",
         "outcome": "Go beyond recovery — book appointments, track opportunities, prove revenue impact and request reviews.",
-        "price": "$2,000 setup",
-        "setupAmount": "$2,000",
+        "price": "$1,499 setup",
+        "setupAmount": "$1,499",
         "cadence": "$500–$750 / month",
         "monthlyAmount": "$500–$750",
         "idealFor": "Teams ready to push recovered leads further toward booked jobs and closed revenue.",
@@ -1731,7 +1731,7 @@
       "Founder-monitored launch and monthly management"
     ],
     "pricingTitle": "Starting ranges",
-    "pricing": "Starter from $799 setup + $375/month. Growth from $2,000 setup + $500–$750/month. Scoped on the audit.",
+    "pricing": "Starter from $799 setup + $375/month. Growth from $1,499 setup + $500–$750/month. Scoped on the audit.",
     "pilotTitle": "Pilot programme",
     "pilot": "Limited founding seats per area: reduced rate, direct founder access, 12-month price lock, launch credit if we delay go-live.",
     "ctaTitle": "Next step",

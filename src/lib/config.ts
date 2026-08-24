@@ -1,7 +1,8 @@
 /**
  * Production configuration guards.
- * In development, missing Turnstile/Resend is allowed (with warnings).
- * In production, both must be fully configured or book-audit rejects.
+ * Missing Turnstile/Resend is allowed in every environment (with warnings) so
+ * book-audit keeps accepting leads while those services are being set up —
+ * see getProductionConfigErrors below for the (now-empty) hard-block list.
  */
 
 export function isProductionRuntime(): boolean {
@@ -45,19 +46,11 @@ export function isE2eHarness(
   );
 }
 
+/**
+ * Intentionally always empty: book-audit no longer refuses submissions when
+ * Turnstile/Resend are unconfigured. Kept as a call site so a future hard
+ * requirement (if ever needed) has an obvious place to live.
+ */
 export function getProductionConfigErrors(): string[] {
-  if (!isProductionRuntime()) return [];
-  if (isE2eHarness()) return [];
-  const errors: string[] = [];
-  if (!isTurnstileConfigured()) {
-    errors.push(
-      "Turnstile is not configured (NEXT_PUBLIC_TURNSTILE_SITE_KEY + TURNSTILE_SECRET_KEY).",
-    );
-  }
-  if (!isResendConfigured()) {
-    errors.push(
-      "Resend is not configured (RESEND_API_KEY + RESEND_FROM_EMAIL + RESEND_NOTIFY_EMAIL).",
-    );
-  }
-  return errors;
+  return [];
 }
