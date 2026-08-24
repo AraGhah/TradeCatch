@@ -21,7 +21,9 @@ import {
   getProductionConfigErrors,
   isDurableMissedCallStoreConfigured,
   isE2eHarness,
+  isLeadsWebhookConfigured,
   isProductionRuntime,
+  isResendConfigured,
 } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
@@ -240,14 +242,20 @@ export async function POST(request: NextRequest) {
   }
 
   // Still accept the submission either way (it's durable if Postgres is
-  // configured) but log loudly when a channel drops so it doesn't go unnoticed.
-  if (!sent && !forwarded) {
+  // configured). Only alert when a channel that IS configured actually
+  // failed — neither channel being set up yet is an expected setup state,
+  // not an incident, and shouldn't page anyone on every test submission.
+  const emailConfigured = isResendConfigured();
+  const crmConfigured = isLeadsWebhookConfigured();
+  const emailFailed = emailConfigured && !sent;
+  const crmFailed = crmConfigured && !forwarded;
+  if (emailFailed && crmFailed) {
     await reportError(new Error("book-audit delivery failed (email + CRM)"), {
       ip,
       trade: payload.trade,
       persisted: Boolean(persisted),
     });
-  } else if (isProductionRuntime() && !isE2eHarness() && !sent) {
+  } else if (isProductionRuntime() && !isE2eHarness() && emailFailed) {
     await reportError(new Error("book-audit email send failed"), {
       ip,
       trade: payload.trade,
