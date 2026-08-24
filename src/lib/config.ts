@@ -24,6 +24,10 @@ export function isResendConfigured(): boolean {
   );
 }
 
+export function isLeadsWebhookConfigured(): boolean {
+  return Boolean(process.env.LEADS_WEBHOOK_URL?.trim());
+}
+
 export function isTwilioConfigured(): boolean {
   return Boolean(
     process.env.TWILIO_ACCOUNT_SID?.trim() &&
