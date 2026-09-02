@@ -57,5 +57,5 @@ TradeCatch:
 - `[PROVIDER]` — TradeCatch / Ara Ghahramanyan operating as TradeCatch  
 - `[CLIENT]` — contractor legal name  
 - `[EFFECTIVE DATE]`  
-- `[NOTICE EMAIL]` — e.g. ara.ghahramanyan07@gmail.com (replace with domain email when ready)  
+- `[NOTICE EMAIL]` — e.g. contact@tradecatch.ca 
 - `[PROVINCE]` — Québec  
