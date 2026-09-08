@@ -8,26 +8,106 @@ import {
   isE2eHarness,
 } from "@/lib/config";
 import { authorizeOpsRequest } from "@/lib/ops-auth";
+import { getProductionSafetyIssues } from "@/lib/production-safety";
+import {
+  loadClientAccountFromEnv,
+  validateClientConfig,
+} from "@/product/missed-call/client-config";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import { OUTBOUND_STALE_SENDING_MS } from "@/product/missed-call/store";
 
 export const dynamic = "force-dynamic";
 
+const REQUIRED_SCHEMA_MIGRATIONS = [
+  "schema.sql",
+  "002_saas_foundation",
+  "003_starter_features",
+  "004_growth_and_settings",
+  "005_crm_webhook_dlq",
+] as const;
+
+function hasValidProductionClientRouting(): boolean {
+  const strictProductionEnv: NodeJS.ProcessEnv = {
+    ...process.env,
+    NODE_ENV: "production",
+  };
+  // Readiness never permits the explicit demo bypass, even if it was set by
+  // mistake. Production safety reports that flag separately.
+  delete strictProductionEnv.MISSED_CALL_ALLOW_DEMO;
+
+  try {
+    const loaded = loadClientAccountFromEnv(strictProductionEnv);
+    return loaded.source === "env" && validateClientConfig(loaded.client).ok;
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Lightweight health check for uptime monitors.
+ * Health checks for uptime monitors and operators.
  *
- * Public: ok / status / timestamp only.
- * Detailed checks: development, or ops bearer auth.
+ * Public production requests are cheap liveness checks and never touch the
+ * database. Detailed readiness checks run in development or with ops bearer
+ * auth.
  *
- * Top-level `ok` is false (HTTP 503) when the marketing site cannot accept leads
- * in production. Module A marks the deployment `degraded` whenever Twilio or the
- * durable-store flag is present but Module A is not fully ready.
+ * Top-level `ok` is false (HTTP 503) when the production safety or Module A
+ * contract is broken. Optional lead-delivery integrations remain visible in
+ * detailed checks without turning an otherwise working service into an outage.
  */
 export async function GET(request: NextRequest) {
+  const production = isProductionRuntime();
+  const authorization = request.headers.get("authorization");
+  const authorized = authorizeOpsRequest(request);
+  const includeDetails = !production || authorized;
+
+  if (production && authorization !== null && !authorized) {
+    return NextResponse.json(
+      {
+        ok: false,
+        status: "unauthorized",
+        service: "tradecatch",
+        timestamp: new Date().toISOString(),
+      },
+      {
+        status: 401,
+        headers: {
+          "Cache-Control": "no-store",
+          "WWW-Authenticate": "Bearer",
+          "x-tradecatch-service": "tradecatch",
+        },
+      },
+    );
+  }
+
+  if (production && !includeDetails) {
+    return NextResponse.json(
+      {
+        ok: true,
+        degraded: false,
+        status: "live",
+        service: "tradecatch",
+        livenessMarker: "tradecatch-live",
+        timestamp: new Date().toISOString(),
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store",
+          "x-tradecatch-live": "1",
+          "x-tradecatch-service": "tradecatch",
+        },
+      },
+    );
+  }
+
+  const e2eHarness = isE2eHarness();
+  const productionSafetyIssues =
+    production && !e2eHarness ? getProductionSafetyIssues() : [];
   const durableConfigured = isDurableMissedCallStoreConfigured();
   const databaseUrl = process.env.DATABASE_URL?.trim();
   let database: boolean | null = null;
   let schemaOk: boolean | null = null;
+  let diagnosticsComplete = false;
   let queue:
     | {
         queued: number;
@@ -52,11 +132,21 @@ export async function GET(request: NextRequest) {
           `SELECT (
              to_regclass('public.mc_workflows') IS NOT NULL
              AND to_regclass('public.mc_outbound_messages') IS NOT NULL
+             AND to_regclass('public.tc_organizations') IS NOT NULL
+             AND to_regclass('public.tc_quote_threads') IS NOT NULL
+             AND to_regclass('public.tc_appointments') IS NOT NULL
+             AND to_regclass('public.tc_crm_dlq') IS NOT NULL
              AND EXISTS (
                SELECT 1 FROM information_schema.columns
                WHERE table_name = 'mc_workflows' AND column_name = 'revision'
              )
+             AND (
+               SELECT COUNT(DISTINCT id)
+               FROM mc_schema_migrations
+               WHERE id = ANY($1::text[])
+             ) = cardinality($1::text[])
            ) AS ok`,
+          [REQUIRED_SCHEMA_MIGRATIONS],
         );
         schemaOk = Boolean(schema.rows[0]?.ok);
 
@@ -97,7 +187,14 @@ export async function GET(request: NextRequest) {
         } else {
           escalationsFresh = false;
         }
+        diagnosticsComplete = true;
       } catch (error) {
+        database = false;
+        schemaOk = false;
+        queue = null;
+        escalationsLastTick = null;
+        escalationsFresh = false;
+        diagnosticsComplete = false;
         console.error("[health] durable database check failed", error);
       }
     }
@@ -116,31 +213,40 @@ export async function GET(request: NextRequest) {
     ),
     authSecret: Boolean(
       process.env.AUTH_SECRET?.trim() ||
-        process.env.SESSION_SECRET?.trim() ||
-        process.env.MISSED_CALL_OPS_SECRET?.trim(),
+      process.env.SESSION_SECRET?.trim() ||
+      process.env.MISSED_CALL_OPS_SECRET?.trim(),
     ),
     twilio: isTwilioConfigured(),
+    clientRouting: hasValidProductionClientRouting(),
     durableMissedCallStore: durableConfigured,
     database,
     schemaOk,
+    diagnosticsComplete,
     queue: queue ?? null,
     escalationsLastTick,
     escalationsFresh,
-    e2eHarness: isE2eHarness(),
+    e2eHarness,
+    productionSafety: {
+      ok: productionSafetyIssues.length === 0,
+      issues: productionSafetyIssues,
+    },
   };
 
   const siteReady =
-    !isProductionRuntime() ||
-    checks.e2eHarness ||
-    (checks.resend && checks.turnstile);
+    !production || checks.e2eHarness || checks.productionSafety.ok;
 
   const moduleAReady =
     checks.twilio &&
+    checks.clientRouting &&
     checks.durableMissedCallStore &&
     checks.database === true &&
     checks.schemaOk === true &&
+    checks.diagnosticsComplete &&
     checks.opsAuth;
-  const moduleAExpected = checks.twilio || checks.durableMissedCallStore;
+  const moduleAExpected =
+    (production && !checks.e2eHarness) ||
+    checks.twilio ||
+    checks.durableMissedCallStore;
   const queueBackedUp =
     Boolean(queue) &&
     ((queue?.queued ?? 0) + (queue?.retry ?? 0) > 100 ||
@@ -148,14 +254,12 @@ export async function GET(request: NextRequest) {
   const cronStale =
     moduleAExpected &&
     checks.durableMissedCallStore &&
-    checks.escalationsFresh === false;
+    checks.escalationsFresh !== true;
   const degraded =
     !siteReady ||
     (moduleAExpected && !moduleAReady) ||
     queueBackedUp ||
     Boolean(cronStale);
-
-  const includeDetails = !isProductionRuntime() || authorizeOpsRequest(request);
 
   // Ready probes must not report healthy when Module A is expected but broken,
   // or when the lead pipeline cannot accept traffic.

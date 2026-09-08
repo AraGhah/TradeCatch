@@ -9,25 +9,38 @@
  */
 import { chromium } from "playwright";
 import { spawn } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from "node:fs";
 import { join, resolve } from "node:path";
 
 const locale = (process.argv[2] || "en").toLowerCase() === "fr" ? "fr" : "en";
 const baseUrl = process.argv[3] || "http://localhost:3003";
 const pagePath =
-  locale === "fr" ? "/fr/demo-video?record=1&voice=0" : "/demo-video?record=1&voice=0";
+  locale === "fr"
+    ? "/fr/demo-video?record=1&voice=0"
+    : "/demo-video?record=1&voice=0";
 
 /** Read the scene windows straight from the timeline so they cannot drift. */
 function readSceneDurations(loc) {
-  const src = readFileSync(resolve("src/components/demo-video/timeline.ts"), "utf8");
-  const block = src.match(
-    new RegExp(`${loc}:\\s*\\{([^}]*)\\}`, "m"),
+  const src = readFileSync(
+    resolve("src/components/demo-video/timeline.ts"),
+    "utf8",
   );
-  if (!block) throw new Error(`Could not read SCENE_DURATIONS_SEC.${loc} from timeline.ts`);
+  const block = src.match(new RegExp(`${loc}:\\s*\\{([^}]*)\\}`, "m"));
+  if (!block)
+    throw new Error(
+      `Could not read SCENE_DURATIONS_SEC.${loc} from timeline.ts`,
+    );
   const values = [...block[1].matchAll(/(\d+)\s*:\s*(\d+)/g)]
     .sort((a, b) => Number(a[1]) - Number(b[1]))
     .map((m) => Number(m[2]));
-  if (values.length !== 8) throw new Error(`Expected 8 scene durations, got ${values.length}`);
+  if (values.length !== 8)
+    throw new Error(`Expected 8 scene durations, got ${values.length}`);
   return values;
 }
 
@@ -36,7 +49,9 @@ const TOTAL_SEC = SCENE_DURATIONS_SEC.reduce((a, b) => a + b, 0);
 /** Extra wall-clock recorded past the end; trimmed off in the final encode. */
 const TAIL_SEC = 2;
 
-const outDir = resolve("public/demo-video/exports");
+// Keep raw recordings outside `public`: Next/OpenNext copies everything under
+// `public` into the deploy artifact, including ignored local files.
+const outDir = resolve(".artifacts/demo-video/exports");
 const tmpDir = join(outDir, ".tmp");
 mkdirSync(outDir, { recursive: true });
 mkdirSync(tmpDir, { recursive: true });
@@ -120,7 +135,9 @@ const musicExpr =
   `:d=${TOTAL_SEC}:s=48000`;
 
 async function main() {
-  console.log(`Recording ${locale.toUpperCase()} demo — ${TOTAL_SEC}s — ${baseUrl}${pagePath}`);
+  console.log(
+    `Recording ${locale.toUpperCase()} demo — ${TOTAL_SEC}s — ${baseUrl}${pagePath}`,
+  );
 
   const browser = await chromium.launch({
     headless: true,
@@ -137,7 +154,10 @@ async function main() {
   const recordingStartedAt = Date.now();
 
   const page = await context.newPage();
-  await page.goto(`${baseUrl}${pagePath}`, { waitUntil: "networkidle", timeout: 120000 });
+  await page.goto(`${baseUrl}${pagePath}`, {
+    waitUntil: "networkidle",
+    timeout: 120000,
+  });
 
   await page.addStyleTag({
     content: `
@@ -205,14 +225,15 @@ async function main() {
     "libx264",
     "-preset",
     "slow",
-    // Deliberately generous for the content: dark gradients and small UI text
-    // band and smear badly once a social platform re-compresses the file.
-    "-b:v",
-    "7M",
+    // Constant quality preserves small UI text without forcing a 7 Mbps average
+    // across mostly static scenes. The capped peak keeps both tracked masters
+    // inside the repository's combined 80 MiB media budget.
+    "-crf",
+    "21",
     "-maxrate",
-    "9M",
+    "4M",
     "-bufsize",
-    "14M",
+    "8M",
     "-profile:v",
     "high",
     "-level",
@@ -226,7 +247,7 @@ async function main() {
     "-ar",
     "48000",
     "-b:a",
-    "224k",
+    "192k",
     "-movflags",
     "+faststart",
     mp4Out,

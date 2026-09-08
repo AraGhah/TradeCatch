@@ -105,8 +105,26 @@ describe("getClientIp", () => {
       },
     });
     assert.equal(
-      getClientIp(req, { NODE_ENV: "production", TRADECATCH_E2E: "1" }),
+      getClientIp(req, {
+        NODE_ENV: "production",
+        TRADECATCH_E2E: "1",
+        NEXT_PUBLIC_SITE_URL: "http://localhost:3100",
+      }),
       "1.2.3.4",
+    );
+  });
+
+  it("does not trust the E2E flag on a public origin", () => {
+    const req = new Request("https://example.com", {
+      headers: { "x-forwarded-for": "1.2.3.4" },
+    });
+    assert.equal(
+      getClientIp(req, {
+        NODE_ENV: "production",
+        TRADECATCH_E2E: "1",
+        NEXT_PUBLIC_SITE_URL: "https://example.com",
+      }),
+      "unknown",
     );
   });
 

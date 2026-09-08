@@ -15,7 +15,7 @@ export default async function LoginPage({
     <section className="border-b border-navy/10 bg-[var(--color-surface)] py-16 md:py-24">
       <Container>
         <div className="mx-auto max-w-lg text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-orange">
+          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ember-text">
             {t("eyebrow")}
           </p>
           <h1 className="mt-3 font-[family-name:var(--font-archivo)] text-3xl font-extrabold tracking-tight text-navy md:text-4xl">

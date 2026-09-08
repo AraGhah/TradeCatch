@@ -32,9 +32,7 @@ export async function forwardProductEventToCrm(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        ...(secret?.trim()
-          ? { Authorization: `Bearer ${secret.trim()}` }
-          : {}),
+        ...(secret?.trim() ? { Authorization: `Bearer ${secret.trim()}` } : {}),
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(8_000),

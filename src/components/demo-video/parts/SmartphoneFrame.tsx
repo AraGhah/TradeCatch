@@ -37,10 +37,12 @@ export function SmartphoneFrame({
           {title ? (
             <div className="border-b border-white/[0.06] px-4 py-3 text-center">
               <p className="text-[16px] font-semibold text-white">{title}</p>
-              <p className="text-[11px] text-white/40">iMessage · Text</p>
+              <p className="text-[11px] text-white/60">iMessage · Text</p>
             </div>
           ) : null}
-          <div className="relative min-h-0 flex-1 overflow-hidden">{children}</div>
+          <div className="relative min-h-0 flex-1 overflow-hidden">
+            {children}
+          </div>
         </div>
       </div>
     </div>

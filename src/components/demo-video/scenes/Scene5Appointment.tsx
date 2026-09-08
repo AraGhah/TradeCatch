@@ -22,7 +22,9 @@ export function Scene5Appointment({ p, copy }: SceneProps) {
             <p className="font-mono text-[15px] tracking-[0.12em] text-white/45 uppercase">
               {copy.bookAppt}
             </p>
-            <p className="mt-2 text-[30px] font-semibold text-white">{DEMO_DATA.customer}</p>
+            <p className="mt-2 text-[30px] font-semibold text-white">
+              {DEMO_DATA.customer}
+            </p>
 
             <div className="mt-6 grid grid-cols-2 gap-4">
               <div
@@ -31,7 +33,9 @@ export function Scene5Appointment({ p, copy }: SceneProps) {
                 }`}
               >
                 <p className="text-[16px] text-white/50">{copy.day}</p>
-                <p className="text-[23px] font-semibold text-white">{copy.today}</p>
+                <p className="text-[23px] font-semibold text-white">
+                  {copy.today}
+                </p>
               </div>
               <div
                 className={`rounded-lg border px-5 py-4 ${
@@ -39,12 +43,16 @@ export function Scene5Appointment({ p, copy }: SceneProps) {
                 }`}
               >
                 <p className="text-[16px] text-white/50">{copy.window}</p>
-                <p className="text-[23px] font-semibold text-white">{copy.windowValue}</p>
+                <p className="text-[23px] font-semibold text-white">
+                  {copy.windowValue}
+                </p>
               </div>
             </div>
 
             <div className="relative mt-6 h-[170px] rounded-lg border border-white/10 bg-[#0e1620] p-5">
-              <p className="mb-2 text-[15px] text-white/40">{copy.todaysSchedule}</p>
+              <p className="mb-2 text-[15px] text-white/60">
+                {copy.todaysSchedule}
+              </p>
               <div className="grid grid-cols-4 gap-2 text-center text-[15px] text-white/35">
                 {["1pm", "2pm", "3pm", "4pm"].map((t) => (
                   <span key={t}>{t}</span>

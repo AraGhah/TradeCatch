@@ -12,6 +12,22 @@ const RESERVED_DEMO_PHONES = new Set([
   "+15145550377",
 ]);
 
+const E164_PHONE = /^\+[1-9]\d{7,14}$/;
+const HH_MM_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+function isE164Phone(phone: string): boolean {
+  return E164_PHONE.test(phone.trim());
+}
+
+function isValidTimeZone(timezone: string): boolean {
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function isReservedDemoPhone(phone: string): boolean {
   const n = phone.replace(/[^\d+]/g, "");
   if (RESERVED_DEMO_PHONES.has(n)) return true;
@@ -27,7 +43,7 @@ export type ClientConfigValidation = {
 const technicianRosterEntrySchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  phone: z.string().min(1),
+  phone: z.string().trim().regex(E164_PHONE, "must be an E.164 phone number"),
   role: z.enum(["primary", "backup", "owner"]),
   active: z.boolean(),
 });
@@ -45,11 +61,14 @@ export const clientAccountConfigSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   contractorDisplayName: z.string().min(1),
-  timezone: z.string().min(1),
+  timezone: z
+    .string()
+    .min(1)
+    .refine(isValidTimeZone, "must be a valid IANA time zone"),
   businessHours: z.object({
-    start: z.string(),
-    end: z.string(),
-    days: z.array(z.number().int().min(0).max(6)),
+    start: z.string().regex(HH_MM_TIME, "must use 24-hour HH:MM"),
+    end: z.string().regex(HH_MM_TIME, "must use 24-hour HH:MM"),
+    days: z.array(z.number().int().min(0).max(6)).min(1),
   }),
   serviceAreaNotes: z.string().optional(),
   approvedServiceAreas: z.array(
@@ -74,9 +93,9 @@ export const clientAccountConfigSchema = z.object({
   onCallSchedule: z.array(
     z.object({
       day: z.number().int().min(0).max(6),
-      start: z.string(),
-      end: z.string(),
-      technicianId: z.string(),
+      start: z.string().regex(HH_MM_TIME, "must use 24-hour HH:MM"),
+      end: z.string().regex(HH_MM_TIME, "must use 24-hour HH:MM"),
+      technicianId: z.string().min(1),
     }),
   ),
   escalationPolicy: z.object({
@@ -93,15 +112,25 @@ export const clientAccountConfigSchema = z.object({
     z.object({
       id: z.string(),
       name: z.string(),
-      phone: z.string(),
+      phone: z
+        .string()
+        .trim()
+        .regex(E164_PHONE, "must be an E.164 phone number"),
       active: z.boolean(),
     }),
   ),
   approvedQuestions: z.array(approvedQuestionSchema).min(1),
-  smsFromNumber: z.string().min(1),
+  smsFromNumber: z
+    .string()
+    .trim()
+    .regex(E164_PHONE, "must be an E.164 phone number"),
   optOutKeywords: z.array(z.string()).min(1),
   duplicateWindowMs: z.number().positive(),
-  humanReviewPhone: z.string().optional(),
+  humanReviewPhone: z
+    .string()
+    .trim()
+    .regex(E164_PHONE, "must be an E.164 phone number")
+    .optional(),
 });
 
 export function parseClientConfigJson(raw: string): ClientAccount {
@@ -133,14 +162,36 @@ export function validateClientConfig(
   if (!client.id || client.id === "client_demo") {
     errors.push("client id must not be the demo id in production");
   }
-  if (!client.smsFromNumber || isReservedDemoPhone(client.smsFromNumber)) {
-    errors.push("smsFromNumber is missing or a reserved demo number");
+  if (!isE164Phone(client.smsFromNumber || "")) {
+    errors.push("smsFromNumber must be a valid E.164 phone number");
+  } else if (isReservedDemoPhone(client.smsFromNumber)) {
+    errors.push("smsFromNumber is a reserved demo number");
+  }
+  if (!isValidTimeZone(client.timezone)) {
+    errors.push("timezone must be a valid IANA time zone");
+  }
+  if (
+    !HH_MM_TIME.test(client.businessHours.start) ||
+    !HH_MM_TIME.test(client.businessHours.end)
+  ) {
+    errors.push("businessHours start/end must use 24-hour HH:MM");
+  }
+  if (
+    client.businessHours.days.length === 0 ||
+    new Set(client.businessHours.days).size !== client.businessHours.days.length
+  ) {
+    errors.push("businessHours days must contain unique weekdays");
   }
   const chain = [
     client.mainTechnicianId,
     ...client.backupTechnicianIds,
     client.ownerTechnicianId,
   ].filter(Boolean) as string[];
+  for (const slot of client.onCallSchedule) {
+    if (!chain.includes(slot.technicianId)) {
+      chain.push(slot.technicianId);
+    }
+  }
   if (chain.length === 0) errors.push("no technicians configured");
 
   for (const id of chain) {
@@ -152,12 +203,19 @@ export function validateClientConfig(
       continue;
     }
     if (!t.active) errors.push(`technician ${id} is inactive`);
-    if (!t.phone || isReservedDemoPhone(t.phone)) {
-      errors.push(`technician ${id} has missing/demo phone`);
+    if (!isE164Phone(t.phone || "")) {
+      errors.push(`technician ${id} phone must be E.164`);
+    } else if (isReservedDemoPhone(t.phone)) {
+      errors.push(`technician ${id} has a reserved demo phone`);
     }
   }
 
-  if (client.humanReviewPhone && isReservedDemoPhone(client.humanReviewPhone)) {
+  if (client.humanReviewPhone && !isE164Phone(client.humanReviewPhone)) {
+    errors.push("humanReviewPhone must be E.164");
+  } else if (
+    client.humanReviewPhone &&
+    isReservedDemoPhone(client.humanReviewPhone)
+  ) {
     errors.push("humanReviewPhone is a reserved demo number");
   }
   if (!client.humanReviewPhone && !client.ownerTechnicianId) {

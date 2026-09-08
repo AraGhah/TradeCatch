@@ -24,12 +24,16 @@ test.describe("security headers", () => {
     expect(headers["permissions-policy"]).toContain("camera=()");
   });
 
-  test("health readiness marker is TradeCatch-specific", async ({ request }) => {
+  test("public health liveness marker is TradeCatch-specific", async ({
+    request,
+  }) => {
     const response = await request.get("/api/health");
-    expect(response.headers()["x-tradecatch-ready"]).toBe("1");
+    expect(response.headers()["x-tradecatch-live"]).toBe("1");
+    expect(response.headers()["x-tradecatch-ready"]).toBeUndefined();
     const body = await response.json();
     expect(body.service).toBe("tradecatch");
-    expect(body.readyMarker).toBe("tradecatch-ready");
+    expect(body.livenessMarker).toBe("tradecatch-live");
+    expect(body.readyMarker).toBeUndefined();
   });
 
   test("api route also receives the shared security headers", async ({

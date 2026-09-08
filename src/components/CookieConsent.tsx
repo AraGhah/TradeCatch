@@ -105,8 +105,8 @@ export function CookieConsent() {
   return (
     <motion.div
       ref={bannerRef}
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ y: 16 }}
+      animate={{ y: 0 }}
       transition={{ duration: 0.25 }}
       role="region"
       aria-label={t("managePreferences")}
@@ -116,7 +116,10 @@ export function CookieConsent() {
         <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-text/80">
             {t("text")}{" "}
-            <Link href="/cookie-policy" className="underline underline-offset-2">
+            <Link
+              href="/cookie-policy"
+              className="underline underline-offset-2"
+            >
               {t("policyLink")}
             </Link>
           </p>
@@ -148,15 +151,19 @@ export function CookieConsent() {
 
         {expanded ? (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
+            initial={{ height: 0 }}
+            animate={{ height: "auto" }}
             transition={{ duration: 0.2 }}
             className="mt-4 space-y-3 border-t border-[rgb(var(--ink-rgb)/0.1)] pt-4"
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-heading">{t("essentialLabel")}</p>
-                <p className="text-xs text-text/70">{t("essentialDescription")}</p>
+                <p className="text-sm font-semibold text-heading">
+                  {t("essentialLabel")}
+                </p>
+                <p className="text-xs text-text/70">
+                  {t("essentialDescription")}
+                </p>
               </div>
               <input
                 type="checkbox"
@@ -168,8 +175,12 @@ export function CookieConsent() {
             </div>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-heading">{t("analyticsLabel")}</p>
-                <p className="text-xs text-text/70">{t("analyticsDescription")}</p>
+                <p className="text-sm font-semibold text-heading">
+                  {t("analyticsLabel")}
+                </p>
+                <p className="text-xs text-text/70">
+                  {t("analyticsDescription")}
+                </p>
               </div>
               <input
                 type="checkbox"

@@ -121,7 +121,10 @@ export function isEligibleRecoveryCaller(input: {
 }): CallerEligibility {
   const raw = input.callerE164.trim();
   if (!raw) return { ok: false, reason: "empty_caller" };
-  if (ANONYMOUS_CALLER.test(raw) || ANONYMOUS_CALLER.test(raw.replace(/^\+/, ""))) {
+  if (
+    ANONYMOUS_CALLER.test(raw) ||
+    ANONYMOUS_CALLER.test(raw.replace(/^\+/, ""))
+  ) {
     return { ok: false, reason: "anonymous_caller" };
   }
 

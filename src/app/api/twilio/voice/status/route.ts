@@ -120,13 +120,22 @@ export async function POST(request: NextRequest) {
     const { getSaasStore } = await import("@/product/saas/runtime");
     const { orgHasFeature } = await import("@/product/saas/entitlements");
     const org =
-      await getSaasStore().findOrganizationByMissedCallClientId(clientAccountId);
-    if (org && org.status === "active" && !orgHasFeature(org.plan, "MISSED_CALL_RECOVERY")) {
-      console.warn("[missed-call/voice] blocked — plan missing MISSED_CALL_RECOVERY", {
+      await getSaasStore().findOrganizationByMissedCallClientId(
         clientAccountId,
-        orgId: org.id,
-        plan: org.plan,
-      });
+      );
+    if (
+      org &&
+      org.status === "active" &&
+      !orgHasFeature(org.plan, "MISSED_CALL_RECOVERY")
+    ) {
+      console.warn(
+        "[missed-call/voice] blocked — plan missing MISSED_CALL_RECOVERY",
+        {
+          clientAccountId,
+          orgId: org.id,
+          plan: org.plan,
+        },
+      );
       return twimlEmpty();
     }
     if (org && org.status !== "active") {

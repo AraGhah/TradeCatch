@@ -87,12 +87,7 @@ function emptyAnswers(): Answers {
 type Phase = "wizard" | "confirmed";
 type SubmitStatus = "idle" | "submitting" | "error";
 
-type StepKind =
-  | "name"
-  | "text"
-  | "choice"
-  | "consent"
-  | "review";
+type StepKind = "name" | "text" | "choice" | "consent" | "review";
 
 function stepKind(step: BookAuditStep): StepKind {
   switch (step) {
@@ -234,7 +229,8 @@ export function BookAuditForm() {
   /** Soft check — drives Continue ember vs greyed pill. */
   function isStepSatisfied(current: BookAuditStep): boolean {
     if (OPTIONAL_STEPS.includes(current)) return true;
-    if (current === "review") return answers.serviceConsent && Boolean(turnstileToken);
+    if (current === "review")
+      return answers.serviceConsent && Boolean(turnstileToken);
     if (current === "name") return Boolean(answers.firstName.trim());
     if (current === "consent") return answers.serviceConsent;
     const field = primaryField(current);
@@ -257,9 +253,7 @@ export function BookAuditForm() {
     if (current === "name") {
       // Soft Continue lights on firstName alone; hard check still asks for
       // lastName so the API payload matches bookAuditSchema.
-      const shape = Object.fromEntries(
-        STEP_FIELDS.name.map((f) => [f, true]),
-      );
+      const shape = Object.fromEntries(STEP_FIELDS.name.map((f) => [f, true]));
       const result = bookAuditSchema
         .pick(shape as Parameters<typeof bookAuditSchema.pick>[0])
         .safeParse(answers);
@@ -300,7 +294,8 @@ export function BookAuditForm() {
       for (const issue of result.error.issues) {
         const field = String(issue.path[0]);
         if (field === "email") nextErrors[field] = t("wizard.errors.email");
-        else if (field === "phone") nextErrors[field] = t("wizard.errors.phone");
+        else if (field === "phone")
+          nextErrors[field] = t("wizard.errors.phone");
         else nextErrors[field] = t("wizard.errors.required");
       }
       setErrors(nextErrors);
@@ -515,7 +510,9 @@ export function BookAuditForm() {
               })
         }
         timeLeft={
-          onReview ? t("wizard.almostDone") : t("wizard.minLeft", { minutes: minutesLeft })
+          onReview
+            ? t("wizard.almostDone")
+            : t("wizard.minLeft", { minutes: minutesLeft })
         }
         progressPct={progressPct}
         currentStep={onReview ? TOTAL_QUESTIONS : stepIndex}
@@ -590,7 +587,9 @@ export function BookAuditForm() {
                   tabIndex={-1}
                   className="mb-5 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 outline-none focus:ring-2 focus:ring-red-400"
                 >
-                  <p className="m-0 font-semibold">{t("wizard.errorSummary")}</p>
+                  <p className="m-0 font-semibold">
+                    {t("wizard.errorSummary")}
+                  </p>
                   <ul className="mt-2 list-none space-y-2 pl-0">
                     {Object.entries(errors).map(([field, message]) => (
                       <li key={field}>
@@ -636,7 +635,10 @@ export function BookAuditForm() {
                   />
                 </div>
                 {submitStatus === "error" ? (
-                  <p role="alert" className="mt-3 text-sm font-medium text-red-600">
+                  <p
+                    role="alert"
+                    className="mt-3 text-sm font-medium text-red-600"
+                  >
                     {submitError === "network"
                       ? t("wizard.networkError")
                       : t("wizard.genericError")}
@@ -732,7 +734,7 @@ function ProgressBar({
           aria-valuemax={totalSteps}
           aria-valuenow={currentStep}
           aria-valuetext={counterText}
-          aria-describedby={summaryId}
+          aria-labelledby={summaryId}
           className="mt-[11px] h-[3px] overflow-hidden rounded-[3px] bg-[rgb(var(--ink-rgb)/0.1)]"
         >
           <span
@@ -921,7 +923,9 @@ function formatReviewValue(
   const empty = t("wizard.emptyValue");
   switch (step) {
     case "name": {
-      const name = [answers.firstName, answers.lastName].filter(Boolean).join(" ");
+      const name = [answers.firstName, answers.lastName]
+        .filter(Boolean)
+        .join(" ");
       return name || empty;
     }
     case "consent":
@@ -981,9 +985,14 @@ function ChoiceGrid({
     event: KeyboardEvent<HTMLButtonElement>,
     index: number,
   ) {
-    if (event.key !== "ArrowRight" && event.key !== "ArrowDown" &&
-        event.key !== "ArrowLeft" && event.key !== "ArrowUp" &&
-        event.key !== "Home" && event.key !== "End") {
+    if (
+      event.key !== "ArrowRight" &&
+      event.key !== "ArrowDown" &&
+      event.key !== "ArrowLeft" &&
+      event.key !== "ArrowUp" &&
+      event.key !== "Home" &&
+      event.key !== "End"
+    ) {
       return;
     }
     event.preventDefault();
@@ -1000,9 +1009,8 @@ function ChoiceGrid({
     options[next]?.onPick();
     // Focus moves via re-render tabIndex; requestAnimationFrame for reliability.
     requestAnimationFrame(() => {
-      const radios = event.currentTarget.parentElement?.querySelectorAll(
-        '[role="radio"]',
-      );
+      const radios =
+        event.currentTarget.parentElement?.querySelectorAll('[role="radio"]');
       (radios?.[next] as HTMLElement | undefined)?.focus();
     });
   }

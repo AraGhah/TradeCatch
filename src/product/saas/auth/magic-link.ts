@@ -1,8 +1,9 @@
 import { Resend } from "resend";
+import { isE2eHarness, isProductionRuntime } from "@/lib/config";
 import { hashToken, newId, randomToken } from "../ids";
 import { getSaasStore } from "../runtime";
 import { normalizeEmail } from "../store";
-import type { Organization, User } from "../types";
+import type { User } from "../types";
 import {
   SESSION_COOKIE,
   SESSION_TTL_SECONDS,
@@ -16,10 +17,6 @@ export async function requestMagicLink(input: {
   email: string;
   locale: "en" | "fr";
   origin: string;
-  createOrgIfMissing?: {
-    name: string;
-    plan?: "starter" | "growth";
-  };
 }): Promise<{ ok: true; devToken?: string } | { ok: false; error: string }> {
   const email = normalizeEmail(input.email);
   if (!email.includes("@")) {
@@ -27,57 +24,19 @@ export async function requestMagicLink(input: {
   }
 
   const store = getSaasStore();
-  let user = await store.getUserByEmail(email);
-  let organization: Organization | null = null;
-
+  const user = await store.getUserByEmail(email);
   if (!user) {
-    if (!input.createOrgIfMissing?.name) {
-      // Do not reveal whether the email exists — still return ok.
-      return { ok: true };
-    }
-    const created = await store.createOrganizationWithOwner({
-      name: input.createOrgIfMissing.name,
-      ownerEmail: email,
-      ownerName: email.split("@")[0] || "Owner",
-      locale: input.locale,
-      plan: input.createOrgIfMissing.plan ?? "starter",
-    });
-    user = created.user;
-    organization = created.organization;
-    const envClientId = process.env.MISSED_CALL_CLIENT_ID?.trim();
-    if (envClientId) {
-      try {
-        organization =
-          (await store.linkMissedCallClient(
-            created.organization.id,
-            envClientId,
-          )) ?? organization;
-      } catch (err) {
-        console.warn(
-          "[saas-auth] could not link MISSED_CALL_CLIENT_ID (ensure mc_clients row exists)",
-          err,
-        );
-      }
-    }
-  } else {
-    const memberships = await store.listMembershipsForUser(user.id);
-    if (memberships[0]) {
-      organization = await store.getOrganization(memberships[0].organizationId);
-    }
-    if (!organization && input.createOrgIfMissing?.name) {
-      const created = await store.createOrganizationWithOwner({
-        name: input.createOrgIfMissing.name,
-        ownerEmail: email,
-        ownerName: user.name,
-        locale: input.locale,
-        plan: input.createOrgIfMissing.plan ?? "starter",
-      });
-      organization = created.organization;
-      user = created.user;
-    }
+    // Keep the public response enumeration-safe, but never create a user,
+    // organization, or magic-link token from an untrusted sign-in request.
+    return { ok: true };
   }
 
-  if (!user || !organization) {
+  const memberships = await store.listMembershipsForUser(user.id);
+  const organization = memberships[0]
+    ? await store.getOrganization(memberships[0].organizationId)
+    : null;
+
+  if (!organization) {
     return { ok: true };
   }
 
@@ -102,11 +61,14 @@ export async function requestMagicLink(input: {
   });
 
   const allowDevToken =
-    process.env.SAAS_DEV_LOGIN === "1" ||
-    (process.env.NODE_ENV !== "production" && !sent.ok);
+    (process.env.SAAS_DEV_LOGIN === "1" ||
+      (!isProductionRuntime() && !sent.ok)) &&
+    (!isProductionRuntime() || isE2eHarness());
 
   if (!sent.ok && !allowDevToken) {
-    return { ok: false, error: sent.error || "Failed to send email." };
+    console.error("[saas-auth] magic-link delivery failed", {
+      error: sent.error || "send failed",
+    });
   }
 
   return {
@@ -180,7 +142,7 @@ export async function consumeMagicLinkAndCreateSession(input: {
     return { ok: false, error: "Invalid or expired link." };
   }
 
-  let user = await store.getUserByEmail(link.email);
+  const user = await store.getUserByEmail(link.email);
   if (!user) {
     return { ok: false, error: "User not found." };
   }

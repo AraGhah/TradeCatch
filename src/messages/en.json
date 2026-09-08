@@ -49,7 +49,7 @@
     "bookAuditDescriptive": "Book a free 20-minute audit"
   },
   "footer": {
-    "description": "When your team misses a call, TradeCatch texts the customer back, collects the job details, and alerts the right technician. Quote follow-up and dashboards shown on this site are illustrative pilot examples. Installed and monitored by a real person.",
+    "description": "In controlled pilots, TradeCatch texts missed callers back, collects job details, and alerts the right technician. Starter quote follow-up and entitled Growth workspace modules are configured with the founder; marketing dashboard figures are illustrative.",
     "company": "Company",
     "legal": "Legal",
     "resources": "Resources",
@@ -72,7 +72,7 @@
       "eyebrow": "Revenue recovery for Québec trades",
       "headline": "Recover the jobs you're already paying to generate.",
       "accentWord": "Recover",
-      "subheadline": "Missed calls, website leads, and quote follow-ups — recovered into conversations your crew can close. Starter recovers leads; Growth helps convert them. Pilots are founder-led, not self-serve SaaS.",
+      "subheadline": "Controlled pilots recover missed calls and website leads. Linked Starter pilots add quote follow-up; entitled Growth pilots add in-app booking, pipeline, attribution, and reviews. Founder-led, not self-serve SaaS.",
       "ctaPrimary": "Book a free 20-minute audit",
       "ctaSecondary": "Watch the 90-second demo",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
@@ -99,7 +99,7 @@
         "statusNetwork": "LTE ●●●",
         "disclaimer": "Illustrative data · Example conversation. Not a real customer.",
         "floatCard": {
-          "label": "Dashboard",
+          "label": "Pilot workspace",
           "title": "Emergency lead assigned"
         },
         "messages": [
@@ -151,12 +151,9 @@
         "dashboardResult": "Emergency lead assigned",
         "dashboardResultTime": "7:45",
         "dashboardMetricValue": "1",
-        "dashboardMetricLabel": "new emergency lead tracked in your dashboard"
+        "dashboardMetricLabel": "new emergency lead tracked in the pilot workspace"
       },
-      "headlineLines": [
-        "Stop losing jobs",
-        "to missed calls."
-      ],
+      "headlineLines": ["Stop losing jobs", "to missed calls."],
       "qualificationLine": "Built for Québec plumbing, HVAC and electrical companies. French and English. Installed and monitored for you."
     },
     "stats": {
@@ -167,7 +164,7 @@
         },
         {
           "value": "4",
-          "label": "illustrative follow-ups in a planned quote sequence"
+          "label": "scheduled touches in the Starter pilot quote sequence"
         },
         {
           "value": "2",
@@ -201,8 +198,8 @@
     },
     "system": {
       "eyebrow": "The system",
-      "headline": "From missed call to booked job: example path.",
-      "intro": "Each step below runs the same way for every missed call: automatic, bilingual, and handed to your team the moment a technician is needed.",
+      "headline": "From missed call to tracked outcome: pilot walkthrough.",
+      "intro": "The missed-call stages show the controlled pilot path. Starter quote follow-up and Growth outcomes run only for entitled organizations linked to the workspace.",
       "cta": "See how it works",
       "previewLabel": "Example workflow (illustrative, not a live client feed)",
       "previewSteps": [
@@ -228,15 +225,15 @@
         },
         {
           "title": "Lead tracked",
-          "body": "The request is logged as a structured lead record for the contractor ops path (pilot), not yet a full client SaaS dashboard."
+          "body": "The request is logged in the founder/ops pilot path. An entitled organization can also use its linked, organization-scoped workspace; access is not self-serve."
         },
         {
-          "title": "Quote chased",
-          "body": "Quote follow-up sequences are on the roadmap; examples on this site are illustrative only."
+          "title": "Quote followed up · Starter pilot",
+          "body": "Linked Starter pilots run day 1 / 3 / 7 / 14 follow-ups that stop on reply, opt-out, won/lost status, or human takeover."
         },
         {
           "title": "Result measured",
-          "body": "Reporting views on this site are illustrative samples. Recovered-revenue analytics are not a live product module yet."
+          "body": "Marketing figures are illustrative. Entitled, linked Growth pilots can record pipeline outcomes and attributed revenue when a real value is supplied."
         }
       ]
     },
@@ -257,14 +254,14 @@
       "note": "The system collects and routes the request. Your licensed technicians still diagnose the problem, confirm pricing, and perform the work."
     },
     "quoteFollowUp": {
-      "headline": "Quote follow-up that stops when they reply",
+      "headline": "Starter pilot quote follow-up that stops when they reply",
       "items": [
         "Ingest a quote into the Starter workspace",
         "Run day 1 / 3 / 7 / 14 follow-ups",
         "Stop on reply, STOP, won/lost, or human takeover",
         "Open an inbox item when the customer answers",
-        "Optional Growth pipeline stage + revenue when marked won",
-        "Founder-led pilot — not self-serve CRM sync yet"
+        "Optional pipeline stage + real won value for an entitled, linked Growth pilot",
+        "Founder-led Starter pilot — outbound webhook only, not native two-way CRM sync"
       ],
       "sequence": [
         {
@@ -289,7 +286,7 @@
       "eyebrow": "Before / after",
       "headline": "What actually changes once it's running.",
       "manualLabel": "Handling it manually",
-      "systemLabel": "With TradeCatch installed",
+      "systemLabel": "In a configured TradeCatch pilot",
       "rows": [
         {
           "manual": "A missed call gets a callback whenever someone remembers, sometimes hours later.",
@@ -297,7 +294,7 @@
         },
         {
           "manual": "Quotes get followed up when someone has a free minute, which often means never.",
-          "system": "Quote follow-up sequences are planned for later pilots. Today we focus on missed-call recovery and technician alerts."
+          "system": "Linked Starter pilots run scheduled quote follow-ups and stop the sequence as soon as the customer replies."
         },
         {
           "manual": "The technician learns the job details secondhand, if at all.",
@@ -305,7 +302,7 @@
         },
         {
           "manual": "Nobody can say how many calls or quotes actually turned into jobs.",
-          "system": "Founding pilots get a linked workspace at /app after install; public marketing dashboards remain illustrative."
+          "system": "Entitled founding pilots get an organization-scoped workspace after install; public marketing dashboards remain illustrative."
         },
         {
           "manual": "An after-hours emergency waits until business hours.",
@@ -316,7 +313,7 @@
     "dashboard": {
       "eyebrow": "Reporting",
       "headline": "You finally see what you were missing.",
-      "intro": "Every recovered call and technician alert from the missed-call pilot. Reporting views on this site are illustrative samples, not a live client dashboard yet.",
+      "intro": "Every number below is illustrative, not a client result. Linked pilot workspaces show organization-scoped counts; attributed-revenue views require an entitled Growth organization and real values.",
       "cta": "Book a free 20-minute audit",
       "badge": "Illustrative dashboard",
       "live": "Illustrative",
@@ -355,27 +352,27 @@
           "label": "Cases needing you"
         }
       ],
-      "note": "Every recovered call and technician alert from the missed-call pilot. Reporting views on this site are illustrative samples.",
+      "note": "This marketing dashboard is illustrative. Linked pilot workspaces show only the organization’s own configured data.",
       "sampleDataLabel": "Illustrative data: example week, not a live client feed. Not a promise of results."
     },
     "industries": {
       "eyebrow": "Industries",
       "headline": "Tuned to how your trade loses jobs.",
-      "leadIn": "Plumbing, HVAC and electrical first, with room for the trades that share the same missed-call problem.",
+      "leadIn": "Controlled missed-call pilots are tuned first for plumbing, HVAC, and electrical. Quote-recovery examples refer to linked Starter pilots.",
       "cta": "All industries",
       "priorityLabel": "Primary",
       "priority": [
         {
           "name": "Plumbing",
-          "pain": "Catch the 9 p.m. flooding call, get a photo of the problem before anyone drives out, and put the on-call plumber on it in under two minutes."
+          "pain": "Text back the 9 p.m. flooding call, collect a photo before anyone drives out, and route the summary to the on-call plumber."
         },
         {
           "name": "HVAC",
-          "pain": "No-heat calls answered the moment they come in, and heat-pump quotes followed up while the customer is still shopping."
+          "pain": "Text back missed no-heat calls through the controlled pilot, with heat-pump quote follow-up available in linked Starter pilots."
         },
         {
           "name": "Electrical",
-          "pain": "Urgent requests routed to the right technician, and panel or rewiring estimates chased until you get a yes or a no."
+          "pain": "Route urgent requests to the right technician, with scheduled follow-up on panel or rewiring estimates in linked Starter pilots."
         }
       ],
       "supportingLabel": "Also built for",
@@ -398,15 +395,15 @@
         },
         {
           "title": "System design",
-          "body": "You create the messages, escalation rules, on-call structure, and follow-up sequence."
+          "body": "You create the messages, escalation rules, on-call structure, and any Starter follow-up sequence included in scope."
         },
         {
           "title": "Installation and testing",
-          "body": "You connect the phone, email, CRM, calendar, and reporting tools."
+          "body": "You connect the agreed phone and email flows, pilot workspace, and any outbound automation webhook included in scope."
         },
         {
           "title": "Launch and optimization",
-          "body": "The system goes live, results are monitored, and workflows are improved."
+          "body": "The configured pilot launches, results are monitored, and the approved workflows are improved."
         }
       ]
     },
@@ -420,7 +417,7 @@
         "Backup contacts",
         "Escalation timing",
         "Service area boundaries",
-        "Planned quote follow-up sequences",
+        "Starter quote follow-up cadence and stop conditions, when included",
         "Stop conditions",
         "Human-approval rules"
       ],
@@ -473,7 +470,7 @@
     },
     "scenario": {
       "headline": "What happens when you miss a call",
-      "intro": "This is a walkthrough of a typical missed-call and quote follow-up sequence, shown here to illustrate how the system responds.",
+      "intro": "This walkthrough combines the controlled missed-call pilot with a linked Starter quote-follow-up example. Booking and pipeline outcomes require an entitled Growth pilot organization.",
       "exampleLabel": "Example scenario",
       "timelineLabel": "Missed-call sequence",
       "steps": [
@@ -499,10 +496,10 @@
         },
         {
           "time": "Next morning",
-          "text": "The appointment and its estimated value appear on your dashboard."
+          "text": "In an entitled Growth pilot, the in-app booking and real value on file appear in the linked workspace."
         }
       ],
-      "secondFlowLabel": "Quote follow-up sequence",
+      "secondFlowLabel": "Starter pilot quote-follow-up sequence",
       "secondFlowCaption": "Quote sent → No reply → Personalized follow-up → Customer responds → Contractor alerted → Status updated"
     },
     "founder": {
@@ -586,19 +583,19 @@
     "pricingPreview": {
       "eyebrow": "Pricing",
       "headline": "Recover leads. Or convert them further.",
-      "intro": "Starter stops leads from disappearing. Growth books, tracks and proves revenue impact. Scoped on the audit.",
+      "intro": "In founder-led pilots, Starter recovers leads and follows up on quotes; entitled Growth organizations add in-app booking, pipeline, attribution, and reviews. Scoped on the audit.",
       "tiers": [
         {
           "name": "Starter",
           "price": "$799 setup",
           "cadence": "$375 / month",
-          "idealFor": "Recover More Leads — missed calls, website inquiries, quote follow-up."
+          "idealFor": "Starter pilot — missed calls, website inquiries, quote follow-up."
         },
         {
           "name": "Growth",
           "price": "$1,499 setup",
           "cadence": "$500–$750 / month",
-          "idealFor": "Convert More Leads — booking, pipeline, attribution, reviews."
+          "idealFor": "Entitled Growth pilot — in-app booking, pipeline, attribution, reviews."
         }
       ],
       "cta": "See full pricing",
@@ -654,7 +651,7 @@
         "urgency": "Emergency · Client-approved rule",
         "ctaLabel": "Reply YES to accept · CALL to dial customer"
       },
-      "quoteBadge": "Illustrative · Example timeline",
+      "quoteBadge": "Illustrative · Starter pilot example",
       "quoteHeadline": "Quote follow-up sequence",
       "quoteSteps": [
         {
@@ -663,19 +660,19 @@
           "body": "You send a $9,000 heat-pump estimate. No reply yet."
         },
         {
-          "day": "Day 2",
+          "day": "Day 1",
           "title": "First follow-up",
-          "body": "Client-approved SMS: polite check-in with a link back to the quote."
+          "body": "Client-approved SMS: a polite check-in asking whether the customer reviewed the quote."
         },
         {
-          "day": "Day 5",
+          "day": "Day 3",
           "title": "Second follow-up",
-          "body": "Short reminder. Sequence pauses the moment they reply."
+          "body": "Short reminder. Any reply stops the sequence."
         },
         {
-          "day": "Day 5+",
+          "day": "Day 3+",
           "title": "You get alerted",
-          "body": "When they answer, your phone/dashboard shows the conversation is live again."
+          "body": "The reply stops the sequence and opens an item in the linked workspace's human inbox."
         }
       ]
     }
@@ -683,10 +680,10 @@
   "services": {
     "eyebrow": "Services",
     "headline": "One system. The jobs it does while you work.",
-    "intro": "TradeCatch starts with missed-call text-back, lead collection and technician alerts. Quote follow-up, CRM sync and dashboards are scoped separately after a controlled pilot.",
+    "intro": "TradeCatch starts with a controlled missed-call pilot. Quote follow-up is a linked Starter pilot; booking, pipeline, attribution, reviews, and advanced analytics require an entitled Growth organization. Native Google/Outlook and two-way CRM sync remain planned.",
     "groups": [
       {
-        "title": "Lead capture",
+        "title": "Lead capture · Controlled pilot",
         "purpose": "Stop callers from dialling your competitor thirty seconds later.",
         "items": [
           "Missed-call detection",
@@ -699,7 +696,7 @@
         ]
       },
       {
-        "title": "Technician alerts",
+        "title": "Technician alerts · Controlled pilot",
         "purpose": "Get the complete request to the right person, fast.",
         "items": [
           "On-call schedule configuration",
@@ -713,7 +710,7 @@
         ]
       },
       {
-        "title": "Lead qualification",
+        "title": "Lead qualification · Controlled pilot",
         "purpose": "Collect enough job details for your team to respond intelligently.",
         "items": [
           "Approved qualification questions",
@@ -721,72 +718,67 @@
           "Service-area verification",
           "Urgency flagging",
           "Human review when needed",
-          "Appointment booking (planned)",
-          "Calendar reminders (planned)"
+          "In-app appointment booking (entitled Growth pilot)",
+          "SMS appointment reminders (entitled Growth pilot)"
         ]
       },
       {
-        "title": "Quote recovery (planned)",
-        "purpose": "A separately scoped future module for high-value estimates.",
+        "title": "Quote recovery · Starter pilot",
+        "purpose": "A founder-configured Starter pilot module for linked organizations and approved estimates.",
         "items": [
-          "Planned quote ingestion",
-          "Planned customer and project extraction",
-          "Planned follow-up sequences",
-          "Planned reply detection",
-          "Planned reply classification",
-          "Planned contractor approval requests",
-          "Planned won/lost tracking"
+          "Quote ingestion into the linked workspace",
+          "Customer, quote-reference, and amount capture",
+          "Day 1 / 3 / 7 / 14 follow-up sequence",
+          "Stop on reply, opt-out, won/lost, or human takeover",
+          "Reply detection and human-inbox handoff",
+          "Founder-approved message templates",
+          "Won/lost tracking"
         ]
       },
       {
         "title": "Reporting",
-        "purpose": "Show whether recovery is working — ops pilot today; client dashboard planned.",
+        "purpose": "Ops and linked-workspace views are pilot tools; every public marketing dashboard remains illustrative.",
         "items": [
           "Ops lead list (pilot API)",
           "Missed-call workflow outcomes (pilot)",
           "Technician accept / decline tracking (pilot)",
-          "Illustrative weekly summaries (not a live client dashboard)",
-          "Illustrative quote follow-ups",
-          "Illustrative quote outcomes",
+          "Linked workspace counts (pilot, organization-scoped)",
+          "Starter quote follow-ups and outcomes (pilot)",
+          "Marketing weekly summaries (illustrative only)",
           "Cases needing human review (pilot)",
-          "Recovered-revenue metrics (illustrative — not live attribution)"
+          "Growth pipeline and attribution (entitled pilot; real values only)"
         ]
       }
     ],
-    "laterTitle": "Bolt-ons, once the core is earning",
-    "laterIntro": "We don't sell you these on day one. They get added when the basics are already recovering work.",
+    "laterTitle": "Additional modules and future bolt-ons",
+    "laterIntro": "Growth review requests are an entitled pilot feature. Every other item below is planned and scoped separately.",
     "later": [
-      "E-signature",
-      "Deposit collection",
-      "Invoice reminders",
-      "Review requests",
-      "Old-lead reactivation",
-      "Seasonal renewals",
-      "Material-order automation"
+      "E-signature (planned)",
+      "Deposit collection (planned)",
+      "Invoice reminders (planned)",
+      "Google review requests (entitled Growth pilot)",
+      "Old-lead reactivation (planned)",
+      "Seasonal renewals (planned)",
+      "Material-order automation (planned)"
     ],
     "cta": "Book a free 20-minute audit",
     "heroHighlights": [
-      "Lead capture",
-      "Technician routing",
-      "Quote follow-up (planned)",
-      "Appointment booking (planned)",
-      "Reporting (pilot / illustrative)"
+      "Lead capture (controlled pilot)",
+      "Technician routing (controlled pilot)",
+      "Quote follow-up (Starter pilot)",
+      "In-app booking (entitled Growth pilot)",
+      "Workspace reporting (pilot) · Marketing examples illustrative"
     ]
   },
   "howItWorks": {
     "eyebrow": "How it works",
-    "headline": "From missed call to signed job.",
-    "intro": "Six stages, from missed call to tracked outcome. What's live today is tested with your team, in French and English, before a single customer sees it; quote follow-up is a planned module, shown here for the full picture.",
-    "metaDescription": "See how missed-call text-back collects job details and alerts a technician. Quote follow-up and booked-appointment scenes are illustrative walkthroughs.",
+    "headline": "From missed call to tracked outcome.",
+    "intro": "Six stages combine the controlled missed-call pilot with linked Starter quote follow-up. Booking, pipeline, and revenue attribution are shown only as entitled Growth pilot outcomes.",
+    "metaDescription": "See the controlled missed-call pilot and linked Starter quote follow-up. Booking scenes represent an entitled Growth pilot only; native Google/Outlook sync is not included.",
     "stages": [
       {
         "title": "Customer makes contact",
-        "items": [
-          "Phone call",
-          "Website form",
-          "Email",
-          "Landing page"
-        ]
+        "items": ["Phone call", "Website form", "Email", "Landing page"]
       },
       {
         "title": "The system responds",
@@ -816,45 +808,45 @@
         ]
       },
       {
-        "title": "Quote follow-up begins (planned)",
+        "title": "Quote follow-up begins · Starter pilot",
         "items": [
-          "Quote detected",
-          "Follow-ups scheduled",
-          "Replies classified",
-          "Contractor notified"
+          "Quote added to the linked workspace",
+          "Day 1 / 3 / 7 / 14 follow-ups scheduled",
+          "Reply or opt-out detected",
+          "Human inbox opened on reply"
         ]
       },
       {
-        "title": "The outcome is recorded",
+        "title": "The outcome is recorded in the linked pilot workspace",
         "items": [
-          "Appointment booked",
-          "Quote accepted",
-          "Quote lost",
-          "Follow-up paused",
-          "Revenue tracked"
+          "In-app appointment booked (Growth)",
+          "Quote won or lost (Starter)",
+          "Follow-up stopped (Starter)",
+          "Pipeline stage updated (Growth)",
+          "Attributed revenue recorded from a real value (Growth)"
         ]
       }
     ],
-    "sequenceTitle": "The quote follow-up sequence (planned)",
+    "sequenceTitle": "The Starter pilot quote-follow-up sequence",
     "sequence": [
       {
-        "day": "DAY 2",
+        "day": "DAY 1",
         "action": "Confirm the quote landed"
       },
       {
-        "day": "DAY 5",
-        "action": "Send something genuinely useful"
+        "day": "DAY 3",
+        "action": "Offer to walk through the quote"
       },
       {
-        "day": "DAY 10",
-        "action": "Ask about their timing"
+        "day": "DAY 7",
+        "action": "Check interest and timing"
       },
       {
-        "day": "DAY 20",
+        "day": "DAY 14",
         "action": "Close the loop, politely"
       }
     ],
-    "sequenceNote": "The sequence stops the instant the customer replies, and you're alerted if they raise a price objection or a question only you can answer.",
+    "sequenceNote": "The sequence stops when the customer replies or opts out, when the quote is won or lost, or when your team takes over. A reply opens a human inbox item.",
     "cta": "Book a free 20-minute audit",
     "heroSteps": [
       "Missed call",
@@ -868,7 +860,7 @@
   "industriesPage": {
     "eyebrow": "Industries",
     "headline": "Built for busy trade companies.",
-    "intro": "One system, tuned to the way each trade actually loses jobs.",
+    "intro": "These examples combine the controlled missed-call pilot with linked Starter quote follow-up. Growth workspace modules require an entitled pilot organization.",
     "focusLabel": "Where it earns its keep",
     "sections": [
       {
@@ -928,20 +920,20 @@
   "pricing": {
     "eyebrow": "Pricing",
     "headline": "Two plans. One goal: stop losing leads you already paid to generate.",
-    "intro": "Starter recovers missed calls, website inquiries and forgotten quotes. Growth converts those leads further — booking, pipeline, revenue proof and reviews. Founder-led install either way.",
+    "intro": "Founder-led pilots only: Starter recovers missed calls, website inquiries, and forgotten quotes. Entitled, linked Growth organizations add in-app booking, pipeline, attribution, and reviews.",
     "reassurance": "Fixed setup. Month-to-month. Cancel with notice.",
-    "metaDescription": "Starter recovers leads. Growth converts them — appointments, pipeline, revenue tracking and reviews for Québec contractors.",
+    "metaDescription": "Founder-led TradeCatch pilots: Starter lead recovery and quote follow-up, plus entitled Growth booking, pipeline, revenue attribution, and reviews.",
     "mostPopular": "Recommended",
     "principles": [
-      "Starter = recover more leads",
-      "Growth = convert more leads (includes Starter)",
+      "Starter pilot = recover more leads",
+      "Entitled Growth pilot = convert more leads (includes Starter)",
       "Scoped on the audit before you commit"
     ],
     "tiers": [
       {
         "name": "Starter",
-        "tagline": "Recover More Leads",
-        "outcome": "Stop missed calls, website inquiries and forgotten quotes from disappearing.",
+        "tagline": "Recover More Leads · Founder-led pilot",
+        "outcome": "In a configured Starter pilot, stop missed calls, website inquiries, and forgotten quotes from disappearing.",
         "price": "$799 setup",
         "setupAmount": "$799",
         "cadence": "$375 / month",
@@ -952,83 +944,72 @@
           {
             "title": "Capture",
             "items": [
-              "Missed-call recovery",
-              "Website lead response"
+              "Missed-call recovery (controlled pilot)",
+              "Website lead response (linked Starter pilot)"
             ]
           },
           {
             "title": "Qualify",
-            "items": [
-              "Lead qualification"
-            ]
+            "items": ["Lead qualification (controlled pilot)"]
           },
           {
             "title": "Follow up",
-            "items": [
-              "Automated quote follow-up"
-            ]
+            "items": ["Automated quote follow-up (linked Starter pilot)"]
           },
           {
             "title": "Respond",
-            "items": [
-              "Human takeover",
-              "Business notifications"
-            ]
+            "items": ["Human takeover", "Business notifications"]
           },
           {
             "title": "Measure",
-            "items": [
-              "Basic performance dashboard"
-            ]
+            "items": ["Basic linked-workspace reporting (pilot)"]
           }
         ]
       },
       {
         "name": "Growth",
         "badge": "Most popular",
-        "tagline": "Convert More Leads",
-        "outcome": "Go beyond recovery — book appointments, track opportunities, prove revenue impact and request reviews.",
+        "tagline": "Convert More Leads · Entitled pilot",
+        "outcome": "For entitled, linked Growth pilot organizations: book in the workspace, track opportunities, attribute real won values, and request reviews.",
         "price": "$1,499 setup",
         "setupAmount": "$1,499",
         "cadence": "$500–$750 / month",
         "monthlyAmount": "$500–$750",
-        "idealFor": "Teams ready to push recovered leads further toward booked jobs and closed revenue.",
+        "idealFor": "Pilot teams ready to move recovered leads toward in-app bookings and recorded won revenue.",
         "reassuranceLine": "Exact monthly rate locked in writing at the audit from technician count and volume. Growth includes everything in Starter.",
-        "everythingInStarter": "Everything in Starter, plus:",
+        "everythingInStarter": "Everything in the configured Starter pilot, plus:",
         "groups": [
           {
             "title": "Book",
             "items": [
-              "Appointment booking",
-              "Calendar integration",
-              "Appointment reminders"
+              "In-app appointment booking (Growth pilot)",
+              "No native Google/Outlook sync",
+              "SMS appointment reminders (Growth pilot)"
             ]
           },
           {
             "title": "Manage",
             "items": [
-              "Advanced lead pipeline",
-              "Multi-technician routing & escalation"
+              "Advanced lead pipeline (Growth pilot)",
+              "Multi-technician routing and escalation (configured pilot)"
             ]
           },
           {
             "title": "Measure",
             "items": [
-              "Revenue attribution",
-              "Advanced analytics"
+              "Revenue attribution from real won values (Growth pilot)",
+              "Advanced analytics and CSV export (Growth pilot)"
             ]
           },
           {
             "title": "Grow",
-            "items": [
-              "Google review automation"
-            ]
+            "items": ["Google review-request SMS (Growth pilot)"]
           }
         ]
       }
     ],
     "customTitle": "Operating across locations or high volume?",
-    "customBody": "We design a custom plan for multi-location routing, advanced integrations and priority monitoring. Scoped on the audit, never sold as a surprise upgrade.",
+    "customBody": "We design a custom pilot scope for multi-location routing, outbound webhook integrations, and priority monitoring. Native two-way CRM remains planned and is never implied by the quote.",
     "customCta": "Book a free 20-minute audit",
     "includesTitle": "Every engagement includes",
     "includesItems": [
@@ -1041,8 +1022,8 @@
     ],
     "details": [
       {
-        "title": "What ships today vs what Growth unlocks next",
-        "body": "Missed-call recovery, technician alerts, human review and the pilot workspace are live in controlled pilots. Website lead capture, quote follow-up, booking, pipeline and review automation are included in the plan you buy and activated with the founder as each module ships — never sold as already live if it is not."
+        "title": "How pilot access and entitlements work",
+        "body": "All listed capabilities are founder-configured pilot modules, not self-serve SaaS. Missed-call recovery is the controlled core; website capture and quote follow-up are linked Starter pilots; booking, reminders, pipeline, attribution, reviews, and advanced analytics require an entitled, linked Growth organization. Native Google/Outlook and two-way CRM sync remain planned."
       },
       {
         "title": "Why prices have a range",
@@ -1144,38 +1125,11 @@
         "Fencing",
         "Other"
       ],
-      "employees": [
-        "Just me",
-        "2–5",
-        "6–15",
-        "16–30",
-        "30+"
-      ],
-      "calls": [
-        "Under 50",
-        "50–150",
-        "150–400",
-        "400+",
-        "Honestly, no idea"
-      ],
-      "missed": [
-        "0–5",
-        "5–15",
-        "15–30",
-        "30+",
-        "No idea"
-      ],
-      "afterHours": [
-        "Yes, always",
-        "Sometimes",
-        "No"
-      ],
-      "quotes": [
-        "Under 10",
-        "10–30",
-        "30–75",
-        "75+"
-      ],
+      "employees": ["Just me", "2–5", "6–15", "16–30", "30+"],
+      "calls": ["Under 50", "50–150", "150–400", "400+", "Honestly, no idea"],
+      "missed": ["0–5", "5–15", "15–30", "30+", "No idea"],
+      "afterHours": ["Yes, always", "Sometimes", "No"],
+      "quotes": ["Under 10", "10–30", "30–75", "75+"],
       "jobValue": [
         "Under $1,000",
         "$1,000–$5,000",
@@ -1409,7 +1363,7 @@
       },
       {
         "q": "Can it integrate with our CRM?",
-        "a": "Today, recovered leads live in the controlled pilot ops path. Founding clients can also use a linked pilot workspace (/app) after install. Marketing audit leads can forward to a webhook you configure (Zapier, Make, HubSpot, etc.). Native two-way CRM sync is still planned — we confirm what fits during the audit."
+        "a": "Recovered leads live in the controlled pilot ops path and, once linked, an organization-scoped workspace. A configured outbound CRM/automation webhook can send supported events and retry failures; marketing audit leads can also forward to a configured webhook. Native two-way CRM sync remains planned."
       },
       {
         "q": "Will customers know they're talking to automation?",
@@ -1417,7 +1371,7 @@
       },
       {
         "q": "What happens when a customer replies?",
-        "a": "For the live missed-call text-back flow, the reply continues the intake questions or is handed to your team. Automatic stop-on-reply for quote follow-up sequences is planned, not shipping yet."
+        "a": "In the missed-call pilot, a reply continues intake or is handed to your team. In a linked Starter quote-follow-up pilot, any reply stops the sequence and opens a human inbox item; opt-out, won/lost status, or human takeover also stops it."
       },
       {
         "q": "Can the system offer discounts?",
@@ -1469,11 +1423,11 @@
         },
         {
           "heading": "Information we collect",
-          "body": "We collect information you provide directly, such as your name, company, trade, email, phone number, city, and answers to qualification questions when you book an audit. We also collect basic technical and analytics data about how the website is used, gated behind the cookie consent described in our Cookie Policy."
+          "body": "We collect information you provide directly when you request an audit: name, company, trade, email, phone number, city, and qualification answers. When a pilot is activated, we may also process, within the agreed scope, names, phone numbers, addresses, service-request details and photos; call and text content and metadata; technician contact information; and quotes, appointments, pipeline stages, reported values, review requests, and workspace events. We also collect technical data and, with your consent, analytics data as explained in our Cookie Policy."
         },
         {
           "heading": "Purposes and legal basis for collection",
-          "body": "We use your information to respond to your audit request, schedule and conduct calls, prepare proposals, and, if you become a client, to design and operate your revenue recovery system. Collection is based on your consent (for optional communications) and on what is necessary to take steps at your request before entering a service agreement. We do not sell your personal information."
+          "body": "We use this information to respond to audit requests, schedule calls, prepare proposals and, within an agreed pilot, respond to missed calls, collect and route requests, run follow-ups, manage bookings, populate the linked workspace, and send configured events. The applicable basis depends on context, including consent, pre-contractual steps, the service agreement, and legal obligations. We do not sell personal information."
         },
         {
           "heading": "SMS and email communication consent",
@@ -1481,15 +1435,15 @@
         },
         {
           "heading": "Data sharing and service providers",
-          "body": "We share information with service providers that support our operations under agreements requiring them to protect your data and use it only for the purpose we specify. As of this writing that includes: Resend (transactional email delivery), Google Analytics 4 (site analytics, only after cookie consent), Cloudflare Turnstile (bot-abuse prevention on our forms), Twilio (SMS/voice for missed-call recovery when enabled), and Vercel (website hosting). We do not share your information for third-party advertising."
+          "body": "We share information with service providers that support our operations under agreements requiring them to protect your data and use it only for the purpose we specify. As of this writing that includes: Resend (transactional email delivery), Google Analytics 4 (site analytics, only after cookie consent), Cloudflare (website hosting and delivery, including Turnstile bot-abuse prevention on our forms), and Twilio (SMS/voice for missed-call recovery when enabled). We do not share your information for third-party advertising."
         },
         {
           "heading": "Cross-border data transfers",
-          "body": "Some service providers listed above may process or store data outside Quebec or Canada, including in the United States. Where this occurs, we require contractual protections comparable to Quebec law. Privacy impact assessments for out-of-Quebec providers are conducted before those providers are used for client personal information in a live engagement; this public site alone does not constitute completion of every PIA."
+          "body": "Some service providers may process or store personal information outside Quebec or Canada, including in the United States. Before a provider processes personal information outside Quebec, we assess the privacy factors required by law and determine the appropriate contractual or other safeguards. Processing locations and applicable measures are described in client documentation or agreements when required."
         },
         {
           "heading": "Data retention schedule",
-          "body": "Our target retention for audit-request and contact-form submissions is up to 24 months after your last interaction with us, unless you become a client (in which case client records are retained per our service agreement and applicable tax/accounting requirements) or you request earlier deletion. Automated purge jobs for that schedule are being rolled out; until then, deletion and access requests are handled manually via our privacy contact. Missed-call operational records, when a durable store is enabled, follow the same target unless a client agreement specifies otherwise. Analytics data is retained per Google Analytics' default retention settings."
+          "body": "We target retention of up to 24 months after the last interaction for audit requests and missed-call operational records, unless the law, an earlier deletion request, or a client agreement requires otherwise. Automated purging for those categories depends on durable storage and the scheduled task; until deployment is verified, it is performed manually. Other pilot data—website leads, quotes, bookings, pipeline records, review requests, and related logs—follows the retention term in the client agreement and is deleted manually until full lifecycle automation is in place. Analytics data follows Google Analytics' retention settings."
         },
         {
           "heading": "Your privacy rights",
@@ -1515,7 +1469,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch designs, installs, and manages automated communication workflows for contractor businesses. The live product module today is missed-call response with lead qualification and technician alerting. Quote follow-up and related modules are offered only when explicitly included in a written proposal after they ship. Services are scoped and priced individually following an audit and confirmed in that proposal."
+          "body": "TradeCatch designs, installs, and manages automated communication workflows for contractor businesses. Capabilities are offered only in a founder-led controlled pilot and when explicitly included in a written proposal. Missed-call recovery is the core pilot path; website capture and quote follow-up are linked Starter pilot modules; booking, reminders, pipeline, attribution, reviews, and the activity timeline require an entitled, linked Growth organization. Native Google/Outlook calendar sync and native two-way CRM sync are not included and remain planned. Nothing in these terms represents a self-serve SaaS launch or a production-readiness guarantee."
         },
         {
           "heading": "Client responsibilities",
@@ -1605,7 +1559,7 @@
         },
         {
           "heading": "Known limitations",
-          "body": "This site is under active development. Some third-party embeds (such as the Cloudflare Turnstile widget or a future calendar-booking embed) are provided by external vendors and may not fully match our own accessibility standard. Automated and manual testing cannot catch every barrier — we review and address issues as they're identified rather than treating any point-in-time audit as a guarantee of full conformance."
+          "body": "This site is under active development. Some third-party embeds, such as the Cloudflare Turnstile widget or any separately added external calendar-provider embed, are provided by external vendors and may not fully match our own accessibility standard. No native Google/Outlook calendar sync is included in the current pilot. Automated and manual testing cannot catch every barrier — we review and address issues as they're identified rather than treating any point-in-time audit as a guarantee of full conformance."
         },
         {
           "heading": "Standards and legal compliance",
@@ -1705,23 +1659,26 @@
     "printCta": "Print / save as PDF",
     "badge": "Illustrative product overview: not a performance guarantee",
     "headline": "Missed calls and quiet quotes, handled while you work.",
-    "lede": "TradeCatch texts missed callers back, collects job details, and alerts the right technician, with messages you approve. Quote follow-up examples on this page are illustrative.",
+    "lede": "In a controlled pilot, TradeCatch texts missed callers back, collects job details, and alerts the right technician with messages you approve. Linked Starter pilots can also run scheduled quote follow-up that stops on reply.",
     "forWhomTitle": "Built for",
     "forWhom": "Québec plumbing, HVAC and electrical companies (and similar trades) that lose work between the ring and the signed job.",
     "doesTitle": "What it does",
     "does": [
-      "Missed-call and after-hours SMS text-back (FR/EN)",
-      "Lead details and photos collected in the customer’s language",
-      "On-call technician / owner alerts",
-      "Planned quote follow-up sequences (illustrative examples only)",
-      "Illustrative reporting view; no live client dashboard yet"
+      "Missed-call and after-hours SMS text-back (controlled pilot, FR/EN)",
+      "Lead details and photos collected in the customer’s language (controlled pilot)",
+      "On-call technician / owner alerts (controlled pilot)",
+      "Day 1 / 3 / 7 / 14 quote follow-up (linked Starter pilot)",
+      "Organization-scoped pilot workspace; public report graphic is illustrative"
     ],
     "doesNotTitle": "What it does not do",
     "doesNot": [
       "Diagnose plumbing, electrical, HVAC or safety problems",
       "Give emergency instructions you did not approve",
       "Guarantee revenue or that every caller will respond",
-      "Replace licensed technicians"
+      "Replace licensed technicians",
+      "Provide native Google/Outlook calendar sync",
+      "Provide native two-way CRM sync",
+      "Operate as self-serve SaaS"
     ],
     "howTitle": "How engagement works",
     "how": [
@@ -1733,20 +1690,20 @@
     "pricingTitle": "Starting ranges",
     "pricing": "Starter from $799 setup + $375/month. Growth from $1,499 setup + $500–$750/month. Scoped on the audit.",
     "pilotTitle": "Pilot programme",
-    "pilot": "Limited founding seats per area: reduced rate, direct founder access, 12-month price lock, launch credit if we delay go-live.",
+    "pilot": "Limited founding seats per area: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
     "ctaTitle": "Next step",
     "cta": "Book a free 20-minute audit. No system access required.",
     "contact": "438·993·6997 · tradecatch.ca",
     "footerNote": "Examples on the website are illustrative. Real client results are published only with permission."
   },
   "demoVideo": {
-    "title": "90-second product demo",
-    "description": "Animated TradeCatch demonstration: missed-call recovery and estimate follow-up for contractors.",
+    "title": "Product demo (under 90 seconds)",
+    "description": "Animated walkthrough of TradeCatch's controlled missed-call pilot, Starter quote follow-up pilot, and entitled Growth pilot booking and pipeline. All figures are illustrative.",
     "playerTitle": "TradeCatch demo",
     "close": "Close",
     "captionsLabel": "English captions",
     "transcriptTitle": "Transcript",
-    "transcript": "A contractor misses a call. TradeCatch texts the caller, collects name, address, and issue details, alerts the on-call technician with a job card, and notifies the customer when the technician accepts. This is an illustrative product demo, not a live customer conversation.",
+    "transcript": "You already paid to make the phone ring. But when you are working, you cannot always answer. In a controlled pilot, TradeCatch texts back within seconds, under your company's name. The customer stays engaged instead of calling your competitor. It collects the customer's name, problem, urgency, address, and a photo while you stay on the job. When you check your phone, the lead is already qualified. The right technician receives one clear job summary. They can accept, decline, or call; a backup can be alerted if no one responds. Acceptance notifies the customer. Entitled, linked Growth pilot organizations book in-app—without native Google or Outlook sync. Starter pilots can follow up on quotes on days 1, 3, 7, and 14. A reply stops the sequence; the pipeline is only for entitled, linked Growth pilot organizations. Figures are illustrative, not promised results. Workspaces show linked-organization data only—not self-serve SaaS or native two-way CRM. Stop losing jobs when you cannot answer. Get your free missed-opportunity audit with TradeCatch.",
     "timelineProgress": "Timeline progress",
     "play": "Play",
     "pause": "Pause"
@@ -1790,12 +1747,12 @@
       "logout": "Sign out"
     },
     "plan": {
-      "starter": "Starter — Lead Recovery",
-      "growth": "Growth — Lead Conversion"
+      "starter": "Starter — Lead Recovery Pilot",
+      "growth": "Growth — Entitled Conversion Pilot"
     },
     "dashboard": {
       "headline": "What TradeCatch did for you",
-      "intro": "High-level recovery metrics from your linked missed-call workspace. Revenue is shown only when a real amount exists on a lead.",
+      "intro": "High-level recovery metrics from your linked missed-call pilot workspace. Revenue is shown only when a real amount exists on a lead.",
       "notLinked": "Your Twilio / missed-call client is not linked yet. Ask the founder to connect your number, or set MISSED_CALL_CLIENT_ID when creating the workspace."
     },
     "metrics": {
@@ -1825,7 +1782,7 @@
       "intro": "Plan entitlements are enforced on the server — hiding a button is not enough.",
       "plan": "Current plan",
       "included": "Included in your plan",
-      "growthOnly": "Available on Growth",
+      "growthOnly": "Entitled Growth pilot only",
       "clientLinked": "Linked missed-call client",
       "integrations": "Notifications & CRM",
       "integrationsIntro": "Owner alerts and outbound CRM/automation webhook (Zapier, Make, HubSpot, etc.). Failures retry via DLQ.",
@@ -1850,7 +1807,7 @@
     },
     "bookings": {
       "headline": "Appointments",
-      "intro": "Book jobs and send confirmation SMS when a customer phone and Twilio number are linked.",
+      "intro": "Entitled Growth pilot: book jobs in the workspace and send confirmation SMS when customer and Twilio numbers are linked. This is not native Google/Outlook sync.",
       "empty": "No appointments yet. Book one below.",
       "entitlement": "Appointment booking is not on your plan.",
       "add": "Book an appointment",
@@ -1866,14 +1823,14 @@
     },
     "pipeline": {
       "headline": "Pipeline",
-      "intro": "Move cards through stages. Marking won can record attributed revenue when a value is set.",
+      "intro": "Entitled Growth pilot: move cards through stages. Marking won can record attributed revenue when a real value is set.",
       "empty": "No pipeline cards yet. Booking an appointment creates one.",
       "entitlement": "Advanced pipeline is not on your plan.",
       "error": "Could not move card."
     },
     "reviews": {
       "headline": "Review requests",
-      "intro": "After a job is marked complete, TradeCatch can schedule a Google review SMS when a review URL is set.",
+      "intro": "Entitled Growth pilot: after a job is marked complete, TradeCatch can schedule a Google review-request SMS when a review URL is set.",
       "empty": "No review requests yet.",
       "entitlement": "Review automation is not on your plan.",
       "setUrl": "Google review link",
@@ -1887,7 +1844,7 @@
     },
     "timeline": {
       "headline": "Activity timeline",
-      "intro": "Recent bookings, pipeline moves, and other workspace events for this organization.",
+      "intro": "Pilot activity for this organization only, including entitled Growth bookings and pipeline moves.",
       "empty": "No timeline events yet.",
       "entitlement": "Timeline is not available on your plan."
     },
@@ -1911,13 +1868,13 @@
     },
     "websiteLeads": {
       "headline": "Website leads",
-      "intro": "Leads captured from your contractor site via the TradeCatch API key — isolated to this organization.",
+      "intro": "Linked Starter pilot leads captured from your contractor site through its TradeCatch API key — isolated to this organization.",
       "empty": "No website leads yet. Generate an API key in Settings and wire your form to POST /api/website-leads.",
       "entitlement": "Website lead capture is not on your plan."
     },
     "quotes": {
       "headline": "Quote follow-up",
-      "intro": "Sequences at day 1 / 3 / 7 / 14 after the quote is sent. Automation stops on reply, opt-out, won/lost, or human takeover.",
+      "intro": "Linked Starter pilot sequences at day 1 / 3 / 7 / 14 after the quote is sent. Automation stops on reply, opt-out, won/lost, or human takeover.",
       "empty": "No quote threads yet. Add a customer phone below to start a follow-up sequence.",
       "entitlement": "Quote follow-up is not on your plan.",
       "add": "Start a follow-up sequence",
@@ -1938,8 +1895,8 @@
       "resolve": "Resolve"
     },
     "upsell": {
-      "title": "Want booking and deeper revenue tracking later?",
-      "body": "Growth adds appointment booking, pipeline views, and review requests — scoped with the founder when your recovery flow is already earning.",
+      "title": "Need the entitled Growth pilot modules?",
+      "body": "For linked organizations, Growth pilot access adds in-app booking, pipeline, attribution, and review requests. The founder enables each entitlement; native Google/Outlook sync is not included.",
       "cta": "See Growth on pricing"
     }
   }

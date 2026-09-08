@@ -8,10 +8,9 @@ export function LoginForm() {
   const t = useTranslations("login");
   const locale = useLocale() === "fr" ? "fr" : "en";
   const [email, setEmail] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "sent" | "error"
-  >("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">(
+    "idle",
+  );
   const [error, setError] = useState<string | null>(null);
   const [devLink, setDevLink] = useState<string | null>(null);
 
@@ -27,9 +26,6 @@ export function LoginForm() {
         body: JSON.stringify({
           email,
           locale,
-          ...(companyName.trim()
-            ? { companyName: companyName.trim(), plan: "starter" }
-            : {}),
         }),
       });
       const data = (await res.json()) as {
@@ -43,7 +39,9 @@ export function LoginForm() {
         return;
       }
       if (data.devToken) {
-        setDevLink(`/api/auth/callback?token=${encodeURIComponent(data.devToken)}&locale=${locale}`);
+        setDevLink(
+          `/api/auth/callback?token=${encodeURIComponent(data.devToken)}&locale=${locale}`,
+        );
       }
       setStatus("sent");
     } catch {
@@ -53,7 +51,10 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <form
+      onSubmit={onSubmit}
+      className="mx-auto flex w-full max-w-md flex-col gap-4"
+    >
       <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
         {t("email")}
         <input
@@ -64,18 +65,6 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           className="rounded-md border border-navy/15 bg-white px-3 py-2.5 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange"
         />
-      </label>
-      <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-        {t("companyOptional")}
-        <input
-          type="text"
-          autoComplete="organization"
-          value={companyName}
-          onChange={(e) => setCompanyName(e.target.value)}
-          placeholder={t("companyPlaceholder")}
-          className="rounded-md border border-navy/15 bg-white px-3 py-2.5 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange"
-        />
-        <span className="text-xs font-normal text-navy/60">{t("companyHelp")}</span>
       </label>
       <button
         type="submit"

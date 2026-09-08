@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 
 /**
  * Lightweight accessibility smoke — not a full axe/Lighthouse suite.
@@ -32,4 +33,32 @@ test.describe("accessibility smoke", () => {
     await expect(group).toBeVisible({ timeout: 15_000 });
     await expect(group.locator("[role='radio']").first()).toBeVisible();
   });
+
+  for (const path of [
+    "/",
+    "/book-audit",
+    "/demo-video",
+    "/login",
+    "/fr",
+    "/fr/reserver-audit",
+  ]) {
+    test(`${path} has no automatically detectable WCAG A/AA violations`, async ({
+      page,
+    }) => {
+      await page.goto(path);
+      const results = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+
+      expect(
+        results.violations,
+        results.violations
+          .map(
+            (violation) =>
+              `${violation.id}: ${violation.help} (${violation.nodes.length} node(s))`,
+          )
+          .join("\n"),
+      ).toEqual([]);
+    });
+  }
 });

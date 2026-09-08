@@ -1,11 +1,15 @@
 import createMiddleware from "next-intl/middleware";
-import { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { routing } from "./i18n/routing";
 
 const handleI18n = createMiddleware(routing);
 
 /**
  * Locale routing only.
+ *
+ * Next.js 16 deprecates this filename in favour of `proxy.ts`, but Proxy is
+ * Node-runtime only. OpenNext Cloudflare 1.20 does not support Node middleware,
+ * so the documented Edge-runtime compatibility path is intentionally retained.
  *
  * Do NOT set a per-request CSP nonce here. On OpenNext Cloudflare, HTML/assets
  * can be served with a different nonce than the middleware CSP header; with
@@ -20,6 +24,10 @@ const handleI18n = createMiddleware(routing);
 export default function middleware(request: NextRequest) {
   return handleI18n(request);
 }
+
+// Legacy middleware requires this value in Next 16; `edge` is rejected during
+// build even though both names refer to the Edge runtime.
+export const runtime = "experimental-edge";
 
 export const config = {
   // Exclude API, Next internals, static files (with extension), and
