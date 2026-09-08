@@ -17,7 +17,8 @@ Ops link org↔client: `POST /api/missed-call/ops/link-organization` (bearer + a
 - Apply schema: `npm run db:schema`
 - Twilio voice status + SMS inbound + SMS status (`/api/twilio/sms/status`)
 - Ops secret + `X-Ops-Actor` on manual PII API calls
-- Cron: escalations every minute; retention daily (`vercel.json`)
+- Cloudflare cron: escalations every minute; Starter/Growth jobs every 15 minutes;
+  retention daily (`wrangler.jsonc` + root `worker.ts`)
 - Readiness script: `npm run check:module-a`
 
 ## Retention
@@ -91,12 +92,14 @@ npm run test:unit
 
 **Default:** in-memory store — **not** multi-instance / serverless safe.
 
-**Durable path:** set `DATABASE_URL`, apply `schema.sql`, then `MISSED_CALL_DURABLE_STORE=1`.
+**Durable path:** set `DATABASE_URL`, run `npm run db:schema`, then set
+`MISSED_CALL_DURABLE_STORE=1`.
 `runtime.ts` then uses `createPostgresStore()` (workflows, leads, suppressions, MessageSid claims, SMS outbox).
 
 Before Module A go-live:
 
-1. Apply `schema.sql` to Postgres (`DATABASE_URL`), including suppressions, outbox, inbound MessageSids, and book-audit leads.
+1. Run `npm run db:schema` against Postgres (`DATABASE_URL`) so the base schema
+   and every migration through `005_crm_webhook_dlq` are applied.
 2. Set `MISSED_CALL_DURABLE_STORE=1` so `/api/health` (ops auth) can report `moduleA.ready` only with Twilio + ops auth + this flag.
 3. Load complete client config via `MISSED_CALL_CLIENT_CONFIG_JSON` (Zod-validated) or full `MISSED_CALL_*` env. Production rejects demo fixtures and reserved numbers.
 4. Confirm cron hits `/api/missed-call/escalations/tick` (outbox flush + escalation timers).

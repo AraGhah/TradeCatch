@@ -63,7 +63,11 @@ export function PlaybackControls({
           <button type="button" onClick={onRestart} className={secondary}>
             {copy.restart}
           </button>
-          <button type="button" onClick={onTogglePresentation} className={secondary}>
+          <button
+            type="button"
+            onClick={onTogglePresentation}
+            className={secondary}
+          >
             {copy.fullScreen}
           </button>
           <button type="button" onClick={onToggleVoice} className={secondary}>
@@ -73,7 +77,7 @@ export function PlaybackControls({
             {formatClock(timeMs)} / {formatClock(durationMs)}
           </span>
         </div>
-        <p className="text-[12px] text-white/40">{copy.tip}</p>
+        <p className="text-[12px] text-white/60">{copy.tip}</p>
       </div>
     </div>
   );

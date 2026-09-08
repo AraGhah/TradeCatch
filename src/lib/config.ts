@@ -45,9 +45,19 @@ export function isDurableMissedCallStoreConfigured(): boolean {
 export function isE2eHarness(
   env: Record<string, string | undefined> = process.env,
 ): boolean {
-  return (
-    env.TRADECATCH_E2E === "1" && env.VERCEL_ENV?.toLowerCase() !== "production"
-  );
+  if (
+    env.TRADECATCH_E2E !== "1" ||
+    env.VERCEL_ENV?.toLowerCase() === "production"
+  ) {
+    return false;
+  }
+
+  try {
+    const hostname = new URL(env.NEXT_PUBLIC_SITE_URL || "").hostname;
+    return ["localhost", "127.0.0.1", "[::1]", "::1"].includes(hostname);
+  } catch {
+    return false;
+  }
 }
 
 /**

@@ -49,7 +49,7 @@
     "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes"
   },
   "footer": {
-    "description": "Quand votre équipe manque un appel, TradeCatch renvoie un texto au client, recueille les détails du job et alerte le bon technicien. Les relances de soumissions et tableaux de bord sur ce site sont des exemples illustratifs de pilote. Installé et suivi par une vraie personne.",
+    "description": "Dans les pilotes contrôlés, TradeCatch renvoie un texto aux appelants manqués, recueille les détails et alerte le bon technicien. La relance Starter et les modules Growth autorisés sont configurés avec le fondateur; les chiffres des tableaux de bord marketing sont illustratifs.",
     "company": "Entreprise",
     "legal": "Légal",
     "resources": "Ressources",
@@ -72,7 +72,7 @@
       "eyebrow": "Récupération de revenus pour les métiers au Québec",
       "headline": "Récupérez les jobs que vous payez déjà pour générer.",
       "accentWord": "Récupérez",
-      "subheadline": "Appels manqués, leads web et relances de soumissions — remis en conversation pour que votre équipe puisse closer. Starter récupère les leads ; Growth aide à les convertir. Les pilotes sont menés avec le fondateur, pas en SaaS libre-service.",
+      "subheadline": "Les pilotes contrôlés récupèrent les appels manqués et les leads web. Les pilotes Starter liés ajoutent la relance de soumissions; les pilotes Growth admissibles ajoutent la réservation dans l’espace, le pipeline, l’attribution et les avis. Le tout est encadré par le fondateur, et non offert en SaaS libre-service.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la démo de 90 secondes",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
@@ -99,7 +99,7 @@
         "statusNetwork": "LTE ●●●",
         "disclaimer": "Données illustratives · Exemple de conversation. Pas un vrai client.",
         "floatCard": {
-          "label": "Tableau de bord",
+          "label": "Espace pilote",
           "title": "Lead d'urgence assigné"
         },
         "messages": [
@@ -151,7 +151,7 @@
         "dashboardResult": "Lead d'urgence assigné",
         "dashboardResultTime": "19:45",
         "dashboardMetricValue": "1",
-        "dashboardMetricLabel": "nouveau lead d'urgence suivi dans votre tableau de bord"
+        "dashboardMetricLabel": "nouveau lead d'urgence suivi dans l'espace pilote"
       },
       "headlineLines": [
         "Arrêtez de perdre des jobs",
@@ -167,7 +167,7 @@
         },
         {
           "value": "4",
-          "label": "relances illustratives dans une séquence prévue"
+          "label": "étapes planifiées de la séquence pilote Starter"
         },
         {
           "value": "2",
@@ -201,8 +201,8 @@
     },
     "system": {
       "eyebrow": "Le système",
-      "headline": "De l'appel manqué au job réservé : exemple de parcours.",
-      "intro": "Chaque étape ci-dessous se déroule de la même façon pour chaque appel manqué : automatique, bilingue, et remise à votre équipe dès qu'un technicien est nécessaire.",
+      "headline": "De l’appel manqué au résultat suivi : parcours pilote.",
+      "intro": "Les premières étapes montrent le pilote contrôlé d’appels manqués. La relance Starter et les résultats Growth s’exécutent seulement pour les organisations admissibles liées à l’espace.",
       "cta": "Voir comment ça marche",
       "previewLabel": "Exemple de parcours (illustratif, pas un flux client en direct)",
       "previewSteps": [
@@ -228,15 +228,15 @@
         },
         {
           "title": "Demande suivie",
-          "body": "La demande est enregistrée comme fiche lead structurée pour le parcours ops entrepreneur (pilote), pas encore un tableau de bord SaaS client complet."
+          "body": "La demande est enregistrée dans le parcours pilote du fondateur et des opérations. Une organisation admissible peut aussi utiliser son espace lié et cloisonné; l’accès n’est pas libre-service."
         },
         {
-          "title": "Parcours pilote",
-          "body": "Les séquences de relance de soumissions sont sur la feuille de route ; les exemples sur ce site sont illustratifs seulement."
+          "title": "Soumission relancée · Pilote Starter",
+          "body": "Les pilotes Starter liés exécutent les relances aux jours 1, 3, 7 et 14. Elles cessent à la réponse, au désabonnement, au statut gagné/perdu ou à la prise en charge humaine."
         },
         {
           "title": "Résultat mesuré",
-          "body": "Les vues de reporting sur ce site sont des exemples illustratifs. L'analytique de revenus récupérés n'est pas encore un module produit en production."
+          "body": "Les chiffres marketing sont illustratifs. Les pilotes Growth admissibles et liés peuvent enregistrer les résultats du pipeline et le revenu attribué lorsqu’une valeur réelle est fournie."
         }
       ]
     },
@@ -257,14 +257,14 @@
       "note": "Le système recueille et achemine la demande. Vos techniciens licenciés continuent de diagnostiquer le problème, confirmer les prix et effectuer les travaux."
     },
     "quoteFollowUp": {
-      "headline": "Relance de soumissions qui s'arrête quand ils répondent",
+      "headline": "Relance pilote Starter qui s’arrête dès la réponse",
       "items": [
         "Injecter une soumission dans l'espace Starter",
         "Enchaîner les relances J+1 / 3 / 7 / 14",
         "Stop sur réponse, STOP, gagné/perdu ou prise en charge humaine",
         "Ouvrir un item inbox quand le client répond",
-        "Pipeline Growth + revenu optionnels quand marqué gagné",
-        "Pilote mené avec le fondateur — pas encore de sync CRM libre-service"
+        "Pipeline et valeur gagnée réelle en option pour un pilote Growth admissible et lié",
+        "Pilote Starter encadré — webhook sortant seulement, sans synchronisation CRM bidirectionnelle native"
       ],
       "sequence": [
         {
@@ -289,7 +289,7 @@
       "eyebrow": "Avant / après",
       "headline": "Ce qui change vraiment une fois que c'est en place.",
       "manualLabel": "Gestion manuelle",
-      "systemLabel": "Avec TradeCatch installé",
+      "systemLabel": "Dans un pilote TradeCatch configuré",
       "rows": [
         {
           "manual": "Un appel manqué reçoit un rappel quand quelqu'un y pense, parfois des heures plus tard.",
@@ -297,7 +297,7 @@
         },
         {
           "manual": "Les soumissions sont relancées quand quelqu'un a une minute libre, ce qui veut souvent dire jamais.",
-          "system": "Les séquences de relance de soumissions sont prévues pour des pilotes ultérieurs. Aujourd'hui on se concentre sur la récupération d'appels manqués et les alertes technicien."
+          "system": "Les pilotes Starter liés exécutent des relances planifiées et arrêtent la séquence dès que le client répond."
         },
         {
           "manual": "Le technicien apprend les détails de la demande de seconde main, si jamais il les apprend.",
@@ -305,7 +305,7 @@
         },
         {
           "manual": "Personne ne peut dire combien d'appels ou de soumissions sont réellement devenus des jobs.",
-          "system": "Les pilotes fondateurs obtiennent un espace lié sur /app après l'installation ; les tableaux de bord marketing restent illustratifs."
+          "system": "Les pilotes fondateurs admissibles obtiennent un espace cloisonné après l’installation; les tableaux de bord marketing restent illustratifs."
         },
         {
           "manual": "Une urgence hors des heures d'ouverture attend l'ouverture.",
@@ -316,7 +316,7 @@
     "dashboard": {
       "eyebrow": "Rapports",
       "headline": "Vous voyez enfin ce qui vous échappait.",
-      "intro": "Chaque appel récupéré et chaque alerte technicien du pilote d'appels manqués. Les vues de reporting sur ce site sont des exemples illustratifs, pas encore un tableau de bord client en production.",
+      "intro": "Tous les chiffres ci-dessous sont illustratifs, et non des résultats clients. Les espaces pilotes liés montrent des données cloisonnées par organisation; l’attribution de revenus exige une organisation Growth admissible et des valeurs réelles.",
       "cta": "Réserver un audit gratuit de 20 minutes",
       "badge": "Tableau de bord illustratif",
       "live": "Illustratif",
@@ -355,27 +355,27 @@
           "label": "Cas qui vous attendent"
         }
       ],
-      "note": "Chaque appel récupéré et chaque alerte technicien du pilote d'appels manqués. Les vues de reporting sur ce site sont des exemples illustratifs.",
+      "note": "Ce tableau de bord marketing est illustratif. Les espaces pilotes liés montrent uniquement les données configurées de leur organisation.",
       "sampleDataLabel": "Données illustratives : semaine d'exemple, pas un flux client en direct. Pas une promesse de résultats."
     },
     "industries": {
       "eyebrow": "Industries",
       "headline": "Ajusté à la façon dont votre métier perd des jobs.",
-      "leadIn": "Plomberie, CVC et électricité d'abord, avec de la place pour les métiers qui partagent le même problème d'appels manqués.",
+      "leadIn": "Les pilotes contrôlés d’appels manqués ciblent d’abord la plomberie, le CVC et l’électricité. Les exemples de relance concernent les pilotes Starter liés.",
       "cta": "Toutes les industries",
       "priorityLabel": "Principal",
       "priority": [
         {
           "name": "Plomberie",
-          "pain": "Captez l'appel d'inondation à 21 h, obtenez une photo du problème avant que quiconque parte, et mettez le plombier de garde dessus en moins de deux minutes."
+          "pain": "Répondez par texto à l’appel d’inondation de 21 h, recueillez une photo avant tout déplacement et acheminez le résumé au plombier de garde."
         },
         {
           "name": "CVC",
-          "pain": "Les appels sans chauffage répondent dès qu'ils arrivent, et les soumissions de thermopompe sont relancées pendant que le client compare encore."
+          "pain": "Répondez par texto aux appels manqués sans chauffage dans le pilote contrôlé; la relance des soumissions de thermopompe est offerte aux pilotes Starter liés."
         },
         {
           "name": "Électricité",
-          "pain": "Les demandes urgentes sont acheminées au bon technicien, et les estimations de panneaux ou de recâblage sont poursuivies jusqu'à un oui ou un non."
+          "pain": "Acheminez les demandes urgentes au bon technicien; la relance planifiée des soumissions de panneaux ou de recâblage est offerte aux pilotes Starter liés."
         }
       ],
       "supportingLabel": "Aussi conçu pour",
@@ -398,15 +398,15 @@
         },
         {
           "title": "Conception du système",
-          "body": "Vous créez les messages, règles d'escalade, structure de garde et séquence de relance."
+          "body": "Vous créez les messages, les règles d’escalade, la structure de garde et toute séquence Starter incluse dans la portée."
         },
         {
           "title": "Installation et tests",
-          "body": "Vous connectez le téléphone, le courriel, le CRM, le calendrier et les outils de rapport."
+          "body": "Vous connectez les parcours téléphoniques et courriel convenus, l’espace pilote et tout webhook d’automatisation sortant inclus dans la portée."
         },
         {
           "title": "Lancement et optimisation",
-          "body": "Le système est lancé, les résultats sont suivis et les processus sont améliorés."
+          "body": "Le pilote configuré est lancé, les résultats sont suivis et les processus approuvés sont améliorés."
         }
       ]
     },
@@ -420,7 +420,7 @@
         "Les contacts de remplacement",
         "Le moment des escalades",
         "Les limites de la zone de service",
-        "Les séquences de relance de soumission prévues",
+        "La cadence et les conditions d’arrêt des relances Starter, lorsque ce module est inclus",
         "Les conditions d'arrêt",
         "Les règles d'approbation humaine"
       ],
@@ -473,7 +473,7 @@
     },
     "scenario": {
       "headline": "Voici ce qui se passe lorsque vous manquez un appel",
-      "intro": "Voici un exemple de séquence d'appel manqué et de relance de soumission, présenté pour illustrer comment le système réagit.",
+      "intro": "Ce parcours combine le pilote contrôlé d’appels manqués avec un exemple de relance Starter liée. La réservation et les résultats du pipeline exigent une organisation pilote Growth admissible.",
       "exampleLabel": "Exemple de fonctionnement",
       "timelineLabel": "Séquence d'appel manqué",
       "steps": [
@@ -499,10 +499,10 @@
         },
         {
           "time": "Le lendemain",
-          "text": "Le rendez-vous et sa valeur estimée apparaissent dans votre tableau de bord."
+          "text": "Dans un pilote Growth admissible, la réservation dans l’espace et la valeur réelle enregistrée apparaissent dans l’espace lié."
         }
       ],
-      "secondFlowLabel": "Séquence de relance de soumission",
+      "secondFlowLabel": "Séquence pilote Starter de relance de soumission",
       "secondFlowCaption": "Soumission envoyée → Aucun retour → Relance personnalisée → Réponse du client → Entrepreneur alerté → Statut mis à jour"
     },
     "founder": {
@@ -586,19 +586,19 @@
     "pricingPreview": {
       "eyebrow": "Tarifs",
       "headline": "Récupérer des leads. Ou les convertir plus loin.",
-      "intro": "Starter empêche les leads de disparaître. Growth réserve, suit et prouve l'impact revenus. Précisé à l'audit.",
+      "intro": "Dans les pilotes encadrés, Starter récupère les leads et relance les soumissions; les organisations Growth admissibles ajoutent la réservation dans l’espace, le pipeline, l’attribution et les avis. Précisé à l’audit.",
       "tiers": [
         {
           "name": "Starter",
           "price": "799 $ d'installation",
           "cadence": "375 $ / mois",
-          "idealFor": "Récupérer plus de leads — appels manqués, web, relance de soumissions."
+          "idealFor": "Pilote Starter — appels manqués, demandes web, relance de soumissions."
         },
         {
           "name": "Growth",
           "price": "1 499 $ d'installation",
           "cadence": "500 $–750 $ / mois",
-          "idealFor": "Convertir plus de leads — rendez-vous, pipeline, attribution, avis."
+          "idealFor": "Pilote Growth admissible — réservation dans l’espace, pipeline, attribution, avis."
         }
       ],
       "cta": "Voir tous les tarifs",
@@ -654,7 +654,7 @@
         "urgency": "Urgence · règle approuvée par le client",
         "ctaLabel": "Répondre OUI pour accepter · APPEL pour joindre le client"
       },
-      "quoteBadge": "Illustratif · Exemple de chronologie",
+      "quoteBadge": "Illustratif · Exemple pilote Starter",
       "quoteHeadline": "Séquence de relance de soumission",
       "quoteSteps": [
         {
@@ -663,19 +663,19 @@
           "body": "Vous envoyez une estimation de thermopompe à 9 000 $. Pas encore de réponse."
         },
         {
-          "day": "Jour 2",
+          "day": "Jour 1",
           "title": "Première relance",
-          "body": "SMS approuvé : suivi poli avec un lien vers la soumission."
+          "body": "SMS approuvé : suivi poli pour vérifier si le client a consulté la soumission."
         },
         {
-          "day": "Jour 5",
+          "day": "Jour 3",
           "title": "Deuxième relance",
-          "body": "Rappel court. La séquence s'arrête dès qu'ils répondent."
+          "body": "Rappel court. Toute réponse met fin à la séquence."
         },
         {
-          "day": "Jour 5+",
+          "day": "Jour 3+",
           "title": "Vous êtes alerté",
-          "body": "Quand ils répondent, votre téléphone/tableau de bord montre que la conversation est relancée."
+          "body": "La réponse met fin à la séquence et ouvre un élément dans la boîte de réception humaine de l'espace lié."
         }
       ]
     }
@@ -683,10 +683,10 @@
   "services": {
     "eyebrow": "Services",
     "headline": "Un système. Les jobs qu'il fait pendant que vous travaillez.",
-    "intro": "TradeCatch commence par le texto d'appel manqué, la collecte de lead et les alertes technicien. Relance de soumissions, sync CRM et tableaux de bord sont cadrés séparément après un pilote contrôlé.",
+    "intro": "TradeCatch commence par un pilote contrôlé d’appels manqués. La relance est un module pilote Starter lié; la réservation, le pipeline, l’attribution, les avis et l’analytique avancée exigent une organisation Growth admissible. Les synchronisations natives Google/Outlook et CRM bidirectionnelle restent prévues.",
     "groups": [
       {
-        "title": "Capture de prospects",
+        "title": "Capture de prospects · Pilote contrôlé",
         "purpose": "Empêcher les appelants de composer le numéro de votre concurrent trente secondes plus tard.",
         "items": [
           "Détection des appels manqués",
@@ -699,7 +699,7 @@
         ]
       },
       {
-        "title": "Alertes aux techniciens",
+        "title": "Alertes aux techniciens · Pilote contrôlé",
         "purpose": "Transmettre la demande complète à la bonne personne, vite.",
         "items": [
           "Configuration de l'horaire de garde",
@@ -713,7 +713,7 @@
         ]
       },
       {
-        "title": "Qualification des leads",
+        "title": "Qualification des leads · Pilote contrôlé",
         "purpose": "Recueillir assez de détails pour que votre équipe réponde intelligemment.",
         "items": [
           "Questions de qualification approuvées",
@@ -721,63 +721,63 @@
           "Vérification de la zone de service",
           "Signalement d'urgence",
           "Revue humaine au besoin",
-          "Prise de rendez-vous (prévue)",
-          "Rappels calendrier (prévus)"
+          "Réservation dans l’espace (pilote Growth admissible)",
+          "Rappels SMS de rendez-vous (pilote Growth admissible)"
         ]
       },
       {
-        "title": "Récupération des soumissions (prévue)",
-        "purpose": "Un futur module cadré séparément pour les estimations à haute valeur.",
+        "title": "Récupération des soumissions · Pilote Starter",
+        "purpose": "Un module pilote Starter configuré avec le fondateur pour les organisations liées et les soumissions approuvées.",
         "items": [
-          "Importation de soumissions prévue",
-          "Extraction client et projet prévue",
-          "Séquences de relance prévues",
-          "Détection des réponses prévue",
-          "Classification des réponses prévue",
-          "Demandes d'approbation prévues",
-          "Suivi gagné/perdu prévu"
+          "Ajout des soumissions dans l’espace lié",
+          "Saisie du client, de la référence et du montant de la soumission",
+          "Séquence de relance aux jours 1, 3, 7 et 14",
+          "Arrêt sur réponse, désabonnement, statut gagné/perdu ou prise en charge humaine",
+          "Détection des réponses et transfert à la boîte de réception humaine",
+          "Modèles de messages approuvés avec le fondateur",
+          "Suivi gagné/perdu"
         ]
       },
       {
         "title": "Rapports",
-        "purpose": "Montrer si la récupération fonctionne — pilote ops aujourd'hui ; tableau de bord client prévu.",
+        "purpose": "Les vues des opérations et de l’espace lié sont des outils pilotes; tous les tableaux de bord marketing publics restent illustratifs.",
         "items": [
           "Liste de leads ops (API pilote)",
           "Résultats des workflows d'appels manqués (pilote)",
           "Suivi acceptation / refus technicien (pilote)",
-          "Résumés hebdomadaires illustratifs (pas de tableau de bord client live)",
-          "Relances de soumissions illustratives",
-          "Résultats de soumissions illustratifs",
+          "Compteurs de l’espace lié (pilote, cloisonné par organisation)",
+          "Relances et résultats de soumissions Starter (pilote)",
+          "Résumés hebdomadaires marketing (illustratifs seulement)",
           "Cas nécessitant une revue humaine (pilote)",
-          "Métriques de revenus récupérés (illustratives — pas d'attribution live)"
+          "Pipeline et attribution Growth (pilote admissible; valeurs réelles seulement)"
         ]
       }
     ],
-    "laterTitle": "Ajouts optionnels, une fois que le cœur rapporte",
-    "laterIntro": "On ne vous les vend pas dès le premier jour. Ils s'ajoutent quand les bases récupèrent déjà du travail.",
+    "laterTitle": "Modules supplémentaires et ajouts futurs",
+    "laterIntro": "Les demandes d’avis Growth sont une fonction pilote admissible. Tous les autres éléments ci-dessous sont prévus et cadrés séparément.",
     "later": [
-      "Signature électronique",
-      "Collecte de dépôts",
-      "Rappels de facture",
-      "Demandes d'avis",
-      "Réactivation d'anciens prospects",
-      "Renouvellements saisonniers",
-      "Automatisation des commandes de matériaux"
+      "Signature électronique (prévue)",
+      "Collecte de dépôts (prévue)",
+      "Rappels de facture (prévus)",
+      "Demandes d’avis Google (pilote Growth admissible)",
+      "Réactivation d’anciens prospects (prévue)",
+      "Renouvellements saisonniers (prévus)",
+      "Automatisation des commandes de matériaux (prévue)"
     ],
     "cta": "Réserver un audit gratuit de 20 minutes",
     "heroHighlights": [
-      "Capture de leads",
-      "Routage technicien",
-      "Relance de soumissions (prévue)",
-      "Prise de rendez-vous (prévue)",
-      "Rapports (pilote / illustratif)"
+      "Capture de leads (pilote contrôlé)",
+      "Routage technicien (pilote contrôlé)",
+      "Relance de soumissions (pilote Starter)",
+      "Réservation dans l’espace (pilote Growth admissible)",
+      "Rapports de l’espace (pilote) · Exemples marketing illustratifs"
     ]
   },
   "howItWorks": {
     "eyebrow": "Fonctionnement",
-    "headline": "De l'appel manqué au job signé.",
-    "intro": "Six étapes, de l'appel manqué au résultat suivi. Ce qui est en production aujourd'hui est testé avec votre équipe, en français et en anglais, avant qu'un seul client le voie ; la relance de soumissions est un module prévu, montré ici pour le portrait complet.",
-    "metaDescription": "Découvrez le texto d'appel manqué, la collecte de détails et l'alerte technicien. Les scènes de relance et de rendez-vous sont des walkthroughs illustratifs.",
+    "headline": "De l’appel manqué au résultat suivi.",
+    "intro": "Six étapes combinent le pilote contrôlé d’appels manqués et la relance Starter liée. La réservation, le pipeline et l’attribution de revenus représentent seulement les résultats d’un pilote Growth admissible.",
+    "metaDescription": "Découvrez le pilote contrôlé d’appels manqués et la relance Starter liée. Les scènes de réservation représentent seulement un pilote Growth admissible; aucune synchronisation native Google/Outlook n’est incluse.",
     "stages": [
       {
         "title": "Le client contacte l'entreprise",
@@ -816,45 +816,45 @@
         ]
       },
       {
-        "title": "La relance de la soumission commence (prévu)",
+        "title": "La relance commence · Pilote Starter",
         "items": [
-          "Soumission détectée",
-          "Relances planifiées",
-          "Réponses classées",
-          "Entrepreneur avisé"
+          "Soumission ajoutée dans l’espace lié",
+          "Relances aux jours 1, 3, 7 et 14 planifiées",
+          "Réponse ou désabonnement détecté",
+          "Boîte de réception humaine ouverte à la réponse"
         ]
       },
       {
-        "title": "Le résultat est enregistré",
+        "title": "Le résultat est enregistré dans l’espace pilote lié",
         "items": [
-          "Rendez-vous pris",
-          "Soumission acceptée",
-          "Soumission perdue",
-          "Relance suspendue",
-          "Revenu suivi"
+          "Réservation dans l’espace (Growth)",
+          "Soumission gagnée ou perdue (Starter)",
+          "Relance arrêtée (Starter)",
+          "Étape du pipeline mise à jour (Growth)",
+          "Revenu attribué à partir d’une valeur réelle (Growth)"
         ]
       }
     ],
-    "sequenceTitle": "La séquence de relance des soumissions (prévu)",
+    "sequenceTitle": "La séquence pilote Starter de relance",
     "sequence": [
       {
-        "day": "JOUR 2",
+        "day": "JOUR 1",
         "action": "Confirmer que la soumission est bien arrivée"
       },
       {
-        "day": "JOUR 5",
-        "action": "Envoyer quelque chose de vraiment utile"
+        "day": "JOUR 3",
+        "action": "Proposer de passer la soumission ensemble"
       },
       {
-        "day": "JOUR 10",
-        "action": "Demander où ils en sont dans le temps"
+        "day": "JOUR 7",
+        "action": "Vérifier l’intérêt et l’échéancier"
       },
       {
-        "day": "JOUR 20",
+        "day": "JOUR 14",
         "action": "Clore la boucle, poliment"
       }
     ],
-    "sequenceNote": "La séquence s'arrête dès que le client répond, et vous êtes alerté s'il soulève une objection de prix ou une question que seul vous pouvez trancher.",
+    "sequenceNote": "La séquence s’arrête lorsque le client répond ou se désabonne, lorsque la soumission est gagnée ou perdue, ou lorsque votre équipe prend le relais. Une réponse ouvre un élément dans la boîte de réception humaine.",
     "cta": "Réserver un audit gratuit de 20 minutes",
     "heroSteps": [
       "Appel manqué",
@@ -868,7 +868,7 @@
   "industriesPage": {
     "eyebrow": "Industries",
     "headline": "Conçu pour les entreprises de service occupées.",
-    "intro": "Un seul système, ajusté à la façon dont chaque métier perd réellement des jobs.",
+    "intro": "Ces exemples combinent le pilote contrôlé d’appels manqués et la relance Starter liée. Les modules de l’espace Growth exigent une organisation pilote admissible.",
     "focusLabel": "Là où ça rapporte vraiment",
     "sections": [
       {
@@ -928,20 +928,20 @@
   "pricing": {
     "eyebrow": "Tarifs",
     "headline": "Deux forfaits. Un objectif : arrêter de perdre les leads que vous payez déjà à générer.",
-    "intro": "Starter récupère les appels manqués, demandes web et soumissions oubliées. Growth pousse plus loin la conversion — rendez-vous, pipeline, preuve de revenus et avis. Installation menée par le fondateur dans les deux cas.",
+    "intro": "Pilotes encadrés seulement : Starter récupère les appels manqués, les demandes web et les soumissions oubliées. Les organisations Growth admissibles et liées ajoutent la réservation dans l’espace, le pipeline, l’attribution et les avis.",
     "reassurance": "Installation fixe. Mois par mois. Résiliation avec préavis.",
-    "metaDescription": "Starter récupère les leads. Growth les convertit — rendez-vous, pipeline, suivi des revenus et avis pour les entrepreneurs québécois.",
+    "metaDescription": "Pilotes TradeCatch encadrés : récupération et relance Starter, puis réservation, pipeline, attribution et avis pour les organisations Growth admissibles.",
     "mostPopular": "Recommandé",
     "principles": [
-      "Starter = récupérer plus de leads",
-      "Growth = convertir plus de leads (inclut Starter)",
+      "Pilote Starter = récupérer plus de leads",
+      "Pilote Growth admissible = convertir plus de leads (inclut Starter)",
       "Cadré à l'audit avant tout engagement"
     ],
     "tiers": [
       {
         "name": "Starter",
-        "tagline": "Récupérer plus de leads",
-        "outcome": "Empêchez les appels manqués, demandes web et soumissions oubliées de disparaître.",
+        "tagline": "Récupérer plus de leads · Pilote encadré",
+        "outcome": "Dans un pilote Starter configuré, empêchez les appels manqués, les demandes web et les soumissions oubliées de disparaître.",
         "price": "799 $ d'installation",
         "setupAmount": "799 $",
         "cadence": "375 $ / mois",
@@ -952,83 +952,72 @@
           {
             "title": "Capturer",
             "items": [
-              "Récupération d'appels manqués",
-              "Réponse aux leads web"
+              "Récupération d’appels manqués (pilote contrôlé)",
+              "Réponse aux leads web (pilote Starter lié)"
             ]
           },
           {
             "title": "Qualifier",
-            "items": [
-              "Qualification des leads"
-            ]
+            "items": ["Qualification des leads (pilote contrôlé)"]
           },
           {
             "title": "Relancer",
-            "items": [
-              "Relance automatisée de soumissions"
-            ]
+            "items": ["Relance automatisée de soumissions (pilote Starter lié)"]
           },
           {
             "title": "Répondre",
-            "items": [
-              "Prise en charge humaine",
-              "Notifications métier"
-            ]
+            "items": ["Prise en charge humaine", "Notifications métier"]
           },
           {
             "title": "Mesurer",
-            "items": [
-              "Tableau de bord de performance de base"
-            ]
+            "items": ["Rapports de base dans l’espace lié (pilote)"]
           }
         ]
       },
       {
         "name": "Growth",
         "badge": "Le plus populaire",
-        "tagline": "Convertir plus de leads",
-        "outcome": "Allez au-delà de la récupération — réservation, suivi d'occasions, impact revenus et demandes d'avis.",
+        "tagline": "Convertir plus de leads · Pilote admissible",
+        "outcome": "Pour les organisations pilotes Growth admissibles et liées : réservez dans l’espace, suivez les occasions, attribuez les valeurs gagnées réelles et demandez des avis.",
         "price": "1 499 $ d'installation",
         "setupAmount": "1 499 $",
         "cadence": "500 $–750 $ / mois",
         "monthlyAmount": "500 $–750 $",
-        "idealFor": "Équipes prêtes à pousser les leads récupérés jusqu'aux jobs réservés et au revenu encaissé.",
+        "idealFor": "Équipes pilotes prêtes à mener les leads récupérés vers des réservations dans l’espace et des revenus gagnés enregistrés.",
         "reassuranceLine": "Le tarif mensuel exact est fixé par écrit à l'audit selon le nombre de techniciens et le volume. Growth inclut tout Starter.",
-        "everythingInStarter": "Tout ce qui est dans Starter, plus :",
+        "everythingInStarter": "Tout ce qui est dans le pilote Starter configuré, plus :",
         "groups": [
           {
             "title": "Réserver",
             "items": [
-              "Prise de rendez-vous",
-              "Intégration calendrier",
-              "Rappels de rendez-vous"
+              "Réservation de rendez-vous dans l’espace (pilote Growth)",
+              "Aucune synchronisation native Google/Outlook",
+              "Rappels SMS de rendez-vous (pilote Growth)"
             ]
           },
           {
             "title": "Gérer",
             "items": [
-              "Pipeline de leads avancé",
-              "Routage multi-techniciens et escalade"
+              "Pipeline de leads avancé (pilote Growth)",
+              "Routage multi-techniciens et escalade (pilote configuré)"
             ]
           },
           {
             "title": "Mesurer",
             "items": [
-              "Attribution de revenus",
-              "Analytique avancée"
+              "Attribution à partir des valeurs gagnées réelles (pilote Growth)",
+              "Analytique avancée et export CSV (pilote Growth)"
             ]
           },
           {
             "title": "Grandir",
-            "items": [
-              "Automatisation des avis Google"
-            ]
+            "items": ["SMS de demande d’avis Google (pilote Growth)"]
           }
         ]
       }
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
-    "customBody": "On conçoit un forfait sur mesure pour le routage multi-sites, les intégrations avancées et le suivi prioritaire. Défini à l'audit, jamais vendu comme une surprise.",
+    "customBody": "Nous définissons un pilote sur mesure pour le routage multisite, les webhooks sortants et le suivi prioritaire. La synchronisation CRM bidirectionnelle native reste prévue et n’est jamais sous-entendue dans le prix.",
     "customCta": "Réserver un audit gratuit de 20 minutes",
     "includesTitle": "Chaque mandat inclut",
     "includesItems": [
@@ -1041,8 +1030,8 @@
     ],
     "details": [
       {
-        "title": "Ce qui tourne aujourd'hui vs ce que Growth débloque ensuite",
-        "body": "La récupération d'appels manqués, les alertes technicien, la revue humaine et l'espace pilote sont en production dans des pilotes contrôlés. Capture web, relance de soumissions, réservation, pipeline et avis sont inclus dans le forfait acheté et activés avec le fondateur à mesure que chaque module est livré — jamais présentés comme déjà en ligne s'ils ne le sont pas."
+        "title": "Fonctionnement des accès pilotes et des droits",
+        "body": "Toutes les capacités présentées sont des modules pilotes configurés avec le fondateur, et non un SaaS libre-service. La récupération d’appels manqués est le cœur contrôlé; la capture web et la relance sont des pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’analytique avancée exigent une organisation Growth admissible et liée. Les synchronisations natives Google/Outlook et CRM bidirectionnelle restent prévues."
       },
       {
         "title": "Pourquoi les prix ont une fourchette",
@@ -1144,13 +1133,7 @@
         "Clôture",
         "Autre"
       ],
-      "employees": [
-        "Juste moi",
-        "2–5",
-        "6–15",
-        "16–30",
-        "30+"
-      ],
+      "employees": ["Juste moi", "2–5", "6–15", "16–30", "30+"],
       "calls": [
         "Moins de 50",
         "50–150",
@@ -1158,24 +1141,9 @@
         "400+",
         "Honnêtement, aucune idée"
       ],
-      "missed": [
-        "0–5",
-        "5–15",
-        "15–30",
-        "30+",
-        "Aucune idée"
-      ],
-      "afterHours": [
-        "Oui, toujours",
-        "Parfois",
-        "Non"
-      ],
-      "quotes": [
-        "Moins de 10",
-        "10–30",
-        "30–75",
-        "75+"
-      ],
+      "missed": ["0–5", "5–15", "15–30", "30+", "Aucune idée"],
+      "afterHours": ["Oui, toujours", "Parfois", "Non"],
+      "quotes": ["Moins de 10", "10–30", "30–75", "75+"],
       "jobValue": [
         "Moins de 1 000 $",
         "1 000 $–5 000 $",
@@ -1409,7 +1377,7 @@
       },
       {
         "q": "Peut-il s'intégrer à notre CRM?",
-        "a": "Aujourd'hui, les leads récupérés vivent dans le parcours ops du pilote contrôlé. Les clients fondateurs peuvent aussi utiliser un espace pilote lié (/app) après l'installation. Les demandes d'audit marketing peuvent être transmises à un webhook que vous configurez (Zapier, Make, HubSpot, etc.). La sync CRM bidirectionnelle native est encore prévue — nous confirmons ce qui convient lors de l'audit."
+        "a": "Les leads récupérés vivent dans le parcours d’opérations du pilote contrôlé et, une fois liés, dans un espace cloisonné par organisation. Un webhook CRM ou d’automatisation sortant peut transmettre les événements pris en charge et relancer les échecs; les demandes d’audit peuvent aussi être transférées à un webhook configuré. La synchronisation CRM bidirectionnelle native reste prévue."
       },
       {
         "q": "Les clients sauront-ils qu'ils communiquent avec de l'automatisation?",
@@ -1417,7 +1385,7 @@
       },
       {
         "q": "Que se passe-t-il quand un client répond?",
-        "a": "Pour le texto d'appel manqué en production, la réponse poursuit les questions de collecte ou est transmise à votre équipe. L'arrêt automatique des séquences de relance de soumissions est prévu, pas encore livré."
+        "a": "Dans le pilote d’appels manqués, la réponse poursuit la collecte ou est transmise à votre équipe. Dans un pilote Starter lié de relance, toute réponse arrête la séquence et ouvre un élément dans la boîte de réception humaine; le désabonnement, le statut gagné/perdu ou la prise en charge humaine l’arrêtent aussi."
       },
       {
         "q": "Le système peut-il offrir des rabais?",
@@ -1469,11 +1437,11 @@
         },
         {
           "heading": "Informations que nous recueillons",
-          "body": "Nous recueillons les informations que vous nous fournissez directement, comme votre nom, votre entreprise, votre métier, votre courriel, votre numéro de téléphone, votre ville et vos réponses aux questions de qualification lors de la réservation d'un audit. Nous recueillons aussi des données techniques et analytiques de base, sous réserve du consentement décrit dans notre politique de cookies."
+          "body": "Nous recueillons les renseignements que vous nous fournissez directement lors d’une demande d’audit : nom, entreprise, métier, courriel, numéro de téléphone, ville et réponses de qualification. Lorsqu’un pilote est activé, nous pouvons aussi traiter, selon la portée convenue, les noms, numéros de téléphone, adresses, détails et photos des demandes de service; le contenu et les métadonnées des appels et textos; les coordonnées des techniciens; ainsi que les soumissions, rendez-vous, étapes du pipeline, valeurs déclarées, demandes d’avis et événements de l’espace. Nous recueillons également des données techniques et, avec votre consentement, des données analytiques, comme l’explique notre politique de cookies."
         },
         {
           "heading": "Finalités et fondement du traitement",
-          "body": "Nous utilisons vos informations pour répondre à votre demande d'audit, planifier et mener des appels, préparer des propositions et, si vous devenez client, concevoir et exploiter votre système de récupération de revenus. La collecte repose sur votre consentement (pour les communications optionnelles) et sur ce qui est nécessaire pour donner suite à votre demande avant la conclusion d'une entente de service. Nous ne vendons pas vos informations personnelles."
+          "body": "Nous utilisons ces renseignements pour répondre aux demandes d’audit, planifier les appels, préparer les propositions et, dans le cadre d’un pilote convenu, répondre aux appels manqués, recueillir et acheminer les demandes, effectuer les relances, gérer les réservations, alimenter l’espace lié et transmettre les événements configurés. Le fondement applicable dépend du contexte, notamment le consentement, les mesures précontractuelles, l’entente de service et les obligations légales. Nous ne vendons pas de renseignements personnels."
         },
         {
           "heading": "Consentement aux communications SMS et courriel",
@@ -1481,15 +1449,15 @@
         },
         {
           "heading": "Partage des données et fournisseurs de services",
-          "body": "Nous partageons des informations avec des fournisseurs de services qui soutiennent nos opérations, en vertu d'ententes exigeant qu'ils protègent vos données et ne les utilisent qu'aux fins précisées. À ce jour, il s'agit de : Resend (envoi de courriels transactionnels), Google Analytics 4 (analytique du site, uniquement après consentement aux cookies), Cloudflare Turnstile (prévention des abus automatisés sur nos formulaires), Twilio (SMS/voix pour la récupération d'appels manqués lorsque activé) et Vercel (hébergement du site). Nous ne partageons pas vos informations à des fins de publicité tierce."
+          "body": "Nous partageons des informations avec des fournisseurs de services qui soutiennent nos opérations, en vertu d'ententes exigeant qu'ils protègent vos données et ne les utilisent qu'aux fins précisées. À ce jour, il s'agit de : Resend (envoi de courriels transactionnels), Google Analytics 4 (analytique du site, uniquement après consentement aux cookies), Cloudflare (hébergement et diffusion du site, y compris Turnstile pour prévenir les abus automatisés sur nos formulaires) et Twilio (SMS/voix pour la récupération d'appels manqués lorsque cette fonction est activée). Nous ne partageons pas vos informations à des fins de publicité tierce."
         },
         {
           "heading": "Transferts de données hors Québec",
-          "body": "Certains fournisseurs ci-dessus peuvent traiter ou stocker des données hors Québec ou du Canada, notamment aux États-Unis. Le cas échéant, nous exigeons des protections contractuelles comparables à la loi québécoise. Les évaluations des facteurs relatifs à la vie privée pour les fournisseurs hors Québec sont réalisées avant leur utilisation pour des renseignements personnels de clients en exploitation réelle; ce site public ne constitue pas à lui seul l'achèvement de chaque EFVP."
+          "body": "Certains fournisseurs peuvent traiter ou stocker des renseignements hors du Québec ou du Canada, notamment aux États-Unis. Avant qu’un fournisseur traite des renseignements personnels hors Québec, nous évaluons les facteurs relatifs à la vie privée exigés par la loi et déterminons les mesures contractuelles ou autres appropriées. Les lieux de traitement et les mesures applicables sont précisés dans la documentation ou l’entente client lorsque requis."
         },
         {
           "heading": "Calendrier de conservation des données",
-          "body": "Notre objectif de conservation pour les soumissions de demande d'audit et de formulaire de contact est d'au plus 24 mois après votre dernière interaction avec nous, sauf si vous devenez client (les dossiers clients sont alors conservés selon notre entente de service et les exigences fiscales et comptables applicables) ou si vous demandez une suppression anticipée. Les tâches automatiques de purge pour ce calendrier sont en déploiement; d'ici là, les demandes d'accès et de suppression sont traitées manuellement via notre contact vie privée. Les dossiers opérationnels d'appels manqués, lorsqu'un stockage durable est activé, suivent le même objectif sauf entente client contraire. Les données analytiques sont conservées selon les paramètres par défaut de Google Analytics."
+          "body": "Nous visons une conservation maximale de 24 mois après la dernière interaction pour les demandes d’audit et les dossiers opérationnels d’appels manqués, sauf obligation légale, demande de suppression anticipée ou durée différente prévue à l’entente client. La purge automatisée de ces catégories exige le stockage durable et la tâche planifiée; tant qu’elle n’est pas vérifiée dans l’environnement déployé, elle est effectuée manuellement. Les autres données du pilote — demandes web, soumissions, rendez-vous, pipeline, avis et journaux connexes — suivent la durée prévue à l’entente et sont supprimées manuellement jusqu’à l’automatisation complète de leur cycle de vie. Les données analytiques suivent les paramètres de conservation de Google Analytics."
         },
         {
           "heading": "Vos droits en matière de confidentialité",
@@ -1497,7 +1465,7 @@
         },
         {
           "heading": "Nous joindre ou porter plainte",
-          "body": "Pour toute question ou demande relative à la confidentialité, écrivez àcontact@tradecatch.ca. Si vous estimez que votre préoccupation n'a pas été résolue, vous pouvez déposer une plainte auprès de la Commission d'accès à l'information du Québec (CAI)."
+          "body": "Pour toute question ou demande relative à la confidentialité, écrivez à contact@tradecatch.ca. Si vous estimez que votre préoccupation n'a pas été résolue, vous pouvez déposer une plainte auprès de la Commission d'accès à l'information du Québec (CAI)."
         },
         {
           "heading": "Sécurité et signalement d'incidents",
@@ -1515,7 +1483,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Le module produit en service aujourd'hui est la réponse aux appels manqués avec qualification de prospects et alertes aux techniciens. La relance des soumissions et les modules connexes ne sont offerts que lorsqu'ils sont explicitement inclus dans une proposition écrite après leur mise en service. Les services sont définis et tarifés individuellement après un audit et confirmés dans cette proposition."
+          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Les capacités sont offertes seulement dans un pilote contrôlé encadré par le fondateur et lorsqu’elles figurent explicitement dans une proposition écrite. La récupération d’appels manqués est le parcours pilote principal; la capture web et la relance de soumissions sont des modules pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’historique d’activité exigent une organisation Growth admissible et liée. Les synchronisations natives Google/Outlook et CRM bidirectionnelle ne sont pas incluses et restent prévues. Les présentes conditions ne décrivent ni un lancement SaaS libre-service ni une garantie que le produit est prêt pour la production."
         },
         {
           "heading": "Responsabilités du client",
@@ -1605,7 +1573,7 @@
         },
         {
           "heading": "Limites connues",
-          "body": "Ce site est en développement actif. Certains éléments intégrés de tiers (comme le module Cloudflare Turnstile ou un futur module de réservation de calendrier) proviennent de fournisseurs externes et peuvent ne pas correspondre entièrement à notre propre norme d'accessibilité. Les tests automatisés et manuels ne peuvent pas détecter tous les obstacles — nous examinons et corrigeons les problèmes au fur et à mesure qu'ils sont signalés, sans considérer un audit ponctuel comme une garantie de conformité totale."
+          "body": "Ce site est en développement actif. Certains éléments intégrés de tiers, comme le module Cloudflare Turnstile ou tout module externe de fournisseur de calendrier ajouté séparément, peuvent ne pas correspondre entièrement à notre propre norme d’accessibilité. Aucune synchronisation native Google/Outlook n’est incluse dans le pilote actuel. Les tests automatisés et manuels ne peuvent pas détecter tous les obstacles — nous examinons et corrigeons les problèmes au fur et à mesure qu’ils sont signalés, sans considérer un audit ponctuel comme une garantie de conformité totale."
         },
         {
           "heading": "Normes et conformité légale",
@@ -1705,23 +1673,26 @@
     "printCta": "Imprimer / enregistrer en PDF",
     "badge": "Aperçu produit illustratif : pas une garantie de performance",
     "headline": "Appels manqués et soumissions silencieuses, gérés pendant que vous travaillez.",
-    "lede": "TradeCatch renvoie un texto aux appelants manqués, recueille les détails du job et alerte le bon technicien, avec des messages que vous approuvez. Les relances de soumissions montrées ici sont illustratives et prévues pour plus tard.",
+    "lede": "Dans un pilote contrôlé, TradeCatch renvoie un texto aux appelants manqués, recueille les détails et alerte le bon technicien avec des messages que vous approuvez. Les pilotes Starter liés peuvent aussi exécuter une relance planifiée qui s’arrête dès la réponse.",
     "forWhomTitle": "Conçu pour",
     "forWhom": "Les entreprises québécoises de plomberie, CVC et électricité (et métiers similaires) qui perdent du travail entre la sonnerie et le job signé.",
     "doesTitle": "Ce que ça fait",
     "does": [
-      "Texto de retour sur appels manqués et hors heures (FR/EN)",
-      "Détails du lead et photos dans la langue du client",
-      "Alertes technicien / propriétaire de garde",
-      "Séquences de relance prévues (exemples illustratifs seulement)",
-      "Vue de rapports illustrative; aucun tableau de bord client en production"
+      "Texto de retour sur appels manqués et hors heures (pilote contrôlé, FR/EN)",
+      "Détails et photos dans la langue du client (pilote contrôlé)",
+      "Alertes au technicien ou au propriétaire de garde (pilote contrôlé)",
+      "Relance aux jours 1, 3, 7 et 14 (pilote Starter lié)",
+      "Espace pilote cloisonné par organisation; graphique public illustratif"
     ],
     "doesNotTitle": "Ce que ça ne fait pas",
     "doesNot": [
       "Diagnostiquer plomberie, électricité, CVC ou sécurité",
       "Donner des consignes d'urgence non approuvées",
       "Garantir des revenus ou que chaque appelant répondra",
-      "Remplacer les techniciens licenciés"
+      "Remplacer les techniciens qualifiés",
+      "Fournir une synchronisation native Google/Outlook",
+      "Fournir une synchronisation CRM bidirectionnelle native",
+      "Fonctionner comme un SaaS libre-service"
     ],
     "howTitle": "Déroulement",
     "how": [
@@ -1733,20 +1704,20 @@
     "pricingTitle": "Fourchettes de départ",
     "pricing": "Démarrage dès 799 $ d'installation + 375 $/mois. Croissance dès 1 499 $ + 500–750 $/mois. Précisé à l'audit.",
     "pilotTitle": "Programme pilote",
-    "pilot": "Places fondatrices limitées : tarif réduit, accès fondateur, prix verrouillé 12 mois, crédit si nous retardons le lancement.",
+    "pilot": "Places fondatrices limitées par zone : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
     "cta": "Réservez un audit gratuit de 20 minutes. Aucun accès système requis.",
     "contact": "438·993·6997 · tradecatch.ca",
     "footerNote": "Les exemples du site sont illustratifs. Les vrais résultats clients ne sont publiés qu'avec permission."
   },
   "demoVideo": {
-    "title": "Démo produit de 90 secondes",
-    "description": "Démonstration animée TradeCatch : récupération d'appels manqués et relance de soumissions pour entrepreneurs.",
+    "title": "Démo produit (moins de 90 secondes)",
+    "description": "Parcours animé du pilote contrôlé de récupération d'appels manqués, du pilote Starter de relance de soumissions et des modules Growth autorisés de réservation et de pipeline. Tous les chiffres sont illustratifs.",
     "playerTitle": "Démo TradeCatch",
     "close": "Fermer",
     "captionsLabel": "Sous-titres français",
     "transcriptTitle": "Transcription",
-    "transcript": "Un entrepreneur manque un appel. TradeCatch envoie un texto au client, recueille le nom, l'adresse et le problème, alerte le technicien de garde avec une fiche job, puis avise le client quand le technicien accepte. Démonstration illustrative, pas une vraie conversation client.",
+    "transcript": "Vous avez déjà payé pour faire sonner le téléphone. Mais quand vous travaillez, vous ne pouvez pas toujours répondre. Dans un pilote contrôlé, TradeCatch renvoie un texto en quelques secondes, au nom de votre entreprise. Le client reste engagé au lieu d'appeler votre concurrent. Le système recueille le nom du client, le problème, l'urgence, l'adresse et une photo pendant que vous poursuivez le travail. Quand vous regardez votre téléphone, la demande est déjà qualifiée. Le bon technicien reçoit une fiche d'intervention claire. Il peut accepter, refuser ou appeler. Un remplaçant peut être alerté si personne ne répond. L'acceptation avise le client. Les organisations pilotes Growth admissibles et liées réservent dans l'espace; Google et Outlook ne sont pas synchronisés nativement. Les pilotes Starter relancent les soumissions aux jours 1, 3, 7 et 14. Une réponse met fin à la séquence; le pipeline est réservé aux organisations pilotes Growth admissibles et liées. Les chiffres sont illustratifs, sans promesse de résultats. L'espace montre seulement les données de l'organisation liée, sans SaaS en libre-service ni CRM bidirectionnel natif. Ne perdez plus de contrats parce que vous ne pouvez pas répondre. Obtenez votre audit gratuit des opportunités manquées avec TradeCatch.",
     "timelineProgress": "Progression de la timeline",
     "play": "Lecture",
     "pause": "Pause"
@@ -1790,12 +1761,12 @@
       "logout": "Déconnexion"
     },
     "plan": {
-      "starter": "Starter — Récupération de leads",
-      "growth": "Growth — Conversion de leads"
+      "starter": "Starter — Pilote de récupération de leads",
+      "growth": "Growth — Pilote de conversion admissible"
     },
     "dashboard": {
       "headline": "Ce que TradeCatch a fait pour vous",
-      "intro": "Indicateurs de récupération de votre espace d'appels manqués lié. Les montants n'apparaissent que lorsqu'une valeur réelle existe sur un lead.",
+      "intro": "Indicateurs de récupération de votre espace pilote d’appels manqués lié. Les montants n’apparaissent que lorsqu’une valeur réelle existe sur un lead.",
       "notLinked": "Votre client Twilio / appels manqués n'est pas encore lié. Demandez au fondateur de connecter votre numéro, ou définissez MISSED_CALL_CLIENT_ID à la création de l'espace."
     },
     "metrics": {
@@ -1825,7 +1796,7 @@
       "intro": "Les droits du forfait sont appliqués côté serveur — cacher un bouton ne suffit pas.",
       "plan": "Forfait actuel",
       "included": "Inclus dans votre forfait",
-      "growthOnly": "Disponible avec Growth",
+      "growthOnly": "Pilote Growth admissible seulement",
       "clientLinked": "Client appels manqués lié",
       "integrations": "Notifications et CRM",
       "integrationsIntro": "Alertes propriétaire et webhook CRM/automatisation sortant (Zapier, Make, HubSpot, etc.). Les échecs sont relancés via DLQ.",
@@ -1850,7 +1821,7 @@
     },
     "bookings": {
       "headline": "Rendez-vous",
-      "intro": "Réservez des jobs et envoyez un SMS de confirmation quand un téléphone client et un numéro Twilio sont liés.",
+      "intro": "Pilote Growth admissible : réservez les interventions dans l’espace et envoyez un SMS de confirmation lorsque les numéros du client et de Twilio sont liés. Il ne s’agit pas d’une synchronisation native Google/Outlook.",
       "empty": "Aucun rendez-vous pour l'instant. Réservez-en un ci-dessous.",
       "entitlement": "La prise de rendez-vous n'est pas dans votre forfait.",
       "add": "Réserver un rendez-vous",
@@ -1866,14 +1837,14 @@
     },
     "pipeline": {
       "headline": "Pipeline",
-      "intro": "Déplacez les cartes d'étape en étape. Gagné peut enregistrer un revenu attribué si une valeur est définie.",
+      "intro": "Pilote Growth admissible : déplacez les cartes d’une étape à l’autre. Le statut gagné peut enregistrer un revenu attribué lorsqu’une valeur réelle est définie.",
       "empty": "Aucune carte pipeline. Réserver un rendez-vous en crée une.",
       "entitlement": "Le pipeline avancé n'est pas dans votre forfait.",
       "error": "Impossible de déplacer la carte."
     },
     "reviews": {
       "headline": "Demandes d'avis",
-      "intro": "Après un job marqué terminé, TradeCatch peut planifier un SMS d'avis Google si une URL est définie.",
+      "intro": "Pilote Growth admissible : après une intervention marquée terminée, TradeCatch peut planifier un SMS de demande d’avis Google lorsqu’une URL est définie.",
       "empty": "Aucune demande d'avis pour l'instant.",
       "entitlement": "L'automatisation des avis n'est pas dans votre forfait.",
       "setUrl": "Lien d'avis Google",
@@ -1887,7 +1858,7 @@
     },
     "timeline": {
       "headline": "Chronologie d'activité",
-      "intro": "Rendez-vous récents, mouvements pipeline et autres événements de cet espace.",
+      "intro": "Activité pilote de cette organisation seulement, y compris les réservations et les mouvements de pipeline Growth autorisés.",
       "empty": "Aucun événement pour l'instant.",
       "entitlement": "La chronologie n'est pas disponible dans votre forfait."
     },
@@ -1911,13 +1882,13 @@
     },
     "websiteLeads": {
       "headline": "Leads site web",
-      "intro": "Leads capturés depuis le site de l'entrepreneur via la clé API TradeCatch — isolés à cette organisation.",
+      "intro": "Leads du pilote Starter lié capturés depuis le site de l’entrepreneur avec sa clé API TradeCatch — isolés à cette organisation.",
       "empty": "Aucun lead web pour l'instant. Générez une clé API dans Réglages et branchez votre formulaire sur POST /api/website-leads.",
       "entitlement": "La capture de leads web n'est pas dans votre forfait."
     },
     "quotes": {
       "headline": "Relance de soumissions",
-      "intro": "Séquences à J+1 / J+3 / J+7 / J+14 après l'envoi. L'automatisation s'arrête sur réponse, désabonnement, gagné/perdu ou prise en charge humaine.",
+      "intro": "Séquences du pilote Starter lié à J+1 / J+3 / J+7 / J+14 après l’envoi. L’automatisation s’arrête sur réponse, désabonnement, gagné/perdu ou prise en charge humaine.",
       "empty": "Aucun fil de soumission. Ajoutez un téléphone client ci-dessous pour démarrer une séquence.",
       "entitlement": "La relance de soumissions n'est pas dans votre forfait.",
       "add": "Démarrer une séquence de relance",
@@ -1938,8 +1909,8 @@
       "resolve": "Résoudre"
     },
     "upsell": {
-      "title": "Vous voudrez plus tard la prise de rendez-vous et un suivi revenus plus clair ?",
-      "body": "Growth ajoute la prise de rendez-vous, les vues pipeline et les demandes d'avis — cadré avec le fondateur une fois que votre récupération rapporte déjà.",
+      "title": "Besoin des modules pilotes Growth admissibles?",
+      "body": "Pour les organisations liées, le pilote Growth ajoute la réservation dans l’espace, le pipeline, l’attribution et les demandes d’avis. Le fondateur active chaque droit; aucune synchronisation native Google/Outlook n’est incluse.",
       "cta": "Voir Growth sur la page tarifs"
     }
   }

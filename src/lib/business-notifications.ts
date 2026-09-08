@@ -80,7 +80,13 @@ export async function sendBusinessNotifyEmail(
 
 /** Optional SMS notify to owner phone via injected port. */
 export async function sendBusinessNotifySms(input: {
-  sms: { send: (m: { toE164: string; fromE164: string; body: string }) => Promise<unknown> };
+  sms: {
+    send: (m: {
+      toE164: string;
+      fromE164: string;
+      body: string;
+    }) => Promise<unknown>;
+  };
   toE164: string;
   fromE164: string;
   body: string;

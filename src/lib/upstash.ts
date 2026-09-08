@@ -59,8 +59,7 @@ export async function upstashRateLimit(input: {
     await upstashCommand(["EXPIRE", redisKey, ttlSec], env);
   }
   const ttl = Number(await upstashCommand(["TTL", redisKey], env));
-  const resetAt =
-    Date.now() + (ttl > 0 ? ttl * 1000 : input.windowMs);
+  const resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : input.windowMs);
   const allowed = count <= input.limit;
   return {
     allowed,

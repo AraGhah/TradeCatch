@@ -75,7 +75,9 @@
   --mono-on-ink: rgba(255, 255, 255, 0.64);
 
   /* Shadows */
-  --shadow-card: 0 1px 2px rgb(var(--ink-rgb) / 0.04), 0 8px 24px -8px rgb(var(--ink-rgb) / 0.08);
+  --shadow-card:
+    0 1px 2px rgb(var(--ink-rgb) / 0.04),
+    0 8px 24px -8px rgb(var(--ink-rgb) / 0.08);
   --shadow-card-hover: 0 26px 46px -28px rgb(var(--ink-rgb) / 0.34);
   --shadow-cta: 0 14px 34px -16px rgba(228, 118, 43, 0.8);
   --shadow-ink-panel: 0 40px 70px -44px rgb(var(--ink-rgb) / 0.7);
@@ -164,7 +166,9 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-wrap: pretty;
-  transition: background-color 0.25s var(--ease-out), color 0.25s var(--ease-out);
+  transition:
+    background-color 0.25s var(--ease-out),
+    color 0.25s var(--ease-out);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -198,7 +202,11 @@ h4 {
     linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size: 64px 64px;
-  -webkit-mask-image: radial-gradient(120% 80% at 30% 0%, #000, transparent 72%);
+  -webkit-mask-image: radial-gradient(
+    120% 80% at 30% 0%,
+    #000,
+    transparent 72%
+  );
   mask-image: radial-gradient(120% 80% at 30% 0%, #000, transparent 72%);
 }
 
@@ -207,7 +215,11 @@ h4 {
     linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
   background-size: 64px 64px;
-  -webkit-mask-image: radial-gradient(120% 80% at 50% 0%, #000, transparent 72%);
+  -webkit-mask-image: radial-gradient(
+    120% 80% at 50% 0%,
+    #000,
+    transparent 72%
+  );
   mask-image: radial-gradient(120% 80% at 50% 0%, #000, transparent 72%);
 }
 
@@ -249,11 +261,9 @@ h4 {
 /* Motion */
 @keyframes tcIn {
   from {
-    opacity: 0;
     transform: translateY(12px);
   }
   to {
-    opacity: 1;
     transform: none;
   }
 }
@@ -396,5 +406,3 @@ body.demo-video-active .sticky-audit-cta {
 body.demo-video-active {
   overflow: hidden;
 }
-
-

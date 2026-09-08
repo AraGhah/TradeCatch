@@ -5,13 +5,12 @@ import { requestMagicLink } from "@/product/saas/auth/magic-link";
 
 export const dynamic = "force-dynamic";
 
-const bodySchema = z.object({
-  email: z.string().email().max(200),
-  locale: z.enum(["en", "fr"]).default("en"),
-  /** Pilot onboarding: create a Starter org when the email is new. */
-  companyName: z.string().trim().min(2).max(120).optional(),
-  plan: z.enum(["starter", "growth"]).optional(),
-});
+const bodySchema = z
+  .object({
+    email: z.string().trim().email().max(200),
+    locale: z.enum(["en", "fr"]).default("en"),
+  })
+  .strict();
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
@@ -43,20 +42,21 @@ export async function POST(request: NextRequest) {
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     request.nextUrl.origin;
 
-  const result = await requestMagicLink({
-    email: parsed.data.email,
-    locale: parsed.data.locale,
-    origin,
-    createOrgIfMissing: parsed.data.companyName
-      ? {
-          name: parsed.data.companyName,
-          plan: parsed.data.plan ?? "starter",
-        }
-      : undefined,
-  });
+  let result: Awaited<ReturnType<typeof requestMagicLink>>;
+  try {
+    result = await requestMagicLink({
+      email: parsed.data.email,
+      locale: parsed.data.locale,
+      origin,
+    });
+  } catch (err) {
+    console.error("[auth/magic-link] request failed", err);
+    return NextResponse.json({ ok: true });
+  }
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 503 });
+    console.error("[auth/magic-link] request failed", result.error);
+    return NextResponse.json({ ok: true });
   }
 
   return NextResponse.json({

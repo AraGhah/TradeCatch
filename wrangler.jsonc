@@ -1,19 +1,30 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"main": ".open-next/worker.js",
-	"name": "tradecatch",
-	"compatibility_date": "2026-08-03",
-	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-	"assets": {
-		"directory": ".open-next/assets",
-		"binding": "ASSETS"
-	},
-	"services": [
-		{
-			// Self-reference service binding, the service name must match the worker name
-			// see https://opennext.js.org/cloudflare/caching
-			"binding": "WORKER_SELF_REFERENCE",
-			"service": "tradecatch"
-		}
-	]
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": "worker.ts",
+  "name": "tradecatch",
+  "compatibility_date": "2026-09-08",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Production values are founder-managed in the Cloudflare dashboard for the
+  // first pilot. Preserve plaintext vars on deploy; Wrangler already preserves
+  // secrets. Move non-secret values into versioned environments when finalized.
+  "keep_vars": true,
+  "triggers": {
+    "crons": ["* * * * *", "*/15 * * * *", "15 6 * * *"],
+  },
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+  },
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      // Self-reference service binding, the service name must match the worker name
+      // see https://opennext.js.org/cloudflare/caching
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "tradecatch",
+    },
+  ],
 }

@@ -37,6 +37,9 @@ export default defineConfig({
       PORT: String(E2E_PORT),
       NEXT_PUBLIC_SITE_URL: E2E_ORIGIN,
       TRADECATCH_E2E: "1",
+      AUTH_SECRET: "tradecatch-e2e-session-secret-not-for-production",
+      SAAS_DEV_LOGIN: "1",
+      MISSED_CALL_OPS_SECRET: "tradecatch-e2e-ops-secret-not-for-production",
     },
   },
   use: {

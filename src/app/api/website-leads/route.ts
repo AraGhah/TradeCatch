@@ -67,11 +67,17 @@ export async function POST(request: NextRequest) {
 
   const org = await getSaasStore().getOrganization(organizationId);
   if (!org || org.status !== "active") {
-    return NextResponse.json({ error: "Organization unavailable." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Organization unavailable." },
+      { status: 403 },
+    );
   }
   if (!orgHasFeature(org.plan, "WEBSITE_LEAD_CAPTURE")) {
     return NextResponse.json(
-      { error: "Website lead capture is not on this plan.", feature: "WEBSITE_LEAD_CAPTURE" },
+      {
+        error: "Website lead capture is not on this plan.",
+        feature: "WEBSITE_LEAD_CAPTURE",
+      },
       { status: 402 },
     );
   }

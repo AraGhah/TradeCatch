@@ -7,10 +7,7 @@ import { sendBookAuditEmails } from "@/lib/email";
 import { forwardLeadToCrm } from "@/lib/leads";
 import { reportError } from "@/lib/errors";
 import { createMemoryStore } from "@/lib/store";
-import {
-  isUpstashConfigured,
-  upstashClaimIdempotencyKey,
-} from "@/lib/upstash";
+import { isUpstashConfigured, upstashClaimIdempotencyKey } from "@/lib/upstash";
 import {
   claimBookAuditDelivery,
   persistBookAuditLead,

@@ -42,7 +42,9 @@ export async function POST(request: NextRequest) {
   }
 
   const { store: missedCallStore } = await ensureMissedCallReady();
-  const client = await missedCallStore.getClient(parsed.data.missedCallClientId);
+  const client = await missedCallStore.getClient(
+    parsed.data.missedCallClientId,
+  );
   if (!client) {
     return NextResponse.json(
       { error: "Missed-call client not found. Save client config first." },

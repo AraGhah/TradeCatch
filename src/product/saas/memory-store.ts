@@ -1,11 +1,7 @@
 import { featuresForPlan, type PlanId } from "./entitlements";
 import { newId, slugify } from "./ids";
-import {
-  normalizeEmail,
-  type SaasStore,
-} from "./store";
+import { normalizeEmail, type SaasStore } from "./store";
 import type {
-  CreateOrganizationInput,
   MagicLink,
   Membership,
   Organization,

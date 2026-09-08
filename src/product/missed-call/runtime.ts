@@ -40,7 +40,7 @@ function createStore(): { store: MissedCallStore; durable: boolean } {
 
   if (isProductionRuntime() && !isE2eHarness()) {
     throw new Error(
-      "[missed-call] Refusing in-memory store in production. Set DATABASE_URL + MISSED_CALL_DURABLE_STORE=1 and apply schema.sql before accepting traffic.",
+      "[missed-call] Refusing in-memory store in production. Set DATABASE_URL + MISSED_CALL_DURABLE_STORE=1 and run npm run db:schema before accepting traffic.",
     );
   }
 

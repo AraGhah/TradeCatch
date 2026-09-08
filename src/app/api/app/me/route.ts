@@ -1,8 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  FEATURE_LABELS,
-  featuresForPlan,
-} from "@/product/saas/entitlements";
+import { FEATURE_LABELS, featuresForPlan } from "@/product/saas/entitlements";
 import {
   requireTenantContext,
   unauthorizedTenantResponse,
@@ -36,10 +33,7 @@ export async function GET() {
     membership: { role: membership.role },
     features,
     featureLabels: Object.fromEntries(
-      featuresForPlan(organization.plan).map((f) => [
-        f,
-        FEATURE_LABELS[f],
-      ]),
+      featuresForPlan(organization.plan).map((f) => [f, FEATURE_LABELS[f]]),
     ),
   });
 }

@@ -7,7 +7,10 @@ import {
   unauthorizedTenantResponse,
 } from "@/product/saas/tenant";
 import { getStarterStore } from "@/product/starter/runtime";
-import { getStarterServices, looksLikeE164 } from "@/product/starter/org-context";
+import {
+  getStarterServices,
+  looksLikeE164,
+} from "@/product/starter/org-context";
 
 export const dynamic = "force-dynamic";
 

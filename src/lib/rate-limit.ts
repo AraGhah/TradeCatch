@@ -103,7 +103,7 @@ function softClientHint(request: Request): string {
  * is known to sanitize.
  *
  * - Vercel (`VERCEL=1`): `x-vercel-forwarded-for`, then platform `x-real-ip`
- * - Cloudflare (`CF-Connecting-IP` present): that header alone
+ * - Cloudflare (`CF_TRUSTED=1`): `CF-Connecting-IP` alone
  * - Explicit trust (`TRUST_PROXY_HEADERS=1`): classic proxy chain
  * - Non-production: allow forwarded headers for local/dev/e2e
  * - Otherwise: never trust public forwarding headers → `"unknown"`

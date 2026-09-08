@@ -98,7 +98,10 @@ export async function POST(request: NextRequest) {
   const orgId = auth.ctx.organization.id;
   const item = await store.getInboxItem(parsed.data.itemId, orgId);
   if (!item) {
-    return NextResponse.json({ error: "Inbox item not found." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Inbox item not found." },
+      { status: 404 },
+    );
   }
 
   if (parsed.data.action === "claim") {

@@ -183,7 +183,9 @@ export function HeroMockup({
             <span className="font-mono text-[11px] font-medium text-navy">
               {statusTime}
             </span>
-            <span className="font-mono text-[10px] text-[#5C6875]">{statusNetwork}</span>
+            <span className="font-mono text-[10px] text-[#3D4855]">
+              {statusNetwork}
+            </span>
           </div>
 
           <div className="flex items-center gap-3 border-b border-[rgba(12,20,30,0.08)] bg-white px-4 py-3">
@@ -215,7 +217,7 @@ export function HeroMockup({
             {typing ? <TypingDots side={typing} /> : null}
           </div>
 
-          <p className="border-t border-[rgba(12,20,30,0.08)] px-4 py-2.5 text-center font-mono text-[10px] tracking-[0.04em] text-[#5C6875]">
+          <p className="border-t border-[rgba(12,20,30,0.08)] px-4 py-2.5 text-center font-mono text-[10px] tracking-[0.04em] text-[#3D4855]">
             {disclaimer}
           </p>
         </div>
@@ -223,16 +225,16 @@ export function HeroMockup({
 
       <div
         className={`absolute bottom-[54px] left-[-8px] z-10 rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-white px-4 py-3 shadow-[0_26px_46px_-28px_rgba(12,20,30,0.34)] transition-[opacity,transform] duration-500 ${
-          floatVisible
-            ? "translate-y-0 opacity-100"
-            : "translate-y-2 opacity-0"
+          floatVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
         }`}
         aria-hidden={!floatVisible}
       >
-        <p className="font-mono text-[10px] tracking-[0.1em] text-[#5C6875] uppercase">
+        <p className="font-mono text-[10px] tracking-[0.1em] text-[#3D4855] uppercase">
           {floatLabel}
         </p>
-        <p className="mt-0.5 text-[14px] font-semibold text-navy">{floatTitle}</p>
+        <p className="mt-0.5 text-[14px] font-semibold text-navy">
+          {floatTitle}
+        </p>
       </div>
     </div>
   );
@@ -262,7 +264,9 @@ function MessageBubble({ msg }: { msg: Msg }) {
           {msg.text}
         </span>
         {msg.time ? (
-          <span className="font-mono text-[10px] text-[#5C6875]">{msg.time}</span>
+          <span className="font-mono text-[10px] text-[#3D4855]">
+            {msg.time}
+          </span>
         ) : null}
       </div>
     );
@@ -280,7 +284,9 @@ function MessageBubble({ msg }: { msg: Msg }) {
             MMS
           </span>
         </div>
-        <p className="px-3 py-2 text-[12.5px] font-medium text-navy">{msg.text}</p>
+        <p className="px-3 py-2 text-[12.5px] font-medium text-navy">
+          {msg.text}
+        </p>
       </div>
     );
   }

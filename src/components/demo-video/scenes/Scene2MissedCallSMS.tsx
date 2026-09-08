@@ -30,8 +30,12 @@ export function Scene2MissedCallSMS({ p, locale, copy }: SceneProps) {
               <p className="text-[13px] tracking-wide text-orange uppercase">
                 {copy.missedCallLabel}
               </p>
-              <p className="text-[17px] font-semibold text-white">{DEMO_DATA.customer}</p>
-              <p className="font-mono text-[13px] text-white/45">{DEMO_DATA.customerPhone}</p>
+              <p className="text-[17px] font-semibold text-white">
+                {DEMO_DATA.customer}
+              </p>
+              <p className="font-mono text-[13px] text-white/45">
+                {DEMO_DATA.customerPhone}
+              </p>
             </div>
 
             {showLang ? (
@@ -39,20 +43,26 @@ export function Scene2MissedCallSMS({ p, locale, copy }: SceneProps) {
                 <div className="flex gap-2">
                   <span
                     className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${
-                      !showSecond ? "bg-orange text-navy" : "bg-white/10 text-white/70"
+                      !showSecond
+                        ? "bg-orange text-navy"
+                        : "bg-white/10 text-white/70"
                     }`}
                   >
                     {firstTag}
                   </span>
                   <span
                     className={`rounded-full px-3.5 py-1.5 text-[13px] font-semibold ${
-                      showSecond ? "bg-orange text-navy" : "bg-white/10 text-white/70"
+                      showSecond
+                        ? "bg-orange text-navy"
+                        : "bg-white/10 text-white/70"
                     }`}
                   >
                     {secondTag}
                   </span>
                 </div>
-                <p className="text-[12px] text-white/45">{copy.bilingualLabel}</p>
+                <p className="text-[12px] text-white/45">
+                  {copy.bilingualLabel}
+                </p>
               </div>
             ) : null}
 
@@ -65,7 +75,11 @@ export function Scene2MissedCallSMS({ p, locale, copy }: SceneProps) {
                 />
               ) : null}
               {showSecond ? (
-                <OutgoingBubble text={typedSecond} time="2:48 PM" badge={copy.autoSecondLang} />
+                <OutgoingBubble
+                  text={typedSecond}
+                  time="2:48 PM"
+                  badge={copy.autoSecondLang}
+                />
               ) : null}
             </div>
           </div>
@@ -98,7 +112,7 @@ function OutgoingBubble({
             {badge}
           </span>
         ) : null}
-        <span className="text-[12px] text-white/40">{time}</span>
+        <span className="text-[12px] text-white/60">{time}</span>
       </div>
     </div>
   );
