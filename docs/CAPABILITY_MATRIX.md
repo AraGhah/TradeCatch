@@ -41,6 +41,11 @@ Status legend:
 | Outbound CRM/automation webhook + DLQ/retry             | pilot        | org `crmWebhookUrl` + `/api/growth/crm/tick`                       | `tc_crm_dlq` + memory                  | unit       | Fixed event envelope with one org bearer secret; not native OAuth, field mapping, inbound sync, or conflict resolution               |
 | Advanced analytics dashboard / exports                  | pilot        | `/api/app/analytics` (+ `?format=csv`)                             | growth lists                           | unit       | CSV export for entitled Growth orgs                                                                                                  |
 | Real calendar provider scheduling                       | planned      | —                                                                  | —                                      | —          | Phase 4 — Google/Outlook sync not built; in-app booking is pilot                                                                     |
+| AI inbound call answering (AI Receptionist plan)        | planned      | —                                                                  | —                                      | —          | No voice-answer webhook, ASR/TTS, or conversation runtime in this repo. Sold as a founder-delivered engagement, not running software |
+| AI phone qualification + lead classification            | planned      | —                                                                  | —                                      | —          | Depends on the answering runtime above                                                                                               |
+| Appointment booking by phone (AI Receptionist plan)     | planned      | —                                                                  | —                                      | —          | Distinct from the pilot in-app booking product; no phone path exists                                                                 |
+| Human call transfer + emergency call routing            | planned      | —                                                                  | —                                      | —          | No call-control runtime; `/api/twilio/voice/status` only detects missed calls                                                        |
+| Call summaries / transcripts + owner call notifications | planned      | —                                                                  | —                                      | —          | Marketing page renders a clearly-labelled sample summary, not product output                                                         |
 
 ## Recommended repair order
 
@@ -59,6 +64,7 @@ See README production go-live checklist. Do not call TradeCatch production-ready
 3. Do not restore a claim to “live” until: route + durable store + monitoring + acceptance tests exist.
 4. Module A must not be marketed as production SaaS until `durableMissedCallStore` and Twilio are green in `/api/health` (ops view).
 5. Starter quote follow-up / website capture may be described as **pilot** for linked orgs — not as self-serve SaaS launch.
+6. The AI Receptionist plan may be sold and described as a **founder-configured engagement scoped during onboarding**, never as running or self-serve software. No page may state or imply that AI call answering, phone booking, call transfer, emergency routing, or call summaries are live today. The premium CTA stays "Book a demo" — never "Buy now" — until the answering runtime exists and this table moves off **planned**. Any sample call summary must stay visibly labelled as an example.
 
 ## P0 launch blockers (engineering)
 

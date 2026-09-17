@@ -22,7 +22,8 @@
     "close": "Fermer",
     "toggleThemeToDark": "Passer au mode sombre",
     "toggleThemeToLight": "Passer au mode clair",
-    "skipToContent": "Passer au contenu principal"
+    "skipToContent": "Passer au contenu principal",
+    "aiReceptionist": "Réceptionniste IA"
   },
   "cta": {
     "primary": "Réserver un audit gratuit de 20 minutes",
@@ -72,7 +73,7 @@
       "eyebrow": "Récupération de revenus pour les métiers au Québec",
       "headline": "Récupérez les jobs que vous payez déjà pour générer.",
       "accentWord": "Récupérez",
-      "subheadline": "Les pilotes contrôlés récupèrent les appels manqués et les leads web. Les pilotes Starter liés ajoutent la relance de soumissions; les pilotes Growth admissibles ajoutent la réservation dans l’espace, le pipeline, l’attribution et les avis. Le tout est encadré par le fondateur, et non offert en SaaS libre-service.",
+      "subheadline": "TradeCatch récupère les appels manqués, relance les soumissions et prend les rendez-vous. Avec le Réceptionniste IA, le système répond aussi à vos appels entrants 24/7, en français et en anglais. Pilotes dirigés par le fondateur, sans SaaS en libre-service.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la démo de 90 secondes",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
@@ -443,11 +444,11 @@
       "items": [
         {
           "q": "Est-ce que TradeCatch répond au téléphone comme une réceptionniste?",
-          "a": "Non. Quand un appel est manqué, TradeCatch envoie immédiatement un texto en français ou en anglais, recueille les détails du job et alerte votre technicien. Les prix, le diagnostic et la négociation restent avec votre équipe."
+          "a": "Avec Starter et Growth, non : un appel manqué reçoit tout de suite un texto bilingue, les détails du job sont recueillis et votre technicien est alerté. Avec le forfait Réceptionniste IA, il répond bel et bien aux appels entrants 24/7, et peut les qualifier, les réserver ou les transférer."
         },
         {
           "q": "Est-ce que ça remplace notre réceptionniste?",
-          "a": "Non. Ça absorbe le travail répétitif d'appels manqués et de relances pour que votre personnel passe son temps sur les conversations qui ont vraiment besoin d'un humain."
+          "a": "Non. Starter et Growth absorbent le travail répétitif d’appels manqués et de relances. Le forfait Réceptionniste IA répond aux appels que votre équipe ne peut pas prendre et transfère à une personne tout ce qui est délicat, complexe ou urgent. Il est conçu pour couvrir les appels qui resteraient sans réponse, pas pour remplacer votre monde."
         },
         {
           "q": "Que se passe-t-il en cas d'urgence?",
@@ -522,7 +523,26 @@
       "emailLabel": "Courriel",
       "statement": "Je m'assois avec votre équipe, je cartographie comment les appels et les soumissions circulent vraiment dans votre entreprise, j'écris chaque message avec vous, et je teste chaque scénario avant qu'un seul client le voie. Ensuite, je continue de surveiller après le lancement.",
       "talkCta": "Réserver un audit gratuit de 20 minutes",
-      "emailCta": "Écrire directement"
+      "emailCta": "Écrire directement",
+      "workLabel": "Comment le travail se fait",
+      "work": [
+        {
+          "title": "Audit",
+          "body": "On cartographie le parcours réel de vos appels, soumissions et chantiers."
+        },
+        {
+          "title": "Construction",
+          "body": "Messages, acheminement et conditions d’arrêt écrits avec vous, jamais en gabarit."
+        },
+        {
+          "title": "Tests",
+          "body": "Chaque scénario est testé de bout en bout avant qu’un client le voie."
+        },
+        {
+          "title": "Surveillance",
+          "body": "Le système reste surveillé après le lancement et ajusté selon votre saison."
+        }
+      ]
     },
     "pilot": {
       "badge": "Programme pilote",
@@ -585,24 +605,31 @@
     },
     "pricingPreview": {
       "eyebrow": "Tarifs",
-      "headline": "Récupérer des leads. Ou les convertir plus loin.",
-      "intro": "Dans les pilotes encadrés, Starter récupère les leads et relance les soumissions; les organisations Growth admissibles ajoutent la réservation dans l’espace, le pipeline, l’attribution et les avis. Précisé à l’audit.",
+      "headline": "Récupérez vos demandes, convertissez-les, ou laissez le téléphone répondre.",
+      "intro": "Trois niveaux, chacun bâti sur le précédent. Définis lors de l’audit, avant tout engagement.",
       "tiers": [
         {
           "name": "Starter",
-          "price": "799 $ d'installation",
-          "cadence": "375 $ / mois",
-          "idealFor": "Pilote Starter — appels manqués, demandes web, relance de soumissions."
+          "price": "799 $ installation",
+          "cadence": "puis 375 $ / mois",
+          "idealFor": "Appels manqués, demandes web et relance des soumissions."
         },
         {
           "name": "Growth",
-          "price": "1 499 $ d'installation",
-          "cadence": "500 $–750 $ / mois",
-          "idealFor": "Pilote Growth admissible — réservation dans l’espace, pipeline, attribution, avis."
+          "price": "1 499 $ installation",
+          "cadence": "puis 500–750 $ / mois",
+          "idealFor": "Tout Starter, plus la prise de rendez-vous, le pipeline, l’attribution et les avis."
+        },
+        {
+          "name": "Réceptionniste IA",
+          "price": "1 999,99 $ installation",
+          "cadence": "puis 1 000 $ / mois",
+          "idealFor": "Tout Growth, plus une réception bilingue qui répond aux appels 24/7."
         }
       ],
       "cta": "Voir tous les tarifs",
-      "note": "Forfaits sur mesure disponibles pour multi-sites ou volume élevé."
+      "receptionistCta": "Le fonctionnement du Réceptionniste IA",
+      "note": "Portées sur mesure pour les entreprises multi-sites ou à fort volume."
     },
     "proofExamples": {
       "eyebrow": "Exemples produit",
@@ -751,6 +778,20 @@
           "Cas nécessitant une revue humaine (pilote)",
           "Pipeline et attribution Growth (pilote admissible; valeurs réelles seulement)"
         ]
+      },
+      {
+        "title": "Réception IA · Pilote premium configuré",
+        "purpose": "Répondre aux appels que votre équipe ne peut pas prendre, au lieu de les rappeler par texto après coup.",
+        "items": [
+          "Réponse téléphonique bilingue, 24/7 et hors des heures d’ouverture",
+          "Base de connaissances d’entreprise configurée et approuvée par vous",
+          "Qualification des prospects pendant l’appel",
+          "Prise de rendez-vous par téléphone",
+          "Transfert à un humain : propriétaire, bureau, ventes ou technicien de garde",
+          "Acheminement d’urgence défini par entreprise",
+          "Résumés d’appel structurés et prochaines actions",
+          "Transcriptions et enregistrements lorsque activés"
+        ]
       }
     ],
     "laterTitle": "Modules supplémentaires et ajouts futurs",
@@ -770,7 +811,8 @@
       "Routage technicien (pilote contrôlé)",
       "Relance de soumissions (pilote Starter)",
       "Réservation dans l’espace (pilote Growth admissible)",
-      "Rapports de l’espace (pilote) · Exemples marketing illustratifs"
+      "Rapports de l’espace (pilote) · Exemples marketing illustratifs",
+      "Réponse téléphonique IA (forfait Réceptionniste IA)"
     ]
   },
   "howItWorks": {
@@ -927,20 +969,20 @@
   },
   "pricing": {
     "eyebrow": "Tarifs",
-    "headline": "Deux forfaits. Un objectif : arrêter de perdre les leads que vous payez déjà à générer.",
-    "intro": "Pilotes encadrés seulement : Starter récupère les appels manqués, les demandes web et les soumissions oubliées. Les organisations Growth admissibles et liées ajoutent la réservation dans l’espace, le pipeline, l’attribution et les avis.",
+    "headline": "Trois forfaits. Un seul but : arrêter de perdre des clients que vous payez déjà pour attirer.",
+    "intro": "Uniquement en pilote dirigé par le fondateur. Starter récupère les appels manqués, les demandes web et les soumissions oubliées. Growth ajoute la prise de rendez-vous, le pipeline, l’attribution et les avis. Réceptionniste IA ajoute une réception bilingue qui répond au téléphone 24/7.",
     "reassurance": "Installation fixe. Mois par mois. Résiliation avec préavis.",
-    "metaDescription": "Pilotes TradeCatch encadrés : récupération et relance Starter, puis réservation, pipeline, attribution et avis pour les organisations Growth admissibles.",
-    "mostPopular": "Recommandé",
+    "metaDescription": "Tarifs TradeCatch pour entrepreneurs : Starter pour la récupération des appels manqués, Growth pour la prise de rendez-vous et les relances, et le forfait Réceptionniste IA qui répond aux appels 24/7 en français et en anglais.",
     "principles": [
-      "Pilote Starter = récupérer plus de leads",
-      "Pilote Growth admissible = convertir plus de leads (inclut Starter)",
-      "Cadré à l'audit avant tout engagement"
+      "Pilote Starter = récupérer plus de demandes",
+      "Pilote Growth = convertir plus de demandes (inclut Starter)",
+      "Réceptionniste IA = répondre, qualifier et réserver par téléphone (inclut Starter et Growth)",
+      "Défini lors de l’audit, avant tout engagement"
     ],
     "tiers": [
       {
         "name": "Starter",
-        "tagline": "Récupérer plus de leads · Pilote encadré",
+        "tagline": "Récupérez plus de demandes · Pilote fondateur",
         "outcome": "Dans un pilote Starter configuré, empêchez les appels manqués, les demandes web et les soumissions oubliées de disparaître.",
         "price": "799 $ d'installation",
         "setupAmount": "799 $",
@@ -972,11 +1014,13 @@
             "title": "Mesurer",
             "items": ["Rapports de base dans l’espace lié (pilote)"]
           }
-        ]
+        ],
+        "planInterest": "starter"
       },
       {
         "name": "Growth",
-        "badge": "Le plus populaire",
+        "badge": "Le plus choisi",
+        "emphasis": "featured",
         "tagline": "Convertir plus de leads · Pilote admissible",
         "outcome": "Pour les organisations pilotes Growth admissibles et liées : réservez dans l’espace, suivez les occasions, attribuez les valeurs gagnées réelles et demandez des avis.",
         "price": "1 499 $ d'installation",
@@ -985,7 +1029,6 @@
         "monthlyAmount": "500 $–750 $",
         "idealFor": "Équipes pilotes prêtes à mener les leads récupérés vers des réservations dans l’espace et des revenus gagnés enregistrés.",
         "reassuranceLine": "Le tarif mensuel exact est fixé par écrit à l'audit selon le nombre de techniciens et le volume. Growth inclut tout Starter.",
-        "everythingInStarter": "Tout ce qui est dans le pilote Starter configuré, plus :",
         "groups": [
           {
             "title": "Réserver",
@@ -1013,7 +1056,63 @@
             "title": "Grandir",
             "items": ["SMS de demande d’avis Google (pilote Growth)"]
           }
-        ]
+        ],
+        "includesPrevious": "Tout ce qui est dans le pilote Starter configuré, plus :",
+        "planInterest": "growth"
+      },
+      {
+        "name": "Réceptionniste IA",
+        "badge": "Le plus complet",
+        "emphasis": "premium",
+        "tagline": "Automatisez votre réception · Pilote configuré",
+        "outcome": "Votre réception 24/7 pour capter, qualifier, réserver et relancer vos demandes, en français et en anglais.",
+        "price": "1 999,99 $ installation",
+        "setupAmount": "1 999,99 $",
+        "cadence": "1 000 $ / mois",
+        "monthlyAmount": "1 000 $",
+        "idealFor": "Entrepreneurs qui perdent des appels le soir, pendant les chantiers ou plus vite que le bureau peut répondre.",
+        "reassuranceLine": "L’installation couvre la base de connaissances, l’accueil, les règles de réservation, les transferts et l’acheminement d’urgence. Le démarrage est requis avant la mise en ligne de la ligne téléphonique.",
+        "usageNote": "L’utilisation des appels IA est soumise à l’allocation du forfait et aux limites applicables, convenues par écrit lors de la démo.",
+        "includesPrevious": "Tout Starter et tout Growth, plus :",
+        "ctaLabel": "Réserver une démo",
+        "secondaryCtaLabel": "Voir le fonctionnement",
+        "groups": [
+          {
+            "title": "Répondre",
+            "items": [
+              "Réponse téléphonique 24/7, y compris hors des heures d’ouverture",
+              "Français et anglais, reconnus pendant l’appel",
+              "Réponses tirées des informations d’entreprise que vous approuvez"
+            ]
+          },
+          {
+            "title": "Qualifier",
+            "items": [
+              "Client, service, adresse et détails du travail notés pendant l’appel",
+              "Urgence, résidentiel ou commercial, nouveau ou ancien client",
+              "Catégories : prospect chaud, qualifié, demande générale, urgence, fournisseur, pourriel"
+            ]
+          },
+          {
+            "title": "Réserver et acheminer",
+            "items": [
+              "Prise de rendez-vous par téléphone selon les disponibilités, les tampons et les zones desservies",
+              "Transfert à un humain : propriétaire, bureau, ventes ou technicien de garde",
+              "Règles d’urgence définies par votre entreprise"
+            ]
+          },
+          {
+            "title": "Résumer",
+            "items": [
+              "Résumé d’appel structuré et prochaine action après chaque appel important",
+              "Transcriptions et enregistrements lorsque activés",
+              "Rapports d’appels et de réception dans l’espace lié"
+            ]
+          }
+        ],
+        "ctaHref": "/book-audit",
+        "secondaryCtaHref": "/ai-receptionist",
+        "planInterest": "ai-receptionist"
       }
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
@@ -1032,6 +1131,18 @@
       {
         "title": "Fonctionnement des accès pilotes et des droits",
         "body": "Toutes les capacités présentées sont des modules pilotes configurés avec le fondateur, et non un SaaS libre-service. La récupération d’appels manqués est le cœur contrôlé; la capture web et la relance sont des pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’analytique avancée exigent une organisation Growth admissible et liée. Les synchronisations natives Google/Outlook et CRM bidirectionnelle restent prévues."
+      },
+      {
+        "title": "Ce que couvre l’installation du Réceptionniste IA",
+        "body": "Les frais d’installation couvrent la configuration : base de connaissances, accueil et déroulement des conversations, questions de qualification, règles de réservation, cibles de transfert, définitions d’urgence et tests. La ligne n’est mise en service qu’une fois que vous avez approuvé ce qu’elle dit."
+      },
+      {
+        "title": "Utilisation des appels IA",
+        "body": "Le tarif mensuel ne représente pas des appels IA illimités. L’allocation incluse, le traitement des dépassements, l’utilisation SMS et les numéros supplémentaires sont convenus par écrit avant le lancement. Aucun dépassement facturé en silence."
+      },
+      {
+        "title": "Enregistrements, transcriptions et vie privée",
+        "body": "Les enregistrements d’appels et les transcriptions sont disponibles lorsqu’ils sont activés. Ils ne le sont pas automatiquement. Les avis aux appelants et la conservation sont configurés selon les exigences de votre entreprise. Il s’agit d’un réglage produit, pas d’un avis juridique."
       },
       {
         "title": "Pourquoi les prix ont une fourchette",
@@ -1053,13 +1164,109 @@
     "cta": "Réserver un audit gratuit de 20 minutes",
     "setupLabel": "Installation",
     "monthlyLabel": "mois",
-    "thenLabel": "puis"
+    "thenLabel": "puis",
+    "comparison": {
+      "eyebrow": "Comparatif",
+      "title": "Ce que chaque forfait ajoute",
+      "intro": "Chaque forfait conserve tout ce que contient le précédent. Une mise à niveau ne retire jamais une fonction dont vous dépendez déjà.",
+      "featureLabel": "Fonction",
+      "columns": ["Starter", "Growth", "Réceptionniste IA"],
+      "includedLabel": "Inclus",
+      "notIncludedLabel": "Non inclus",
+      "plannedLabel": "Prévu",
+      "rows": [
+        {
+          "feature": "Récupération des appels manqués",
+          "values": ["y", "y", "y"]
+        },
+        {
+          "feature": "SMS bilingues (français et anglais)",
+          "values": ["y", "y", "y"]
+        },
+        {
+          "feature": "Réponse aux demandes du site web",
+          "values": ["y", "y", "y"]
+        },
+        {
+          "feature": "Qualification des prospects",
+          "values": ["y", "y", "y"]
+        },
+        {
+          "feature": "Relance des soumissions",
+          "values": ["y", "y", "y"]
+        },
+        {
+          "feature": "Reprise par un humain",
+          "values": ["y", "y", "y"]
+        },
+        {
+          "feature": "Tableau de bord des prospects",
+          "values": ["y", "y", "y"]
+        },
+        {
+          "feature": "Prise de rendez-vous",
+          "values": ["n", "y", "y"]
+        },
+        {
+          "feature": "Rappels de rendez-vous",
+          "values": ["n", "y", "y"]
+        },
+        {
+          "feature": "Séquences de relance avancées",
+          "values": ["n", "y", "y"]
+        },
+        {
+          "feature": "Pipeline et attribution des revenus",
+          "values": ["n", "y", "y"]
+        },
+        {
+          "feature": "Demandes d’avis",
+          "values": ["n", "y", "y"]
+        },
+        {
+          "feature": "Réponse téléphonique par l’IA",
+          "values": ["n", "n", "y"]
+        },
+        {
+          "feature": "Réceptionniste bilingue 24/7",
+          "values": ["n", "n", "y"]
+        },
+        {
+          "feature": "Qualification pendant l’appel",
+          "values": ["n", "n", "y"]
+        },
+        {
+          "feature": "Prise de rendez-vous par téléphone",
+          "values": ["n", "n", "y"]
+        },
+        {
+          "feature": "Transfert d’appel à un humain",
+          "values": ["n", "n", "y"]
+        },
+        {
+          "feature": "Acheminement des appels d’urgence",
+          "values": ["n", "n", "y"]
+        },
+        {
+          "feature": "Résumés d’appel",
+          "values": ["n", "n", "y"]
+        },
+        {
+          "feature": "Transcriptions et enregistrements lorsque activés",
+          "values": ["n", "n", "y"]
+        },
+        {
+          "feature": "Synchronisation native Google / Outlook",
+          "values": ["p", "p", "p"]
+        }
+      ],
+      "note": "Chaque fonction ci-dessus est un module de pilote configuré par le fondateur, pas un logiciel en libre-service. Les éléments marqués « prévu » ne sont pas encore offerts et ne sont jamais sous-entendus dans une soumission."
+    }
   },
   "about": {
     "eyebrow": "À propos",
     "headline": "Pour les entrepreneurs québécois trop occupés pour courir après chaque occasion.",
     "metaDescription": "TradeCatch est bâti et exploité pour les entreprises de service du Québec, en français et en anglais, avec un contrôle humain sur chaque décision importante.",
-    "caption": "Ara Ghahramanyan · Fondateur",
     "bodyHeadline": "Pas de centre d'appels. Pas de support externalisé. La personne qui l'a construit.",
     "bodyIntro": "TradeCatch est bâti et exploité directement par son fondateur, un développeur logiciel avec une expertise en automatisation qui travaille aux côtés de chaque entrepreneur pour concevoir, installer et gérer le système.",
     "body": [
@@ -1087,7 +1294,35 @@
       "Axé sur le Québec",
       "Bilingue FR/EN",
       "Support direct du fondateur"
-    ]
+    ],
+    "snapshotLabel": "TradeCatch en bref",
+    "snapshot": [
+      {
+        "label": "Basé à",
+        "value": "Montréal · Laval"
+      },
+      {
+        "label": "Langues",
+        "value": "Français et anglais"
+      },
+      {
+        "label": "Conçu pour",
+        "value": "Métiers et services résidentiels"
+      },
+      {
+        "label": "Modèle",
+        "value": "Pilotes dirigés par le fondateur"
+      },
+      {
+        "label": "Forfaits",
+        "value": "Starter · Growth · Réceptionniste IA"
+      },
+      {
+        "label": "Soutien",
+        "value": "Direct, sans centre d’appels"
+      }
+    ],
+    "snapshotNote": "L’installation, les tests et la surveillance sont faits directement. Rien n’est confié à un centre d’appels."
   },
   "bookAudit": {
     "headline": "Réservez un audit gratuit de fuites de revenus de 20 minutes",
@@ -1361,11 +1596,11 @@
     "items": [
       {
         "q": "Est-ce que l'IA parle directement aux clients?",
-        "a": "Non. Quand un appel est manqué, TradeCatch envoie immédiatement un texto en français ou en anglais que vous avez approuvé, recueille les détails du job et alerte votre technicien. Les prix, le diagnostic et la négociation restent avec votre équipe. Il ne répond pas au téléphone comme une réceptionniste."
+        "a": "Ça dépend du forfait. Avec Starter et Growth, le système ne répond pas au téléphone : un appel manqué déclenche un texto immédiat en français ou en anglais que vous avez approuvé, les détails du job sont recueillis et votre technicien est alerté. Avec le forfait Réceptionniste IA, il répond aux appels entrants et parle à l’appelant, uniquement à partir des informations d’entreprise que vous avez approuvées. Dans tous les cas, les prix, le diagnostic et la négociation restent avec votre équipe."
       },
       {
         "q": "Est-ce que ça remplace notre réceptionniste?",
-        "a": "Non. Ça absorbe le travail répétitif d'appels manqués et de relances pour que votre personnel passe son temps sur les conversations qui ont vraiment besoin d'un humain."
+        "a": "Non. Starter et Growth absorbent le travail répétitif d’appels manqués et de relances. Le forfait Réceptionniste IA répond aux appels que votre équipe ne peut pas prendre et transfère à une personne tout ce qui est délicat, complexe ou urgent. Il est conçu pour couvrir les appels qui resteraient sans réponse, pas pour remplacer votre monde."
       },
       {
         "q": "Que se passe-t-il en cas d'urgence?",
@@ -1398,6 +1633,10 @@
       {
         "q": "Combien de temps prend l'installation?",
         "a": "Nous vous donnons une fourchette réaliste après l'audit. Ça varie selon le volume d'appels, les intégrations et le nombre de processus. On préfère citer un vrai délai qu'un délai flatteur."
+      },
+      {
+        "q": "Est-ce que TradeCatch peut répondre au téléphone, pas seulement par texto?",
+        "a": "Oui, avec le forfait Réceptionniste IA. Le système répond aux appels entrants en français ou en anglais, qualifie l’appelant, prend les rendez-vous selon vos disponibilités, transfère les appels qui exigent une personne et achemine les urgences vers votre technicien de garde. La récupération des appels manqués, les relances et l’espace de travail continuent de fonctionner en dessous. Tout est configuré avec vous au démarrage et rien n’est mis en ligne avant votre approbation."
       }
     ],
     "stillHave": {
@@ -1483,7 +1722,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Les capacités sont offertes seulement dans un pilote contrôlé encadré par le fondateur et lorsqu’elles figurent explicitement dans une proposition écrite. La récupération d’appels manqués est le parcours pilote principal; la capture web et la relance de soumissions sont des modules pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’historique d’activité exigent une organisation Growth admissible et liée. Les synchronisations natives Google/Outlook et CRM bidirectionnelle ne sont pas incluses et restent prévues. Les présentes conditions ne décrivent ni un lancement SaaS libre-service ni une garantie que le produit est prêt pour la production."
+          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Les capacités sont offertes seulement dans un pilote contrôlé encadré par le fondateur et lorsqu’elles figurent explicitement dans une proposition écrite. La récupération d’appels manqués est le parcours pilote principal; la capture web et la relance de soumissions sont des modules pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’historique d’activité exigent une organisation Growth admissible et liée. La réponse téléphonique par l’IA, la qualification et la prise de rendez-vous par téléphone, le transfert d’appel à un humain, l’acheminement des appels d’urgence et les résumés d’appel font partie du forfait Réceptionniste IA et sont configurés par entreprise au démarrage; l’utilisation des appels IA est soumise à l’allocation et aux limites prévues dans la proposition écrite. Les synchronisations natives Google/Outlook et CRM bidirectionnelle ne sont pas incluses et restent prévues. Les présentes conditions ne décrivent ni un lancement SaaS libre-service ni une garantie que le produit est prêt pour la production."
         },
         {
           "heading": "Responsabilités du client",
@@ -1682,7 +1921,8 @@
       "Détails et photos dans la langue du client (pilote contrôlé)",
       "Alertes au technicien ou au propriétaire de garde (pilote contrôlé)",
       "Relance aux jours 1, 3, 7 et 14 (pilote Starter lié)",
-      "Espace pilote cloisonné par organisation; graphique public illustratif"
+      "Espace pilote cloisonné par organisation; graphique public illustratif",
+      "Répond aux appels entrants 24/7 en français et en anglais avec le forfait Réceptionniste IA, puis réserve, transfère ou escalade"
     ],
     "doesNotTitle": "Ce que ça ne fait pas",
     "doesNot": [
@@ -1702,7 +1942,7 @@
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
     "pricingTitle": "Fourchettes de départ",
-    "pricing": "Démarrage dès 799 $ d'installation + 375 $/mois. Croissance dès 1 499 $ + 500–750 $/mois. Précisé à l'audit.",
+    "pricing": "Starter : 799 $ d’installation, puis 375 $/mois. Growth : 1 499 $ d’installation, puis 500–750 $/mois, et inclut Starter. Réceptionniste IA : 1 999,99 $ d’installation, puis 1 000 $/mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, de la prise de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels IA est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
     "pilotTitle": "Programme pilote",
     "pilot": "Places fondatrices limitées par zone : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
@@ -1912,6 +2152,450 @@
       "title": "Besoin des modules pilotes Growth admissibles?",
       "body": "Pour les organisations liées, le pilote Growth ajoute la réservation dans l’espace, le pipeline, l’attribution et les demandes d’avis. Le fondateur active chaque droit; aucune synchronisation native Google/Outlook n’est incluse.",
       "cta": "Voir Growth sur la page tarifs"
+    }
+  },
+  "aiReceptionist": {
+    "eyebrow": "Réceptionniste IA · 1 999,99 $ installation, puis 1 000 $/mois",
+    "headline": "Une réception bilingue qui répond à chaque appel, jour et nuit.",
+    "intro": "Le Réceptionniste IA est le forfait premium de TradeCatch. Il répond à vos appels entrants en français ou en anglais, comprend ce que l’appelant demande, qualifie le travail, prend le rendez-vous, transfère les appels qui exigent une personne et laisse tourner en dessous toute la récupération et les relances TradeCatch.",
+    "metaDescription": "Réceptionniste IA pour entrepreneurs du Québec : réponse téléphonique bilingue 24/7, qualification des prospects, prise de rendez-vous par téléphone, transfert d’appel et acheminement d’urgence, en plus de la récupération des appels manqués et des relances TradeCatch.",
+    "heroPointsLabel": "Ce qui change dès le premier jour",
+    "heroPoints": [
+      "Répond 24/7, le soir comme pendant que vos équipes sont sur les chantiers",
+      "Français et anglais, reconnus à la façon dont l’appelant parle",
+      "Inclut tout Starter et tout Growth"
+    ],
+    "planLabel": "Le forfait",
+    "planName": "Réceptionniste IA",
+    "planSetup": "1 999,99 $ installation",
+    "planCadence": "puis 1 000 $ / mois",
+    "planNote": "L’utilisation des appels IA est soumise à l’allocation du forfait et aux limites applicables.",
+    "ctaPrimary": "Réserver une démo",
+    "ctaSecondary": "Voir tous les tarifs",
+    "flow": {
+      "eyebrow": "Le déroulement d’un appel",
+      "title": "Du téléphone qui sonne au contrat suivi.",
+      "intro": "Chaque embranchement ci-dessous est configuré pour votre entreprise avant la mise en service.",
+      "steps": [
+        {
+          "title": "Quelqu’un appelle",
+          "body": "Votre numéro actuel sonne. Si personne ne répond, ou si l’appel arrive en dehors des heures, le réceptionniste prend l’appel."
+        },
+        {
+          "title": "Le réceptionniste répond",
+          "body": "Il accueille l’appelant au nom de votre entreprise, en français ou en anglais, et le laisse parler et l’interrompre normalement."
+        },
+        {
+          "title": "Il comprend la demande",
+          "body": "Service demandé, problème décrit, résidentiel ou commercial, nouveau ou ancien client."
+        },
+        {
+          "title": "Il qualifie le prospect",
+          "body": "Nom, téléphone, adresse, ville, urgence, ampleur approximative et moment souhaité, recueillis avant tout rappel."
+        }
+      ],
+      "branchLabel": "Ensuite, selon la nature de l’appel",
+      "branches": [
+        {
+          "title": "Prendre le rendez-vous",
+          "body": "Il propose de vraies disponibilités et fixe l’estimation, la consultation ou l’appel de service."
+        },
+        {
+          "title": "Transférer à votre équipe",
+          "body": "Les appels à forte valeur, mécontents, complexes ou qui demandent une personne vont à qui vous avez configuré."
+        },
+        {
+          "title": "Acheminement d’urgence",
+          "body": "Une urgence que vous avez définie fait recueillir les détails critiques et rejoint d’abord votre technicien de garde."
+        }
+      ],
+      "outcomeLabel": "Tous les chemins finissent pareil",
+      "outcome": [
+        {
+          "title": "TradeCatch conserve tout",
+          "body": "Prospect, conversation, résumé et rendez-vous arrivent dans l’espace de travail."
+        },
+        {
+          "title": "Les relances continuent",
+          "body": "Rappels, relance des estimations et suivi des sans-réponse continuent tout seuls."
+        }
+      ],
+      "note": "Flux illustratif. Les règles d’acheminement, les définitions d’urgence et les cibles de transfert sont établies par entreprise."
+    },
+    "capabilities": {
+      "eyebrow": "Pendant l’appel",
+      "title": "Ce qu’il gère pendant qu’il a l’appelant en ligne.",
+      "intro": "Le réceptionniste répond à partir des informations d’entreprise que vous approuvez. On ne lui demande pas d’improviser.",
+      "groups": [
+        {
+          "title": "Appels entrants",
+          "purpose": "Répondre quand votre équipe ne peut pas.",
+          "items": [
+            "Répond aux appels d’affaires entrants 24/7",
+            "Gère les appels du soir et les débordements",
+            "Reconnaît automatiquement le français ou l’anglais",
+            "Conversation naturelle, interruptions gérées",
+            "Pose des questions de suivi quand une réponse est incomplète",
+            "Répond aux questions fréquentes à partir du contenu approuvé",
+            "Détermine la prochaine action appropriée"
+          ]
+        },
+        {
+          "title": "Connaissances de l’entreprise",
+          "purpose": "Configuré à partir de ce que vous fournissez, pas de suppositions.",
+          "items": [
+            "Nom de l’entreprise, services et heures d’ouverture",
+            "Zones desservies et adresse",
+            "Taille minimale de projet et disponibilité d’urgence",
+            "Indications de prix uniquement là où vous l’autorisez",
+            "Financement, paiement et promotions lorsque fournis",
+            "Types de rendez-vous, règles de réservation et d’annulation",
+            "Employés, départements et règles d’acheminement d’appel"
+          ]
+        },
+        {
+          "title": "Qualification des prospects",
+          "purpose": "Donner à votre équipe de quoi rappeler bien préparée.",
+          "items": [
+            "Nom, numéro de téléphone et courriel au besoin",
+            "Adresse et ville",
+            "Service demandé et description du travail",
+            "Niveau d’urgence",
+            "Résidentiel ou commercial",
+            "Nouveau ou ancien client",
+            "Date et heure de rendez-vous souhaitées",
+            "Ampleur approximative du projet, budget lorsque pertinent, et échéancier souhaité"
+          ]
+        },
+        {
+          "title": "Classement des appelants",
+          "purpose": "Pour que les appels qui valent votre temps ressortent en premier.",
+          "items": [
+            "Prospect chaud",
+            "Prospect qualifié",
+            "Demande générale",
+            "Client existant",
+            "Urgence",
+            "Fournisseur",
+            "Candidat à un emploi",
+            "Pourriel"
+          ]
+        },
+        {
+          "title": "Prise de rendez-vous",
+          "purpose": "La réservation Growth, étendue au téléphone.",
+          "items": [
+            "Vérifie les disponibilités et propose de vraies plages horaires",
+            "Fixe estimations, consultations et appels de service",
+            "Respecte les heures, les zones desservies, les durées et les tampons",
+            "Empêche les doubles réservations",
+            "Confirme, reporte et annule",
+            "Confirmation par SMS, par courriel lorsque configuré",
+            "Rappels avant le rendez-vous"
+          ]
+        },
+        {
+          "title": "Transfert à un humain",
+          "purpose": "Il n’est pas conçu pour tout gérer seul.",
+          "items": [
+            "L’appelant demande à parler à quelqu’un",
+            "Prospect à forte valeur, ou client mécontent",
+            "Une urgence, ou un client existant avec un cas complexe",
+            "La demande n’est pas comprise avec assurance",
+            "Une de vos règles de transfert se déclenche",
+            "Achemine vers le propriétaire, les ventes, le bureau, un technicien ou le technicien de garde",
+            "Si le transfert reste sans réponse, il prend un message et les coordonnées plutôt que de perdre le prospect"
+          ]
+        }
+      ]
+    },
+    "emergency": {
+      "eyebrow": "Urgences",
+      "title": "Les appels qui ne peuvent pas attendre à demain matin.",
+      "intro": "Ce qui constitue une urgence, c’est vous qui le définissez : un tuyau qui cède, une panne de chauffage en janvier, un risque électrique, un dégât d’eau, ou tout ce que votre métier traite comme urgent.",
+      "steps": [
+        "Appel entrant",
+        "Urgence détectée",
+        "Détails critiques recueillis",
+        "Adresse confirmée",
+        "Transfert au technicien configuré tenté",
+        "Technicien et propriétaire avisés",
+        "Prospect et conversation conservés"
+      ],
+      "note": "TradeCatch n’est pas un service de répartition d’urgence. L’acheminement configuré rejoint vos propres gens. Les travaux réglementés et les décisions de sécurité restent à votre équipe."
+    },
+    "stillIncluded": {
+      "eyebrow": "Rien n’est retiré",
+      "title": "Tout ce que font Starter et Growth continue de tourner en dessous.",
+      "intro": "La mise à niveau ajoute la couche téléphonique. Elle ne retire ni la récupération des appels manqués, ni les séquences de relance, ni le suivi des soumissions, ni la réservation, ni l’espace de travail.",
+      "groups": [
+        {
+          "title": "Récupération des appels manqués",
+          "items": [
+            "Les appels manqués ou sans réponse sont toujours détectés",
+            "SMS de retour rapide dans la langue de l’appelant",
+            "La conversation se poursuit par texto",
+            "Service demandé, détails et coordonnées recueillis",
+            "Occasion de réservation envoyée",
+            "Entreprise avisée, conversation conservée"
+          ]
+        },
+        {
+          "title": "Relances automatisées",
+          "items": [
+            "Relance des nouveaux prospects",
+            "Relance après appel manqué",
+            "Rappels de rendez-vous",
+            "Relance en cas de non-réponse",
+            "Relance des estimations et des soumissions",
+            "Réactivation lorsque configurée"
+          ]
+        },
+        {
+          "title": "Relance des soumissions",
+          "items": [
+            "Détection des estimations en attente",
+            "Relance personnalisée par SMS, et par courriel lorsque configuré",
+            "La séquence s’arrête dès que le client répond",
+            "Vous êtes avisé quand un prospect redevient intéressé",
+            "Un autre rendez-vous peut être fixé directement à partir de la réponse",
+            "Dépôts, paiements et signature électronique lorsque configurés (modules prévus)"
+          ]
+        }
+      ],
+      "lifecycleLabel": "Cycle de vie d’un prospect",
+      "lifecycle": [
+        "Appel",
+        "Qualification",
+        "Rendez-vous",
+        "Estimation",
+        "Relance",
+        "Client"
+      ]
+    },
+    "summary": {
+      "eyebrow": "Après l’appel",
+      "title": "Un résumé écrit avant même que vous preniez votre téléphone.",
+      "intro": "Après un appel important, TradeCatch rédige un résumé structuré : vous savez de quel travail il s’agit sans rien écouter.",
+      "cardLabel": "Nouveau prospect",
+      "sampleBadge": "Exemple de résumé. Pas un vrai client.",
+      "fields": [
+        {
+          "label": "Appelant",
+          "value": "Jean Simard"
+        },
+        {
+          "label": "Téléphone",
+          "value": "(514) 555-0147"
+        },
+        {
+          "label": "Secteur",
+          "value": "Laval"
+        },
+        {
+          "label": "Service",
+          "value": "Entrée en pavé-uni"
+        },
+        {
+          "label": "Détail du travail",
+          "value": "Environ 1 200 pi², asphalte à retirer"
+        },
+        {
+          "label": "Catégorie",
+          "value": "Prospect qualifié"
+        },
+        {
+          "label": "Urgence",
+          "value": "Normale · veut les travaux cette saison"
+        },
+        {
+          "label": "Demande",
+          "value": "Estimation"
+        },
+        {
+          "label": "Rendez-vous",
+          "value": "Jeudi, 15 h"
+        },
+        {
+          "label": "Prochaine action",
+          "value": "Confirmer les mesures sur place"
+        },
+        {
+          "label": "Appel",
+          "value": "3 min 12 s · transcription disponible"
+        }
+      ],
+      "includesLabel": "Un résumé peut contenir",
+      "includes": [
+        "Nom et numéro de l’appelant",
+        "Service demandé",
+        "Adresse ou secteur",
+        "Catégorie de prospect",
+        "Urgence",
+        "Détails importants du travail",
+        "Rendez-vous fixé",
+        "Prochaine action requise",
+        "Durée de l’appel",
+        "Transcription lorsque activée",
+        "Enregistrement lorsque activé"
+      ]
+    },
+    "notifications": {
+      "title": "Vous êtes avisé comme vous l’êtes déjà.",
+      "intro": "Les avis passent par les canaux TradeCatch que votre compte possède déjà : SMS, courriel et espace de travail, selon la configuration.",
+      "items": [
+        "Nouveau prospect",
+        "Prospect chaud",
+        "Urgence",
+        "Rendez-vous fixé",
+        "Suivi humain requis",
+        "Rendez-vous annulé",
+        "Réponse à une soumission"
+      ]
+    },
+    "dashboard": {
+      "title": "Un seul endroit pour tout ce que le téléphone a produit.",
+      "intro": "L’espace de travail TradeCatch reste le centre du système. Le Réceptionniste IA y ajoute les appels.",
+      "items": [
+        "Prospects",
+        "Historique des appels",
+        "Conversations SMS",
+        "Rendez-vous",
+        "Statut des prospects et notes",
+        "Relances",
+        "Résumés d’appel",
+        "Transcriptions lorsque activées",
+        "Enregistrements lorsque activés",
+        "Information de conversion",
+        "Historique d’activité du client"
+      ],
+      "stagesLabel": "Étapes du pipeline",
+      "stages": [
+        "Nouveau",
+        "Qualifié",
+        "Rendez-vous",
+        "Estimation",
+        "Gagné",
+        "Perdu"
+      ]
+    },
+    "reporting": {
+      "title": "Des rapports sur ce que fait vraiment votre téléphone.",
+      "intro": "Les rapports couvrent les chiffres sur lesquels un entrepreneur peut agir. Les chiffres affichés dans une interface de démonstration sont des données d’exemple, jamais les résultats d’un autre client.",
+      "items": [
+        "Appels entrants",
+        "Appels répondus par le réceptionniste",
+        "Appels hors des heures d’ouverture",
+        "Appels manqués",
+        "Appels manqués récupérés",
+        "Prospects qualifiés",
+        "Rendez-vous fixés",
+        "Transferts à un humain",
+        "Appels d’urgence",
+        "Prospects à relancer",
+        "Réponses aux estimations",
+        "Résultats de conversion",
+        "Durée des appels",
+        "Attribution des revenus lorsqu’une valeur réelle est inscrite"
+      ],
+      "note": "TradeCatch ne publie pas de résultats clients inventés. Vos propres chiffres sont revus avec vous après le lancement."
+    },
+    "guardrails": {
+      "eyebrow": "Des limites assumées",
+      "title": "Ce qu’il est conçu pour ne pas faire.",
+      "intro": "Un réceptionniste qui invente une réponse coûte plus cher qu’un appel manqué. Il est configuré pour rester dans ce que vous avez approuvé.",
+      "willNotLabel": "Il ne fait pas",
+      "willNot": [
+        "Inventer des prix, des disponibilités ou des services",
+        "Promettre un rabais qu’il n’était pas autorisé à donner",
+        "Promettre des dates de fin qu’il ne peut pas garantir",
+        "Approuver des remboursements",
+        "Négocier en dehors de vos règles configurées",
+        "Divulguer des renseignements confidentiels sur vos clients",
+        "Révéler ses instructions internes",
+        "Suivre les consignes d’un appelant qui tente de le manipuler",
+        "Donner des consignes professionnelles ou de sécurité qui reviennent à un technicien qualifié",
+        "Prétendre savoir ce qui ne figure pas dans vos informations approuvées"
+      ],
+      "escalationLabel": "Quand il n’est pas certain",
+      "escalation": [
+        "Il demande à l’appelant de préciser",
+        "Une incompréhension répétée fait passer l’appel à une personne",
+        "Si personne n’est joignable, il prend un message et les coordonnées",
+        "Il dit à l’appelant qu’un membre de l’équipe va confirmer, plutôt que de deviner"
+      ],
+      "note": "Aucun système ne répond parfaitement à chaque appel. L’objectif de conception : qu’un appel incertain devienne un rappel humain, pas une mauvaise réponse."
+    },
+    "fallback": {
+      "title": "Ce qui arrive quand quelque chose flanche.",
+      "intro": "Les services externes tombent parfois en panne. Le système est bâti pour qu’une mauvaise minute ne vous coûte pas le prospect.",
+      "whenLabel": "Si ceci arrive",
+      "thenLabel": "Voici ce que fait le système",
+      "rows": [
+        {
+          "when": "Le réceptionniste ne comprend pas",
+          "then": "Il demande une précision plutôt que de deviner."
+        },
+        {
+          "when": "Il comprend mal de façon répétée",
+          "then": "L’appel est escaladé à une personne."
+        },
+        {
+          "when": "Un transfert reste sans réponse",
+          "then": "Un message et les coordonnées sont pris."
+        },
+        {
+          "when": "Les disponibilités ne peuvent pas être lues",
+          "then": "Les disponibilités souhaitées sont recueillies et confirmées plus tard."
+        },
+        {
+          "when": "Un SMS n’est pas livré",
+          "then": "La livraison est retentée, avec solution de repli lorsque configurée."
+        },
+        {
+          "when": "L’appel coupe",
+          "then": "Le flux de récupération reprend la conversation lorsque configuré."
+        },
+        {
+          "when": "Une intégration échoue",
+          "then": "L’information du prospect est conservée et signalée pour révision."
+        },
+        {
+          "when": "Le même appelant revient deux fois",
+          "then": "Le prospect existant est mis à jour au lieu d’être dupliqué."
+        },
+        {
+          "when": "L’appel est du pourriel",
+          "then": "Il est classé et tenu à l’écart de votre liste de prospects."
+        }
+      ]
+    },
+    "usage": {
+      "title": "Utilisation et allocations",
+      "body": "Le tarif mensuel n’est pas présenté comme des appels IA illimités. Votre allocation, le traitement des dépassements et les numéros supplémentaires sont convenus par écrit avant le lancement.",
+      "items": [
+        "Minutes d’appels IA incluses, convenues au démarrage",
+        "Dépassements traités par entente écrite, jamais en silence",
+        "Utilisation des appels et des SMS suivie dans l’espace de travail",
+        "Numéros de téléphone supplémentaires sur demande"
+      ]
+    },
+    "privacy": {
+      "title": "Enregistrements, transcriptions et vie privée",
+      "body": "Les enregistrements d’appels et les transcriptions sont disponibles lorsqu’ils sont activés. Ils ne le sont pas automatiquement, et l’avis donné aux appelants est configuré avec vous.",
+      "items": [
+        "Enregistrements d’appels et transcriptions lorsque activés",
+        "Réglages de confidentialité et d’enregistrement configurés selon les exigences de votre entreprise",
+        "Les dossiers clients et les historiques de conversation appartiennent à votre entreprise"
+      ],
+      "note": "Ceci décrit des réglages produit configurables, pas un avis juridique. Validez vos obligations avec votre conseiller."
+    },
+    "finalCta": {
+      "title": "Écoutez-le répondre à un appel avant de décider.",
+      "body": "La démo suit un vrai déroulement d’appel pour votre métier : ce qu’il dit, ce qu’il recueille, quand il transfère et ce qui atterrit dans votre espace de travail.",
+      "primary": "Réserver une démo",
+      "secondary": "Voir tous les tarifs",
+      "note": "20 minutes. Aucun accès à vos systèmes requis. La configuration et le démarrage ont lieu avant la mise en service."
     }
   }
 }

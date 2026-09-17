@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { Metadata } from "next";
 import { Container } from "@/components/Container";
@@ -33,6 +32,7 @@ export default async function AboutPage({
 
   const body = t.raw("body") as string[];
   const heroPoints = t.raw("heroPoints") as string[];
+  const snapshot = t.raw("snapshot") as { label: string; value: string }[];
   const email = site("founderEmail");
 
   return (
@@ -71,18 +71,31 @@ export default async function AboutPage({
               gap: "clamp(28px, 4vw, 64px)",
             }}
           >
-            <div data-reveal className="mx-auto w-full max-w-[360px] -mt-10 max-lg:mt-0 lg:-mt-16">
-              <div className="relative aspect-[4/5] overflow-hidden border border-[rgb(var(--ink-rgb)/0.1)] bg-paper-deep shadow-[0_28px_50px_-36px_rgb(var(--ink-rgb)/0.45)]">
-                <Image
-                  src="/images/founder.jpg"
-                  alt={t("caption")}
-                  width={720}
-                  height={900}
-                  className="h-full w-full object-cover"
-                  priority
-                />
+            <div
+              data-reveal
+              className="mx-auto w-full max-w-[420px] -mt-10 max-lg:mt-0 lg:-mt-16"
+            >
+              <div className="border border-[rgb(var(--ink-rgb)/0.1)] bg-paper-deep p-[clamp(22px,2.6vw,30px)] shadow-[0_28px_50px_-36px_rgb(var(--ink-rgb)/0.45)]">
+                <p className="font-mono text-[10.5px] tracking-[0.12em] text-muted uppercase">
+                  {t("snapshotLabel")}
+                </p>
+                <dl className="mt-5 m-0 flex flex-col">
+                  {snapshot.map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex items-baseline justify-between gap-5 border-t border-[rgb(var(--ink-rgb)/0.1)] py-3.5 first:border-t-0 first:pt-0"
+                    >
+                      <dt className="text-[13.5px] text-muted">{row.label}</dt>
+                      <dd className="m-0 text-right text-[14.5px] font-semibold tracking-[-0.015em] text-heading">
+                        {row.value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
-              <p className="mt-4 text-[13px] text-muted">{t("caption")}</p>
+              <p className="mt-4 text-[13px] leading-[1.55] text-muted">
+                {t("snapshotNote")}
+              </p>
             </div>
 
             <div data-reveal>

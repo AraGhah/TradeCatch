@@ -9,6 +9,42 @@ export type PricingOutcomeGroup = {
   items: string[];
 };
 
+/** Routes a pricing tier is allowed to point at. */
+const TIER_HREFS = {
+  "/book-audit": "/book-audit",
+  "/ai-receptionist": "/ai-receptionist",
+  "/pricing": "/pricing",
+} as const;
+
+type TierHref = keyof typeof TIER_HREFS;
+
+/** Plan ids accepted by the book-audit intake, so a lead stays attributable. */
+const TIER_PLAN_INTEREST = ["starter", "growth", "ai-receptionist"] as const;
+
+type TierPlanInterest = (typeof TIER_PLAN_INTEREST)[number];
+
+function resolveHref(value: string | undefined, fallback: TierHref): TierHref {
+  return value && value in TIER_HREFS ? (value as TierHref) : fallback;
+}
+
+function resolvePlanInterest(
+  value: string | undefined,
+): TierPlanInterest | undefined {
+  return TIER_PLAN_INTEREST.includes(value as TierPlanInterest)
+    ? (value as TierPlanInterest)
+    : undefined;
+}
+
+/**
+ * Only the intake route carries the plan query — linking to a content page
+ * with a stray `?plan=` would just create duplicate URLs for crawlers.
+ */
+function tierCtaHref(pathname: TierHref, plan: TierPlanInterest | undefined) {
+  return plan && pathname === "/book-audit"
+    ? { pathname, query: { plan } }
+    : pathname;
+}
+
 export type PricingTier = {
   name: string;
   /** Short outcome line, e.g. "Recover More Leads" */
@@ -17,19 +53,27 @@ export type PricingTier = {
   outcome: string;
   price: string;
   cadence: string;
-  /** @deprecated Prefer outcome groups; kept for older callers */
-  items?: string[];
-  groups?: PricingOutcomeGroup[];
+  groups: PricingOutcomeGroup[];
   badge?: string;
+  /** Visual weight. Premium gets the inverted card. */
+  emphasis?: "featured" | "premium";
   idealFor: string;
   setupAmount?: string;
   monthlyAmount?: string;
   reassuranceLine?: string;
-  everythingInStarter?: string;
+  /** "Everything in Starter, plus:" style line for stacked plans */
+  includesPrevious?: string;
+  /** Allowance/limits disclosure shown under the price */
+  usageNote?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  /** Tags the intake submission with the plan this CTA came from. */
+  planInterest?: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
 };
 
 type Labels = {
-  mostPopular: string;
   cta: string;
   setupLabel: string;
   monthlyLabel: string;
@@ -51,18 +95,18 @@ export function PricingExperience({
   tiers: PricingTier[];
   labels: Labels;
 }) {
-  const primary = tiers.slice(0, 2);
-
   return (
     <div className="w-full">
-      <div className="relative z-[1] -mt-[clamp(24px,3vw,40px)] grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
-        {primary.map((tier, i) => (
+      {/*
+        Two standard plans sit side by side from md; the premium plan spans the
+        full row there and only joins them as a third column at lg.
+      */}
+      <div className="relative z-[1] -mt-[clamp(24px,3vw,40px)] grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+        {tiers.map((tier, i) => (
           <PlanCard
             key={tier.name}
             tier={tier}
             index={i}
-            featured={Boolean(tier.badge)}
-            popularLabel={labels.mostPopular}
             cta={labels.cta}
             setupLabel={labels.setupLabel}
             monthlyLabel={labels.monthlyLabel}
@@ -98,7 +142,12 @@ export function PricingExperience({
               {labels.customBody}
             </p>
           </div>
-          <CTAButton href="/book-audit" variant="ember" size="lg" className="shrink-0">
+          <CTAButton
+            href="/book-audit"
+            variant="ember"
+            size="lg"
+            className="shrink-0"
+          >
             {labels.customCta}
           </CTAButton>
         </div>
@@ -129,7 +178,11 @@ export function PricingExperience({
 
         <div className="mt-10 border-t border-[rgb(var(--ink-rgb)/0.14)]">
           {labels.details.map((detail) => (
-            <DetailAccordion key={detail.title} title={detail.title} body={detail.body} />
+            <DetailAccordion
+              key={detail.title}
+              title={detail.title}
+              body={detail.body}
+            />
           ))}
         </div>
       </motion.section>
@@ -140,8 +193,6 @@ export function PricingExperience({
 function PlanCard({
   tier,
   index,
-  featured,
-  popularLabel,
   cta,
   setupLabel,
   monthlyLabel,
@@ -149,20 +200,33 @@ function PlanCard({
 }: {
   tier: PricingTier;
   index: number;
-  featured: boolean;
-  popularLabel: string;
   cta: string;
   setupLabel: string;
   monthlyLabel: string;
   thenLabel: string;
 }) {
   const setupDisplay = tier.setupAmount ?? tier.price;
-  const monthlyDisplay = tier.monthlyAmount ?? tier.cadence.replace(/^\+\s*/, "");
-  const groups = tier.groups?.length
-    ? tier.groups
-    : tier.items?.length
-      ? [{ title: "", items: tier.items.slice(0, 6) }]
-      : [];
+  const monthlyDisplay =
+    tier.monthlyAmount ?? tier.cadence.replace(/^\+\s*/, "");
+  const premium = tier.emphasis === "premium";
+  const featured = tier.emphasis === "featured";
+
+  const shell = premium
+    ? "border-navy bg-navy text-white shadow-[0_36px_72px_-40px_rgb(var(--ink-rgb)/0.6)] md:col-span-2 lg:col-span-1"
+    : featured
+      ? "border-orange/55 bg-surface text-heading shadow-[0_32px_64px_-40px_rgba(228,118,43,0.45)] ring-1 ring-orange/20"
+      : "border-[rgb(var(--ink-rgb)/0.1)] bg-surface text-heading shadow-[0_20px_48px_-40px_rgb(var(--ink-rgb)/0.28)]";
+
+  const divider = premium
+    ? "border-white/12"
+    : "border-[rgb(var(--ink-rgb)/0.1)]";
+  const softDivider = premium
+    ? "border-white/[0.08]"
+    : "border-[rgb(var(--ink-rgb)/0.08)]";
+  const bodyText = premium ? "text-white/85" : "text-heading/85";
+  const mutedText = premium ? "text-white/55" : "text-muted";
+  const listText = premium ? "text-white/80" : "text-secondary";
+  const strongText = premium ? "text-white" : "text-heading";
 
   return (
     <motion.article
@@ -170,11 +234,7 @@ function PlanCard({
       whileInView={{ y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.55, delay: index * 0.08, ease }}
-      className={`relative flex flex-col border bg-surface p-[clamp(28px,3.2vw,44px)] text-heading transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 ${
-        featured
-          ? "border-orange/55 shadow-[0_32px_64px_-40px_rgba(228,118,43,0.45)] ring-1 ring-orange/20"
-          : "border-[rgb(var(--ink-rgb)/0.1)] shadow-[0_20px_48px_-40px_rgb(var(--ink-rgb)/0.28)]"
-      }`}
+      className={`relative flex flex-col border p-[clamp(28px,3.2vw,44px)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 ${shell}`}
     >
       {featured ? (
         <div
@@ -182,70 +242,105 @@ function PlanCard({
           className="absolute top-0 left-0 h-full w-[3px] bg-orange"
         />
       ) : null}
+      {premium ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-50"
+          style={{
+            backgroundImage:
+              "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)",
+            backgroundSize: "44px 44px",
+            maskImage:
+              "radial-gradient(80% 55% at 90% 0%, #000 10%, transparent 72%)",
+          }}
+        />
+      ) : null}
 
-      <div className="flex items-baseline justify-between gap-4">
-        <div>
-          <h2 className="m-0 font-heading text-[clamp(28px,2.8vw,36px)] font-extrabold tracking-[-0.04em] text-heading">
+      <div className="relative flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <h2
+            className={`m-0 font-heading text-[clamp(26px,2.6vw,34px)] font-extrabold tracking-[-0.04em] ${strongText}`}
+          >
             {tier.name}
           </h2>
-          <p className="mt-2 text-[15px] font-semibold tracking-[-0.01em] text-orange">
+          <p
+            className={`mt-2 text-[15px] font-semibold tracking-[-0.01em] ${premium ? "text-orange" : "text-orange"}`}
+          >
             {tier.tagline}
           </p>
         </div>
-        {featured ? (
-          <span className="shrink-0 bg-[rgba(228,118,43,0.12)] px-2.5 py-1 text-[12px] font-semibold tracking-[0.04em] text-ember-text">
-            {popularLabel}
+        {tier.badge ? (
+          <span
+            className={`shrink-0 px-2.5 py-1 text-[12px] font-semibold tracking-[0.04em] ${
+              premium
+                ? "bg-orange text-navy"
+                : "bg-[rgba(228,118,43,0.12)] text-ember-text"
+            }`}
+          >
+            {tier.badge}
           </span>
         ) : null}
       </div>
 
-      <p className="mt-4 max-w-[32em] text-[16px] leading-[1.55] text-heading/85">
+      <p
+        className={`relative mt-4 max-w-[32em] text-[16px] leading-[1.55] ${bodyText}`}
+      >
         {tier.outcome}
       </p>
-      <p className="mt-2 max-w-[28em] text-[14.5px] leading-[1.5] text-muted">
+      <p
+        className={`relative mt-2 max-w-[28em] text-[14.5px] leading-[1.5] ${mutedText}`}
+      >
         {tier.idealFor}
       </p>
 
-      <div className="mt-7 border-t border-[rgb(var(--ink-rgb)/0.1)] pt-6">
-        <p className="text-[12px] tracking-[0.08em] text-muted uppercase">
+      <div className={`relative mt-7 border-t pt-6 ${divider}`}>
+        <p className={`text-[12px] tracking-[0.08em] uppercase ${mutedText}`}>
           {setupLabel}
         </p>
-        <p className="mt-1.5 font-heading text-[clamp(26px,2.6vw,32px)] font-extrabold leading-[1.05] tracking-[-0.03em] text-heading">
+        <p
+          className={`mt-1.5 font-heading text-[clamp(26px,2.6vw,32px)] font-extrabold leading-[1.05] tracking-[-0.03em] break-words ${strongText}`}
+        >
           {setupDisplay}
         </p>
-        <p className="mt-2 text-[15px] text-secondary">
-          <span className="text-muted">{thenLabel} </span>
-          <span className="font-semibold text-heading">{monthlyDisplay}</span>
-          <span className="text-muted"> / {monthlyLabel.toLowerCase()}</span>
+        <p className={`mt-2 text-[15px] ${listText}`}>
+          <span className={mutedText}>{thenLabel} </span>
+          <span className={`font-semibold ${strongText}`}>
+            {monthlyDisplay}
+          </span>
+          <span className={mutedText}> / {monthlyLabel.toLowerCase()}</span>
         </p>
         {tier.reassuranceLine ? (
-          <p className="mt-3 text-[13.5px] leading-[1.5] text-muted">
+          <p className={`mt-3 text-[13.5px] leading-[1.5] ${mutedText}`}>
             {tier.reassuranceLine}
+          </p>
+        ) : null}
+        {tier.usageNote ? (
+          <p className={`mt-2 text-[13px] leading-[1.5] ${mutedText}`}>
+            {tier.usageNote}
           </p>
         ) : null}
       </div>
 
-      <div className="mt-7 flex flex-1 flex-col gap-5">
-        {tier.everythingInStarter ? (
-          <p className="border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4 text-[14.5px] font-semibold text-heading">
-            {tier.everythingInStarter}
+      <div className="relative mt-7 flex flex-1 flex-col gap-5">
+        {tier.includesPrevious ? (
+          <p
+            className={`border-t pt-4 text-[14.5px] font-semibold ${softDivider} ${strongText}`}
+          >
+            {tier.includesPrevious}
           </p>
         ) : null}
-        {groups.map((group) => (
-          <div
-            key={group.title || group.items.join("|")}
-            className="border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4"
-          >
-            {group.title ? (
-              <p className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
-                {group.title}
-              </p>
-            ) : null}
+        {tier.groups.map((group) => (
+          <div key={group.title} className={`border-t pt-4 ${softDivider}`}>
+            <p
+              className={`text-[11px] font-semibold tracking-[0.1em] uppercase ${mutedText}`}
+            >
+              {group.title}
+            </p>
             <ul className="mt-2 flex list-none flex-col p-0">
               {group.items.map((item) => (
                 <li
                   key={item}
-                  className="py-1.5 text-[15px] leading-[1.45] text-secondary"
+                  className={`py-1.5 text-[15px] leading-[1.45] ${listText}`}
                 >
                   {item}
                 </li>
@@ -255,14 +350,29 @@ function PlanCard({
         ))}
       </div>
 
-      <CTAButton
-        href="/book-audit"
-        variant={featured ? "ember" : "ink"}
-        size="lg"
-        className="mt-10 w-full"
-      >
-        {cta}
-      </CTAButton>
+      <div className="relative mt-10 flex flex-col items-stretch gap-3">
+        <CTAButton
+          href={tierCtaHref(
+            resolveHref(tier.ctaHref, "/book-audit"),
+            resolvePlanInterest(tier.planInterest),
+          )}
+          variant={premium || featured ? "ember" : "ink"}
+          size="lg"
+          className="w-full"
+        >
+          {tier.ctaLabel ?? cta}
+        </CTAButton>
+        {tier.secondaryCtaLabel ? (
+          <CTAButton
+            href={resolveHref(tier.secondaryCtaHref, "/ai-receptionist")}
+            variant="ghost-ink"
+            size="lg"
+            className="w-full"
+          >
+            {tier.secondaryCtaLabel}
+          </CTAButton>
+        ) : null}
+      </div>
     </motion.article>
   );
 }

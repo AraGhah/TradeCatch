@@ -8,6 +8,7 @@ import { HeroBackground } from "@/components/HeroBackground";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { ProofExamplesSection } from "@/components/ProofExamplesSection";
+import { PricingPreview } from "@/components/PricingPreview";
 import { WorkflowPreview } from "@/components/WorkflowPreview";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { buildMetadata } from "@/lib/seo";
@@ -370,7 +371,26 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 7. Founder */}
+      {/* 7. Plan ladder */}
+      <section
+        id="plans"
+        className="scroll-mt-28 bg-paper"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <PricingPreview
+            eyebrow={t("pricingPreview.eyebrow")}
+            headline={t("pricingPreview.headline")}
+            intro={t("pricingPreview.intro")}
+            tiers={t.raw("pricingPreview.tiers")}
+            cta={t("pricingPreview.cta")}
+            receptionistCta={t("pricingPreview.receptionistCta")}
+            note={t("pricingPreview.note")}
+          />
+        </Container>
+      </section>
+
+      {/* 8. Founder */}
       <section
         className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
@@ -381,9 +401,12 @@ export default async function HomePage({
             eyebrow={t("founder.eyebrow")}
             headline={t("founder.headline")}
             name={t("founder.name")}
+            role={t("founder.role")}
             floatLabel={t("founder.floatLabel")}
             statement={t("founder.statement")}
             points={t.raw("founder.points")}
+            workLabel={t("founder.workLabel")}
+            work={t.raw("founder.work")}
             emailLabel={cta("emailDirect")}
             email={site("founderEmail")}
             talkCta={t("founder.talkCta")}
@@ -391,7 +414,7 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 8. Pilot programme */}
+      {/* 9. Pilot programme */}
       <section
         id="pilot"
         className="scroll-mt-28 bg-paper"
@@ -454,7 +477,7 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 9. FAQ teaser */}
+      {/* 10. FAQ teaser */}
       <section
         className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
         style={{ padding: "var(--section-y) 0" }}
@@ -487,7 +510,7 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 10. Final CTA */}
+      {/* 11. Final CTA */}
       <section
         className="relative overflow-hidden bg-navy"
         style={{ padding: "var(--section-y) 0" }}

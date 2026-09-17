@@ -9,6 +9,7 @@ export const routing = defineRouting({
     "/services": { en: "/services", fr: "/services" },
     "/how-it-works": { en: "/how-it-works", fr: "/fonctionnement" },
     "/industries": { en: "/industries", fr: "/industries" },
+    "/ai-receptionist": { en: "/ai-receptionist", fr: "/receptionniste-ia" },
     "/pricing": { en: "/pricing", fr: "/tarifs" },
     "/about": { en: "/about", fr: "/a-propos" },
     "/book-audit": { en: "/book-audit", fr: "/reserver-audit" },
