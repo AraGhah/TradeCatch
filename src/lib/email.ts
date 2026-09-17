@@ -62,6 +62,7 @@ export async function sendBookAuditNotifyEmail(
       ${row("Name", `${payload.firstName} ${payload.lastName}`)}
       ${row("Company", payload.company)}
       ${row("Trade", payload.trade)}
+      ${row("Plan interest", payload.planInterest)}
       ${row("Email", payload.email)}
       ${row("Phone", payload.phone)}
       ${row("City", payload.city)}

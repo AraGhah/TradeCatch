@@ -79,6 +79,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/ai-receptionist" className={linkClass}>
+                  {nav("aiReceptionist")}
+                </Link>
+              </li>
+              <li>
                 <Link href="/pricing" className={linkClass}>
                   {nav("pricing")}
                 </Link>

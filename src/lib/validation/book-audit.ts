@@ -33,6 +33,12 @@ export const bookAuditSchema = z.object({
   /** Exact consent checkbox wording shown to the user (CASL record-keeping). */
   consentWording: z.string().trim().min(1).max(2000),
   consentSource: z.string().trim().min(1).max(120).default("book-audit"),
+  /**
+   * Which pricing card sent the visitor here. Closed enum on purpose — this
+   * value reaches the notification email, so free text would let a caller
+   * inject arbitrary content into it.
+   */
+  planInterest: z.enum(["starter", "growth", "ai-receptionist"]).optional(),
   companyWebsite: z.string().max(500).optional().default(""),
   turnstileToken: z.string().min(1),
 });

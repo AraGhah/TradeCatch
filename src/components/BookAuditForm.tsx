@@ -25,6 +25,10 @@ import {
 import { randomUUID } from "@/lib/id";
 
 const DRAFT_STORAGE_KEY = "tradecatch-book-audit-draft";
+const PLAN_INTEREST_VALUES = ["starter", "growth", "ai-receptionist"] as const;
+
+type PlanInterest = (typeof PLAN_INTEREST_VALUES)[number];
+
 const OPT_KEYS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /** Question steps only — review is a separate screen after these. */
@@ -123,6 +127,7 @@ export function BookAuditForm() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const idempotencyKey = useRef<string>(randomUUID());
+  const planInterest = useRef<PlanInterest | undefined>(undefined);
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const focusErrorSummary = useRef(false);
@@ -160,6 +165,16 @@ export function BookAuditForm() {
     } catch {
       // Corrupt or inaccessible sessionStorage — start from a blank draft.
     }
+  }, []);
+
+  // Which pricing card sent the visitor here. Read from location instead of
+  // useSearchParams so this page keeps its server render instead of bailing
+  // out to client-side rendering. It's only needed at submit time.
+  useEffect(() => {
+    const plan = new URLSearchParams(window.location.search).get("plan");
+    planInterest.current = PLAN_INTEREST_VALUES.includes(plan as PlanInterest)
+      ? (plan as PlanInterest)
+      : undefined;
   }, []);
 
   useEffect(() => {
@@ -359,6 +374,7 @@ export function BookAuditForm() {
       turnstileToken,
       consentWording: t("consent"),
       consentSource: "book-audit",
+      ...(planInterest.current ? { planInterest: planInterest.current } : {}),
     };
     const parsed = bookAuditSchema.safeParse(payload);
     if (!parsed.success) {

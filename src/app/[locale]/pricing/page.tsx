@@ -6,6 +6,10 @@ import {
   PricingExperience,
   type PricingTier,
 } from "@/components/PricingExperience";
+import {
+  PlanComparison,
+  type PlanComparisonData,
+} from "@/components/PlanComparison";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -102,7 +106,6 @@ export default async function PricingPage({
           <PricingExperience
             tiers={tiers}
             labels={{
-              mostPopular: t("mostPopular"),
               cta: t("cta"),
               setupLabel: t("setupLabel"),
               monthlyLabel: t("monthlyLabel"),
@@ -115,6 +118,18 @@ export default async function PricingPage({
               details: t.raw("details") as { title: string; body: string }[],
             }}
           />
+        </Container>
+      </section>
+
+      <section
+        id="compare"
+        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div data-reveal>
+            <PlanComparison data={t.raw("comparison") as PlanComparisonData} />
+          </div>
         </Container>
       </section>
 
