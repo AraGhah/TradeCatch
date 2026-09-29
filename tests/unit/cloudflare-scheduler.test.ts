@@ -17,6 +17,8 @@ describe("Cloudflare scheduler", () => {
       "/api/growth/reminders/tick",
       "/api/growth/reviews/tick",
       "/api/growth/crm/tick",
+      "/api/receptionist/tick",
+      "/api/growth/email/tick",
     ]);
     assert.deepEqual(routesForCloudflareCron("15 6 * * *"), [
       "/api/missed-call/retention/tick",
@@ -44,7 +46,7 @@ describe("Cloudflare scheduler", () => {
       /failed for 1 route/,
     );
 
-    assert.equal(invoked.length, 4);
+    assert.equal(invoked.length, routesForCloudflareCron("*/15 * * * *").length);
   });
 
   it("returns the completed routes when every invocation succeeds", async () => {

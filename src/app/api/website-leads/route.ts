@@ -142,8 +142,29 @@ export async function POST(request: NextRequest) {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL?.trim(),
   });
 
+  // Optional follow-up sequence: off by default, and only for a lead that gave
+  // an email AND express consent. Must never fail lead capture.
+  let emailSequence: { enrolled: boolean; reason?: string } = {
+    enrolled: false,
+    reason: "not_configured",
+  };
+  if (!result.duplicate && orgHasFeature(org.plan, "EMAIL_AUTOMATION")) {
+    try {
+      const { getEmailAutomationServices } =
+        await import("@/product/email-automation/runtime");
+      emailSequence = await getEmailAutomationServices().autoEnrollWebsiteLead({
+        organizationId,
+        lead: result.lead,
+      });
+    } catch (err) {
+      console.warn("[website-leads] email auto-enroll failed", err);
+      emailSequence = { enrolled: false, reason: "error" };
+    }
+  }
+
   return NextResponse.json({
     ok: true,
+    emailSequence,
     id: result.lead.id,
     duplicate: Boolean(result.duplicate),
     smsSent: result.smsSent,

@@ -6,11 +6,14 @@ import { useTranslations } from "next-intl";
 const NAV_ITEMS = [
   { href: "/app", key: "dashboard" },
   { href: "/app/leads", key: "leads" },
+  { href: "/app/calls", key: "calls" },
+  { href: "/app/receptionist", key: "receptionist" },
   { href: "/app/website-leads", key: "websiteLeads" },
   { href: "/app/quotes", key: "quotes" },
   { href: "/app/bookings", key: "bookings" },
   { href: "/app/pipeline", key: "pipeline" },
   { href: "/app/reviews", key: "reviews" },
+  { href: "/app/email", key: "email" },
   { href: "/app/timeline", key: "timeline" },
   { href: "/app/inbox", key: "inbox" },
   { href: "/app/onboarding", key: "onboarding" },
@@ -46,7 +49,7 @@ export function AppShell({
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 md:px-6 md:py-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy/50">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy/70">
               TradeCatch
             </p>
             <p className="mt-1 text-lg font-semibold text-navy">{orgName}</p>
