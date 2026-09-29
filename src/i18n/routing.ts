@@ -73,6 +73,18 @@ export const routing = defineRouting({
       en: "/app/reviews",
       fr: "/app/avis",
     },
+    "/app/calls": {
+      en: "/app/calls",
+      fr: "/app/appels",
+    },
+    "/app/receptionist": {
+      en: "/app/receptionist",
+      fr: "/app/receptionniste",
+    },
+    "/app/email": {
+      en: "/app/email",
+      fr: "/app/courriels",
+    },
     "/app/timeline": {
       en: "/app/timeline",
       fr: "/app/chronologie",

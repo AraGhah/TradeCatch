@@ -18,6 +18,7 @@ export const FEATURE_IDS = [
   "REVENUE_ATTRIBUTION",
   "REVIEW_AUTOMATION",
   "ADVANCED_ANALYTICS",
+  "EMAIL_AUTOMATION",
 ] as const;
 
 export type FeatureId = (typeof FEATURE_IDS)[number];
@@ -37,6 +38,7 @@ const GROWTH_EXTRA = [
   "REVENUE_ATTRIBUTION",
   "REVIEW_AUTOMATION",
   "ADVANCED_ANALYTICS",
+  "EMAIL_AUTOMATION",
 ] as const satisfies readonly FeatureId[];
 
 export const PLAN_FEATURES: Record<PlanId, readonly FeatureId[]> = {
@@ -120,5 +122,9 @@ export const FEATURE_LABELS: Record<FeatureId, { en: string; fr: string }> = {
   ADVANCED_ANALYTICS: {
     en: "Advanced analytics",
     fr: "Analytique avancée",
+  },
+  EMAIL_AUTOMATION: {
+    en: "Email follow-up automation",
+    fr: "Relances automatiques par courriel",
   },
 };

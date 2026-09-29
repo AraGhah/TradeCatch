@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Apply Module A + SaaS + Starter + Growth schemas to DATABASE_URL.
+ * Apply Module A + SaaS + Starter + Growth + AI Receptionist + Email automation schemas to DATABASE_URL.
  * Usage: npm run db:schema
  */
 const fs = require("node:fs");
@@ -53,6 +53,16 @@ async function main() {
       client,
       ["src", "product", "growth", "schema-crm.sql"],
       "005_crm_webhook_dlq",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "receptionist", "schema.sql"],
+      "006_ai_receptionist",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "email-automation", "schema.sql"],
+      "007_email_automation",
     );
   } finally {
     await client.end();

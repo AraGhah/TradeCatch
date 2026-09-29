@@ -11,7 +11,7 @@ export function timeToMinutes(hhmm: string): number {
  * days: 0=Sunday … 6=Saturday (JS getDay).
  */
 export function isAfterHours(
-  client: ClientAccount,
+  client: Pick<ClientAccount, "businessHours" | "timezone">,
   at: Date,
   timeZone = client.timezone,
 ): boolean {

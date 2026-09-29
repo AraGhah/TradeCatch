@@ -441,7 +441,7 @@
       "items": [
         {
           "q": "Does TradeCatch answer the phone like a receptionist?",
-          "a": "On Starter and Growth, no: a missed call gets an immediate bilingual text back, job details are collected, and your technician is alerted. On the AI Receptionist plan it does answer incoming calls 24/7, and can qualify, book or transfer them."
+          "a": "On Starter and Growth, no: a missed call gets an immediate bilingual text back, job details are collected, and your technician is alerted. On the AI Receptionist plan it does answer incoming calls 24/7, and can qualify, take appointment requests or transfer them."
         },
         {
           "q": "Does it replace our receptionist?",
@@ -783,11 +783,11 @@
           "Bilingual phone answering, 24/7 and after hours",
           "Business knowledge base configured and approved by you",
           "Lead qualification during the call",
-          "Appointment booking by phone",
+          "Appointment requests by phone, confirmed by your team",
           "Human transfer to owner, office, sales or on-call technician",
           "Emergency routing defined per business",
           "Structured call summaries and next actions",
-          "Transcripts and recordings when enabled"
+          "Transcripts, and voicemail recordings when enabled"
         ]
       }
     ],
@@ -968,7 +968,7 @@
     "principles": [
       "Starter pilot = recover more leads",
       "Growth pilot = convert more leads (includes Starter)",
-      "AI Receptionist = answer, qualify and book by phone (includes Starter and Growth)",
+      "AI Receptionist = answer, qualify and take appointment requests by phone (includes Starter and Growth)",
       "Scoped on the audit before you commit"
     ],
     "tiers": [
@@ -1057,13 +1057,13 @@
         "badge": "Most advanced",
         "emphasis": "premium",
         "tagline": "Automate Your Front Desk · Configured pilot",
-        "outcome": "Your 24/7 front desk for capturing, qualifying, booking and following up with leads, in French and English.",
+        "outcome": "Your 24/7 front desk for capturing, qualifying, routing and following up with leads, in French and English.",
         "price": "$1,999.99 setup",
         "setupAmount": "$1,999.99",
         "cadence": "$1,000 / month",
         "monthlyAmount": "$1,000",
         "idealFor": "Contractors losing calls after hours, during jobs, or faster than the office can pick up.",
-        "reassuranceLine": "Setup covers the knowledge base, greeting, booking rules, transfer targets and emergency routing. Onboarding is required before the line goes live.",
+        "reassuranceLine": "Setup covers the knowledge base, greeting, appointment-request rules, transfer targets and emergency routing. Onboarding is required before the line goes live.",
         "usageNote": "AI calling usage is subject to plan allowance and applicable usage limits, agreed in writing at the demo.",
         "includesPrevious": "Everything in Starter and everything in Growth, plus:",
         "ctaLabel": "Book a demo",
@@ -1073,7 +1073,7 @@
             "title": "Answer",
             "items": [
               "Phone answering 24/7, including after hours",
-              "French and English, identified on the call",
+              "French and English, offered at the start of the call",
               "Answers drawn from your approved business information"
             ]
           },
@@ -1081,14 +1081,14 @@
             "title": "Qualify",
             "items": [
               "Caller, service, address and job details captured live",
-              "Urgency, residential or commercial, new or existing customer",
-              "Lead categories: hot, qualified, inquiry, emergency, supplier, spam"
+              "Urgency level and type of request (service, appointment, question, message)",
+              "Emergency detection with an immediate text alert to your team"
             ]
           },
           {
-            "title": "Book and route",
+            "title": "Request and route",
             "items": [
-              "Phone booking against availability, buffers and service areas",
+              "Appointment requests by phone: preferred time captured, confirmed by your team",
               "Human transfer to owner, office, sales or on-call technician",
               "Emergency routing rules defined by your business"
             ]
@@ -1097,7 +1097,7 @@
             "title": "Summarise",
             "items": [
               "Structured call summary and next action after every meaningful call",
-              "Transcripts and call recordings when enabled",
+              "Transcripts, and voicemail recordings when enabled",
               "Call and receptionist reporting in the linked workspace"
             ]
           }
@@ -1228,7 +1228,7 @@
           "values": ["n", "n", "y"]
         },
         {
-          "feature": "Appointment booking by phone",
+          "feature": "Appointment requests by phone",
           "values": ["n", "n", "y"]
         },
         {
@@ -1244,7 +1244,7 @@
           "values": ["n", "n", "y"]
         },
         {
-          "feature": "Transcripts and recordings when enabled",
+          "feature": "Transcripts and voicemail recordings when enabled",
           "values": ["n", "n", "y"]
         },
         {
@@ -1622,7 +1622,7 @@
       },
       {
         "q": "Can TradeCatch answer the phone, not just text back?",
-        "a": "Yes, on the AI Receptionist plan. It answers incoming calls in French or English, qualifies the caller, books appointments against your availability, transfers the calls that need a person, and routes emergencies to your on-call technician. Missed-call recovery, follow-up and the workspace keep running underneath. It is configured with you during onboarding and does not go live until you approve what it says."
+        "a": "Yes, on the AI Receptionist plan. It answers incoming calls in French or English, qualifies the caller, takes appointment requests for your team to confirm, transfers the calls that need a person, and bridges emergencies to your on-call line. Missed-call recovery, follow-up and the workspace keep running underneath. It is configured with you during onboarding and does not go live until you approve what it says."
       }
     ],
     "stillHave": {
@@ -1908,7 +1908,7 @@
       "On-call technician / owner alerts (controlled pilot)",
       "Day 1 / 3 / 7 / 14 quote follow-up (linked Starter pilot)",
       "Organization-scoped pilot workspace; public report graphic is illustrative",
-      "Answers incoming calls 24/7 in French and English on the AI Receptionist plan, then books, transfers or escalates"
+      "Answers incoming calls 24/7 in French and English on the AI Receptionist plan, then takes the request, transfers or escalates"
     ],
     "doesNotTitle": "What it does not do",
     "doesNot": [
@@ -1928,7 +1928,7 @@
       "Founder-monitored launch and monthly management"
     ],
     "pricingTitle": "Starting ranges",
-    "pricing": "Starter: $799 setup, then $375/month. Growth: $1,499 setup, then $500–$750/month, and it includes Starter. AI Receptionist: $1,999.99 setup, then $1,000/month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone booking, human transfer and emergency routing. AI calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
+    "pricing": "Starter: $799 setup, then $375/month. Growth: $1,499 setup, then $500–$750/month, and it includes Starter. AI Receptionist: $1,999.99 setup, then $1,000/month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. AI calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
     "pilotTitle": "Pilot programme",
     "pilot": "Limited founding seats per area: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
     "ctaTitle": "Next step",
@@ -1975,16 +1975,96 @@
     "nav": {
       "dashboard": "Dashboard",
       "leads": "Missed calls",
+      "calls": "AI calls",
       "websiteLeads": "Website",
       "quotes": "Quotes",
       "bookings": "Bookings",
       "pipeline": "Pipeline",
       "reviews": "Reviews",
+      "email": "Email",
       "timeline": "Timeline",
       "onboarding": "Onboarding",
       "inbox": "Inbox",
       "settings": "Settings",
-      "logout": "Sign out"
+      "logout": "Sign out",
+      "receptionist": "Receptionist"
+    },
+    "calls": {
+      "headline": "AI receptionist calls",
+      "intro": "Every call answered by the AI receptionist, with the collected details, next step and transcript. Transcripts are purged automatically after the retention window.",
+      "empty": "No AI-answered calls yet.",
+      "entitlement": "AI call answering is not available on your plan.",
+      "notConfigured": "The AI receptionist is not configured for your number yet. Ask the founder to enable it.",
+      "inProgress": "In progress",
+      "afterHours": "after hours",
+      "callback": "Callback",
+      "address": "Address",
+      "preferredTime": "Preferred time",
+      "nextStep": "Next step",
+      "transcript": "Transcript",
+      "caller": "Caller",
+      "agent": "Assistant",
+      "purged": "Transcript purged (retention policy).",
+      "knownContact": "Known contact",
+      "stats": {
+        "total": "AI-answered calls",
+        "afterHours": "After hours",
+        "transfers": "Transferred to a person",
+        "emergencies": "Emergencies",
+        "requests": "Messages and appointment requests"
+      }
+    },
+    "email": {
+      "headline": "Email follow-up automation",
+      "intro": "Templated, scheduled email sequences for quotes and leads. Sequences stop automatically when a contact replies or unsubscribes.",
+      "entitlement": "Email automation is available on the Growth plan.",
+      "error": "Something went wrong.",
+      "enrollTitle": "Add a contact to a sequence",
+      "sequence": "Sequence",
+      "paused": "paused",
+      "contactEmail": "Email",
+      "contactName": "Name",
+      "vars": "Template variables (one per line, key=value)",
+      "enroll": "Start sequence",
+      "enrollmentsTitle": "Contacts in sequences",
+      "noEnrollments": "No contacts enrolled yet.",
+      "status": "Status",
+      "step": "Step",
+      "nextSend": "Next email",
+      "replied": "Replied",
+      "stop": "Stop",
+      "statuses": {
+        "active": "Active",
+        "completed": "Completed",
+        "stopped": "Stopped",
+        "failed": "Failed"
+      },
+      "sequencesTitle": "Sequences",
+      "days": "d",
+      "stopOnReply": "stops on reply",
+      "newSequence": "New sequence",
+      "name": "Name",
+      "stepTemplate": "Step {n} template",
+      "delayDays": "Wait (days)",
+      "removeStep": "Remove step",
+      "addStep": "Add step",
+      "saveSequence": "Save sequence",
+      "templatesTitle": "Templates",
+      "newTemplate": "New template",
+      "language": "Language",
+      "subject": "Subject",
+      "body": "Body",
+      "syntaxHelp": "Variables: '{{ first_name }}', '{{ business_name }}', '{{ quote_ref }}' or any you pass when enrolling. Filters: default, upper, lower, capitalize. Conditions: if / else / endif. An unsubscribe link is added automatically.",
+      "preview": "Preview",
+      "saveTemplate": "Save changes",
+      "createTemplate": "Create template",
+      "variablesUsed": "Variables used",
+      "autoTitle": "Follow up new website leads automatically",
+      "autoIntro": "Off by default. A lead who fills your website form is enrolled only if they gave an email address and consent.",
+      "autoOff": "Off — enroll contacts manually",
+      "autoSequence": "Sequence for new website leads",
+      "autoSave": "Save",
+      "autoSaved": "Saved."
     },
     "plan": {
       "starter": "Starter — Lead Recovery Pilot",
@@ -2138,17 +2218,165 @@
       "title": "Need the entitled Growth pilot modules?",
       "body": "For linked organizations, Growth pilot access adds in-app booking, pipeline, attribution, and review requests. The founder enables each entitlement; native Google/Outlook sync is not included.",
       "cta": "See Growth on pricing"
+    },
+    "receptionist": {
+      "headline": "AI receptionist settings",
+      "intro": "What the receptionist says and where it sends callers. Changes apply to new calls within about 30 seconds.",
+      "statusActive": "Answering calls on {number}.",
+      "statusInactive": "Not answering calls yet. The founder connects your phone number and switches it on. You can prepare everything below in the meantime.",
+      "notLinked": "Your phone client is not linked yet. Ask the founder to connect it before configuring the receptionist.",
+      "entitlement": "The AI receptionist is not available on your plan.",
+      "readOnly": "Only an owner or admin can change these settings.",
+      "save": "Save settings",
+      "saving": "Saving…",
+      "saved": "Saved. New calls use these settings within about 30 seconds.",
+      "error": "Could not save the settings.",
+      "issuesTitle": "Please fix:",
+      "phoneHelp": "Canadian number in international format, e.g. +14385551234.",
+      "removeRow": "Remove",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "languagesTitle": "Languages",
+      "langFr": "Français",
+      "langEn": "English",
+      "defaultLanguage": "Default language",
+      "greetingsTitle": "Greeting and after-hours message",
+      "greetingHelp": "Leave a field blank to use the standard message with your business name.",
+      "greetingFr": "Greeting (French)",
+      "greetingEn": "Greeting (English)",
+      "afterHoursFr": "After-hours message (French)",
+      "afterHoursEn": "After-hours message (English)",
+      "hoursTitle": "Business hours",
+      "hoursIntro": "Outside these hours the receptionist takes a message and never transfers to a department. Emergencies are still bridged to your on-call line.",
+      "hoursCustom": "Use different hours for the receptionist",
+      "hoursDefault": "Using your business hours: {hours}.",
+      "hoursStart": "Opens",
+      "hoursEnd": "Closes",
+      "knowledgeTitle": "What it knows about your business",
+      "personality": "Tone",
+      "personalityHelp": "Optional, e.g. warm, brief and professional. Only used when an AI model is enabled.",
+      "facts": "Business facts",
+      "factsHelp": "Services, service area, minimum job size, anything a caller may ask. It will not invent anything that is not here or in the FAQ.",
+      "routingTitle": "Departments and people",
+      "routingIntro": "When a caller asks for one of these during business hours, the call is transferred.",
+      "deptName": "Name",
+      "deptPhone": "Phone",
+      "deptKeywords": "Words callers use (comma-separated)",
+      "addDept": "Add a department",
+      "faqTitle": "Answers to common questions",
+      "faqIntro": "The receptionist answers only from these approved answers.",
+      "faqKeywords": "Trigger words (comma-separated)",
+      "faqAnswerFr": "Answer (French)",
+      "faqAnswerEn": "Answer (English)",
+      "addFaq": "Add a question",
+      "emergencyTitle": "Emergency and fallback lines",
+      "emergencyIntro": "A gas smell, fire, flooding or electrical hazard is always bridged to the emergency line, even after hours. The fallback line takes over if something goes wrong.",
+      "emergencyPhone": "Emergency (on-call) line",
+      "fallbackPhone": "Fallback line",
+      "linesBlank": "Blank = your technician / owner from your account.",
+      "notifyTitle": "Call summaries",
+      "notifyEmail": "Send summaries to this email",
+      "notifySms": "Text summaries and emergency alerts to",
+      "collectTime": "Ask the caller for a preferred date and time"
     }
   },
   "aiReceptionist": {
+    "demo": {
+      "eyebrow": "Try it",
+      "title": "Talk to the receptionist yourself.",
+      "intro": "This runs the same conversation engine that answers real calls, for a fictional plumbing company. Type what a caller would say and watch it collect the details, answer a question, or bridge an emergency.",
+      "badge": "Simulated call. Nothing is sent, no phone is dialed, nothing is saved.",
+      "startHeading": "Pick a situation",
+      "scenarios": [
+        {
+          "id": "open",
+          "label": "During business hours",
+          "hint": "Wednesday, 10 a.m. Transfers to a department are possible."
+        },
+        {
+          "id": "after_hours",
+          "label": "After hours",
+          "hint": "Tuesday, 10 p.m. The office is closed."
+        }
+      ],
+      "startCta": "Start the call",
+      "inputLabel": "What the caller says",
+      "inputPlaceholder": "Type what you would say…",
+      "send": "Send",
+      "suggestionsLabel": "Try saying",
+      "suggestions": {
+        "reason": [
+          "My kitchen sink has been leaking since yesterday",
+          "I smell gas in my house",
+          "What are your opening hours?",
+          "I need to talk to billing"
+        ],
+        "name": [
+          "My name is Marie Tremblay"
+        ],
+        "address": [
+          "123 Saint-Denis Street, Montréal"
+        ],
+        "callback": [
+          "Yes",
+          "No"
+        ],
+        "callback_number": [
+          "514 555 0123"
+        ],
+        "preferred_time": [
+          "Tomorrow morning"
+        ],
+        "anything_else": [
+          "No thanks",
+          "Do you offer free estimates?"
+        ]
+      },
+      "agentLabel": "Receptionist",
+      "callerLabel": "You",
+      "systemLabel": "Demo",
+      "afterHoursNote": "Outside business hours the receptionist takes a message for a callback and never transfers to a department. A gas smell or fire is still bridged to the on-call line.",
+      "ended": "The call has ended.",
+      "restart": "Start another call",
+      "error": "The demo is unavailable right now. Please try again in a moment.",
+      "rateLimited": "Too many demo turns. Please wait a few minutes.",
+      "expired": "This demo call timed out. Start a new one.",
+      "summaryLabel": "Call summary",
+      "summaryPlaceholder": "When the call ends, the summary the owner receives by email and text appears here, built from what you said.",
+      "summaryBadge": "Generated from the demo call. Not a real customer.",
+      "fields": {
+        "caller": "Caller",
+        "callback": "Callback",
+        "address": "Address",
+        "request": "Request",
+        "time": "Preferred time",
+        "urgency": "Urgency",
+        "outcome": "Outcome",
+        "nextStep": "Next step",
+        "contact": "Known contact"
+      },
+      "urgency": {
+        "routine": "Routine",
+        "priority": "Priority",
+        "critical": "Emergency",
+        "unknown": "Not assessed"
+      }
+    },
     "eyebrow": "AI Receptionist · $1,999.99 setup, then $1,000/month",
     "headline": "A bilingual front desk that answers every call, day or night.",
-    "intro": "AI Receptionist is the premium TradeCatch plan. It answers your incoming calls in French or English, works out what the caller needs, qualifies the job, books the appointment, transfers the calls that need a person, and keeps every TradeCatch recovery and follow-up workflow running underneath.",
-    "metaDescription": "AI receptionist for Québec contractors: bilingual call answering 24/7, lead qualification, appointment booking by phone, human transfer and emergency routing, on top of TradeCatch missed-call recovery and quote follow-up.",
+    "intro": "AI Receptionist is the premium TradeCatch plan. It answers your incoming calls in French or English, works out what the caller needs, qualifies the job, takes the appointment request, transfers the calls that need a person, and keeps every TradeCatch recovery and follow-up workflow running underneath.",
+    "metaDescription": "AI receptionist for Québec contractors: bilingual call answering 24/7, call qualification, appointment requests by phone, human transfer and emergency routing, on top of TradeCatch missed-call recovery and quote follow-up.",
     "heroPointsLabel": "What changes on day one",
     "heroPoints": [
       "Answers 24/7, including after hours and while your crews are on site",
-      "French and English, identified from how the caller speaks",
+      "French and English, offered at the start of every call",
       "Includes everything in Starter and everything in Growth"
     ],
     "planLabel": "The plan",
@@ -2173,18 +2401,18 @@
         },
         {
           "title": "It understands the request",
-          "body": "Service needed, problem described, residential or commercial, new or existing customer."
+          "body": "Service needed, problem described and how urgent it is."
         },
         {
           "title": "It qualifies the lead",
-          "body": "Name, phone, address, city, urgency, approximate size and preferred timing, collected before anyone calls back."
+          "body": "Name, callback number, address, urgency and preferred timing, collected before anyone calls back."
         }
       ],
       "branchLabel": "Then, depending on the call",
       "branches": [
         {
-          "title": "Book the appointment",
-          "body": "It offers real availability and books the estimate, consultation or service call."
+          "title": "Take the appointment request",
+          "body": "It captures the preferred date and time and passes it to your team, who confirm the slot."
         },
         {
           "title": "Transfer to your team",
@@ -2199,7 +2427,7 @@
       "outcome": [
         {
           "title": "TradeCatch saves everything",
-          "body": "Lead, conversation, summary and appointment land in the workspace."
+          "body": "Lead, conversation and summary land in the workspace."
         },
         {
           "title": "Follow-up continues",
@@ -2219,7 +2447,7 @@
           "items": [
             "Answers incoming business calls 24/7",
             "Handles after-hours and overflow calls",
-            "Detects French or English automatically",
+            "Offers French or English at the start of every call",
             "Natural conversation, interruptions handled",
             "Asks follow-up questions when an answer is incomplete",
             "Answers frequently asked questions from approved content",
@@ -2243,41 +2471,36 @@
           "title": "Lead qualification",
           "purpose": "Give your team enough to call back prepared.",
           "items": [
-            "Name, phone number and email where needed",
-            "Address and city",
+            "Name and callback number",
+            "Address",
             "Requested service and a description of the job",
             "Urgency level",
-            "Residential or commercial",
-            "New or existing customer",
-            "Preferred appointment date and time",
-            "Approximate project size, budget where appropriate, and desired timeline"
+            "Preferred date and time",
+            "A caller who already used your website form or phoned before is flagged for you"
           ]
         },
         {
-          "title": "Lead classification",
-          "purpose": "So the calls worth your time surface first.",
+          "title": "Urgency and request type",
+          "purpose": "So the calls that cannot wait surface first.",
           "items": [
-            "Hot lead",
-            "Qualified lead",
-            "General inquiry",
-            "Existing customer",
-            "Emergency",
-            "Supplier",
-            "Job applicant",
-            "Spam"
+            "Emergency (gas, fire, flooding, electrical hazard)",
+            "Priority",
+            "Routine",
+            "Service request",
+            "Appointment request",
+            "Question",
+            "Message for the team"
           ]
         },
         {
-          "title": "Appointment booking",
-          "purpose": "Growth booking, extended to the telephone.",
+          "title": "Appointment requests",
+          "purpose": "The phone captures the request. Booking stays with your team.",
           "items": [
-            "Checks availability and offers real times",
-            "Books estimates, consultations and service calls",
-            "Respects working hours, service areas, durations and buffers",
-            "Prevents double bookings",
-            "Confirms, reschedules and cancels",
-            "SMS confirmation, email when configured",
-            "Reminders before the appointment"
+            "Captures the preferred date and time",
+            "Never promises a slot on the call: a team member confirms",
+            "Follows your business hours, and never transfers to a department after hours",
+            "Requests land in the workspace and the pipeline",
+            "Once your team books the visit in the workspace, SMS confirmation and reminders follow (Growth)"
           ]
         },
         {
@@ -2285,10 +2508,10 @@
           "purpose": "It is not built to handle everything alone.",
           "items": [
             "The caller asks for a person",
-            "High-value lead, or a frustrated customer",
-            "An emergency, or an existing customer with a complex issue",
-            "The request is not understood with confidence",
-            "One of your own transfer rules is triggered",
+            "The caller names a department you configured",
+            "An emergency: the on-call line is bridged straight away",
+            "If the caller stays silent, it offers to take a voicemail",
+            "One of your own routing keywords is triggered",
             "Routes to owner, sales, office, technician or on-call technician",
             "If the transfer goes unanswered, it takes a message and contact details instead of losing the lead"
           ]
@@ -2301,12 +2524,11 @@
       "intro": "What counts as an emergency is defined by you: a burst pipe, a heating failure in January, an electrical hazard, water damage, or whatever your trade treats as urgent.",
       "steps": [
         "Incoming call",
-        "Urgency detected",
-        "Critical details collected",
-        "Address confirmed",
-        "Configured technician transfer attempted",
-        "Technician and owner notified",
-        "Lead and conversation stored"
+        "Emergency keywords detected",
+        "Caller told to dial 9-1-1 if anyone is in danger",
+        "Your on-call line is called straight away",
+        "Owner alerted by text",
+        "Call summary and conversation stored"
       ],
       "note": "TradeCatch is not an emergency dispatch service. Configured routing reaches your own people. Licensed work and safety decisions stay with your team."
     },
@@ -2387,8 +2609,8 @@
           "value": "Approx. 1,200 sq. ft., asphalt to remove"
         },
         {
-          "label": "Category",
-          "value": "Qualified lead"
+          "label": "Outcome",
+          "value": "Appointment requested"
         },
         {
           "label": "Urgency",
@@ -2399,12 +2621,12 @@
           "value": "Estimate"
         },
         {
-          "label": "Appointment",
-          "value": "Thursday, 3:00 PM"
+          "label": "Preferred time",
+          "value": "Thursday afternoon"
         },
         {
           "label": "Next action",
-          "value": "Confirm measurements on site"
+          "value": "Call back to confirm the visit"
         },
         {
           "label": "Call",
@@ -2416,14 +2638,14 @@
         "Caller name and phone number",
         "Requested service",
         "Address or location",
-        "Lead category",
+        "Outcome (message, appointment request, transfer…)",
         "Urgency",
         "Important job details",
-        "Appointment booked",
+        "Preferred appointment time",
         "Next required action",
         "Call duration",
         "Transcript when enabled",
-        "Recording when enabled"
+        "Voicemail recording when enabled"
       ]
     },
     "notifications": {
@@ -2431,11 +2653,10 @@
       "intro": "Notifications use the TradeCatch channels your account already has: SMS, email and the workspace, depending on how it is configured.",
       "items": [
         "New lead",
-        "Hot lead",
         "Emergency",
-        "Appointment booked",
+        "Appointment request",
         "Human follow-up required",
-        "Appointment cancelled",
+        "Transfer completed or unanswered",
         "Quote response"
       ]
     },
@@ -2451,7 +2672,7 @@
         "Follow-ups",
         "Call summaries",
         "Transcripts when enabled",
-        "Recordings when enabled",
+        "Voicemail recordings when enabled",
         "Conversion information",
         "Customer activity history"
       ],
@@ -2499,7 +2720,7 @@
       "escalationLabel": "When it is not sure",
       "escalation": [
         "It asks the caller to clarify",
-        "Repeated misunderstanding hands the call to a person",
+        "Silence or a technical error falls back to your fallback line or a voicemail",
         "If nobody is reachable, it takes a message and contact details",
         "It tells the caller a team member will confirm, rather than guessing"
       ],
@@ -2516,16 +2737,16 @@
           "then": "It asks for clarification instead of guessing."
         },
         {
-          "when": "It misunderstands repeatedly",
-          "then": "The call is escalated to a person."
+          "when": "The receptionist hits a technical error",
+          "then": "It apologises and puts the caller through to your fallback line, or takes a voicemail."
         },
         {
           "when": "A human transfer goes unanswered",
           "then": "A message and contact details are taken."
         },
         {
-          "when": "Calendar availability cannot be read",
-          "then": "Preferred availability is collected and confirmed later."
+          "when": "The caller gives a preferred time",
+          "then": "It is recorded as a request. A team member confirms, and nothing is booked automatically."
         },
         {
           "when": "An SMS fails to deliver",
@@ -2544,8 +2765,8 @@
           "then": "The existing lead is updated instead of duplicated."
         },
         {
-          "when": "The call is spam",
-          "then": "It is classified and kept out of your lead list."
+          "when": "The caller says nothing",
+          "then": "After one reprompt it offers a voicemail and records the message."
         }
       ]
     },
@@ -2561,9 +2782,9 @@
     },
     "privacy": {
       "title": "Recording, transcripts and privacy",
-      "body": "Call recordings and transcripts are available when enabled. They are not switched on automatically, and caller notification wording is configured with you.",
+      "body": "Call transcripts and voicemail recordings are available when enabled. Full-call recording is not offered until the caller-notification wording is agreed with you, nothing is switched on automatically, and that wording is configured with you.",
       "items": [
-        "Call recordings and transcripts when enabled",
+        "Call transcripts and voicemail recordings when enabled",
         "Privacy and recording settings configured to your business's requirements",
         "Customer records and conversation logs belong to your business"
       ],

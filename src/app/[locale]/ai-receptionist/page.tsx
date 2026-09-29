@@ -6,6 +6,7 @@ import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
 import { CallFlowDiagram, type FlowNode } from "@/components/CallFlowDiagram";
 import { CallSummaryCard } from "@/components/CallSummaryCard";
+import { CallDemo, type CallDemoCopy } from "@/components/CallDemo";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -124,6 +125,31 @@ export default async function AiReceptionistPage({
               outcomeLabel={t("flow.outcomeLabel")}
               outcome={t.raw("flow.outcome") as FlowNode[]}
               note={t("flow.note")}
+            />
+          </div>
+        </Container>
+      </section>
+
+      {/* 1b. Interactive demo (real conversation engine, no side effects) */}
+      <section
+        id="try-it"
+        className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div data-reveal>
+            <SectionHeading
+              align="left"
+              eyebrow={t("demo.eyebrow")}
+              title={t("demo.title")}
+              intro={t("demo.intro")}
+              className="max-w-[46em]"
+            />
+          </div>
+          <div data-reveal className="mt-[clamp(32px,4vw,48px)]">
+            <CallDemo
+              copy={t.raw("demo") as CallDemoCopy}
+              locale={locale === "fr" ? "fr" : "en"}
             />
           </div>
         </Container>

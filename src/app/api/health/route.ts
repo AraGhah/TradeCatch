@@ -15,6 +15,7 @@ import {
 } from "@/product/missed-call/client-config";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import { OUTBOUND_STALE_SENDING_MS } from "@/product/missed-call/store";
+import { receptionistReadiness } from "@/product/receptionist/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -279,6 +280,12 @@ export async function GET(request: NextRequest) {
             ready: moduleAReady,
             status: moduleAReady ? "ready" : "not_ready",
           },
+          // Informational only — never affects `ok`. Omitted unless the AI
+          // receptionist is configured, so it never boots for other deployments.
+          ...(process.env.RECEPTIONIST_CONFIG_JSON?.trim() ||
+          process.env.RECEPTIONIST_ENABLED === "1"
+            ? { receptionist: receptionistReadiness() }
+            : {}),
         }
       : {}),
   };
