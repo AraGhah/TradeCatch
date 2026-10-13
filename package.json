@@ -43,8 +43,9 @@
   "overrides": {
     "sharp": "0.35.5",
     "postcss": "^8.5.10",
-    "brace-expansion@1": "1.1.17",
-    "brace-expansion@5": "5.0.8",
+    "brace-expansion@1": "1.1.21",
+    "brace-expansion@5": "5.0.12",
+    "glob@10": "10.5.0",
     "source-map-js": "1.2.2",
     "undici": "7.29.1"
   },

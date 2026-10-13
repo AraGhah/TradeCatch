@@ -3,7 +3,14 @@
     "id": "GHSA-mh99-v99m-4gvg",
     "package": "brace-expansion",
     "via": "eslint / minimatch (dev tooling only)",
-    "mitigation": "npm overrides pin brace-expansion to patched 1.1.17 / 5.0.8; CI runs check:brace-expansion (npm audit may still list the GHSA against eslint ranges)",
-    "expiresOn": "2026-10-29"
+    "mitigation": "npm overrides pin brace-expansion to patched 1.1.21 / 5.0.12; CI runs check:brace-expansion (npm audit may still list older GHSAs against eslint ranges)",
+    "expiresOn": "2026-12-31"
+  },
+  {
+    "id": "GHSA-vfj7-8cjw-p6xm",
+    "package": "braces",
+    "via": "eslint-config-next → @next/eslint-plugin-next → fast-glob → micromatch (dev tooling only)",
+    "mitigation": "No patched braces release exists (all published versions through 3.0.3 are affected). Do not run npm audit fix --force — it would downgrade eslint-config-next to 14.x. Track micromatch/braces for a fix; production audit gate remains npm audit --omit=dev.",
+    "expiresOn": "2026-12-31"
   }
 ]
