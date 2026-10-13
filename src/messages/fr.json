@@ -611,7 +611,7 @@
         {
           "name": "Starter",
           "price": "799,99 $ installation",
-          "cadence": "puis 750 $ / mois",
+          "cadence": "puis 350 $ / mois",
           "idealFor": "Appels manqués, demandes web et relance des soumissions."
         },
         {
@@ -986,8 +986,8 @@
         "outcome": "Dans un pilote Starter configuré, empêchez les appels manqués, les demandes web et les soumissions oubliées de disparaître.",
         "price": "799,99 $ d'installation",
         "setupAmount": "799,99 $",
-        "cadence": "750 $ / mois",
-        "monthlyAmount": "750 $",
+        "cadence": "350 $ / mois",
+        "monthlyAmount": "350 $",
         "idealFor": "Propriétaires-exploitants et petites équipes qui ont besoin d'une récupération solide avant d'accélérer la conversion.",
         "reassuranceLine": "La prise en charge humaine et les notifications de base sont incluses — pas réservées à Growth. Souvent moins qu'une seule job récupérée.",
         "groups": [
@@ -2062,7 +2062,7 @@
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
     "pricingTitle": "Fourchettes de départ",
-    "pricing": "Starter : 799,99 $ d’installation, puis 750 $/mois. Growth : 1 499,99 $ d’installation, puis 750 $/mois, et inclut Starter. Réceptionniste : 1 499,99 $ d’installation, puis 750 $/mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
+    "pricing": "Starter : 799,99 $ d’installation, puis 350 $/mois. Growth : 1 499,99 $ d’installation, puis 750 $/mois, et inclut Starter. Réceptionniste : 1 499,99 $ d’installation, puis 750 $/mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
     "pilotTitle": "Programme pilote",
     "pilot": "Places fondatrices limitées par zone : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
