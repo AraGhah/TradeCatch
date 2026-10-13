@@ -611,7 +611,7 @@
         {
           "name": "Starter",
           "price": "$799.99 setup",
-          "cadence": "then $750 / month",
+          "cadence": "then $350 / month",
           "idealFor": "Missed calls, website inquiries and quote follow-up."
         },
         {
@@ -986,8 +986,8 @@
         "outcome": "In a configured Starter pilot, stop missed calls, website inquiries, and forgotten quotes from disappearing.",
         "price": "$799.99 setup",
         "setupAmount": "$799.99",
-        "cadence": "$750 / month",
-        "monthlyAmount": "$750",
+        "cadence": "$350 / month",
+        "monthlyAmount": "$350",
         "idealFor": "Owner-operators and small crews who need recovery working before they scale conversion.",
         "reassuranceLine": "Human takeover and basic notifications are included — not locked behind Growth. Often less than one recovered job.",
         "groups": [
@@ -2062,7 +2062,7 @@
       "Founder-monitored launch and monthly management"
     ],
     "pricingTitle": "Starting ranges",
-    "pricing": "Starter: $799.99 setup, then $750/month. Growth: $1,499.99 setup, then $750/month, and it includes Starter. Receptionist: $1,499.99 setup, then $750/month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
+    "pricing": "Starter: $799.99 setup, then $350/month. Growth: $1,499.99 setup, then $750/month, and it includes Starter. Receptionist: $1,499.99 setup, then $750/month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
     "pilotTitle": "Pilot programme",
     "pilot": "Limited founding seats per area: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
     "ctaTitle": "Next step",
