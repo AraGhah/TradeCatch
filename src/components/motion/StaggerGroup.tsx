@@ -7,7 +7,7 @@ import { useMounted } from "@/components/motion/useMounted";
 const container = {
   hidden: {},
   visible: {
-    transition: { staggerChildren: 0.08 },
+    transition: { staggerChildren: 0.1, delayChildren: 0.04 },
   },
 };
 
@@ -16,10 +16,10 @@ const container = {
 // print, and some crawlers; if it never fires, items just keep their
 // resting position instead of staying invisible.
 export const staggerItem = {
-  hidden: { y: 16 },
+  hidden: { y: 20 },
   visible: {
     y: 0,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
 

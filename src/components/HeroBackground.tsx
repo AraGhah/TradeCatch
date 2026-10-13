@@ -32,7 +32,7 @@ export function HeroBackground() {
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute top-[-160px] right-[-120px] h-[520px] w-[520px] rounded-full"
+        className="animate-tc-glow pointer-events-none absolute top-[-160px] right-[-120px] h-[520px] w-[520px] rounded-full"
         style={{
           background:
             "radial-gradient(circle, rgba(228,118,43,0.16), transparent 66%)",

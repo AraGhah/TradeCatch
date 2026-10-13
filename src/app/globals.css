@@ -268,6 +268,24 @@ h4 {
   }
 }
 
+@keyframes tcRise {
+  from {
+    transform: translateY(20px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@keyframes tcScaleIn {
+  from {
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    transform: none;
+  }
+}
+
 @keyframes tcBlink {
   0%,
   80% {
@@ -300,8 +318,50 @@ h4 {
   }
 }
 
+@keyframes tcGlowBreath {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes tcArrowNudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes tcShimmer {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -40% 0;
+  }
+}
+
 .animate-tc-in {
   animation: tcIn 0.42s var(--ease-out) both;
+  animation-delay: var(--anim-delay, 0ms);
+}
+
+.animate-tc-rise {
+  animation: tcRise 0.65s var(--ease-out) both;
+  animation-delay: var(--anim-delay, 0ms);
+}
+
+.animate-tc-scale-in {
+  animation: tcScaleIn 0.7s var(--ease-out) both;
+  animation-delay: var(--anim-delay, 0ms);
 }
 
 .animate-tc-pulse {
@@ -316,19 +376,95 @@ h4 {
   animation: tcBlink 1.2s ease-in-out infinite;
 }
 
+.animate-tc-glow {
+  animation: tcGlowBreath 6.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.animate-tc-arrow {
+  display: inline-block;
+  transition: transform 0.25s var(--ease-out);
+}
+
+.group:hover .animate-tc-arrow,
+.group\/cta:hover .animate-tc-arrow {
+  animation: tcArrowNudge 0.7s var(--ease-out) 1;
+}
+
+/* Ember CTA sheen on hover — transform/background only, no opacity hide */
+.tc-cta-sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.tc-cta-sheen::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.28) 50%,
+    transparent 65%
+  );
+  background-size: 220% 100%;
+  background-position: 120% 0;
+  transition: none;
+}
+
+.tc-cta-sheen:hover::after {
+  animation: tcShimmer 0.85s var(--ease-out) 1;
+}
+
+.tc-cta-sheen:active {
+  transform: translateY(0) scale(0.985);
+}
+
+/* Shared lift for interactive list / plan surfaces */
+.tc-lift {
+  transition:
+    transform 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out),
+    border-color 0.3s var(--ease-out);
+}
+
+.tc-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+}
+
+/* Nav active underline grows from center */
+.tc-nav-underline {
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.28s var(--ease-out);
+}
+
+.tc-nav-underline.is-active,
+.group:hover .tc-nav-underline {
+  transform: scaleX(1);
+}
+
 /* Scroll reveal — transform only (never opacity). Opacity:0 left blank
    full-page screenshots and print captures; the prior Reveal component
    documented the same constraint. */
 [data-reveal] {
-  transition: transform 0.7s var(--ease-out);
+  transition:
+    transform 0.75s var(--ease-out),
+    filter 0.75s var(--ease-out);
 }
 
 [data-reveal].reveal-pending:not(.is-visible) {
-  transform: translateY(18px);
+  transform: translateY(22px);
 }
 
 [data-reveal].is-visible {
   transform: none;
+}
+
+[data-reveal][data-reveal-style="scale"].reveal-pending:not(.is-visible) {
+  transform: translateY(16px) scale(0.985);
 }
 
 @media print {
@@ -367,6 +503,20 @@ h4 {
   [data-reveal],
   [data-reveal].reveal-pending {
     transform: none !important;
+  }
+
+  .tc-lift:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  .tc-cta-sheen:hover::after {
+    animation: none;
+  }
+
+  .group:hover .animate-tc-arrow,
+  .group\/cta:hover .animate-tc-arrow {
+    animation: none;
   }
 }
 
