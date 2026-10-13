@@ -1,6 +1,9 @@
 "use client";
 
 import { useId, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+
+const ease = [0.22, 1, 0.36, 1] as const;
 
 export function FaqAccordion({
   items,
@@ -35,28 +38,38 @@ export function FaqAccordion({
               onClick={() => setOpen(isOpen ? -1 : i)}
               aria-expanded={isOpen}
               aria-controls={panelId}
-              className="flex w-full items-center justify-between gap-4 py-[22px] text-left"
+              className="group flex w-full items-center justify-between gap-4 py-[22px] text-left"
             >
-              <span className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-heading sm:text-[18.5px]">
+              <span className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-heading transition-colors duration-200 group-hover:text-ember-text sm:text-[18.5px]">
                 {item.q}
               </span>
-              <span
+              <motion.span
                 className="shrink-0 font-mono text-[18px] font-medium text-ember-text"
                 aria-hidden
+                animate={{ rotate: isOpen ? 45 : 0 }}
+                transition={{ type: "spring", stiffness: 400, damping: 26 }}
               >
-                {isOpen ? "−" : "+"}
-              </span>
+                +
+              </motion.span>
             </button>
-            {isOpen ? (
-              <p
-                id={panelId}
-                role="region"
-                aria-labelledby={buttonId}
-                className="animate-tc-in pb-6 text-[15px] leading-[1.65] text-muted"
-              >
-                {item.a}
-              </p>
-            ) : null}
+            <AnimatePresence initial={false}>
+              {isOpen ? (
+                <motion.div
+                  id={panelId}
+                  role="region"
+                  aria-labelledby={buttonId}
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease }}
+                  className="overflow-hidden"
+                >
+                  <p className="pb-6 text-[15px] leading-[1.65] text-muted">
+                    {item.a}
+                  </p>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
         );
       })}

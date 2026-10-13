@@ -3,6 +3,7 @@ import { TechnicianAlertCard } from "@/components/TechnicianAlertCard";
 import { QuoteFollowUpTimeline } from "@/components/QuoteFollowUpTimeline";
 import { CTAButton } from "@/components/CTAButton";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 
 type QuoteStep = { day: string; title: string; body: string };
 
@@ -73,38 +74,42 @@ export function ProofExamplesSection({
           gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
         }}
       >
-        <div className="rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-paper p-5">
+        <div className="rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-paper p-5 transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-card-hover">
           <IllustrativeBadge label={sms.badge} />
           <h3 className="mt-3 font-heading text-[18px] font-bold tracking-[-0.03em] text-heading">
             {sms.title}
           </h3>
-          <div className="mt-5 flex flex-col gap-2.5">
+          <StaggerGroup stagger={0.16} delay={0.15} className="mt-5 flex flex-col gap-2.5">
             {sms.lines.map((line, i) => {
               if (line.who === "event") {
                 return (
-                  <p
-                    key={`${line.text}-${i}`}
-                    className="rounded-full bg-[rgb(var(--ink-rgb)/0.05)] px-3 py-2 text-center font-mono text-[11px] tracking-[0.04em] text-secondary"
-                  >
-                    {line.text}
-                  </p>
+                  <StaggerItem key={`${line.text}-${i}`} from="pop">
+                    <p className="rounded-full bg-[rgb(var(--ink-rgb)/0.05)] px-3 py-2 text-center font-mono text-[11px] tracking-[0.04em] text-secondary">
+                      {line.text}
+                    </p>
+                  </StaggerItem>
                 );
               }
               const outbound = line.who === "system";
               return (
-                <p
+                <StaggerItem
                   key={`${line.text}-${i}`}
-                  className={`max-w-[92%] rounded-[16px] px-3.5 py-2.5 text-[13.5px] leading-snug ${
-                    outbound
-                      ? "self-start rounded-bl-[5px] border border-[rgb(var(--ink-rgb)/0.08)] bg-surface text-heading"
-                      : "self-end rounded-br-[5px] bg-navy text-white"
-                  }`}
+                  from={outbound ? "left" : "right"}
+                  className={`max-w-[92%] ${outbound ? "self-start" : "self-end"}`}
                 >
-                  {line.text}
-                </p>
+                  <p
+                    className={`rounded-[16px] px-3.5 py-2.5 text-[13.5px] leading-snug ${
+                      outbound
+                        ? "rounded-bl-[5px] border border-[rgb(var(--ink-rgb)/0.08)] bg-surface text-heading"
+                        : "rounded-br-[5px] bg-navy text-white"
+                    }`}
+                  >
+                    {line.text}
+                  </p>
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerGroup>
         </div>
 
         <TechnicianAlertCard {...alert} />
@@ -117,7 +122,7 @@ export function ProofExamplesSection({
       </div>
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
-        <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2">
+        <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[translate,scale,background] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2">
           {demoCta}
         </WatchDemoButton>
         <CTAButton href="/one-pager" variant="secondary">

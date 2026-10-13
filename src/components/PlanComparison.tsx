@@ -1,3 +1,9 @@
+import {
+  StaggerGroup,
+  StaggerItem,
+  StaggerPop,
+} from "@/components/motion/StaggerGroup";
+
 export type PlanComparisonValue = "y" | "n" | "p";
 
 export type PlanComparisonData = {
@@ -58,11 +64,13 @@ export function PlanComparison({ data }: { data: PlanComparisonData }) {
             ))}
           </tr>
         </thead>
-        <tbody>
+        <StaggerGroup as="tbody" stagger={0.05}>
           {data.rows.map((row) => (
-            <tr
+            <StaggerItem
+              as="tr"
+              from="left"
               key={row.feature}
-              className="border-b border-[rgb(var(--ink-rgb)/0.08)]"
+              className="border-b border-[rgb(var(--ink-rgb)/0.08)] transition-colors duration-200 hover:bg-[rgb(var(--ink-rgb)/0.03)]"
             >
               <th
                 scope="row"
@@ -78,9 +86,9 @@ export function PlanComparison({ data }: { data: PlanComparisonData }) {
                   <Mark value={value} label={labels[value]} />
                 </td>
               ))}
-            </tr>
+            </StaggerItem>
           ))}
-        </tbody>
+        </StaggerGroup>
       </table>
 
       <p className="mt-6 max-w-[54em] text-[13.5px] leading-[1.6] text-muted">
@@ -93,10 +101,10 @@ export function PlanComparison({ data }: { data: PlanComparisonData }) {
 function Mark({ value, label }: { value: PlanComparisonValue; label: string }) {
   if (value === "y") {
     return (
-      <span className="inline-flex items-center justify-center text-[15px] font-bold text-signal-text">
+      <StaggerPop className="inline-flex items-center justify-center text-[15px] font-bold text-signal-text">
         <span aria-hidden>✓</span>
         <span className="sr-only">{label}</span>
-      </span>
+      </StaggerPop>
     );
   }
 
