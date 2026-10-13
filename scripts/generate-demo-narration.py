@@ -1,67 +1,145 @@
-"""Generate the approved bilingual demo narration MP3s with edge-tts.
+"""Generate the bilingual demo narration from src/components/demo-video/cuts.ts.
 
-Keep this text exactly in sync with NARRATION in
-src/components/demo-video/timeline.ts. After regenerating, run
-`node scripts/measure-narration.mjs` and the repository media check. The approved
-77-second EN and 89-second FR windows may stay longer than the measured minimum,
-but every clip must fit its scene before replacement videos are exported.
+Usage:
+    npx tsx scripts/demo-media.ts script | python scripts/generate-demo-narration.py
+
+For every cut, locale and scene this:
+  1. synthesizes each spoken line with edge-tts (cached by text/voice/rate),
+  2. lays the lines out back to back and sizes the scene to fit them,
+  3. mixes the lines into public/demo-video/narration/<cut>/<locale>/scene-N.mp3,
+  4. writes src/components/demo-video/narration-timing.json, which the player,
+     the captions and the recorder all read, so visuals can never drift from
+     the audio.
 """
 import asyncio
+import hashlib
+import json
+import math
+import re
+import subprocess
+import sys
 from pathlib import Path
 
 import edge_tts
 
-ROOT = Path(__file__).resolve().parents[1] / "public" / "demo-video" / "narration"
-TTS_RATES = {"en": "+15%", "fr": "+35%"}
-# Dense English proof/disclaimer scenes need a little more pace to stay inside
-# their approved timeline windows without clipping.
-TTS_RATE_OVERRIDES = {
-    ("en", 2): "+23%",
-    ("en", 5): "+50%",
-    ("en", 6): "+31%",
-    ("en", 7): "+38%",
-}
+ROOT = Path(__file__).resolve().parents[1]
+NARRATION_DIR = ROOT / "public" / "demo-video" / "narration"
+CACHE_DIR = ROOT / ".artifacts" / "demo-video" / "tts"
+TIMING_FILE = ROOT / "src" / "components" / "demo-video" / "narration-timing.json"
 
-NARRATION = {
-    "en": {
-        1: "You already paid to make the phone ring. But when you are working, you cannot always answer.",
-        2: "In a controlled pilot, TradeCatch texts back within seconds, under your company's name. The customer stays engaged instead of calling your competitor.",
-        3: "It collects the customer's name, problem, urgency, address, and a photo while you stay on the job. When you check your phone, the lead is already qualified.",
-        4: "The right technician receives one clear job summary. They can accept, decline, or call; a backup can be alerted if no one responds.",
-        5: "Acceptance notifies the customer. Entitled, linked Growth pilot organizations book in-app—without native Google or Outlook sync.",
-        6: "Starter pilots can follow up on quotes on days 1, 3, 7, and 14. A reply stops the sequence; the pipeline is only for entitled, linked Growth pilot organizations.",
-        7: "Figures are illustrative, not promised results. Workspaces show linked-organization data only—not self-serve SaaS or native two-way CRM.",
-        8: "Stop losing jobs when you cannot answer. Get your free missed-opportunity audit with TradeCatch.",
-    },
-    "fr": {
-        1: "Vous avez déjà payé pour faire sonner le téléphone. Mais quand vous travaillez, vous ne pouvez pas toujours répondre.",
-        2: "Dans un pilote contrôlé, TradeCatch renvoie un texto en quelques secondes, au nom de votre entreprise. Le client reste engagé au lieu d'appeler votre concurrent.",
-        3: "Le système recueille le nom du client, le problème, l'urgence, l'adresse et une photo pendant que vous poursuivez le travail. Quand vous regardez votre téléphone, la demande est déjà qualifiée.",
-        4: "Le bon technicien reçoit une fiche d'intervention claire. Il peut accepter, refuser ou appeler. Un remplaçant peut être alerté si personne ne répond.",
-        5: "L'acceptation avise le client. Les organisations pilotes Growth admissibles et liées réservent dans l'espace; Google et Outlook ne sont pas synchronisés nativement.",
-        6: "Les pilotes Starter relancent les soumissions aux jours 1, 3, 7 et 14. Une réponse met fin à la séquence; le pipeline est réservé aux organisations pilotes Growth admissibles et liées.",
-        7: "Les chiffres sont illustratifs, sans promesse de résultats. L'espace montre seulement les données de l'organisation liée, sans SaaS en libre-service ni CRM bidirectionnel natif.",
-        8: "Ne perdez plus de contrats parce que vous ne pouvez pas répondre. Obtenez votre audit gratuit des opportunités manquées avec TradeCatch.",
-    },
-}
 
-VOICES = {"en": "en-US-AndrewNeural", "fr": "fr-CA-AntoineNeural"}
+def ffmpeg_bin() -> str:
+    try:
+        subprocess.run(["ffmpeg", "-version"], capture_output=True, check=True)
+        return "ffmpeg"
+    except (OSError, subprocess.CalledProcessError):
+        local = ROOT / "node_modules" / "ffmpeg-static" / "ffmpeg.exe"
+        if not local.exists():
+            local = ROOT / "node_modules" / "ffmpeg-static" / "ffmpeg"
+        return str(local)
+
+
+FFMPEG = ffmpeg_bin()
+
+
+def duration_of(path: Path) -> float:
+    result = subprocess.run([FFMPEG, "-i", str(path)], capture_output=True, text=True)
+    match = re.search(r"Duration:\s*(\d+):(\d+):(\d+\.\d+)", result.stderr)
+    if not match:
+        raise RuntimeError(f"could not read duration of {path}")
+    h, m, s = match.groups()
+    return int(h) * 3600 + int(m) * 60 + float(s)
+
+
+async def synthesize(text: str, voice: str, rate: str) -> Path:
+    key = hashlib.sha1(f"{voice}|{rate}|-2Hz|{text}".encode("utf-8")).hexdigest()[:16]
+    path = CACHE_DIR / f"{key}.mp3"
+    if path.exists() and path.stat().st_size > 0:
+        return path
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    for attempt in range(4):
+        try:
+            await edge_tts.Communicate(text, voice, rate=rate, pitch="-2Hz").save(str(path))
+            return path
+        except Exception:  # transient websocket failures are common
+            if attempt == 3:
+                raise
+            await asyncio.sleep(2 * (attempt + 1))
+    return path
+
+
+def round_up_half(value: float) -> float:
+    return math.ceil(value * 2) / 2
+
+
+def mix_scene(clips: list[tuple[Path, float]], duration: float, out: Path) -> None:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    args = [FFMPEG, "-y", "-loglevel", "error"]
+    for path, _ in clips:
+        args += ["-i", str(path)]
+    filters = []
+    labels = []
+    for i, (_, start) in enumerate(clips):
+        ms = int(round(start * 1000))
+        filters.append(f"[{i}:a]aresample=24000,adelay={ms}:all=1[a{i}]")
+        labels.append(f"[a{i}]")
+    filters.append(
+        f"{''.join(labels)}amix=inputs={len(clips)}:normalize=0:duration=longest,"
+        f"apad=whole_dur={duration}[out]"
+    )
+    args += [
+        "-filter_complex", ";".join(filters),
+        "-map", "[out]",
+        "-t", str(duration),
+        "-ac", "1", "-ar", "24000", "-b:a", "48k",
+        str(out),
+    ]
+    subprocess.run(args, check=True)
 
 
 async def main() -> None:
-    for loc, scenes in NARRATION.items():
-        out_dir = ROOT / loc
-        out_dir.mkdir(parents=True, exist_ok=True)
-        for i, text in scenes.items():
-            path = out_dir / f"scene-{i}.mp3"
-            communicate = edge_tts.Communicate(
-                text,
-                VOICES[loc],
-                rate=TTS_RATE_OVERRIDES.get((loc, i), TTS_RATES[loc]),
-                pitch="-2Hz",
-            )
-            await communicate.save(str(path))
-            print(f"saved {path}")
+    plan = json.load(sys.stdin)
+    voices = plan["voices"]
+    rates = plan["rates"]
+    layout = plan["layout"]
+    timing: dict = {}
+
+    for cut, locales in plan["cuts"].items():
+        timing[cut] = {}
+        for locale, scenes in locales.items():
+            timing[cut][locale] = []
+            for index, scene in enumerate(scenes, start=1):
+                cursor = layout["leadIn"]
+                previous = None
+                placed = []
+                clips: list[tuple[Path, float]] = []
+                for segment in scene["segments"]:
+                    voice = segment["voice"]
+                    if previous is not None:
+                        narrative = "narrator" in (voice, previous) or "none" in (voice, previous)
+                        cursor += layout["narratorGap"] if narrative else layout["dialogueGap"]
+                    start = cursor
+                    if voice == "none":
+                        length = float(segment.get("holdSec", 3))
+                    else:
+                        clip = await synthesize(segment["text"], voices[locale][voice], rates[locale][voice])
+                        length = duration_of(clip)
+                        clips.append((clip, start))
+                    cursor = start + length
+                    placed.append({"start": round(start, 2), "end": round(cursor, 2)})
+                    previous = voice
+
+                duration = max(float(scene["minSec"]), round_up_half(cursor + layout["tail"]))
+                out = NARRATION_DIR / cut / locale / f"scene-{index}.mp3"
+                mix_scene(clips, duration, out)
+                timing[cut][locale].append({"duration": duration, "segments": placed})
+                print(f"{cut} {locale} scene {index}: {duration:.1f}s ({len(placed)} lines)")
+
+            total = sum(s["duration"] for s in timing[cut][locale])
+            print(f"== {cut} {locale}: {total:.1f}s")
+
+    TIMING_FILE.write_text(json.dumps(timing, indent=2) + "\n", encoding="utf-8")
+    print(f"wrote {TIMING_FILE.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":

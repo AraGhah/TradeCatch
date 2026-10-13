@@ -7,6 +7,7 @@ import { CTAButton } from "@/components/CTAButton";
 import { CallFlowDiagram, type FlowNode } from "@/components/CallFlowDiagram";
 import { CallSummaryCard } from "@/components/CallSummaryCard";
 import { CallDemo, type CallDemoCopy } from "@/components/CallDemo";
+import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -91,6 +92,9 @@ export default async function AiReceptionistPage({
               <CTAButton href="/book-audit" variant="ember" size="md">
                 {t("ctaPrimary")}
               </CTAButton>
+              <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[11px] border border-white/20 bg-transparent px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.97]">
+                {t("ctaDemo")}
+              </WatchDemoButton>
               <CTAButton href="/pricing" variant="ghost-ink" size="md">
                 {t("ctaSecondary")}
               </CTAButton>
