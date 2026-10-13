@@ -34,7 +34,7 @@ export function TechnicianAlertCard({
             {title}
           </h3>
         </div>
-        <span className="mt-1 h-2.5 w-2.5 shrink-0 animate-tc-pulse rounded-full bg-orange" />
+        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-orange" />
       </div>
 
       <dl className="mt-5 space-y-3 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4">

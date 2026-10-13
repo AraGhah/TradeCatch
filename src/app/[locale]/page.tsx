@@ -90,7 +90,7 @@ export default async function HomePage({
           >
             <div>
               <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
-                <span className="block h-[7px] w-[7px] animate-tc-pulse rounded-full bg-green" />
+                <span className="block h-[7px] w-[7px] rounded-full bg-green" />
                 {t("hero.eyebrow")}
               </span>
 

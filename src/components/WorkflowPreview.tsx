@@ -108,7 +108,7 @@ function FlowRow({
                 {label}
               </span>
               {isActive ? (
-                <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 animate-tc-pulse rounded-full bg-orange" />
+                <span className="absolute top-2.5 right-2.5 h-1.5 w-1.5 rounded-full bg-orange" />
               ) : null}
             </div>
             {showArrow ? (
