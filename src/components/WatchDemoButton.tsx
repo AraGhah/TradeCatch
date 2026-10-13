@@ -10,36 +10,35 @@ import {
 } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { trackEvent } from "@/lib/analytics";
+import { CUT_MEDIA, type DemoCut, type DemoLocale } from "@/components/demo-video/cuts";
 
-const VIDEO_SRC = {
-  en: "/demo-video/TradeCatch-Demo-EN.mp4",
-  fr: "/demo-video/TradeCatch-Demo-FR.mp4",
-} as const;
+/** i18n namespace under demoVideo for each cut. */
+const COPY_KEY: Record<DemoCut, "platform" | "missedCall"> = {
+  platform: "platform",
+  "missed-call": "missedCall",
+};
 
-const CAPTION_SRC = {
-  en: "/demo-video/captions/en.vtt",
-  fr: "/demo-video/captions/fr.vtt",
-} as const;
-
-type LocaleKey = keyof typeof VIDEO_SRC;
-
-function resolveLocale(raw: string): LocaleKey {
+function resolveLocale(raw: string): DemoLocale {
   return raw.startsWith("fr") ? "fr" : "en";
 }
 
 /**
- * Opens the locale-matched TradeCatch demo MP4 in an accessible dialog.
- * Used by homepage / proof CTAs labelled as the 90-second demo (not the
- * interactive /demo-video experience).
+ * Opens a locale-matched TradeCatch demo MP4 in an accessible dialog: the
+ * full platform demo (receptionist-led) by default, or the short missed-call
+ * cut. Not the interactive /demo-video experience.
  */
 export function WatchDemoButton({
   children,
   className,
+  video = "platform",
 }: {
   children: ReactNode;
   className?: string;
+  video?: DemoCut;
 }) {
   const locale = resolveLocale(useLocale());
+  const media = CUT_MEDIA[video];
+  const copyKey = COPY_KEY[video];
   const t = useTranslations("demoVideo");
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -60,9 +59,9 @@ export function WatchDemoButton({
   }, []);
 
   const openModal = useCallback(() => {
-    trackEvent("demo_video_open", { locale });
+    trackEvent("demo_video_open", { locale, video });
     setOpen(true);
-  }, [locale]);
+  }, [locale, video]);
 
   useEffect(() => {
     // Only restore focus when the modal closes after having been open —
@@ -146,7 +145,7 @@ export function WatchDemoButton({
                 id={titleId}
                 className="truncate text-[15px] font-semibold tracking-[-0.01em] text-white"
               >
-                {t("playerTitle")}
+                {t(`${copyKey}.playerTitle`)}
               </h2>
               <button
                 ref={closeRef}
@@ -161,18 +160,18 @@ export function WatchDemoButton({
             <div className="bg-black aspect-video">
               <video
                 ref={videoRef}
-                key={locale}
+                key={`${video}-${locale}`}
                 className="h-full w-full"
                 controls
                 playsInline
                 preload="metadata"
-                src={VIDEO_SRC[locale]}
+                src={media.video[locale]}
               >
                 <track
                   kind="captions"
                   srcLang={locale}
                   label={t("captionsLabel")}
-                  src={CAPTION_SRC[locale]}
+                  src={media.captions[locale]}
                 />
               </video>
             </div>
@@ -185,7 +184,7 @@ export function WatchDemoButton({
                 id={transcriptId}
                 className="mt-2 max-h-40 overflow-y-auto text-[13px] leading-relaxed text-white/70"
               >
-                {t("transcript")}
+                {t(`${copyKey}.transcript`)}
               </p>
             </details>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { CTAButton } from "@/components/CTAButton";
 
 export type PricingOutcomeGroup = {
@@ -88,6 +88,18 @@ type Labels = {
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+// Transform-only, like the rest of the site's motion: if whileInView never
+// fires (print, screenshot tools), content is merely offset, never hidden.
+const listItem: Variants = {
+  hidden: { x: -8 },
+  visible: { x: 0, transition: { duration: 0.35, ease } },
+};
+
+const includesItem: Variants = {
+  hidden: { y: 10 },
+  visible: { y: 0, transition: { duration: 0.4, ease } },
+};
+
 export function PricingExperience({
   tiers,
   labels,
@@ -154,26 +166,38 @@ export function PricingExperience({
       </motion.section>
 
       <motion.section
-        initial={{ y: 12 }}
-        whileInView={{ y: 0 }}
+        initial="hidden"
+        whileInView="visible"
         viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.45, ease }}
+        variants={{
+          hidden: { y: 12 },
+          visible: { y: 0, transition: { duration: 0.45, ease } },
+        }}
         className="mt-[clamp(48px,6vw,72px)]"
       >
         <div className="flex flex-col gap-6 border-t border-[rgb(var(--ink-rgb)/0.14)] pt-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
           <h2 className="m-0 max-w-[10em] font-heading text-[clamp(24px,2.6vw,32px)] font-extrabold tracking-[-0.035em] text-heading">
             {labels.includesTitle}
           </h2>
-          <ul className="m-0 grid flex-1 list-none gap-x-8 gap-y-0 p-0 sm:grid-cols-2 lg:grid-cols-3">
+          <motion.ul
+            variants={{
+              hidden: {},
+              visible: {
+                transition: { staggerChildren: 0.05, delayChildren: 0.15 },
+              },
+            }}
+            className="m-0 grid flex-1 list-none gap-x-8 gap-y-0 p-0 sm:grid-cols-2 lg:grid-cols-3"
+          >
             {labels.includesItems.map((item) => (
-              <li
+              <motion.li
                 key={item}
+                variants={includesItem}
                 className="border-t border-[rgb(var(--ink-rgb)/0.1)] py-4 text-[15px] leading-[1.5] text-secondary"
               >
                 {item}
-              </li>
+              </motion.li>
             ))}
-          </ul>
+          </motion.ul>
         </div>
 
         <div className="mt-10 border-t border-[rgb(var(--ink-rgb)/0.14)]">
@@ -230,16 +254,29 @@ function PlanCard({
 
   return (
     <motion.article
-      initial={{ y: 20 }}
-      whileInView={{ y: 0 }}
+      initial="hidden"
+      whileInView="visible"
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.55, delay: index * 0.08, ease }}
-      className={`relative flex flex-col border p-[clamp(28px,3.2vw,44px)] transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 ${shell}`}
+      variants={{
+        hidden: { y: 20 },
+        visible: {
+          y: 0,
+          transition: { duration: 0.55, delay: index * 0.08, ease },
+        },
+      }}
+      className={`relative flex flex-col border p-[clamp(28px,3.2vw,44px)] transition-[translate,box-shadow,border-color] duration-300 hover:-translate-y-1 ${shell}`}
     >
       {featured ? (
-        <div
+        <motion.div
           aria-hidden
-          className="absolute top-0 left-0 h-full w-[3px] bg-orange"
+          variants={{
+            hidden: { scaleY: 0 },
+            visible: {
+              scaleY: 1,
+              transition: { duration: 0.7, delay: index * 0.08 + 0.2, ease },
+            },
+          }}
+          className="absolute top-0 left-0 h-full w-[3px] origin-top bg-orange"
         />
       ) : null}
       {premium ? (
@@ -297,11 +334,23 @@ function PlanCard({
         <p className={`text-[12px] tracking-[0.08em] uppercase ${mutedText}`}>
           {setupLabel}
         </p>
-        <p
-          className={`mt-1.5 font-heading text-[clamp(26px,2.6vw,32px)] font-extrabold leading-[1.05] tracking-[-0.03em] break-words ${strongText}`}
+        <motion.p
+          variants={{
+            hidden: { scale: 0.9 },
+            visible: {
+              scale: 1,
+              transition: {
+                type: "spring",
+                stiffness: 260,
+                damping: 18,
+                delay: index * 0.08 + 0.25,
+              },
+            },
+          }}
+          className={`mt-1.5 origin-left font-heading text-[clamp(26px,2.6vw,32px)] font-extrabold leading-[1.05] tracking-[-0.03em] break-words ${strongText}`}
         >
           {setupDisplay}
-        </p>
+        </motion.p>
         <p className={`mt-2 text-[15px] ${listText}`}>
           <span className={mutedText}>{thenLabel} </span>
           <span className={`font-semibold ${strongText}`}>
@@ -336,16 +385,28 @@ function PlanCard({
             >
               {group.title}
             </p>
-            <ul className="mt-2 flex list-none flex-col p-0">
+            <motion.ul
+              variants={{
+                hidden: {},
+                visible: {
+                  transition: {
+                    staggerChildren: 0.04,
+                    delayChildren: index * 0.08 + 0.3,
+                  },
+                },
+              }}
+              className="mt-2 flex list-none flex-col p-0"
+            >
               {group.items.map((item) => (
-                <li
+                <motion.li
                   key={item}
+                  variants={listItem}
                   className={`py-1.5 text-[15px] leading-[1.45] ${listText}`}
                 >
                   {item}
-                </li>
+                </motion.li>
               ))}
-            </ul>
+            </motion.ul>
           </div>
         ))}
       </div>

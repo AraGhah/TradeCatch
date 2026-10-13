@@ -2,18 +2,27 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import {
-  NARRATION,
+  DIALOGUE_SCENES,
   scenesFor,
   sfxMarks,
   totalDurationSec,
+  type DemoCut,
   type DemoLocale,
-  type SceneId,
+  type SfxSound,
 } from "./timeline";
 
+/** Scene index within a cut (1-based); also the narration file number. */
+type SceneId = number;
+
 /**
- * Demo audio: neural MP3 narration (en/fr) + Web Audio SFX.
+ * Demo audio: neural MP3 narration (en/fr, one mixed file per scene, dialogue
+ * included) + Web Audio SFX.
  */
-export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
+export function useDemoAudio(
+  enabled: boolean,
+  cut: DemoCut,
+  locale: DemoLocale,
+) {
   const ctxRef = useRef<AudioContext | null>(null);
   const musicGainRef = useRef<GainNode | null>(null);
   const musicNodesRef = useRef<OscillatorNode[]>([]);
@@ -24,10 +33,12 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
   const narrationCache = useRef<Map<string, HTMLAudioElement>>(new Map());
   const mp3Available = useRef<Map<string, boolean>>(new Map());
   const localeRef = useRef(locale);
+  const cutRef = useRef(cut);
 
   useEffect(() => {
     localeRef.current = locale;
-  }, [locale]);
+    cutRef.current = cut;
+  }, [cut, locale]);
 
   const ensureCtx = useCallback(async () => {
     if (typeof window === "undefined") return null;
@@ -186,7 +197,13 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
     (sceneId: SceneId, loc: DemoLocale) => {
       if (typeof window === "undefined" || !window.speechSynthesis) return;
       stopVoice();
-      const utter = new SpeechSynthesisUtterance(NARRATION[loc][sceneId]);
+      const scene = scenesFor(cutRef.current, loc)[sceneId - 1];
+      const text = scene?.segments
+        .filter((s) => s.voice !== "none")
+        .map((s) => s.text)
+        .join(" ");
+      if (!text) return;
+      const utter = new SpeechSynthesisUtterance(text);
       utter.lang = loc === "fr" ? "fr-CA" : "en-US";
       utter.rate = 0.92;
       utter.pitch = 0.95;
@@ -198,17 +215,19 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
     [pickNaturalVoice, stopVoice],
   );
 
-  const cacheKey = (loc: DemoLocale, sceneId: SceneId) => `${loc}-${sceneId}`;
-
-  const getNarrationAudio = useCallback(async (sceneId: SceneId, loc: DemoLocale) => {
-    const key = cacheKey(loc, sceneId);
+  const getNarrationAudio = useCallback(async (
+    sceneId: SceneId,
+    demoCut: DemoCut,
+    loc: DemoLocale,
+  ) => {
+    const key = `${demoCut}-${loc}-${sceneId}`;
     const cached = narrationCache.current.get(key);
     if (cached) return cached;
 
     const known = mp3Available.current.get(key);
     if (known === false) return null;
 
-    const src = `/demo-video/narration/${loc}/scene-${sceneId}.mp3`;
+    const src = `/demo-video/narration/${demoCut}/${loc}/scene-${sceneId}.mp3`;
     try {
       const head = await fetch(src, { method: "HEAD" });
       if (!head.ok) {
@@ -233,7 +252,7 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
       const loc = localeRef.current;
       stopVoice();
 
-      const audio = await getNarrationAudio(sceneId, loc);
+      const audio = await getNarrationAudio(sceneId, cutRef.current, loc);
       if (audio) {
         try {
           audio.currentTime = 0;
@@ -275,10 +294,13 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
       }
 
       const loc = localeRef.current;
-      const nearEnd = timeSec >= totalDurationSec(loc) - 3;
-      const sceneStarts = scenesFor(loc).map((s) => s.start);
+      const demoCut = cutRef.current;
+      const scenes = scenesFor(demoCut, loc);
+      const nearEnd = timeSec >= totalDurationSec(demoCut, loc) - 3;
+      const sceneStarts = scenes.map((s) => s.start);
+      const sceneKey = scenes[sceneId - 1]?.key;
       if (nearEnd) setMusicLevel(0.006);
-      else if (sceneId === 3) setMusicLevel(0.014);
+      else if (sceneKey && DIALOGUE_SCENES.includes(sceneKey)) setMusicLevel(0.012);
       else if (sceneStarts.some((t) => Math.abs(timeSec - t) < 0.8)) setMusicLevel(0.036);
       else setMusicLevel(0.024);
 
@@ -295,19 +317,18 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
         }
       };
 
-      const players: Record<string, () => void> = {
-        ring1: () => void playRing(),
-        ring2: () => void playRing(),
+      const players: Record<SfxSound, () => void> = {
+        ring: () => void playRing(),
         missed: () => void playMissed(),
-        sms1: () => void playSms(),
-        sms2: () => void playSms(),
+        sms: () => void playSms(),
         notify: () => void playNotify(),
         confirm: () => void playConfirm(),
+        answer: () => void playConfirm(),
       };
 
-      for (const cue of sfxMarks(loc)) {
+      for (const cue of sfxMarks(demoCut, loc)) {
         if (timeSec >= cue.start && timeSec < cue.end) {
-          mark(cue.key, players[cue.key]);
+          mark(cue.key, players[cue.sound]);
         }
       }
     },
@@ -330,11 +351,11 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
     stopVoice();
   }, [stopVoice]);
 
-  // Reset narration when locale changes
+  // Reset narration when the cut or locale changes
   useEffect(() => {
     lastSceneRef.current = null;
     stopVoice();
-  }, [locale, stopVoice]);
+  }, [cut, locale, stopVoice]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -342,8 +363,8 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
     const onVoices = () => window.speechSynthesis.getVoices();
     window.speechSynthesis?.addEventListener("voiceschanged", onVoices);
 
-    for (let i = 1; i <= 8; i++) {
-      void getNarrationAudio(i as SceneId, locale);
+    for (const scene of scenesFor(cut, locale)) {
+      void getNarrationAudio(scene.index, cut, locale);
     }
 
     return () => {
@@ -353,7 +374,7 @@ export function useDemoAudio(enabled: boolean, locale: DemoLocale) {
       void ctxRef.current?.close().catch(() => undefined);
       ctxRef.current = null;
     };
-  }, [getNarrationAudio, locale, stopMusic, stopVoice]);
+  }, [cut, getNarrationAudio, locale, stopMusic, stopVoice]);
 
   return {
     onTimeline,

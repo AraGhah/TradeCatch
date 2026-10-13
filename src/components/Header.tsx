@@ -80,8 +80,8 @@ export function Header() {
                 >
                   {link.label}
                   <span
-                    className={`absolute inset-x-[14px] bottom-[2px] h-0.5 bg-orange transition-opacity ${
-                      active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    className={`absolute inset-x-[14px] bottom-[2px] h-0.5 origin-left bg-orange transition-[scale] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                      active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"
                     }`}
                   />
                 </Link>

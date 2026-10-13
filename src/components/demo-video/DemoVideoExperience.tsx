@@ -11,29 +11,37 @@ import { useLocale } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import {
   getCopy,
+  isDemoCut,
   sceneAt,
-  sceneProgress,
   totalDurationMs,
   type DemoCopy,
+  type DemoCut,
   type DemoLocale,
-  type SceneId,
+  type SceneKey,
+  type SceneWindow,
 } from "./timeline";
 import { useTimelineClock } from "./useTimelineClock";
 import { useDemoAudio } from "./useDemoAudio";
 import { CaptionOverlay } from "./parts/CaptionOverlay";
 import { PlaybackControls } from "./parts/PlaybackControls";
-import { Scene1ContractorWork } from "./scenes/Scene1ContractorWork";
-import { Scene2MissedCallSMS } from "./scenes/Scene2MissedCallSMS";
-import { Scene3CustomerQualification } from "./scenes/Scene3CustomerQualification";
-import { Scene4LeadSummary } from "./scenes/Scene4LeadSummary";
-import { Scene5Appointment } from "./scenes/Scene5Appointment";
-import { Scene6EstimateFollowUp } from "./scenes/Scene6EstimateFollowUp";
-import { Scene7WeeklyResults } from "./scenes/Scene7WeeklyResults";
-import { Scene8Closing } from "./scenes/Scene8Closing";
+import { AnswerScene } from "./scenes/AnswerScene";
+import { ClosingScene } from "./scenes/ClosingScene";
+import { ContractorScene } from "./scenes/ContractorScene";
+import { FollowUpsScene } from "./scenes/FollowUpsScene";
+import { LeadCapturedScene } from "./scenes/LeadCapturedScene";
+import { LiveCallScene } from "./scenes/LiveCallScene";
+import { QuoteFollowUpScene } from "./scenes/QuoteFollowUpScene";
+import { TextBackScene } from "./scenes/TextBackScene";
+import { TransferScene } from "./scenes/TransferScene";
+import { WorkspaceScene } from "./scenes/WorkspaceScene";
 
 export type SceneProps = {
   /** Progress inside the current scene, 0 → 1. */
   p: number;
+  /** Seconds since the scene started; dialogue scenes key beats to lines. */
+  sec: number;
+  scene: SceneWindow;
+  cut: DemoCut;
   locale: DemoLocale;
   copy: DemoCopy;
 };
@@ -43,26 +51,30 @@ export type SceneProps = {
  * leave too much empty frame. Zoom them so the content carries the screen.
  * Scenes that show a phone stay at 1 — the frame is already height-capped.
  */
-const SCENE_ZOOM: Record<SceneId, number> = {
-  1: 1,
-  2: 1,
-  3: 1,
-  4: 1.24,
-  5: 1,
-  6: 1.2,
-  7: 1.18,
-  8: 1.06,
+const SCENE_ZOOM: Record<SceneKey, number> = {
+  contractor: 1,
+  answer: 1.08,
+  liveCall: 1.08,
+  transfer: 1.1,
+  workspace: 1.12,
+  followUps: 1.12,
+  closing: 1.06,
+  textBack: 1,
+  leadCaptured: 1.14,
+  quoteFollowUp: 1.2,
 };
 
-const SCENE_COMPONENTS: Record<SceneId, ComponentType<SceneProps>> = {
-  1: Scene1ContractorWork,
-  2: Scene2MissedCallSMS,
-  3: Scene3CustomerQualification,
-  4: Scene4LeadSummary,
-  5: Scene5Appointment,
-  6: Scene6EstimateFollowUp,
-  7: Scene7WeeklyResults,
-  8: Scene8Closing,
+const SCENE_COMPONENTS: Record<SceneKey, ComponentType<SceneProps>> = {
+  contractor: ContractorScene,
+  answer: AnswerScene,
+  liveCall: LiveCallScene,
+  transfer: TransferScene,
+  workspace: WorkspaceScene,
+  followUps: FollowUpsScene,
+  closing: ClosingScene,
+  textBack: TextBackScene,
+  leadCaptured: LeadCapturedScene,
+  quoteFollowUp: QuoteFollowUpScene,
 };
 
 function safeFullscreen(enter: boolean) {
@@ -88,20 +100,24 @@ function safeFullscreen(enter: boolean) {
 function DemoVideoExperienceInner() {
   const rawLocale = useLocale();
   const locale: DemoLocale = rawLocale === "fr" ? "fr" : "en";
-  const copy = getCopy(locale);
   const searchParams = useSearchParams();
+  const rawCut = searchParams.get("cut");
+  const cut: DemoCut = isDemoCut(rawCut) ? rawCut : "platform";
+  const copy = getCopy(cut, locale);
   const recording = searchParams.get("record") === "1";
   const voiceFromUrl = searchParams.get("voice") !== "0";
 
-  const clock = useTimelineClock(totalDurationMs(locale));
+  const clock = useTimelineClock(totalDurationMs(cut, locale));
   const [presentation, setPresentation] = useState(recording);
   const [voiceOn, setVoiceOn] = useState(voiceFromUrl);
   const [audioArmed, setAudioArmed] = useState(false);
-  const audio = useDemoAudio(audioArmed && voiceOn, locale);
+  const audio = useDemoAudio(audioArmed && voiceOn, cut, locale);
 
-  const sceneId = sceneAt(clock.timeSec, locale);
-  const p = sceneProgress(clock.timeSec, sceneId, locale);
-  const Scene = SCENE_COMPONENTS[sceneId];
+  const scene = sceneAt(clock.timeSec, cut, locale);
+  const sec = Math.max(0, clock.timeSec - scene.start);
+  const p = Math.min(1, sec / scene.duration);
+  const sceneId = scene.index;
+  const Scene = SCENE_COMPONENTS[scene.key];
 
   useEffect(() => {
     document.body.classList.add("demo-video-active");
@@ -202,14 +218,25 @@ function DemoVideoExperienceInner() {
           <div
             className="absolute inset-0"
             style={{
-              transform: `scale(${SCENE_ZOOM[sceneId]})`,
+              transform: `scale(${SCENE_ZOOM[scene.key]})`,
               transformOrigin: "50% 44%",
             }}
           >
-            <Scene p={p} locale={locale} copy={copy} />
+            <Scene
+              p={p}
+              sec={sec}
+              scene={scene}
+              cut={cut}
+              locale={locale}
+              copy={copy}
+            />
           </div>
+          <p className="pointer-events-none absolute top-[2.5%] left-[2%] z-40 rounded-md border border-white/15 bg-black/35 px-3 py-1.5 font-mono text-[clamp(11px,0.85vw,14px)] tracking-[0.08em] text-white/70 uppercase">
+            {copy.illustrative}
+          </p>
           <CaptionOverlay
             timeSec={clock.timeSec}
+            cut={cut}
             locale={locale}
             raised={!presentation}
           />

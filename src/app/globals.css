@@ -300,6 +300,51 @@ h4 {
   }
 }
 
+@keyframes tcPulseEmber {
+  0% {
+    box-shadow: 0 0 0 0 rgba(228, 118, 43, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(228, 118, 43, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(228, 118, 43, 0);
+  }
+}
+
+@keyframes tcNudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes tcGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(228, 118, 43, 0);
+  }
+  50% {
+    box-shadow: 0 18px 44px -22px rgba(228, 118, 43, 0.55);
+  }
+}
+
+/* Slow ember breathing for the top-tier plan card. */
+.animate-tc-glow {
+  animation: tcGlow 4.5s ease-in-out infinite;
+}
+
+.animate-tc-pulse-ember {
+  animation: tcPulseEmber 2s ease-out infinite;
+}
+
+.animate-tc-nudge {
+  animation: tcNudge 1.6s ease-in-out infinite;
+}
+
 .animate-tc-in {
   animation: tcIn 0.42s var(--ease-out) both;
 }
@@ -391,6 +436,16 @@ h4 {
   }
   75% {
     transform: translateX(2px) rotate(0.6deg);
+  }
+}
+
+@keyframes demo-bars {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
   }
 }
 

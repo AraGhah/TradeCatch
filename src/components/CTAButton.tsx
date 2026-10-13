@@ -63,7 +63,7 @@ export function CTAButton({
         trackEvent("cta_click", { href: String(href), variant });
         onClick?.(e);
       }}
-      className={`inline-flex items-center justify-center gap-2.5 font-semibold tracking-[-0.01em] transition-[transform,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 ${styles[styleKey]} ${isLink ? "" : sizes[size]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2.5 font-semibold tracking-[-0.01em] transition-[translate,scale,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 ${styles[styleKey]} ${isLink ? "" : `${sizes[size]} active:scale-[0.97]`} ${className}`}
       {...props}
     >
       {children}

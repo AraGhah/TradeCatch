@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { captionAt, type DemoLocale } from "../timeline";
+import { captionAt, type DemoCut, type DemoLocale } from "../timeline";
 
 function renderWithHighlights(text: string, highlights: string[] = []) {
   if (!highlights.length) return text;
@@ -25,14 +25,16 @@ function renderWithHighlights(text: string, highlights: string[] = []) {
 
 export function CaptionOverlay({
   timeSec,
+  cut,
   locale,
   raised = false,
 }: {
   timeSec: number;
+  cut: DemoCut;
   locale: DemoLocale;
   raised?: boolean;
 }) {
-  const cue = captionAt(timeSec, locale);
+  const cue = captionAt(timeSec, cut, locale);
   if (!cue) return null;
 
   return (

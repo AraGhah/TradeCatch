@@ -11,6 +11,7 @@ import { ProofExamplesSection } from "@/components/ProofExamplesSection";
 import { PricingPreview } from "@/components/PricingPreview";
 import { WorkflowPreview } from "@/components/WorkflowPreview";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -88,44 +89,62 @@ export default async function HomePage({
               gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))",
             }}
           >
-            <div>
-              <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
-                <span className="block h-[7px] w-[7px] rounded-full bg-green" />
-                {t("hero.eyebrow")}
-              </span>
+            <StaggerGroup stagger={0.09}>
+              <StaggerItem>
+                <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
+                  <span className="animate-tc-pulse block h-[7px] w-[7px] rounded-full bg-green" />
+                  {t("hero.eyebrow")}
+                </span>
+              </StaggerItem>
 
-              <h1 className="text-hero mt-[26px] text-white">
-                {accentHeadline(headline, accentWord)}
-              </h1>
+              <StaggerItem>
+                <h1 className="text-hero mt-[26px] text-white">
+                  {accentHeadline(headline, accentWord)}
+                </h1>
+              </StaggerItem>
 
-              <p className="text-lede mt-[26px] max-w-[36em] text-white/68">
-                {t("hero.subheadline")}
-              </p>
+              <StaggerItem>
+                <p className="text-lede mt-[26px] max-w-[36em] text-white/68">
+                  {t("hero.subheadline")}
+                </p>
 
-              <p className="mt-4 max-w-[34em] text-[15px] leading-[1.55] text-white/52">
-                {t("hero.qualificationLine")}
-              </p>
+                <p className="mt-4 max-w-[34em] text-[15px] leading-[1.55] text-white/52">
+                  {t("hero.qualificationLine")}
+                </p>
+              </StaggerItem>
 
-              <div className="mt-[34px] flex flex-wrap gap-3">
+              <StaggerItem className="mt-[34px] flex flex-wrap gap-3">
                 <CTAButton href="/book-audit" variant="ember" size="lg">
                   {t("hero.ctaPrimary")}
                 </CTAButton>
-                <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[transform,background,border-color] duration-200 hover:translate-y-[-2px] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
+                <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
                   {t("hero.ctaSecondary")}
                 </WatchDemoButton>
-              </div>
+              </StaggerItem>
 
-              <p className="mt-[18px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
-                {t("hero.reassurance")}
-              </p>
+              <StaggerItem>
+                <p className="mt-[18px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
+                  {t("hero.reassurance")}
+                </p>
+              </StaggerItem>
 
-              <div className="mt-9 border-t border-white/10 pt-[26px]">
+              <StaggerItem className="mt-9 border-t border-white/10 pt-[26px]">
                 <p className="font-mono text-[10.5px] tracking-[0.12em] text-white/45 uppercase">
                   {t("hero.demoStripLabel")}
                 </p>
-                <ol className="mt-3.5 flex flex-wrap items-center gap-x-1.5 gap-y-2">
+                <StaggerGroup
+                  as="ol"
+                  stagger={0.07}
+                  delay={0.35}
+                  className="mt-3.5 flex flex-wrap items-center gap-x-1.5 gap-y-2"
+                >
                   {demoStripSteps.map((step, i) => (
-                    <li key={step} className="flex items-center gap-1.5">
+                    <StaggerItem
+                      as="li"
+                      from="pop"
+                      key={step}
+                      className="flex items-center gap-1.5"
+                    >
                       <span className="rounded-md border border-white/12 bg-white/[0.06] px-2.5 py-1.5 text-[12.5px] font-medium text-white/85">
                         {step}
                       </span>
@@ -134,9 +153,9 @@ export default async function HomePage({
                           →
                         </span>
                       ) : null}
-                    </li>
+                    </StaggerItem>
                   ))}
-                </ol>
+                </StaggerGroup>
                 <ul className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
                   {trustChips.map((chip) => (
                     <li
@@ -147,8 +166,8 @@ export default async function HomePage({
                     </li>
                   ))}
                 </ul>
-              </div>
-            </div>
+              </StaggerItem>
+            </StaggerGroup>
 
             <HeroMockup
               businessName={t("hero.mockup.businessName")}
@@ -171,11 +190,14 @@ export default async function HomePage({
         style={{ padding: "clamp(28px, 4vw, 40px) 0" }}
       >
         <Container>
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+          <StaggerGroup
+            stagger={0.06}
+            className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6"
+          >
             {trustStrip.map((item) => (
-              <div
+              <StaggerItem
                 key={item.title}
-                className="border border-[rgb(var(--ink-rgb)/0.08)] bg-paper px-4 py-4"
+                className="border border-[rgb(var(--ink-rgb)/0.08)] bg-paper px-4 py-4 transition-[translate,border-color] duration-200 hover:-translate-y-0.5 hover:border-orange/40"
               >
                 <p className="text-[14px] font-semibold tracking-[-0.01em] text-heading">
                   {item.title}
@@ -183,9 +205,9 @@ export default async function HomePage({
                 <p className="mt-1.5 text-[12.5px] leading-snug text-muted">
                   {item.body}
                 </p>
-              </div>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGroup>
         </Container>
       </section>
 
@@ -243,7 +265,7 @@ export default async function HomePage({
               <div
                 key={step.title}
                 data-reveal
-                className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)] transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[rgb(var(--ink-rgb)/0.2)]"
+                className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)] transition-[border-color,translate] duration-200 hover:-translate-y-0.5 hover:border-[rgb(var(--ink-rgb)/0.2)]"
               >
                 <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
                   {String(i + 1).padStart(2, "0")}

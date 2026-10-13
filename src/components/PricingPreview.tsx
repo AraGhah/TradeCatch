@@ -1,5 +1,6 @@
 import { CTAButton } from "@/components/CTAButton";
 import { SectionHeading } from "@/components/SectionHeading";
+import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 
 export type PricingPreviewTier = {
   name: string;
@@ -38,17 +39,21 @@ export function PricingPreview({
         />
       </div>
 
-      <ol className="m-0 mt-[clamp(32px,4vw,48px)] grid list-none gap-4 p-0 md:grid-cols-3">
+      <StaggerGroup
+        as="ol"
+        stagger={0.12}
+        className="m-0 mt-[clamp(32px,4vw,48px)] grid list-none gap-4 p-0 md:grid-cols-3"
+      >
         {tiers.map((tier, i) => {
           const premium = i === tiers.length - 1;
           return (
-            <li
+            <StaggerItem
+              as="li"
               key={tier.name}
-              data-reveal
-              className={`flex flex-col p-[clamp(22px,2.6vw,30px)] ${
+              className={`flex flex-col p-[clamp(22px,2.6vw,30px)] transition-[translate,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:shadow-card-hover ${
                 premium
-                  ? "border border-orange/45 bg-surface ring-1 ring-orange/15"
-                  : "border border-[rgb(var(--ink-rgb)/0.1)] bg-surface"
+                  ? "animate-tc-glow border border-orange/45 bg-surface ring-1 ring-orange/15"
+                  : "border border-[rgb(var(--ink-rgb)/0.1)] bg-surface hover:border-[rgb(var(--ink-rgb)/0.2)]"
               }`}
             >
               <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
@@ -64,10 +69,10 @@ export function PricingPreview({
               <p className="mt-4 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4 text-[14.5px] leading-[1.55] text-secondary">
                 {tier.idealFor}
               </p>
-            </li>
+            </StaggerItem>
           );
         })}
-      </ol>
+      </StaggerGroup>
 
       <div
         data-reveal
