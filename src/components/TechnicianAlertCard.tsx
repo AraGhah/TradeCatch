@@ -26,7 +26,7 @@ export function TechnicianAlertCard({
   ctaLabel: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-5 shadow-[0_20px_40px_-28px_rgb(var(--ink-rgb)/0.35)]">
+    <div className="relative overflow-hidden rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-5 shadow-[0_20px_40px_-28px_rgb(var(--ink-rgb)/0.35)] transition-[translate,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-card-hover">
       <div className="flex items-start justify-between gap-3">
         <div>
           <IllustrativeBadge label={badge} />
@@ -34,7 +34,7 @@ export function TechnicianAlertCard({
             {title}
           </h3>
         </div>
-        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-orange" />
+        <span className="animate-tc-pulse-ember mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-orange" />
       </div>
 
       <dl className="mt-5 space-y-3 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4">

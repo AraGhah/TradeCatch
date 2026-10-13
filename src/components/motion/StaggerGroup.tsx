@@ -1,14 +1,22 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { ReactNode } from "react";
 import { useMounted } from "@/components/motion/useMounted";
 
-const container = {
-  hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.08 },
-  },
+const ease = [0.22, 1, 0.36, 1] as const;
+
+const groupTags = {
+  div: motion.div,
+  ol: motion.ol,
+  ul: motion.ul,
+  tbody: motion.tbody,
+};
+
+const itemTags = {
+  div: motion.div,
+  li: motion.li,
+  tr: motion.tr,
 };
 
 // Opacity is intentionally never part of these variants. whileInView's
@@ -19,11 +27,33 @@ export const staggerItem = {
   hidden: { y: 16 },
   visible: {
     y: 0,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
+    transition: { duration: 0.45, ease },
   },
 };
 
-function useProgressiveMotion() {
+/** Where an item travels in from. "pop" scales up from slightly smaller. */
+export type StaggerFrom = "up" | "left" | "right" | "pop";
+
+const itemVariants: Record<StaggerFrom, Variants> = {
+  up: staggerItem,
+  left: {
+    hidden: { x: -14 },
+    visible: { x: 0, transition: { duration: 0.45, ease } },
+  },
+  right: {
+    hidden: { x: 14 },
+    visible: { x: 0, transition: { duration: 0.45, ease } },
+  },
+  pop: {
+    hidden: { scale: 0.94 },
+    visible: {
+      scale: 1,
+      transition: { type: "spring", stiffness: 320, damping: 22 },
+    },
+  },
+};
+
+export function useProgressiveMotion() {
   const mounted = useMounted();
   const prefersReducedMotion = useReducedMotion();
   return mounted && !prefersReducedMotion;
@@ -32,47 +62,97 @@ function useProgressiveMotion() {
 export function StaggerGroup({
   children,
   className = "",
+  as = "div",
+  stagger = 0.08,
+  delay = 0,
 }: {
   children: ReactNode;
   className?: string;
+  as?: keyof typeof groupTags;
+  /** Seconds between each child's entrance. */
+  stagger?: number;
+  /** Seconds before the first child starts. */
+  delay?: number;
 }) {
   const animate = useProgressiveMotion();
 
   // Same progressive-enhancement rule as Reveal: without JS or with
   // reduced motion, children render plainly and stay fully visible.
   if (!animate) {
-    return <div className={className}>{children}</div>;
+    const Tag = as;
+    return <Tag className={className}>{children}</Tag>;
   }
 
+  const MotionTag = groupTags[as];
+
   return (
-    <motion.div
+    <MotionTag
       className={className}
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-60px" }}
-      variants={container}
+      variants={{
+        hidden: {},
+        visible: {
+          transition: { staggerChildren: stagger, delayChildren: delay },
+        },
+      }}
     >
       {children}
-    </motion.div>
+    </MotionTag>
   );
 }
 
 export function StaggerItem({
   children,
   className = "",
+  as = "div",
+  from = "up",
 }: {
   children: ReactNode;
   className?: string;
+  as?: keyof typeof itemTags;
+  from?: StaggerFrom;
 }) {
   const animate = useProgressiveMotion();
 
   if (!animate) {
-    return <div className={className}>{children}</div>;
+    const Tag = as;
+    return <Tag className={className}>{children}</Tag>;
   }
 
+  const MotionTag = itemTags[as];
+
   return (
-    <motion.div className={className} variants={staggerItem}>
+    <MotionTag className={className} variants={itemVariants[from]}>
       {children}
-    </motion.div>
+    </MotionTag>
+  );
+}
+
+const popVariants: Variants = {
+  hidden: { scale: 0.6 },
+  visible: {
+    scale: 1,
+    transition: { type: "spring", stiffness: 420, damping: 18, delay: 0.12 },
+  },
+};
+
+/**
+ * Small accent (number badge, check mark, status dot) that springs in when
+ * its surrounding StaggerItem enters. It inherits the parent's variant
+ * state, so outside an animating StaggerGroup it simply renders at rest.
+ */
+export function StaggerPop({
+  children,
+  className = "",
+}: {
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <motion.span className={className} variants={popVariants}>
+      {children}
+    </motion.span>
   );
 }
