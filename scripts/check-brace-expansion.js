@@ -16,7 +16,16 @@ for (const match of out.matchAll(/brace-expansion@([\w.-]+)/g)) {
   versions.add(match[1]);
 }
 
-const allowed = new Set(["1.1.17", "2.1.3", "2.1.4", "3.0.3", "5.0.8"]);
+// Patched floors: 1.1.21+ (v1), 2.1.3+ (v2/v3), 5.0.12+ (v5).
+// Keep an allow-list of exact versions currently resolved in the tree.
+const allowed = new Set([
+  "1.1.21",
+  "2.1.3",
+  "2.1.4",
+  "2.1.7",
+  "3.0.3",
+  "5.0.12",
+]);
 const bad = [...versions].filter((v) => !allowed.has(v));
 if (bad.length || versions.size === 0) {
   console.error("Unpatched brace-expansion detected:", [...versions]);
