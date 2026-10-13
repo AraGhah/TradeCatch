@@ -439,6 +439,16 @@ h4 {
   }
 }
 
+@keyframes demo-bars {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
 /* Full-bleed recording surface for /demo-video */
 body.demo-video-active header,
 body.demo-video-active footer,

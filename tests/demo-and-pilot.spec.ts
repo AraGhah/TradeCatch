@@ -26,16 +26,17 @@ test.describe("first-demo journeys", () => {
     await expect(dialog).toBeVisible();
     await expect(dialog.locator("video")).toHaveAttribute(
       "src",
-      "/demo-video/TradeCatch-Demo-EN.mp4",
+      "/demo-video/TradeCatch-Platform-EN.mp4",
     );
     await expect(dialog.locator("track[kind='captions']")).toHaveAttribute(
       "src",
-      "/demo-video/captions/en.vtt",
+      "/demo-video/captions/platform-en.vtt",
     );
 
     await dialog.getByText("Transcript", { exact: true }).click();
-    await expect(dialog).toContainText("controlled pilot");
-    await expect(dialog).toContainText("not self-serve SaaS");
+    await expect(dialog).toContainText("Illustrative demo with a fictional business");
+    // The receptionist takes a request; it never promises a slot on the call.
+    await expect(dialog).toContainText("I've sent your request");
 
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
@@ -44,23 +45,46 @@ test.describe("first-demo journeys", () => {
     ).toBeFocused();
   });
 
-  test("both exported videos and caption tracks are served", async ({
+  test("the missed-call demo opens its own video from the proof section", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await rejectCookiesIfVisible(page);
+
+    await page.getByRole("button", { name: "Watch the missed-call demo" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "TradeCatch missed-call demo" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator("video")).toHaveAttribute(
+      "src",
+      "/demo-video/TradeCatch-MissedCall-EN.mp4",
+    );
+    await dialog.getByText("Transcript", { exact: true }).click();
+    await expect(dialog).toContainText("controlled pilot");
+  });
+
+  test("every exported video and caption track is served", async ({
     request,
   }) => {
-    for (const locale of ["EN", "FR"] as const) {
-      const video = await request.get(
-        `/demo-video/TradeCatch-Demo-${locale}.mp4`,
-        { headers: { range: "bytes=0-1" } },
-      );
-      expect([200, 206]).toContain(video.status());
-      expect(video.headers()["content-type"]).toContain("video/mp4");
+    for (const [video, captions] of [
+      ["Platform", "platform"],
+      ["MissedCall", "missed-call"],
+    ] as const) {
+      for (const locale of ["EN", "FR"] as const) {
+        const mp4 = await request.get(
+          `/demo-video/TradeCatch-${video}-${locale}.mp4`,
+          { headers: { range: "bytes=0-1" } },
+        );
+        expect([200, 206]).toContain(mp4.status());
+        expect(mp4.headers()["content-type"]).toContain("video/mp4");
 
-      const captions = await request.get(
-        `/demo-video/captions/${locale.toLowerCase()}.vtt`,
-      );
-      expect(captions.status()).toBe(200);
-      expect(captions.headers()["content-type"]).toContain("text/vtt");
-      expect(await captions.text()).toContain("WEBVTT");
+        const vtt = await request.get(
+          `/demo-video/captions/${captions}-${locale.toLowerCase()}.vtt`,
+        );
+        expect(vtt.status()).toBe(200);
+        expect(vtt.headers()["content-type"]).toContain("text/vtt");
+        expect(await vtt.text()).toContain("WEBVTT");
+      }
     }
   });
 
