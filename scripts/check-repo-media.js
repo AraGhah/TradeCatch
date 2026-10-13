@@ -31,7 +31,7 @@ const forbidden = [
   /^public\/demo-video\/exports\//,
   /\.wav$/i,
   /\/\.tmp\//,
-  /^TradeCatch-Demo-.*\.(mp4|webm)$/,
+  /^TradeCatch-(Demo|Platform|MissedCall)-.*\.(mp4|webm)$/,
   /^public\/demo-video\/.*\.webm$/i,
 ];
 
@@ -96,96 +96,89 @@ function lastCaptionEnd(vtt) {
     : null;
 }
 
-function timelineWindows() {
-  const source = fs.readFileSync(
-    path.join(ROOT, "src/components/demo-video/timeline.ts"),
-    "utf8",
-  );
-  const result = {};
-  for (const locale of LOCALES) {
-    const block = source.match(new RegExp(`${locale}:\\s*\\{([^}]*)\\}`, "m"));
-    const values = block
-      ? [...block[1].matchAll(/(\d+)\s*:\s*(\d+)/g)]
-          .sort((a, b) => Number(a[1]) - Number(b[1]))
-          .map((entry) => Number(entry[2]))
-      : [];
-    if (values.length !== 8) {
-      errors.push(`Could not read eight ${locale.toUpperCase()} scene windows`);
-    }
-    result[locale] = values;
+/** Scene windows, media paths and honesty markers, straight from the timeline. */
+function timelineMedia() {
+  try {
+    return JSON.parse(
+      execSync("npx tsx scripts/demo-media.ts windows", {
+        cwd: ROOT,
+        encoding: "utf8",
+      }),
+    );
+  } catch (error) {
+    errors.push(
+      `Could not read the demo timeline: ${error instanceof Error ? error.message : error}`,
+    );
+    return {};
   }
-  return result;
 }
 
-const windows = timelineWindows();
-const honestyMarkers = {
-  en: ["controlled pilot", "illustrative", "not self-serve SaaS"],
-  fr: ["pilote contrôlé", "illustratifs", "sans SaaS en libre-service"],
-};
+const media = timelineMedia();
 
-for (const locale of LOCALES) {
-  const upper = locale.toUpperCase();
-  const videoPath = path.join(
-    ROOT,
-    "public/demo-video",
-    `TradeCatch-Demo-${upper}.mp4`,
-  );
-  const captionsPath = path.join(
-    ROOT,
-    "public/demo-video/captions",
-    `${locale}.vtt`,
-  );
+for (const [cut, locales] of Object.entries(media)) {
+  for (const locale of LOCALES) {
+    const entry = locales[locale];
+    const label = `${cut} ${locale.toUpperCase()}`;
+    if (!entry) {
+      errors.push(`${label}: missing from the demo timeline`);
+      continue;
+    }
+    const videoPath = path.join(ROOT, "public", entry.video);
+    const captionsPath = path.join(ROOT, "public", entry.captions);
 
-  try {
-    const videoDuration = durationSeconds(videoPath);
-    const expectedDuration = windows[locale].reduce((sum, value) => sum + value, 0);
-    if (Math.abs(videoDuration - expectedDuration) > 0.75) {
-      errors.push(
-        `${upper} MP4 is ${videoDuration.toFixed(2)}s but the timeline is ${expectedDuration}s`,
-      );
-    }
-
-    const captions = fs.readFileSync(captionsPath, "utf8");
-    const normalizedCaptions = captions.replace(/\s+/g, " ");
-    if (!captions.replace(/^\uFEFF/, "").startsWith("WEBVTT")) {
-      errors.push(`${upper} captions do not start with WEBVTT`);
-    }
-    const captionEnd = lastCaptionEnd(captions);
-    if (captionEnd === null || Math.abs(captionEnd - videoDuration) > 0.75) {
-      errors.push(
-        `${upper} captions end at ${captionEnd ?? "unknown"}s but the MP4 is ${videoDuration.toFixed(2)}s`,
-      );
-    }
-    for (const marker of honestyMarkers[locale]) {
-      if (!normalizedCaptions.includes(marker)) {
-        errors.push(`${upper} captions are missing honesty marker: ${marker}`);
-      }
-    }
-
-    for (let scene = 1; scene <= 8; scene += 1) {
-      const narrationPath = path.join(
-        ROOT,
-        "public/demo-video/narration",
-        locale,
-        `scene-${scene}.mp3`,
-      );
-      const narrationDuration = durationSeconds(narrationPath);
-      const sceneWindow = windows[locale][scene - 1];
-      if (sceneWindow && narrationDuration + 0.25 > sceneWindow) {
+    try {
+      const videoDuration = durationSeconds(videoPath);
+      const expectedDuration = entry.durations.reduce((sum, value) => sum + value, 0);
+      if (Math.abs(videoDuration - expectedDuration) > 0.75) {
         errors.push(
-          `${upper} narration scene ${scene} (${narrationDuration.toFixed(2)}s) is clipped by its ${sceneWindow}s window`,
+          `${label} MP4 is ${videoDuration.toFixed(2)}s but the timeline is ${expectedDuration}s`,
         );
       }
+
+      const captions = fs.readFileSync(captionsPath, "utf8");
+      const normalizedCaptions = captions.replace(/\s+/g, " ");
+      if (!captions.replace(/^\uFEFF/, "").startsWith("WEBVTT")) {
+        errors.push(`${label} captions do not start with WEBVTT`);
+      }
+      const captionEnd = lastCaptionEnd(captions);
+      if (captionEnd === null || Math.abs(captionEnd - videoDuration) > 0.75) {
+        errors.push(
+          `${label} captions end at ${captionEnd ?? "unknown"}s but the MP4 is ${videoDuration.toFixed(2)}s`,
+        );
+      }
+      for (const marker of entry.honesty) {
+        if (!normalizedCaptions.includes(marker)) {
+          errors.push(`${label} captions are missing honesty marker: ${marker}`);
+        }
+      }
+
+      entry.durations.forEach((sceneWindow, i) => {
+        const narrationPath = path.join(
+          ROOT,
+          "public/demo-video/narration",
+          cut,
+          locale,
+          `scene-${i + 1}.mp3`,
+        );
+        const narrationDuration = durationSeconds(narrationPath);
+        // Scene files are mixed to their exact window; anything else means the
+        // timeline and the audio were generated from different scripts.
+        if (Math.abs(narrationDuration - sceneWindow) > 0.3) {
+          errors.push(
+            `${label} narration scene ${i + 1} is ${narrationDuration.toFixed(2)}s but its window is ${sceneWindow}s`,
+          );
+        }
+      });
+    } catch (error) {
+      errors.push(error instanceof Error ? error.message : String(error));
     }
-  } catch (error) {
-    errors.push(error instanceof Error ? error.message : String(error));
   }
 }
 
 const demoMb = demoBytes / (1024 * 1024);
 if (demoMb > MAX_TRACKED_DEMO_MB) {
   errors.push(
-    `Tracked public/demo-video is ${demoMb.toFixed(1)} MB (max ${MAX_TRACKED_DEMO_MB}). Keep one EN + one FR optimized MP4.`,
+    `Tracked public/demo-video is ${demoMb.toFixed(1)} MB (max ${MAX_TRACKED_DEMO_MB}). Keep one optimized EN + FR MP4 per demo cut.`,
   );
 }
 

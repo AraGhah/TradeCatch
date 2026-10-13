@@ -75,7 +75,7 @@
       "accentWord": "Récupérez",
       "subheadline": "TradeCatch récupère les appels manqués, relance les soumissions et prend les rendez-vous. Avec le Réceptionniste, le système répond aussi à vos appels entrants 24/7, en français et en anglais. Pilotes dirigés par le fondateur, sans SaaS en libre-service.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
-      "ctaSecondary": "Voir la démo de 90 secondes",
+      "ctaSecondary": "Voir la démo vidéo",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
       "demoStripLabel": "Parcours de simulation produit",
       "demoStripSteps": [
@@ -636,7 +636,7 @@
       "headline": "Voyez le système avant de parler à qui que ce soit.",
       "intro": "Ce sont des exemples de produit étiquetés, construits avec des noms fictifs et des parcours types, pour comprendre le produit. Ce ne sont pas des témoignages clients, des logos, ni des résultats promis.",
       "illustrativeLabel": "Données illustratives",
-      "demoCta": "Voir la démo produit de 90 secondes",
+      "demoCta": "Voir la démo des appels manqués",
       "onePagerCta": "Ouvrir la page résumé",
       "sms": {
         "badge": "Illustratif · Exemple SMS",
@@ -2071,16 +2071,22 @@
     "footerNote": "Les exemples du site sont illustratifs. Les vrais résultats clients ne sont publiés qu'avec permission."
   },
   "demoVideo": {
-    "title": "Démo produit (moins de 90 secondes)",
-    "description": "Parcours animé du pilote contrôlé de récupération d'appels manqués, du pilote Starter de relance de soumissions et des modules Growth autorisés de réservation et de pipeline. Tous les chiffres sont illustratifs.",
-    "playerTitle": "Démo TradeCatch",
+    "title": "Démos du produit",
+    "description": "Démonstrations animées de la réceptionniste TradeCatch, de la récupération des appels manqués et de la relance des soumissions, avec une entreprise fictive. Les conversations et les chiffres sont illustratifs.",
     "close": "Fermer",
     "captionsLabel": "Sous-titres français",
     "transcriptTitle": "Transcription",
-    "transcript": "Vous avez déjà payé pour faire sonner le téléphone. Mais quand vous travaillez, vous ne pouvez pas toujours répondre. Dans un pilote contrôlé, TradeCatch renvoie un texto en quelques secondes, au nom de votre entreprise. Le client reste engagé au lieu d'appeler votre concurrent. Le système recueille le nom du client, le problème, l'urgence, l'adresse et une photo pendant que vous poursuivez le travail. Quand vous regardez votre téléphone, la demande est déjà qualifiée. Le bon technicien reçoit une fiche d'intervention claire. Il peut accepter, refuser ou appeler. Un remplaçant peut être alerté si personne ne répond. L'acceptation avise le client. Les organisations pilotes Growth admissibles et liées réservent dans l'espace; Google et Outlook ne sont pas synchronisés nativement. Les pilotes Starter relancent les soumissions aux jours 1, 3, 7 et 14. Une réponse met fin à la séquence; le pipeline est réservé aux organisations pilotes Growth admissibles et liées. Les chiffres sont illustratifs, sans promesse de résultats. L'espace montre seulement les données de l'organisation liée, sans SaaS en libre-service ni CRM bidirectionnel natif. Ne perdez plus de contrats parce que vous ne pouvez pas répondre. Obtenez votre audit gratuit des opportunités manquées avec TradeCatch.",
     "timelineProgress": "Progression de la timeline",
     "play": "Lecture",
-    "pause": "Pause"
+    "pause": "Pause",
+    "platform": {
+      "playerTitle": "Démo TradeCatch",
+      "transcript": "Vous êtes sur un chantier. Le téléphone sonne, mais vous ne pouvez pas répondre. Et ce client peut se tourner vers un concurrent. Voici la réceptionniste TradeCatch. Elle répond à vos appels au nom de votre entreprise, en français ou en anglais, même quand vous ne pouvez pas décrocher. Réceptionniste: Merci d'avoir appelé Plomberie NorthStar! Comment puis-je vous aider? Client: Bonjour, l'évier de ma cuisine fuit. Faites-vous des réparations à Laval? Réceptionniste: Oui, nous desservons Laval et les environs. Est-ce que la fuite cause une inondation? Client: Non, mais j'aimerais que quelqu'un passe demain. Réceptionniste: Bien sûr. Quelle heure vous conviendrait le mieux? Client: Vers dix heures du matin. Réceptionniste: Parfait. J'ai transmis votre demande pour demain à 10 h à l'équipe. Elle vous écrira sous peu pour confirmer. Client: Mon sous-sol est inondé! Je dois parler à quelqu'un tout de suite. Réceptionniste: Je comprends, c'est urgent. Je vous transfère immédiatement au technicien de garde. Les urgences que vous définissez vont directement à votre ligne de garde. Chaque appel arrive dans un seul espace de travail : la demande, le résumé de l'appel et la demande de rendez-vous. Votre équipe confirme la visite en un clic, sans quitter le chantier. Et quand un appel reste sans réponse ou qu'une soumission reste en suspens, les relances automatiques gardent la conversation active. Ne laissez plus filer les occasions. TradeCatch : chaque appel compte. Démonstration illustrative avec une entreprise fictive. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait."
+    },
+    "missedCall": {
+      "playerTitle": "Démo TradeCatch des appels manqués",
+      "transcript": "Vous travaillez. Un client appelle. Vous manquez l'appel. Et ce client est peut-être déjà en train d'appeler votre concurrent. Avec TradeCatch, un appel manqué admissible déclenche un texto au nom de votre entreprise, pour reprendre contact avant que l'occasion disparaisse. TradeCatch enregistre la conversation, organise la demande et vous tient informé, dans un seul espace de travail. Une soumission envoyée, mais aucune nouvelle? TradeCatch relance automatiquement, et une réponse arrête la séquence. Moins de temps à courir après les clients. Plus d'occasions. TradeCatch : chaque appel compte. Démonstration illustrative avec une entreprise fictive. La récupération des appels manqués fonctionne en pilote contrôlé."
+    }
   },
   "errors": {
     "eyebrow": "Une erreur est survenue",
@@ -2519,6 +2525,7 @@
     "planCadence": "puis 750 $ / mois",
     "planNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables.",
     "ctaPrimary": "Réserver une démo",
+    "ctaDemo": "Voir la démo de la réceptionniste",
     "ctaSecondary": "Voir tous les tarifs",
     "flow": {
       "eyebrow": "Le déroulement d’un appel",

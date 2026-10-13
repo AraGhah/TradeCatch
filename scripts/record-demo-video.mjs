@@ -1,50 +1,30 @@
 /**
  * Records /demo-video to a downloadable MP4 with narration + a subtle music bed.
  *
- * Usage: node scripts/record-demo-video.mjs [en|fr] [baseUrl]
+ * Usage: node scripts/record-demo-video.mjs <platform|missed-call> [en|fr] [baseUrl] [--publish]
  *
  * The page is loaded with ?record=1&voice=0, which renders the demo with no
  * player chrome and no in-page audio. Narration is muxed afterwards from the
  * pre-generated MP3s so it stays perfectly in sync with the scene windows.
+ * --publish also copies the finished MP4 to its public/demo-video path.
  */
 import { chromium } from "playwright";
-import { spawn } from "node:child_process";
-import {
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  renameSync,
-  writeFileSync,
-} from "node:fs";
+import { execSync, spawn } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, renameSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const locale = (process.argv[2] || "en").toLowerCase() === "fr" ? "fr" : "en";
-const baseUrl = process.argv[3] || "http://localhost:3003";
-const pagePath =
-  locale === "fr"
-    ? "/fr/demo-video?record=1&voice=0"
-    : "/demo-video?record=1&voice=0";
+const positional = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const publish = process.argv.includes("--publish");
+const cut = positional[0] === "missed-call" ? "missed-call" : "platform";
+const locale = (positional[1] || "en").toLowerCase() === "fr" ? "fr" : "en";
+const baseUrl = positional[2] || "http://localhost:3003";
+const pagePath = `${locale === "fr" ? "/fr" : ""}/demo-video?record=1&voice=0&cut=${cut}`;
 
-/** Read the scene windows straight from the timeline so they cannot drift. */
-function readSceneDurations(loc) {
-  const src = readFileSync(
-    resolve("src/components/demo-video/timeline.ts"),
-    "utf8",
-  );
-  const block = src.match(new RegExp(`${loc}:\\s*\\{([^}]*)\\}`, "m"));
-  if (!block)
-    throw new Error(
-      `Could not read SCENE_DURATIONS_SEC.${loc} from timeline.ts`,
-    );
-  const values = [...block[1].matchAll(/(\d+)\s*:\s*(\d+)/g)]
-    .sort((a, b) => Number(a[1]) - Number(b[1]))
-    .map((m) => Number(m[2]));
-  if (values.length !== 8)
-    throw new Error(`Expected 8 scene durations, got ${values.length}`);
-  return values;
-}
-
-const SCENE_DURATIONS_SEC = readSceneDurations(locale);
+/** Scene windows come from the timeline itself so they cannot drift. */
+const MEDIA = JSON.parse(
+  execSync("npx tsx scripts/demo-media.ts windows", { encoding: "utf8" }),
+)[cut][locale];
+const SCENE_DURATIONS_SEC = MEDIA.durations;
 const TOTAL_SEC = SCENE_DURATIONS_SEC.reduce((a, b) => a + b, 0);
 /** Extra wall-clock recorded past the end; trimmed off in the final encode. */
 const TAIL_SEC = 2;
@@ -79,20 +59,21 @@ async function findFfmpeg() {
 
 /** Pads each narration clip out to its scene window and concatenates them. */
 async function buildNarrationTrack(ffmpeg, outWav) {
-  const narrDir = resolve(`public/demo-video/narration/${locale}`);
+  const narrDir = resolve(`public/demo-video/narration/${cut}/${locale}`);
   const parts = [];
 
   for (let i = 0; i < SCENE_DURATIONS_SEC.length; i += 1) {
     const sceneId = i + 1;
     const duration = SCENE_DURATIONS_SEC[i];
-    const padded = join(tmpDir, `${locale}-scene-${sceneId}.wav`);
+    const padded = join(tmpDir, `${cut}-${locale}-scene-${sceneId}.wav`);
 
     await run(ffmpeg, [
       "-y",
       "-i",
       join(narrDir, `scene-${sceneId}.mp3`),
       "-af",
-      `adelay=250|250,apad=whole_dur=${duration}`,
+      // Each scene MP3 already places its lines at their timeline offsets.
+      `apad=whole_dur=${duration}`,
       "-t",
       String(duration),
       "-ar",
@@ -105,7 +86,7 @@ async function buildNarrationTrack(ffmpeg, outWav) {
     parts.push(`file '${padded.replace(/\\/g, "/")}'`);
   }
 
-  const listFile = join(tmpDir, `concat-${locale}.txt`);
+  const listFile = join(tmpDir, `concat-${cut}-${locale}.txt`);
   writeFileSync(listFile, parts.join("\n"), "utf8");
 
   await run(ffmpeg, [
@@ -136,7 +117,7 @@ const musicExpr =
 
 async function main() {
   console.log(
-    `Recording ${locale.toUpperCase()} demo — ${TOTAL_SEC}s — ${baseUrl}${pagePath}`,
+    `Recording ${cut} ${locale.toUpperCase()} demo — ${TOTAL_SEC}s — ${baseUrl}${pagePath}`,
   );
 
   const browser = await chromium.launch({
@@ -183,12 +164,13 @@ async function main() {
   if (!video) throw new Error("No video recorded");
 
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const base = `TradeCatch-Demo-${locale.toUpperCase()}-${stamp}`;
+  const label = cut === "missed-call" ? "MissedCall" : "Platform";
+  const base = `TradeCatch-${label}-${locale.toUpperCase()}-${stamp}`;
   const webmOut = join(tmpDir, `${base}.webm`);
   renameSync(await video.path(), webmOut);
 
   const ffmpeg = await findFfmpeg();
-  const narrationWav = join(tmpDir, `${locale}-narration.wav`);
+  const narrationWav = join(tmpDir, `${cut}-${locale}-narration.wav`);
   await buildNarrationTrack(ffmpeg, narrationWav);
 
   const mp4Out = join(outDir, `${base}.mp4`);
@@ -254,6 +236,11 @@ async function main() {
   ]);
 
   console.log(`\nDone — ${TOTAL_SEC}s\n${mp4Out}`);
+  if (publish) {
+    const target = resolve(`public${MEDIA.video}`);
+    copyFileSync(mp4Out, target);
+    console.log(`Published -> ${target}`);
+  }
   return mp4Out;
 }
 
