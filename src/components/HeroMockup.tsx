@@ -197,7 +197,7 @@ export function HeroMockup({
                 {businessName}
               </p>
               <p className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[0.06em] text-[#1E6B47]">
-                <span className="h-1.5 w-1.5 animate-tc-pulse rounded-full bg-green" />
+                <span className="h-1.5 w-1.5 rounded-full bg-green" />
                 {autoReply}
               </p>
             </div>

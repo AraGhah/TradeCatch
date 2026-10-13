@@ -479,7 +479,7 @@ export function BookAuditForm() {
         <div className="w-full max-w-[640px] animate-tc-in text-center">
           <span
             aria-hidden
-            className="animate-tc-pulse inline-flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(47,158,104,0.14)] text-[26px] text-signal-text"
+            className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-[rgba(47,158,104,0.14)] text-[26px] text-signal-text"
           >
             ✓
           </span>
