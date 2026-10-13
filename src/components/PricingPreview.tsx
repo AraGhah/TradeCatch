@@ -45,7 +45,8 @@ export function PricingPreview({
             <li
               key={tier.name}
               data-reveal
-              className={`flex flex-col p-[clamp(22px,2.6vw,30px)] ${
+              data-reveal-style="scale"
+              className={`tc-lift flex flex-col p-[clamp(22px,2.6vw,30px)] ${
                 premium
                   ? "border border-orange/45 bg-surface ring-1 ring-orange/15"
                   : "border border-[rgb(var(--ink-rgb)/0.1)] bg-surface"
@@ -76,8 +77,16 @@ export function PricingPreview({
         <CTAButton href="/pricing" variant="ink" size="md">
           {cta}
         </CTAButton>
-        <CTAButton href="/ai-receptionist" variant="secondary" size="md">
-          {receptionistCta} →
+        <CTAButton
+          href="/ai-receptionist"
+          variant="secondary"
+          size="md"
+          className="group"
+        >
+          {receptionistCta}{" "}
+          <span className="animate-tc-arrow" aria-hidden>
+            →
+          </span>
         </CTAButton>
       </div>
       <p data-reveal className="mt-5 text-[14px] leading-[1.55] text-muted">

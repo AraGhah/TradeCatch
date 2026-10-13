@@ -11,6 +11,10 @@ import { ProofExamplesSection } from "@/components/ProofExamplesSection";
 import { PricingPreview } from "@/components/PricingPreview";
 import { WorkflowPreview } from "@/components/WorkflowPreview";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
+import {
+  HeroEntrance,
+  HeroEntranceItem,
+} from "@/components/motion/HeroEntrance";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -88,38 +92,48 @@ export default async function HomePage({
               gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))",
             }}
           >
-            <div>
-              <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
-                <span className="block h-[7px] w-[7px] animate-tc-pulse rounded-full bg-green" />
-                {t("hero.eyebrow")}
-              </span>
+            <HeroEntrance>
+              <HeroEntranceItem>
+                <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
+                  <span className="block h-[7px] w-[7px] animate-tc-pulse rounded-full bg-green" />
+                  {t("hero.eyebrow")}
+                </span>
+              </HeroEntranceItem>
 
-              <h1 className="text-hero mt-[26px] text-white">
-                {accentHeadline(headline, accentWord)}
-              </h1>
+              <HeroEntranceItem>
+                <h1 className="text-hero mt-[26px] text-white">
+                  {accentHeadline(headline, accentWord)}
+                </h1>
+              </HeroEntranceItem>
 
-              <p className="text-lede mt-[26px] max-w-[36em] text-white/68">
-                {t("hero.subheadline")}
-              </p>
+              <HeroEntranceItem>
+                <p className="text-lede mt-[26px] max-w-[36em] text-white/68">
+                  {t("hero.subheadline")}
+                </p>
+              </HeroEntranceItem>
 
-              <p className="mt-4 max-w-[34em] text-[15px] leading-[1.55] text-white/52">
-                {t("hero.qualificationLine")}
-              </p>
+              <HeroEntranceItem>
+                <p className="mt-4 max-w-[34em] text-[15px] leading-[1.55] text-white/52">
+                  {t("hero.qualificationLine")}
+                </p>
+              </HeroEntranceItem>
 
-              <div className="mt-[34px] flex flex-wrap gap-3">
+              <HeroEntranceItem className="mt-[34px] flex flex-wrap gap-3">
                 <CTAButton href="/book-audit" variant="ember" size="lg">
                   {t("hero.ctaPrimary")}
                 </CTAButton>
-                <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[transform,background,border-color] duration-200 hover:translate-y-[-2px] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
+                <WatchDemoButton className="group inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[transform,background,border-color] duration-200 hover:translate-y-[-2px] hover:border-white/40 hover:bg-white/[0.07] active:scale-[0.985] focus-visible:outline-2 focus-visible:outline-offset-2">
                   {t("hero.ctaSecondary")}
                 </WatchDemoButton>
-              </div>
+              </HeroEntranceItem>
 
-              <p className="mt-[18px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
-                {t("hero.reassurance")}
-              </p>
+              <HeroEntranceItem>
+                <p className="mt-[18px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
+                  {t("hero.reassurance")}
+                </p>
+              </HeroEntranceItem>
 
-              <div className="mt-9 border-t border-white/10 pt-[26px]">
+              <HeroEntranceItem className="mt-9 border-t border-white/10 pt-[26px]">
                 <p className="font-mono text-[10.5px] tracking-[0.12em] text-white/45 uppercase">
                   {t("hero.demoStripLabel")}
                 </p>
@@ -147,8 +161,8 @@ export default async function HomePage({
                     </li>
                   ))}
                 </ul>
-              </div>
-            </div>
+              </HeroEntranceItem>
+            </HeroEntrance>
 
             <HeroMockup
               businessName={t("hero.mockup.businessName")}
@@ -175,7 +189,9 @@ export default async function HomePage({
             {trustStrip.map((item) => (
               <div
                 key={item.title}
-                className="border border-[rgb(var(--ink-rgb)/0.08)] bg-paper px-4 py-4"
+                data-reveal
+                data-reveal-style="scale"
+                className="tc-lift border border-[rgb(var(--ink-rgb)/0.08)] bg-paper px-4 py-4"
               >
                 <p className="text-[14px] font-semibold tracking-[-0.01em] text-heading">
                   {item.title}
@@ -226,7 +242,10 @@ export default async function HomePage({
                 variant="link"
                 className="mt-7"
               >
-                {t("system.cta")} →
+                {t("system.cta")}{" "}
+                <span className="animate-tc-arrow" aria-hidden>
+                  →
+                </span>
               </CTAButton>
             </div>
 
@@ -243,7 +262,8 @@ export default async function HomePage({
               <div
                 key={step.title}
                 data-reveal
-                className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)] transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-[rgb(var(--ink-rgb)/0.2)]"
+                data-reveal-style="scale"
+                className="tc-lift border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)] hover:border-[rgb(var(--ink-rgb)/0.2)]"
               >
                 <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
                   {String(i + 1).padStart(2, "0")}
@@ -364,8 +384,11 @@ export default async function HomePage({
                 {t("industries.leadIn")}
               </p>
             </div>
-            <CTAButton href="/industries" variant="secondary">
-              {t("industries.cta")} →
+            <CTAButton href="/industries" variant="secondary" className="group">
+              {t("industries.cta")}{" "}
+              <span className="animate-tc-arrow" aria-hidden>
+                →
+              </span>
             </CTAButton>
           </div>
         </Container>

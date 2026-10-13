@@ -41,10 +41,12 @@ export function FaqAccordion({
                 {item.q}
               </span>
               <span
-                className="shrink-0 font-mono text-[18px] font-medium text-ember-text"
+                className={`shrink-0 font-mono text-[18px] font-medium text-ember-text transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  isOpen ? "rotate-45" : "rotate-0"
+                }`}
                 aria-hidden
               >
-                {isOpen ? "−" : "+"}
+                +
               </span>
             </button>
             {isOpen ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 
 type Msg = {
   type: "event" | "out" | "in" | "photo" | "win";
@@ -159,7 +159,7 @@ export function HeroMockup({
       <p className="sr-only">{staticDescription || disclaimer}</p>
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-16 -top-20 h-[520px] w-[520px] rounded-full opacity-40"
+        className="animate-tc-glow pointer-events-none absolute -right-16 -top-20 h-[520px] w-[520px] rounded-full opacity-40"
         style={{
           background:
             "radial-gradient(circle, rgba(228,118,43,0.35) 0%, transparent 70%)",
@@ -167,74 +167,85 @@ export function HeroMockup({
       />
 
       <div
-        className="relative rounded-[46px] p-[11px]"
-        style={{
-          background: "linear-gradient(160deg,#2A3846,#141F2B 55%,#0A1017)",
-          boxShadow:
-            "0 60px 90px -50px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.07)",
-        }}
+        className={`relative ${reduceMotion ? "" : "animate-tc-scale-in"}`}
+        style={
+          reduceMotion
+            ? undefined
+            : ({ ["--anim-delay"]: "180ms" } as CSSProperties)
+        }
       >
         <div
-          className="flex flex-col overflow-hidden rounded-[36px] bg-[#F4F1EC]"
-          style={{ height: "min(660px, 72vh)" }}
+          className="relative rounded-[46px] p-[11px]"
+          style={{
+            background: "linear-gradient(160deg,#2A3846,#141F2B 55%,#0A1017)",
+            boxShadow:
+              "0 60px 90px -50px rgba(0,0,0,.9), 0 0 0 1px rgba(255,255,255,.07)",
+          }}
         >
-          <div className="relative flex items-center justify-between bg-white px-4 pb-3 pt-3.5">
-            <div className="absolute left-1/2 top-1.5 h-[22px] w-[88px] -translate-x-1/2 rounded-full bg-navy/90" />
-            <span className="font-mono text-[11px] font-medium text-navy">
-              {statusTime}
-            </span>
-            <span className="font-mono text-[10px] text-[#3D4855]">
-              {statusNetwork}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 border-b border-[rgba(12,20,30,0.08)] bg-white px-4 py-3">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-navy font-heading text-[12px] font-bold text-white">
-              {avatar}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[14px] font-semibold text-navy">
-                {businessName}
-              </p>
-              <p className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[0.06em] text-[#1E6B47]">
-                <span className="h-1.5 w-1.5 animate-tc-pulse rounded-full bg-green" />
-                {autoReply}
-              </p>
-            </div>
-          </div>
-
           <div
-            ref={threadRef}
-            className="flex flex-1 flex-col justify-end gap-2.5 overflow-hidden px-[18px] py-4"
-            aria-hidden="true"
+            className="flex flex-col overflow-hidden rounded-[36px] bg-[#F4F1EC]"
+            style={{ height: "min(660px, 72vh)" }}
           >
-            {shown.map((msg, i) => (
-              <MessageBubble
-                key={`${msg.type}-${i}-${msg.text.slice(0, 16)}`}
-                msg={msg}
-              />
-            ))}
-            {typing ? <TypingDots side={typing} /> : null}
-          </div>
+            <div className="relative flex items-center justify-between bg-white px-4 pb-3 pt-3.5">
+              <div className="absolute left-1/2 top-1.5 h-[22px] w-[88px] -translate-x-1/2 rounded-full bg-navy/90" />
+              <span className="font-mono text-[11px] font-medium text-navy">
+                {statusTime}
+              </span>
+              <span className="font-mono text-[10px] text-[#3D4855]">
+                {statusNetwork}
+              </span>
+            </div>
 
-          <p className="border-t border-[rgba(12,20,30,0.08)] px-4 py-2.5 text-center font-mono text-[10px] tracking-[0.04em] text-[#3D4855]">
-            {disclaimer}
+            <div className="flex items-center gap-3 border-b border-[rgba(12,20,30,0.08)] bg-white px-4 py-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-navy font-heading text-[12px] font-bold text-white">
+                {avatar}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[14px] font-semibold text-navy">
+                  {businessName}
+                </p>
+                <p className="flex items-center gap-1.5 font-mono text-[10px] font-medium tracking-[0.06em] text-[#1E6B47]">
+                  <span className="h-1.5 w-1.5 animate-tc-pulse rounded-full bg-green" />
+                  {autoReply}
+                </p>
+              </div>
+            </div>
+
+            <div
+              ref={threadRef}
+              className="flex flex-1 flex-col justify-end gap-2.5 overflow-hidden px-[18px] py-4"
+              aria-hidden="true"
+            >
+              {shown.map((msg, i) => (
+                <MessageBubble
+                  key={`${msg.type}-${i}-${msg.text.slice(0, 16)}`}
+                  msg={msg}
+                />
+              ))}
+              {typing ? <TypingDots side={typing} /> : null}
+            </div>
+
+            <p className="border-t border-[rgba(12,20,30,0.08)] px-4 py-2.5 text-center font-mono text-[10px] tracking-[0.04em] text-[#3D4855]">
+              {disclaimer}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className={`absolute bottom-[54px] left-[-8px] z-10 rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-white px-4 py-3 shadow-[0_26px_46px_-28px_rgba(12,20,30,0.34)] transition-[opacity,transform] duration-500 ${
+            floatVisible
+              ? "translate-y-0 opacity-100"
+              : "translate-y-2 opacity-0"
+          }`}
+          aria-hidden={!floatVisible}
+        >
+          <p className="font-mono text-[10px] tracking-[0.1em] text-[#3D4855] uppercase">
+            {floatLabel}
+          </p>
+          <p className="mt-0.5 text-[14px] font-semibold text-navy">
+            {floatTitle}
           </p>
         </div>
-      </div>
-
-      <div
-        className={`absolute bottom-[54px] left-[-8px] z-10 rounded-[14px] border border-[rgba(12,20,30,0.1)] bg-white px-4 py-3 shadow-[0_26px_46px_-28px_rgba(12,20,30,0.34)] transition-[opacity,transform] duration-500 ${
-          floatVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-        }`}
-        aria-hidden={!floatVisible}
-      >
-        <p className="font-mono text-[10px] tracking-[0.1em] text-[#3D4855] uppercase">
-          {floatLabel}
-        </p>
-        <p className="mt-0.5 text-[14px] font-semibold text-navy">
-          {floatTitle}
-        </p>
       </div>
     </div>
   );
