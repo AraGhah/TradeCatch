@@ -2112,22 +2112,45 @@
     "preferAudit": "Not a pilot yet? Book a free audit instead."
   },
   "app": {
+    "demoAccountBadge": "Demo account",
     "nav": {
       "dashboard": "Dashboard",
-      "leads": "Missed calls",
-      "calls": "AI calls",
+      "overview": "Overview",
+      "leads": "Leads",
+      "calls": "Phone calls",
       "websiteLeads": "Website",
-      "quotes": "Quotes",
+      "quotes": "Quotes & follow-ups",
       "bookings": "Bookings",
+      "appointments": "Appointments",
       "pipeline": "Pipeline",
       "reviews": "Reviews",
       "email": "Email",
       "timeline": "Timeline",
       "onboarding": "Onboarding",
       "inbox": "Inbox",
-      "settings": "Settings",
+      "conversations": "Conversations",
+      "analytics": "Analytics",
+      "settings": "Business settings",
+      "testCenter": "Test Center",
+      "admin": "Admin",
       "logout": "Sign out",
-      "receptionist": "Receptionist"
+      "receptionist": "AI Receptionist"
+    },
+    "testCenter": {
+      "headline": "Test Center",
+      "intro": "Generate or reset fictional data for this demo business. Simulated actions never contact real customers.",
+      "demoBadge": "Demo Mode",
+      "liveBadge": "Live account",
+      "notDemo": "Test Center tools are available on demo businesses only.",
+      "adminOnly": "Only TradeCatch administrators can seed or reset demo data.",
+      "generateData": "Generate demo data",
+      "resetAccount": "Reset demo account",
+      "confirmReset": "Reset this demo account? Generated records will be removed. The business and owner login stay.",
+      "seedOk": "Fictional demo data generated for this business only.",
+      "resetOk": "Demo account reset. Owner access retained.",
+      "seedFailed": "Could not generate demo data.",
+      "resetFailed": "Could not reset the demo account.",
+      "safetyNote": "SMS and calls stay in dry-run / sandbox unless you explicitly enable an authorized live staging test."
     },
     "calls": {
       "headline": "Receptionist calls",
@@ -2263,7 +2286,20 @@
       "apiKeyCreating": "Generating…",
       "apiKeyOnce": "Copy this key now",
       "apiKeyHint": "POST /api/website-leads with header X-TradeCatch-Key. The plaintext is shown once.",
-      "apiKeyError": "Could not create API key."
+      "apiKeyError": "Could not create API key.",
+      "demoAccount": "Demo contractor account",
+      "featuresHeading": "Feature toggles",
+      "featuresIntro": "Activate or deactivate TradeCatch modules for this business. Plan entitlements still apply.",
+      "saveFeatures": "Save features",
+      "featuresSaved": "Features saved.",
+      "featuresSaveFailed": "Could not save features.",
+      "featureFlags": {
+        "aiReceptionist": "AI receptionist",
+        "appointmentBooking": "Appointment booking",
+        "callTransfer": "Call transfer",
+        "missedCallRecovery": "Missed-call recovery",
+        "quoteFollowups": "Quote follow-ups"
+      }
     },
     "bookings": {
       "headline": "Appointments",
@@ -2360,10 +2396,10 @@
       "cta": "See Growth on pricing"
     },
     "receptionist": {
-      "headline": "Receptionist settings",
-      "intro": "What the receptionist says and where it sends callers. Changes apply to new calls within about 30 seconds.",
+      "headline": "AI Receptionist",
+      "intro": "Configure, activate, and test your business's virtual receptionist. Each business has its own isolated configuration.",
       "statusActive": "Answering calls on {number}.",
-      "statusInactive": "Not answering calls yet. The founder connects your phone number and switches it on. You can prepare everything below in the meantime.",
+      "statusInactive": "Not answering calls yet. Save the configuration, then activate the receptionist to wire call routing.",
       "notLinked": "Your phone client is not linked yet. Ask the founder to connect it before configuring the receptionist.",
       "entitlement": "The Receptionist is not available on your plan.",
       "readOnly": "Only an owner or admin can change these settings.",
@@ -2424,7 +2460,129 @@
       "notifyTitle": "Call summaries",
       "notifyEmail": "Send summaries to this email",
       "notifySms": "Text summaries and emergency alerts to",
-      "collectTime": "Ask the caller for a preferred date and time"
+      "collectTime": "Ask the caller for a preferred date and time",
+      "activate": "Activate AI",
+      "deactivate": "Deactivate AI",
+      "activateError": "Could not change activation.",
+      "editConfig": "Edit configuration",
+      "testAi": "Test AI receptionist",
+      "viewHistory": "View call history",
+      "identityTitle": "Identity & personality",
+      "receptionistName": "Receptionist name",
+      "communicationStyle": "Communication style",
+      "speakingSpeed": "Speaking speed",
+      "callHandlingTitle": "Call handling rules",
+      "callHandlingIntro": "These settings drive actual call routing, not just a visual status.",
+      "callHandlingMode": "Call handling mode",
+      "companyName": "Company name",
+      "industry": "Industry",
+      "services": "Services",
+      "servicesPlaceholder": "Drain cleaning, repairs, installations",
+      "serviceAreas": "Service areas",
+      "areasPlaceholder": "Montreal, Laval, Longueuil",
+      "emergencyServices": "Emergency services available",
+      "emergencyHours": "Emergency hours",
+      "startingPrices": "Starting prices (approved only)",
+      "pricesHelp": "Leave blank to forbid any price quotes. Never invent pricing.",
+      "businessAddress": "Business address",
+      "additionalInstructions": "Additional instructions",
+      "faqQuestion": "Question",
+      "transferTitle": "Call transfers & human escalation",
+      "transferIntro": "Authorized numbers and what happens if nobody answers.",
+      "primaryTransfer": "Primary transfer number",
+      "secondaryTransfer": "Secondary transfer number",
+      "transferTimeout": "Transfer timeout (seconds)",
+      "failedTransfer": "If transfer fails",
+      "appointmentTitle": "Appointment management",
+      "appointmentIntro": "Booking rules. The simulated calendar prevents double bookings in tests.",
+      "duration": "Duration (minutes)",
+      "buffer": "Buffer between appointments (minutes)",
+      "bookingNotice": "Minimum booking notice (hours)",
+      "maxDaily": "Maximum per day (optional)",
+      "confirmationMethod": "Confirmation method",
+      "confirmBoth": "SMS and email",
+      "confirmNone": "None",
+      "bookableServices": "Bookable services",
+      "overview": {
+        "aiName": "AI name",
+        "phone": "Assigned phone number",
+        "language": "Language",
+        "voice": "Voice",
+        "business": "Business",
+        "calls": "Calls handled",
+        "appointments": "Appointments booked",
+        "transfers": "Transfers",
+        "lastActivity": "Last activity",
+        "mode": "Call mode"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "error": "Error"
+      },
+      "connection": {
+        "not_connected": "Configuration saved — live phone connection not established yet (see Task 4).",
+        "configured": "Routing configured for the assigned number.",
+        "error": "Integration error — fallback behavior applies."
+      },
+      "languageValue": {
+        "en": "English",
+        "fr": "Français",
+        "bilingual": "Bilingual"
+      },
+      "modes": {
+        "always": "Always active",
+        "business_hours": "Business hours only",
+        "after_hours": "After hours only",
+        "overflow": "Overflow / no answer",
+        "disabled": "Disabled"
+      },
+      "styles": {
+        "professional_friendly": "Professional and friendly",
+        "professional": "Professional",
+        "warm": "Warm",
+        "brief": "Brief"
+      },
+      "speeds": {
+        "slow": "Slow",
+        "normal": "Normal",
+        "fast": "Fast"
+      },
+      "failed": {
+        "take_message": "Take a message",
+        "urgent_lead": "Create urgent lead",
+        "voicemail": "Voicemail"
+      },
+      "test": {
+        "title": "Test AI receptionist",
+        "badge": "Simulated conversation. No real calls, SMS, or email.",
+        "language": "Language",
+        "scenario": "Scenario",
+        "scenarioOpen": "During business hours",
+        "scenarioAfter": "After hours",
+        "start": "Start test",
+        "empty": "Start a test to talk to your configuration.",
+        "you": "You",
+        "ai": "AI",
+        "system": "System",
+        "placeholder": "Type as a customer…",
+        "send": "Send",
+        "ended": "Simulated call ended.",
+        "restart": "New test",
+        "error": "The test is unavailable right now."
+      },
+      "history": {
+        "title": "Call history",
+        "loading": "Loading…",
+        "empty": "No calls recorded for this business yet.",
+        "error": "Could not load history.",
+        "simulated": "simulated",
+        "duration": "Duration",
+        "outcome": "Outcome",
+        "urgency": "Urgency",
+        "transfer": "Transfer",
+        "yes": "Yes"
+      }
     }
   },
   "aiReceptionist": {
@@ -2944,6 +3102,50 @@
       "primary": "Book a demo",
       "secondary": "See full pricing",
       "note": "20 minutes. No system access required. Configuration and onboarding happen before the line goes live."
+    }
+  },
+  "demoMode": {
+    "badge": "Demo Mode",
+    "message": "Staging environment — fictional data only.",
+    "hint": "No real customers are contacted. Production is untouched."
+  },
+  "admin": {
+    "headline": "Demo businesses",
+    "intro": "Create fictional contractor accounts, open their dashboards, generate simulated data, and reset without touching production customers.",
+    "createButton": "+ Create Demo Business",
+    "cancel": "Cancel",
+    "submitCreate": "Create demo business",
+    "empty": "No demo businesses yet.",
+    "demoBadge": "Demo",
+    "openDashboard": "Open dashboard",
+    "generateData": "Generate demo data",
+    "reset": "Reset",
+    "delete": "Delete",
+    "created": "Demo business created.",
+    "seeded": "Fictional demo data generated.",
+    "resetDone": "Demo account reset.",
+    "deleted": "Demo business deleted.",
+    "confirmReset": "Reset this demo account and regenerate sample data?",
+    "confirmDelete": "Delete this demo business permanently?",
+    "fields": {
+      "businessName": "Business name",
+      "industry": "Industry",
+      "ownerEmail": "Owner email",
+      "ownerName": "Owner name",
+      "phoneNumber": "Phone number (E.164)",
+      "city": "City",
+      "serviceArea": "Service area",
+      "language": "Language",
+      "timezone": "Timezone",
+      "subscriptionPlan": "Subscription plan"
+    },
+    "errors": {
+      "load": "Could not load demo businesses.",
+      "create": "Could not create the demo business.",
+      "seed": "Could not generate demo data.",
+      "reset": "Could not reset the demo account.",
+      "delete": "Could not delete the demo business.",
+      "switch": "Could not open the contractor dashboard."
     }
   }
 }

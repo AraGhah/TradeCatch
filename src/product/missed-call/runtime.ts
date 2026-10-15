@@ -6,7 +6,7 @@ import { createTwilioSmsPort } from "./twilio";
 import {
   isDurableMissedCallStoreConfigured,
   isE2eHarness,
-  isProductionRuntime,
+  isRealProductionRuntime,
 } from "@/lib/config";
 
 /**
@@ -38,7 +38,7 @@ function createStore(): { store: MissedCallStore; durable: boolean } {
     );
   }
 
-  if (isProductionRuntime() && !isE2eHarness()) {
+  if (isRealProductionRuntime() && !isE2eHarness()) {
     throw new Error(
       "[missed-call] Refusing in-memory store in production. Set DATABASE_URL + MISSED_CALL_DURABLE_STORE=1 and run npm run db:schema before accepting traffic.",
     );

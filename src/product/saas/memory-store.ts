@@ -1,12 +1,13 @@
 import { featuresForPlan, type PlanId } from "./entitlements";
 import { newId, slugify } from "./ids";
 import { normalizeEmail, type SaasStore } from "./store";
-import type {
-  MagicLink,
-  Membership,
-  Organization,
-  Session,
-  User,
+import {
+  mergeBusinessFeatures,
+  type MagicLink,
+  type Membership,
+  type Organization,
+  type Session,
+  type User,
 } from "./types";
 
 function nowIso() {
@@ -22,6 +23,7 @@ export function createMemorySaasStore(): SaasStore {
   const memberships = new Map<string, Membership>();
   const magicLinks = new Map<string, MagicLink>();
   const sessions = new Map<string, Session>();
+  const demoIdempotency = new Map<string, string>();
 
   return {
     async createOrganizationWithOwner(input) {
@@ -36,6 +38,7 @@ export function createMemorySaasStore(): SaasStore {
           email,
           name: input.ownerName.trim() || email.split("@")[0] || "Owner",
           locale: input.locale ?? "en",
+          platformRole: "none",
           createdAt,
           updatedAt: createdAt,
         };
@@ -55,8 +58,16 @@ export function createMemorySaasStore(): SaasStore {
         name: input.name.trim(),
         slug,
         plan: input.plan ?? "starter",
-        status: "active",
+        status: input.status ?? "active",
         missedCallClientId: input.missedCallClientId ?? null,
+        accountType: input.accountType ?? "pilot",
+        industry: input.industry ?? null,
+        phoneE164: input.phoneE164 ?? null,
+        city: input.city ?? null,
+        serviceArea: input.serviceArea ?? "",
+        timezone: input.timezone?.trim() || "America/Toronto",
+        localeDefault: input.locale ?? "en",
+        features: mergeBusinessFeatures(input.features),
         createdAt,
         updatedAt: createdAt,
       };
@@ -84,12 +95,59 @@ export function createMemorySaasStore(): SaasStore {
       return id ? (organizations.get(id) ?? null) : null;
     },
 
-    async updateOrganizationPlan(id, plan) {
+    async listOrganizations(filter) {
+      return [...organizations.values()]
+        .filter((org) =>
+          filter?.accountType ? org.accountType === filter.accountType : true,
+        )
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+
+    async updateOrganization(id, patch) {
       const org = organizations.get(id);
       if (!org) return null;
-      const next = { ...org, plan, updatedAt: nowIso() };
+      const next: Organization = {
+        ...org,
+        name: patch.name?.trim() || org.name,
+        plan: patch.plan ?? org.plan,
+        status: patch.status ?? org.status,
+        industry:
+          patch.industry !== undefined ? patch.industry : org.industry,
+        phoneE164:
+          patch.phoneE164 !== undefined ? patch.phoneE164 : org.phoneE164,
+        city: patch.city !== undefined ? patch.city : org.city,
+        serviceArea:
+          patch.serviceArea !== undefined ? patch.serviceArea : org.serviceArea,
+        timezone: patch.timezone?.trim() || org.timezone,
+        localeDefault: patch.localeDefault ?? org.localeDefault,
+        features: patch.features
+          ? mergeBusinessFeatures({ ...org.features, ...patch.features })
+          : org.features,
+        updatedAt: nowIso(),
+      };
       organizations.set(id, next);
       return next;
+    },
+
+    async updateOrganizationPlan(id, plan) {
+      return this.updateOrganization(id, { plan });
+    },
+
+    async deleteOrganization(id) {
+      const org = organizations.get(id);
+      if (!org) return false;
+      organizations.delete(id);
+      orgsBySlug.delete(org.slug);
+      for (const [memId, mem] of [...memberships.entries()]) {
+        if (mem.organizationId === id) memberships.delete(memId);
+      }
+      for (const [sesId, ses] of [...sessions.entries()]) {
+        if (ses.organizationId === id) sessions.delete(sesId);
+      }
+      for (const [key, orgId] of [...demoIdempotency.entries()]) {
+        if (orgId === id) demoIdempotency.delete(key);
+      }
+      return true;
     },
 
     async linkMissedCallClient(organizationId, clientId) {
@@ -120,6 +178,14 @@ export function createMemorySaasStore(): SaasStore {
       return users.get(id) ?? null;
     },
 
+    async setUserPlatformRole(userId, role) {
+      const user = users.get(userId);
+      if (!user) return null;
+      const next = { ...user, platformRole: role, updatedAt: nowIso() };
+      users.set(userId, next);
+      return next;
+    },
+
     async getMembership(organizationId, userId) {
       for (const m of memberships.values()) {
         if (m.organizationId === organizationId && m.userId === userId) {
@@ -131,6 +197,29 @@ export function createMemorySaasStore(): SaasStore {
 
     async listMembershipsForUser(userId) {
       return [...memberships.values()].filter((m) => m.userId === userId);
+    },
+
+    async listMembershipsForOrganization(organizationId) {
+      return [...memberships.values()].filter(
+        (m) => m.organizationId === organizationId,
+      );
+    },
+
+    async addMembership(input) {
+      const existing = await this.getMembership(
+        input.organizationId,
+        input.userId,
+      );
+      if (existing) return existing;
+      const membership: Membership = {
+        id: newId("mem"),
+        organizationId: input.organizationId,
+        userId: input.userId,
+        role: input.role,
+        createdAt: nowIso(),
+      };
+      memberships.set(membership.id, membership);
+      return membership;
     },
 
     async createMagicLink(link) {
@@ -167,6 +256,17 @@ export function createMemorySaasStore(): SaasStore {
           sessions.set(id, { ...s, revokedAt: atIso });
         }
       }
+    },
+
+    async claimDemoIdempotencyKey(key, organizationId) {
+      const existing = demoIdempotency.get(key);
+      if (existing) return { claimed: false, organizationId: existing };
+      demoIdempotency.set(key, organizationId);
+      return { claimed: true, organizationId };
+    },
+
+    async getDemoIdempotency(key) {
+      return demoIdempotency.get(key) ?? null;
     },
   };
 }

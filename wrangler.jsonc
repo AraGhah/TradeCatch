@@ -6,7 +6,7 @@
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   // Production values are founder-managed in the Cloudflare dashboard for the
   // first pilot. Preserve plaintext vars on deploy; Wrangler already preserves
-  // secrets. Move non-secret values into versioned environments when finalized.
+  // secrets. Staging overrides live under env.staging (separate Worker + DB).
   "keep_vars": true,
   "triggers": {
     "crons": ["* * * * *", "*/15 * * * *", "15 6 * * *"],
@@ -27,4 +27,40 @@
       "service": "tradecatch",
     },
   ],
+  "env": {
+    // Isolated staging / demo Worker. Deploy with:
+    //   npm run deploy:staging
+    // Set secrets via `wrangler secret put --env staging <NAME>` (never commit).
+    // Required secrets/vars are documented in docs/STAGING_ENVIRONMENT.md.
+    "staging": {
+      "name": "tradecatch-staging",
+      "triggers": {
+        "crons": ["* * * * *", "*/15 * * * *", "15 6 * * *"],
+      },
+      "observability": {
+        "enabled": true,
+        "head_sampling_rate": 1,
+      },
+      "assets": {
+        "directory": ".open-next/assets",
+        "binding": "ASSETS",
+      },
+      "services": [
+        {
+          "binding": "WORKER_SELF_REFERENCE",
+          "service": "tradecatch-staging",
+        },
+      ],
+      "vars": {
+        "TRADECATCH_ENV": "staging",
+        "NEXT_PUBLIC_TRADECATCH_ENV": "staging",
+        "NEXT_PUBLIC_DEMO_MODE": "1",
+        "MISSED_CALL_SANDBOX": "1",
+        "MISSED_CALL_ALLOW_DEMO": "1",
+        "MISSED_CALL_SMS_MODE": "dry-run",
+        "MISSED_CALL_DURABLE_STORE": "1",
+        "SAAS_DEV_LOGIN": "0",
+      },
+    },
+  },
 }

@@ -11,6 +11,7 @@
 
 import { randomUUID } from "@/lib/id";
 import { isAfterHours } from "@/product/missed-call/call-handling";
+import { shouldAnswerCall } from "./call-handling";
 import { classifyUrgency } from "@/product/missed-call/urgency";
 import type { Clock, UrgencyClassification } from "@/product/missed-call/types";
 import {
@@ -623,6 +624,14 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       }
 
       const at = clock.now();
+      if (!shouldAnswerCall(config, at)) {
+        console.info("[receptionist] callHandlingMode declined call", {
+          to: input.toE164,
+          mode: config.callHandlingMode,
+        });
+        return failSafePlan(null, null);
+      }
+
       const bilingual = config.languages.length > 1;
       const draft: CallSession = {
         id: `rcs_${randomUUID()}`,

@@ -1,4 +1,8 @@
 import { z } from "zod";
+import {
+  isRealProductionRuntime,
+  isStagingRuntime,
+} from "@/lib/environment";
 import { demoClientAccount } from "./fixtures";
 import { defaultApprovedQuestions } from "./messaging";
 import { defaultUrgencyRubric } from "./urgency";
@@ -236,13 +240,15 @@ function tech(
 
 /**
  * Build a production client from environment variables.
- * Never returns the demo fixture when NODE_ENV=production.
+ * Never returns the demo fixture on live production unless MISSED_CALL_ALLOW_DEMO=1.
+ * Staging may use demo fixtures by default (isolated DB + dry-run SMS).
  */
 export function loadClientAccountFromEnv(
   env: NodeJS.ProcessEnv = process.env,
 ): { client: ClientAccount; source: "env" | "demo" } {
   const isProd = env.NODE_ENV === "production";
-  const allowDemo = env.MISSED_CALL_ALLOW_DEMO === "1";
+  const staging = isStagingRuntime(env);
+  const allowDemo = env.MISSED_CALL_ALLOW_DEMO === "1" || staging;
 
   if (env.MISSED_CALL_CLIENT_CONFIG_JSON?.trim()) {
     const parsed = parseClientConfigJson(env.MISSED_CALL_CLIENT_CONFIG_JSON);
@@ -277,7 +283,7 @@ export function loadClientAccountFromEnv(
     }
   }
 
-  if (isProd && allowDemo) {
+  if (isRealProductionRuntime(env) && env.MISSED_CALL_ALLOW_DEMO === "1") {
     console.error(
       "[missed-call] MISSED_CALL_ALLOW_DEMO=1 is set in production — demo contacts may be reachable. Remove this flag before real traffic.",
     );

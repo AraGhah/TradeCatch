@@ -45,9 +45,25 @@ export const routing = defineRouting({
       en: "/login",
       fr: "/connexion",
     },
+    "/admin": {
+      en: "/admin",
+      fr: "/admin",
+    },
     "/app": {
       en: "/app",
       fr: "/app",
+    },
+    "/app/conversations": {
+      en: "/app/conversations",
+      fr: "/app/conversations",
+    },
+    "/app/analytics": {
+      en: "/app/analytics",
+      fr: "/app/analytique",
+    },
+    "/app/test-center": {
+      en: "/app/test-center",
+      fr: "/app/centre-de-test",
     },
     "/app/leads": {
       en: "/app/leads",
