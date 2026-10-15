@@ -306,6 +306,7 @@ describe("dangerous branch coverage", () => {
   it("prohibits production dry-run SMS mode from silently succeeding", async () => {
     const port = createTwilioSmsPort({
       NODE_ENV: "production",
+      TRADECATCH_ENV: "production",
       MISSED_CALL_SMS_MODE: "dry-run",
       TWILIO_ACCOUNT_SID: "",
       TWILIO_AUTH_TOKEN: "",

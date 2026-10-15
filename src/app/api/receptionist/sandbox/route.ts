@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { isOpsSandboxEnabled } from "@/lib/environment";
 import { authorizeOpsRequest, unauthorizedOpsResponse } from "@/lib/ops-auth";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import type { VoicePlan } from "@/product/receptionist/types";
@@ -9,7 +10,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Drive the AI receptionist without Twilio (local / staging).
- * Disabled in production unless MISSED_CALL_SANDBOX=1. Ops bearer required.
+ * Disabled on real production unless MISSED_CALL_SANDBOX=1.
+ * Always enabled on TRADECATCH_ENV=staging. Ops bearer required.
  *
  *   {"action":"start","callSid":"CA_test_1","from":"+15145551234","to":"+15145550000"}
  *   {"action":"say","sessionId":"rcs_…","speech":"J'ai une fuite d'eau"}
@@ -48,10 +50,7 @@ const schema = z.discriminatedUnion("action", [
 ]);
 
 function sandboxEnabled() {
-  return (
-    process.env.MISSED_CALL_SANDBOX === "1" ||
-    process.env.NODE_ENV !== "production"
-  );
+  return isOpsSandboxEnabled();
 }
 
 function view(plan: VoicePlan) {

@@ -15,8 +15,16 @@
 
 import { z } from "zod";
 import type { ClientAccount } from "@/product/missed-call/types";
-import { parseReceptionistConfig, validateReceptionistConfig } from "./config";
-import type { ReceptionistConfig, ReceptionistLanguage } from "./types";
+import {
+  DEFAULT_VOICES,
+  parseReceptionistConfig,
+  validateReceptionistConfig,
+} from "./config";
+import type {
+  CallHandlingMode,
+  ReceptionistConfig,
+  ReceptionistLanguage,
+} from "./types";
 
 const CANADIAN_AREA_CODES = new Set(
   (
@@ -58,13 +66,89 @@ const optionalPhone = z
 
 const keyword = z.string().trim().min(2).max(40);
 
+const stringList = (maxItems: number, maxLen: number) =>
+  z
+    .array(z.string().trim().min(1).max(maxLen))
+    .max(maxItems)
+    .default([]);
+
+export const knowledgeSchema = z.object({
+  companyName: optionalText(120),
+  industry: optionalText(60),
+  services: stringList(40, 80),
+  serviceAreas: stringList(40, 80),
+  emergencyServices: z.boolean().default(false),
+  emergencyHours: optionalText(120),
+  /** Only prices the contractor explicitly provided — never invent. */
+  startingPrices: optionalText(500),
+  businessAddress: optionalText(200),
+  additionalInstructions: optionalText(2000),
+});
+
+export const transferSettingsSchema = z.object({
+  primaryTransferE164: optionalPhone,
+  secondaryTransferE164: optionalPhone,
+  conditions: z
+    .array(
+      z.enum([
+        "caller_request",
+        "urgent",
+        "unknown_answer",
+        "manager_request",
+        "custom",
+      ]),
+    )
+    .max(8)
+    .default(["caller_request", "urgent", "unknown_answer"]),
+  transferHours: z.enum(["always", "business_hours"]).default("always"),
+  timeoutSeconds: z.number().int().min(10).max(120).default(30),
+  failedAction: z
+    .enum(["take_message", "urgent_lead", "voicemail"])
+    .default("take_message"),
+});
+
+export const appointmentSettingsSchema = z.object({
+  calendarProvider: z
+    .enum(["none", "simulated", "google", "outlook"])
+    .default("simulated"),
+  durationMinutes: z.number().int().min(15).max(240).default(60),
+  bufferMinutes: z.number().int().min(0).max(120).default(15),
+  maxDailyBookings: z.number().int().min(1).max(50).optional(),
+  bookingNoticeHours: z.number().int().min(0).max(168).default(2),
+  confirmationMethod: z
+    .enum(["sms", "email", "both", "none"])
+    .default("sms"),
+  bookableServices: stringList(20, 80),
+});
+
+export const collectFieldsSchema = z.object({
+  name: z.boolean().default(true),
+  phone: z.boolean().default(true),
+  service: z.boolean().default(true),
+  location: z.boolean().default(true),
+  description: z.boolean().default(true),
+  urgency: z.boolean().default(true),
+  preferredDate: z.boolean().default(true),
+  notes: z.boolean().default(true),
+});
+
 export const profileSettingsSchema = z.object({
+  receptionistName: optionalText(60),
   languages: z
     .array(z.enum(["fr", "en"]))
     .min(1)
     .max(2)
     .default(["fr", "en"]),
   defaultLanguage: z.enum(["fr", "en"]).default("fr"),
+  voiceFr: optionalText(80),
+  voiceEn: optionalText(80),
+  communicationStyle: z
+    .enum(["professional_friendly", "professional", "warm", "brief"])
+    .default("professional_friendly"),
+  speakingSpeed: z.enum(["slow", "normal", "fast"]).default("normal"),
+  callHandlingMode: z
+    .enum(["always", "business_hours", "after_hours", "overflow", "disabled"])
+    .default("always"),
   greetingFr: optionalText(400),
   greetingEn: optionalText(400),
   afterHoursMessageFr: optionalText(400),
@@ -78,6 +162,13 @@ export const profileSettingsSchema = z.object({
     .optional(),
   personality: optionalText(600),
   businessFacts: optionalText(2000),
+  // Zod object `.default({})` returns the raw object without nested defaults —
+  // always seed concrete defaults (or preprocess through the child schema).
+  knowledge: knowledgeSchema.default({
+    services: [],
+    serviceAreas: [],
+    emergencyServices: false,
+  }),
   routing: z
     .array(
       z.object({
@@ -91,15 +182,62 @@ export const profileSettingsSchema = z.object({
   faqs: z
     .array(
       z.object({
-        keywords: z.array(keyword).min(1).max(8),
+        question: optionalText(200),
+        keywords: z.array(keyword).max(8).default([]),
         answerFr: z.string().trim().min(1).max(500),
         answerEn: z.string().trim().min(1).max(500),
       }),
     )
     .max(20)
-    .default([]),
+    .default([])
+    .superRefine((faqs, ctx) => {
+      faqs.forEach((f, i) => {
+        const keys =
+          f.keywords.length > 0
+            ? f.keywords
+            : f.question
+              ? f.question
+                  .toLowerCase()
+                  .split(/\s+/)
+                  .map((w) => w.replace(/[^a-zàâäéèêëïîôùûüç0-9-]/gi, ""))
+                  .filter((w) => w.length >= 2)
+                  .slice(0, 8)
+              : [];
+        if (keys.length < 1) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "provide keywords or a question",
+            path: [i, "keywords"],
+          });
+        }
+      });
+    }),
   emergencyTransferE164: optionalPhone,
   fallbackTransferE164: optionalPhone,
+  transferSettings: transferSettingsSchema.default({
+    conditions: ["caller_request", "urgent", "unknown_answer"],
+    transferHours: "always",
+    timeoutSeconds: 30,
+    failedAction: "take_message",
+  }),
+  appointmentSettings: appointmentSettingsSchema.default({
+    calendarProvider: "simulated",
+    durationMinutes: 60,
+    bufferMinutes: 15,
+    bookingNoticeHours: 2,
+    confirmationMethod: "sms",
+    bookableServices: [],
+  }),
+  collectFields: collectFieldsSchema.default({
+    name: true,
+    phone: true,
+    service: true,
+    location: true,
+    description: true,
+    urgency: true,
+    preferredDate: true,
+    notes: true,
+  }),
   notifyEmail: z
     .union([z.literal(""), z.string().trim().email().max(200)])
     .transform((v) => (v === "" ? undefined : v))
@@ -109,9 +247,88 @@ export const profileSettingsSchema = z.object({
 });
 
 export type ProfileSettings = z.infer<typeof profileSettingsSchema>;
+export type KnowledgeSettings = z.infer<typeof knowledgeSchema>;
+export type TransferSettings = z.infer<typeof transferSettingsSchema>;
+export type AppointmentSettings = z.infer<typeof appointmentSettingsSchema>;
 
 export function defaultProfileSettings(): ProfileSettings {
   return profileSettingsSchema.parse({});
+}
+
+function stylePersonality(
+  style: ProfileSettings["communicationStyle"],
+  existing?: string,
+): string | undefined {
+  const base: Record<ProfileSettings["communicationStyle"], string> = {
+    professional_friendly:
+      "Professional and friendly. Identify yourself as a virtual receptionist. Keep answers short and conversational.",
+    professional:
+      "Professional and concise. Identify yourself as a virtual receptionist. Do not invent prices or services.",
+    warm: "Warm and reassuring. Identify yourself as a virtual receptionist. Stay brief.",
+    brief:
+      "Brief and direct. Identify yourself as a virtual receptionist. Ask one question at a time.",
+  };
+  const baked = base[style];
+  if (!existing?.trim()) return baked;
+  return `${baked} ${existing.trim()}`.slice(0, 2000);
+}
+
+/** Compose structured knowledge into the free-form facts string the brains use. */
+export function composeBusinessFacts(
+  knowledge: KnowledgeSettings | undefined,
+  freeform?: string,
+): string | undefined {
+  const k = knowledge ?? {
+    services: [],
+    serviceAreas: [],
+    emergencyServices: false,
+  };
+  const services = k.services ?? [];
+  const areas = k.serviceAreas ?? [];
+  const lines: string[] = [];
+  if (k.companyName) lines.push(`Company: ${k.companyName}`);
+  if (k.industry) lines.push(`Industry: ${k.industry}`);
+  if (services.length) lines.push(`Services: ${services.join(", ")}`);
+  if (areas.length) lines.push(`Service areas: ${areas.join(", ")}`);
+  if (k.emergencyServices) {
+    lines.push(
+      `Emergency services: available${
+        k.emergencyHours ? ` (${k.emergencyHours})` : ""
+      }`,
+    );
+  } else {
+    lines.push("Emergency services: not configured as available.");
+  }
+  if (k.startingPrices?.trim()) {
+    lines.push(`Starting prices (approved only): ${k.startingPrices}`);
+  } else {
+    lines.push(
+      "Pricing: do not quote any price; say a team member will confirm.",
+    );
+  }
+  if (k.businessAddress) lines.push(`Address: ${k.businessAddress}`);
+  if (k.additionalInstructions)
+    lines.push(`Business rules: ${k.additionalInstructions}`);
+  if (freeform?.trim()) lines.push(freeform.trim());
+  lines.push(
+    "Never invent services, prices, or arrival times. Offer a human transfer when unsure.",
+  );
+  const text = lines.join("\n").trim();
+  return text || undefined;
+}
+
+function faqKeywords(f: {
+  question?: string;
+  keywords: string[];
+}): string[] {
+  if (f.keywords.length > 0) return f.keywords;
+  if (!f.question) return [];
+  return f.question
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w) => w.replace(/[^a-zàâäéèêëïîôùûüç0-9-]/gi, ""))
+    .filter((w) => w.length >= 2)
+    .slice(0, 8);
 }
 
 export type ReceptionistProfile = {
@@ -170,39 +387,69 @@ export function buildProfileConfig(
   if (sms) notifications.push({ type: "sms", toE164: sms });
 
   const languages = s.languages as ReceptionistLanguage[];
+  const mode: CallHandlingMode = s.callHandlingMode ?? "always";
+  const knowledge = s.knowledge ?? defaultProfileSettings().knowledge;
+  const transfer = s.transferSettings ?? defaultProfileSettings().transferSettings;
+  const collect = s.collectFields ?? defaultProfileSettings().collectFields;
+  const businessName =
+    knowledge.companyName?.trim() || client.contractorDisplayName;
+  const primaryTransfer =
+    transfer.primaryTransferE164 ?? s.fallbackTransferE164;
+  const emergency =
+    s.emergencyTransferE164 ??
+    primaryPhone(client) ??
+    client.humanReviewPhone;
+
   const raw: Record<string, unknown> = {
     id: `rc_org_${profile.organizationId}`,
+    enabled: mode !== "disabled",
     clientAccountId: client.id,
     // Placeholder keeps validation meaningful before ops assigns the number.
     phoneNumberE164: profile.phoneNumberE164 ?? client.smsFromNumber,
-    businessName: client.contractorDisplayName,
+    businessName,
+    receptionistName: s.receptionistName,
+    callHandlingMode: mode,
     timezone: client.timezone,
     businessHours: s.businessHours ?? client.businessHours,
     languages,
     defaultLanguage: languages.includes(s.defaultLanguage)
       ? s.defaultLanguage
       : languages[0],
+    voices: {
+      fr: s.voiceFr ?? DEFAULT_VOICES.fr,
+      en: s.voiceEn ?? DEFAULT_VOICES.en,
+    },
     greetingFr: s.greetingFr,
     greetingEn: s.greetingEn,
     afterHoursMessageFr: s.afterHoursMessageFr,
     afterHoursMessageEn: s.afterHoursMessageEn,
-    personality: s.personality,
-    businessFacts: s.businessFacts,
-    routing: s.routing.map((r, i) => ({
+    personality: stylePersonality(
+      s.communicationStyle ?? "professional_friendly",
+      s.personality,
+    ),
+    businessFacts: composeBusinessFacts(knowledge, s.businessFacts),
+    routing: (s.routing ?? []).map((r, i) => ({
       id: slug(r.name, i),
       name: r.name,
       phoneE164: r.phoneE164,
       keywords: r.keywords,
     })),
-    faqs: s.faqs.map((f, i) => ({ id: `faq-${i + 1}`, ...f })),
+    faqs: (s.faqs ?? []).map((f, i) => ({
+      id: `faq-${i + 1}`,
+      question: f.question,
+      keywords: faqKeywords(f),
+      answerFr: f.answerFr,
+      answerEn: f.answerEn,
+    })),
     urgencyRubric: client.urgencyRubric,
-    emergencyTransferE164:
-      s.emergencyTransferE164 ??
-      primaryPhone(client) ??
-      client.humanReviewPhone,
+    emergencyTransferE164: emergency,
     fallbackTransferE164:
-      s.fallbackTransferE164 ?? client.humanReviewPhone ?? ownerPhone(client),
-    collectPreferredTime: s.collectPreferredTime,
+      primaryTransfer ??
+      transfer.secondaryTransferE164 ??
+      client.humanReviewPhone ??
+      ownerPhone(client),
+    collectPreferredTime:
+      s.collectPreferredTime !== false && collect.preferredDate !== false,
     notifications,
     smsFromE164: client.smsFromNumber,
   };
@@ -229,6 +476,14 @@ export function validateProfile(
   const targets: [string, string | undefined][] = [
     ["emergencyTransferE164", profile.settings.emergencyTransferE164],
     ["fallbackTransferE164", profile.settings.fallbackTransferE164],
+    [
+      "transferSettings.primaryTransferE164",
+      profile.settings.transferSettings?.primaryTransferE164,
+    ],
+    [
+      "transferSettings.secondaryTransferE164",
+      profile.settings.transferSettings?.secondaryTransferE164,
+    ],
     ...profile.settings.routing.map(
       (r, i) => [`routing.${i}.phoneE164`, r.phoneE164] as [string, string],
     ),

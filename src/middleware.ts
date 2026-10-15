@@ -1,11 +1,13 @@
 import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { routing } from "./i18n/routing";
+import { enforceStagingAccess } from "./lib/staging-middleware";
 
 const handleI18n = createMiddleware(routing);
 
 /**
- * Locale routing only.
+ * Staging HTTP Basic gate (when configured) + locale routing.
  *
  * Next.js 16 deprecates this filename in favour of `proxy.ts`, but Proxy is
  * Node-runtime only. OpenNext Cloudflare 1.20 does not support Node middleware,
@@ -22,6 +24,14 @@ const handleI18n = createMiddleware(routing);
  * hostname (`localhost`) or omit `--hostname`.
  */
 export default function middleware(request: NextRequest) {
+  const stagingGate = enforceStagingAccess(request);
+  if (stagingGate) return stagingGate;
+
+  // API routes must not go through next-intl locale rewrites.
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   return handleI18n(request);
 }
 
@@ -30,9 +40,9 @@ export default function middleware(request: NextRequest) {
 export const runtime = "experimental-edge";
 
 export const config = {
-  // Exclude API, Next internals, static files (with extension), and
-  // generated app icons so they are never rewritten into a locale path.
+  // Include API paths so the staging Basic gate can protect them. Locale
+  // rewrites still skip /api via the handler above.
   matcher: [
-    "/((?!api|trpc|_next|_vercel|icon|apple-icon|favicon\\.ico|.*\\..*).*)",
+    "/((?!_next|_vercel|icon|apple-icon|favicon\\.ico|.*\\..*).*)",
   ],
 };

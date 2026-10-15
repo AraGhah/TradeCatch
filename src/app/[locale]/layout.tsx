@@ -13,6 +13,7 @@ import { Analytics } from "@/components/Analytics";
 import { HeadInlineScripts } from "@/components/HeadInlineScripts";
 import { ScrollReveal } from "@/components/motion/ScrollReveal";
 import { MarketingChrome } from "@/components/MarketingChrome";
+import { DemoModeBanner } from "@/components/DemoModeBanner";
 import "../globals.css";
 
 const archivo = Archivo({
@@ -120,6 +121,7 @@ export default async function LocaleLayout({
         <MotionConfig reducedMotion="user">
           <NextIntlClientProvider>
             {/* Must sit inside the intl provider — usePathname/useLocale need it. */}
+            <DemoModeBanner />
             <Analytics nonce={nonce} />
             <ScrollReveal />
             <MarketingChrome header={<Header />} footer={<Footer />}>

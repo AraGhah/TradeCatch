@@ -2,35 +2,14 @@ import type { Pool, QueryResultRow } from "pg";
 import { Pool as PgPool } from "pg";
 import type { PlanId } from "./entitlements";
 import { newId, slugify } from "./ids";
+import { mapOrgRow, mapUserRow, type OrgRow, type UserRow } from "./org-mapping";
 import { normalizeEmail, type SaasStore } from "./store";
-import type {
-  CreateOrganizationInput,
-  MagicLink,
-  Membership,
-  Organization,
-  Session,
-  User,
+import {
+  mergeBusinessFeatures,
+  type MagicLink,
+  type Membership,
+  type Session,
 } from "./types";
-
-type OrgRow = {
-  id: string;
-  name: string;
-  slug: string;
-  plan: string;
-  status: string;
-  missed_call_client_id: string | null;
-  created_at: Date;
-  updated_at: Date;
-};
-
-type UserRow = {
-  id: string;
-  email: string;
-  name: string;
-  locale: string;
-  created_at: Date;
-  updated_at: Date;
-};
 
 type MemRow = {
   id: string;
@@ -39,30 +18,6 @@ type MemRow = {
   role: string;
   created_at: Date;
 };
-
-function mapOrg(row: OrgRow): Organization {
-  return {
-    id: row.id,
-    name: row.name,
-    slug: row.slug,
-    plan: row.plan as PlanId,
-    status: row.status as Organization["status"],
-    missedCallClientId: row.missed_call_client_id,
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at.toISOString(),
-  };
-}
-
-function mapUser(row: UserRow): User {
-  return {
-    id: row.id,
-    email: row.email,
-    name: row.name,
-    locale: row.locale === "fr" ? "fr" : "en",
-    createdAt: row.created_at.toISOString(),
-    updatedAt: row.updated_at.toISOString(),
-  };
-}
 
 function mapMembership(row: MemRow): Membership {
   return {
@@ -96,10 +51,11 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
   }
 
   return {
-    async createOrganizationWithOwner(input: CreateOrganizationInput) {
+    async createOrganizationWithOwner(input) {
       const client = await pool.connect();
       const email = normalizeEmail(input.ownerEmail);
       const createdAt = new Date();
+      const features = mergeBusinessFeatures(input.features);
       try {
         await client.query("BEGIN");
 
@@ -114,8 +70,8 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
           const userId = newId("usr");
           userRow = (
             await client.query<UserRow>(
-              `INSERT INTO tc_users (id, email, name, locale, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $5)
+              `INSERT INTO tc_users (id, email, name, locale, platform_role, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, 'none', $5, $5)
                RETURNING *`,
               [
                 userId,
@@ -147,15 +103,26 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
         const orgRow = (
           await client.query<OrgRow>(
             `INSERT INTO tc_organizations
-               (id, name, slug, plan, status, missed_call_client_id, created_at, updated_at)
-             VALUES ($1, $2, $3, $4, 'active', $5, $6, $6)
+               (id, name, slug, plan, status, missed_call_client_id,
+                account_type, industry, phone_e164, city, service_area,
+                timezone, locale_default, features_json, created_at, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14::jsonb, $15, $15)
              RETURNING *`,
             [
               orgId,
               input.name.trim(),
               slug,
               input.plan ?? "starter",
+              input.status ?? "active",
               input.missedCallClientId ?? null,
+              input.accountType ?? "pilot",
+              input.industry ?? null,
+              input.phoneE164 ?? null,
+              input.city ?? null,
+              input.serviceArea ?? "",
+              input.timezone?.trim() || "America/Toronto",
+              input.locale ?? "en",
+              JSON.stringify(features),
               createdAt,
             ],
           )
@@ -181,8 +148,8 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
 
         await client.query("COMMIT");
         return {
-          organization: mapOrg(orgRow),
-          user: mapUser(userRow),
+          organization: mapOrgRow(orgRow),
+          user: mapUserRow(userRow),
           membership: mapMembership(memRow),
         };
       } catch (err) {
@@ -198,7 +165,7 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
         `SELECT * FROM tc_organizations WHERE id = $1`,
         [id],
       );
-      return rows[0] ? mapOrg(rows[0]) : null;
+      return rows[0] ? mapOrgRow(rows[0]) : null;
     },
 
     async getOrganizationBySlug(slug) {
@@ -206,18 +173,101 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
         `SELECT * FROM tc_organizations WHERE slug = $1`,
         [slug],
       );
-      return rows[0] ? mapOrg(rows[0]) : null;
+      return rows[0] ? mapOrgRow(rows[0]) : null;
+    },
+
+    async listOrganizations(filter) {
+      if (filter?.accountType) {
+        const { rows } = await query<OrgRow>(
+          `SELECT * FROM tc_organizations
+           WHERE account_type = $1
+           ORDER BY created_at DESC`,
+          [filter.accountType],
+        );
+        return rows.map(mapOrgRow);
+      }
+      const { rows } = await query<OrgRow>(
+        `SELECT * FROM tc_organizations ORDER BY created_at DESC`,
+      );
+      return rows.map(mapOrgRow);
+    },
+
+    async updateOrganization(id, patch) {
+      const current = await this.getOrganization(id);
+      if (!current) return null;
+      const features = patch.features
+        ? mergeBusinessFeatures({ ...current.features, ...patch.features })
+        : current.features;
+      const { rows } = await query<OrgRow>(
+        `UPDATE tc_organizations SET
+           name = $2,
+           plan = $3,
+           status = $4,
+           industry = $5,
+           phone_e164 = $6,
+           city = $7,
+           service_area = $8,
+           timezone = $9,
+           locale_default = $10,
+           features_json = $11::jsonb,
+           updated_at = now()
+         WHERE id = $1
+         RETURNING *`,
+        [
+          id,
+          patch.name?.trim() || current.name,
+          patch.plan ?? current.plan,
+          patch.status ?? current.status,
+          patch.industry !== undefined ? patch.industry : current.industry,
+          patch.phoneE164 !== undefined ? patch.phoneE164 : current.phoneE164,
+          patch.city !== undefined ? patch.city : current.city,
+          patch.serviceArea !== undefined
+            ? patch.serviceArea
+            : current.serviceArea,
+          patch.timezone?.trim() || current.timezone,
+          patch.localeDefault ?? current.localeDefault,
+          JSON.stringify(features),
+        ],
+      );
+      return rows[0] ? mapOrgRow(rows[0]) : null;
     },
 
     async updateOrganizationPlan(id, plan) {
-      const { rows } = await query<OrgRow>(
-        `UPDATE tc_organizations
-         SET plan = $2, updated_at = now()
-         WHERE id = $1
-         RETURNING *`,
-        [id, plan],
-      );
-      return rows[0] ? mapOrg(rows[0]) : null;
+      return this.updateOrganization(id, { plan });
+    },
+
+    async deleteOrganization(id) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const org = (
+          await client.query<{ missed_call_client_id: string | null }>(
+            `SELECT missed_call_client_id FROM tc_organizations WHERE id = $1`,
+            [id],
+          )
+        ).rows[0];
+        if (!org) {
+          await client.query("ROLLBACK");
+          return false;
+        }
+        const clientId = org.missed_call_client_id;
+        await client.query(`DELETE FROM tc_organizations WHERE id = $1`, [id]);
+        if (clientId) {
+          // Drop the linked Module A client only when it belongs to this org.
+          await client.query(
+            `DELETE FROM mc_clients
+             WHERE id = $1 AND (organization_id = $2 OR organization_id IS NULL)`,
+            [clientId, id],
+          );
+        }
+        await client.query("COMMIT");
+        return true;
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
     },
 
     async linkMissedCallClient(organizationId, clientId) {
@@ -236,7 +286,7 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
           [organizationId, clientId],
         );
         await client.query("COMMIT");
-        return rows[0] ? mapOrg(rows[0]) : null;
+        return rows[0] ? mapOrgRow(rows[0]) : null;
       } catch (err) {
         await client.query("ROLLBACK");
         throw err;
@@ -250,7 +300,7 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
         `SELECT * FROM tc_organizations WHERE missed_call_client_id = $1`,
         [clientId],
       );
-      return rows[0] ? mapOrg(rows[0]) : null;
+      return rows[0] ? mapOrgRow(rows[0]) : null;
     },
 
     async getUserByEmail(email) {
@@ -258,7 +308,7 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
         `SELECT * FROM tc_users WHERE email = $1`,
         [normalizeEmail(email)],
       );
-      return rows[0] ? mapUser(rows[0]) : null;
+      return rows[0] ? mapUserRow(rows[0]) : null;
     },
 
     async getUser(id) {
@@ -266,7 +316,18 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
         `SELECT * FROM tc_users WHERE id = $1`,
         [id],
       );
-      return rows[0] ? mapUser(rows[0]) : null;
+      return rows[0] ? mapUserRow(rows[0]) : null;
+    },
+
+    async setUserPlatformRole(userId, role) {
+      const { rows } = await query<UserRow>(
+        `UPDATE tc_users
+         SET platform_role = $2, updated_at = now()
+         WHERE id = $1
+         RETURNING *`,
+        [userId, role],
+      );
+      return rows[0] ? mapUserRow(rows[0]) : null;
     },
 
     async getMembership(organizationId, userId) {
@@ -284,6 +345,30 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
         [userId],
       );
       return rows.map(mapMembership);
+    },
+
+    async listMembershipsForOrganization(organizationId) {
+      const { rows } = await query<MemRow>(
+        `SELECT * FROM tc_memberships WHERE organization_id = $1`,
+        [organizationId],
+      );
+      return rows.map(mapMembership);
+    },
+
+    async addMembership(input) {
+      const existing = await this.getMembership(
+        input.organizationId,
+        input.userId,
+      );
+      if (existing) return existing;
+      const { rows } = await query<MemRow>(
+        `INSERT INTO tc_memberships
+           (id, organization_id, user_id, role, created_at)
+         VALUES ($1, $2, $3, $4, now())
+         RETURNING *`,
+        [newId("mem"), input.organizationId, input.userId, input.role],
+      );
+      return mapMembership(rows[0]!);
     },
 
     async createMagicLink(link: MagicLink) {
@@ -391,6 +476,32 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
          WHERE user_id = $1 AND revoked_at IS NULL`,
         [userId, atIso],
       );
+    },
+
+    async claimDemoIdempotencyKey(key, organizationId) {
+      try {
+        await query(
+          `INSERT INTO tc_demo_create_idempotency (idempotency_key, organization_id)
+           VALUES ($1, $2)`,
+          [key, organizationId],
+        );
+        return { claimed: true, organizationId };
+      } catch {
+        const existing = await this.getDemoIdempotency(key);
+        return {
+          claimed: false,
+          organizationId: existing ?? organizationId,
+        };
+      }
+    },
+
+    async getDemoIdempotency(key) {
+      const { rows } = await query<{ organization_id: string }>(
+        `SELECT organization_id FROM tc_demo_create_idempotency
+         WHERE idempotency_key = $1`,
+        [key],
+      );
+      return rows[0]?.organization_id ?? null;
     },
   };
 }

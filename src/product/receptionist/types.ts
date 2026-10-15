@@ -47,6 +47,17 @@ export type AfterHoursMode =
   /** Same as take_message but still bridges critical emergencies live. */
   | "take_message_emergency_transfer";
 
+/**
+ * When the AI answers inbound calls. Overflow is configured here; live forward
+ * wiring lands in Task 4 (telephony). Until then overflow behaves like always.
+ */
+export type CallHandlingMode =
+  | "always"
+  | "business_hours"
+  | "after_hours"
+  | "overflow"
+  | "disabled";
+
 export type ReceptionistConfig = {
   id: string;
   /**
@@ -60,6 +71,10 @@ export type ReceptionistConfig = {
   /** Twilio number callers dial — used to resolve the config on inbound calls. */
   phoneNumberE164: string;
   businessName: string;
+  /** Spoken AI identity, e.g. "Sophie". */
+  receptionistName?: string;
+  /** Owner-configured when the AI should answer. */
+  callHandlingMode: CallHandlingMode;
   timezone: string;
   businessHours: { start: string; end: string; days: number[] };
   languages: ReceptionistLanguage[];
