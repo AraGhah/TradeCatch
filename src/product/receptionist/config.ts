@@ -50,6 +50,9 @@ export const receptionistConfigSchema = z.object({
   callHandlingMode: z
     .enum(["always", "business_hours", "after_hours", "overflow", "disabled"])
     .default("always"),
+  inboundStrategy: z.enum(["ai_first", "human_first"]).default("ai_first"),
+  humanRingTimeoutSeconds: z.number().int().min(10).max(60).default(25),
+  voiceEngine: z.enum(["gather", "conversation_relay"]).default("gather"),
   timezone: z
     .string()
     .min(1)

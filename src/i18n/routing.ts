@@ -93,6 +93,14 @@ export const routing = defineRouting({
       en: "/app/calls",
       fr: "/app/appels",
     },
+    "/app/calls/settings": {
+      en: "/app/calls/settings",
+      fr: "/app/appels/parametres",
+    },
+    "/app/test-center/live-phone": {
+      en: "/app/test-center/live-phone",
+      fr: "/app/centre-de-test/telephone-live",
+    },
     "/app/receptionist": {
       en: "/app/receptionist",
       fr: "/app/receptionniste",

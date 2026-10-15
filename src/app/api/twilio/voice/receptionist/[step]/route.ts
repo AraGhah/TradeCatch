@@ -1,11 +1,14 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
+import { greetingFor } from "@/product/receptionist/prompts";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import type { VoicePlan } from "@/product/receptionist/types";
 import {
   renderTwiml,
   type TwimlCallbackUrl,
 } from "@/product/receptionist/voice";
+import { renderConversationRelayTwiml } from "@/product/telephony/conversation-relay";
+import { getTelephonyRuntime } from "@/product/telephony/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -112,14 +115,83 @@ export async function POST(
 
   try {
     switch (step) {
-      case "incoming":
-        return render(
-          await engine.startCall({
-            callSid: form.CallSid || `CA_unknown_${Date.now()}`,
-            fromE164: form.From || form.Caller || "",
-            toE164: form.To || form.Called || "",
-          }),
-        );
+      case "incoming": {
+        const callSid = form.CallSid || `CA_unknown_${Date.now()}`;
+        const fromE164 = form.From || form.Caller || "";
+        const toE164 = form.To || form.Called || "";
+        const plan = await engine.startCall({
+          callSid,
+          fromE164,
+          toE164,
+        });
+        const session = plan.sessionId
+          ? await store.getSession(plan.sessionId)
+          : null;
+        const config = engine.resolveConfig(toE164);
+
+        try {
+          const orgId = config?.id.replace(/^rc_org_/, "") || "unknown";
+          const events = getTelephonyRuntime().events;
+          if (!(await events.seenRecently({ callSid, kind: "incoming" }))) {
+            await events.append({
+              organizationId: orgId,
+              clientAccountId:
+                session?.clientAccountId || config?.clientAccountId || "unknown",
+              callSid,
+              sessionId: session?.id,
+              kind: "incoming",
+              detail: `from=${fromE164} to=${toE164}`,
+            });
+          }
+          if (plan.verbs.some((v) => v.verb === "dial")) {
+            await events.append({
+              organizationId: orgId,
+              clientAccountId:
+                session?.clientAccountId || config?.clientAccountId || "unknown",
+              callSid,
+              sessionId: session?.id,
+              kind: "human_ring",
+              detail: "inbound_strategy",
+            });
+          } else if (session) {
+            await events.append({
+              organizationId: orgId,
+              clientAccountId: session.clientAccountId,
+              callSid,
+              sessionId: session.id,
+              kind: "ai_started",
+              detail: config?.voiceEngine || "gather",
+            });
+          }
+        } catch (err) {
+          console.warn("[receptionist] call event write failed", err);
+        }
+
+        // ConversationRelay path when configured and the plan is AI (not dial).
+        if (
+          config?.voiceEngine === "conversation_relay" &&
+          plan.sessionId &&
+          !plan.verbs.some((v) => v.verb === "dial")
+        ) {
+          const base = (
+            process.env.MISSED_CALL_PUBLIC_WEBHOOK_BASE?.trim() ||
+            request.nextUrl.origin
+          ).replace(/\/$/, "");
+          const wsUrl = `${base.replace(/^http/, "ws")}/api/voice/socket`;
+          const lang = session?.language || config.defaultLanguage;
+          return xml(
+            renderConversationRelayTwiml({
+              websocketUrl: wsUrl,
+              language: lang,
+              welcomeGreeting: greetingFor(config, lang),
+              actionUrl: `${base}/api/webhooks/twilio/relay-ended`,
+              sessionId: plan.sessionId,
+            }),
+          );
+        }
+
+        return render(plan);
+      }
 
       case "gather":
         if (!sessionId)

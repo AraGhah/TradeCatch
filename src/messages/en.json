@@ -2134,7 +2134,8 @@
       "testCenter": "Test Center",
       "admin": "Admin",
       "logout": "Sign out",
-      "receptionist": "AI Receptionist"
+      "receptionist": "AI Receptionist",
+      "phoneSettings": "Phone settings"
     },
     "testCenter": {
       "headline": "Test Center",
@@ -2150,7 +2151,8 @@
       "resetOk": "Demo account reset. Owner access retained.",
       "seedFailed": "Could not generate demo data.",
       "resetFailed": "Could not reset the demo account.",
-      "safetyNote": "SMS and calls stay in dry-run / sandbox unless you explicitly enable an authorized live staging test."
+      "safetyNote": "SMS and calls stay in dry-run / sandbox unless you explicitly enable an authorized live staging test.",
+      "livePhoneLink": "Open live phone testing"
     },
     "calls": {
       "headline": "Receptionist calls",
@@ -2175,7 +2177,9 @@
         "transfers": "Transferred to a person",
         "emergencies": "Emergencies",
         "requests": "Messages and appointment requests"
-      }
+      },
+      "phoneSettings": "Phone settings",
+      "liveTesting": "Live phone testing"
     },
     "email": {
       "headline": "Email follow-up automation",
@@ -2583,6 +2587,68 @@
         "transfer": "Transfer",
         "yes": "Yes"
       }
+    },
+    "phoneSettings": {
+      "headline": "Phone settings",
+      "intro": "Connect the TradeCatch number, human transfer line, and inbound call routing.",
+      "entitlement": "Call management is not available on your plan.",
+      "backToCalls": "Phone calls",
+      "status": {
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "error": "Error"
+      },
+      "webhook": "Voice webhook",
+      "numbersTitle": "Numbers",
+      "businessPhone": "Business phone",
+      "tradecatchNumber": "TradeCatch number",
+      "forwardingHelp": "To keep your public number, set up compatible carrier forwarding to the TradeCatch number and verify it before going live.",
+      "forwardingAck": "I verified that call forwarding works with my carrier.",
+      "routingTitle": "Routing",
+      "aiEnabled": "AI receptionist enabled",
+      "inboundStrategy": "Inbound strategy",
+      "strategy": {
+        "ai_first": "AI first",
+        "human_first": "Human first (then AI if no answer)"
+      },
+      "voiceEngine": "Voice engine",
+      "engine": {
+        "gather": "Gather (TwiML, Twilio-ready)",
+        "conversation_relay": "ConversationRelay (WebSocket — Durable Objects required in prod)"
+      },
+      "engineHelp": "Gather works now with Twilio webhooks. ConversationRelay TwiML is wired; production WebSockets need Durable Objects.",
+      "transferTitle": "Human transfers",
+      "humanTransfer": "Primary transfer number",
+      "backupTransfer": "Backup number",
+      "ringTimeout": "Ring timeout (seconds)",
+      "recordingTitle": "Recording",
+      "recordingEnabled": "Enable call recording",
+      "recordingHelp": "Subject to applicable notices, consent, and retention rules.",
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Phone settings saved.",
+      "error": "Could not save."
+    },
+    "livePhoneTesting": {
+      "headline": "Live phone testing",
+      "intro": "Simulate routing and call events with no charges, or show instructions for calling the staging number.",
+      "back": "Test Center",
+      "simTitle": "Simulation mode",
+      "simBadge": "No real calls. Results are saved in this business’s call history only.",
+      "scenario": "Scenario",
+      "language": "Language",
+      "scenarios": {
+        "ai_answers": "AI answers",
+        "human_first_missed_then_ai": "Human first, no answer → AI",
+        "transfer_request": "Transfer request",
+        "appointment_request": "Appointment request"
+      },
+      "startSimulation": "Start simulation",
+      "liveInstructions": "Live test instructions",
+      "liveWarning": "The live button never places an outbound call automatically. Carrier charges may apply if you dial the number.",
+      "testNumber": "Test number",
+      "results": "Results",
+      "error": "The test failed."
     }
   },
   "aiReceptionist": {

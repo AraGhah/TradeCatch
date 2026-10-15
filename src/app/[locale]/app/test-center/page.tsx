@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { TestCenterActions } from "@/components/app/TestCenterActions";
 
@@ -26,6 +27,13 @@ export default async function TestCenterPage({
         </h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("intro")}</p>
       </header>
+
+      <Link
+        href="/app/test-center/live-phone"
+        className="rounded-md border border-navy/15 bg-white px-4 py-3 text-sm font-semibold text-navy hover:bg-navy/5"
+      >
+        {t("livePhoneLink")}
+      </Link>
 
       <TestCenterActions
         organizationId={auth.ctx.organization.id}
