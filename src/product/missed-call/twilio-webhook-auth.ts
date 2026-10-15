@@ -1,17 +1,15 @@
 ﻿import { NextRequest } from "next/server";
+import { isRealProductionRuntime } from "@/lib/environment";
 import { validateTwilioSignature } from "./twilio";
-
-function isProduction(env: NodeJS.ProcessEnv): boolean {
-  return env.NODE_ENV === "production";
-}
 
 /**
  * Validate Twilio webhook authenticity.
  *
- * Production: require TWILIO_AUTH_TOKEN and a valid X-Twilio-Signature.
- * MISSED_CALL_SKIP_TWILIO_VALIDATE is ignored in production (logged).
+ * Live production: require TWILIO_AUTH_TOKEN and a valid X-Twilio-Signature.
+ * MISSED_CALL_SKIP_TWILIO_VALIDATE is ignored on live production (logged).
  *
- * Development: allow through when token is unset or skip flag is set.
+ * Staging / development: allow through when token is unset or skip flag is set
+ * so sandbox-driven simulations work without a real Twilio account.
  */
 export async function assertTwilioWebhook(
   request: NextRequest,
@@ -20,8 +18,9 @@ export async function assertTwilioWebhook(
 ): Promise<boolean> {
   const token = env.TWILIO_AUTH_TOKEN?.trim();
   const skipFlag = env.MISSED_CALL_SKIP_TWILIO_VALIDATE === "1";
+  const realProduction = isRealProductionRuntime(env);
 
-  if (isProduction(env)) {
+  if (realProduction) {
     if (skipFlag) {
       console.error(
         "[twilio] MISSED_CALL_SKIP_TWILIO_VALIDATE=1 is ignored in production",

@@ -2945,5 +2945,10 @@
       "secondary": "Voir tous les tarifs",
       "note": "20 minutes. Aucun accès à vos systèmes requis. La configuration et le démarrage ont lieu avant la mise en service."
     }
+  },
+  "demoMode": {
+    "badge": "Mode démo",
+    "message": "Environnement de staging — données fictives uniquement.",
+    "hint": "Aucun vrai client n’est contacté. La production n’est pas modifiée."
   }
 }

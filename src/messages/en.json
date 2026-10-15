@@ -2945,5 +2945,10 @@
       "secondary": "See full pricing",
       "note": "20 minutes. No system access required. Configuration and onboarding happen before the line goes live."
     }
+  },
+  "demoMode": {
+    "badge": "Demo Mode",
+    "message": "Staging environment — fictional data only.",
+    "hint": "No real customers are contacted. Production is untouched."
   }
 }

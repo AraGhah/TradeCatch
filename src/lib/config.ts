@@ -3,11 +3,25 @@
  * Missing Turnstile/Resend is allowed in every environment (with warnings) so
  * book-audit keeps accepting leads while those services are being set up —
  * see getProductionConfigErrors below for the (now-empty) hard-block list.
+ *
+ * For deployment isolation (staging vs live), prefer helpers in
+ * `@/lib/environment` — especially `isRealProductionRuntime()` and
+ * `isStagingRuntime()`. `isProductionRuntime()` only means NODE_ENV=production
+ * (includes the staging Worker build).
  */
 
 export function isProductionRuntime(): boolean {
   return process.env.NODE_ENV === "production";
 }
+
+export {
+  isDemoModeVisible,
+  isOpsSandboxEnabled,
+  isRealProductionRuntime,
+  isStagingRuntime,
+  resolveTradeCatchEnv,
+  shouldUseDryRunSms,
+} from "@/lib/environment";
 
 export function isTurnstileConfigured(): boolean {
   return Boolean(

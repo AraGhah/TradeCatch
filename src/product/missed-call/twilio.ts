@@ -1,3 +1,4 @@
+import { isStagingRuntime, shouldUseDryRunSms } from "@/lib/environment";
 import type { OutboundSms, SmsPort } from "./types";
 
 /** In-memory SMS port for tests and explicitly selected local dry-runs. */
@@ -49,25 +50,27 @@ export function isTwilioSmsConfigured(
 /**
  * Twilio REST SMS sender.
  *
- * Production: requires TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN; missing config
- * throws on send (never returns a fake success SID).
- * Development: falls back to dry-run only when credentials are unset.
- * Set MISSED_CALL_SMS_MODE=dry-run to force dry-run outside production.
+ * Live production: requires TWILIO_ACCOUNT_SID + TWILIO_AUTH_TOKEN; missing
+ * config throws on send (never returns a fake success SID).
+ * Staging: defaults to dry-run so simulated tests never hit real customers.
+ * Set MISSED_CALL_SMS_MODE=live only with a dedicated staging Twilio number.
+ * Development: falls back to dry-run when credentials are unset.
  */
 export function createTwilioSmsPort(
   env: NodeJS.ProcessEnv = process.env,
 ): SmsPort {
   const sid = env.TWILIO_ACCOUNT_SID?.trim();
   const token = env.TWILIO_AUTH_TOKEN?.trim();
-  const forceDryRun = env.MISSED_CALL_SMS_MODE === "dry-run";
-  const isProd = env.NODE_ENV === "production";
+  const dryRun = shouldUseDryRunSms(env);
+  const isLiveProd =
+    env.NODE_ENV === "production" && !isStagingRuntime(env);
 
-  if (forceDryRun && !isProd) {
+  if (dryRun) {
     return createDryRunSmsPort();
   }
 
   if (!sid || !token) {
-    if (isProd) {
+    if (isLiveProd) {
       return {
         async send() {
           throw new Error(
