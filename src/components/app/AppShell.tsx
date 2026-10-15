@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: "/app", key: "overview" },
   { href: "/app/receptionist", key: "receptionist" },
   { href: "/app/calls", key: "calls" },
+  { href: "/app/calls/settings", key: "phoneSettings" },
   { href: "/app/leads", key: "leads" },
   { href: "/app/conversations", key: "conversations" },
   { href: "/app/bookings", key: "appointments" },

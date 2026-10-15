@@ -20,6 +20,10 @@ import {
   parseReceptionistConfig,
   validateReceptionistConfig,
 } from "./config";
+import {
+  defaultPhoneSettings,
+  phoneSettingsSchema,
+} from "@/product/telephony/phone-settings";
 import type {
   CallHandlingMode,
   ReceptionistConfig,
@@ -238,6 +242,16 @@ export const profileSettingsSchema = z.object({
     preferredDate: true,
     notes: true,
   }),
+  phoneSettings: phoneSettingsSchema.default({
+    connectionStatus: "disconnected",
+    aiEnabled: true,
+    inboundStrategy: "ai_first",
+    voiceEngine: "gather",
+    humanRingTimeoutSeconds: 25,
+    callRecordingEnabled: false,
+    forwardingInstructionsAck: false,
+    ringHumanOnOverflow: true,
+  }),
   notifyEmail: z
     .union([z.literal(""), z.string().trim().email().max(200)])
     .transform((v) => (v === "" ? undefined : v))
@@ -391,24 +405,34 @@ export function buildProfileConfig(
   const knowledge = s.knowledge ?? defaultProfileSettings().knowledge;
   const transfer = s.transferSettings ?? defaultProfileSettings().transferSettings;
   const collect = s.collectFields ?? defaultProfileSettings().collectFields;
+  const phone = s.phoneSettings ?? defaultPhoneSettings();
   const businessName =
     knowledge.companyName?.trim() || client.contractorDisplayName;
   const primaryTransfer =
-    transfer.primaryTransferE164 ?? s.fallbackTransferE164;
+    phone.humanTransferE164 ||
+    transfer.primaryTransferE164 ||
+    s.fallbackTransferE164;
   const emergency =
     s.emergencyTransferE164 ??
     primaryPhone(client) ??
     client.humanReviewPhone;
+  const tradecatchNumber =
+    phone.tradecatchNumberE164 ||
+    profile.phoneNumberE164 ||
+    client.smsFromNumber;
 
   const raw: Record<string, unknown> = {
     id: `rc_org_${profile.organizationId}`,
-    enabled: mode !== "disabled",
+    enabled: mode !== "disabled" && phone.aiEnabled !== false,
     clientAccountId: client.id,
     // Placeholder keeps validation meaningful before ops assigns the number.
-    phoneNumberE164: profile.phoneNumberE164 ?? client.smsFromNumber,
+    phoneNumberE164: tradecatchNumber,
     businessName,
     receptionistName: s.receptionistName,
     callHandlingMode: mode,
+    inboundStrategy: phone.inboundStrategy ?? "ai_first",
+    humanRingTimeoutSeconds: phone.humanRingTimeoutSeconds ?? 25,
+    voiceEngine: phone.voiceEngine ?? "gather",
     timezone: client.timezone,
     businessHours: s.businessHours ?? client.businessHours,
     languages,
@@ -483,6 +507,14 @@ export function validateProfile(
     [
       "transferSettings.secondaryTransferE164",
       profile.settings.transferSettings?.secondaryTransferE164,
+    ],
+    [
+      "phoneSettings.humanTransferE164",
+      profile.settings.phoneSettings?.humanTransferE164,
+    ],
+    [
+      "phoneSettings.backupTransferE164",
+      profile.settings.phoneSettings?.backupTransferE164,
     ],
     ...profile.settings.routing.map(
       (r, i) => [`routing.${i}.phoneE164`, r.phoneE164] as [string, string],

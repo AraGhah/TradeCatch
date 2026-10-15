@@ -69,6 +69,11 @@ async function main() {
       ["src", "product", "saas", "schema-demo-businesses.sql"],
       "008_demo_businesses",
     );
+    await applyFile(
+      client,
+      ["src", "product", "telephony", "schema.sql"],
+      "009_phone_call_events",
+    );
   } finally {
     await client.end();
   }

@@ -2134,7 +2134,8 @@
       "testCenter": "Centre de test",
       "admin": "Admin",
       "logout": "Déconnexion",
-      "receptionist": "Réceptionniste IA"
+      "receptionist": "Réceptionniste IA",
+      "phoneSettings": "Paramètres téléphone"
     },
     "testCenter": {
       "headline": "Centre de test",
@@ -2150,7 +2151,8 @@
       "resetOk": "Compte démo réinitialisé. L’accès propriétaire est conservé.",
       "seedFailed": "Impossible de générer les données démo.",
       "resetFailed": "Impossible de réinitialiser le compte démo.",
-      "safetyNote": "SMS et appels restent en dry-run / sandbox sauf activation explicite d’un test live autorisé en staging."
+      "safetyNote": "SMS et appels restent en dry-run / sandbox sauf activation explicite d’un test live autorisé en staging.",
+      "livePhoneLink": "Ouvrir le test téléphonique live"
     },
     "calls": {
       "headline": "Appels de la réceptionniste",
@@ -2175,7 +2177,9 @@
         "transfers": "Transférés à une personne",
         "emergencies": "Urgences",
         "requests": "Messages et demandes de rendez-vous"
-      }
+      },
+      "phoneSettings": "Paramètres téléphone",
+      "liveTesting": "Test téléphonique live"
     },
     "email": {
       "headline": "Relances automatiques par courriel",
@@ -2583,6 +2587,68 @@
         "transfer": "Transfert",
         "yes": "Oui"
       }
+    },
+    "phoneSettings": {
+      "headline": "Paramètres téléphone",
+      "intro": "Connectez le numéro TradeCatch, le transfert humain et le routage des appels entrants.",
+      "entitlement": "La gestion des appels n’est pas offerte avec votre forfait.",
+      "backToCalls": "Appels",
+      "status": {
+        "connected": "Connecté",
+        "disconnected": "Déconnecté",
+        "error": "Erreur"
+      },
+      "webhook": "Webhook vocal",
+      "numbersTitle": "Numéros",
+      "businessPhone": "Téléphone d’affaires",
+      "tradecatchNumber": "Numéro TradeCatch",
+      "forwardingHelp": "Pour conserver votre numéro public, configurez un renvoi compatible chez votre opérateur vers le numéro TradeCatch, puis validez-le avant d’activer le service.",
+      "forwardingAck": "J’ai vérifié que le renvoi d’appels fonctionne avec mon opérateur.",
+      "routingTitle": "Routage",
+      "aiEnabled": "Réceptionniste IA activée",
+      "inboundStrategy": "Stratégie d’entrée",
+      "strategy": {
+        "ai_first": "IA d’abord",
+        "human_first": "Humain d’abord (puis IA si sans réponse)"
+      },
+      "voiceEngine": "Moteur vocal",
+      "engine": {
+        "gather": "Gather (TwiML, prêt pour Twilio)",
+        "conversation_relay": "ConversationRelay (WebSocket — Durable Objects requis en prod)"
+      },
+      "engineHelp": "Gather fonctionne dès maintenant avec les webhooks Twilio. ConversationRelay est branché côté TwiML ; le WebSocket de production nécessite Durable Objects.",
+      "transferTitle": "Transferts humains",
+      "humanTransfer": "Numéro de transfert principal",
+      "backupTransfer": "Numéro de secours",
+      "ringTimeout": "Délai de sonnerie (secondes)",
+      "recordingTitle": "Enregistrement",
+      "recordingEnabled": "Activer l’enregistrement des appels",
+      "recordingHelp": "Soumis aux avis, consentements et règles de conservation applicables.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Paramètres téléphone enregistrés.",
+      "error": "Impossible d’enregistrer."
+    },
+    "livePhoneTesting": {
+      "headline": "Test téléphonique live",
+      "intro": "Simulez le routage et les événements d’appel sans frais, ou affichez les instructions pour appeler le numéro de staging.",
+      "back": "Centre de test",
+      "simTitle": "Mode simulation",
+      "simBadge": "Aucun appel réel. Les résultats sont enregistrés dans l’historique de cette entreprise seulement.",
+      "scenario": "Scénario",
+      "language": "Langue",
+      "scenarios": {
+        "ai_answers": "L’IA répond",
+        "human_first_missed_then_ai": "Humain d’abord, sans réponse → IA",
+        "transfer_request": "Demande de transfert",
+        "appointment_request": "Demande de rendez-vous"
+      },
+      "startSimulation": "Lancer la simulation",
+      "liveInstructions": "Instructions test live",
+      "liveWarning": "Le bouton live n’envoie jamais d’appel sortant automatiquement. Les frais opérateur peuvent s’appliquer si vous composez le numéro.",
+      "testNumber": "Numéro de test",
+      "results": "Résultats",
+      "error": "Le test a échoué."
     }
   },
   "aiReceptionist": {

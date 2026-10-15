@@ -75,6 +75,12 @@ export type ReceptionistConfig = {
   receptionistName?: string;
   /** Owner-configured when the AI should answer. */
   callHandlingMode: CallHandlingMode;
+  /** Ring contractor first, then AI (Task 4). */
+  inboundStrategy: "ai_first" | "human_first";
+  /** Seconds to ring the human on overflow / human_first. */
+  humanRingTimeoutSeconds: number;
+  /** gather (TwiML) or conversation_relay (Twilio ConversationRelay). */
+  voiceEngine: "gather" | "conversation_relay";
   timezone: string;
   businessHours: { start: string; end: string; days: number[] };
   languages: ReceptionistLanguage[];
@@ -174,8 +180,15 @@ export type TransferAttempt = {
   targetId: string;
   targetName: string;
   phoneE164: string;
-  reason: "caller_request" | "emergency" | "fallback";
+  reason:
+    | "caller_request"
+    | "emergency"
+    | "fallback"
+    | "overflow_ring"
+    | "human_first";
   status: "dialing" | "completed" | "no_answer" | "busy" | "failed";
+  /** After a failed overflow/human_first ring, continue into the AI. */
+  continueWithAi?: boolean;
 };
 
 export type NotificationDelivery = {

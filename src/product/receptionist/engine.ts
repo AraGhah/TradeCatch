@@ -12,6 +12,8 @@
 import { randomUUID } from "@/lib/id";
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import { shouldAnswerCall } from "./call-handling";
+import { decideInboundRouting } from "@/product/telephony/call-routing";
+import { defaultPhoneSettings } from "@/product/telephony/phone-settings";
 import { classifyUrgency } from "@/product/missed-call/urgency";
 import type { Clock, UrgencyClassification } from "@/product/missed-call/types";
 import {
@@ -609,11 +611,13 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     resolveConfig,
     failSafePlan,
 
-    /** Inbound call webhook: create the session and greet. */
+    /** Inbound call webhook: create the session and greet (or ring human first). */
     async startCall(input: {
       callSid: string;
       fromE164: string;
       toE164: string;
+      /** Skip human-first / overflow ring and go straight to the AI. */
+      skipHumanRing?: boolean;
     }): Promise<VoicePlan> {
       const config = resolveConfig(input.toE164);
       if (!config) {
@@ -632,6 +636,23 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         return failSafePlan(null, null);
       }
 
+      const phone = {
+        ...defaultPhoneSettings(),
+        aiEnabled: config.enabled,
+        inboundStrategy: config.inboundStrategy ?? "ai_first",
+        humanRingTimeoutSeconds: config.humanRingTimeoutSeconds ?? 25,
+        humanTransferE164: config.fallbackTransferE164,
+        ringHumanOnOverflow: true,
+      };
+      const routing = input.skipHumanRing
+        ? ({ action: "ai", reason: "forced_ai", strategy: "ai_first" } as const)
+        : decideInboundRouting({ config, phone, now: at });
+
+      if (routing.action === "reject") {
+        console.info("[receptionist] routing rejected call", routing.reason);
+        return failSafePlan(config, null);
+      }
+
       const bilingual = config.languages.length > 1;
       const draft: CallSession = {
         id: `rcs_${randomUUID()}`,
@@ -641,14 +662,31 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         fromE164: input.fromE164,
         toE164: input.toE164,
         language: config.defaultLanguage,
-        status: "in_progress",
+        status: routing.action === "ring_human" ? "transferring" : "in_progress",
         step: bilingual ? "language" : "reason",
         afterHours: isAfterHours(config, at),
         slots: {},
         turns: [],
         silenceCount: 0,
         callerTurnCount: 0,
-        transfers: [],
+        transfers:
+          routing.action === "ring_human"
+            ? [
+                {
+                  at: at.toISOString(),
+                  targetId: "primary",
+                  targetName:
+                    config.defaultLanguage === "fr" ? "l'équipe" : "the team",
+                  phoneE164: routing.phoneE164,
+                  reason:
+                    routing.reason === "overflow_ring"
+                      ? "overflow_ring"
+                      : "human_first",
+                  status: "dialing",
+                  continueWithAi: routing.then === "ai",
+                },
+              ]
+            : [],
         notifications: [],
         startedAt: at.toISOString(),
         updatedAt: at.toISOString(),
@@ -660,6 +698,23 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
 
       if (!created) {
         // Twilio retry of the same call: repeat the current question.
+        if (session.status === "transferring") {
+          const last = session.transfers.at(-1);
+          if (last) {
+            return {
+              sessionId: session.id,
+              verbs: [
+                {
+                  verb: "dial",
+                  next: "dial",
+                  phoneE164: last.phoneE164,
+                  timeoutSeconds: config.humanRingTimeoutSeconds ?? 25,
+                  callerIdE164: config.phoneNumberE164,
+                },
+              ],
+            };
+          }
+        }
         const q = questionForStep(
           session.step,
           session.language,
@@ -669,6 +724,21 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         return {
           sessionId: session.id,
           verbs: [listen(config, session, [{ text: q }])],
+        };
+      }
+
+      if (routing.action === "ring_human") {
+        return {
+          sessionId: session.id,
+          verbs: [
+            {
+              verb: "dial",
+              next: "dial",
+              phoneE164: routing.phoneE164,
+              timeoutSeconds: routing.timeoutSeconds,
+              callerIdE164: config.phoneNumberE164,
+            },
+          ],
         };
       }
 
@@ -932,7 +1002,57 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             return { session: next, result: hangupPlan(session.id) };
           }
 
-          // Nobody picked up: take the request instead.
+          // Overflow / human-first ring failed → hand to the AI receptionist.
+          if (
+            last?.continueWithAi ||
+            last?.reason === "overflow_ring" ||
+            last?.reason === "human_first"
+          ) {
+            const lang = session.language;
+            const bilingual = config.languages.length > 1;
+            const prompts: { text: string; lang?: ReceptionistLanguage }[] =
+              bilingual
+                ? [
+                    {
+                      text: greetingFor(config, config.defaultLanguage),
+                      lang: config.defaultLanguage,
+                    },
+                    {
+                      text: greetingFor(
+                        config,
+                        config.defaultLanguage === "fr" ? "en" : "fr",
+                      ),
+                      lang: config.defaultLanguage === "fr" ? "en" : "fr",
+                    },
+                    ...languageMenuPrompts(),
+                  ]
+                : [
+                    { text: greetingFor(config, lang) },
+                    { text: phrase("askReason", lang) },
+                  ];
+            const next: CallSession = {
+              ...session,
+              transfers,
+              status: "in_progress",
+              step: bilingual ? "language" : "reason",
+              turns: [
+                ...session.turns,
+                turn("system", `ring_${mapped}`, { action: "missed" }),
+                ...prompts.map((p) =>
+                  turn("agent", p.text, { action: "greet", brain: "rules" }),
+                ),
+              ],
+            };
+            return {
+              session: next,
+              result: {
+                sessionId: next.id,
+                verbs: [listen(config, next, prompts)],
+              },
+            };
+          }
+
+          // Nobody picked up on an explicit transfer: take the request instead.
           const lang = session.language;
           let next: CallSession = {
             ...session,
