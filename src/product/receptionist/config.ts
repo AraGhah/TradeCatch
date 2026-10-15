@@ -285,7 +285,10 @@ export function loadReceptionistConfigsFromEnv(
     configs = [deriveConfigFromClient(client, env)];
   }
 
-  if (isProd && env.MISSED_CALL_ALLOW_DEMO !== "1") {
+  const allowDemo =
+    env.MISSED_CALL_ALLOW_DEMO === "1" ||
+    env.TRADECATCH_ENV?.trim().toLowerCase() === "staging";
+  if (isProd && !allowDemo) {
     for (const config of configs) {
       const v = validateReceptionistConfig(config);
       if (!v.ok) {

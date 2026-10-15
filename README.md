@@ -134,6 +134,19 @@ in `wrangler.jsonc`.
 5. Confirm `/api/health`, all three cron triggers, Twilio webhooks, and the real
    missed-call flow in staging before routing client traffic.
 
+### Staging / demo environment
+
+TradeCatch supports an isolated staging Worker (`tradecatch-staging`) with its own
+Postgres database, dry-run SMS, sandbox APIs, Demo Mode banner, and optional HTTP
+Basic / Cloudflare Access gate. Full setup:
+
+[`docs/STAGING_ENVIRONMENT.md`](docs/STAGING_ENVIRONMENT.md)
+
+```bash
+npm run deploy:staging          # deploy Worker env.staging only
+npm run db:seed:staging         # seed fictional demo client (staging DB only)
+```
+
 The demo-day sequence and fallback plan are in
 [`docs/FIRST_DEMO_RUNBOOK.md`](docs/FIRST_DEMO_RUNBOOK.md).
 

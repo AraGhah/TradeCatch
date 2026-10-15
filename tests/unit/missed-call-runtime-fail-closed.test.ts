@@ -13,6 +13,7 @@ describe("missed-call runtime fail-closed", () => {
   const prevDb = process.env.DATABASE_URL;
   const prevE2e = process.env.TRADECATCH_E2E;
   const prevVercel = process.env.VERCEL_ENV;
+  const prevTradeCatchEnv = process.env.TRADECATCH_ENV;
 
   beforeEach(() => {
     const g = globalThis as unknown as {
@@ -31,6 +32,8 @@ describe("missed-call runtime fail-closed", () => {
     else process.env.TRADECATCH_E2E = prevE2e;
     if (prevVercel === undefined) delete process.env.VERCEL_ENV;
     else process.env.VERCEL_ENV = prevVercel;
+    if (prevTradeCatchEnv === undefined) delete process.env.TRADECATCH_ENV;
+    else process.env.TRADECATCH_ENV = prevTradeCatchEnv;
 
     const g = globalThis as unknown as {
       __tradecatchMissedCall?: unknown;
@@ -40,6 +43,7 @@ describe("missed-call runtime fail-closed", () => {
 
   it("refuses memory store in production without durable config", async () => {
     setNodeEnv("production");
+    process.env.TRADECATCH_ENV = "production";
     delete process.env.MISSED_CALL_DURABLE_STORE;
     delete process.env.DATABASE_URL;
     delete process.env.TRADECATCH_E2E;
@@ -53,8 +57,23 @@ describe("missed-call runtime fail-closed", () => {
     );
   });
 
+  it("allows memory store on staging builds without durable config", async () => {
+    setNodeEnv("production");
+    process.env.TRADECATCH_ENV = "staging";
+    delete process.env.MISSED_CALL_DURABLE_STORE;
+    delete process.env.DATABASE_URL;
+
+    const { getMissedCallRuntime, isRuntimeUsingDurableStore } = await import(
+      "../../src/product/missed-call/runtime"
+    );
+    const runtime = getMissedCallRuntime();
+    assert.equal(isRuntimeUsingDurableStore(), false);
+    assert.ok(runtime.store);
+  });
+
   it("allows memory store outside production", async () => {
     setNodeEnv("development");
+    delete process.env.TRADECATCH_ENV;
     delete process.env.MISSED_CALL_DURABLE_STORE;
     delete process.env.DATABASE_URL;
 

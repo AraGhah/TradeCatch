@@ -4,6 +4,9 @@ Use this as the go/no-go checklist for the first founder-led TradeCatch demo. Th
 demo should prove the controlled pilot path without presenting illustrative screens
 or provider integrations as production features.
 
+For an isolated staging Worker + database (recommended before any live demo), see
+[`STAGING_ENVIRONMENT.md`](STAGING_ENVIRONMENT.md).
+
 ## What the demo may claim
 
 - Missed-call text-back, bilingual intake, urgency/service-area flagging,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { isOpsSandboxEnabled } from "@/lib/environment";
 import { authorizeOpsRequest, unauthorizedOpsResponse } from "@/lib/ops-auth";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 
@@ -7,8 +8,8 @@ export const dynamic = "force-dynamic";
 
 /**
  * Local / staging sandbox to drive Module A without Twilio.
- * Disabled in production unless MISSED_CALL_SANDBOX=1.
- * Always requires ops bearer auth when enabled in production.
+ * Disabled on real production unless MISSED_CALL_SANDBOX=1.
+ * Always enabled on TRADECATCH_ENV=staging. Ops bearer required in production builds.
  */
 const callSchema = z.object({
   action: z.literal("call"),
@@ -29,10 +30,7 @@ const smsSchema = z.object({
 const schema = z.discriminatedUnion("action", [callSchema, smsSchema]);
 
 function sandboxEnabled() {
-  return (
-    process.env.MISSED_CALL_SANDBOX === "1" ||
-    process.env.NODE_ENV !== "production"
-  );
+  return isOpsSandboxEnabled();
 }
 
 export async function POST(request: NextRequest) {

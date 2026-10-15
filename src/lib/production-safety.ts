@@ -28,7 +28,12 @@ const UNSAFE_BOOLEAN_FLAGS = [
   },
 ] as const;
 
-/** Flags that must never be enabled on a real production deployment. */
+/**
+ * Flags that must never be enabled on the live production deployment.
+ *
+ * Callers must gate with isRealProductionRuntime() — staging intentionally
+ * enables sandbox / dry-run / demo fixtures and should not fail readiness.
+ */
 export function getProductionSafetyIssues(
   env: RuntimeEnvironment = process.env,
 ): ProductionSafetyIssue[] {
