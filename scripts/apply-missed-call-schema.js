@@ -64,6 +64,11 @@ async function main() {
       ["src", "product", "email-automation", "schema.sql"],
       "007_email_automation",
     );
+    await applyFile(
+      client,
+      ["src", "product", "saas", "schema-demo-businesses.sql"],
+      "008_demo_businesses",
+    );
   } finally {
     await client.end();
   }

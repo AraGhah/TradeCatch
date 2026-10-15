@@ -6,6 +6,10 @@ import {
   isTwilioConfigured,
   isProductionRuntime,
   isE2eHarness,
+  isRealProductionRuntime,
+  isStagingRuntime,
+  resolveTradeCatchEnv,
+  shouldUseDryRunSms,
 } from "@/lib/config";
 import { authorizeOpsRequest } from "@/lib/ops-auth";
 import { getProductionSafetyIssues } from "@/lib/production-safety";
@@ -81,12 +85,18 @@ export async function GET(request: NextRequest) {
   }
 
   if (production && !includeDetails) {
+    const publicEnv = resolveTradeCatchEnv();
+    const publicDemo =
+      isStagingRuntime() ||
+      process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === "1";
     return NextResponse.json(
       {
         ok: true,
         degraded: false,
         status: "live",
         service: "tradecatch",
+        environment: publicEnv,
+        demoMode: publicDemo,
         livenessMarker: "tradecatch-live",
         timestamp: new Date().toISOString(),
       },
@@ -96,14 +106,21 @@ export async function GET(request: NextRequest) {
           "Cache-Control": "no-store",
           "x-tradecatch-live": "1",
           "x-tradecatch-service": "tradecatch",
+          "x-tradecatch-env": publicEnv,
+          ...(publicDemo ? { "x-tradecatch-demo-mode": "1" } : {}),
         },
       },
     );
   }
 
   const e2eHarness = isE2eHarness();
+  const realProduction = isRealProductionRuntime();
+  const staging = isStagingRuntime();
+  const deploymentEnv = resolveTradeCatchEnv();
+  // Staging intentionally enables sandbox / dry-run; only the live production
+  // host fails readiness on those flags.
   const productionSafetyIssues =
-    production && !e2eHarness ? getProductionSafetyIssues() : [];
+    realProduction && !e2eHarness ? getProductionSafetyIssues() : [];
   const durableConfigured = isDurableMissedCallStoreConfigured();
   const databaseUrl = process.env.DATABASE_URL?.trim();
   let database: boolean | null = null;
@@ -234,18 +251,22 @@ export async function GET(request: NextRequest) {
   };
 
   const siteReady =
-    !production || checks.e2eHarness || checks.productionSafety.ok;
+    !realProduction || checks.e2eHarness || checks.productionSafety.ok;
 
+  // Staging may run without live Twilio (dry-run SMS) and with demo fixtures.
+  const stagingSmsOk = staging && shouldUseDryRunSms();
+  const stagingRoutingOk =
+    staging && process.env.MISSED_CALL_ALLOW_DEMO?.trim() === "1";
   const moduleAReady =
-    checks.twilio &&
-    checks.clientRouting &&
+    (checks.twilio || stagingSmsOk) &&
+    (checks.clientRouting || stagingRoutingOk) &&
     checks.durableMissedCallStore &&
     checks.database === true &&
     checks.schemaOk === true &&
     checks.diagnosticsComplete &&
     checks.opsAuth;
   const moduleAExpected =
-    (production && !checks.e2eHarness) ||
+    (realProduction && !checks.e2eHarness) ||
     checks.twilio ||
     checks.durableMissedCallStore;
   const queueBackedUp =
@@ -271,6 +292,8 @@ export async function GET(request: NextRequest) {
     degraded,
     status: degraded ? "degraded" : "healthy",
     service: "tradecatch",
+    environment: deploymentEnv,
+    demoMode: staging || process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === "1",
     readyMarker: ready ? "tradecatch-ready" : "tradecatch-not-ready",
     timestamp: new Date().toISOString(),
     ...(includeDetails
@@ -294,6 +317,10 @@ export async function GET(request: NextRequest) {
     status: ready ? 200 : 503,
     headers: {
       "Cache-Control": "no-store",
+      "x-tradecatch-env": deploymentEnv,
+      ...(staging || process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === "1"
+        ? { "x-tradecatch-demo-mode": "1" }
+        : {}),
       ...(ready
         ? {
             "x-tradecatch-ready": "1",

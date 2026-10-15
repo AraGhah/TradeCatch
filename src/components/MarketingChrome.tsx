@@ -21,7 +21,9 @@ export function MarketingChrome({
   const isPilotShell =
     pathname === "/login" ||
     pathname === "/app" ||
-    pathname.startsWith("/app/");
+    pathname.startsWith("/app/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/");
 
   return (
     <>
