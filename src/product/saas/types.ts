@@ -6,7 +6,7 @@ import type {
 import { DEFAULT_DEMO_FEATURES } from "@/product/demo/types";
 
 export type OrgStatus = "active" | "suspended" | "churned";
-export type MemberRole = "owner" | "admin" | "member";
+export type MemberRole = "owner" | "admin" | "member" | "viewer";
 export type PlatformRole = "none" | "admin";
 
 export type Organization = {

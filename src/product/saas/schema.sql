@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS tc_memberships (
   organization_id TEXT NOT NULL REFERENCES tc_organizations (id) ON DELETE CASCADE,
   user_id TEXT NOT NULL REFERENCES tc_users (id) ON DELETE CASCADE,
   role TEXT NOT NULL DEFAULT 'owner'
-    CHECK (role IN ('owner', 'admin', 'member')),
+    CHECK (role IN ('owner', 'admin', 'member', 'viewer')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (organization_id, user_id)
 );

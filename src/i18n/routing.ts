@@ -153,6 +153,10 @@ export const routing = defineRouting({
       en: "/app/receptionist/fallback",
       fr: "/app/receptionniste/repli",
     },
+    "/app/receptionist/privacy": {
+      en: "/app/receptionist/privacy",
+      fr: "/app/receptionniste/confidentialite",
+    },
     "/app/email": {
       en: "/app/email",
       fr: "/app/courriels",
@@ -180,6 +184,10 @@ export const routing = defineRouting({
     "/app/settings/notifications": {
       en: "/app/settings/notifications",
       fr: "/app/parametres/notifications",
+    },
+    "/app/settings/security": {
+      en: "/app/settings/security",
+      fr: "/app/parametres/securite",
     },
     "/app/automations": {
       en: "/app/automations",

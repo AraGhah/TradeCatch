@@ -462,6 +462,34 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
       };
     },
 
+    async listSessionsForUser(userId) {
+      const { rows } = await query<{
+        id: string;
+        user_id: string;
+        organization_id: string;
+        expires_at: Date;
+        revoked_at: Date | null;
+        created_at: Date;
+        user_agent: string | null;
+        ip: string | null;
+      }>(
+        `SELECT * FROM tc_sessions
+         WHERE user_id = $1 AND revoked_at IS NULL
+         ORDER BY created_at DESC`,
+        [userId],
+      );
+      return rows.map((row) => ({
+        id: row.id,
+        userId: row.user_id,
+        organizationId: row.organization_id,
+        expiresAt: row.expires_at.toISOString(),
+        revokedAt: row.revoked_at?.toISOString(),
+        createdAt: row.created_at.toISOString(),
+        userAgent: row.user_agent ?? undefined,
+        ip: row.ip ?? undefined,
+      }));
+    },
+
     async revokeSession(id, atIso) {
       await query(
         `UPDATE tc_sessions SET revoked_at = $2::timestamptz

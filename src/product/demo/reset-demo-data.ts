@@ -87,6 +87,16 @@ export const DEMO_RESET_TABLES = [
   "tc_system_incidents",
   "tc_system_errors",
   "tc_health_checks",
+  "tc_webhook_receipts",
+  "tc_login_attempts",
+  "tc_mfa_verifications",
+  "tc_mfa_secrets",
+  "tc_recording_permissions",
+  "tc_security_incidents",
+  "tc_data_retention_policies",
+  "tc_privacy_requests",
+  "tc_consent_records",
+  "tc_audit_logs",
 ] as const;
 
 export const DEMO_RESET_CONFIRMATION = "RESET_DEMO_DATA";

@@ -64,6 +64,7 @@ export type SaasStore = {
   ): Promise<MagicLink | null>;
   createSession(session: Session): Promise<void>;
   getSession(id: string): Promise<Session | null>;
+  listSessionsForUser(userId: string): Promise<Session[]>;
   revokeSession(id: string, atIso: string): Promise<void>;
   revokeUserSessions(userId: string, atIso: string): Promise<void>;
   /** Demo create idempotency — returns existing org id when key already used. */

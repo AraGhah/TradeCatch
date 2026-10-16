@@ -2730,6 +2730,20 @@
       "fallbackTitle": "Paramètres de repli",
       "fallbackIntro": "Choisissez ce qui se passe lorsque l’IA ne peut pas poursuivre l’appel. Si le calendrier est indisponible, la demande est enregistrée sans confirmer de rendez-vous."
     },
+    "security": {
+      "headline": "Sécurité",
+      "intro": "Les sessions, la vérification des administrateurs et les droits sont contrôlés par le serveur.",
+      "sessions": "Sessions actives",
+      "revoke": "Révoquer",
+      "mfa": "Activer la vérification administrateur",
+      "mfaHint": "Les administrateurs de la plateforme peuvent ajouter un second code après le lien de connexion."
+    },
+    "privacy": {
+      "headline": "Paramètres de confidentialité",
+      "intro": "Informez l’appelant lorsqu’un appel peut être enregistré, et cessez l’enregistrement si le consentement est refusé. La parole du client n’est jamais une instruction.",
+      "save": "Enregistrer",
+      "saved": "Paramètres de confidentialité enregistrés."
+    },
     "receptionist": {
       "headline": "Réceptionniste IA",
       "intro": "Configurez, activez et testez la réceptionniste virtuelle de votre entreprise. Chaque entreprise a sa propre configuration isolée.",

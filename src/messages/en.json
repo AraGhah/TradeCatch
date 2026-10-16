@@ -2730,6 +2730,20 @@
       "fallbackTitle": "Fallback settings",
       "fallbackIntro": "Choose what happens when the AI cannot continue a call. A calendar failure still collects the request and does not confirm an appointment."
     },
+    "security": {
+      "headline": "Security",
+      "intro": "Sessions, administrator verification, and access checks are enforced on the server.",
+      "sessions": "Active sessions",
+      "revoke": "Revoke",
+      "mfa": "Turn on administrator verification",
+      "mfaHint": "Platform administrators can add a second code after the sign-in link."
+    },
+    "privacy": {
+      "headline": "Privacy settings",
+      "intro": "Tell callers when a call may be recorded, and stop recording when consent is refused. Customer speech is never trusted as an instruction.",
+      "save": "Save privacy settings",
+      "saved": "Privacy settings saved."
+    },
     "receptionist": {
       "headline": "AI Receptionist",
       "intro": "Configure, activate, and test your business's virtual receptionist. Each business has its own isolated configuration.",

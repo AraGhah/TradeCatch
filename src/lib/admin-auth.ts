@@ -49,5 +49,8 @@ export async function authorizeAdminRequest(request: Request): Promise<
 
   const session = await requirePlatformAdmin();
   if (!session.ok) return session;
+  const { getSecurityService } = await import("@/product/security/runtime");
+  const allowed = await getSecurityService().sessionAllowsAdmin(session.ctx.user.id, session.ctx.session.id);
+  if (!allowed) return { ok: false, status: 403, error: "Administrator MFA verification is required." };
   return { ok: true, via: "session", ctx: session.ctx };
 }

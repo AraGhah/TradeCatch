@@ -76,6 +76,10 @@ export default async function AppReceptionistPage({
         <Link href="/app/receptionist/fallback" className="mt-3 inline-block text-sm font-semibold text-navy underline">
           {t("monitoring.fallbackTitle")}
         </Link>
+        {" · "}
+        <Link href="/app/receptionist/privacy" className="mt-3 inline-block text-sm font-semibold text-navy underline">
+          {t("privacy.headline")}
+        </Link>
       </header>
 
       {!client ? (
