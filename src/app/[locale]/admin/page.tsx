@@ -1,5 +1,6 @@
 import { setRequestLocale } from "next-intl/server";
 import { AdminDemoBusinesses } from "@/components/admin/AdminDemoBusinesses";
+import { AdminSystemAlerts } from "@/components/admin/AdminSystemAlerts";
 
 export default async function AdminHomePage({
   params,
@@ -8,5 +9,10 @@ export default async function AdminHomePage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <AdminDemoBusinesses />;
+  return (
+    <div className="flex flex-col gap-8">
+      <AdminSystemAlerts />
+      <AdminDemoBusinesses />
+    </div>
+  );
 }

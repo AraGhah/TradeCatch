@@ -170,6 +170,16 @@ function deps(): AutomationDeps {
         return undefined;
       }
     },
+    async onPermanentFailure(organizationId: string, detail: string) {
+      const { emitBusinessEvent } = await import("@/product/notifications/hooks");
+      await emitBusinessEvent({
+        organizationId,
+        type: "automation_failure",
+        idempotencyKey: `automation-failed:${organizationId}:${detail.slice(0, 40)}`,
+        service: detail.slice(0, 80),
+        href: "/app/automations",
+      });
+    },
     async notifyContractor(input) {
       try {
         await getStarterStore().upsertInboxItem({

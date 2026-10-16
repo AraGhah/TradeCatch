@@ -141,9 +141,21 @@ export const routing = defineRouting({
       en: "/app/settings/calendar",
       fr: "/app/parametres/calendrier",
     },
+    "/app/settings/notifications": {
+      en: "/app/settings/notifications",
+      fr: "/app/parametres/notifications",
+    },
     "/app/automations": {
       en: "/app/automations",
       fr: "/app/automatisations",
+    },
+    "/app/notifications": {
+      en: "/app/notifications",
+      fr: "/app/alertes",
+    },
+    "/app/notifications/escalation": {
+      en: "/app/notifications/escalation",
+      fr: "/app/alertes/escalade",
     },
     "/app/automations/missed-call": {
       en: "/app/automations/missed-call",

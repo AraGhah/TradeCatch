@@ -68,6 +68,19 @@ export async function syncAiCallToCrm(
         }
       : undefined,
   });
+  const urgent = session.urgency?.level === "critical";
+  const { emitBusinessEvent } = await import("@/product/notifications/hooks");
+  await emitBusinessEvent({
+    organizationId,
+    type: urgent ? "urgent_request" : session.intent === "transfer" ? "human_requested" : "lead_created",
+    idempotencyKey: `call:${session.id}`,
+    customer: session.slots.callerName,
+    service: description,
+    location: session.slots.serviceAddress,
+    callId: session.id,
+    consolidateKey: session.id,
+    href: "/app/leads",
+  });
 }
 
 export async function syncMissedCallWorkflow(input: {

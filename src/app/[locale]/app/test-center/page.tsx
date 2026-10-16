@@ -5,6 +5,7 @@ import { TestCenterActions } from "@/components/app/TestCenterActions";
 import { SimulateLeadButton } from "@/components/app/SimulateLeadButton";
 import { AutomationTestPanel } from "@/components/app/AutomationTestPanel";
 import { AppointmentTestPanel } from "@/components/app/AppointmentTestPanel";
+import { NotificationTestPanel } from "@/components/app/NotificationTestPanel";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 
 export default async function TestCenterPage({
@@ -73,6 +74,7 @@ export default async function TestCenterPage({
       />
 
       <AppointmentTestPanel organizationId={auth.ctx.organization.id} />
+      <NotificationTestPanel organizationId={auth.ctx.organization.id} />
     </div>
   );
 }

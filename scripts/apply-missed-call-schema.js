@@ -89,6 +89,11 @@ async function main() {
       ["src", "product", "scheduling", "schema.sql"],
       "012_scheduling",
     );
+    await applyFile(
+      client,
+      ["src", "product", "notifications", "schema.sql"],
+      "013_notifications",
+    );
   } finally {
     await client.end();
   }
