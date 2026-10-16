@@ -2,9 +2,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
+import { buildOverview } from "@/product/receptionist/ai-receptionist-service";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
-import { ReceptionistSettingsForm } from "@/components/app/ReceptionistSettingsForm";
+import { ReceptionistManager } from "@/components/app/ReceptionistManager";
 
 export default async function AppReceptionistPage({
   params,
@@ -33,11 +34,36 @@ export default async function AppReceptionistPage({
     }
   }
 
-  const profile = await getReceptionistRuntime().profileStore.getProfile(
-    organization.id,
+  const runtime = getReceptionistRuntime();
+  let integrationError: string | undefined;
+  try {
+    await runtime.refresh(true);
+  } catch (err) {
+    integrationError =
+      err instanceof Error ? err.message : "Receptionist runtime unavailable";
+  }
+
+  const profile = await runtime.profileStore.getProfile(organization.id);
+  const calls = client
+    ? await runtime.store.listSessions({
+        clientAccountId: client.id,
+        limit: 200,
+      })
+    : [];
+  const answering = runtime.configs.some(
+    (c) =>
+      c.id === `rc_org_${organization.id}` ||
+      c.clientAccountId === client?.id,
   );
-  const activated = profile?.activated ?? false;
-  const number = profile?.phoneNumberE164;
+
+  const overview = buildOverview({
+    organization,
+    profile,
+    client,
+    calls,
+    answering,
+    integrationError,
+  });
 
   return (
     <div className="flex flex-col gap-6">
@@ -54,24 +80,15 @@ export default async function AppReceptionistPage({
         </p>
       ) : (
         <>
-          <p
-            className={`rounded-md border px-4 py-3 text-sm ${
-              activated
-                ? "border-green-300 bg-green-50 text-green-900"
-                : "border-navy/15 bg-white text-navy/80"
-            }`}
-          >
-            {activated && number
-              ? t("receptionist.statusActive", { number })
-              : t("receptionist.statusInactive")}
-          </p>
           {membership.role === "member" ? (
             <p className="text-sm text-navy/70">{t("receptionist.readOnly")}</p>
           ) : null}
-          <ReceptionistSettingsForm
-            readOnly={membership.role === "member"}
-            initial={profile?.settings ?? defaultProfileSettings()}
+          <ReceptionistManager
+            organizationId={organization.id}
+            overview={overview}
+            initialSettings={profile?.settings ?? defaultProfileSettings()}
             defaultHours={client.businessHours}
+            readOnly={membership.role === "member"}
           />
         </>
       )}

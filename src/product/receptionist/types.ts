@@ -47,6 +47,17 @@ export type AfterHoursMode =
   /** Same as take_message but still bridges critical emergencies live. */
   | "take_message_emergency_transfer";
 
+/**
+ * When the AI answers inbound calls. Overflow is configured here; live forward
+ * wiring lands in Task 4 (telephony). Until then overflow behaves like always.
+ */
+export type CallHandlingMode =
+  | "always"
+  | "business_hours"
+  | "after_hours"
+  | "overflow"
+  | "disabled";
+
 export type ReceptionistConfig = {
   id: string;
   /**
@@ -60,6 +71,16 @@ export type ReceptionistConfig = {
   /** Twilio number callers dial — used to resolve the config on inbound calls. */
   phoneNumberE164: string;
   businessName: string;
+  /** Spoken AI identity, e.g. "Sophie". */
+  receptionistName?: string;
+  /** Owner-configured when the AI should answer. */
+  callHandlingMode: CallHandlingMode;
+  /** Ring contractor first, then AI (Task 4). */
+  inboundStrategy: "ai_first" | "human_first";
+  /** Seconds to ring the human on overflow / human_first. */
+  humanRingTimeoutSeconds: number;
+  /** gather (TwiML) or conversation_relay (Twilio ConversationRelay). */
+  voiceEngine: "gather" | "conversation_relay";
   timezone: string;
   businessHours: { start: string; end: string; days: number[] };
   languages: ReceptionistLanguage[];
@@ -159,8 +180,15 @@ export type TransferAttempt = {
   targetId: string;
   targetName: string;
   phoneE164: string;
-  reason: "caller_request" | "emergency" | "fallback";
+  reason:
+    | "caller_request"
+    | "emergency"
+    | "fallback"
+    | "overflow_ring"
+    | "human_first";
   status: "dialing" | "completed" | "no_answer" | "busy" | "failed";
+  /** After a failed overflow/human_first ring, continue into the AI. */
+  continueWithAi?: boolean;
 };
 
 export type NotificationDelivery = {

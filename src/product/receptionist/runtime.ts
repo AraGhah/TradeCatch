@@ -201,6 +201,12 @@ function bootstrap(): RuntimeState {
 
     async onFinalized(session, config) {
       await syncFinalizedCall(await leadSyncDeps(store), config, session);
+      try {
+        const { syncAiCallToCrm } = await import("@/product/crm/bridge");
+        await syncAiCallToCrm(session, config.clientAccountId);
+      } catch (err) {
+        console.warn("[crm] ai call sync skipped", err);
+      }
     },
   });
 

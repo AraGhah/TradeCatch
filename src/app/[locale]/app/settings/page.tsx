@@ -7,6 +7,7 @@ import {
 } from "@/product/saas/entitlements";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { ApiKeyCreateButton } from "@/components/app/ApiKeyCreateButton";
+import { BusinessFeaturesForm } from "@/components/app/BusinessFeaturesForm";
 import { SettingsIntegrationsForm } from "@/components/app/SettingsIntegrationsForm";
 import { getGrowthStore } from "@/product/growth";
 
@@ -52,6 +53,18 @@ export default async function AppSettingsPage({
         <p className="mt-1 text-sm text-navy/60">
           {auth.ctx.organization.name} · {auth.ctx.user.email}
         </p>
+        {auth.ctx.organization.accountType === "demo" ? (
+          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[rgb(120_60_0)]">
+            {t("settings.demoAccount")}
+          </p>
+        ) : null}
+        {auth.ctx.organization.city || auth.ctx.organization.industry ? (
+          <p className="mt-2 text-sm text-navy/60">
+            {[auth.ctx.organization.industry, auth.ctx.organization.city]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+        ) : null}
         {auth.ctx.organization.missedCallClientId ? (
           <p className="mt-2 text-xs text-navy/50">
             {t("settings.clientLinked")}:{" "}
@@ -60,6 +73,18 @@ export default async function AppSettingsPage({
         ) : (
           <p className="mt-2 text-sm text-navy/70">{t("dashboard.notLinked")}</p>
         )}
+      </section>
+
+      <section className="rounded-md border border-navy/10 bg-white px-5 py-4">
+        <BusinessFeaturesForm
+          organizationId={auth.ctx.organization.id}
+          initial={auth.ctx.organization.features}
+          canEdit={
+            auth.ctx.membership.role === "owner" ||
+            auth.ctx.membership.role === "admin" ||
+            auth.ctx.isPlatformAdmin
+          }
+        />
       </section>
 
       <section>

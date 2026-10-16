@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { isPlatformAdminUser } from "@/product/saas/platform-admin";
 import {
   featuresForPlan,
   orgHasFeature,
@@ -93,6 +94,7 @@ export async function requireTenantContext(): Promise<
       organization,
       membership,
       features: featuresForPlan(organization.plan),
+      isPlatformAdmin: isPlatformAdminUser(user),
     },
   };
 }

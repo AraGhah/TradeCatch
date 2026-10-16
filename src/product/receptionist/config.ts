@@ -46,6 +46,13 @@ export const receptionistConfigSchema = z.object({
   clientAccountId: z.string().min(1),
   phoneNumberE164: e164,
   businessName: z.string().min(1),
+  receptionistName: z.string().trim().min(1).max(60).optional(),
+  callHandlingMode: z
+    .enum(["always", "business_hours", "after_hours", "overflow", "disabled"])
+    .default("always"),
+  inboundStrategy: z.enum(["ai_first", "human_first"]).default("ai_first"),
+  humanRingTimeoutSeconds: z.number().int().min(10).max(60).default(25),
+  voiceEngine: z.enum(["gather", "conversation_relay"]).default("gather"),
   timezone: z
     .string()
     .min(1)
@@ -119,10 +126,19 @@ export const receptionistConfigSchema = z.object({
 
 export type ReceptionistConfigInput = z.input<typeof receptionistConfigSchema>;
 
-export function defaultGreetings(businessName: string) {
+export function defaultGreetings(
+  businessName: string,
+  receptionistName?: string,
+) {
+  const identityFr = receptionistName
+    ? `Je suis ${receptionistName}, la réceptionniste virtuelle`
+    : "Je suis l'assistante virtuelle";
+  const identityEn = receptionistName
+    ? `I'm ${receptionistName}, the virtual receptionist`
+    : "I'm the virtual assistant";
   return {
-    greetingFr: `Bonjour, vous êtes bien chez ${businessName}. Je suis l'assistante virtuelle et je peux prendre votre demande.`,
-    greetingEn: `Hi, you've reached ${businessName}. I'm the virtual assistant and I can take your request.`,
+    greetingFr: `Bonjour, vous êtes bien chez ${businessName}. ${identityFr}. Comment puis-je vous aider?`,
+    greetingEn: `Hi, you've reached ${businessName}. ${identityEn}. How can I help you?`,
     afterHoursMessageFr: `Nos bureaux sont présentement fermés, mais je peux prendre votre demande et l'équipe vous rappellera dès l'ouverture.`,
     afterHoursMessageEn: `Our office is currently closed, but I can take your request and the team will call you back when we open.`,
   };
@@ -138,7 +154,7 @@ export function parseReceptionistConfig(input: unknown): ReceptionistConfig {
     throw new Error(`[receptionist] Invalid config: ${issues}`);
   }
   const c = parsed.data;
-  const defaults = defaultGreetings(c.businessName);
+  const defaults = defaultGreetings(c.businessName, c.receptionistName);
   const languages = Array.from(new Set(c.languages));
   return {
     ...c,
