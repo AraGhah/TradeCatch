@@ -133,6 +133,10 @@ export const routing = defineRouting({
       en: "/app/inbox",
       fr: "/app/boite-reception",
     },
+    "/app/billing": {
+      en: "/app/billing",
+      fr: "/app/facturation",
+    },
     "/app/settings": {
       en: "/app/settings",
       fr: "/app/parametres",

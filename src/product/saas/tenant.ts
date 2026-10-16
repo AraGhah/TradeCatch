@@ -3,6 +3,7 @@ import { isPlatformAdminUser } from "@/product/saas/platform-admin";
 import {
   featuresForPlan,
   orgHasFeature,
+  upgradePlanForFeature,
   type FeatureId,
 } from "./entitlements";
 import { getSaasStore } from "./runtime";
@@ -111,7 +112,7 @@ export function forbiddenFeatureResponse(feature: FeatureId) {
     {
       error: "Feature not included in your plan.",
       feature,
-      upgrade: "growth",
+      upgrade: upgradePlanForFeature(feature),
     },
     { status: 402 },
   );

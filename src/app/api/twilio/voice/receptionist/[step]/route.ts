@@ -243,11 +243,44 @@ export async function POST(
           // Summaries + notifications can take a few seconds; respond first.
           await deferTask(async () => {
             try {
-              await engine.handleCallStatus({
+              const result = await engine.handleCallStatus({
                 callSid,
                 callStatus,
                 durationSeconds,
               });
+              if (
+                result.finalized &&
+                result.session &&
+                (result.session.durationSeconds ?? durationSeconds ?? 0) > 0
+              ) {
+                const { recordAiCallMinutes } = await import(
+                  "@/product/billing/recordUsage"
+                );
+                const { getSaasStore } = await import(
+                  "@/product/saas/runtime"
+                );
+                const orgIdFromConfig = result.session.configId.startsWith(
+                  "rc_org_",
+                )
+                  ? result.session.configId.slice("rc_org_".length)
+                  : null;
+                let businessId = orgIdFromConfig;
+                if (!businessId && result.session.clientAccountId) {
+                  const org =
+                    await getSaasStore().findOrganizationByMissedCallClientId(
+                      result.session.clientAccountId,
+                    );
+                  businessId = org?.id ?? null;
+                }
+                if (businessId) {
+                  await recordAiCallMinutes({
+                    businessId,
+                    durationSeconds:
+                      result.session.durationSeconds ?? durationSeconds ?? 0,
+                    callSid,
+                  });
+                }
+              }
             } catch (err) {
               console.error("[receptionist] status finalize failed", err);
             }

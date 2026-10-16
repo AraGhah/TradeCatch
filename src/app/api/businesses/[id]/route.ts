@@ -21,7 +21,9 @@ const patchSchema = z
     serviceArea: z.string().trim().max(240).optional(),
     timezone: z.string().trim().min(3).max(64).optional(),
     language: z.enum(["en", "fr"]).optional(),
-    subscriptionPlan: z.enum(["starter", "growth"]).optional(),
+    subscriptionPlan: z
+      .enum(["starter", "growth", "ai_receptionist"])
+      .optional(),
     accountStatus: z.enum(["active", "suspended"]).optional(),
     features: z
       .object({
