@@ -79,6 +79,14 @@ export const DEMO_RESET_TABLES = [
   "tc_notification_recipients",
   "tc_notifications",
   "tc_outbox_events",
+  "tc_api_observations",
+  "tc_usage_costs",
+  "tc_recovery_attempts",
+  "tc_failed_operations",
+  "tc_incident_events",
+  "tc_system_incidents",
+  "tc_system_errors",
+  "tc_health_checks",
 ] as const;
 
 export const DEMO_RESET_CONFIRMATION = "RESET_DEMO_DATA";

@@ -37,6 +37,12 @@ export default async function AdminLayout({
               Businesses
             </Link>
             <Link
+              href="/admin/monitoring"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              System monitoring
+            </Link>
+            <Link
               href="/app"
               className="rounded-md px-3 py-2 text-navy/70 hover:bg-navy/5"
             >

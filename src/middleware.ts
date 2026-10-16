@@ -28,7 +28,8 @@ export default function middleware(request: NextRequest) {
   if (stagingGate) return stagingGate;
 
   // API routes must not go through next-intl locale rewrites.
-  if (request.nextUrl.pathname.startsWith("/api/")) {
+  const path = request.nextUrl.pathname;
+  if (path.startsWith("/api/") || path === "/health" || path === "/ready") {
     return NextResponse.next();
   }
 

@@ -228,6 +228,15 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         voice,
       },
     ];
+    void import("@/product/reliability/hooks").then(({ recordFailure }) =>
+      recordFailure({
+        service: "ai_receptionist",
+        operation: "continue_call",
+        errorCode: "AI_SESSION_FAILED",
+        severity: "high",
+        retryable: true,
+      }),
+    );
     if (config?.fallbackTransferE164) {
       verbs.push({
         verb: "dial",
