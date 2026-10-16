@@ -18,7 +18,7 @@ const bodySchema = z
     organizationName: z.string().trim().min(2).max(120),
     ownerName: z.string().trim().min(1).max(120),
     locale: z.enum(["en", "fr"]),
-    plan: z.enum(["starter", "growth"]),
+    plan: z.enum(["starter", "growth", "ai_receptionist"]),
   })
   .strict();
 

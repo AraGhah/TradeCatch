@@ -7,7 +7,8 @@ Multi-tenant portal layered on Module A without replacing the missed-call engine
 | Area | Location |
 | --- | --- |
 | Schema | `schema.sql` (`tc_organizations`, `tc_users`, `tc_memberships`, `tc_sessions`, `tc_magic_links`) |
-| Entitlements | `entitlements.ts` — **only** place for plan → feature mapping |
+| Entitlements | `entitlements.ts` — catalog plan → feature mapping; billing status further restricts via `src/product/billing/entitlementService.ts` |
+| Billing (Task 10) | `src/product/billing/` — Stripe Checkout, portal, webhooks, usage, `/app/billing` |
 | Auth | `auth/magic-link.ts`, `auth/session-token.ts` |
 | Tenant guard | `tenant.ts` → `requireTenantContext()` |
 | Stores | `memory-store.ts` (tests/dev), `postgres-store.ts` (durable) |

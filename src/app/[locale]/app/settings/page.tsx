@@ -47,9 +47,19 @@ export default async function AppSettingsPage({
           {t("settings.plan")}
         </h2>
         <p className="mt-2 text-lg font-semibold text-navy">
-          {auth.ctx.organization.plan === "growth"
-            ? t("plan.growth")
-            : t("plan.starter")}
+          {auth.ctx.organization.plan === "ai_receptionist"
+            ? t("plan.aiReceptionist")
+            : auth.ctx.organization.plan === "growth"
+              ? t("plan.growth")
+              : t("plan.starter")}
+        </p>
+        <p className="mt-3">
+          <Link
+            href="/app/billing"
+            className="text-sm font-medium text-orange underline-offset-2 hover:underline"
+          >
+            {t("billing.changePlan")}
+          </Link>
         </p>
         <p className="mt-1 text-sm text-navy/60">
           {auth.ctx.organization.name} · {auth.ctx.user.email}

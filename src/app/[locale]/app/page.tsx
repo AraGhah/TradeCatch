@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { computeStarterDashboardMetrics } from "@/product/saas/analytics";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import { GrowthUpsell } from "@/components/app/GrowthUpsell";
+import { getGrowthStore } from "@/product/growth";
+import { getOnboardingService } from "@/product/onboarding/runtime";
 
 export default async function AppDashboardPage({
   params,
@@ -17,6 +20,23 @@ export default async function AppDashboardPage({
 
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
+
+  // New / incomplete contractors resume the guided setup wizard.
+  try {
+    const settings = await getGrowthStore().getOrgSettings(
+      auth.ctx.organization.id,
+    );
+    if (!settings.onboardingCompletedAt) {
+      const snap = await getOnboardingService().getSnapshot(
+        auth.ctx.organization,
+      );
+      if (snap.session.status !== "active") {
+        redirect(locale === "fr" ? "/fr/app/demarrage" : "/app/onboarding");
+      }
+    }
+  } catch {
+    // Ignore onboarding probe failures on the dashboard.
+  }
 
   const clientId = auth.ctx.organization.missedCallClientId;
   let metrics = computeStarterDashboardMetrics([]);

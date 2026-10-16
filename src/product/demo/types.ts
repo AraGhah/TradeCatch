@@ -91,9 +91,9 @@ export const FEATURE_FLAG_TO_PLAN_FEATURE: Record<
   keyof BusinessFeatureFlags,
   FeatureId | null
 > = {
-  aiReceptionist: "MISSED_CALL_RECOVERY",
+  aiReceptionist: "AI_PHONE_ANSWERING",
   appointmentBooking: "APPOINTMENT_BOOKING",
-  callTransfer: "MISSED_CALL_RECOVERY",
+  callTransfer: "AI_CALL_TRANSFER",
   missedCallRecovery: "MISSED_CALL_RECOVERY",
   quoteFollowups: "QUOTE_FOLLOW_UP",
 };

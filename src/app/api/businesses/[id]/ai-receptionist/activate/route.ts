@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { hasEffectiveFeature } from "@/product/billing/entitlementService";
+import { getSubscriptionService } from "@/product/billing/runtime";
 import { ownerToggleActivation } from "@/product/receptionist/profile-service";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { getSaasStore } from "@/product/saas/runtime";
@@ -16,6 +18,21 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
+
+  const entitlements = await getSubscriptionService().getEffective(
+    id,
+    access.organization.plan,
+  );
+  if (!hasEffectiveFeature(entitlements, "AI_PHONE_ANSWERING")) {
+    return NextResponse.json(
+      {
+        error: "Feature not included in your plan.",
+        feature: "AI_PHONE_ANSWERING",
+        upgrade: "ai_receptionist",
+      },
+      { status: 402 },
+    );
+  }
 
   const client = await loadClientForOrg(access.organization);
   if (!client) {
