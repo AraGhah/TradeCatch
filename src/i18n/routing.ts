@@ -85,6 +85,14 @@ export const routing = defineRouting({
       en: "/app/bookings",
       fr: "/app/rendez-vous",
     },
+    "/app/bookings/availability": {
+      en: "/app/bookings/availability",
+      fr: "/app/rendez-vous/disponibilite",
+    },
+    "/app/bookings/services": {
+      en: "/app/bookings/services",
+      fr: "/app/rendez-vous/services",
+    },
     "/app/pipeline": {
       en: "/app/pipeline",
       fr: "/app/pipeline",
@@ -128,6 +136,10 @@ export const routing = defineRouting({
     "/app/settings": {
       en: "/app/settings",
       fr: "/app/parametres",
+    },
+    "/app/settings/calendar": {
+      en: "/app/settings/calendar",
+      fr: "/app/parametres/calendrier",
     },
     "/app/automations": {
       en: "/app/automations",

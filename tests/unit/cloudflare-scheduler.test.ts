@@ -20,6 +20,7 @@ describe("Cloudflare scheduler", () => {
       "/api/growth/crm/tick",
       "/api/receptionist/tick",
       "/api/growth/email/tick",
+      "/api/scheduling/reconcile",
     ]);
     assert.deepEqual(routesForCloudflareCron("15 6 * * *"), [
       "/api/missed-call/retention/tick",

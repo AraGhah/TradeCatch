@@ -62,6 +62,14 @@ export const DEMO_RESET_TABLES = [
   "tc_sms_jobs",
   "tc_sms_templates",
   "tc_sms_automations",
+  "tc_calendar_sync_state",
+  "tc_calendar_busy",
+  "tc_calendar_connections",
+  "tc_appointment_events",
+  "tc_schedule_appointments",
+  "tc_technicians",
+  "tc_service_types",
+  "tc_availability_rules",
 ] as const;
 
 export const DEMO_RESET_CONFIRMATION = "RESET_DEMO_DATA";

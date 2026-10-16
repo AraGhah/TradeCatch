@@ -4,6 +4,7 @@ import { requireTenantContext } from "@/product/saas/tenant";
 import { TestCenterActions } from "@/components/app/TestCenterActions";
 import { SimulateLeadButton } from "@/components/app/SimulateLeadButton";
 import { AutomationTestPanel } from "@/components/app/AutomationTestPanel";
+import { AppointmentTestPanel } from "@/components/app/AppointmentTestPanel";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 
 export default async function TestCenterPage({
@@ -70,6 +71,8 @@ export default async function TestCenterPage({
           name: automationsT("testPanel.name"),
         }}
       />
+
+      <AppointmentTestPanel organizationId={auth.ctx.organization.id} />
     </div>
   );
 }

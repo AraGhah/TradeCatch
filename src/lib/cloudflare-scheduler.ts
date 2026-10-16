@@ -10,6 +10,7 @@ export const CLOUDFLARE_CRON_ROUTES = {
     "/api/growth/crm/tick",
     "/api/receptionist/tick",
     "/api/growth/email/tick",
+    "/api/scheduling/reconcile",
   ],
   "15 6 * * *": ["/api/missed-call/retention/tick"],
 } as const;
