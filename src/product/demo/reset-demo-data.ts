@@ -53,6 +53,15 @@ export const DEMO_RESET_TABLES = [
   "em_sequences",
   "em_templates",
   "em_org_settings",
+  // SMS automation
+  "tc_sms_webhook_events",
+  "tc_sms_automation_events",
+  "tc_sms_consent",
+  "tc_sms_suppressions",
+  "tc_sms_executions",
+  "tc_sms_jobs",
+  "tc_sms_templates",
+  "tc_sms_automations",
 ] as const;
 
 export const DEMO_RESET_CONFIRMATION = "RESET_DEMO_DATA";

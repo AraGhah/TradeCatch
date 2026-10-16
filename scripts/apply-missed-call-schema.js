@@ -79,6 +79,11 @@ async function main() {
       ["src", "product", "crm", "schema.sql"],
       "010_crm_leads",
     );
+    await applyFile(
+      client,
+      ["src", "product", "sms-automation", "schema.sql"],
+      "011_sms_automation",
+    );
   } finally {
     await client.end();
   }

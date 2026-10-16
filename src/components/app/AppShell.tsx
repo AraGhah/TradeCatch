@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/app/conversations", key: "conversations" },
   { href: "/app/bookings", key: "appointments" },
   { href: "/app/quotes", key: "quotes" },
+  { href: "/app/automations", key: "automations" },
   { href: "/app/analytics", key: "analytics" },
   { href: "/app/settings", key: "settings" },
   { href: "/app/test-center", key: "testCenter" },

@@ -43,6 +43,24 @@ import {
   technicianAtEscalationIndex,
 } from "./technicians";
 import { classifyUrgency, rosterTechnician } from "./urgency";
+
+/** Configurable automation owns the recovery SMS when the contractor enabled it. */
+async function deferOpeningSms(input: {
+  clientAccountId: string;
+  callId: string;
+  callerE164: string;
+  disposition: string;
+}): Promise<boolean> {
+  try {
+    const { deferMissedCallOpening } = await import(
+      "@/product/sms-automation/hooks"
+    );
+    return await deferMissedCallOpening(input);
+  } catch (err) {
+    console.warn("[sms-automation] missed-call defer skipped", err);
+    return false;
+  }
+}
 import type {
   CallRecord,
   ClientAccount,
@@ -827,14 +845,23 @@ export function createMissedCallEngine(deps: {
                 clock,
               );
               await deps.store.saveWorkflow(wf);
-              const open = openingSms(client);
-              const smsSent = await sendOutboundSms({
-                workflow: wf,
-                client,
-                toE164: wf.callerE164,
-                body: open,
-                detail: "opening_fr",
+              const deferred = await deferOpeningSms({
+                clientAccountId: client.id,
+                callId: existingCall.id,
+                callerE164: wf.callerE164,
+                disposition: existingCall.disposition,
               });
+              let smsSent = false;
+              if (!deferred) {
+                const open = openingSms(client);
+                smsSent = await sendOutboundSms({
+                  workflow: wf,
+                  client,
+                  toE164: wf.callerE164,
+                  body: open,
+                  detail: "opening_fr",
+                });
+              }
               return {
                 call: existingCall,
                 workflow: wf,
@@ -857,14 +884,23 @@ export function createMissedCallEngine(deps: {
               (e) => e.type === "sms_sent" && e.detail === "opening_fr",
             )
           ) {
-            const open = openingSms(client);
-            const smsSent = await sendOutboundSms({
-              workflow: wf,
-              client,
-              toE164: wf.callerE164,
-              body: open,
-              detail: "opening_fr",
+            const deferred = await deferOpeningSms({
+              clientAccountId: client.id,
+              callId: existingCall.id,
+              callerE164: wf.callerE164,
+              disposition: existingCall.disposition,
             });
+            let smsSent = false;
+            if (!deferred) {
+              const open = openingSms(client);
+              smsSent = await sendOutboundSms({
+                workflow: wf,
+                client,
+                toE164: wf.callerE164,
+                body: open,
+                detail: "opening_fr",
+              });
+            }
             return {
               call: existingCall,
               workflow: wf,
@@ -1008,14 +1044,23 @@ export function createMissedCallEngine(deps: {
         throw err;
       }
 
-      const open = openingSms(client);
-      const smsSent = await sendOutboundSms({
-        workflow,
-        client,
-        toE164: input.callerE164,
-        body: open,
-        detail: "opening_fr",
+      const deferred = await deferOpeningSms({
+        clientAccountId: client.id,
+        callId: call.id,
+        callerE164: input.callerE164,
+        disposition,
       });
+      let smsSent = false;
+      if (!deferred) {
+        const open = openingSms(client);
+        smsSent = await sendOutboundSms({
+          workflow,
+          client,
+          toE164: input.callerE164,
+          body: open,
+          detail: "opening_fr",
+        });
+      }
 
       return { call, workflow, smsSent };
     },

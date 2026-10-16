@@ -49,5 +49,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
 
+  try {
+    const { getAutomationServices } = await import(
+      "@/product/sms-automation/runtime"
+    );
+    await getAutomationServices().applyDeliveryStatus({
+      providerSid: sid,
+      providerStatus: status,
+      price: params.Price,
+      priceUnit: params.PriceUnit,
+      eventId: `${sid}:${status}:${params.ErrorCode ?? ""}`,
+    });
+  } catch (err) {
+    console.warn("[sms-automation] status skipped", err);
+  }
+
   return NextResponse.json({ ok: true });
 }

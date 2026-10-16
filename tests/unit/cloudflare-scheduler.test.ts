@@ -11,6 +11,7 @@ describe("Cloudflare scheduler", () => {
   it("maps each configured schedule to the expected internal routes", () => {
     assert.deepEqual(routesForCloudflareCron("* * * * *"), [
       "/api/missed-call/escalations/tick",
+      "/api/automations/tick",
     ]);
     assert.deepEqual(routesForCloudflareCron("*/15 * * * *"), [
       "/api/starter/quotes/tick",
@@ -54,6 +55,9 @@ describe("Cloudflare scheduler", () => {
       Response.json({ ok: true }),
     );
 
-    assert.deepEqual(result.completed, ["/api/missed-call/escalations/tick"]);
+    assert.deepEqual(result.completed, [
+      "/api/missed-call/escalations/tick",
+      "/api/automations/tick",
+    ]);
   });
 });
