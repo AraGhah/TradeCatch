@@ -1190,6 +1190,102 @@ export function createAutomationService(deps: AutomationDeps) {
       });
     },
 
+    async scheduleAppointmentNotices(input: {
+      organizationId: string;
+      appointmentId: string;
+      phoneE164: string;
+      customerName?: string;
+      serviceName: string;
+      appointmentDate: string;
+      appointmentTime: string;
+      startAt: string;
+      locale?: "en" | "fr";
+      simulated?: boolean;
+      leadId?: string;
+    }) {
+      const automation = await deps.store.getAutomationByType(
+        input.organizationId,
+        "appointment_reminder",
+      );
+      if (!automation?.enabled) return { scheduled: false as const, jobs: [] as JobRecord[] };
+      const org = await requireOrg(input.organizationId);
+      const phone = normalizeE164(input.phoneE164);
+      if (!isE164(phone) || (await deps.store.isSuppressed(input.organizationId, phone))) {
+        return { scheduled: false as const, jobs: [] as JobRecord[] };
+      }
+      const locale = resolveLocale(automation.config, org, input.locale);
+      const recorded = await consent({
+        organizationId: input.organizationId,
+        phone,
+        category: "appointment_service",
+        evidence: `Appointment ${input.appointmentId} was confirmed for ${input.appointmentDate} ${input.appointmentTime}.`,
+      });
+      const vars = {
+        customer_name: input.customerName ?? "",
+        business_name: org.name,
+        service_name: input.serviceName,
+        appointment_date: input.appointmentDate,
+        appointment_time: input.appointmentTime,
+      };
+      const payloadBase = {
+        customerName: input.customerName,
+        locale,
+        vars,
+        leadId: input.leadId,
+        attemptIndex: 1,
+        messageCategory: "appointment_service" as const,
+        consentId: recorded.id,
+        serviceName: input.serviceName,
+        appointmentId: input.appointmentId,
+      };
+      const jobs: JobRecord[] = [];
+      const stamp = input.startAt.slice(0, 16);
+      const confirm = await placeJob({
+        organizationId: input.organizationId,
+        automation,
+        phone,
+        idempotencyKey: `appt-confirm:${input.appointmentId}:${stamp}`,
+        scheduledAt: snap(deps.now(), org, automation.config),
+        simulated: Boolean(input.simulated),
+        payload: { ...payloadBase, templateKey: "appointment_confirmation" },
+      });
+      if (confirm) jobs.push(confirm);
+      const remindAt = new Date(Date.parse(input.startAt) - 24 * 60 * 60 * 1000);
+      if (remindAt.getTime() > deps.now().getTime()) {
+        const reminder = await placeJob({
+          organizationId: input.organizationId,
+          automation,
+          phone,
+          idempotencyKey: `appt-remind:${input.appointmentId}:${stamp}`,
+          scheduledAt: snap(remindAt, org, automation.config),
+          simulated: Boolean(input.simulated),
+          payload: { ...payloadBase, templateKey: "appointment_reminder" },
+        });
+        if (reminder) jobs.push(reminder);
+      }
+      return { scheduled: true as const, jobs };
+    },
+
+    async cancelAppointmentNotices(
+      organizationId: string,
+      appointmentId: string,
+      reason: string,
+    ) {
+      const jobs = await deps.store.listJobs(organizationId, 200);
+      let canceled = 0;
+      for (const job of jobs) {
+        if (job.payload.appointmentId !== appointmentId) continue;
+        if (job.providerMessageSid) continue;
+        if (!["pending", "processing"].includes(job.status)) continue;
+        job.status = "canceled";
+        job.cancelReason = reason;
+        job.updatedAt = deps.now().toISOString();
+        await deps.store.saveJob(job);
+        canceled += 1;
+      }
+      return canceled;
+    },
+
     async sendLiveTest(input: { organizationId: string; templateKey?: TemplateKey }) {
       const org = await requireOrg(input.organizationId);
       if (org.accountType === "demo") {

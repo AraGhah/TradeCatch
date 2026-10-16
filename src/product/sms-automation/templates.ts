@@ -117,6 +117,7 @@ const ALLOWED = new Set([
   "service_name",
   "quote_ref",
   "appointment_time",
+  "appointment_date",
 ]);
 
 const GSM_BASIC =
@@ -148,6 +149,9 @@ function fallback(locale: "en" | "fr", name: string, provided?: string): string 
   if (name === "quote_ref") return "";
   if (name === "appointment_time") {
     return locale === "fr" ? "votre rendez-vous" : "your appointment";
+  }
+  if (name === "appointment_date") {
+    return locale === "fr" ? "la date convenue" : "the confirmed date";
   }
   return "";
 }

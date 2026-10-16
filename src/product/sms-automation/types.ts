@@ -12,6 +12,7 @@ export type AutomationType = (typeof AUTOMATION_TYPES)[number];
 export const OPERATIONAL_AUTOMATION_TYPES: readonly AutomationType[] = [
   "missed_call_recovery",
   "quote_followup",
+  "appointment_reminder",
 ];
 
 export const TEMPLATE_KEYS = [
@@ -33,6 +34,7 @@ export const TEMPLATE_VARIABLES = [
   "service_name",
   "quote_ref",
   "appointment_time",
+  "appointment_date",
 ] as const;
 
 export type TemplateVariable = (typeof TEMPLATE_VARIABLES)[number];
@@ -126,6 +128,7 @@ export type JobPayload = {
   quoteStatus?: "open" | "accepted" | "rejected" | "replied";
   renderedBody?: string;
   disposition?: string;
+  appointmentId?: string;
 };
 
 export type JobRecord = {

@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Link } from "@/i18n/navigation";
 import {
   FEATURE_LABELS,
   featuresForPlan,
@@ -126,6 +127,11 @@ export default async function AppSettingsPage({
           {t("settings.integrations")}
         </h2>
         <p className="mt-2 text-sm text-navy/70">{t("settings.integrationsIntro")}</p>
+        <p className="mt-2">
+          <Link href="/app/settings/calendar" className="text-sm font-semibold text-navy underline">
+            {t("schedule.navCalendar")}
+          </Link>
+        </p>
         <SettingsIntegrationsForm
           initialNotifyEmail={settings.notifyEmail}
           initialGoogleReviewUrl={settings.googleReviewUrl}
