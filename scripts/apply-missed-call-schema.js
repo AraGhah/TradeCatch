@@ -99,6 +99,11 @@ async function main() {
       ["src", "product", "billing", "schema.sql"],
       "014_billing",
     );
+    await applyFile(
+      client,
+      ["src", "product", "onboarding", "schema.sql"],
+      "015_onboarding",
+    );
   } finally {
     await client.end();
   }

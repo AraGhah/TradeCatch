@@ -6,6 +6,7 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 
 const NAV_ITEMS = [
   { href: "/app", key: "overview" },
+  { href: "/app/onboarding", key: "onboarding" },
   { href: "/app/receptionist", key: "receptionist" },
   { href: "/app/calls", key: "calls" },
   { href: "/app/calls/settings", key: "phoneSettings" },

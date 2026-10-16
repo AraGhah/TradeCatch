@@ -1,6 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireTenantContext } from "@/product/saas/tenant";
-import { getGrowthStore } from "@/product/growth";
 import { OnboardingWizard } from "@/components/app/OnboardingWizard";
 
 export default async function AppOnboardingPage({
@@ -15,9 +14,7 @@ export default async function AppOnboardingPage({
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
 
-  const settings = await getGrowthStore().getOrgSettings(
-    auth.ctx.organization.id,
-  );
+  const { organization, user } = auth.ctx;
 
   return (
     <div className="flex flex-col gap-6">
@@ -25,14 +22,16 @@ export default async function AppOnboardingPage({
         <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
           {t("onboarding.headline")}
         </h1>
-        <p className="mt-2 text-navy/70">{t("onboarding.intro")}</p>
+        <p className="mt-2 max-w-2xl text-navy/70">{t("onboarding.intro")}</p>
       </header>
 
       <OnboardingWizard
-        initialNotifyEmail={settings.notifyEmail}
-        initialGoogleReviewUrl={settings.googleReviewUrl}
-        isGrowth={auth.ctx.organization.plan === "growth"}
-        alreadyComplete={Boolean(settings.onboardingCompletedAt)}
+        organizationId={organization.id}
+        locale={locale === "fr" ? "fr" : "en"}
+        plan={organization.plan}
+        ownerName={user.name}
+        ownerEmail={user.email}
+        businessName={organization.name}
       />
     </div>
   );
