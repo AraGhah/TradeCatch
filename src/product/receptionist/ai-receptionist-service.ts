@@ -136,7 +136,7 @@ export async function patchAiReceptionistSettings(
   input: {
     organizationId: string;
     client: ClientAccount;
-    role: "owner" | "admin" | "member";
+    role: "owner" | "admin" | "member" | "viewer";
     userEmail: string;
     body: unknown;
     env?: NodeJS.ProcessEnv;
@@ -225,7 +225,7 @@ export async function putKnowledge(
   input: {
     organizationId: string;
     client: ClientAccount;
-    role: "owner" | "admin" | "member";
+    role: "owner" | "admin" | "member" | "viewer";
     userEmail: string;
     knowledge: unknown;
     faqs?: unknown;
@@ -281,7 +281,7 @@ export async function putCallRouting(
   input: {
     organizationId: string;
     client: ClientAccount;
-    role: "owner" | "admin" | "member";
+    role: "owner" | "admin" | "member" | "viewer";
     userEmail: string;
     callHandlingMode: unknown;
     businessHours?: unknown;
@@ -318,7 +318,7 @@ export async function putTransferSettings(
   input: {
     organizationId: string;
     client: ClientAccount;
-    role: "owner" | "admin" | "member";
+    role: "owner" | "admin" | "member" | "viewer";
     userEmail: string;
     transferSettings: unknown;
     emergencyTransferE164?: unknown;
@@ -354,7 +354,7 @@ export async function putAppointmentSettings(
   input: {
     organizationId: string;
     client: ClientAccount;
-    role: "owner" | "admin" | "member";
+    role: "owner" | "admin" | "member" | "viewer";
     userEmail: string;
     appointmentSettings: unknown;
     env?: NodeJS.ProcessEnv;

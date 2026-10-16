@@ -12,7 +12,7 @@ export type BusinessAccess =
       ok: true;
       via: "admin" | "member";
       organization: Organization;
-      role: "owner" | "admin" | "member";
+      role: "owner" | "admin" | "member" | "viewer";
       userEmail: string;
       ctx?: TenantContext;
     }
@@ -52,6 +52,13 @@ export async function authorizeBusinessMemberOrAdmin(
     };
   }
   if (tenant.ctx.organization.id !== organizationId) {
+    const { recordSecurityEvent } = await import("@/product/security/hooks");
+    await recordSecurityEvent({
+      organizationId: tenant.ctx.organization.id,
+      actorUserId: tenant.ctx.user.id,
+      action: "cross_business_denied",
+      target: organizationId,
+    });
     return {
       ok: false,
       response: NextResponse.json(

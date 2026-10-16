@@ -38,7 +38,8 @@ export function enforceStagingAccess(
     path.endsWith("/api/health") ||
     path === "/health" ||
     path === "/ready" ||
-    path.startsWith("/api/twilio/")
+    path.startsWith("/api/twilio/") ||
+    path.startsWith("/api/webhooks/stripe")
   ) {
     return null;
   }

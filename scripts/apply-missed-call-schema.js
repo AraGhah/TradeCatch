@@ -99,6 +99,11 @@ async function main() {
       ["src", "product", "reliability", "schema.sql"],
       "014_reliability",
     );
+    await applyFile(
+      client,
+      ["src", "product", "security", "schema.sql"],
+      "015_security",
+    );
   } finally {
     await client.end();
   }

@@ -22,6 +22,13 @@ export async function requestMagicLink(input: {
   if (!email.includes("@")) {
     return { ok: false, error: "Invalid email." };
   }
+  const { getSecurityService } = await import("@/product/security/runtime");
+  const security = getSecurityService();
+  if (!(await security.loginAllowed(email))) {
+    await security.audit({ action: "login_rate_limited" });
+    return { ok: true };
+  }
+  await security.noteLogin(email);
 
   const store = getSaasStore();
   const user = await store.getUserByEmail(email);

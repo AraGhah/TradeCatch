@@ -32,7 +32,7 @@ export async function saveOwnerSettings(
   deps: OwnerSaveDeps,
   input: {
     organization: { id: string; missedCallClientId: string | null };
-    role: "owner" | "admin" | "member";
+    role: "owner" | "admin" | "member" | "viewer";
     userEmail: string;
     body: unknown;
   },
@@ -142,7 +142,7 @@ export async function ownerToggleActivation(
   },
   input: {
     organization: { id: string; missedCallClientId: string | null };
-    role: "owner" | "admin" | "member";
+    role: "owner" | "admin" | "member" | "viewer";
     userEmail: string;
     activated: boolean;
     /** Optional explicit number (ops / admin). Owners cannot override an existing ops number. */

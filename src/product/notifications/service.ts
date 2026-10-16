@@ -28,7 +28,7 @@ export class NotificationError extends Error {
 
 export type NoticeMember = {
   userId: string;
-  role: "owner" | "admin" | "member";
+  role: "owner" | "admin" | "member" | "viewer";
   email: string;
   locale: "en" | "fr";
   phoneE164?: string;
@@ -88,7 +88,7 @@ export function createNotificationService(deps: NotificationDeps) {
     const existing = await deps.store.getPreferences(org.id, member.userId);
     if (existing) return existing;
     const created = defaultPreferences(org.id, member.userId, member.locale || org.localeDefault, deps.now().toISOString());
-    if (member.role === "member") created.scope = "assigned";
+    if (member.role === "member" || member.role === "viewer") created.scope = "assigned";
     await deps.store.savePreferences(created);
     return created;
   }
@@ -187,10 +187,10 @@ export function createNotificationService(deps: NotificationDeps) {
     const limited = recentCount >= RATE_LIMIT;
     for (const member of members) {
       const prefs = await prefsFor(org, member);
-      if (member.role === "member" && prefs.scope === "assigned" && payload.assigneeUserId !== member.userId) {
+      if ((member.role === "member" || member.role === "viewer") && prefs.scope === "assigned" && payload.assigneeUserId !== member.userId) {
         continue;
       }
-      if (rule.primaryUserId && member.role === "member" && member.userId !== rule.primaryUserId && member.userId !== payload.assigneeUserId) {
+      if (rule.primaryUserId && (member.role === "member" || member.role === "viewer") && member.userId !== rule.primaryUserId && member.userId !== payload.assigneeUserId) {
         continue;
       }
       const category = TYPE_CATEGORY[notification.type];

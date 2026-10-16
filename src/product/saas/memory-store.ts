@@ -244,6 +244,10 @@ export function createMemorySaasStore(): SaasStore {
       return sessions.get(id) ?? null;
     },
 
+    async listSessionsForUser(userId) {
+      return [...sessions.values()].filter((session) => session.userId === userId && !session.revokedAt);
+    },
+
     async revokeSession(id, atIso) {
       const s = sessions.get(id);
       if (!s) return;
