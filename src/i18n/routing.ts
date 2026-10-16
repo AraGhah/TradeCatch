@@ -69,6 +69,10 @@ export const routing = defineRouting({
       en: "/app/leads",
       fr: "/app/leads",
     },
+    "/app/leads/[id]": {
+      en: "/app/leads/[id]",
+      fr: "/app/leads/[id]",
+    },
     "/app/website-leads": {
       en: "/app/website-leads",
       fr: "/app/leads-web",

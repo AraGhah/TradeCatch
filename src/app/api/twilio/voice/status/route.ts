@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await engine.handleCallEvent({
+    const result = await engine.handleCallEvent({
       clientAccountId,
       callerE164: from,
       answered: Boolean(answered),
@@ -160,6 +160,16 @@ export async function POST(request: NextRequest) {
       twilioCallSid: callSid,
       durationSeconds: Number.isFinite(duration) ? duration : undefined,
     });
+    try {
+      const { syncMissedCallWorkflow } = await import("@/product/crm/bridge");
+      await syncMissedCallWorkflow({
+        clientAccountId,
+        workflow: result.workflow,
+        callSid,
+      });
+    } catch (err) {
+      console.warn("[crm] missed-call sync skipped", err);
+    }
   } catch (err) {
     console.error("[missed-call/voice]", err);
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });

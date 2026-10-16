@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { TestCenterActions } from "@/components/app/TestCenterActions";
+import { SimulateLeadButton } from "@/components/app/SimulateLeadButton";
 
 export default async function TestCenterPage({
   params,
@@ -34,6 +35,10 @@ export default async function TestCenterPage({
       >
         {t("livePhoneLink")}
       </Link>
+
+      {isDemo ? (
+        <SimulateLeadButton organizationId={auth.ctx.organization.id} />
+      ) : null}
 
       <TestCenterActions
         organizationId={auth.ctx.organization.id}

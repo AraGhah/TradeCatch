@@ -277,6 +277,12 @@ async function wipeOrgScopedDemoData(organizationId: string): Promise<void> {
       `DELETE FROM tc_revenue_events WHERE organization_id = $1`,
       [organizationId],
     );
+    try {
+      const { getCrmService } = await import("@/product/crm/runtime");
+      await getCrmService().clearOrganization(organizationId);
+    } catch (err) {
+      console.warn("[crm] demo wipe skipped", err);
+    }
     return;
   }
 
@@ -307,6 +313,12 @@ async function wipeOrgScopedDemoData(organizationId: string): Promise<void> {
     await starter.updateInboxItem(item.id, organizationId, {
       status: "resolved",
     });
+  }
+  try {
+    const { getCrmService } = await import("@/product/crm/runtime");
+    await getCrmService().clearOrganization(organizationId);
+  } catch (err) {
+    console.warn("[crm] demo wipe skipped", err);
   }
 }
 
