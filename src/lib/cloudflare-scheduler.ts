@@ -2,6 +2,7 @@ export const CLOUDFLARE_CRON_ROUTES = {
   "* * * * *": [
     "/api/missed-call/escalations/tick",
     "/api/automations/tick",
+    "/api/notifications/tick",
   ],
   "*/15 * * * *": [
     "/api/starter/quotes/tick",

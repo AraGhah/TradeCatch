@@ -64,5 +64,12 @@ export async function POST(request: NextRequest) {
     console.warn("[sms-automation] status skipped", err);
   }
 
+  try {
+    const { getNotificationService } = await import("@/product/notifications/runtime");
+    await getNotificationService().applyProviderStatus(sid, status);
+  } catch (err) {
+    console.warn("[notifications] status skipped", err);
+  }
+
   return NextResponse.json({ ok: true });
 }

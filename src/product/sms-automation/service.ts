@@ -89,6 +89,7 @@ export type AutomationDeps = {
     threadId: string,
     reason: "won" | "lost" | "customer_reply" | "opt_out" | "manual_pause",
   ) => Promise<void>;
+  onPermanentFailure?: (organizationId: string, detail: string) => Promise<void>;
   onCustomerMessage?: (input: {
     organizationId: string;
     phoneE164: string;
@@ -540,6 +541,9 @@ export function createAutomationService(deps: AutomationDeps) {
         job.claimToken = undefined;
         await deps.store.saveJob(job);
         await record(deps, job, "failure", job.status, { error: job.lastError });
+        if (job.status === "failed") {
+          await deps.onPermanentFailure?.(job.organizationId, job.lastError || "automation_failed");
+        }
         return job;
       }
       const backoff = [1, 5, 15][job.attempts - 1] ?? 15;

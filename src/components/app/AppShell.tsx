@@ -2,6 +2,7 @@
 
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { NotificationBell } from "@/components/app/NotificationBell";
 
 const NAV_ITEMS = [
   { href: "/app", key: "overview" },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
   { href: "/app/bookings", key: "appointments" },
   { href: "/app/quotes", key: "quotes" },
   { href: "/app/automations", key: "automations" },
+  { href: "/app/notifications", key: "notifications" },
   { href: "/app/analytics", key: "analytics" },
   { href: "/app/settings", key: "settings" },
   { href: "/app/test-center", key: "testCenter" },
@@ -29,6 +31,7 @@ export function AppShell({
   locale,
   accountType,
   isPlatformAdmin,
+  organizationId,
 }: {
   children: React.ReactNode;
   orgName: string;
@@ -37,6 +40,7 @@ export function AppShell({
   locale: "en" | "fr";
   accountType?: string;
   isPlatformAdmin?: boolean;
+  organizationId: string;
 }) {
   const t = useTranslations("app");
   const pathname = usePathname();
@@ -78,6 +82,7 @@ export function AppShell({
                 {t("nav.admin")}
               </Link>
             ) : null}
+            <NotificationBell organizationId={organizationId} />
             {NAV_ITEMS.map((item) => {
               const active =
                 item.href === "/app"

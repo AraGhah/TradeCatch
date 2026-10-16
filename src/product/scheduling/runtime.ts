@@ -3,7 +3,7 @@ import {
   isProductionRuntime,
 } from "@/lib/config";
 import { getCrmService } from "@/product/crm/runtime";
-import { getGrowthServices } from "@/product/growth";
+import { emitBusinessEvent } from "@/product/notifications/hooks";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 import {
   createGoogleCalendarPort,
@@ -114,16 +114,29 @@ export function getSchedulingService() {
       await getAutomationServices().cancelAppointmentNotices(organizationId, appointmentId, reason);
     },
     async notify(input) {
-      try {
-        await getGrowthServices().notifyOwner({
-          organizationId: input.organizationId,
-          subject: input.reason,
-          title: input.title,
-          lines: [{ label: "Appointment", value: input.refId }],
-        });
-      } catch {
-        // Notification failure must not undo a confirmed booking.
-      }
+      const reason = input.reason.toLowerCase();
+      const type = reason.includes("cancel")
+        ? "appointment_canceled"
+        : reason.includes("moved") || reason.includes("reschedul")
+          ? "appointment_rescheduled"
+          : "appointment_confirmed";
+      await emitBusinessEvent({
+        organizationId: input.organizationId,
+        type,
+        idempotencyKey: `${type}:${input.refId}:${reason.slice(0, 24)}`,
+        customer: input.title,
+        appointmentId: input.refId,
+        href: "/app/bookings",
+        consolidateKey: input.refId,
+      });
+    },
+    async onDisconnected(organizationId) {
+      await emitBusinessEvent({
+        organizationId,
+        type: "calendar_disconnected",
+        idempotencyKey: `calendar-disconnected:${organizationId}:${new Date().toISOString().slice(0, 13)}`,
+        href: "/app/settings/calendar",
+      });
     },
     async linkLead(input) {
       if (!input.phone) return;

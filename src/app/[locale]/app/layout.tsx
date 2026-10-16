@@ -26,6 +26,7 @@ export default async function AppLayout({
       locale={locale === "fr" ? "fr" : "en"}
       accountType={auth.ctx.organization.accountType}
       isPlatformAdmin={auth.ctx.isPlatformAdmin}
+      organizationId={auth.ctx.organization.id}
     >
       {children}
     </AppShell>

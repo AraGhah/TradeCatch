@@ -197,6 +197,15 @@ export async function POST(request: NextRequest) {
           messageSid: params.MessageSid,
           skipCrm: true,
         });
+        const { emitBusinessEvent } = await import("@/product/notifications/hooks");
+        await emitBusinessEvent({
+          organizationId: crmOrgId,
+          type: "customer_message",
+          idempotencyKey: `sms:${params.MessageSid}`,
+          service: "Customer reply",
+          href: "/app/conversations",
+          consolidateKey: params.MessageSid,
+        });
       } catch (err) {
         console.warn("[sms-automation] inbound skipped", err);
       }

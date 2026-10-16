@@ -49,6 +49,7 @@ export type SchedulingDeps = {
   }) => Promise<void>;
   cancelNotices?: (organizationId: string, appointmentId: string, reason: string) => Promise<void>;
   notify?: (input: { organizationId: string; title: string; reason: string; refId: string }) => Promise<void>;
+  onDisconnected?: (organizationId: string) => Promise<void>;
   linkLead?: (input: {
     organizationId: string;
     phone?: string;
@@ -527,6 +528,12 @@ export function createSchedulingService(deps: SchedulingDeps) {
         await deps.store.saveAppointment(reinserted);
         await deps.store.saveAppointment(current);
         await record(current, "rescheduled", `${previous.startAt}->${current.startAt}`);
+        await deps.notify?.({
+          organizationId,
+          title: current.customerName || current.serviceName,
+          reason: "Appointment rescheduled",
+          refId: current.id,
+        });
         await deps.cancelNotices?.(organizationId, current.id, "rescheduled");
         if (current.customerPhoneE164 && current.status === "confirmed") {
           const when = localParts(current.startAt, rules.timezone);
@@ -627,6 +634,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
         provider: "google",
         status: "disconnected",
       });
+      await deps.onDisconnected?.(organizationId);
     },
 
     async selectCalendar(organizationId: string, calendarId: string, summary: string) {

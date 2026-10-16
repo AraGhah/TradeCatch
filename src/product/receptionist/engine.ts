@@ -1061,6 +1061,9 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           };
           const step = nextMissingStep(config, next, next.slots);
           const reply = `${phrase("transferFailed", lang, { target: last?.targetName ?? "" })} ${questionForStep(step, lang, next, next.slots)}`;
+          void import("@/product/notifications/hooks").then((mod) =>
+            mod.emitTransferFailed(config.clientAccountId, session.id),
+          );
           next = {
             ...next,
             step,
