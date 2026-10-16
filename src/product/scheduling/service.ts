@@ -380,6 +380,19 @@ export function createSchedulingService(deps: SchedulingDeps) {
           updatedAt: deps.now().toISOString(),
         };
 
+        if (calendarBlocksConfirmation) {
+          void import("@/product/reliability/hooks").then(({ recordFailure }) =>
+            recordFailure({
+              organizationId: input.organizationId,
+              service: "google_calendar",
+              operation: "book_appointment",
+              errorCode: "CALENDAR_UNAVAILABLE",
+              severity: "medium",
+              retryable: true,
+              simulated: Boolean(input.simulated),
+            }),
+          );
+        }
         if (!match || needsReview || calendarBlocksConfirmation) {
           const saved = await deps.store.insertIfFree({ ...base, status: "pending" }, 0);
           const appointment = saved ?? base;

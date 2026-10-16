@@ -5,6 +5,7 @@ import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { buildOverview } from "@/product/receptionist/ai-receptionist-service";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
+import { Link } from "@/i18n/navigation";
 import { ReceptionistManager } from "@/components/app/ReceptionistManager";
 
 export default async function AppReceptionistPage({
@@ -72,6 +73,9 @@ export default async function AppReceptionistPage({
           {t("receptionist.headline")}
         </h1>
         <p className="mt-2 text-navy/70">{t("receptionist.intro")}</p>
+        <Link href="/app/receptionist/fallback" className="mt-3 inline-block text-sm font-semibold text-navy underline">
+          {t("monitoring.fallbackTitle")}
+        </Link>
       </header>
 
       {!client ? (

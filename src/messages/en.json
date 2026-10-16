@@ -2726,6 +2726,10 @@
       "body": "For linked organizations, Growth pilot access adds in-app booking, pipeline, attribution, and review requests. The founder enables each entitlement; native Google/Outlook sync is not included.",
       "cta": "See Growth on pricing"
     },
+    "monitoring": {
+      "fallbackTitle": "Fallback settings",
+      "fallbackIntro": "Choose what happens when the AI cannot continue a call. A calendar failure still collects the request and does not confirm an appointment."
+    },
     "receptionist": {
       "headline": "AI Receptionist",
       "intro": "Configure, activate, and test your business's virtual receptionist. Each business has its own isolated configuration.",

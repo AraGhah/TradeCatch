@@ -36,6 +36,8 @@ export function enforceStagingAccess(
   if (
     path === "/api/health" ||
     path.endsWith("/api/health") ||
+    path === "/health" ||
+    path === "/ready" ||
     path.startsWith("/api/twilio/")
   ) {
     return null;

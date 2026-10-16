@@ -94,6 +94,11 @@ async function main() {
       ["src", "product", "notifications", "schema.sql"],
       "013_notifications",
     );
+    await applyFile(
+      client,
+      ["src", "product", "reliability", "schema.sql"],
+      "014_reliability",
+    );
   } finally {
     await client.end();
   }

@@ -49,6 +49,38 @@ export const routing = defineRouting({
       en: "/admin",
       fr: "/admin",
     },
+    "/admin/monitoring": {
+      en: "/admin/monitoring",
+      fr: "/admin/monitoring",
+    },
+    "/admin/monitoring/api": {
+      en: "/admin/monitoring/api",
+      fr: "/admin/monitoring/api",
+    },
+    "/admin/monitoring/errors": {
+      en: "/admin/monitoring/errors",
+      fr: "/admin/monitoring/errors",
+    },
+    "/admin/monitoring/jobs": {
+      en: "/admin/monitoring/jobs",
+      fr: "/admin/monitoring/jobs",
+    },
+    "/admin/monitoring/ai": {
+      en: "/admin/monitoring/ai",
+      fr: "/admin/monitoring/ai",
+    },
+    "/admin/monitoring/database": {
+      en: "/admin/monitoring/database",
+      fr: "/admin/monitoring/database",
+    },
+    "/admin/monitoring/deployments": {
+      en: "/admin/monitoring/deployments",
+      fr: "/admin/monitoring/deployments",
+    },
+    "/admin/monitoring/costs": {
+      en: "/admin/monitoring/costs",
+      fr: "/admin/monitoring/costs",
+    },
     "/app": {
       en: "/app",
       fr: "/app",
@@ -116,6 +148,10 @@ export const routing = defineRouting({
     "/app/receptionist": {
       en: "/app/receptionist",
       fr: "/app/receptionniste",
+    },
+    "/app/receptionist/fallback": {
+      en: "/app/receptionist/fallback",
+      fr: "/app/receptionniste/repli",
     },
     "/app/email": {
       en: "/app/email",

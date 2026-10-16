@@ -2726,6 +2726,10 @@
       "body": "Pour les organisations liées, le pilote Growth ajoute la réservation dans l’espace, le pipeline, l’attribution et les demandes d’avis. Le fondateur active chaque droit; aucune synchronisation native Google/Outlook n’est incluse.",
       "cta": "Voir Growth sur la page tarifs"
     },
+    "monitoring": {
+      "fallbackTitle": "Paramètres de repli",
+      "fallbackIntro": "Choisissez ce qui se passe lorsque l’IA ne peut pas poursuivre l’appel. Si le calendrier est indisponible, la demande est enregistrée sans confirmer de rendez-vous."
+    },
     "receptionist": {
       "headline": "Réceptionniste IA",
       "intro": "Configurez, activez et testez la réceptionniste virtuelle de votre entreprise. Chaque entreprise a sa propre configuration isolée.",
