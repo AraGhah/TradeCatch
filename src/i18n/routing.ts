@@ -129,6 +129,26 @@ export const routing = defineRouting({
       en: "/app/settings",
       fr: "/app/parametres",
     },
+    "/app/automations": {
+      en: "/app/automations",
+      fr: "/app/automatisations",
+    },
+    "/app/automations/missed-call": {
+      en: "/app/automations/missed-call",
+      fr: "/app/automatisations/appel-manque",
+    },
+    "/app/automations/quotes": {
+      en: "/app/automations/quotes",
+      fr: "/app/automatisations/soumissions",
+    },
+    "/app/automations/templates": {
+      en: "/app/automations/templates",
+      fr: "/app/automatisations/modeles",
+    },
+    "/app/automations/history": {
+      en: "/app/automations/history",
+      fr: "/app/automatisations/historique",
+    },
   },
 });
 

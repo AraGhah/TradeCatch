@@ -89,6 +89,25 @@ function normalizePhone(p: string) {
   return p.replace(/[^\d+]/g, "");
 }
 
+async function handQuoteOff(thread: QuoteThread): Promise<void> {
+  try {
+    const { handQuoteToSmsAutomation } = await import(
+      "@/product/sms-automation/hooks"
+    );
+    await handQuoteToSmsAutomation({
+      organizationId: thread.organizationId,
+      threadId: thread.id,
+      phoneE164: thread.customerPhoneE164,
+      customerName: thread.customerName,
+      quoteRef: thread.quoteRef,
+      locale: thread.locale,
+      quoteSentAt: thread.quoteSentAt,
+    });
+  } catch (err) {
+    console.warn("[sms-automation] quote schedule skipped", err);
+  }
+}
+
 export function createStarterServices(deps: {
   store: StarterStore;
   sms: SmsPort;
@@ -292,7 +311,7 @@ export function createStarterServices(deps: {
         input.customerPhoneE164,
       );
       if (existing) {
-        return (
+        const updated =
           (await store.updateQuoteThread(existing.id, input.organizationId, {
             customerName: input.customerName ?? existing.customerName,
             quoteRef: input.quoteRef ?? existing.quoteRef,
@@ -304,8 +323,9 @@ export function createStarterServices(deps: {
             status: "active",
             stopReason: undefined,
             conversationMode: "auto",
-          })) ?? existing
-        );
+          })) ?? existing;
+        await handQuoteOff(updated);
+        return updated;
       }
 
       const thread = buildQuoteThread(input);
@@ -328,6 +348,7 @@ export function createStarterServices(deps: {
           input.quoteRef,
         );
       }
+      await handQuoteOff(created);
       return created;
     },
 
@@ -340,6 +361,16 @@ export function createStarterServices(deps: {
 
       for (const thread of due) {
         if (thread.conversationMode !== "auto") continue;
+        try {
+          const { quoteAutomationHasJob } = await import(
+            "@/product/sms-automation/hooks"
+          );
+          if (await quoteAutomationHasJob(thread.organizationId, thread.id)) {
+            continue;
+          }
+        } catch (err) {
+          console.warn("[sms-automation] quote ownership check skipped", err);
+        }
         const from = await input.smsFromForOrg(thread.organizationId);
         if (!from) {
           failed += 1;
@@ -543,13 +574,26 @@ export function createStarterServices(deps: {
     },
 
     async stopQuote(input) {
-      return store.updateQuoteThread(input.threadId, input.organizationId, {
+      const updated = await store.updateQuoteThread(input.threadId, input.organizationId, {
         status: input.status ?? "stopped",
         stopReason: input.reason,
         nextRunAt: undefined,
         conversationMode:
           input.reason === "human_takeover" ? "human" : undefined,
       });
+      try {
+        const { cancelQuoteAutomation } = await import(
+          "@/product/sms-automation/hooks"
+        );
+        await cancelQuoteAutomation(
+          input.organizationId,
+          input.threadId,
+          input.reason,
+        );
+      } catch (err) {
+        console.warn("[sms-automation] quote cancel skipped", err);
+      }
+      return updated;
     },
 
     async setHumanTakeover(input) {

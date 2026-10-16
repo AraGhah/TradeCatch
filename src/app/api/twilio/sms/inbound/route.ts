@@ -144,46 +144,63 @@ export async function POST(request: NextRequest) {
     console.warn("[starter/sms] quote dispatcher skipped", err);
   }
 
-  if (crmOrgId && body.trim()) {
-    try {
-      const { getCrmService } = await import("@/product/crm/runtime");
-      const crm = getCrmService();
-      await crm.capture({
-        organizationId: crmOrgId,
-        source: "sms",
-        phoneE164: from,
-        actor: "sms",
-        message: {
-          direction: "inbound",
-          body,
-          fromE164: from,
-          toE164: to,
-          automated: false,
-          providerMessageSid: params.MessageSid,
-          deliveryStatus: "delivered",
-        },
-      });
-      for (const reply of replies) {
+    if (crmOrgId && body.trim()) {
+      try {
+        const { getCrmService } = await import("@/product/crm/runtime");
+        const crm = getCrmService();
         await crm.capture({
           organizationId: crmOrgId,
           source: "sms",
           phoneE164: from,
           actor: "sms",
           message: {
-            direction: "outbound",
-            body: reply,
-            fromE164: to,
-            toE164: from,
-            automated: true,
-            simulated: false,
-            deliveryStatus: "queued",
+            direction: "inbound",
+            body,
+            fromE164: from,
+            toE164: to,
+            automated: false,
+            providerMessageSid: params.MessageSid,
+            deliveryStatus: "delivered",
           },
         });
+        for (const reply of replies) {
+          await crm.capture({
+            organizationId: crmOrgId,
+            source: "sms",
+            phoneE164: from,
+            actor: "sms",
+            message: {
+              direction: "outbound",
+              body: reply,
+              fromE164: to,
+              toE164: from,
+              automated: true,
+              simulated: false,
+              deliveryStatus: "queued",
+            },
+          });
+        }
+      } catch (err) {
+        console.warn("[crm] sms sync skipped", err);
       }
-    } catch (err) {
-      console.warn("[crm] sms sync skipped", err);
     }
-  }
+
+    if (crmOrgId && body.trim()) {
+      try {
+        const { getAutomationServices } = await import(
+          "@/product/sms-automation/runtime"
+        );
+        await getAutomationServices().applyInbound({
+          organizationId: crmOrgId,
+          fromE164: from,
+          body,
+          messageSid: params.MessageSid,
+          skipCrm: true,
+        });
+      } catch (err) {
+        console.warn("[sms-automation] inbound skipped", err);
+      }
+    }
 
   return new NextResponse(twimlMessages(replies), {
     status: 200,

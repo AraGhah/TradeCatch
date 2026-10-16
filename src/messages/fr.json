@@ -2135,7 +2135,129 @@
       "admin": "Admin",
       "logout": "Déconnexion",
       "receptionist": "Réceptionniste IA",
-      "phoneSettings": "Paramètres téléphone"
+      "phoneSettings": "Paramètres téléphone",
+      "automations": "Automatisations"
+    },
+    "automations": {
+      "headline": "Automatisations",
+      "intro": "Configurez les textos de récupération et les rappels de soumission. L'envoi se fait dans le serveur même si vous n'êtes pas connecté, et seulement après une nouvelle vérification du client, du consentement et de l'horaire.",
+      "missedIntro": "Lorsqu'un appel est manqué et que les règles le permettent, TradeCatch planifie un texto de récupération au nom de votre entreprise. Un appel répondu ne lance pas ce flux.",
+      "quoteIntro": "Les rappels partent seulement tant que la soumission reste sans réponse. Une réponse, une acceptation ou un refus annule ce qui n'a pas encore été remis au fournisseur.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "enable": "Activer",
+      "disable": "Désactiver",
+      "edit": "Modifier la configuration",
+      "test": "Tester l'automatisation",
+      "save": "Enregistrer",
+      "saved": "Enregistré.",
+      "error": "Une erreur s'est produite.",
+      "none": "Aucun pour le moment",
+      "later": "Disponible après les deux flux principaux",
+      "simulated": "simulation",
+      "pendingTitle": "Rappels planifiés",
+      "pendingEmpty": "Aucun rappel de soumission n'est planifié.",
+      "templatesTitle": "Modèles de message",
+      "templatesIntro": "Textes en français et en anglais. Le nom de l'entreprise et la mention STOP restent obligatoires : une personnalisation ne peut pas les retirer.",
+      "historyTitle": "Historique des messages",
+      "historyIntro": "Envoyé n'est pas la même chose que livré. Une ligne annulée n'a jamais été remise au fournisseur téléphonique.",
+      "historyEmpty": "Aucun message automatisé pour le moment.",
+      "subnav": {
+        "overview": "Aperçu",
+        "missedCall": "Récupération d'appel manqué",
+        "quotes": "Relances de soumission",
+        "templates": "Modèles de message",
+        "history": "Historique"
+      },
+      "table": {
+        "automation": "Automatisation",
+        "status": "Statut",
+        "trigger": "Déclencheur",
+        "action": "Action",
+        "last": "Dernière exécution",
+        "success": "Réussites",
+        "failures": "Échecs",
+        "responses": "Réponses"
+      },
+      "names": {
+        "missed_call_recovery": "Récupération d'appel manqué",
+        "quote_followup": "Relance de soumission",
+        "appointment_reminder": "Rappel de rendez-vous",
+        "customer_reengagement": "Relance client inactif",
+        "urgent_lead_notification": "Avis de lead urgent"
+      },
+      "triggers": {
+        "missed_call_recovery": "Appel client manqué",
+        "quote_followup": "Soumission sans réponse",
+        "appointment_reminder": "Rendez-vous qui approche",
+        "customer_reengagement": "Client inactif admissible",
+        "urgent_lead_notification": "Lead urgent détecté"
+      },
+      "actions": {
+        "missed_call_recovery": "Envoyer un texto",
+        "quote_followup": "Envoyer un rappel",
+        "appointment_reminder": "Envoyer un rappel",
+        "customer_reengagement": "Envoyer un suivi",
+        "urgent_lead_notification": "Aviser l'entrepreneur"
+      },
+      "templates": {
+        "missed_call_recovery": "Récupération d'appel manqué",
+        "quote_followup_1": "Relance de soumission 1",
+        "quote_followup_2": "Relance de soumission 2",
+        "appointment_confirmation": "Confirmation de rendez-vous",
+        "appointment_reminder": "Rappel de rendez-vous",
+        "general_followup": "Suivi général",
+        "human_assistance": "Aide humaine",
+        "after_hours": "Réponse hors heures"
+      },
+      "fields": {
+        "delay": "Délai initial",
+        "secondDelay": "Délai du second rappel",
+        "language": "Langue du message",
+        "languageCustomer": "Préférence du client",
+        "languageEn": "Anglais",
+        "languageFr": "Français",
+        "attempts": "Nombre maximal de tentatives",
+        "windowStart": "Début de la plage d'envoi (heure)",
+        "windowEnd": "Fin de la plage d'envoi (heure)",
+        "weekend": "Envoi la fin de semaine",
+        "duplicate": "Protection contre les doublons",
+        "stopReply": "Arrêter quand le client répond",
+        "stopHuman": "Arrêter quand une personne prend le relais",
+        "stopAccepted": "Arrêter si la soumission est acceptée",
+        "stopRejected": "Arrêter si la soumission est refusée",
+        "minutes": "minutes après l'événement"
+      },
+      "templateUi": {
+        "variables": "Insérer une variable",
+        "preview": "Aperçu",
+        "reset": "Réinitialiser",
+        "chars": "Caractères",
+        "segments": "Segments SMS",
+        "segmentWarning": "Ce message peut utiliser plus d'un segment SMS et coûter plus cher à livrer.",
+        "missing": "Valeurs manquantes"
+      },
+      "testPanel": {
+        "title": "Centre de test — flux simulés",
+        "intro": "Ces actions utilisent des numéros fictifs et ne contactent jamais un vrai téléphone. Exécutez la prochaine action pour lancer immédiatement un travail simulé dû.",
+        "missed": "Simuler un appel manqué",
+        "run": "Exécuter la prochaine action planifiée",
+        "reply": "Simuler une réponse client",
+        "quote": "Simuler une soumission",
+        "accept": "Marquer la soumission acceptée",
+        "result": "Résultat",
+        "phone": "Téléphone fictif",
+        "name": "Nom fictif"
+      },
+      "historyCols": {
+        "customer": "Client",
+        "automation": "Automatisation",
+        "status": "Statut",
+        "result": "Résultat",
+        "message": "Message",
+        "scheduled": "Planifié",
+        "sent": "Remis"
+      }
     },
     "testCenter": {
       "headline": "Centre de test",

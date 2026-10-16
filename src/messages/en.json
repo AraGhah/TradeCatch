@@ -2135,7 +2135,129 @@
       "admin": "Admin",
       "logout": "Sign out",
       "receptionist": "AI Receptionist",
-      "phoneSettings": "Phone settings"
+      "phoneSettings": "Phone settings",
+      "automations": "Automations"
+    },
+    "automations": {
+      "headline": "Automations",
+      "intro": "Configure recovery texts and quote reminders. Messages are sent by the backend even when you are not signed in, and only after the current customer, consent and schedule are checked again.",
+      "missedIntro": "When a call is missed and the rules allow it, TradeCatch schedules one recovery text in your business name. An answered call does not start this workflow.",
+      "quoteIntro": "Reminders go out only while an estimate is still unanswered. A reply, an acceptance or a rejection cancels what has not been submitted yet.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "enable": "Enable",
+      "disable": "Disable",
+      "edit": "Edit configuration",
+      "test": "Test automation",
+      "save": "Save",
+      "saved": "Saved.",
+      "error": "Something went wrong.",
+      "none": "None yet",
+      "later": "Available after the two primary workflows",
+      "simulated": "simulation",
+      "pendingTitle": "Scheduled reminders",
+      "pendingEmpty": "No quote reminders are scheduled.",
+      "templatesTitle": "Message templates",
+      "templatesIntro": "French and English texts. The business name and the STOP line stay required, so a customization cannot drop them.",
+      "historyTitle": "Message history",
+      "historyIntro": "Sent is not the same as delivered. Canceled rows never reached the telephone provider.",
+      "historyEmpty": "No automated messages yet.",
+      "subnav": {
+        "overview": "Overview",
+        "missedCall": "Missed-call recovery",
+        "quotes": "Quote follow-ups",
+        "templates": "Message templates",
+        "history": "History"
+      },
+      "table": {
+        "automation": "Automation",
+        "status": "Status",
+        "trigger": "Trigger",
+        "action": "Action",
+        "last": "Last execution",
+        "success": "Successful",
+        "failures": "Failures",
+        "responses": "Responses"
+      },
+      "names": {
+        "missed_call_recovery": "Missed-call recovery",
+        "quote_followup": "Quote follow-up",
+        "appointment_reminder": "Appointment reminder",
+        "customer_reengagement": "Customer re-engagement",
+        "urgent_lead_notification": "Urgent lead notification"
+      },
+      "triggers": {
+        "missed_call_recovery": "Customer call missed",
+        "quote_followup": "Quote remains unanswered",
+        "appointment_reminder": "Appointment approaching",
+        "customer_reengagement": "Eligible inactive customer",
+        "urgent_lead_notification": "Urgent lead detected"
+      },
+      "actions": {
+        "missed_call_recovery": "Send SMS",
+        "quote_followup": "Send reminder",
+        "appointment_reminder": "Send reminder",
+        "customer_reengagement": "Send follow-up",
+        "urgent_lead_notification": "Notify contractor"
+      },
+      "templates": {
+        "missed_call_recovery": "Missed-call recovery",
+        "quote_followup_1": "Quote follow-up 1",
+        "quote_followup_2": "Quote follow-up 2",
+        "appointment_confirmation": "Appointment confirmation",
+        "appointment_reminder": "Appointment reminder",
+        "general_followup": "General follow-up",
+        "human_assistance": "Human assistance",
+        "after_hours": "After-hours response"
+      },
+      "fields": {
+        "delay": "Initial delay",
+        "secondDelay": "Second reminder delay",
+        "language": "Message language",
+        "languageCustomer": "Customer preference",
+        "languageEn": "English",
+        "languageFr": "French",
+        "attempts": "Maximum attempts",
+        "windowStart": "Sending window starts (hour)",
+        "windowEnd": "Sending window ends (hour)",
+        "weekend": "Weekend sending",
+        "duplicate": "Duplicate protection",
+        "stopReply": "Stop when the customer replies",
+        "stopHuman": "Stop when a person takes over",
+        "stopAccepted": "Stop when the quote is accepted",
+        "stopRejected": "Stop when the quote is rejected",
+        "minutes": "minutes from the event"
+      },
+      "templateUi": {
+        "variables": "Insert a variable",
+        "preview": "Preview",
+        "reset": "Reset",
+        "chars": "Characters",
+        "segments": "SMS segments",
+        "segmentWarning": "This message may use more than one SMS segment and can cost more to deliver.",
+        "missing": "Missing values"
+      },
+      "testPanel": {
+        "title": "Test Center — simulated workflows",
+        "intro": "These actions use fictional numbers and never contact a real handset. Run the next action to execute a due simulated job immediately.",
+        "missed": "Simulate missed call",
+        "run": "Run next scheduled action",
+        "reply": "Simulate customer reply",
+        "quote": "Simulate quote",
+        "accept": "Mark quote accepted",
+        "result": "Result",
+        "phone": "Fictional phone",
+        "name": "Fictional name"
+      },
+      "historyCols": {
+        "customer": "Customer",
+        "automation": "Automation",
+        "status": "Status",
+        "result": "Result",
+        "message": "Message",
+        "scheduled": "Scheduled",
+        "sent": "Submitted"
+      }
     },
     "testCenter": {
       "headline": "Test Center",

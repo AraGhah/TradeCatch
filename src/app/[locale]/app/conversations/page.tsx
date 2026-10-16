@@ -52,6 +52,7 @@ export default async function ConversationsPage({
                 <p className="font-semibold text-navy">{title}</p>
                 <p className="text-sm text-navy/70">
                   {conversation.lastMessage?.body || t("noMessages")}
+                  {conversation.lastMessage?.simulated ? ` · ${t("simulated")}` : ""}
                 </p>
               </div>
             );
