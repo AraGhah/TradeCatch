@@ -1,7 +1,13 @@
 import type { FeatureId, PlanId } from "./entitlements";
+import type {
+  AccountType,
+  BusinessFeatureFlags,
+} from "@/product/demo/types";
+import { DEFAULT_DEMO_FEATURES } from "@/product/demo/types";
 
 export type OrgStatus = "active" | "suspended" | "churned";
 export type MemberRole = "owner" | "admin" | "member";
+export type PlatformRole = "none" | "admin";
 
 export type Organization = {
   id: string;
@@ -10,6 +16,14 @@ export type Organization = {
   plan: PlanId;
   status: OrgStatus;
   missedCallClientId: string | null;
+  accountType: AccountType;
+  industry: string | null;
+  phoneE164: string | null;
+  city: string | null;
+  serviceArea: string;
+  timezone: string;
+  localeDefault: "en" | "fr";
+  features: BusinessFeatureFlags;
   createdAt: string;
   updatedAt: string;
 };
@@ -19,6 +33,7 @@ export type User = {
   email: string;
   name: string;
   locale: "en" | "fr";
+  platformRole: PlatformRole;
   createdAt: string;
   updatedAt: string;
 };
@@ -67,6 +82,7 @@ export type TenantContext = {
   organization: Organization;
   membership: Membership;
   features: readonly FeatureId[];
+  isPlatformAdmin: boolean;
 };
 
 export type CreateOrganizationInput = {
@@ -77,4 +93,31 @@ export type CreateOrganizationInput = {
   ownerName: string;
   locale?: "en" | "fr";
   missedCallClientId?: string | null;
+  accountType?: AccountType;
+  industry?: string | null;
+  phoneE164?: string | null;
+  city?: string | null;
+  serviceArea?: string;
+  timezone?: string;
+  features?: Partial<BusinessFeatureFlags>;
+  status?: OrgStatus;
 };
+
+export type UpdateOrganizationInput = {
+  name?: string;
+  plan?: PlanId;
+  status?: OrgStatus;
+  industry?: string | null;
+  phoneE164?: string | null;
+  city?: string | null;
+  serviceArea?: string;
+  timezone?: string;
+  localeDefault?: "en" | "fr";
+  features?: Partial<BusinessFeatureFlags>;
+};
+
+export function mergeBusinessFeatures(
+  partial?: Partial<BusinessFeatureFlags> | null,
+): BusinessFeatureFlags {
+  return { ...DEFAULT_DEMO_FEATURES, ...(partial ?? {}) };
+}

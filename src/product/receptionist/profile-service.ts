@@ -129,6 +129,68 @@ export type ActivateDeps = {
   env?: NodeJS.ProcessEnv;
 };
 
+/**
+ * Owner/admin toggle: activates routing for the org's assigned (or business)
+ * phone number. Does not invent a Twilio number — uses the existing ops-assigned
+ * number, else the organization / Module A SMS number as a staging/demo target.
+ */
+export async function ownerToggleActivation(
+  deps: ActivateDeps & {
+    getOrgPhone?(
+      organizationId: string,
+    ): Promise<string | null | undefined>;
+  },
+  input: {
+    organization: { id: string; missedCallClientId: string | null };
+    role: "owner" | "admin" | "member";
+    userEmail: string;
+    activated: boolean;
+    /** Optional explicit number (ops / admin). Owners cannot override an existing ops number. */
+    phoneNumberE164?: string;
+  },
+): Promise<ServiceResult> {
+  if (input.role !== "owner" && input.role !== "admin") {
+    return {
+      status: 403,
+      body: { error: "Only an owner or admin can activate the receptionist." },
+    };
+  }
+
+  const existing = await deps.profiles.getProfile(input.organization.id);
+  let phone =
+    input.phoneNumberE164?.trim() ||
+    existing?.phoneNumberE164 ||
+    (await deps.getOrgPhone?.(input.organization.id)) ||
+    undefined;
+
+  if (!phone && input.organization.missedCallClientId) {
+    const client = await deps.getClient(input.organization.missedCallClientId);
+    phone = client?.smsFromNumber;
+  }
+
+  if (input.activated && !phone) {
+    return {
+      status: 409,
+      body: {
+        error:
+          "No phone number is assigned yet. Link a business number or ask ops to assign one before activating.",
+      },
+    };
+  }
+
+  // Deactivate without a number: keep any existing number, just flip the flag.
+  if (!input.activated) {
+    phone = existing?.phoneNumberE164 || phone || "+15145550100";
+  }
+
+  return activateProfile(deps, {
+    organizationId: input.organization.id,
+    phoneNumberE164: phone!,
+    activated: input.activated,
+    actor: input.userEmail,
+  });
+}
+
 export async function activateProfile(
   deps: ActivateDeps,
   input: {

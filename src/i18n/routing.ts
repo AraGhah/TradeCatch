@@ -45,13 +45,33 @@ export const routing = defineRouting({
       en: "/login",
       fr: "/connexion",
     },
+    "/admin": {
+      en: "/admin",
+      fr: "/admin",
+    },
     "/app": {
       en: "/app",
       fr: "/app",
     },
+    "/app/conversations": {
+      en: "/app/conversations",
+      fr: "/app/conversations",
+    },
+    "/app/analytics": {
+      en: "/app/analytics",
+      fr: "/app/analytique",
+    },
+    "/app/test-center": {
+      en: "/app/test-center",
+      fr: "/app/centre-de-test",
+    },
     "/app/leads": {
       en: "/app/leads",
       fr: "/app/leads",
+    },
+    "/app/leads/[id]": {
+      en: "/app/leads/[id]",
+      fr: "/app/leads/[id]",
     },
     "/app/website-leads": {
       en: "/app/website-leads",
@@ -76,6 +96,14 @@ export const routing = defineRouting({
     "/app/calls": {
       en: "/app/calls",
       fr: "/app/appels",
+    },
+    "/app/calls/settings": {
+      en: "/app/calls/settings",
+      fr: "/app/appels/parametres",
+    },
+    "/app/test-center/live-phone": {
+      en: "/app/test-center/live-phone",
+      fr: "/app/centre-de-test/telephone-live",
     },
     "/app/receptionist": {
       en: "/app/receptionist",

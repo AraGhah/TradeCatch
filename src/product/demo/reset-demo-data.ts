@@ -40,6 +40,13 @@ export const DEMO_RESET_TABLES = [
   // Receptionist
   "rc_call_sessions",
   "rc_profiles",
+  "rc_call_events",
+  // CRM
+  "tc_crm_messages",
+  "tc_lead_events",
+  "tc_conversations",
+  "tc_leads",
+  "tc_customers",
   // Email automation
   "em_enrollments",
   "em_suppressions",

@@ -2112,22 +2112,47 @@
     "preferAudit": "Pas encore en pilote ? Réservez un audit gratuit."
   },
   "app": {
+    "demoAccountBadge": "Compte démo",
     "nav": {
       "dashboard": "Tableau de bord",
-      "leads": "Appels manqués",
-      "calls": "Appels IA",
+      "overview": "Vue d’ensemble",
+      "leads": "Leads",
+      "calls": "Appels",
       "websiteLeads": "Site web",
-      "quotes": "Soumissions",
+      "quotes": "Soumissions et relances",
       "bookings": "Rendez-vous",
+      "appointments": "Rendez-vous",
       "pipeline": "Pipeline",
       "reviews": "Avis",
       "email": "Courriels",
       "timeline": "Chronologie",
       "onboarding": "Démarrage",
       "inbox": "Boîte",
-      "settings": "Réglages",
+      "conversations": "Conversations",
+      "analytics": "Analytique",
+      "settings": "Paramètres de l’entreprise",
+      "testCenter": "Centre de test",
+      "admin": "Admin",
       "logout": "Déconnexion",
-      "receptionist": "Réceptionniste"
+      "receptionist": "Réceptionniste IA",
+      "phoneSettings": "Paramètres téléphone"
+    },
+    "testCenter": {
+      "headline": "Centre de test",
+      "intro": "Générez ou réinitialisez des données fictives pour cette entreprise démo. Les actions simulées ne contactent jamais de vrais clients.",
+      "demoBadge": "Mode démo",
+      "liveBadge": "Compte réel",
+      "notDemo": "Les outils du centre de test sont réservés aux entreprises démo.",
+      "adminOnly": "Seuls les administrateurs TradeCatch peuvent générer ou réinitialiser les données démo.",
+      "generateData": "Générer des données démo",
+      "resetAccount": "Réinitialiser le compte démo",
+      "confirmReset": "Réinitialiser ce compte démo ? Les enregistrements générés seront retirés. L’entreprise et le propriétaire restent.",
+      "seedOk": "Données démo fictives générées pour cette entreprise seulement.",
+      "resetOk": "Compte démo réinitialisé. L’accès propriétaire est conservé.",
+      "seedFailed": "Impossible de générer les données démo.",
+      "resetFailed": "Impossible de réinitialiser le compte démo.",
+      "safetyNote": "SMS et appels restent en dry-run / sandbox sauf activation explicite d’un test live autorisé en staging.",
+      "livePhoneLink": "Ouvrir le test téléphonique live"
     },
     "calls": {
       "headline": "Appels de la réceptionniste",
@@ -2152,7 +2177,9 @@
         "transfers": "Transférés à une personne",
         "emergencies": "Urgences",
         "requests": "Messages et demandes de rendez-vous"
-      }
+      },
+      "phoneSettings": "Paramètres téléphone",
+      "liveTesting": "Test téléphonique live"
     },
     "email": {
       "headline": "Relances automatiques par courriel",
@@ -2237,6 +2264,88 @@
       "noAddress": "Pas encore d'adresse",
       "entitlement": "La récupération d'appels manqués n'est pas dans votre forfait."
     },
+    "crm": {
+      "headline": "Leads",
+      "intro": "Clients, leads et textos de cette entreprise. Les appels de la réceptionniste, les appels manqués, les textos et les ajouts manuels arrivent ici. Une autre entreprise ne les voit pas.",
+      "entitlement": "La gestion des leads n'est pas dans votre forfait.",
+      "search": "Recherche",
+      "status": "Statut",
+      "source": "Source",
+      "priority": "Priorité",
+      "all": "Tous",
+      "filter": "Filtrer",
+      "clear": "Fermer",
+      "empty": "Aucun lead pour l'instant.",
+      "newLead": "Ajouter un lead",
+      "phone": "Téléphone",
+      "name": "Nom",
+      "email": "Courriel",
+      "service": "Service",
+      "description": "Demande",
+      "location": "Lieu",
+      "notes": "Notes internes",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "error": "Quelque chose s'est mal passé.",
+      "customer": "Client",
+      "assigned": "Assigné à",
+      "unassigned": "Non assigné",
+      "events": "Historique",
+      "conversation": "Messages",
+      "control": "Qui répond",
+      "noMessages": "Aucun message pour l'instant.",
+      "inbound": "Client",
+      "outbound": "Vous",
+      "simulated": "simulé",
+      "automated": "automatique",
+      "replyPlaceholder": "Écrire une réponse",
+      "manualNote": "Une réponse ici est enregistrée sur le lead. La livraison du texto reste distincte du statut du lead. En démo ou en simulation, rien n'est envoyé à un vrai téléphone.",
+      "send": "Enregistrer la réponse",
+      "back": "Tous les leads",
+      "detail": "Ouvrir le lead",
+      "detailIntro": "Le statut, la priorité et l'assignation restent indépendants de la livraison d'un texto ou de l'existence d'un rendez-vous.",
+      "conversationsHeadline": "Conversations",
+      "conversationsIntro": "Fils de textos de cette entreprise. Mettez l'automatisation en pause quand une personne doit prendre le relais.",
+      "simulate": "Simuler un lead",
+      "simulateOk": "Un lead fictif a été ajouté.",
+      "sources": {
+        "ai_receptionist": "Réceptionniste IA",
+        "missed_call": "Appel manqué",
+        "sms": "Texto",
+        "website": "Site web",
+        "manual": "Manuel"
+      },
+      "statuses": {
+        "new": "Nouveau",
+        "contacted": "Contacté",
+        "qualified": "Qualifié",
+        "appointment_booked": "Rendez-vous pris",
+        "quote_sent": "Soumission envoyée",
+        "won": "Gagné",
+        "lost": "Perdu",
+        "closed": "Fermé"
+      },
+      "priorities": {
+        "urgent": "Urgent",
+        "high": "Haute",
+        "medium": "Moyenne",
+        "low": "Basse"
+      },
+      "controls": {
+        "ai_managed": "L'IA répond",
+        "human_managed": "Une personne répond",
+        "automation_paused": "Automatisation en pause",
+        "closed": "Fermée"
+      },
+      "delivery": {
+        "queued": "En file",
+        "sending": "Envoi",
+        "sent": "Envoyé",
+        "delivered": "Livré",
+        "failed": "Échec",
+        "undelivered": "Non livré"
+      }
+    },
     "settings": {
       "headline": "Réglages de l'espace",
       "intro": "Les droits du forfait sont appliqués côté serveur — cacher un bouton ne suffit pas.",
@@ -2263,7 +2372,20 @@
       "apiKeyCreating": "Génération…",
       "apiKeyOnce": "Copiez cette clé maintenant",
       "apiKeyHint": "POST /api/website-leads avec l'en-tête X-TradeCatch-Key. Le texte en clair n'est montré qu'une fois.",
-      "apiKeyError": "Impossible de créer la clé API."
+      "apiKeyError": "Impossible de créer la clé API.",
+      "demoAccount": "Compte entrepreneur démo",
+      "featuresHeading": "Fonctionnalités",
+      "featuresIntro": "Activez ou désactivez les modules TradeCatch pour cette entreprise. Les droits du forfait s’appliquent toujours.",
+      "saveFeatures": "Enregistrer les fonctionnalités",
+      "featuresSaved": "Fonctionnalités enregistrées.",
+      "featuresSaveFailed": "Impossible d’enregistrer les fonctionnalités.",
+      "featureFlags": {
+        "aiReceptionist": "Réceptionniste IA",
+        "appointmentBooking": "Prise de rendez-vous",
+        "callTransfer": "Transfert d’appel",
+        "missedCallRecovery": "Récupération d’appels manqués",
+        "quoteFollowups": "Relances de soumissions"
+      }
     },
     "bookings": {
       "headline": "Rendez-vous",
@@ -2360,10 +2482,10 @@
       "cta": "Voir Growth sur la page tarifs"
     },
     "receptionist": {
-      "headline": "Réglages de la réceptionniste",
-      "intro": "Ce que la réceptionniste dit et où elle achemine les appelants. Les changements s’appliquent aux nouveaux appels en environ 30 secondes.",
+      "headline": "Réceptionniste IA",
+      "intro": "Configurez, activez et testez la réceptionniste virtuelle de votre entreprise. Chaque entreprise a sa propre configuration isolée.",
       "statusActive": "Répond aux appels au {number}.",
-      "statusInactive": "Ne répond pas encore aux appels. Le fondateur branche votre numéro de téléphone et l’active. Vous pouvez tout préparer ci-dessous en attendant.",
+      "statusInactive": "Ne répond pas encore aux appels. Enregistrez la configuration, puis activez la réceptionniste pour brancher le routage.",
       "notLinked": "Votre client téléphonique n’est pas encore lié. Demandez au fondateur de le connecter avant de configurer la réceptionniste.",
       "entitlement": "La réceptionniste n’est pas offerte avec votre forfait.",
       "readOnly": "Seul un propriétaire ou un administrateur peut modifier ces réglages.",
@@ -2424,7 +2546,191 @@
       "notifyTitle": "Résumés d’appel",
       "notifyEmail": "Envoyer les résumés à ce courriel",
       "notifySms": "Envoyer les résumés et alertes d’urgence par texto à",
-      "collectTime": "Demander à l’appelant la date et l’heure souhaitées"
+      "collectTime": "Demander à l’appelant la date et l’heure souhaitées",
+      "activate": "Activer l'IA",
+      "deactivate": "Désactiver l'IA",
+      "activateError": "Impossible de modifier l'activation.",
+      "editConfig": "Modifier la configuration",
+      "testAi": "Tester la réceptionniste IA",
+      "viewHistory": "Voir l'historique des appels",
+      "identityTitle": "Identité et personnalité",
+      "receptionistName": "Nom de la réceptionniste",
+      "communicationStyle": "Style de communication",
+      "speakingSpeed": "Débit de parole",
+      "callHandlingTitle": "Règles de prise d'appels",
+      "callHandlingIntro": "Ces réglages pilotent le routage réel des appels, pas seulement un indicateur visuel.",
+      "callHandlingMode": "Mode de prise d'appels",
+      "companyName": "Nom de l'entreprise",
+      "industry": "Secteur",
+      "services": "Services",
+      "servicesPlaceholder": "Débouchage, réparations, installations",
+      "serviceAreas": "Zones de service",
+      "areasPlaceholder": "Montréal, Laval, Longueuil",
+      "emergencyServices": "Services d'urgence disponibles",
+      "emergencyHours": "Heures d'urgence",
+      "startingPrices": "Prix de départ (approuvés seulement)",
+      "pricesHelp": "Laissez vide pour interdire toute citation de prix. Ne jamais inventer de tarifs.",
+      "businessAddress": "Adresse de l'entreprise",
+      "additionalInstructions": "Instructions supplémentaires",
+      "faqQuestion": "Question",
+      "transferTitle": "Transferts et escalade humaine",
+      "transferIntro": "Numéros autorisés et comportement si personne ne répond.",
+      "primaryTransfer": "Numéro de transfert principal",
+      "secondaryTransfer": "Numéro de transfert secondaire",
+      "transferTimeout": "Délai de transfert (secondes)",
+      "failedTransfer": "Si le transfert échoue",
+      "appointmentTitle": "Gestion des rendez-vous",
+      "appointmentIntro": "Règles de réservation. Le calendrier simulé empêche les doubles réservations dans les tests.",
+      "duration": "Durée (minutes)",
+      "buffer": "Tampon entre rendez-vous (minutes)",
+      "bookingNotice": "Préavis minimum (heures)",
+      "maxDaily": "Maximum par jour (optionnel)",
+      "confirmationMethod": "Méthode de confirmation",
+      "confirmBoth": "SMS et courriel",
+      "confirmNone": "Aucune",
+      "bookableServices": "Services réservables",
+      "overview": {
+        "aiName": "Nom de l'IA",
+        "phone": "Numéro assigné",
+        "language": "Langue",
+        "voice": "Voix",
+        "business": "Entreprise",
+        "calls": "Appels traités",
+        "appointments": "Rendez-vous pris",
+        "transfers": "Transferts",
+        "lastActivity": "Dernière activité",
+        "mode": "Mode d'appel"
+      },
+      "status": {
+        "active": "Actif",
+        "inactive": "Inactif",
+        "error": "Erreur"
+      },
+      "connection": {
+        "not_connected": "Configuration enregistrée — connexion téléphonique opérationnelle non établie (voir Task 4).",
+        "configured": "Routage configuré pour le numéro assigné.",
+        "error": "Erreur d'intégration — comportement de secours appliqué."
+      },
+      "languageValue": {
+        "en": "English",
+        "fr": "Français",
+        "bilingual": "Bilingue"
+      },
+      "modes": {
+        "always": "Toujours actif",
+        "business_hours": "Heures d'ouverture seulement",
+        "after_hours": "Hors des heures seulement",
+        "overflow": "Débordement / sans réponse",
+        "disabled": "Désactivé"
+      },
+      "styles": {
+        "professional_friendly": "Professionnel et amical",
+        "professional": "Professionnel",
+        "warm": "Chaleureux",
+        "brief": "Bref"
+      },
+      "speeds": {
+        "slow": "Lent",
+        "normal": "Normal",
+        "fast": "Rapide"
+      },
+      "failed": {
+        "take_message": "Prendre un message",
+        "urgent_lead": "Créer une piste urgente",
+        "voicemail": "Messagerie vocale"
+      },
+      "test": {
+        "title": "Test de la réceptionniste IA",
+        "badge": "Conversation simulée. Aucun appel réel, SMS ou courriel.",
+        "language": "Langue",
+        "scenario": "Scénario",
+        "scenarioOpen": "Pendant les heures",
+        "scenarioAfter": "Hors des heures",
+        "start": "Démarrer le test",
+        "empty": "Démarrez un test pour parler à votre configuration.",
+        "you": "Vous",
+        "ai": "IA",
+        "system": "Système",
+        "placeholder": "Écrivez comme un client…",
+        "send": "Envoyer",
+        "ended": "Appel simulé terminé.",
+        "restart": "Nouveau test",
+        "error": "Le test est indisponible pour le moment."
+      },
+      "history": {
+        "title": "Historique des appels",
+        "loading": "Chargement…",
+        "empty": "Aucun appel enregistré pour cette entreprise.",
+        "error": "Impossible de charger l'historique.",
+        "simulated": "simulé",
+        "duration": "Durée",
+        "outcome": "Résultat",
+        "urgency": "Urgence",
+        "transfer": "Transfert",
+        "yes": "Oui"
+      }
+    },
+    "phoneSettings": {
+      "headline": "Paramètres téléphone",
+      "intro": "Connectez le numéro TradeCatch, le transfert humain et le routage des appels entrants.",
+      "entitlement": "La gestion des appels n’est pas offerte avec votre forfait.",
+      "backToCalls": "Appels",
+      "status": {
+        "connected": "Connecté",
+        "disconnected": "Déconnecté",
+        "error": "Erreur"
+      },
+      "webhook": "Webhook vocal",
+      "numbersTitle": "Numéros",
+      "businessPhone": "Téléphone d’affaires",
+      "tradecatchNumber": "Numéro TradeCatch",
+      "forwardingHelp": "Pour conserver votre numéro public, configurez un renvoi compatible chez votre opérateur vers le numéro TradeCatch, puis validez-le avant d’activer le service.",
+      "forwardingAck": "J’ai vérifié que le renvoi d’appels fonctionne avec mon opérateur.",
+      "routingTitle": "Routage",
+      "aiEnabled": "Réceptionniste IA activée",
+      "inboundStrategy": "Stratégie d’entrée",
+      "strategy": {
+        "ai_first": "IA d’abord",
+        "human_first": "Humain d’abord (puis IA si sans réponse)"
+      },
+      "voiceEngine": "Moteur vocal",
+      "engine": {
+        "gather": "Gather (TwiML, prêt pour Twilio)",
+        "conversation_relay": "ConversationRelay (WebSocket — Durable Objects requis en prod)"
+      },
+      "engineHelp": "Gather fonctionne dès maintenant avec les webhooks Twilio. ConversationRelay est branché côté TwiML ; le WebSocket de production nécessite Durable Objects.",
+      "transferTitle": "Transferts humains",
+      "humanTransfer": "Numéro de transfert principal",
+      "backupTransfer": "Numéro de secours",
+      "ringTimeout": "Délai de sonnerie (secondes)",
+      "recordingTitle": "Enregistrement",
+      "recordingEnabled": "Activer l’enregistrement des appels",
+      "recordingHelp": "Soumis aux avis, consentements et règles de conservation applicables.",
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Paramètres téléphone enregistrés.",
+      "error": "Impossible d’enregistrer."
+    },
+    "livePhoneTesting": {
+      "headline": "Test téléphonique live",
+      "intro": "Simulez le routage et les événements d’appel sans frais, ou affichez les instructions pour appeler le numéro de staging.",
+      "back": "Centre de test",
+      "simTitle": "Mode simulation",
+      "simBadge": "Aucun appel réel. Les résultats sont enregistrés dans l’historique de cette entreprise seulement.",
+      "scenario": "Scénario",
+      "language": "Langue",
+      "scenarios": {
+        "ai_answers": "L’IA répond",
+        "human_first_missed_then_ai": "Humain d’abord, sans réponse → IA",
+        "transfer_request": "Demande de transfert",
+        "appointment_request": "Demande de rendez-vous"
+      },
+      "startSimulation": "Lancer la simulation",
+      "liveInstructions": "Instructions test live",
+      "liveWarning": "Le bouton live n’envoie jamais d’appel sortant automatiquement. Les frais opérateur peuvent s’appliquer si vous composez le numéro.",
+      "testNumber": "Numéro de test",
+      "results": "Résultats",
+      "error": "Le test a échoué."
     }
   },
   "aiReceptionist": {
@@ -2950,5 +3256,44 @@
     "badge": "Mode démo",
     "message": "Environnement de staging — données fictives uniquement.",
     "hint": "Aucun vrai client n’est contacté. La production n’est pas modifiée."
+  },
+  "admin": {
+    "headline": "Entreprises démo",
+    "intro": "Créez des comptes entrepreneurs fictifs, ouvrez leurs tableaux de bord, générez des données simulées et réinitialisez sans toucher aux clients de production.",
+    "createButton": "+ Créer une entreprise démo",
+    "cancel": "Annuler",
+    "submitCreate": "Créer l’entreprise démo",
+    "empty": "Aucune entreprise démo pour l’instant.",
+    "demoBadge": "Démo",
+    "openDashboard": "Ouvrir le tableau de bord",
+    "generateData": "Générer des données démo",
+    "reset": "Réinitialiser",
+    "delete": "Supprimer",
+    "created": "Entreprise démo créée.",
+    "seeded": "Données démo fictives générées.",
+    "resetDone": "Compte démo réinitialisé.",
+    "deleted": "Entreprise démo supprimée.",
+    "confirmReset": "Réinitialiser ce compte démo et régénérer les données d’exemple ?",
+    "confirmDelete": "Supprimer définitivement cette entreprise démo ?",
+    "fields": {
+      "businessName": "Nom de l’entreprise",
+      "industry": "Industrie",
+      "ownerEmail": "Courriel du propriétaire",
+      "ownerName": "Nom du propriétaire",
+      "phoneNumber": "Téléphone (E.164)",
+      "city": "Ville",
+      "serviceArea": "Zone de service",
+      "language": "Langue",
+      "timezone": "Fuseau horaire",
+      "subscriptionPlan": "Forfait"
+    },
+    "errors": {
+      "load": "Impossible de charger les entreprises démo.",
+      "create": "Impossible de créer l’entreprise démo.",
+      "seed": "Impossible de générer les données démo.",
+      "reset": "Impossible de réinitialiser le compte démo.",
+      "delete": "Impossible de supprimer l’entreprise démo.",
+      "switch": "Impossible d’ouvrir le tableau de bord entrepreneur."
+    }
   }
 }

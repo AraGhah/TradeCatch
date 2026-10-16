@@ -142,6 +142,13 @@ Basic / Cloudflare Access gate. Full setup:
 
 [`docs/STAGING_ENVIRONMENT.md`](docs/STAGING_ENVIRONMENT.md)
 
+### Demo contractor accounts
+
+Administrators can create fictional contractor businesses at `/admin`, open their
+dashboards, generate simulated leads/calls/appointments, and reset or delete them
+without affecting other tenants. See
+[`docs/DEMO_BUSINESSES.md`](docs/DEMO_BUSINESSES.md).
+
 ```bash
 npm run deploy:staging          # deploy Worker env.staging only
 npm run db:seed:staging         # seed fictional demo client (staging DB only)

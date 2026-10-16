@@ -13,7 +13,10 @@ export function LocaleSwitcher({ inverted = false }: { inverted?: boolean }) {
     // useParams() in the href object can produce a soft-nav to `/en`, which
     // next-intl then redirects away under localePrefix: "as-needed" and
     // breaks the RSC payload fetch.
-    router.replace(pathname, { locale: nextLocale });
+    router.replace(
+      pathname as Exclude<typeof pathname, `${string}[${string}`>,
+      { locale: nextLocale },
+    );
   }
 
   return (
