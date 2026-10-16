@@ -76,18 +76,48 @@ export async function POST(request: NextRequest) {
   const { engine } = await ensureMissedCallReady();
   let replies: string[] = [];
   let moduleAHandled = false;
+  let crmOrgId: string | null = null;
+  let automationPaused = false;
   try {
-    const result = await engine.handleInboundSms({
-      fromE164: from,
-      toE164: to,
-      body,
-      mediaUrls,
-      messageSid: params.MessageSid,
-    });
-    // Return every engine reply via TwiML — technician guidance ("Code requis",
-    // APPELER with the customer number, stale-alert notices) must not be dropped.
-    replies = result.replies;
-    moduleAHandled = result.handled;
+    const { resolveOrganizationFromSmsTo: resolveOrg } = await import(
+      "@/product/starter/org-context"
+    );
+    const linked = await resolveOrg(to);
+    crmOrgId = linked?.id ?? null;
+    if (!crmOrgId) {
+      const { store } = await ensureMissedCallReady();
+      const client = await store.findClientBySmsFromNumber(to);
+      if (client) {
+        const { getSaasStore } = await import("@/product/saas/runtime");
+        const org = await getSaasStore().findOrganizationByMissedCallClientId(
+          client.id,
+        );
+        crmOrgId = org?.status === "active" ? org.id : null;
+      }
+    }
+    if (crmOrgId) {
+      const { getCrmService } = await import("@/product/crm/runtime");
+      automationPaused = await getCrmService().isAutomationPaused(crmOrgId, from);
+    }
+  } catch (err) {
+    console.warn("[crm] pause check skipped", err);
+  }
+
+  const technicianCommand = /^(accepter|refuser|appeler)\b/i.test(body.trim());
+  try {
+    if (automationPaused && !technicianCommand) {
+      moduleAHandled = true;
+    } else {
+      const result = await engine.handleInboundSms({
+        fromE164: from,
+        toE164: to,
+        body,
+        mediaUrls,
+        messageSid: params.MessageSid,
+      });
+      replies = result.replies;
+      moduleAHandled = result.handled;
+    }
   } catch (err) {
     console.error("[missed-call/sms]", err);
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });
@@ -100,6 +130,7 @@ export async function POST(request: NextRequest) {
     if (
       org &&
       orgHasFeature(org.plan, "QUOTE_FOLLOW_UP") &&
+      !automationPaused &&
       (!moduleAHandled || isOptOut(body, demoClientAccount()))
     ) {
       await getStarterServices().handleInboundSms({
@@ -111,6 +142,47 @@ export async function POST(request: NextRequest) {
     }
   } catch (err) {
     console.warn("[starter/sms] quote dispatcher skipped", err);
+  }
+
+  if (crmOrgId && body.trim()) {
+    try {
+      const { getCrmService } = await import("@/product/crm/runtime");
+      const crm = getCrmService();
+      await crm.capture({
+        organizationId: crmOrgId,
+        source: "sms",
+        phoneE164: from,
+        actor: "sms",
+        message: {
+          direction: "inbound",
+          body,
+          fromE164: from,
+          toE164: to,
+          automated: false,
+          providerMessageSid: params.MessageSid,
+          deliveryStatus: "delivered",
+        },
+      });
+      for (const reply of replies) {
+        await crm.capture({
+          organizationId: crmOrgId,
+          source: "sms",
+          phoneE164: from,
+          actor: "sms",
+          message: {
+            direction: "outbound",
+            body: reply,
+            fromE164: to,
+            toE164: from,
+            automated: true,
+            simulated: false,
+            deliveryStatus: "queued",
+          },
+        });
+      }
+    } catch (err) {
+      console.warn("[crm] sms sync skipped", err);
+    }
   }
 
   return new NextResponse(twimlMessages(replies), {

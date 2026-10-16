@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { getPathname } from "@/i18n/pathname";
 import type { AppPathnames } from "@/i18n/routing";
 
+type StaticPathname = Exclude<AppPathnames, `${string}[${string}`>;
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
 
 const OG_IMAGE_PATH = "/og.svg";
@@ -21,7 +23,7 @@ export function buildMetadata({
   description,
 }: {
   locale: string;
-  pathname: AppPathnames;
+  pathname: StaticPathname;
   title: string;
   description?: string;
 }): Metadata {

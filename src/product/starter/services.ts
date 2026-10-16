@@ -142,6 +142,22 @@ export function createStarterServices(deps: {
       });
 
       const duplicate = Boolean(before && before.id === lead.id);
+      if (!duplicate && lead.phoneE164) {
+        try {
+          const { syncWebsiteLeadToCrm } = await import("@/product/crm/bridge");
+          await syncWebsiteLeadToCrm({
+            organizationId: input.organizationId,
+            phoneE164: lead.phoneE164,
+            name: lead.name,
+            email: lead.email,
+            message: lead.message,
+            service: lead.serviceRequested,
+            websiteLeadId: lead.id,
+          });
+        } catch (err) {
+          console.warn("[crm] website lead sync skipped", err);
+        }
+      }
       let smsSent = false;
 
       if (

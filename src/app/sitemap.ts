@@ -8,7 +8,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
 const CONTENT_LAST_MODIFIED = new Date("2026-09-17");
 
 const PATHS = Object.keys(routing.pathnames).filter(
-  (path) => path !== "/demo-video",
+  (path) => path !== "/demo-video" && !path.includes("["),
 );
 
 export default function sitemap(): MetadataRoute.Sitemap {
