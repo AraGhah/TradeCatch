@@ -20,7 +20,7 @@ export default async function AppReceptionistPage({
   if (!auth.ok) return null;
   const { organization, membership } = auth.ctx;
 
-  if (!orgHasFeature(organization.plan, "MISSED_CALL_RECOVERY")) {
+  if (!orgHasFeature(organization.plan, "AI_PHONE_ANSWERING")) {
     return <p className="text-navy/70">{t("receptionist.entitlement")}</p>;
   }
 

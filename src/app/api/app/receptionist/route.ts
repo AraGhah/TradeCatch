@@ -16,8 +16,8 @@ export const dynamic = "force-dynamic";
 async function context() {
   const auth = await requireTenantContext();
   if (!auth.ok) return { error: unauthorizedTenantResponse(auth.error) };
-  if (!tenantHasFeature(auth.ctx, "MISSED_CALL_RECOVERY")) {
-    return { error: forbiddenFeatureResponse("MISSED_CALL_RECOVERY") };
+  if (!tenantHasFeature(auth.ctx, "AI_PHONE_ANSWERING")) {
+    return { error: forbiddenFeatureResponse("AI_PHONE_ANSWERING") };
   }
   return { ctx: auth.ctx };
 }

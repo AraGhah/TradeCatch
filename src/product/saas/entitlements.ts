@@ -1,9 +1,12 @@
 /**
  * Central plan entitlements — enforce on the backend; UI only mirrors this.
  * Do not scatter `if (plan === "growth")` through random components.
+ *
+ * Billing (Task 10) may further restrict access when a Stripe subscription is
+ * past_due / canceled — see `src/product/billing/entitlementService.ts`.
  */
 
-export const PLAN_IDS = ["starter", "growth"] as const;
+export const PLAN_IDS = ["starter", "growth", "ai_receptionist"] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 
 export const FEATURE_IDS = [
@@ -19,6 +22,9 @@ export const FEATURE_IDS = [
   "REVIEW_AUTOMATION",
   "ADVANCED_ANALYTICS",
   "EMAIL_AUTOMATION",
+  "AI_PHONE_ANSWERING",
+  "AI_APPOINTMENT_BOOKING",
+  "AI_CALL_TRANSFER",
 ] as const;
 
 export type FeatureId = (typeof FEATURE_IDS)[number];
@@ -26,13 +32,13 @@ export type FeatureId = (typeof FEATURE_IDS)[number];
 const STARTER_FEATURES = [
   "MISSED_CALL_RECOVERY",
   "WEBSITE_LEAD_CAPTURE",
-  "QUOTE_FOLLOW_UP",
   "HUMAN_TAKEOVER",
   "BUSINESS_NOTIFICATIONS",
   "BASIC_ANALYTICS",
 ] as const satisfies readonly FeatureId[];
 
 const GROWTH_EXTRA = [
+  "QUOTE_FOLLOW_UP",
   "APPOINTMENT_BOOKING",
   "ADVANCED_PIPELINE",
   "REVENUE_ATTRIBUTION",
@@ -41,9 +47,20 @@ const GROWTH_EXTRA = [
   "EMAIL_AUTOMATION",
 ] as const satisfies readonly FeatureId[];
 
+const AI_RECEPTIONIST_EXTRA = [
+  "AI_PHONE_ANSWERING",
+  "AI_APPOINTMENT_BOOKING",
+  "AI_CALL_TRANSFER",
+] as const satisfies readonly FeatureId[];
+
 export const PLAN_FEATURES: Record<PlanId, readonly FeatureId[]> = {
   starter: STARTER_FEATURES,
   growth: [...STARTER_FEATURES, ...GROWTH_EXTRA],
+  ai_receptionist: [
+    ...STARTER_FEATURES,
+    ...GROWTH_EXTRA,
+    ...AI_RECEPTIONIST_EXTRA,
+  ],
 };
 
 export function isPlanId(value: string): value is PlanId {
@@ -76,6 +93,22 @@ export function assertFeature(
 /** Features that Growth unlocks beyond Starter — for contextual upsells. */
 export function growthUpsellFeatures(): readonly FeatureId[] {
   return GROWTH_EXTRA;
+}
+
+/** Features exclusive to the AI Receptionist plan. */
+export function aiReceptionistUpsellFeatures(): readonly FeatureId[] {
+  return AI_RECEPTIONIST_EXTRA;
+}
+
+/** Suggested upgrade plan when a feature is blocked. */
+export function upgradePlanForFeature(feature: FeatureId): PlanId {
+  if ((AI_RECEPTIONIST_EXTRA as readonly FeatureId[]).includes(feature)) {
+    return "ai_receptionist";
+  }
+  if ((GROWTH_EXTRA as readonly FeatureId[]).includes(feature)) {
+    return "growth";
+  }
+  return "starter";
 }
 
 export const FEATURE_LABELS: Record<FeatureId, { en: string; fr: string }> = {
@@ -127,4 +160,22 @@ export const FEATURE_LABELS: Record<FeatureId, { en: string; fr: string }> = {
     en: "Email follow-up automation",
     fr: "Relances automatiques par courriel",
   },
+  AI_PHONE_ANSWERING: {
+    en: "AI phone answering",
+    fr: "Réponse téléphonique par IA",
+  },
+  AI_APPOINTMENT_BOOKING: {
+    en: "AI appointment booking",
+    fr: "Prise de rendez-vous par IA",
+  },
+  AI_CALL_TRANSFER: {
+    en: "AI call transfer",
+    fr: "Transfert d'appel par IA",
+  },
+};
+
+export const PLAN_LABELS: Record<PlanId, { en: string; fr: string }> = {
+  starter: { en: "Starter", fr: "Starter" },
+  growth: { en: "Growth", fr: "Growth" },
+  ai_receptionist: { en: "AI Receptionist", fr: "Réceptionniste IA" },
 };

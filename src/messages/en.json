@@ -2137,7 +2137,8 @@
       "logout": "Sign out",
       "receptionist": "AI Receptionist",
       "phoneSettings": "Phone settings",
-      "automations": "Automations"
+      "automations": "Automations",
+      "billing": "Billing"
     },
     "automations": {
       "headline": "Automations",
@@ -2358,7 +2359,8 @@
     },
     "plan": {
       "starter": "Starter — Lead Recovery Pilot",
-      "growth": "Growth — Entitled Conversion Pilot"
+      "growth": "Growth — Entitled Conversion Pilot",
+      "aiReceptionist": "AI Receptionist"
     },
     "dashboard": {
       "headline": "What TradeCatch did for you",
@@ -2976,6 +2978,58 @@
       "testNumber": "Test number",
       "results": "Results",
       "error": "The test failed."
+    },
+    "billing": {
+      "headline": "Billing & subscription",
+      "intro": "Review your plan, included usage, Stripe invoices, and convert a trial or demo account to a paid subscription. Cards are handled by Stripe — TradeCatch never stores card numbers.",
+      "loading": "Loading billing…",
+      "loadError": "Could not load billing.",
+      "checkoutError": "Secure checkout could not start.",
+      "portalError": "Could not open the Stripe customer portal.",
+      "trialError": "Could not start the trial.",
+      "checkoutSuccess": "Stripe received the payment. Paid access activates after the verified webhook — not from this page alone.",
+      "checkoutCancel": "Checkout canceled. No paid features were activated.",
+      "tabs": {
+        "subscription": "Subscription",
+        "plans": "Plans",
+        "usage": "Usage",
+        "invoices": "Invoices",
+        "trial": "Trial"
+      },
+      "subscriptionTitle": "Your subscription",
+      "currentPlan": "Current plan",
+      "status": "Status",
+      "price": "Price",
+      "nextRenewal": "Next renewal",
+      "paymentMethod": "Payment method",
+      "paymentManagedByStripe": "Card managed by Stripe",
+      "accessMode": "Access mode",
+      "manageInPortal": "Manage in Stripe portal",
+      "changePlan": "Change plan",
+      "portalHint": "Plan changes, payment method updates, cancellation, and reactivation use the Stripe Customer Portal.",
+      "plansTitle": "Available plans",
+      "monthly": "Monthly",
+      "annual": "Annual",
+      "month": "month",
+      "year": "year",
+      "setupFee": "Setup fee",
+      "allowances": "Allowances",
+      "subscribe": "Subscribe",
+      "currentBadge": "Current plan",
+      "cancellationTerms": "Cancel at period end in the portal. Business records are retained; phone routing falls back to a safe forward path.",
+      "usageTitle": "Cycle usage",
+      "usagePeriod": "Period",
+      "remaining": "Remaining",
+      "overage": "Overage",
+      "usagePolicyNote": "An active call is never cut off for allowance exhaustion. Policy applies to subsequent sessions, with a safe forward fallback when AI minutes are exhausted.",
+      "invoicesTitle": "Invoices",
+      "noInvoices": "No invoices yet.",
+      "download": "View / download",
+      "trialTitle": "Trial & conversion",
+      "trialIntro": "A trial temporarily enables paid features on the same business account. Converting to paid does not create a new business.",
+      "trialEnds": "Trial ends",
+      "startTrial": "Start trial",
+      "convertToPaid": "Convert to paid"
     }
   },
   "aiReceptionist": {

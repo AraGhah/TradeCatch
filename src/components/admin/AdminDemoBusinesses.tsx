@@ -24,7 +24,7 @@ type FormState = {
   serviceArea: string;
   language: "en" | "fr";
   timezone: string;
-  subscriptionPlan: "starter" | "growth";
+  subscriptionPlan: "starter" | "growth" | "ai_receptionist";
   accountStatus: "active" | "suspended";
 };
 
@@ -249,13 +249,14 @@ export function AdminDemoBusinesses() {
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  subscriptionPlan: e.target.value as "starter" | "growth",
+                  subscriptionPlan: e.target.value as FormState["subscriptionPlan"],
                 }))
               }
               className="rounded-md border border-navy/20 px-3 py-2"
             >
               <option value="growth">Growth</option>
               <option value="starter">Starter</option>
+              <option value="ai_receptionist">AI Receptionist</option>
             </select>
           </label>
           <div className="md:col-span-2">

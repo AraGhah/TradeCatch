@@ -16,6 +16,7 @@ const NAV_ITEMS = [
   { href: "/app/automations", key: "automations" },
   { href: "/app/notifications", key: "notifications" },
   { href: "/app/analytics", key: "analytics" },
+  { href: "/app/billing", key: "billing" },
   { href: "/app/settings", key: "settings" },
   { href: "/app/test-center", key: "testCenter" },
 ] as const;
@@ -67,7 +68,11 @@ export function AppShell({
             <p className="mt-1 text-lg font-semibold text-navy">{orgName}</p>
             <p className="text-sm text-navy/60">
               {userName} ·{" "}
-              {plan === "growth" ? t("plan.growth") : t("plan.starter")}
+              {plan === "ai_receptionist"
+                ? t("plan.aiReceptionist")
+                : plan === "growth"
+                  ? t("plan.growth")
+                  : t("plan.starter")}
             </p>
           </div>
           <nav

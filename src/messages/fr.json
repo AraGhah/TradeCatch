@@ -2137,7 +2137,8 @@
       "logout": "Déconnexion",
       "receptionist": "Réceptionniste IA",
       "phoneSettings": "Paramètres téléphone",
-      "automations": "Automatisations"
+      "automations": "Automatisations",
+      "billing": "Facturation"
     },
     "automations": {
       "headline": "Automatisations",
@@ -2358,7 +2359,8 @@
     },
     "plan": {
       "starter": "Starter — Pilote de récupération de leads",
-      "growth": "Growth — Pilote de conversion admissible"
+      "growth": "Growth — Pilote de conversion admissible",
+      "aiReceptionist": "Réceptionniste IA"
     },
     "dashboard": {
       "headline": "Ce que TradeCatch a fait pour vous",
@@ -2976,6 +2978,58 @@
       "testNumber": "Numéro de test",
       "results": "Résultats",
       "error": "Le test a échoué."
+    },
+    "billing": {
+      "headline": "Facturation et abonnement",
+      "intro": "Consultez votre forfait, l’usage inclus, les factures Stripe et convertissez un essai ou un compte démo en abonnement payant. Les cartes sont traitées par Stripe — TradeCatch ne stocke jamais les numéros de carte.",
+      "loading": "Chargement de la facturation…",
+      "loadError": "Impossible de charger la facturation.",
+      "checkoutError": "Le paiement sécurisé n’a pas pu démarrer.",
+      "portalError": "Le portail Stripe n’a pas pu s’ouvrir.",
+      "trialError": "L’essai n’a pas pu démarrer.",
+      "checkoutSuccess": "Paiement reçu par Stripe. L’accès payant s’active après confirmation du webhook (pas seulement cette page).",
+      "checkoutCancel": "Paiement annulé. Aucune fonction payante n’a été activée.",
+      "tabs": {
+        "subscription": "Abonnement",
+        "plans": "Forfaits",
+        "usage": "Usage",
+        "invoices": "Factures",
+        "trial": "Essai"
+      },
+      "subscriptionTitle": "Votre abonnement",
+      "currentPlan": "Forfait actuel",
+      "status": "Statut",
+      "price": "Prix",
+      "nextRenewal": "Prochain renouvellement",
+      "paymentMethod": "Mode de paiement",
+      "paymentManagedByStripe": "Carte gérée par Stripe",
+      "accessMode": "Mode d’accès",
+      "manageInPortal": "Gérer dans le portail Stripe",
+      "changePlan": "Changer de forfait",
+      "portalHint": "Changement de forfait, mise à jour de carte, annulation et réactivation passent par le portail client Stripe.",
+      "plansTitle": "Forfaits disponibles",
+      "monthly": "Mensuel",
+      "annual": "Annuel",
+      "month": "mois",
+      "year": "an",
+      "setupFee": "Frais d’installation",
+      "allowances": "Allocations",
+      "subscribe": "S’abonner",
+      "currentBadge": "Forfait actuel",
+      "cancellationTerms": "Annulation en fin de période via le portail. Les données métier sont conservées; le routage téléphonique bascule vers un renvoi sécurisé.",
+      "usageTitle": "Usage du cycle",
+      "usagePeriod": "Période",
+      "remaining": "Restant",
+      "overage": "Dépassement",
+      "usagePolicyNote": "Un appel en cours n’est jamais coupé pour dépassement. La politique s’applique aux sessions suivantes, avec renvoi sécurisé si l’allocation IA est épuisée.",
+      "invoicesTitle": "Factures",
+      "noInvoices": "Aucune facture pour le moment.",
+      "download": "Voir / télécharger",
+      "trialTitle": "Essai et conversion",
+      "trialIntro": "Un essai active temporairement les fonctions payantes sur le même compte entreprise. La conversion vers un abonnement payant ne crée pas un nouveau compte.",
+      "trialEnds": "Fin de l’essai",
+      "startTrial": "Démarrer l’essai",
+      "convertToPaid": "Convertir en payant"
     }
   },
   "aiReceptionist": {

@@ -35,6 +35,10 @@ from this agent and must not use production credentials.
    wrangler secret put AUTH_SECRET --env staging
    wrangler secret put STAGING_BASIC_AUTH_USER --env staging
    wrangler secret put STAGING_BASIC_AUTH_PASSWORD --env staging
+   # Stripe test-mode only on staging (never sk_live_ here):
+   wrangler secret put STRIPE_SECRET_KEY --env staging
+   wrangler secret put STRIPE_WEBHOOK_SECRET --env staging
+   # Also set STRIPE_PRICE_*_MONTHLY/ANNUAL + NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
    # Optional: staging-only Resend / Turnstile test keys
    ```
 4. **Set plaintext staging vars** in the Cloudflare dashboard for
