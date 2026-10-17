@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CallSummaryCard } from "@/components/CallSummaryCard";
+import { CTAButton } from "@/components/CTAButton";
 import { IllustrativeBadge } from "@/components/IllustrativeBadge";
+import { useDemoVoice, type VoiceFailure } from "@/components/useDemoVoice";
 import { OUTCOME_LABEL } from "@/product/receptionist/summary";
 import type { DemoMessage, DemoResponse } from "@/product/receptionist/demo";
 
@@ -27,10 +29,27 @@ export type CallDemoCopy = {
   restart: string;
   error: string;
   rateLimited: string;
-  expired: string;
   summaryLabel: string;
   summaryPlaceholder: string;
   summaryBadge: string;
+  afterCall: { title: string; body: string; cta: string };
+  voice: {
+    modeLabel: string;
+    speak: string;
+    speakHint: string;
+    type: string;
+    typeHint: string;
+    unsupported: string;
+    privacy: string;
+    micStart: string;
+    micStop: string;
+    listening: string;
+    speaking: string;
+    repliesAloud: string;
+    denied: string;
+    noSpeech: string;
+    unavailable: string;
+  };
   fields: {
     caller: string;
     callback: string;
@@ -46,9 +65,48 @@ export type CallDemoCopy = {
 };
 
 type Line = { role: "agent" | "caller" | "system"; text: string };
+type Scenario = "open" | "after_hours";
 
 const FOCUS =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
+
+/** Five bars that move while the microphone or the receptionist is active. */
+function Equalizer({ active }: { active: boolean }) {
+  return (
+    <span aria-hidden className="inline-flex h-4 items-end gap-[3px]">
+      {[0.55, 1, 0.7, 0.9, 0.45].map((scale, i) => (
+        <span
+          key={i}
+          className={`block w-[3px] origin-bottom bg-orange ${
+            active ? "animate-[demo-bars_0.9s_ease-in-out_infinite]" : ""
+          }`}
+          style={{
+            height: `${Math.round(scale * 16)}px`,
+            animationDelay: `${i * 0.11}s`,
+          }}
+        />
+      ))}
+    </span>
+  );
+}
+
+function MicIcon() {
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 24 24"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+    </svg>
+  );
+}
 
 export function CallDemo({
   copy,
@@ -57,26 +115,103 @@ export function CallDemo({
   copy: CallDemoCopy;
   locale: "fr" | "en";
 }) {
-  const [scenario, setScenario] = useState<"open" | "after_hours">("open");
+  const voice = useDemoVoice(locale);
+  const [scenario, setScenario] = useState<Scenario>("open");
   const [lines, setLines] = useState<Line[]>([]);
-  const [state, setState] = useState<string | null>(null);
-  const [step, setStep] = useState<string>("reason");
   const [started, setStarted] = useState(false);
   const [ended, setEnded] = useState(false);
   const [summary, setSummary] = useState<DemoResponse["summary"]>();
+  const [step, setStep] = useState<string>("reason");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  // What the visitor picked on the start screen, and the live voice state.
+  const [wantsVoice, setWantsVoice] = useState(true);
+  const [voiceLive, setVoiceLive] = useState(false);
+  const [repliesAloud, setRepliesAloud] = useState(false);
+
   const logRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  // Conversation facts live in refs so voice callbacks never read stale state.
+  const turnsRef = useRef<string[]>([]);
+  const scenarioRef = useRef<Scenario>("open");
+  const busyRef = useRef(false);
+  const endedRef = useRef(false);
+  const voiceLiveRef = useRef(false);
+  const repliesAloudRef = useRef(false);
+  const silentTurnsRef = useRef(0);
+
+  const voiceChoice = voice.canListen && wantsVoice;
 
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [lines]);
 
+  function setLive(value: boolean) {
+    voiceLiveRef.current = value;
+    setVoiceLive(value);
+  }
+
+  function setAloud(value: boolean) {
+    repliesAloudRef.current = value;
+    setRepliesAloud(value);
+  }
+
+  /** Stops the microphone and any speech; `reason` explains why, if it failed. */
+  function stopVoice(reason?: VoiceFailure) {
+    setLive(false);
+    voice.stopListening();
+    voice.cancelSpeech();
+    setNotice(
+      reason === "denied"
+        ? copy.voice.denied
+        : reason === "no_speech"
+          ? copy.voice.noSpeech
+          : reason === "unavailable"
+            ? copy.voice.unavailable
+            : null,
+    );
+  }
+
+  function listenForCaller() {
+    voice.listen({
+      onFinal: (text) => {
+        silentTurnsRef.current = 0;
+        void send(text);
+      },
+      onFail: (reason) => {
+        if (!voiceLiveRef.current || endedRef.current) return;
+        if (reason !== "no_speech") {
+          stopVoice(reason);
+          return;
+        }
+        // Browsers close the microphone after a few quiet seconds. Try once
+        // more, then hand control back instead of listening forever.
+        silentTurnsRef.current += 1;
+        if (silentTurnsRef.current >= 2) stopVoice("no_speech");
+        else listenForCaller();
+      },
+    });
+  }
+
+  function afterReply(data: DemoResponse) {
+    const resume = () => {
+      if (data.ended) setLive(false);
+      else if (voiceLiveRef.current) listenForCaller();
+    };
+    if (!repliesAloudRef.current && !voiceLiveRef.current) return;
+    const spoken = data.messages
+      .filter((m) => m.role === "agent")
+      .map((m) => m.text);
+    if (repliesAloudRef.current) voice.speak(spoken, resume);
+    else resume();
+  }
+
   async function call(
     body: Record<string, unknown>,
   ): Promise<DemoResponse | null> {
+    busyRef.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -85,17 +220,9 @@ export function CallDemo({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
-      const data = (await res.json().catch(() => null)) as
-        (DemoResponse & { code?: string }) | null;
+      const data = (await res.json().catch(() => null)) as DemoResponse | null;
       if (!res.ok || !data) {
-        setError(
-          res.status === 429
-            ? copy.rateLimited
-            : res.status === 410
-              ? copy.expired
-              : copy.error,
-        );
-        if (res.status === 410) setEnded(true);
+        setError(res.status === 429 ? copy.rateLimited : copy.error);
         return null;
       }
       return data;
@@ -103,6 +230,7 @@ export function CallDemo({
       setError(copy.error);
       return null;
     } finally {
+      busyRef.current = false;
       setBusy(false);
     }
   }
@@ -113,18 +241,28 @@ export function CallDemo({
       text: m.text,
     }));
     setLines((prev) => [...prev, ...incoming]);
-    setState(data.state);
     setStep(data.step);
+    endedRef.current = data.ended;
     setEnded(data.ended);
     if (data.summary) setSummary(data.summary);
+    afterReply(data);
   }
 
-  async function start(chosen: "open" | "after_hours") {
+  async function start(chosen: Scenario) {
+    stopVoice();
+    scenarioRef.current = chosen;
+    turnsRef.current = [];
+    endedRef.current = false;
+    silentTurnsRef.current = 0;
     setScenario(chosen);
     setLines([]);
     setSummary(undefined);
     setEnded(false);
     setStarted(true);
+    setLive(voiceChoice);
+    setAloud(voiceChoice && voice.canSpeak);
+    if (voiceChoice) voice.prime();
+
     const data = await call({
       action: "start",
       language: locale,
@@ -132,20 +270,54 @@ export function CallDemo({
     });
     if (data) {
       absorb(data);
-      setTimeout(() => inputRef.current?.focus(), 0);
+      if (!voiceChoice) setTimeout(() => inputRef.current?.focus(), 0);
     } else {
+      stopVoice();
       setStarted(false);
     }
   }
 
   async function send(text: string) {
     const speech = text.trim();
-    if (!speech || !state || busy || ended) return;
+    if (!speech || busyRef.current || endedRef.current) return;
+    voice.cancelSpeech();
+    voice.stopListening();
     setInput("");
     setLines((prev) => [...prev, { role: "caller", text: speech }]);
-    const data = await call({ action: "say", state, speech });
-    if (data) absorb(data);
-    setTimeout(() => inputRef.current?.focus(), 0);
+
+    const data = await call({
+      action: "say",
+      language: locale,
+      scenario: scenarioRef.current,
+      history: turnsRef.current,
+      speech,
+    });
+    if (data) {
+      turnsRef.current = [...turnsRef.current, speech];
+      absorb(data);
+    } else {
+      stopVoice();
+    }
+    if (!voiceLiveRef.current) setTimeout(() => inputRef.current?.focus(), 0);
+  }
+
+  function toggleMic() {
+    if (voiceLiveRef.current) {
+      stopVoice();
+      return;
+    }
+    silentTurnsRef.current = 0;
+    setNotice(null);
+    setLive(true);
+    voice.prime();
+    listenForCaller();
+  }
+
+  function reset() {
+    stopVoice();
+    setStarted(false);
+    setLines([]);
+    setError(null);
   }
 
   const suggestions = !ended && started ? (copy.suggestions[step] ?? []) : [];
@@ -155,6 +327,12 @@ export function CallDemo({
       : role === "caller"
         ? copy.callerLabel
         : copy.systemLabel;
+
+  const status = voice.listening
+    ? copy.voice.listening
+    : voice.speaking
+      ? copy.voice.speaking
+      : null;
 
   const summaryFields = summary
     ? [
@@ -200,35 +378,86 @@ export function CallDemo({
         </div>
 
         {!started ? (
-          <div className="flex flex-col gap-3 px-5 py-6">
-            <p
-              id="demo-scenario-heading"
-              className="m-0 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase"
-            >
-              {copy.startHeading}
-            </p>
-            <div
-              role="group"
-              aria-labelledby="demo-scenario-heading"
-              className="flex flex-col gap-3 sm:flex-row"
-            >
-              {copy.scenarios.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void start(s.id)}
-                  className={`flex flex-1 flex-col items-start gap-1 border border-[rgb(var(--ink-rgb)/0.15)] px-4 py-3 text-left hover:border-navy hover:bg-[rgb(var(--ink-rgb)/0.05)] disabled:opacity-60 ${FOCUS}`}
-                >
-                  <span className="text-[15px] font-semibold text-heading">
-                    {s.label}
-                  </span>
-                  <span className="text-[13px] text-muted">{s.hint}</span>
-                  <span className="mt-1 text-[13.5px] font-semibold text-navy">
-                    {copy.startCta} <span aria-hidden>→</span>
-                  </span>
-                </button>
-              ))}
+          <div className="flex flex-col gap-6 px-5 py-6">
+            {voice.ready ? (
+              voice.canListen ? (
+                <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+                  <legend className="mb-2 p-0 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase">
+                    {copy.voice.modeLabel}
+                  </legend>
+                  <div className="inline-flex w-fit border border-[rgb(var(--ink-rgb)/0.25)]">
+                    {(
+                      [
+                        ["speak", copy.voice.speak],
+                        ["type", copy.voice.type],
+                      ] as const
+                    ).map(([id, text]) => {
+                      const active = (id === "speak") === voiceChoice;
+                      return (
+                        <label
+                          key={id}
+                          className={`flex cursor-pointer items-center gap-2 px-4 py-2.5 text-[14.5px] font-semibold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-orange has-[:focus-visible]:ring-inset ${
+                            active
+                              ? "bg-navy text-white"
+                              : "text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="demo-mode"
+                            value={id}
+                            checked={active}
+                            onChange={() => setWantsVoice(id === "speak")}
+                            className="sr-only"
+                          />
+                          {id === "speak" ? <MicIcon /> : null}
+                          {text}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <p className="m-0 max-w-[40em] text-[13px] leading-[1.5] text-muted">
+                    {voiceChoice ? copy.voice.speakHint : copy.voice.typeHint}
+                    {voiceChoice ? ` ${copy.voice.privacy}` : ""}
+                  </p>
+                </fieldset>
+              ) : (
+                <p className="m-0 border border-dashed border-[rgb(var(--ink-rgb)/0.25)] px-4 py-3 text-[13.5px] leading-[1.5] text-muted">
+                  {copy.voice.unsupported}
+                </p>
+              )
+            ) : null}
+
+            <div className="flex flex-col gap-3">
+              <p
+                id="demo-scenario-heading"
+                className="m-0 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase"
+              >
+                {copy.startHeading}
+              </p>
+              <div
+                role="group"
+                aria-labelledby="demo-scenario-heading"
+                className="flex flex-col gap-3 sm:flex-row"
+              >
+                {copy.scenarios.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void start(s.id)}
+                    className={`flex flex-1 flex-col items-start gap-1 border border-[rgb(var(--ink-rgb)/0.15)] px-4 py-3 text-left hover:border-navy hover:bg-[rgb(var(--ink-rgb)/0.05)] disabled:opacity-60 ${FOCUS}`}
+                  >
+                    <span className="text-[15px] font-semibold text-heading">
+                      {s.label}
+                    </span>
+                    <span className="text-[13px] text-muted">{s.hint}</span>
+                    <span className="mt-1 text-[13.5px] font-semibold text-navy">
+                      {copy.startCta} <span aria-hidden>→</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         ) : (
@@ -293,11 +522,7 @@ export function CallDemo({
                 </p>
                 <button
                   type="button"
-                  onClick={() => {
-                    setStarted(false);
-                    setLines([]);
-                    setError(null);
-                  }}
+                  onClick={reset}
                   className={`rounded-md border border-[rgb(var(--ink-rgb)/0.25)] px-4 py-2 text-[14px] font-semibold text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS}`}
                 >
                   {copy.restart}
@@ -305,6 +530,33 @@ export function CallDemo({
               </div>
             ) : (
               <div className="flex flex-col gap-3 border-t border-[rgb(var(--ink-rgb)/0.1)] px-5 py-4">
+                {voice.canListen || voice.canSpeak ? (
+                  <div className="flex min-h-6 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                    <p
+                      role="status"
+                      className="m-0 flex items-center gap-2.5 text-[13.5px] font-semibold text-heading"
+                    >
+                      <Equalizer active={Boolean(status)} />
+                      {status ?? notice}
+                    </p>
+                    {voice.canSpeak ? (
+                      <label className="flex cursor-pointer items-center gap-2 text-[13px] text-muted">
+                        <input
+                          type="checkbox"
+                          checked={repliesAloud}
+                          onChange={(e) => {
+                            setAloud(e.target.checked);
+                            if (!e.target.checked) voice.cancelSpeech();
+                            else voice.prime();
+                          }}
+                          className="h-4 w-4 accent-[rgb(var(--ink-rgb))]"
+                        />
+                        {copy.voice.repliesAloud}
+                      </label>
+                    ) : null}
+                  </div>
+                ) : null}
+
                 {suggestions.length > 0 ? (
                   <div>
                     <p className="mb-2 font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
@@ -332,13 +584,33 @@ export function CallDemo({
                     void send(input);
                   }}
                 >
+                  {voice.canListen ? (
+                    <button
+                      type="button"
+                      onClick={toggleMic}
+                      disabled={busy}
+                      aria-pressed={voiceLive}
+                      aria-label={
+                        voiceLive ? copy.voice.micStop : copy.voice.micStart
+                      }
+                      title={voiceLive ? copy.voice.micStop : copy.voice.micStart}
+                      className={`relative flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full disabled:opacity-50 ${FOCUS} ${
+                        voiceLive
+                          ? "animate-tc-pulse-ember bg-orange text-navy"
+                          : "bg-navy text-white hover:bg-navy-light"
+                      }`}
+                    >
+                      <MicIcon />
+                    </button>
+                  ) : null}
                   <label className="sr-only" htmlFor="demo-input">
                     {copy.inputLabel}
                   </label>
                   <input
                     id="demo-input"
                     ref={inputRef}
-                    value={input}
+                    value={voice.listening && voice.interim ? voice.interim : input}
+                    readOnly={voice.listening}
                     maxLength={400}
                     autoComplete="off"
                     onChange={(e) => setInput(e.target.value)}
@@ -367,11 +639,35 @@ export function CallDemo({
 
       <div>
         {summary ? (
-          <CallSummaryCard
-            cardLabel={copy.summaryLabel}
-            sampleBadge={copy.summaryBadge}
-            fields={summaryFields}
-          />
+          <div className="flex flex-col gap-4">
+            <CallSummaryCard
+              cardLabel={copy.summaryLabel}
+              sampleBadge={copy.summaryBadge}
+              fields={summaryFields}
+            />
+            <div className="relative border border-[rgb(var(--ink-rgb)/0.12)] bg-surface p-[clamp(20px,2.4vw,28px)] pl-[clamp(24px,2.8vw,32px)]">
+              <span
+                aria-hidden
+                className="absolute top-0 left-0 h-full w-[3px] bg-orange"
+              />
+              <p className="m-0 font-heading text-[clamp(19px,1.9vw,23px)] leading-[1.2] font-extrabold tracking-[-0.03em] text-heading">
+                {copy.afterCall.title}
+              </p>
+              <p className="mt-3 mb-0 text-[15px] leading-[1.6] text-muted">
+                {copy.afterCall.body}
+              </p>
+              <CTAButton
+                href={{
+                  pathname: "/book-audit",
+                  query: { plan: "receptionist" },
+                }}
+                variant="ember"
+                className="mt-5"
+              >
+                {copy.afterCall.cta}
+              </CTAButton>
+            </div>
+          </div>
         ) : (
           <div className="flex h-full min-h-[200px] items-center border border-dashed border-[rgb(var(--ink-rgb)/0.25)] px-6 py-8 text-[15px] leading-[1.55] text-muted">
             {copy.summaryPlaceholder}

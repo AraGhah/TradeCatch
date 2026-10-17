@@ -62,10 +62,14 @@ export function PricingPreview({
               <h3 className="mt-3 font-heading text-[22px] font-extrabold tracking-[-0.035em] text-heading">
                 {tier.name}
               </h3>
-              <p className="mt-3 font-heading text-[19px] font-bold tracking-[-0.025em] break-words text-heading">
+              <p
+                className={`mt-3 font-heading text-[clamp(28px,3vw,36px)] font-extrabold leading-[0.95] tracking-[-0.04em] break-words ${
+                  premium ? "text-orange" : "text-heading"
+                }`}
+              >
                 {tier.price}
               </p>
-              <p className="mt-1 text-[14.5px] text-muted">{tier.cadence}</p>
+              <p className="mt-2 text-[14.5px] text-muted">{tier.cadence}</p>
               <p className="mt-4 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4 text-[14.5px] leading-[1.55] text-secondary">
                 {tier.idealFor}
               </p>

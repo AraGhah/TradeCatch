@@ -48,6 +48,28 @@ describe("urgency handling", () => {
     assert.match(log.textSample, /gaz/i);
   });
 
+  it("treats English gas-smell phrasings as critical but not a routine gas job", () => {
+    for (const issueDescription of [
+      "I smell gas in my house",
+      "my basement smells like gas",
+      "there is a gas smell near the furnace",
+      "I think gas is leaking",
+    ]) {
+      const { classification } = classifyUrgency({
+        issueDescription,
+        rubric: client.urgencyRubric,
+      });
+      assert.equal(classification.level, "critical", issueDescription);
+      assert.equal(classification.source, "critical_gas", issueDescription);
+    }
+
+    const { classification } = classifyUrgency({
+      issueDescription: "I would like a quote for a new gas stove installation",
+      rubric: client.urgencyRubric,
+    });
+    assert.notEqual(classification.level, "critical");
+  });
+
   it("uses contractor rubric for priority leaks", () => {
     const { classification } = classifyUrgency({
       issueDescription: "Fuite d'eau importante au sous-sol",

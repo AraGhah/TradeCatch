@@ -157,9 +157,13 @@ imperative runner itself is covered by `tests/unit/receptionist-core.test.ts`.
 - **Public demo** — `/receptionist#try-it` runs this same engine (rule brain
   only) against a fictional plumbing business. `POST /api/receptionist/demo`
   has no side effects: no SMS, email, dialed number, database write or LLM call.
-  The server keeps no state; each response carries the session as an
-  HMAC-signed token (30 min) that the browser sends back. Rate limited per IP;
-  `RECEPTIONIST_DEMO=0` disables it; it needs `AUTH_SECRET` in production.
+  The server keeps no state and needs no secret: the browser sends back what
+  the caller already said and the server replays it through the deterministic
+  rule brain (fixed clock), returning only the newest turn. Visitors can speak
+  (Web Speech recognition and synthesis in the browser, `fr-CA` / `en-CA`;
+  TradeCatch only ever receives text, never audio) or type. This needs the
+  `Permissions-Policy: microphone=(self)` header from `next.config.ts`. Rate
+  limited per IP (120 per 10 minutes); `RECEPTIONIST_DEMO=0` disables it.
 - **Known callers (owner-facing only)** — when a call is finalized,
   `lookupCallerContext` checks whether the number (caller ID or the callback the
   caller gave) matches a lead from the contractor's website form

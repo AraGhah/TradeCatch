@@ -1,10 +1,24 @@
 "use client";
 
 import { ComponentProps } from "react";
+import NextLink from "next/link";
 import { Link } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
 
-type Variant = "ember" | "ink" | "ghost" | "ghost-ink" | "outline" | "primary" | "secondary" | "link";
+/**
+ * An anchor link: a localized path with a hash ("/fr/receptionniste#try-it")
+ * or a hash on the current page ("#try-it").
+ */
+export type AnchorHref = `/${string}#${string}` | `#${string}`;
+
+function isAnchorHref(href: unknown): href is AnchorHref {
+  return (
+    typeof href === "string" &&
+    (href.startsWith("#") || (href.startsWith("/") && href.includes("#")))
+  );
+}
+
+type Variant = "ember" | "ink" | "ghost" | "ghost-ink" | "outline" | "primary" | "secondary" | "link" | "link-ink";
 type Size = "sm" | "md" | "lg";
 
 const styles: Record<string, string> = {
@@ -20,6 +34,9 @@ const styles: Record<string, string> = {
   outline:
     "bg-transparent text-heading border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] w-full hover:bg-navy hover:text-white hover:border-navy",
   link: "bg-transparent text-ember-text underline underline-offset-[6px] decoration-[1.5px] decoration-ember-text/40 hover:text-heading hover:decoration-navy px-0 py-0 rounded-none",
+  // Text link for navy sections: ember underline, ember on hover.
+  "link-ink":
+    "bg-transparent text-white underline underline-offset-[6px] decoration-[1.5px] decoration-orange hover:text-orange px-0 py-0 rounded-none",
 };
 
 const sizes: Record<Size, string> = {
@@ -45,7 +62,7 @@ export function CTAButton({
   showDot = false,
   ...props
 }: {
-  href: ComponentProps<typeof Link>["href"];
+  href: ComponentProps<typeof Link>["href"] | AnchorHref;
   variant?: Variant;
   size?: Size;
   className?: string;
@@ -53,8 +70,40 @@ export function CTAButton({
   showDot?: boolean;
 } & Omit<ComponentProps<typeof Link>, "href">) {
   const styleKey = resolveVariant(variant);
-  const isLink = styleKey === "link";
+  const isLink = styleKey === "link" || styleKey === "link-ink";
   const withDot = showDot;
+
+  const classes = `inline-flex items-center justify-center gap-2.5 font-semibold tracking-[-0.01em] transition-[translate,scale,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 ${styles[styleKey]} ${isLink ? "" : `${sizes[size]} active:scale-[0.97]`} ${className}`;
+
+  const content = (
+    <>
+      {children}
+      {withDot ? (
+        <span
+          aria-hidden
+          className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-orange"
+        />
+      ) : null}
+    </>
+  );
+
+  // Anchor links bypass the typed locale pathnames, which cannot carry a hash:
+  // callers pass an already localized path (see localizedAnchor) or "#id".
+  if (isAnchorHref(href)) {
+    return (
+      <NextLink
+        href={href}
+        onClick={(e) => {
+          trackEvent("cta_click", { href, variant });
+          onClick?.(e);
+        }}
+        className={classes}
+        {...(props as Omit<ComponentProps<typeof NextLink>, "href">)}
+      >
+        {content}
+      </NextLink>
+    );
+  }
 
   return (
     <Link
@@ -63,16 +112,10 @@ export function CTAButton({
         trackEvent("cta_click", { href: String(href), variant });
         onClick?.(e);
       }}
-      className={`inline-flex items-center justify-center gap-2.5 font-semibold tracking-[-0.01em] transition-[translate,scale,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 ${styles[styleKey]} ${isLink ? "" : `${sizes[size]} active:scale-[0.97]`} ${className}`}
+      className={classes}
       {...props}
     >
-      {children}
-      {withDot ? (
-        <span
-          aria-hidden
-          className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-orange"
-        />
-      ) : null}
+      {content}
     </Link>
   );
 }

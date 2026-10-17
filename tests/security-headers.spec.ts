@@ -21,7 +21,13 @@ test.describe("security headers", () => {
     expect(headers["x-content-type-options"]).toBe("nosniff");
     expect(headers["x-frame-options"]).toBe("DENY");
     expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
-    expect(headers["permissions-policy"]).toContain("camera=()");
+    const permissions = headers["permissions-policy"] ?? "";
+    expect(permissions).toContain("camera=()");
+    expect(permissions).toContain("geolocation=()");
+    // The receptionist demo listens through the microphone: this origin only,
+    // never an embedded frame.
+    expect(permissions).toContain("microphone=(self)");
+    expect(permissions).not.toContain("microphone=*");
   });
 
   test("public health liveness marker is TradeCatch-specific", async ({
