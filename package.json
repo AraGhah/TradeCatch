@@ -19,6 +19,7 @@
     "check:dev-audit": "node scripts/check-dev-audit-exceptions.js",
     "check:brace-expansion": "node scripts/check-brace-expansion.js",
     "test:unit": "tsx --test tests/unit/*.test.ts",
+    "test:qa": "tsx --test tests/qa/*.test.ts",
     "test:e2e": "playwright test",
     "build:cloudflare": "opennextjs-cloudflare build",
     "check:cloudflare-bundle": "wrangler deploy --dry-run --outdir .wrangler/dry-run",

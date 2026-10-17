@@ -50,6 +50,9 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
 
+      - name: Quality assurance suite
+        run: npm run test:qa
+
       - name: Audit production deps (high+)
         run: npm audit --omit=dev --audit-level=high
 
