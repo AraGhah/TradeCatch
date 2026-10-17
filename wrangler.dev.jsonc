@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": "worker.ts",
+  "name": "tradecatch",
+  "compatibility_date": "2026-09-08",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Local `next dev` only. Production deploy still uses wrangler.jsonc.
+  // Assets stay on `public` so workerd does not lock `.open-next` during development.
+  "keep_vars": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "logs": { "enabled": true },
+    "traces": { "enabled": true }
+  },
+  "assets": {
+    "directory": "public",
+    "binding": "ASSETS",
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "tradecatch",
+    },
+  ],
+}
