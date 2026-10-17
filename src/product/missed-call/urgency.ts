@@ -13,6 +13,9 @@ export const HARDCODED_CRITICAL_TRIGGERS: {
     id: "critical_gas",
     patterns: [
       /\b(gazs?|gases?|odeur de gaz|smell of gas|fuite de gaz|gas leak)\b/i,
+      // "I smell gas", "smells like gas", "gas smell", "leaking gas". A bare
+      // "gas" must not trigger: "gas stove quote" is a routine request.
+      /\b(smell(s|ed|ing)?( like| of)? gas|gas (smell|odou?r|leak(s|ing)?)|leaking gas|gas is (leaking|escaping|hissing)|rotten eggs?)\b/i,
       /\b(propane|monoxyde|carbon monoxide|co detector)\b/i,
     ],
   },

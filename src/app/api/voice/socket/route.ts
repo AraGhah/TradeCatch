@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isOpsSandboxEnabled } from "@/lib/environment";
+import { authorizeOpsRequest, unauthorizedOpsResponse } from "@/lib/ops-auth";
 import {
   createRelayConversation,
   parseRelayMessage,
@@ -15,14 +17,18 @@ export const dynamic = "force-dynamic";
  * Until a DO binding is configured, this route:
  * - Rejects native WS upgrades with a clear error (so Twilio/logs show why).
  * - Accepts POST JSON messages for staging/simulated relay turns (same protocol).
+ *
+ * The POST path runs against real client receptionist configs and echoes the
+ * transfer numbers they hold, so it is a sandbox: same gate as
+ * /api/receptionist/sandbox (404 on real production unless MISSED_CALL_SANDBOX=1,
+ * ops bearer required everywhere else). It must never be anonymous.
  */
 export async function GET(request: NextRequest) {
   const upgrade = request.headers.get("upgrade");
   if (upgrade?.toLowerCase() === "websocket") {
     return NextResponse.json(
       {
-        error:
-          "WebSocket ConversationRelay requires Durable Objects on this Worker. Use gather voice engine or the simulated relay POST endpoint for staging.",
+        error: "WebSocket is not available on this endpoint.",
         code: "ws_not_configured",
       },
       { status: 501 },
@@ -32,11 +38,15 @@ export async function GET(request: NextRequest) {
     ok: true,
     protocol: "conversation_relay",
     websocket: false,
-    hint: "POST JSON messages here for simulated relay turns in staging.",
   });
 }
 
 export async function POST(request: NextRequest) {
+  if (!isOpsSandboxEnabled()) {
+    return NextResponse.json({ error: "Sandbox disabled" }, { status: 404 });
+  }
+  if (!authorizeOpsRequest(request)) return unauthorizedOpsResponse();
+
   let body: { message?: unknown; configId?: string; toE164?: string };
   try {
     body = (await request.json()) as typeof body;

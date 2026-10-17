@@ -73,7 +73,7 @@
       "eyebrow": "Revenue recovery for Québec trades",
       "headline": "Recover the jobs you're already paying to generate.",
       "accentWord": "Recover",
-      "subheadline": "TradeCatch recovers missed calls, follows up on quotes and books appointments. With Receptionist, it also answers your incoming calls 24/7, in French and English. Founder-led pilots, not self-serve software.",
+      "subheadline": "Missed calls get a text back. Quiet quotes get followed up. On Receptionist, the phone is answered 24/7 in French and English.",
       "ctaPrimary": "Book a free 20-minute audit",
       "ctaSecondary": "Watch the 90-second demo",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
@@ -158,7 +158,8 @@
         "Stop losing jobs",
         "to missed calls."
       ],
-      "qualificationLine": "Built for Québec plumbing, HVAC and electrical companies. French and English. Installed and monitored for you."
+      "qualificationLine": "Built for Québec plumbing, HVAC and electrical companies. French and English. Installed and monitored for you.",
+      "ctaTry": "Or talk to the receptionist yourself"
     },
     "stats": {
       "items": [
@@ -547,10 +548,10 @@
     "pilot": {
       "badge": "Pilot programme",
       "headline": "Founding pilot openings. Limited seats per service area.",
-      "body": "Join as a founding contractor while TradeCatch is taking a small number of pilots. You get a reduced founding rate, direct founder access, implementation around how your crew already works, priority on fitting features, and pricing locked for 12 months. No fabricated case-study promises. Results are tracked with you after launch.",
+      "body": "Join as a founding contractor while TradeCatch is taking a small number of pilots. You get the published rate, direct founder access, implementation around how your crew already works, priority on fitting features, and that rate locked for 12 months. No fabricated case-study promises. Results are tracked with you after launch.",
       "pointsLabel": "What the pilot includes",
       "points": [
-        "Reduced founding rate for early partners",
+        "The rate published on the pricing page",
         "Direct access to the founder during setup and tuning",
         "Custom implementation around your real call and quote volume",
         "Priority on feature requests that fit your trade",
@@ -606,30 +607,30 @@
     "pricingPreview": {
       "eyebrow": "Pricing",
       "headline": "Recover leads, convert them, or let the phone answer itself.",
-      "intro": "Three levels, each one built on the one before it. Scoped on the audit before you commit.",
+      "intro": "Three plans. Each one keeps everything in the plan before it. Setup is paid once. The large figure is the monthly management fee.",
       "tiers": [
         {
           "name": "Starter",
-          "price": "$799.99 setup",
-          "cadence": "then $350 / month",
-          "idealFor": "Missed calls, website inquiries and quote follow-up."
+          "price": "$349.99 / month",
+          "cadence": "$799.99 setup, paid once",
+          "idealFor": "Missed calls, website inquiries and quotes that go quiet."
         },
         {
           "name": "Growth",
-          "price": "$1,499.99 setup",
-          "cadence": "then $750 / month",
-          "idealFor": "Everything in Starter, plus booking, pipeline, attribution and reviews."
+          "price": "$749.99 / month",
+          "cadence": "$1,499.99 setup, paid once",
+          "idealFor": "Everything in Starter, plus booking, a pipeline and review requests."
         },
         {
           "name": "Receptionist",
-          "price": "$1,499.99 setup",
-          "cadence": "then $750 / month",
-          "idealFor": "Everything in Growth, plus a bilingual front desk that answers calls 24/7."
+          "price": "$999.99 / month",
+          "cadence": "$1,999.99 setup, paid once",
+          "idealFor": "Everything in Growth, plus a bilingual front desk that answers 24/7."
         }
       ],
       "cta": "See full pricing",
       "receptionistCta": "How the Receptionist works",
-      "note": "Custom scopes available for multi-location or high-volume operations."
+      "note": "Multi-location and high-volume work is scoped with you. Minutes past the written allowance are never billed in silence."
     },
     "proofExamples": {
       "eyebrow": "Product examples",
@@ -970,57 +971,57 @@
   "pricing": {
     "eyebrow": "Pricing",
     "headline": "Three plans. One goal: stop losing leads you already paid to generate.",
-    "intro": "Founder-led pilots only. Starter recovers missed calls, website inquiries and forgotten quotes. Growth adds booking, pipeline, attribution and reviews. Receptionist adds a bilingual front desk that answers the phone 24/7.",
+    "intro": "Starter recovers missed calls, website inquiries and quiet quotes. Growth books the work and tracks it. Receptionist answers the phone 24/7 in French and English, and includes both.",
     "reassurance": "Fixed setup. Month-to-month. Cancel with notice.",
     "metaDescription": "TradeCatch pricing for contractors: Starter missed-call recovery, Growth appointment booking and follow-up, and the Receptionist plan that answers calls 24/7 in French and English.",
     "principles": [
-      "Starter pilot = recover more leads",
-      "Growth pilot = convert more leads (includes Starter)",
-      "Receptionist = answer, qualify and take appointment requests by phone (includes Starter and Growth)",
-      "Scoped on the audit before you commit"
+      "Starter catches the leads that slip",
+      "Growth books and tracks them, and includes Starter",
+      "Receptionist answers the phone, and includes both",
+      "Nothing sends until you approve the messages"
     ],
     "tiers": [
       {
         "name": "Starter",
-        "tagline": "Recover More Leads · Founder-led pilot",
-        "outcome": "In a configured Starter pilot, stop missed calls, website inquiries, and forgotten quotes from disappearing.",
+        "tagline": "Catch the work that slips",
+        "outcome": "Missed calls get a text back. Website inquiries get a reply. Quotes that go quiet get followed up, in the customer's language, with wording you approve first.",
         "price": "$799.99 setup",
         "setupAmount": "$799.99",
-        "cadence": "$350 / month",
-        "monthlyAmount": "$350",
-        "idealFor": "Owner-operators and small crews who need recovery working before they scale conversion.",
-        "reassuranceLine": "Human takeover and basic notifications are included — not locked behind Growth. Often less than one recovered job.",
+        "cadence": "$349.99 / month",
+        "monthlyAmount": "$349.99",
+        "idealFor": "Owner-operators and small crews who lose jobs while they are on the tools.",
+        "reassuranceLine": "A person can take over any thread. Month to month. Further down, see what one of your jobs covers.",
         "groups": [
           {
             "title": "Capture",
             "items": [
-              "Missed-call recovery (controlled pilot)",
-              "Website lead response (linked Starter pilot)"
+              "Text-back on missed calls",
+              "Reply to website inquiries"
             ]
           },
           {
             "title": "Qualify",
             "items": [
-              "Lead qualification (controlled pilot)"
+              "Job, address and urgency collected before anyone calls back"
             ]
           },
           {
             "title": "Follow up",
             "items": [
-              "Automated quote follow-up (linked Starter pilot)"
+              "Quote follow-up that stops the moment they reply"
             ]
           },
           {
             "title": "Respond",
             "items": [
-              "Human takeover",
-              "Business notifications"
+              "A person can take over",
+              "Alerts to the owner or the on-call technician"
             ]
           },
           {
             "title": "Measure",
             "items": [
-              "Basic linked-workspace reporting (pilot)"
+              "A simple report of what came in"
             ]
           }
         ],
@@ -1030,63 +1031,63 @@
         "name": "Growth",
         "badge": "Most popular",
         "emphasis": "featured",
-        "tagline": "Convert More Leads · Entitled pilot",
-        "outcome": "For entitled, linked Growth pilot organizations: book in the workspace, track opportunities, attribute real won values, and request reviews.",
+        "tagline": "Turn those leads into booked visits",
+        "outcome": "Everything in Starter, then booking in the workspace, reminders, a pipeline, the won-job values you record, and review requests.",
         "price": "$1,499.99 setup",
         "setupAmount": "$1,499.99",
-        "cadence": "$750 / month",
-        "monthlyAmount": "$750",
-        "idealFor": "Pilot teams ready to move recovered leads toward in-app bookings and recorded won revenue.",
-        "reassuranceLine": "Exact monthly rate locked in writing at the audit from technician count and volume. Growth includes everything in Starter.",
+        "cadence": "$749.99 / month",
+        "monthlyAmount": "$749.99",
+        "idealFor": "Crews that already catch leads and now need them on the calendar.",
+        "reassuranceLine": "The monthly figure on this card is the rate. Usage past the written allowance is confirmed with you before it is billed. Growth includes Starter.",
         "groups": [
           {
             "title": "Book",
             "items": [
-              "In-app appointment booking (Growth pilot)",
-              "No native Google/Outlook sync",
-              "SMS appointment reminders (Growth pilot)"
+              "Appointment booking in the workspace",
+              "SMS appointment reminders"
             ]
           },
           {
             "title": "Manage",
             "items": [
-              "Advanced lead pipeline (Growth pilot)",
-              "Multi-technician routing and escalation (configured pilot)"
+              "A pipeline of open work",
+              "Routing and escalation across technicians"
             ]
           },
           {
             "title": "Measure",
             "items": [
-              "Revenue attribution from real won values (Growth pilot)",
-              "Advanced analytics and CSV export (Growth pilot)"
+              "Won revenue from the jobs you close",
+              "Analytics and a CSV export"
             ]
           },
           {
             "title": "Grow",
             "items": [
-              "Google review-request SMS (Growth pilot)"
+              "Google review-request texts"
             ]
           }
         ],
-        "includesPrevious": "Everything in the configured Starter pilot, plus:",
-        "planInterest": "growth"
+        "includesPrevious": "Everything in Starter, plus:",
+        "planInterest": "growth",
+        "stepUp": "Adds booking, pipeline, attribution and reviews: $400.00 a month and $700.00 more at setup than Starter."
       },
       {
         "name": "Receptionist",
         "badge": "Most advanced",
         "emphasis": "premium",
-        "tagline": "Automate Your Front Desk · Configured pilot",
-        "outcome": "Your 24/7 front desk for capturing, qualifying, routing and following up with leads, in French and English.",
-        "price": "$1,499.99 setup",
-        "setupAmount": "$1,499.99",
-        "cadence": "$750 / month",
-        "monthlyAmount": "$750",
-        "idealFor": "Contractors losing calls after hours, during jobs, or faster than the office can pick up.",
+        "tagline": "The line gets answered",
+        "outcome": "A front desk that picks up 24/7 in French and English, qualifies the job, takes the appointment request and transfers the calls that need a person. Starter and Growth stay on underneath.",
+        "price": "$1,999.99 setup",
+        "setupAmount": "$1,999.99",
+        "cadence": "$999.99 / month",
+        "monthlyAmount": "$999.99",
+        "idealFor": "Companies whose phone rings after hours, or while the crew is on a job.",
         "reassuranceLine": "Setup covers the knowledge base, greeting, appointment-request rules, transfer targets and emergency routing. Onboarding is required before the line goes live.",
         "usageNote": "Calling usage is subject to plan allowance and applicable usage limits, agreed in writing at the demo.",
         "includesPrevious": "Everything in Starter and everything in Growth, plus:",
         "ctaLabel": "Book a demo",
-        "secondaryCtaLabel": "See how it works",
+        "secondaryCtaLabel": "Talk to it yourself",
         "groups": [
           {
             "title": "Answer",
@@ -1122,8 +1123,9 @@
           }
         ],
         "ctaHref": "/book-audit",
-        "secondaryCtaHref": "/receptionist",
-        "planInterest": "receptionist"
+        "secondaryCtaHref": "/receptionist#try-it",
+        "planInterest": "receptionist",
+        "stepUp": "Adds the 24/7 bilingual phone line: $250.00 a month and $500.00 more at setup than Growth."
       }
     ],
     "customTitle": "Operating across locations or high volume?",
@@ -1156,8 +1158,8 @@
         "body": "Call recordings and transcripts are available when enabled. They are not switched on automatically. Notification wording and retention are configured to your business's requirements. This is a product setting, not legal advice."
       },
       {
-        "title": "Why prices have a range",
-        "body": "Final pricing depends on call volume, technicians, quote volume, existing software, and escalation rules. The audit locks the number in writing before work starts."
+        "title": "What the published price includes",
+        "body": "The figures on this page are the prices: a one-time setup and a monthly management fee. The audit confirms the plan fits your trade and locks the written allowance for calls and texts. It does not replace the published rate. Anything past that allowance is agreed in writing before it is billed."
       },
       {
         "title": "Volume and overages",
@@ -1360,7 +1362,25 @@
         }
       ],
       "note": "Every capability above is a founder-configured pilot module, not self-serve software. Items marked planned are not available yet and are never implied in a quote."
-    }
+    },
+    "breakEven": {
+      "eyebrow": "Do the math",
+      "title": "What is one job worth to you?",
+      "intro": "Enter the average value of a job. We show how many months one recovered job covers each plan's monthly fee. It is arithmetic on your number, not a forecast.",
+      "inputLabel": "Average job value (CAD)",
+      "inputHint": "Starting figure is an example. Replace it with yours.",
+      "planColumn": "Plan",
+      "feeColumn": "Monthly fee",
+      "coverColumn": "One job covers",
+      "months": "{value} months",
+      "monthOne": "1 month",
+      "partMonth": "{value}% of a month",
+      "invalid": "Enter an amount above zero.",
+      "note": "Monthly fees only. Setup is paid once and calling usage is agreed in writing. This is arithmetic on your own number, not a promise that any plan recovers a given number of jobs.",
+      "cta": "Book a free 20-minute audit"
+    },
+    "onceLabel": "paid once",
+    "monthlyEyebrow": "Each month"
   },
   "about": {
     "eyebrow": "About",
@@ -2027,8 +2047,8 @@
       "Install on your existing number where possible",
       "Founder-monitored launch and monthly management"
     ],
-    "pricingTitle": "Starting ranges",
-    "pricing": "Starter: $799.99 setup, then $350/month. Growth: $1,499.99 setup, then $750/month, and it includes Starter. Receptionist: $1,499.99 setup, then $750/month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
+    "pricingTitle": "Published prices",
+    "pricing": "Starter: $799.99 setup, then $349.99/month. Growth: $1,499.99 setup, then $749.99/month, and it includes Starter. Receptionist: $1,999.99 setup, then $999.99/month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
     "pilotTitle": "Pilot programme",
     "pilot": "Limited founding seats per area: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
     "ctaTitle": "Next step",
@@ -3020,7 +3040,7 @@
     "demo": {
       "eyebrow": "Try it",
       "title": "Talk to the receptionist yourself.",
-      "intro": "This runs the same conversation engine that answers real calls, for a fictional plumbing company. Type what a caller would say and watch it collect the details, answer a question, or bridge an emergency.",
+      "intro": "Say what a caller would say, out loud or typed. This is the same conversation engine that answers real calls, running on a fictional plumbing company. Watch it collect the details, answer a question, or bridge an emergency.",
       "badge": "Simulated call. Nothing is sent, no phone is dialed, nothing is saved.",
       "startHeading": "Pick a situation",
       "scenarios": [
@@ -3076,7 +3096,6 @@
       "restart": "Start another call",
       "error": "The demo is unavailable right now. Please try again in a moment.",
       "rateLimited": "Too many demo turns. Please wait a few minutes.",
-      "expired": "This demo call timed out. Start a new one.",
       "summaryLabel": "Call summary",
       "summaryPlaceholder": "When the call ends, the summary the owner receives by email and text appears here, built from what you said.",
       "summaryBadge": "Generated from the demo call. Not a real customer.",
@@ -3096,11 +3115,33 @@
         "priority": "Priority",
         "critical": "Emergency",
         "unknown": "Not assessed"
+      },
+      "voice": {
+        "modeLabel": "How do you want to talk?",
+        "speak": "Speak",
+        "speakHint": "Your microphone listens and the receptionist answers out loud. Allow microphone access when your browser asks.",
+        "type": "Type",
+        "typeHint": "Type what a caller would say. You can still turn on spoken replies.",
+        "unsupported": "Voice is not available in this browser. Chrome, Edge and Safari support it. You can type instead.",
+        "privacy": "Your browser turns your voice into text; TradeCatch only receives that text, never audio, and nothing is saved.",
+        "micStart": "Start speaking",
+        "micStop": "Stop the microphone",
+        "listening": "Listening… go ahead and speak.",
+        "speaking": "The receptionist is speaking…",
+        "repliesAloud": "Read replies aloud",
+        "denied": "The microphone is blocked. Allow it in your browser's address bar, or type instead.",
+        "noSpeech": "I didn't hear anything. Tap the microphone to try again, or type.",
+        "unavailable": "Voice did not work in this browser. You can type instead."
+      },
+      "afterCall": {
+        "title": "That was the demo. Now picture it on your own number.",
+        "body": "Every call like this reaches your workspace as a summary you can act on. In a 20-minute demo we walk through the call flow for your trade: what it says, what it collects, and when it hands off to a person.",
+        "cta": "Book a demo"
       }
     },
-    "eyebrow": "Receptionist · $1,499.99 setup, then $750/month",
+    "eyebrow": "Receptionist · $1,999.99 setup, then $999.99/month",
     "headline": "A bilingual front desk that answers every call, day or night.",
-    "intro": "Receptionist is the premium TradeCatch plan. It answers your incoming calls in French or English, works out what the caller needs, qualifies the job, takes the appointment request, transfers the calls that need a person, and keeps every TradeCatch recovery and follow-up workflow running underneath.",
+    "intro": "Receptionist answers incoming calls in French or English, works out what the caller needs, takes the appointment request and transfers the calls that need a person. Missed-call recovery, quote follow-up and the Growth workspace stay on underneath.",
     "metaDescription": "Receptionist for Québec contractors: bilingual call answering 24/7, call qualification, appointment requests by phone, human transfer and emergency routing, on top of TradeCatch missed-call recovery and quote follow-up.",
     "heroPointsLabel": "What changes on day one",
     "heroPoints": [
@@ -3110,8 +3151,8 @@
     ],
     "planLabel": "The plan",
     "planName": "Receptionist",
-    "planSetup": "$1,499.99 setup",
-    "planCadence": "then $750 / month",
+    "planSetup": "$1,999.99 setup",
+    "planCadence": "$999.99 / month",
     "planNote": "Calling usage is subject to plan allowance and applicable usage limits.",
     "ctaPrimary": "Book a demo",
     "ctaDemo": "Watch the receptionist demo",
@@ -3533,7 +3574,8 @@
       "primary": "Book a demo",
       "secondary": "See full pricing",
       "note": "20 minutes. No system access required. Configuration and onboarding happen before the line goes live."
-    }
+    },
+    "ctaTry": "Talk to it yourself"
   },
   "demoMode": {
     "badge": "Demo Mode",

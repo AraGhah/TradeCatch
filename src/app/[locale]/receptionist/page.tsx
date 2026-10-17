@@ -71,10 +71,10 @@ export default async function AiReceptionistPage({
             <p className="mt-3 font-heading text-[22px] font-extrabold tracking-[-0.03em] text-white">
               {t("planName")}
             </p>
-            <p className="mt-2 font-heading text-[clamp(24px,2.6vw,30px)] font-extrabold tracking-[-0.03em] text-orange">
-              {t("planSetup")}
+            <p className="mt-3 font-heading text-[clamp(36px,4vw,48px)] font-extrabold leading-[0.95] tracking-[-0.045em] text-orange">
+              {t("planCadence")}
             </p>
-            <p className="mt-1 text-[15px] text-white/70">{t("planCadence")}</p>
+            <p className="mt-2 text-[15px] text-white/70">{t("planSetup")}</p>
             <ul className="mt-5 flex list-none flex-col gap-2.5 border-t border-white/12 p-0 pt-5">
               {heroPoints.map((point) => (
                 <li
@@ -95,12 +95,19 @@ export default async function AiReceptionistPage({
               <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[11px] border border-white/20 bg-transparent px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 active:scale-[0.97]">
                 {t("ctaDemo")}
               </WatchDemoButton>
-              <CTAButton href="/pricing" variant="ghost-ink" size="md">
-                {t("ctaSecondary")}
+              <CTAButton href="#try-it" variant="ghost-ink" size="md">
+                {t("ctaTry")}
               </CTAButton>
             </div>
             <p className="mt-4 text-[12.5px] leading-[1.5] text-white/45">
-              {t("planNote")}
+              {t("planNote")}{" "}
+              <CTAButton
+                href="/pricing"
+                variant="link-ink"
+                className="text-[12.5px]"
+              >
+                {t("ctaSecondary")}
+              </CTAButton>
             </p>
           </div>
         }

@@ -24,6 +24,17 @@ async function demoSection(page: Page, path: string) {
 }
 
 test.describe("receptionist demo on the receptionist page", () => {
+  // These cover the typed conversation. Voice has its own spec
+  // (receptionist-voice.spec.ts); here the browser has no speech recognition,
+  // as in Firefox, so the page falls back to typing.
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      for (const key of ["SpeechRecognition", "webkitSpeechRecognition"]) {
+        Object.defineProperty(window, key, { value: undefined, configurable: true });
+      }
+    });
+  });
+
   test("English: full service-request call ends with a summary card", async ({
     page,
   }) => {

@@ -40,8 +40,10 @@ const securityHeaders = [
   },
   {
     key: "Permissions-Policy",
+    // The receptionist demo listens through the visitor's microphone, so
+    // this origin may ask for it. No embedded frame may, and nothing else.
     value:
-      "camera=(), microphone=(), geolocation=(), browsing-topics=(), interest-cohort=()",
+      "camera=(), microphone=(self), geolocation=(), browsing-topics=(), interest-cohort=()",
   },
 ];
 

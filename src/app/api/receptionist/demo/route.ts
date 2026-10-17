@@ -3,54 +3,46 @@ import { z } from "zod";
 import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
 import {
   DemoError,
-  MAX_DEMO_STATE_CHARS,
+  MAX_DEMO_HISTORY,
   MAX_DEMO_UTTERANCE,
   runDemoTurn,
 } from "@/product/receptionist/demo";
-import { getAuthSecret } from "@/product/saas/tenant";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Public website demo of the AI receptionist (see product/receptionist/demo.ts).
- * No auth: it has no side effects — no SMS, email, phone call, database write
- * or LLM call. Rate limited per IP. Disable with RECEPTIONIST_DEMO=0.
+ * Public website demo of the receptionist (see product/receptionist/demo.ts).
+ * No auth and no secret: it has no side effects — no SMS, email, phone call,
+ * database write or LLM call — and the client only supplies what the caller
+ * says, which the server replays from the start of the call. Rate limited per
+ * IP. Disable with RECEPTIONIST_DEMO=0.
  */
+const utterance = z.string().trim().min(1).max(MAX_DEMO_UTTERANCE);
+const language = z.enum(["fr", "en"]);
+const scenario = z.enum(["open", "after_hours"]).default("open");
+
 const schema = z.discriminatedUnion("action", [
-  z.object({
-    action: z.literal("start"),
-    language: z.enum(["fr", "en"]),
-    scenario: z.enum(["open", "after_hours"]).default("open"),
-  }),
+  z.object({ action: z.literal("start"), language, scenario }),
   z.object({
     action: z.literal("say"),
-    state: z.string().min(10).max(MAX_DEMO_STATE_CHARS),
-    speech: z.string().trim().min(1).max(MAX_DEMO_UTTERANCE),
+    language,
+    scenario,
+    history: z.array(utterance).max(MAX_DEMO_HISTORY).default([]),
+    speech: utterance,
   }),
 ]);
 
-function demoSecret(): string | null {
-  const configured = getAuthSecret();
-  if (configured) return configured;
-  // Local development only: never sign demo state with a guessable key in production.
-  return process.env.NODE_ENV === "production"
-    ? null
-    : "dev-only-receptionist-demo-secret";
-}
+// 13 utterances of 400 characters plus JSON overhead.
+const MAX_BODY_CHARS = 8_000;
 
 export async function POST(request: NextRequest) {
   if (process.env.RECEPTIONIST_DEMO === "0") {
     return NextResponse.json({ error: "Demo disabled" }, { status: 404 });
   }
 
-  const secret = demoSecret();
-  if (!secret) {
-    return NextResponse.json({ error: "Demo unavailable" }, { status: 503 });
-  }
-
   const { allowed } = await rateLimitAsync({
     key: `receptionist-demo:${getClientIp(request)}`,
-    limit: 60,
+    limit: 120,
     windowMs: 10 * 60 * 1000,
   });
   if (!allowed) {
@@ -61,7 +53,7 @@ export async function POST(request: NextRequest) {
   }
 
   const raw = await request.text();
-  if (raw.length > MAX_DEMO_STATE_CHARS + 2000) {
+  if (raw.length > MAX_BODY_CHARS) {
     return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   }
   let json: unknown;
@@ -76,7 +68,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await runDemoTurn(parsed.data, secret);
+    const result = await runDemoTurn(parsed.data);
     return NextResponse.json(
       { ok: true, ...result },
       { headers: { "Cache-Control": "no-store" } },
@@ -85,7 +77,7 @@ export async function POST(request: NextRequest) {
     if (err instanceof DemoError) {
       return NextResponse.json(
         { error: err.message, code: err.code },
-        { status: err.code === "expired" ? 410 : 400 },
+        { status: 400 },
       );
     }
     console.error("[receptionist-demo] failed", err);

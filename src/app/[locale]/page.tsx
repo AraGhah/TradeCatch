@@ -12,6 +12,7 @@ import { PricingPreview } from "@/components/PricingPreview";
 import { WorkflowPreview } from "@/components/WorkflowPreview";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
+import { localizedAnchor } from "@/lib/anchors";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -52,6 +53,7 @@ export default async function HomePage({
   const cta = await getTranslations("cta");
   const site = await getTranslations("site");
 
+  const tryHref = localizedAnchor(locale, "/receptionist#try-it");
   const headline = t("hero.headline");
   const accentWord = t("hero.accentWord");
   const trustChips = t.raw("hero.trustChips") as string[];
@@ -120,6 +122,16 @@ export default async function HomePage({
                 <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
                   {t("hero.ctaSecondary")}
                 </WatchDemoButton>
+              </StaggerItem>
+
+              <StaggerItem>
+                <CTAButton
+                  href={tryHref}
+                  variant="link-ink"
+                  className="mt-6 text-[15.5px]"
+                >
+                  {t("hero.ctaTry")} <span aria-hidden>→</span>
+                </CTAButton>
               </StaggerItem>
 
               <StaggerItem>

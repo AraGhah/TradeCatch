@@ -14,13 +14,22 @@ import {
 
 export const dynamic = "force-dynamic";
 
+function isPublicHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 const bodySchema = z.object({
   name: z.string().trim().min(1).max(120).optional(),
   email: z.string().trim().email().max(200).optional(),
   phone: z.string().trim().min(8).max(32).optional(),
   message: z.string().trim().max(2000).optional(),
   serviceRequested: z.string().trim().max(200).optional(),
-  sourceUrl: z.string().url().max(500).optional(),
+  sourceUrl: z.string().trim().max(500).refine(isPublicHttpUrl).optional(),
   locale: z.enum(["en", "fr"]).optional(),
   idempotencyKey: z.string().trim().min(8).max(120).optional(),
   consentAt: z.string().datetime().optional(),
@@ -49,6 +58,16 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request);
+  // The per-key bucket below is keyed on the key the caller sent, so guessing
+  // keys would start a fresh bucket every time. Cap each IP across all keys too.
+  const ipBudget = await rateLimitAsync({
+    key: `website-lead-ip:${ip}`,
+    limit: 120,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!ipBudget.allowed) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
   const { allowed } = await rateLimitAsync({
     key: `website-lead:${hashToken(apiKey).slice(0, 16)}:${ip}`,
     limit: 30,
@@ -90,10 +109,7 @@ export async function POST(request: NextRequest) {
   }
   const parsed = bodySchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid body.", details: parsed.error.flatten() },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Invalid body." }, { status: 400 });
   }
 
   const data = parsed.data;

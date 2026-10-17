@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { CTAButton } from "@/components/CTAButton";
+import { CTAButton, type AnchorHref } from "@/components/CTAButton";
 
 export type PricingOutcomeGroup = {
   title: string;
@@ -23,8 +23,16 @@ const TIER_PLAN_INTEREST = ["starter", "growth", "receptionist"] as const;
 
 type TierPlanInterest = (typeof TIER_PLAN_INTEREST)[number];
 
-function resolveHref(value: string | undefined, fallback: TierHref): TierHref {
-  return value && value in TIER_HREFS ? (value as TierHref) : fallback;
+/** A localized page + anchor passed in by the page, e.g. "/fr/receptionniste#try-it". */
+const ANCHOR_HREF = /^\/(?!\/)[a-z0-9/-]*#[\w-]+$/i;
+
+function resolveHref(
+  value: string | undefined,
+  fallback: TierHref,
+): TierHref | AnchorHref {
+  if (value && value in TIER_HREFS) return value as TierHref;
+  if (value && ANCHOR_HREF.test(value)) return value as AnchorHref;
+  return fallback;
 }
 
 function resolvePlanInterest(
@@ -39,7 +47,10 @@ function resolvePlanInterest(
  * Only the intake route carries the plan query — linking to a content page
  * with a stray `?plan=` would just create duplicate URLs for crawlers.
  */
-function tierCtaHref(pathname: TierHref, plan: TierPlanInterest | undefined) {
+function tierCtaHref(
+  pathname: TierHref | AnchorHref,
+  plan: TierPlanInterest | undefined,
+) {
   return plan && pathname === "/book-audit"
     ? { pathname, query: { plan } }
     : pathname;
@@ -63,6 +74,8 @@ export type PricingTier = {
   reassuranceLine?: string;
   /** "Everything in Starter, plus:" style line for stacked plans */
   includesPrevious?: string;
+  /** What this plan adds over the previous one, with the real price difference */
+  stepUp?: string;
   /** Allowance/limits disclosure shown under the price */
   usageNote?: string;
   ctaLabel?: string;
@@ -76,14 +89,14 @@ export type PricingTier = {
 type Labels = {
   cta: string;
   setupLabel: string;
-  monthlyLabel: string;
   customTitle: string;
   customBody: string;
   customCta: string;
   includesTitle: string;
   includesItems: string[];
   details: { title: string; body: string }[];
-  thenLabel: string;
+  onceLabel: string;
+  monthlyEyebrow: string;
 };
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -121,8 +134,8 @@ export function PricingExperience({
             index={i}
             cta={labels.cta}
             setupLabel={labels.setupLabel}
-            monthlyLabel={labels.monthlyLabel}
-            thenLabel={labels.thenLabel}
+            onceLabel={labels.onceLabel}
+            monthlyEyebrow={labels.monthlyEyebrow}
           />
         ))}
       </div>
@@ -219,15 +232,15 @@ function PlanCard({
   index,
   cta,
   setupLabel,
-  monthlyLabel,
-  thenLabel,
+  onceLabel,
+  monthlyEyebrow,
 }: {
   tier: PricingTier;
   index: number;
   cta: string;
   setupLabel: string;
-  monthlyLabel: string;
-  thenLabel: string;
+  onceLabel: string;
+  monthlyEyebrow: string;
 }) {
   const setupDisplay = tier.setupAmount ?? tier.price;
   const monthlyDisplay =
@@ -332,7 +345,7 @@ function PlanCard({
 
       <div className={`relative mt-7 border-t pt-6 ${divider}`}>
         <p className={`text-[12px] tracking-[0.08em] uppercase ${mutedText}`}>
-          {setupLabel}
+          {monthlyEyebrow}
         </p>
         <motion.p
           variants={{
@@ -347,17 +360,22 @@ function PlanCard({
               },
             },
           }}
-          className={`mt-1.5 origin-left font-heading text-[clamp(26px,2.6vw,32px)] font-extrabold leading-[1.05] tracking-[-0.03em] break-words ${strongText}`}
+          className={`mt-1.5 origin-left font-heading text-[clamp(40px,4.2vw,56px)] font-extrabold leading-[0.95] tracking-[-0.045em] break-words ${premium ? "text-orange" : strongText}`}
         >
-          {setupDisplay}
+          {monthlyDisplay}
         </motion.p>
-        <p className={`mt-2 text-[15px] ${listText}`}>
-          <span className={mutedText}>{thenLabel} </span>
-          <span className={`font-semibold ${strongText}`}>
-            {monthlyDisplay}
-          </span>
-          <span className={mutedText}> / {monthlyLabel.toLowerCase()}</span>
+        <p className={`mt-4 text-[15px] ${listText}`}>
+          <span className={mutedText}>{setupLabel} </span>
+          <span className={`font-semibold ${strongText}`}>{setupDisplay}</span>
+          <span className={mutedText}> · {onceLabel}</span>
         </p>
+        {tier.stepUp ? (
+          <p
+            className={`mt-4 border-l-2 border-orange pl-3 text-[14px] leading-[1.5] font-medium ${strongText}`}
+          >
+            {tier.stepUp}
+          </p>
+        ) : null}
         {tier.reassuranceLine ? (
           <p className={`mt-3 text-[13.5px] leading-[1.5] ${mutedText}`}>
             {tier.reassuranceLine}

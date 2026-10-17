@@ -73,7 +73,7 @@
       "eyebrow": "Récupération de revenus pour les métiers au Québec",
       "headline": "Récupérez les jobs que vous payez déjà pour générer.",
       "accentWord": "Récupérez",
-      "subheadline": "TradeCatch récupère les appels manqués, relance les soumissions et prend les rendez-vous. Avec le Réceptionniste, le système répond aussi à vos appels entrants 24/7, en français et en anglais. Pilotes dirigés par le fondateur, sans SaaS en libre-service.",
+      "subheadline": "Les appels manqués reçoivent un texto. Les soumissions sans réponse sont relancées. Le forfait Réceptionniste répond au téléphone 24/7, en français et en anglais.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la démo vidéo",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
@@ -158,7 +158,8 @@
         "Arrêtez de perdre des jobs",
         "à cause d'appels manqués."
       ],
-      "qualificationLine": "Conçu pour les entreprises de plomberie, CVC et électricité au Québec. Français et anglais. Installé et suivi pour vous."
+      "qualificationLine": "Conçu pour les entreprises de plomberie, CVC et électricité au Québec. Français et anglais. Installé et suivi pour vous.",
+      "ctaTry": "Ou parlez vous-même à la réceptionniste"
     },
     "stats": {
       "items": [
@@ -547,10 +548,10 @@
     "pilot": {
       "badge": "Programme pilote",
       "headline": "Places pilotes fondatrices. Limitées par zone de service.",
-      "body": "Joignez-vous comme entrepreneur fondateur pendant que TradeCatch accepte un petit nombre de pilotes. Tarif fondateur réduit, accès direct au fondateur, mise en place selon votre façon de travailler, priorité sur les fonctions pertinentes, et prix verrouillé 12 mois. Pas de promesses de case study inventées. Les résultats se suivent avec vous après le lancement.",
+      "body": "Joignez-vous comme entrepreneur fondateur pendant que TradeCatch accepte un petit nombre de pilotes. Le tarif affiché, l’accès direct au fondateur, une mise en place selon votre façon de travailler, la priorité sur les fonctions pertinentes, et ce tarif verrouillé 12 mois. Pas de promesses de case study inventées. Les résultats se suivent avec vous après le lancement.",
       "pointsLabel": "Ce que le pilote inclut",
       "points": [
-        "Tarif fondateur réduit pour les premiers partenaires",
+        "Le tarif affiché sur la page des tarifs",
         "Accès direct au fondateur pendant l'installation et le peaufinage",
         "Mise en place sur mesure selon votre volume réel d'appels et de soumissions",
         "Priorité sur les demandes de fonctions adaptées à votre métier",
@@ -606,30 +607,30 @@
     "pricingPreview": {
       "eyebrow": "Tarifs",
       "headline": "Récupérez vos demandes, convertissez-les, ou laissez le téléphone répondre.",
-      "intro": "Trois niveaux, chacun bâti sur le précédent. Définis lors de l’audit, avant tout engagement.",
+      "intro": "Trois forfaits. Chacun garde tout ce que contient le précédent. L’installation se paie une fois. Le gros chiffre, c’est les frais de gestion mensuels.",
       "tiers": [
         {
           "name": "Starter",
-          "price": "799,99 $ installation",
-          "cadence": "puis 350 $ / mois",
-          "idealFor": "Appels manqués, demandes web et relance des soumissions."
+          "price": "349,99 $ / mois",
+          "cadence": "799,99 $ d’installation, payé une fois",
+          "idealFor": "Appels manqués, demandes du site et soumissions qui restent sans réponse."
         },
         {
           "name": "Growth",
-          "price": "1 499,99 $ installation",
-          "cadence": "puis 750 $ / mois",
-          "idealFor": "Tout Starter, plus la prise de rendez-vous, le pipeline, l’attribution et les avis."
+          "price": "749,99 $ / mois",
+          "cadence": "1 499,99 $ d’installation, payé une fois",
+          "idealFor": "Tout Starter, plus la prise de rendez-vous, le pipeline et les demandes d’avis."
         },
         {
           "name": "Réceptionniste",
-          "price": "1 499,99 $ installation",
-          "cadence": "puis 750 $ / mois",
-          "idealFor": "Tout Growth, plus une réception bilingue qui répond aux appels 24/7."
+          "price": "999,99 $ / mois",
+          "cadence": "1 999,99 $ d’installation, payé une fois",
+          "idealFor": "Tout Growth, plus une réception bilingue qui répond 24/7."
         }
       ],
       "cta": "Voir tous les tarifs",
       "receptionistCta": "Le fonctionnement du Réceptionniste",
-      "note": "Portées sur mesure pour les entreprises multi-sites ou à fort volume."
+      "note": "Le multi-sites et le fort volume se définissent avec vous. Les minutes au-delà de l’allocation écrite ne sont jamais facturées en silence."
     },
     "proofExamples": {
       "eyebrow": "Exemples produit",
@@ -970,57 +971,57 @@
   "pricing": {
     "eyebrow": "Tarifs",
     "headline": "Trois forfaits. Un seul but : arrêter de perdre des clients que vous payez déjà pour attirer.",
-    "intro": "Uniquement en pilote dirigé par le fondateur. Starter récupère les appels manqués, les demandes web et les soumissions oubliées. Growth ajoute la prise de rendez-vous, le pipeline, l’attribution et les avis. Réceptionniste ajoute une réception bilingue qui répond au téléphone 24/7.",
+    "intro": "Starter récupère les appels manqués, les demandes du site et les soumissions sans nouvelles. Growth prend les rendez-vous et suit le travail. Réceptionniste répond au téléphone 24/7 en français et en anglais, et inclut les deux.",
     "reassurance": "Installation fixe. Mois par mois. Résiliation avec préavis.",
     "metaDescription": "Tarifs TradeCatch pour entrepreneurs : Starter pour la récupération des appels manqués, Growth pour la prise de rendez-vous et les relances, et le forfait Réceptionniste qui répond aux appels 24/7 en français et en anglais.",
     "principles": [
-      "Pilote Starter = récupérer plus de demandes",
-      "Pilote Growth = convertir plus de demandes (inclut Starter)",
-      "Réceptionniste = répondre, qualifier et prendre les demandes de rendez-vous par téléphone (inclut Starter et Growth)",
-      "Défini lors de l’audit, avant tout engagement"
+      "Starter rattrape les demandes qui filent",
+      "Growth les réserve et les suit, et inclut Starter",
+      "Réceptionniste répond au téléphone, et inclut les deux",
+      "Rien ne part tant que vous n’avez pas approuvé les messages"
     ],
     "tiers": [
       {
         "name": "Starter",
-        "tagline": "Récupérez plus de demandes · Pilote fondateur",
-        "outcome": "Dans un pilote Starter configuré, empêchez les appels manqués, les demandes web et les soumissions oubliées de disparaître.",
-        "price": "799,99 $ d'installation",
-        "setupAmount": "799,99 $",
-        "cadence": "350 $ / mois",
-        "monthlyAmount": "350 $",
-        "idealFor": "Propriétaires-exploitants et petites équipes qui ont besoin d'une récupération solide avant d'accélérer la conversion.",
-        "reassuranceLine": "La prise en charge humaine et les notifications de base sont incluses — pas réservées à Growth. Souvent moins qu'une seule job récupérée.",
+        "tagline": "Rattrapez le travail qui file",
+        "outcome": "Les appels manqués reçoivent un texto. Les demandes du site reçoivent une réponse. Les soumissions sans nouvelles sont relancées, dans la langue du client, avec un texte que vous approuvez d’abord.",
+        "price": "799,99 $ d'installation",
+        "setupAmount": "799,99 $",
+        "cadence": "349,99 $ / mois",
+        "monthlyAmount": "349,99 $",
+        "idealFor": "Propriétaires-exploitants et petites équipes qui perdent des jobs pendant qu’ils sont sur les outils.",
+        "reassuranceLine": "Une personne peut reprendre n’importe quel fil. Mois par mois. Plus bas, voyez ce qu’une de vos jobs couvre.",
         "groups": [
           {
             "title": "Capturer",
             "items": [
-              "Récupération d’appels manqués (pilote contrôlé)",
-              "Réponse aux leads web (pilote Starter lié)"
+              "Texto de retour sur les appels manqués",
+              "Réponse aux demandes du site"
             ]
           },
           {
             "title": "Qualifier",
             "items": [
-              "Qualification des leads (pilote contrôlé)"
+              "Travail, adresse et urgence notés avant le rappel"
             ]
           },
           {
             "title": "Relancer",
             "items": [
-              "Relance automatisée de soumissions (pilote Starter lié)"
+              "Relance de soumission qui s’arrête dès qu’ils répondent"
             ]
           },
           {
             "title": "Répondre",
             "items": [
-              "Prise en charge humaine",
-              "Notifications métier"
+              "Une personne peut reprendre la main",
+              "Alertes au propriétaire ou au technicien de garde"
             ]
           },
           {
             "title": "Mesurer",
             "items": [
-              "Rapports de base dans l’espace lié (pilote)"
+              "Un rapport simple de ce qui est entré"
             ]
           }
         ],
@@ -1030,63 +1031,63 @@
         "name": "Growth",
         "badge": "Le plus choisi",
         "emphasis": "featured",
-        "tagline": "Convertir plus de leads · Pilote admissible",
-        "outcome": "Pour les organisations pilotes Growth admissibles et liées : réservez dans l’espace, suivez les occasions, attribuez les valeurs gagnées réelles et demandez des avis.",
-        "price": "1 499,99 $ d'installation",
-        "setupAmount": "1 499,99 $",
-        "cadence": "750 $ / mois",
-        "monthlyAmount": "750 $",
-        "idealFor": "Équipes pilotes prêtes à mener les leads récupérés vers des réservations dans l’espace et des revenus gagnés enregistrés.",
-        "reassuranceLine": "Le tarif mensuel exact est fixé par écrit à l'audit selon le nombre de techniciens et le volume. Growth inclut tout Starter.",
+        "tagline": "Transformez ces demandes en visites réservées",
+        "outcome": "Tout Starter, puis la réservation dans l’espace, les rappels, un pipeline, les valeurs gagnées que vous enregistrez et les demandes d’avis.",
+        "price": "1 499,99 $ d'installation",
+        "setupAmount": "1 499,99 $",
+        "cadence": "749,99 $ / mois",
+        "monthlyAmount": "749,99 $",
+        "idealFor": "Équipes qui rattrapent déjà des demandes et veulent maintenant les voir au calendrier.",
+        "reassuranceLine": "Le montant mensuel sur cette carte est le tarif. Tout dépassement de l’allocation écrite est confirmé avec vous avant d’être facturé. Growth inclut Starter.",
         "groups": [
           {
             "title": "Réserver",
             "items": [
-              "Réservation de rendez-vous dans l’espace (pilote Growth)",
-              "Aucune synchronisation native Google/Outlook",
-              "Rappels SMS de rendez-vous (pilote Growth)"
+              "Prise de rendez-vous dans l’espace",
+              "Rappels de rendez-vous par texto"
             ]
           },
           {
             "title": "Gérer",
             "items": [
-              "Pipeline de leads avancé (pilote Growth)",
-              "Routage multi-techniciens et escalade (pilote configuré)"
+              "Un pipeline du travail ouvert",
+              "Routage et escalade entre techniciens"
             ]
           },
           {
             "title": "Mesurer",
             "items": [
-              "Attribution à partir des valeurs gagnées réelles (pilote Growth)",
-              "Analytique avancée et export CSV (pilote Growth)"
+              "Revenu gagné à partir des jobs que vous fermez",
+              "Analytique et export CSV"
             ]
           },
           {
             "title": "Grandir",
             "items": [
-              "SMS de demande d’avis Google (pilote Growth)"
+              "Textos de demande d’avis Google"
             ]
           }
         ],
-        "includesPrevious": "Tout ce qui est dans le pilote Starter configuré, plus :",
-        "planInterest": "growth"
+        "includesPrevious": "Tout ce qui est dans Starter, plus :",
+        "planInterest": "growth",
+        "stepUp": "Ajoute la prise de rendez-vous, le pipeline, l’attribution et les avis : 400,00 $ par mois et 700,00 $ d’installation de plus que Starter."
       },
       {
         "name": "Réceptionniste",
         "badge": "Le plus complet",
         "emphasis": "premium",
-        "tagline": "Automatisez votre réception · Pilote configuré",
-        "outcome": "Votre réception 24/7 pour capter, qualifier, acheminer et relancer vos demandes, en français et en anglais.",
-        "price": "1 499,99 $ d'installation",
-        "setupAmount": "1 499,99 $",
-        "cadence": "750 $ / mois",
-        "monthlyAmount": "750 $",
-        "idealFor": "Entrepreneurs qui perdent des appels le soir, pendant les chantiers ou plus vite que le bureau peut répondre.",
+        "tagline": "On répond au téléphone",
+        "outcome": "Une réception qui décroche 24/7 en français et en anglais, qualifie le travail, prend la demande de rendez-vous et transfère les appels qui ont besoin d’une personne. Starter et Growth restent en dessous.",
+        "price": "1 999,99 $ d'installation",
+        "setupAmount": "1 999,99 $",
+        "cadence": "999,99 $ / mois",
+        "monthlyAmount": "999,99 $",
+        "idealFor": "Entreprises dont le téléphone sonne le soir, ou pendant que l’équipe est sur un chantier.",
         "reassuranceLine": "La mise en place couvre la base de connaissances, l’accueil, les règles de demande de rendez-vous, les cibles de transfert et l’acheminement des urgences. L’intégration est obligatoire avant la mise en ligne de la ligne.",
         "usageNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables, convenues par écrit lors de la démo.",
         "includesPrevious": "Tout Starter et tout Growth, plus :",
         "ctaLabel": "Réserver une démo",
-        "secondaryCtaLabel": "Voir le fonctionnement",
+        "secondaryCtaLabel": "Parlez-lui vous-même",
         "groups": [
           {
             "title": "Répondre",
@@ -1122,8 +1123,9 @@
           }
         ],
         "ctaHref": "/book-audit",
-        "secondaryCtaHref": "/receptionist",
-        "planInterest": "receptionist"
+        "secondaryCtaHref": "/receptionist#try-it",
+        "planInterest": "receptionist",
+        "stepUp": "Ajoute la ligne téléphonique bilingue 24/7 : 250,00 $ par mois et 500,00 $ d’installation de plus que Growth."
       }
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
@@ -1156,8 +1158,8 @@
         "body": "Les enregistrements d’appels et les transcriptions sont disponibles lorsqu’ils sont activés. Ils ne le sont pas automatiquement. Les avis aux appelants et la conservation sont configurés selon les exigences de votre entreprise. Il s’agit d’un réglage produit, pas d’un avis juridique."
       },
       {
-        "title": "Pourquoi les prix ont une fourchette",
-        "body": "Le prix final dépend du volume d'appels, des techniciens, du volume de soumissions, des logiciels déjà en place et des règles d'escalade. L'audit fixe le chiffre par écrit avant le début des travaux."
+        "title": "Ce que couvre le prix affiché",
+        "body": "Les chiffres de cette page sont les prix : une installation unique et des frais de gestion mensuels. L’audit confirme que le forfait convient à votre métier et fixe par écrit l’allocation d’appels et de textos. Il ne remplace pas le tarif affiché. Tout dépassement est convenu par écrit avant d’être facturé."
       },
       {
         "title": "Volume et dépassements",
@@ -1360,7 +1362,25 @@
         }
       ],
       "note": "Chaque fonction ci-dessus est un module de pilote configuré par le fondateur, pas un logiciel en libre-service. Les éléments marqués « prévu » ne sont pas encore offerts et ne sont jamais sous-entendus dans une soumission."
-    }
+    },
+    "breakEven": {
+      "eyebrow": "Faites le calcul",
+      "title": "Combien vaut un contrat pour vous?",
+      "intro": "Entrez la valeur moyenne d’un contrat. Nous montrons combien de mois un seul contrat récupéré couvre les frais mensuels de chaque forfait. C’est de l’arithmétique sur votre chiffre, pas une prévision.",
+      "inputLabel": "Valeur moyenne d’un contrat ($ CA)",
+      "inputHint": "Chiffre de départ à titre d’exemple. Remplacez-le par le vôtre.",
+      "planColumn": "Forfait",
+      "feeColumn": "Frais mensuels",
+      "coverColumn": "Un seul contrat couvre",
+      "months": "{value} mois",
+      "monthOne": "1 mois",
+      "partMonth": "{value} % d’un mois",
+      "invalid": "Entrez un montant supérieur à zéro.",
+      "note": "Frais mensuels seulement. L’installation est payée une fois et l’utilisation des appels est convenue par écrit. C’est de l’arithmétique sur votre propre chiffre, pas une promesse qu’un forfait récupère un nombre donné de contrats.",
+      "cta": "Réserver un audit gratuit de 20 minutes"
+    },
+    "onceLabel": "payé une fois",
+    "monthlyEyebrow": "Chaque mois"
   },
   "about": {
     "eyebrow": "À propos",
@@ -2027,8 +2047,8 @@
       "Installation sur votre numéro existant quand c'est possible",
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
-    "pricingTitle": "Fourchettes de départ",
-    "pricing": "Starter : 799,99 $ d’installation, puis 350 $/mois. Growth : 1 499,99 $ d’installation, puis 750 $/mois, et inclut Starter. Réceptionniste : 1 499,99 $ d’installation, puis 750 $/mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
+    "pricingTitle": "Prix affichés",
+    "pricing": "Starter : 799,99 $ d’installation, puis 349,99 $/mois. Growth : 1 499,99 $ d’installation, puis 749,99 $/mois, et inclut Starter. Réceptionniste : 1 999,99 $ d’installation, puis 999,99 $/mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
     "pilotTitle": "Programme pilote",
     "pilot": "Places fondatrices limitées par zone : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
@@ -3020,7 +3040,7 @@
     "demo": {
       "eyebrow": "Essayez-la",
       "title": "Parlez vous-même à la réceptionniste.",
-      "intro": "Cette démo utilise le même moteur de conversation que les vrais appels, pour une entreprise de plomberie fictive. Écrivez ce qu'un appelant dirait et voyez-la recueillir les détails, répondre à une question ou acheminer une urgence.",
+      "intro": "Dites ce qu’un appelant dirait, à voix haute ou par écrit. C’est le même moteur de conversation que celui des vrais appels, sur une entreprise de plomberie fictive. Regardez-le recueillir les détails, répondre à une question ou acheminer une urgence.",
       "badge": "Appel simulé. Rien n'est envoyé, aucun téléphone n'est composé, rien n'est enregistré.",
       "startHeading": "Choisissez une situation",
       "scenarios": [
@@ -3076,7 +3096,6 @@
       "restart": "Démarrer un autre appel",
       "error": "La démo est indisponible pour le moment. Réessayez dans un instant.",
       "rateLimited": "Trop d'échanges de démo. Patientez quelques minutes.",
-      "expired": "Cet appel de démo a expiré. Démarrez-en un nouveau.",
       "summaryLabel": "Résumé d'appel",
       "summaryPlaceholder": "À la fin de l'appel, le résumé que le propriétaire reçoit par courriel et par texto apparaît ici, construit à partir de ce que vous avez dit.",
       "summaryBadge": "Généré à partir de l'appel de démo. Pas un vrai client.",
@@ -3096,11 +3115,33 @@
         "priority": "Prioritaire",
         "critical": "Urgence",
         "unknown": "Non évaluée"
+      },
+      "voice": {
+        "modeLabel": "Comment voulez-vous parler?",
+        "speak": "Parler",
+        "speakHint": "Votre microphone écoute et la réceptionniste répond à voix haute. Autorisez l’accès au microphone quand votre navigateur le demande.",
+        "type": "Écrire",
+        "typeHint": "Écrivez ce qu’un appelant dirait. Vous pouvez quand même activer les réponses à voix haute.",
+        "unsupported": "La voix n’est pas disponible dans ce navigateur. Chrome, Edge et Safari la prennent en charge. Vous pouvez écrire à la place.",
+        "privacy": "Votre navigateur transforme votre voix en texte; TradeCatch reçoit seulement ce texte, jamais d’audio, et rien n’est enregistré.",
+        "micStart": "Commencer à parler",
+        "micStop": "Arrêter le microphone",
+        "listening": "J’écoute… vous pouvez parler.",
+        "speaking": "La réceptionniste parle…",
+        "repliesAloud": "Lire les réponses à voix haute",
+        "denied": "Le microphone est bloqué. Autorisez-le dans la barre d’adresse de votre navigateur, ou écrivez à la place.",
+        "noSpeech": "Je n’ai rien entendu. Touchez le microphone pour réessayer, ou écrivez.",
+        "unavailable": "La voix n’a pas fonctionné dans ce navigateur. Vous pouvez écrire à la place."
+      },
+      "afterCall": {
+        "title": "C’était la démo. Imaginez-la maintenant sur votre propre numéro.",
+        "body": "Chaque appel de ce genre arrive dans votre espace sous forme de résumé prêt à l’action. Pendant une démo de 20 minutes, nous parcourons le déroulement d’appel pour votre métier : ce qu’elle dit, ce qu’elle recueille et quand elle passe la main à une personne.",
+        "cta": "Réserver une démo"
       }
     },
-    "eyebrow": "Réceptionniste · 1 499,99 $ installation, puis 750 $/mois",
+    "eyebrow": "Réceptionniste · 1 999,99 $ d’installation, puis 999,99 $/mois",
     "headline": "Une réception bilingue qui répond à chaque appel, jour et nuit.",
-    "intro": "Réceptionniste est le forfait premium de TradeCatch. Elle répond à vos appels entrants en français ou en anglais, comprend ce dont l’appelant a besoin, qualifie la demande, prend la demande de rendez-vous, transfère les appels qui exigent une personne et laisse tourner en dessous tous les processus de récupération et de relance de TradeCatch.",
+    "intro": "Réceptionniste répond aux appels entrants en français ou en anglais, comprend ce que l’appelant veut, prend la demande de rendez-vous et transfère les appels qui ont besoin d’une personne. La récupération des appels manqués, la relance des soumissions et l’espace Growth restent en dessous.",
     "metaDescription": "Réceptionniste pour entrepreneurs du Québec : réponse téléphonique bilingue 24/7, qualification des appels, demandes de rendez-vous par téléphone, transfert d’appel et acheminement des urgences, en plus de la récupération des appels manqués et de la relance des soumissions TradeCatch.",
     "heroPointsLabel": "Ce qui change dès le premier jour",
     "heroPoints": [
@@ -3110,8 +3151,8 @@
     ],
     "planLabel": "Le forfait",
     "planName": "Réceptionniste",
-    "planSetup": "1 499,99 $ installation",
-    "planCadence": "puis 750 $ / mois",
+    "planSetup": "1 999,99 $ installation",
+    "planCadence": "999,99 $ / mois",
     "planNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables.",
     "ctaPrimary": "Réserver une démo",
     "ctaDemo": "Voir la démo de la réceptionniste",
@@ -3533,7 +3574,8 @@
       "primary": "Réserver une démo",
       "secondary": "Voir tous les tarifs",
       "note": "20 minutes. Aucun accès à vos systèmes requis. La configuration et le démarrage ont lieu avant la mise en service."
-    }
+    },
+    "ctaTry": "Parlez-lui vous-même"
   },
   "demoMode": {
     "badge": "Mode démo",

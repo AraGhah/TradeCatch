@@ -44,7 +44,7 @@ Only configured Canadian transfer numbers are dialed — never model-invented nu
 | Engine | Status |
 | --- | --- |
 | `gather` | Default. TwiML `<Gather>` + existing receptionist engine. Live-ready. |
-| `conversation_relay` | TwiML `<Connect><ConversationRelay>` rendered. Production WebSockets need Cloudflare Durable Objects; staging can POST relay JSON to `/api/voice/socket`. |
+| `conversation_relay` | TwiML `<Connect><ConversationRelay>` rendered. Production WebSockets need Cloudflare Durable Objects; staging can POST relay JSON to `/api/voice/socket` (ops bearer required; 404 on real production unless `MISSED_CALL_SANDBOX=1`). |
 
 ## Simulation vs live testing
 

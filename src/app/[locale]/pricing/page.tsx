@@ -10,6 +10,11 @@ import {
   PlanComparison,
   type PlanComparisonData,
 } from "@/components/PlanComparison";
+import {
+  PlanBreakEven,
+  type PlanBreakEvenCopy,
+} from "@/components/PlanBreakEven";
+import { localizedAnchor } from "@/lib/anchors";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -37,7 +42,15 @@ export default async function PricingPage({
   const t = await getTranslations("pricing");
   const cta = await getTranslations("cta");
 
-  const tiers = t.raw("tiers") as PricingTier[];
+  // Hash links need the visitor's localized path (see localizedAnchor).
+  const tiers = (t.raw("tiers") as PricingTier[]).map((tier) =>
+    tier.secondaryCtaHref?.includes("#")
+      ? {
+          ...tier,
+          secondaryCtaHref: localizedAnchor(locale, tier.secondaryCtaHref),
+        }
+      : tier,
+  );
   const principles = t.raw("principles") as string[];
 
   return (
@@ -108,8 +121,8 @@ export default async function PricingPage({
             labels={{
               cta: t("cta"),
               setupLabel: t("setupLabel"),
-              monthlyLabel: t("monthlyLabel"),
-              thenLabel: t("thenLabel"),
+              onceLabel: t("onceLabel"),
+              monthlyEyebrow: t("monthlyEyebrow"),
               customTitle: t("customTitle"),
               customBody: t("customBody"),
               customCta: t("customCta"),
@@ -122,8 +135,28 @@ export default async function PricingPage({
       </section>
 
       <section
-        id="compare"
+        id="worth-it"
         className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div data-reveal>
+            <PlanBreakEven
+              locale={locale === "fr" ? "fr" : "en"}
+              copy={t.raw("breakEven") as PlanBreakEvenCopy}
+              plans={[
+                { id: "starter", name: tiers[0]!.name },
+                { id: "growth", name: tiers[1]!.name },
+                { id: "receptionist", name: tiers[2]!.name },
+              ]}
+            />
+          </div>
+        </Container>
+      </section>
+
+      <section
+        id="compare"
+        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
