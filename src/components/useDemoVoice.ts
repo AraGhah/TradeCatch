@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 /**
- * Browser-only voice for the website demo: the visitor speaks (Web Speech
- * recognition) and hears the receptionist (speech synthesis). TradeCatch never
- * receives audio: the browser, or its speech provider, turns the voice into
- * text and only that text is sent to the demo endpoint.
+ * Voice for the website demo. The visitor speaks through the browser (Web
+ * Speech recognition): only text is sent. Replies are spoken by the ElevenLabs
+ * voice for the page language. If that service is off, the browser's own
+ * speech synthesis reads them instead.
  */
 
 type RecognitionResultLike = { isFinal: boolean; 0: { transcript: string } };
@@ -29,6 +29,13 @@ export type VoiceFailure = "denied" | "no_speech" | "unavailable";
 
 /** How long one listening turn may last before it is closed. */
 const MAX_LISTEN_MS = 15_000;
+
+/**
+ * A silent clip played inside the click, so the later ElevenLabs file is
+ * allowed to play after the network wait.
+ */
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 
 function recognitionCtor(): RecognitionCtor | null {
   if (typeof window === "undefined") return null;
@@ -98,6 +105,9 @@ export function useDemoVoice(locale: "fr" | "en") {
   const recognition = useRef<RecognitionLike | null>(null);
   const listenTimer = useRef<number | null>(null);
   const speechRun = useRef(0);
+  const audioEpoch = useRef(0);
+  const replyAudio = useRef<HTMLAudioElement | null>(null);
+  const replyAbort = useRef<AbortController | null>(null);
   // Chrome drops utterances that are garbage-collected before they finish.
   const utterances = useRef<SpeechSynthesisUtterance[]>([]);
 
@@ -124,6 +134,16 @@ export function useDemoVoice(locale: "fr" | "en") {
 
   const cancelSpeech = useCallback(() => {
     speechRun.current += 1;
+    audioEpoch.current += 1;
+    replyAbort.current?.abort();
+    replyAbort.current = null;
+    const audio = replyAudio.current;
+    if (audio) {
+      audio.onended = null;
+      audio.onerror = null;
+      audio.onloadedmetadata = null;
+      audio.pause();
+    }
     utterances.current = [];
     synthesis()?.cancel();
     setSpeaking(false);
@@ -205,15 +225,14 @@ export function useDemoVoice(locale: "fr" | "en") {
    */
   const speak = useCallback(
     (lines: string[], onDone: () => void) => {
-      const synth = synthesis();
       const clean = lines.map((l) => l.trim()).filter(Boolean);
-      if (!synth || clean.length === 0) {
+      if (clean.length === 0) {
         onDone();
         return;
       }
       cancelSpeech();
       const run = speechRun.current;
-      const voice = pickVoice(synth.getVoices(), lang);
+      const text = clean.join(" ");
 
       let finished = false;
       const timers: number[] = [];
@@ -227,34 +246,115 @@ export function useDemoVoice(locale: "fr" | "en") {
         onDone();
       };
 
-      const queue = clean.map((text, i) => {
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        if (voice) utterance.voice = voice;
-        utterance.rate = 1;
-        if (i === clean.length - 1) {
-          utterance.onend = finish;
-          utterance.onerror = finish;
+      let playedFile = false;
+      let browserStarted = false;
+      const speakWithBrowser = () => {
+        if (playedFile || browserStarted || speechRun.current !== run) return;
+        browserStarted = true;
+        const audioNow = replyAudio.current;
+        if (audioNow) {
+          audioNow.onended = null;
+          audioNow.onerror = null;
+          audioNow.onloadedmetadata = null;
+          audioNow.pause();
         }
-        return utterance;
-      });
-      utterances.current = queue;
-      const characters = clean.join(" ").length;
-      // Some browsers never fire `end`; do not leave the call waiting forever.
-      timers.push(window.setTimeout(finish, characters * 110 + 6_000));
+        const synth = synthesis();
+        if (!synth) {
+          finish();
+          return;
+        }
+        const voice = pickVoice(synth.getVoices(), lang);
+        const queue = clean.map((line, i) => {
+          const utterance = new SpeechSynthesisUtterance(line);
+          utterance.lang = lang;
+          if (voice) utterance.voice = voice;
+          utterance.rate = 1;
+          if (i === clean.length - 1) {
+            utterance.onend = finish;
+            utterance.onerror = finish;
+          }
+          return utterance;
+        });
+        utterances.current = queue;
+        timers.push(window.setTimeout(finish, text.length * 110 + 6_000));
+        queue.forEach((utterance) => synth.speak(utterance));
+      };
+
+      const controller = new AbortController();
+      replyAbort.current = controller;
+      // A stalled request must not hold the call open. Cancelling aborts too.
+      timers.push(window.setTimeout(() => controller.abort(), 15_000));
       setSpeaking(true);
-      queue.forEach((utterance) => synth.speak(utterance));
+
+      void (async () => {
+        try {
+          const res = await fetch("/api/receptionist/demo/voice", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ locale, text }),
+            signal: controller.signal,
+          });
+          if (speechRun.current !== run) return;
+          const type = res.headers.get("content-type") ?? "";
+          if (!res.ok || !type.includes("audio")) {
+            speakWithBrowser();
+            return;
+          }
+          const url = URL.createObjectURL(await res.blob());
+          if (speechRun.current !== run) {
+            URL.revokeObjectURL(url);
+            return;
+          }
+          const audio = replyAudio.current ?? new Audio();
+          replyAudio.current = audio;
+          audio.onerror = null;
+          audio.src = url;
+          const release = () => {
+            URL.revokeObjectURL(url);
+          };
+          audio.onloadedmetadata = () => {
+            const ms =
+              Number.isFinite(audio.duration) && audio.duration > 0
+                ? audio.duration * 1000 + 2_500
+                : 20_000;
+            timers.push(window.setTimeout(finish, ms));
+          };
+          audio.onended = () => {
+            release();
+            finish();
+          };
+          // Replacing the silent unlock clip aborts it and can fire "error"
+          // while the new file is fine. Only a failure before playback starts
+          // may use the browser voice, so the two never speak together.
+          audio.onerror = () => {
+            if (playedFile || audio.error?.code === 1) return;
+            release();
+            speakWithBrowser();
+          };
+          synthesis()?.cancel();
+          await audio.play();
+          playedFile = true;
+        } catch {
+          if (speechRun.current !== run) return;
+          speakWithBrowser();
+        }
+      })();
     },
-    [lang, cancelSpeech],
+    [lang, locale, cancelSpeech],
   );
 
   /** Mobile Safari only allows speech that starts inside a user gesture. */
   const prime = useCallback(() => {
-    const synth = synthesis();
-    if (!synth) return;
-    const utterance = new SpeechSynthesisUtterance(" ");
-    utterance.volume = 0;
-    synth.speak(utterance);
+    const epoch = audioEpoch.current;
+    const audio = replyAudio.current ?? new Audio();
+    replyAudio.current = audio;
+    audio.src = SILENT_WAV;
+    void audio
+      .play()
+      .then(() => {
+        if (audioEpoch.current === epoch) audio.pause();
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

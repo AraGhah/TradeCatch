@@ -9,6 +9,7 @@ import {
   detectYesNo,
   extractName,
   extractPhoneE164,
+  looksLikeServiceRequest,
   matchFaq,
   matchRoutingTarget,
   mentionsAppointment,
@@ -224,9 +225,17 @@ function handleReason(input: BrainInput): AgentDecision {
 
   const intent: CallIntent = mentionsAppointment(utterance)
     ? "appointment"
-    : "service_request";
+    : looksLikeServiceRequest(utterance)
+      ? "service_request"
+      : "message";
+  const detail = utterance.trim().replace(/\s+/g, " ").slice(0, 160);
+  const heard = detail ? phrase("notedDetail", lang, { detail }) : undefined;
+  if (intent === "message") {
+    slots.message = utterance.trim().slice(0, 300);
+    return ask(input, slots, intent, heard);
+  }
   slots.issue = slots.issue ? `${slots.issue} — ${utterance}` : utterance;
-  return ask(input, slots, intent);
+  return ask(input, slots, intent, heard);
 }
 
 function handleAnythingElse(input: BrainInput): AgentDecision {

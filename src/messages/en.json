@@ -3123,7 +3123,7 @@
         "type": "Type",
         "typeHint": "Type what a caller would say. You can still turn on spoken replies.",
         "unsupported": "Voice is not available in this browser. Chrome, Edge and Safari support it. You can type instead.",
-        "privacy": "Your browser turns your voice into text; TradeCatch only receives that text, never audio, and nothing is saved.",
+        "privacy": "Your browser turns your voice into text; TradeCatch only receives that text, never audio, and does not save it. Spoken replies use the ElevenLabs voice for this language.",
         "micStart": "Start speaking",
         "micStop": "Stop the microphone",
         "listening": "Listening… go ahead and speak.",

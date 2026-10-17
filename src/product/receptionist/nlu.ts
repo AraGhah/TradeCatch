@@ -202,6 +202,75 @@ export function mentionsAppointment(text: string): boolean {
   return hasPhrase(normalizeSpeech(text), APPOINTMENT);
 }
 
+/**
+ * A job for a contractor, as opposed to a personal note ("I'm sick").
+ * Unknown trade wording still counts when the caller describes a problem.
+ */
+const SERVICE_REQUEST = [
+  "fuite",
+  "coule",
+  "evier",
+  "toilette",
+  "drain",
+  "chauffe",
+  "gaz",
+  "eau",
+  "plomb",
+  "electric",
+  "panne",
+  "bris",
+  "repar",
+  "install",
+  "chauffage",
+  "clim",
+  "toiture",
+  "robinet",
+  "tuyau",
+  "egout",
+  "odeur",
+  "bruit",
+  "probleme",
+  "urgence",
+  "feu",
+  "inond",
+  "refoul",
+  "pompe",
+  "chaudiere",
+  "disjoncteur",
+  "leak",
+  "sink",
+  "toilet",
+  "water",
+  "gas",
+  "broken",
+  "repair",
+  "heat",
+  "furnace",
+  "clog",
+  "flood",
+  "smell",
+  "noise",
+  "problem",
+  "emergency",
+  "fire",
+  "pipe",
+  "sewer",
+  "faucet",
+  "boiler",
+  "pump",
+  "outlet",
+  "power",
+  "not working",
+  "fonctionne pas",
+  "marche pas",
+  "besoin",
+  "need ",
+];
+
+export function looksLikeServiceRequest(text: string): boolean {
+  return hasPhrase(normalizeSpeech(text), SERVICE_REQUEST);
+}
+
 export function matchRoutingTarget(
   text: string,
   routing: RoutingTarget[],
