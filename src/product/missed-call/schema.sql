@@ -76,6 +76,10 @@ CREATE TABLE IF NOT EXISTS mc_leads (
   updated_at TIMESTAMPTZ NOT NULL
 );
 
+CREATE INDEX IF NOT EXISTS mc_leads_client_updated
+  ON mc_leads (client_account_id, updated_at DESC)
+  WHERE deleted_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS mc_audit_events (
   id BIGSERIAL PRIMARY KEY,
   workflow_id TEXT REFERENCES mc_workflows (id),

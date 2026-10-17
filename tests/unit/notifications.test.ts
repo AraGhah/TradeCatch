@@ -196,6 +196,11 @@ describe("contractor notifications", () => {
     assert.equal((await service.listForUser("org-a", "owner")).some((row) => row.note.organizationId === "org-b"), false);
     assert.equal((await service.listForUser("org-b", "owner")).length, 0);
     assert.equal((await service.listForUser("org-b", "other")).length, 1);
+    assert.equal(
+      await service.unreadCount("org-a", "owner"),
+      (await service.listForUser("org-a", "owner", { status: "unread" })).length,
+    );
+    assert.equal(await service.unreadCount("org-b", "owner"), 0);
   });
 
   it("does not give an unassigned employee another person's lead", async () => {

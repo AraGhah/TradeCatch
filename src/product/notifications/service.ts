@@ -434,8 +434,7 @@ export function createNotificationService(deps: NotificationDeps) {
     },
 
     async unreadCount(organizationId: string, userId: string) {
-      const rows = await this.listForUser(organizationId, userId, { status: "unread" });
-      return rows.length;
+      return deps.store.countUnread(organizationId, userId);
     },
 
     async getForUser(organizationId: string, userId: string, notificationId: string) {

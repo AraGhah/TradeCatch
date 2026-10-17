@@ -21,6 +21,7 @@ export type NotificationStore = {
   getNotification(organizationId: string, id: string): Promise<ContractorNotification | null>;
   saveRecipient(row: NotificationRecipient): Promise<void>;
   listRecipients(organizationId: string, notificationId?: string): Promise<NotificationRecipient[]>;
+  countUnread(organizationId: string, userId: string): Promise<number>;
   saveDelivery(row: NotificationDelivery): Promise<NotificationDelivery | null>;
   listDeliveries(organizationId: string): Promise<NotificationDelivery[]>;
   dueDeliveries(nowIso: string): Promise<NotificationDelivery[]>;
@@ -102,6 +103,13 @@ export function createMemoryNotificationStore(): NotificationStore {
       return [...recipients.values()]
         .filter((row) => row.organizationId === organizationId && (!notificationId || row.notificationId === notificationId))
         .map((row) => structuredClone(row));
+    },
+    async countUnread(organizationId, userId) {
+      let count = 0;
+      for (const row of recipients.values()) {
+        if (row.organizationId === organizationId && row.userId === userId && !row.readAt) count += 1;
+      }
+      return count;
     },
     async saveDelivery(row) {
       const dupe = [...deliveries.values()].find(
