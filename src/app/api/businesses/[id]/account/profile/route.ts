@@ -13,6 +13,11 @@ const schema = z.object({
   city: z.string().max(80).optional(),
   serviceArea: z.string().max(160).optional(),
   industry: z.string().max(80).optional(),
+  phoneE164: z
+    .string()
+    .max(16)
+    .refine((value) => value === "" || /^\+[1-9]\d{7,14}$/.test(value))
+    .optional(),
 });
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -29,6 +34,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     city: parsed.data.city ?? null,
     serviceArea: parsed.data.serviceArea,
     industry: parsed.data.industry ?? null,
+    phoneE164:
+      parsed.data.phoneE164 === undefined
+        ? undefined
+        : parsed.data.phoneE164 || null,
   });
   if (!updated) return NextResponse.json({ error: "Business not found." }, { status: 404 });
   await recordSecurityEvent({
