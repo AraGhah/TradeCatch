@@ -14,6 +14,7 @@ export const NOTIFICATION_TYPES = [
   "automation_failure",
   "calendar_disconnected",
   "daily_summary",
+  "support_update",
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -168,6 +169,7 @@ export const TYPE_PRIORITY: Record<NotificationType, Priority> = {
   automation_failure: "high",
   calendar_disconnected: "high",
   daily_summary: "normal",
+  support_update: "normal",
 };
 
 export const TYPE_CATEGORY: Record<NotificationType, PreferenceCategory> = {
@@ -186,4 +188,5 @@ export const TYPE_CATEGORY: Record<NotificationType, PreferenceCategory> = {
   automation_failure: "automation_failures",
   calendar_disconnected: "automation_failures",
   daily_summary: "system",
+  support_update: "system",
 };

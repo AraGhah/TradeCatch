@@ -105,6 +105,14 @@ export const DEMO_RESET_TABLES = [
   "tc_pilot_tests",
   "tc_pilot_feedback",
   "tc_pilot_accounts",
+  "tc_customer_feedback",
+  "tc_account_requests",
+  "tc_support_events",
+  "tc_support_attachments",
+  "tc_support_messages",
+  "tc_support_tickets",
+  "tc_help_articles",
+  "tc_help_categories",
 ] as const;
 
 export const DEMO_RESET_CONFIRMATION = "RESET_DEMO_DATA";

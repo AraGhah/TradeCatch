@@ -14,6 +14,8 @@ export const routing = defineRouting({
     "/about": { en: "/about", fr: "/a-propos" },
     "/book-audit": { en: "/book-audit", fr: "/reserver-audit" },
     "/faq": { en: "/faq", fr: "/faq" },
+    "/help": { en: "/help", fr: "/aide" },
+    "/help/[id]": { en: "/help/[id]", fr: "/aide/[id]" },
     "/privacy-policy": { en: "/privacy-policy", fr: "/politique-de-confidentialite" },
     "/terms-of-service": { en: "/terms-of-service", fr: "/conditions-utilisation" },
     "/cookie-policy": { en: "/cookie-policy", fr: "/politique-de-cookies" },
@@ -64,6 +66,10 @@ export const routing = defineRouting({
     "/admin/pilots": {
       en: "/admin/pilots",
       fr: "/admin/pilots",
+    },
+    "/admin/support": {
+      en: "/admin/support",
+      fr: "/admin/support",
     },
     "/admin/monitoring/api": {
       en: "/admin/monitoring/api",
@@ -200,6 +206,30 @@ export const routing = defineRouting({
     "/app/settings/security": {
       en: "/app/settings/security",
       fr: "/app/parametres/securite",
+    },
+    "/app/settings/account": {
+      en: "/app/settings/account",
+      fr: "/app/parametres/compte",
+    },
+    "/app/support": {
+      en: "/app/support",
+      fr: "/app/soutien",
+    },
+    "/app/support/[ticketId]": {
+      en: "/app/support/[ticketId]",
+      fr: "/app/soutien/[ticketId]",
+    },
+    "/app/support/diagnostics": {
+      en: "/app/support/diagnostics",
+      fr: "/app/soutien/diagnostic",
+    },
+    "/app/help": {
+      en: "/app/help",
+      fr: "/app/aide",
+    },
+    "/app/help/[id]": {
+      en: "/app/help/[id]",
+      fr: "/app/aide/[id]",
     },
     "/app/feedback": {
       en: "/app/feedback",

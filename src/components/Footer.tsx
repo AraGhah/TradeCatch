@@ -98,6 +98,11 @@ export function Footer() {
                   {nav("faq")}
                 </Link>
               </li>
+              <li>
+                <Link href="/help" className={linkClass}>
+                  {nav("help")}
+                </Link>
+              </li>
             </ul>
           </div>
 
