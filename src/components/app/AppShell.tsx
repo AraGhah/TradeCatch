@@ -17,6 +17,8 @@ const NAV_ITEMS = [
   { href: "/app/notifications", key: "notifications" },
   { href: "/app/analytics", key: "analytics" },
   { href: "/app/settings", key: "settings" },
+  { href: "/app/support", key: "support" },
+  { href: "/app/help", key: "help" },
   { href: "/app/test-center", key: "testCenter" },
 ] as const;
 

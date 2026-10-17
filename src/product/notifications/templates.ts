@@ -89,6 +89,10 @@ const COPY: Record<NotificationType, { en: { title: string; body: string }; fr: 
     en: { title: "Daily summary", body: "New activity for {business}: {service}" },
     fr: { title: "Résumé quotidien", body: "Activité de {business} : {service}" },
   },
+  support_update: {
+    en: { title: "Support update", body: "TradeCatch updated a support request for {business}." },
+    fr: { title: "Mise à jour du support", body: "TradeCatch a mis à jour une demande de support pour {business}." },
+  },
 };
 
 function fill(template: string, vars: Record<string, string>): string {

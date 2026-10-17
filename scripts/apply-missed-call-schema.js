@@ -114,6 +114,11 @@ async function main() {
       ["src", "product", "launch", "schema.sql"],
       "017_launch",
     );
+    await applyFile(
+      client,
+      ["src", "product", "support", "schema.sql"],
+      "018_support",
+    );
   } finally {
     await client.end();
   }

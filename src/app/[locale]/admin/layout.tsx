@@ -61,6 +61,12 @@ export default async function AdminLayout({
               Pilot customers
             </Link>
             <Link
+              href="/admin/support"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              Customer support
+            </Link>
+            <Link
               href="/app"
               className="rounded-md px-3 py-2 text-navy/70 hover:bg-navy/5"
             >
