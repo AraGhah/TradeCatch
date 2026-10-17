@@ -75,4 +75,12 @@ const nextConfig: NextConfig = {
 
 export default withNextIntl(nextConfig);
 
-import('@opennextjs/cloudflare').then(m => m.initOpenNextCloudflareForDev());
+// Local Cloudflare bindings. Production builds must not start workerd here:
+// it would keep `.open-next/assets` open and the deploy cannot replace that folder.
+if (process.argv.includes("dev")) {
+  import("@opennextjs/cloudflare").then((mod) =>
+    mod.initOpenNextCloudflareForDev({
+      configPath: path.join(__dirname, "wrangler.dev.jsonc"),
+    }),
+  );
+}
