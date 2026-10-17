@@ -380,6 +380,17 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
       return mapMembership(rows[0]!);
     },
 
+    async setMembershipRole(organizationId, userId, role) {
+      const { rows } = await query<MemRow>(
+        `UPDATE tc_memberships
+         SET role = $3
+         WHERE organization_id = $1 AND user_id = $2
+         RETURNING *`,
+        [organizationId, userId, role],
+      );
+      return rows[0] ? mapMembership(rows[0]) : null;
+    },
+
     async createMagicLink(link: MagicLink) {
       await query(
         `INSERT INTO tc_magic_links
