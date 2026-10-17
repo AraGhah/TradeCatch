@@ -5,6 +5,97 @@ import { computeStarterDashboardMetrics } from "@/product/saas/analytics";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import { GrowthUpsell } from "@/components/app/GrowthUpsell";
+import { readTenantCache, writeTenantCache } from "@/lib/tenant-cache";
+import type { Organization } from "@/product/saas/types";
+
+const DASHBOARD_TTL_MS = 20_000;
+
+type DashSnapshot = {
+  metrics: ReturnType<typeof computeStarterDashboardMetrics>;
+  linked: boolean;
+  aiFinished: number;
+  appointmentsRequested: number;
+  recent: { id: string; title: string; detail: string; when: string }[];
+  growthMetrics: {
+    openPipelineValue: number;
+    attributedRevenue: number;
+    upcomingAppointments: number;
+    reviewsSent: number;
+  } | null;
+};
+
+async function loadRecentCalls(clientId: string) {
+  try {
+    const { getReceptionistRuntime } = await import("@/product/receptionist/runtime");
+    return await getReceptionistRuntime().store.listSessions({
+      clientAccountId: clientId,
+      limit: 100,
+    });
+  } catch {
+    return [];
+  }
+}
+
+async function loadHomeSnapshot(organization: Organization): Promise<DashSnapshot | null> {
+  const snapshot: DashSnapshot = {
+    metrics: computeStarterDashboardMetrics([]),
+    linked: false,
+    aiFinished: 0,
+    appointmentsRequested: 0,
+    recent: [],
+    growthMetrics: null,
+  };
+  const clientId = organization.missedCallClientId;
+  if (clientId && orgHasFeature(organization.plan, "BASIC_ANALYTICS")) {
+    try {
+      const { store } = await ensureMissedCallReady();
+      const [leads, calls] = await Promise.all([
+        store.listLeads(clientId),
+        loadRecentCalls(clientId),
+      ]);
+      snapshot.metrics = computeStarterDashboardMetrics(leads);
+      snapshot.linked = true;
+      snapshot.appointmentsRequested = leads.filter((lead) => lead.becameBooking).length;
+      snapshot.recent = [...leads]
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .slice(0, 5)
+        .map((lead) => ({
+          id: lead.id,
+          title: lead.customerName || lead.callerE164,
+          detail: lead.issueDescription ?? "",
+          when: lead.updatedAt,
+        }));
+      snapshot.aiFinished = calls.filter((call) => call.status === "completed").length;
+      snapshot.appointmentsRequested += calls.filter(
+        (call) => call.outcome === "appointment_requested",
+      ).length;
+    } catch {
+      return null;
+    }
+  }
+
+  if (orgHasFeature(organization.plan, "ADVANCED_ANALYTICS")) {
+    try {
+      const { getGrowthStore, getGrowthServices } = await import("@/product/growth");
+      const store = getGrowthStore();
+      const [pipeline, revenue, appointments, reviews] = await Promise.all([
+        store.listPipeline(organization.id),
+        store.listRevenue(organization.id),
+        store.listAppointments(organization.id),
+        store.listReviewRequests(organization.id),
+      ]);
+      snapshot.growthMetrics = getGrowthServices().computeAdvancedAnalytics({
+        pipeline,
+        revenue,
+        appointments,
+        reviews,
+      });
+    } catch {
+      snapshot.growthMetrics = null;
+    }
+  }
+  return snapshot;
+}
 
 export default async function AppDashboardPage({
   params,
@@ -18,76 +109,16 @@ export default async function AppDashboardPage({
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
 
-  const clientId = auth.ctx.organization.missedCallClientId;
-  let metrics = computeStarterDashboardMetrics([]);
-  let linked = false;
-  let aiFinished = 0;
-  let appointmentsRequested = 0;
-  let recent: { id: string; title: string; detail: string; when: string }[] = [];
-  let growthMetrics: {
-    openPipelineValue: number;
-    attributedRevenue: number;
-    upcomingAppointments: number;
-    reviewsSent: number;
-  } | null = null;
-
-  if (
-    clientId &&
-    orgHasFeature(auth.ctx.organization.plan, "BASIC_ANALYTICS")
-  ) {
-    try {
-      const { store } = await ensureMissedCallReady();
-      const leads = await store.listLeads(clientId);
-      metrics = computeStarterDashboardMetrics(leads);
-      linked = true;
-      appointmentsRequested = leads.filter((lead) => lead.becameBooking).length;
-      recent = [...leads]
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-        .slice(0, 5)
-        .map((lead) => ({
-          id: lead.id,
-          title: lead.customerName || lead.callerE164,
-          detail: lead.issueDescription ?? "",
-          when: lead.updatedAt,
-        }));
-      try {
-        const { getReceptionistRuntime } = await import(
-          "@/product/receptionist/runtime"
-        );
-        const runtime = getReceptionistRuntime();
-        await runtime.refresh();
-        const calls = await runtime.store.listSessions({
-          clientAccountId: clientId,
-          limit: 100,
-        });
-        aiFinished = calls.filter((call) => call.status === "completed").length;
-        appointmentsRequested += calls.filter(
-          (call) => call.outcome === "appointment_requested",
-        ).length;
-      } catch {
-        aiFinished = 0;
-      }
-    } catch {
-      linked = false;
-    }
-  }
-
-  if (orgHasFeature(auth.ctx.organization.plan, "ADVANCED_ANALYTICS")) {
-    try {
-      const { getGrowthStore, getGrowthServices } =
-        await import("@/product/growth");
-      const store = getGrowthStore();
-      const services = getGrowthServices();
-      growthMetrics = services.computeAdvancedAnalytics({
-        pipeline: await store.listPipeline(auth.ctx.organization.id),
-        revenue: await store.listRevenue(auth.ctx.organization.id),
-        appointments: await store.listAppointments(auth.ctx.organization.id),
-        reviews: await store.listReviewRequests(auth.ctx.organization.id),
-      });
-    } catch {
-      growthMetrics = null;
-    }
-  }
+  const organization = auth.ctx.organization;
+  const cached = readTenantCache<DashSnapshot>(organization.id, "home", DASHBOARD_TTL_MS);
+  const snapshot = cached ?? (await loadHomeSnapshot(organization));
+  if (!cached && snapshot) writeTenantCache(organization.id, "home", snapshot);
+  const metrics = snapshot?.metrics ?? computeStarterDashboardMetrics([]);
+  const linked = snapshot?.linked ?? false;
+  const aiFinished = snapshot?.aiFinished ?? 0;
+  const appointmentsRequested = snapshot?.appointmentsRequested ?? 0;
+  const recent = snapshot?.recent ?? [];
+  const growthMetrics = snapshot?.growthMetrics ?? null;
 
   const cards = [
     { label: t("metrics.leadsCaptured"), value: metrics.leadsCaptured },

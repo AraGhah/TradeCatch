@@ -178,6 +178,15 @@ export function createMemorySaasStore(): SaasStore {
       return users.get(id) ?? null;
     },
 
+    async listUsers(ids) {
+      const found: User[] = [];
+      for (const id of ids) {
+        const user = users.get(id);
+        if (user) found.push(user);
+      }
+      return found;
+    },
+
     async setUserPlatformRole(userId, role) {
       const user = users.get(userId);
       if (!user) return null;

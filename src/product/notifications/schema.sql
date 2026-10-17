@@ -36,6 +36,10 @@ CREATE TABLE IF NOT EXISTS tc_notification_recipients (
   UNIQUE (notification_id, user_id)
 );
 
+CREATE INDEX IF NOT EXISTS tc_notification_recipients_unread
+  ON tc_notification_recipients (organization_id, user_id)
+  WHERE read_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS tc_notification_preferences (
   organization_id TEXT NOT NULL,
   user_id TEXT NOT NULL,

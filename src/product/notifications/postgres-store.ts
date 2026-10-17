@@ -134,6 +134,15 @@ export function createPostgresNotificationStore(connectionString: string): Notif
         acknowledgedBy: row.acknowledged_by ? String(row.acknowledged_by) : undefined,
       })) satisfies NotificationRecipient[];
     },
+    async countUnread(organizationId, userId) {
+      const res = await query(
+        `SELECT count(*)::int AS n
+         FROM tc_notification_recipients
+         WHERE organization_id = $1 AND user_id = $2 AND read_at IS NULL`,
+        [organizationId, userId],
+      );
+      return Number(res.rows[0]?.n ?? 0);
+    },
     async saveDelivery(row) {
       const res = await query(
         `INSERT INTO tc_notification_deliveries (

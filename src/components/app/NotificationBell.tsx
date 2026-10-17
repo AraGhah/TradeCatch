@@ -10,17 +10,33 @@ export function NotificationBell({ organizationId }: { organizationId: string })
 
   useEffect(() => {
     let stop = false;
+    let ctrl: AbortController | null = null;
     async function load() {
-      const res = await fetch(`/api/businesses/${organizationId}/notifications/unread-count`);
-      if (!res.ok) return;
-      const data = (await res.json()) as { count?: number };
-      if (!stop) setCount(data.count ?? 0);
+      if (document.visibilityState === "hidden") return;
+      ctrl?.abort();
+      ctrl = new AbortController();
+      try {
+        const res = await fetch(`/api/businesses/${organizationId}/notifications/unread-count`, {
+          signal: ctrl.signal,
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { count?: number };
+        if (!stop) setCount(data.count ?? 0);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      }
     }
     void load();
     const timer = window.setInterval(() => void load(), 20_000);
+    function onVisible() {
+      if (document.visibilityState === "visible") void load();
+    }
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       stop = true;
+      ctrl?.abort();
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [organizationId]);
 

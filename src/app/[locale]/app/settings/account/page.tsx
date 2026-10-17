@@ -9,17 +9,18 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
   const t = await getTranslations("app.account");
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
-  const members = await getSaasStore().listMembershipsForOrganization(auth.ctx.organization.id);
-  const people = await Promise.all(
-    members.map(async (member) => {
-      const user = await getSaasStore().getUser(member.userId);
-      return {
-        name: user?.name ?? "",
-        email: user?.email ?? "",
-        role: member.role,
-      };
-    }),
-  );
+  const store = getSaasStore();
+  const members = await store.listMembershipsForOrganization(auth.ctx.organization.id);
+  const users = await store.listUsers(members.map((member) => member.userId));
+  const byId = new Map(users.map((user) => [user.id, user]));
+  const people = members.map((member) => {
+    const user = byId.get(member.userId);
+    return {
+      name: user?.name ?? "",
+      email: user?.email ?? "",
+      role: member.role,
+    };
+  });
   const org = auth.ctx.organization;
   const portal = process.env.STRIPE_BILLING_PORTAL_URL;
   const billingPortalUrl = portal?.startsWith("https://") ? portal : undefined;

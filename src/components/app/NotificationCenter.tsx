@@ -35,9 +35,22 @@ export function NotificationCenter({ organizationId }: { organizationId: string 
   }
 
   useEffect(() => {
-    void load();
-    const timer = window.setInterval(() => void load(), 20_000);
-    return () => window.clearInterval(timer);
+    let stop = false;
+    async function pull() {
+      if (stop || document.visibilityState === "hidden") return;
+      await load();
+    }
+    void pull();
+    const timer = window.setInterval(() => void pull(), 20_000);
+    function onVisible() {
+      if (document.visibilityState === "visible") void pull();
+    }
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      stop = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [organizationId, status, priority, query]);
 
   async function act(id: string, action: "read" | "acknowledge") {

@@ -12,15 +12,23 @@ export function HeroBackground() {
 
   useEffect(() => {
     reduced.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let frame = 0;
 
     function onScroll() {
-      if (reduced.current) return;
-      setOffset(Math.min(window.scrollY, 1200) * 0.12);
+      if (reduced.current || frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const next = Math.round(Math.min(window.scrollY, 1200) * 0.12);
+        setOffset((prev) => (prev === next ? prev : next));
+      });
     }
 
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
   }, []);
 
   return (

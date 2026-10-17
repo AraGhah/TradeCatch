@@ -319,6 +319,15 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
       return rows[0] ? mapUserRow(rows[0]) : null;
     },
 
+    async listUsers(ids) {
+      if (ids.length === 0) return [];
+      const { rows } = await query<UserRow>(
+        `SELECT * FROM tc_users WHERE id = ANY($1::text[])`,
+        [ids],
+      );
+      return rows.map(mapUserRow);
+    },
+
     async setUserPlatformRole(userId, role) {
       const { rows } = await query<UserRow>(
         `UPDATE tc_users

@@ -40,6 +40,7 @@ export type SaasStore = {
   ): Promise<Organization | null>;
   getUserByEmail(email: string): Promise<User | null>;
   getUser(id: string): Promise<User | null>;
+  listUsers(ids: string[]): Promise<User[]>;
   setUserPlatformRole(
     userId: string,
     role: User["platformRole"],

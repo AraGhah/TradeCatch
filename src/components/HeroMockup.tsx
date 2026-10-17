@@ -67,7 +67,8 @@ export function HeroMockup({
       if (media.matches || frameId !== null) return;
       frameId = window.requestAnimationFrame(() => {
         frameId = null;
-        setParallax(Math.min(window.scrollY, 1200));
+        const next = Math.round(Math.min(window.scrollY, 1200) / 8) * 8;
+        setParallax((prev) => (prev === next ? prev : next));
       });
     }
     window.addEventListener("scroll", onScroll, { passive: true });
