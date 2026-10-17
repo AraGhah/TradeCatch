@@ -81,7 +81,7 @@ export function PricingPreview({
         <CTAButton href="/pricing" variant="ink" size="md">
           {cta}
         </CTAButton>
-        <CTAButton href="/ai-receptionist" variant="secondary" size="md">
+        <CTAButton href="/receptionist" variant="secondary" size="md">
           {receptionistCta} →
         </CTAButton>
       </div>

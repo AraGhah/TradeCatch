@@ -65,7 +65,6 @@
       "cookies": "Cookie Policy",
       "acceptableUse": "Acceptable Use",
       "accessibility": "Accessibility",
-      "cancellation": "Cancellation & Refunds",
       "emergency": "Emergency-service disclaimer"
     }
   },
@@ -781,7 +780,7 @@
         ]
       },
       {
-        "title": "AI reception · Premium configured pilot",
+        "title": "Receptionist · Premium configured pilot",
         "purpose": "Answer the calls your team cannot pick up, instead of texting them back afterwards.",
         "items": [
           "Bilingual phone answering, 24/7 and after hours",
@@ -1123,8 +1122,8 @@
           }
         ],
         "ctaHref": "/book-audit",
-        "secondaryCtaHref": "/ai-receptionist",
-        "planInterest": "ai-receptionist"
+        "secondaryCtaHref": "/receptionist",
+        "planInterest": "receptionist"
       }
     ],
     "customTitle": "Operating across locations or high volume?",
@@ -1375,7 +1374,7 @@
       "We build and manage the workflows. You don't configure anything.",
       "We never replace licensed professionals.",
       "Important decisions stay human, always.",
-      "The goal is practical revenue recovery, not experimental AI."
+      "The goal is practical revenue recovery, not experimental technology."
     ],
     "points": [
       "We work with local service and trade businesses, not enterprises.",
@@ -1383,7 +1382,7 @@
       "We build and manage the workflows. You don't configure anything.",
       "We never replace licensed professionals.",
       "Important decisions stay human, always.",
-      "The goal is practical revenue recovery, not experimental AI."
+      "The goal is practical revenue recovery, not experimental technology."
     ],
     "cta": "Book a free 20-minute audit",
     "emailCta": "Email Ara",
@@ -1716,7 +1715,7 @@
     "metaDescription": "Answers about how the missed-call and quote follow-up system works, what stays human, and what it does not do.",
     "items": [
       {
-        "q": "Does the AI speak directly to customers?",
+        "q": "Does the system speak directly to customers?",
         "a": "It depends on the plan. On Starter and Growth it does not answer the phone: a missed call triggers an immediate text in French or English that you approved, job details are collected, and your technician is alerted. On the Receptionist plan it does answer incoming calls and speaks with the caller, using only the business information you approved. On every plan, pricing decisions, diagnosis and negotiation stay with your people."
       },
       {
@@ -1949,40 +1948,6 @@
         }
       ]
     },
-    "cancellationRefundPolicy": {
-      "title": "Cancellation and Refund Policy",
-      "metaDescription": "How TradeCatch handles cancellations, notice periods, setup fees and refunds for Québec contractors.",
-      "sections": [
-        {
-          "heading": "Scope",
-          "body": "This policy covers TradeCatch setup fees and ongoing monthly management fees for contractor revenue-recovery systems. Specific notice periods and amounts are confirmed in your written proposal."
-        },
-        {
-          "heading": "Monthly management",
-          "body": "Either party may end the management agreement with written notice according to the term in your proposal (typically 30 days). Service continues through the notice period unless both parties agree otherwise."
-        },
-        {
-          "heading": "Setup fees",
-          "body": "Setup fees cover design, configuration, message writing, testing and launch. Once that work has begun, setup fees are non-refundable."
-        },
-        {
-          "heading": "Unused prepaid management",
-          "body": "Unused prepaid management fees for the remainder of a notice period are not refunded, except where Québec consumer-protection law requires otherwise."
-        },
-        {
-          "heading": "Founding launch guarantee",
-          "body": "If an agreed founding system is not live because of a delay on our side, your first management month is credited as described in your founding agreement."
-        },
-        {
-          "heading": "How to cancel",
-          "body": "Send written notice to contact@tradecatch.ca (or the email on your proposal). We will confirm the end date and any final invoice in writing."
-        },
-        {
-          "heading": "Questions",
-          "body": "If something in your proposal conflicts with this page, the signed proposal controls. Contact us before canceling if you want to adjust scope instead."
-        }
-      ]
-    },
     "emergencyServiceDisclaimer": {
       "title": "Emergency-Service Disclaimer",
       "metaDescription": "TradeCatch does not diagnose emergencies or replace your emergency-response process. Read how escalation works.",
@@ -2138,7 +2103,7 @@
       "notifications": "Notifications",
       "admin": "Admin",
       "logout": "Sign out",
-      "receptionist": "AI Receptionist",
+      "receptionist": "Receptionist",
       "phoneSettings": "Phone settings",
       "automations": "Automations"
     },
@@ -2283,7 +2248,7 @@
     "calls": {
       "headline": "Receptionist calls",
       "intro": "Every call answered by the Receptionist, with the collected details, next step and transcript. Transcripts are purged automatically after the retention window.",
-      "empty": "No AI-answered calls yet.",
+      "empty": "No calls answered by the Receptionist yet.",
       "entitlement": "Call answering is not available on your plan.",
       "notConfigured": "The Receptionist is not configured for your number yet. Ask the founder to enable it.",
       "inProgress": "In progress",
@@ -2294,11 +2259,11 @@
       "nextStep": "Next step",
       "transcript": "Transcript",
       "caller": "Caller",
-      "agent": "Assistant",
+      "agent": "Receptionist",
       "purged": "Transcript purged (retention policy).",
       "knownContact": "Known contact",
       "stats": {
-        "total": "AI-answered calls",
+        "total": "Calls answered",
         "afterHours": "After hours",
         "transfers": "Transferred to a person",
         "emergencies": "Emergencies",
@@ -2392,7 +2357,7 @@
     },
     "crm": {
       "headline": "Leads",
-      "intro": "Customers, leads and text threads for this business. New AI calls, missed calls, texts and manual entries show up here. Another business cannot see them.",
+      "intro": "Customers, leads and text threads for this business. New Receptionist calls, missed calls, texts and manual entries show up here. Another business cannot see them.",
       "entitlement": "Lead management is not on your plan.",
       "search": "Search",
       "status": "Status",
@@ -2435,7 +2400,7 @@
       "simulate": "Simulate a lead",
       "simulateOk": "A fictional lead was added.",
       "sources": {
-        "ai_receptionist": "AI receptionist",
+        "ai_receptionist": "Receptionist",
         "missed_call": "Missed call",
         "sms": "Text message",
         "website": "Website",
@@ -2458,7 +2423,7 @@
         "low": "Low"
       },
       "controls": {
-        "ai_managed": "AI replies",
+        "ai_managed": "Receptionist replies",
         "human_managed": "Person replies",
         "automation_paused": "Automation paused",
         "closed": "Closed"
@@ -2506,7 +2471,7 @@
       "featuresSaved": "Features saved.",
       "featuresSaveFailed": "Could not save features.",
       "featureFlags": {
-        "aiReceptionist": "AI receptionist",
+        "aiReceptionist": "Receptionist",
         "appointmentBooking": "Appointment booking",
         "callTransfer": "Call transfer",
         "missedCallRecovery": "Missed-call recovery",
@@ -2731,7 +2696,7 @@
     },
     "monitoring": {
       "fallbackTitle": "Fallback settings",
-      "fallbackIntro": "Choose what happens when the AI cannot continue a call. A calendar failure still collects the request and does not confirm an appointment."
+      "fallbackIntro": "Choose what happens when the Receptionist cannot continue a call. A calendar failure still collects the request and does not confirm an appointment."
     },
     "security": {
       "headline": "Security",
@@ -2800,8 +2765,8 @@
       "sessions": "Sessions and security"
     },
     "receptionist": {
-      "headline": "AI Receptionist",
-      "intro": "Configure, activate, and test your business's virtual receptionist. Each business has its own isolated configuration.",
+      "headline": "Receptionist",
+      "intro": "Configure, activate, and test your business's receptionist. Each business has its own isolated configuration.",
       "statusActive": "Answering calls on {number}.",
       "statusInactive": "Not answering calls yet. Save the configuration, then activate the receptionist to wire call routing.",
       "notLinked": "Your phone client is not linked yet. Ask the founder to connect it before configuring the receptionist.",
@@ -2841,7 +2806,7 @@
       "hoursEnd": "Closes",
       "knowledgeTitle": "What it knows about your business",
       "personality": "Tone",
-      "personalityHelp": "Optional, e.g. warm, brief and professional. Only used when an AI model is enabled.",
+      "personalityHelp": "Optional, e.g. warm, brief and professional. Only used when the advanced conversation mode is enabled.",
       "facts": "Business facts",
       "factsHelp": "Services, service area, minimum job size, anything a caller may ask. It will not invent anything that is not here or in the FAQ.",
       "routingTitle": "Departments and people",
@@ -2865,11 +2830,11 @@
       "notifyEmail": "Send summaries to this email",
       "notifySms": "Text summaries and emergency alerts to",
       "collectTime": "Ask the caller for a preferred date and time",
-      "activate": "Activate AI",
-      "deactivate": "Deactivate AI",
+      "activate": "Activate Receptionist",
+      "deactivate": "Deactivate Receptionist",
       "activateError": "Could not change activation.",
       "editConfig": "Edit configuration",
-      "testAi": "Test AI receptionist",
+      "testAi": "Test Receptionist",
       "viewHistory": "View call history",
       "identityTitle": "Identity & personality",
       "receptionistName": "Receptionist name",
@@ -2908,7 +2873,7 @@
       "confirmNone": "None",
       "bookableServices": "Bookable services",
       "overview": {
-        "aiName": "AI name",
+        "aiName": "Receptionist name",
         "phone": "Assigned phone number",
         "language": "Language",
         "voice": "Voice",
@@ -2958,7 +2923,7 @@
         "voicemail": "Voicemail"
       },
       "test": {
-        "title": "Test AI receptionist",
+        "title": "Test Receptionist",
         "badge": "Simulated conversation. No real calls, SMS, or email.",
         "language": "Language",
         "scenario": "Scenario",
@@ -2967,7 +2932,7 @@
         "start": "Start test",
         "empty": "Start a test to talk to your configuration.",
         "you": "You",
-        "ai": "AI",
+        "ai": "Receptionist",
         "system": "System",
         "placeholder": "Type as a customer…",
         "send": "Send",
@@ -3005,11 +2970,11 @@
       "forwardingHelp": "To keep your public number, set up compatible carrier forwarding to the TradeCatch number and verify it before going live.",
       "forwardingAck": "I verified that call forwarding works with my carrier.",
       "routingTitle": "Routing",
-      "aiEnabled": "AI receptionist enabled",
+      "aiEnabled": "Receptionist enabled",
       "inboundStrategy": "Inbound strategy",
       "strategy": {
-        "ai_first": "AI first",
-        "human_first": "Human first (then AI if no answer)"
+        "ai_first": "Receptionist first",
+        "human_first": "Human first (then Receptionist if no answer)"
       },
       "voiceEngine": "Voice engine",
       "engine": {
@@ -3038,8 +3003,8 @@
       "scenario": "Scenario",
       "language": "Language",
       "scenarios": {
-        "ai_answers": "AI answers",
-        "human_first_missed_then_ai": "Human first, no answer → AI",
+        "ai_answers": "Receptionist answers",
+        "human_first_missed_then_ai": "Human first, no answer → Receptionist",
         "transfer_request": "Transfer request",
         "appointment_request": "Appointment request"
       },

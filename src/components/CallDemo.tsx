@@ -119,12 +119,17 @@ export function CallDemo({
     if (data.summary) setSummary(data.summary);
   }
 
-  async function start() {
+  async function start(chosen: "open" | "after_hours") {
+    setScenario(chosen);
     setLines([]);
     setSummary(undefined);
     setEnded(false);
     setStarted(true);
-    const data = await call({ action: "start", language: locale, scenario });
+    const data = await call({
+      action: "start",
+      language: locale,
+      scenario: chosen,
+    });
     if (data) {
       absorb(data);
       setTimeout(() => inputRef.current?.focus(), 0);
@@ -195,48 +200,35 @@ export function CallDemo({
         </div>
 
         {!started ? (
-          <div className="flex flex-col gap-5 px-5 py-6">
-            <fieldset className="m-0 border-0 p-0">
-              <legend className="mb-3 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase">
-                {copy.startHeading}
-              </legend>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                {copy.scenarios.map((s) => (
-                  <label
-                    key={s.id}
-                    className={`flex flex-1 cursor-pointer flex-col gap-1 border px-4 py-3 ${
-                      scenario === s.id
-                        ? "border-navy bg-[rgb(var(--ink-rgb)/0.05)]"
-                        : "border-[rgb(var(--ink-rgb)/0.15)]"
-                    }`}
-                  >
-                    <span className="flex items-center gap-2 text-[15px] font-semibold text-heading">
-                      <input
-                        type="radio"
-                        name="demo-scenario"
-                        value={s.id}
-                        checked={scenario === s.id}
-                        onChange={() => setScenario(s.id)}
-                        className="accent-[rgb(var(--ink-rgb))]"
-                      />
-                      {s.label}
-                    </span>
-                    <span className="pl-6 text-[13px] text-muted">
-                      {s.hint}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-            <div>
-              <button
-                type="button"
-                onClick={() => void start()}
-                disabled={busy}
-                className={`rounded-md bg-navy px-5 py-3 text-[15px] font-semibold text-white disabled:opacity-60 ${FOCUS}`}
-              >
-                {copy.startCta}
-              </button>
+          <div className="flex flex-col gap-3 px-5 py-6">
+            <p
+              id="demo-scenario-heading"
+              className="m-0 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase"
+            >
+              {copy.startHeading}
+            </p>
+            <div
+              role="group"
+              aria-labelledby="demo-scenario-heading"
+              className="flex flex-col gap-3 sm:flex-row"
+            >
+              {copy.scenarios.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void start(s.id)}
+                  className={`flex flex-1 flex-col items-start gap-1 border border-[rgb(var(--ink-rgb)/0.15)] px-4 py-3 text-left hover:border-navy hover:bg-[rgb(var(--ink-rgb)/0.05)] disabled:opacity-60 ${FOCUS}`}
+                >
+                  <span className="text-[15px] font-semibold text-heading">
+                    {s.label}
+                  </span>
+                  <span className="text-[13px] text-muted">{s.hint}</span>
+                  <span className="mt-1 text-[13.5px] font-semibold text-navy">
+                    {copy.startCta} <span aria-hidden>→</span>
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         ) : (

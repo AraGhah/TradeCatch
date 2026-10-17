@@ -40,7 +40,7 @@ export type NotifierDeps = {
 function smsBody(config: ReceptionistConfig, summary: CallSummary): string {
   const fr = config.defaultLanguage === "fr";
   const parts = [
-    `[${config.businessName}] ${fr ? "Appel IA" : "AI call"}: ${summary.headline}`,
+    `[${config.businessName}] ${fr ? "Appel de la réceptionniste" : "Receptionist call"}: ${summary.headline}`,
     summary.callbackE164
       ? `${fr ? "Rappel" : "Callback"}: ${summary.callbackE164}`
       : `${fr ? "De" : "From"}: ${summary.callerE164}`,
@@ -114,7 +114,7 @@ function emailInput(
         label: fr ? "Durée (s)" : "Duration (s)",
         value: summary.durationSeconds?.toString(),
       },
-      { label: fr ? "Résumé IA" : "AI summary", value: summary.aiSummary },
+      { label: fr ? "Résumé de l’appel" : "Call summary", value: summary.aiSummary },
       {
         label: fr ? "Message vocal" : "Voicemail",
         value: session.recordingUrl,

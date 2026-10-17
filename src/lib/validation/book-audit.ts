@@ -38,7 +38,7 @@ export const bookAuditSchema = z.object({
    * value reaches the notification email, so free text would let a caller
    * inject arbitrary content into it.
    */
-  planInterest: z.enum(["starter", "growth", "ai-receptionist"]).optional(),
+  planInterest: z.enum(["starter", "growth", "receptionist"]).optional(),
   companyWebsite: z.string().max(500).optional().default(""),
   turnstileToken: z.string().min(1),
 });

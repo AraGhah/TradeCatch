@@ -73,7 +73,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         ? [
             `Call ${number} from your authorized test phone.`,
             "Confirm the webhook URL points at this environment.",
-            "Speak with the AI, then open Call History for the record.",
+            "Speak with the Receptionist, then open Call History for the record.",
           ]
         : [
             "Assign a TradeCatch / Twilio staging number in Phone Settings first.",

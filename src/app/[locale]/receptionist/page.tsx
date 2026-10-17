@@ -19,7 +19,7 @@ export async function generateMetadata({
   const t = await getTranslations({ locale, namespace: "aiReceptionist" });
   return buildMetadata({
     locale,
-    pathname: "/ai-receptionist",
+    pathname: "/receptionist",
     title: t("headline"),
     description: t("metaDescription"),
   });

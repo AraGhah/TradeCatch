@@ -107,7 +107,7 @@
         "segments": [
           {
             "start": 0.4,
-            "end": 8.61
+            "end": 8.75
           }
         ]
       },
@@ -116,57 +116,57 @@
         "segments": [
           {
             "start": 0.4,
-            "end": 9.47
+            "end": 9.54
           }
         ]
       },
       {
-        "duration": 36.0,
+        "duration": 39.0,
         "segments": [
           {
             "start": 0.4,
-            "end": 5.18
+            "end": 5.54
           },
           {
-            "start": 5.48,
-            "end": 11.7
+            "start": 5.84,
+            "end": 12.06
           },
           {
-            "start": 12.0,
-            "end": 16.92
+            "start": 12.36,
+            "end": 18.22
           },
           {
-            "start": 17.22,
-            "end": 20.27
+            "start": 18.52,
+            "end": 22.17
           },
           {
-            "start": 20.57,
-            "end": 24.46
+            "start": 22.47,
+            "end": 26.55
           },
           {
-            "start": 24.76,
-            "end": 26.8
+            "start": 26.85,
+            "end": 29.3
           },
           {
-            "start": 27.1,
-            "end": 34.97
+            "start": 29.6,
+            "end": 37.83
           }
         ]
       },
       {
-        "duration": 16.5,
+        "duration": 17.5,
         "segments": [
           {
             "start": 0.4,
-            "end": 5.03
+            "end": 5.32
           },
           {
-            "start": 5.33,
-            "end": 10.97
+            "start": 5.62,
+            "end": 11.74
           },
           {
-            "start": 11.57,
-            "end": 15.53
+            "start": 12.34,
+            "end": 16.54
           }
         ]
       },
@@ -175,29 +175,29 @@
         "segments": [
           {
             "start": 0.4,
-            "end": 10.41
+            "end": 10.91
           }
         ]
       },
       {
-        "duration": 8.0,
+        "duration": 8.5,
         "segments": [
           {
             "start": 0.4,
-            "end": 6.74
+            "end": 7.5
           }
         ]
       },
       {
-        "duration": 11.0,
+        "duration": 12.0,
         "segments": [
           {
             "start": 0.4,
-            "end": 4.62
+            "end": 5.56
           },
           {
-            "start": 5.22,
-            "end": 9.72
+            "start": 6.16,
+            "end": 10.66
           }
         ]
       }
@@ -257,11 +257,11 @@
     ],
     "fr": [
       {
-        "duration": 10.0,
+        "duration": 11.0,
         "segments": [
           {
             "start": 0.4,
-            "end": 8.73
+            "end": 9.9
           }
         ]
       },
@@ -270,7 +270,7 @@
         "segments": [
           {
             "start": 0.4,
-            "end": 7.91
+            "end": 8.66
           }
         ]
       },
@@ -279,7 +279,7 @@
         "segments": [
           {
             "start": 0.4,
-            "end": 6.4
+            "end": 7.17
           }
         ]
       },
@@ -288,20 +288,20 @@
         "segments": [
           {
             "start": 0.4,
-            "end": 7.89
+            "end": 7.94
           }
         ]
       },
       {
-        "duration": 11.0,
+        "duration": 12.0,
         "segments": [
           {
             "start": 0.4,
-            "end": 6.5
+            "end": 7.46
           },
           {
-            "start": 7.1,
-            "end": 10.1
+            "start": 8.06,
+            "end": 11.06
           }
         ]
       }

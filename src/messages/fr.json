@@ -65,7 +65,6 @@
       "cookies": "Politique de cookies",
       "acceptableUse": "Utilisation acceptable",
       "accessibility": "Accessibilité",
-      "cancellation": "Annulation et remboursements",
       "emergency": "Avis services d'urgence"
     }
   },
@@ -781,7 +780,7 @@
         ]
       },
       {
-        "title": "Réception IA · Pilote premium configuré",
+        "title": "Réceptionniste · Pilote premium configuré",
         "purpose": "Répondre aux appels que votre équipe ne peut pas prendre, au lieu de les rappeler par texto après coup.",
         "items": [
           "Réponse téléphonique bilingue, 24/7 et hors des heures d’ouverture",
@@ -1123,8 +1122,8 @@
           }
         ],
         "ctaHref": "/book-audit",
-        "secondaryCtaHref": "/ai-receptionist",
-        "planInterest": "ai-receptionist"
+        "secondaryCtaHref": "/receptionist",
+        "planInterest": "receptionist"
       }
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
@@ -1288,7 +1287,7 @@
           ]
         },
         {
-          "feature": "Réponse téléphonique par l’IA",
+          "feature": "Réponse téléphonique",
           "values": [
             "n",
             "n",
@@ -1375,7 +1374,7 @@
       "Nous construisons et gérons les processus. Vous ne configurez rien.",
       "Nous ne remplaçons jamais les professionnels licenciés.",
       "Les décisions importantes restent humaines, toujours.",
-      "L'objectif est la récupération pratique de revenus, pas l'expérimentation de l'IA."
+      "L'objectif est la récupération pratique de revenus, pas la technologie expérimentale."
     ],
     "points": [
       "Nous travaillons avec des entreprises de service et de métiers locales, pas avec de grandes entreprises.",
@@ -1383,7 +1382,7 @@
       "Nous construisons et gérons les processus. Vous ne configurez rien.",
       "Nous ne remplaçons jamais les professionnels licenciés.",
       "Les décisions importantes restent humaines, toujours.",
-      "L'objectif est la récupération pratique de revenus, pas l'expérimentation de l'IA."
+      "L'objectif est la récupération pratique de revenus, pas la technologie expérimentale."
     ],
     "cta": "Réserver un audit gratuit de 20 minutes",
     "emailCta": "Écrire à Ara",
@@ -1716,7 +1715,7 @@
     "metaDescription": "Réponses sur le fonctionnement du système d'appels manqués et de relance de soumissions, ce qui reste humain et ce qu'il ne fait pas.",
     "items": [
       {
-        "q": "Est-ce que l'IA parle directement aux clients?",
+        "q": "Est-ce que le système parle directement aux clients?",
         "a": "Ça dépend du forfait. Avec Starter et Growth, le système ne répond pas au téléphone : un appel manqué déclenche un texto immédiat en français ou en anglais que vous avez approuvé, les détails du job sont recueillis et votre technicien est alerté. Avec le forfait Réceptionniste, il répond aux appels entrants et parle à l’appelant, uniquement à partir des informations d’entreprise que vous avez approuvées. Dans tous les cas, les prix, le diagnostic et la négociation restent avec votre équipe."
       },
       {
@@ -1949,40 +1948,6 @@
         }
       ]
     },
-    "cancellationRefundPolicy": {
-      "title": "Politique d'annulation et de remboursement",
-      "metaDescription": "Comment TradeCatch gère les annulations, les préavis, les frais d'installation et les remboursements pour les entrepreneurs québécois.",
-      "sections": [
-        {
-          "heading": "Portée",
-          "body": "Cette politique couvre les frais d'installation TradeCatch et les frais de gestion mensuels des systèmes de récupération de revenus. Les préavis et montants précis sont confirmés dans votre proposition écrite."
-        },
-        {
-          "heading": "Gestion mensuelle",
-          "body": "Chaque partie peut mettre fin à l'entente de gestion par avis écrit selon le délai prévu dans votre proposition (habituellement 30 jours). Le service continue pendant le préavis, sauf entente contraire."
-        },
-        {
-          "heading": "Frais d'installation",
-          "body": "Les frais d'installation couvrent la conception, la configuration, la rédaction des messages, les tests et le lancement. Une fois ce travail commencé, ces frais ne sont pas remboursables."
-        },
-        {
-          "heading": "Gestion prépayée non utilisée",
-          "body": "Les frais de gestion prépayés non utilisés pour le reste d'un préavis ne sont pas remboursés, sauf si la loi québécoise sur la protection du consommateur l'exige."
-        },
-        {
-          "heading": "Garantie de lancement fondateur",
-          "body": "Si un système fondateur convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité selon votre entente fondatrice."
-        },
-        {
-          "heading": "Comment annuler",
-          "body": "Envoyez un avis écrit à contact@tradecatch.ca (ou au courriel de votre proposition). Nous confirmerons la date de fin et toute facture finale par écrit."
-        },
-        {
-          "heading": "Questions",
-          "body": "Si votre proposition contredit cette page, la proposition signée prévaut. Contactez-nous avant d'annuler si vous préférez ajuster la portée."
-        }
-      ]
-    },
     "emergencyServiceDisclaimer": {
       "title": "Avis relatif aux services d'urgence",
       "metaDescription": "TradeCatch ne diagnostique pas les urgences et ne remplace pas votre processus d'urgence. Voici comment fonctionne l'escalade.",
@@ -2138,7 +2103,7 @@
       "notifications": "Alertes",
       "admin": "Admin",
       "logout": "Déconnexion",
-      "receptionist": "Réceptionniste IA",
+      "receptionist": "Réceptionniste",
       "phoneSettings": "Paramètres téléphone",
       "automations": "Automatisations"
     },
@@ -2283,8 +2248,8 @@
     "calls": {
       "headline": "Appels de la réceptionniste",
       "intro": "Chaque appel répondu par la réceptionniste, avec les détails recueillis, la prochaine étape et la transcription. Les transcriptions sont purgées automatiquement après la période de rétention.",
-      "empty": "Aucun appel répondu par l'IA pour l'instant.",
-      "entitlement": "La réponse aux appels par IA n'est pas disponible avec votre forfait.",
+      "empty": "Aucun appel répondu par la réceptionniste pour l'instant.",
+      "entitlement": "La réponse aux appels n'est pas disponible avec votre forfait.",
       "notConfigured": "La réceptionniste n'est pas encore configurée pour votre numéro. Demandez au fondateur de l'activer.",
       "inProgress": "En cours",
       "afterHours": "hors des heures",
@@ -2294,11 +2259,11 @@
       "nextStep": "Prochaine étape",
       "transcript": "Transcription",
       "caller": "Appelant",
-      "agent": "Assistante",
+      "agent": "Réceptionniste",
       "purged": "Transcription purgée (politique de rétention).",
       "knownContact": "Contact connu",
       "stats": {
-        "total": "Appels répondus par l’IA",
+        "total": "Appels répondus",
         "afterHours": "Hors des heures",
         "transfers": "Transférés à une personne",
         "emergencies": "Urgences",
@@ -2435,7 +2400,7 @@
       "simulate": "Simuler un lead",
       "simulateOk": "Un lead fictif a été ajouté.",
       "sources": {
-        "ai_receptionist": "Réceptionniste IA",
+        "ai_receptionist": "Réceptionniste",
         "missed_call": "Appel manqué",
         "sms": "Texto",
         "website": "Site web",
@@ -2458,7 +2423,7 @@
         "low": "Basse"
       },
       "controls": {
-        "ai_managed": "L'IA répond",
+        "ai_managed": "La réceptionniste répond",
         "human_managed": "Une personne répond",
         "automation_paused": "Automatisation en pause",
         "closed": "Fermée"
@@ -2506,7 +2471,7 @@
       "featuresSaved": "Fonctionnalités enregistrées.",
       "featuresSaveFailed": "Impossible d’enregistrer les fonctionnalités.",
       "featureFlags": {
-        "aiReceptionist": "Réceptionniste IA",
+        "aiReceptionist": "Réceptionniste",
         "appointmentBooking": "Prise de rendez-vous",
         "callTransfer": "Transfert d’appel",
         "missedCallRecovery": "Récupération d’appels manqués",
@@ -2731,7 +2696,7 @@
     },
     "monitoring": {
       "fallbackTitle": "Paramètres de repli",
-      "fallbackIntro": "Choisissez ce qui se passe lorsque l’IA ne peut pas poursuivre l’appel. Si le calendrier est indisponible, la demande est enregistrée sans confirmer de rendez-vous."
+      "fallbackIntro": "Choisissez ce qui se passe lorsque la réceptionniste ne peut pas poursuivre l’appel. Si le calendrier est indisponible, la demande est enregistrée sans confirmer de rendez-vous."
     },
     "security": {
       "headline": "Sécurité",
@@ -2800,8 +2765,8 @@
       "sessions": "Sessions et sécurité"
     },
     "receptionist": {
-      "headline": "Réceptionniste IA",
-      "intro": "Configurez, activez et testez la réceptionniste virtuelle de votre entreprise. Chaque entreprise a sa propre configuration isolée.",
+      "headline": "Réceptionniste",
+      "intro": "Configurez, activez et testez la réceptionniste de votre entreprise. Chaque entreprise a sa propre configuration isolée.",
       "statusActive": "Répond aux appels au {number}.",
       "statusInactive": "Ne répond pas encore aux appels. Enregistrez la configuration, puis activez la réceptionniste pour brancher le routage.",
       "notLinked": "Votre client téléphonique n’est pas encore lié. Demandez au fondateur de le connecter avant de configurer la réceptionniste.",
@@ -2841,7 +2806,7 @@
       "hoursEnd": "Fermeture",
       "knowledgeTitle": "Ce qu’elle sait de votre entreprise",
       "personality": "Ton",
-      "personalityHelp": "Facultatif, p. ex. chaleureuse, brève et professionnelle. Utilisé seulement lorsqu’un modèle d’IA est activé.",
+      "personalityHelp": "Facultatif, p. ex. chaleureuse, brève et professionnelle. Utilisé seulement lorsque le mode de conversation avancé est activé.",
       "facts": "Faits sur l’entreprise",
       "factsHelp": "Services, zone desservie, taille minimale des travaux, tout ce qu’un appelant peut demander. Elle n’inventera rien qui ne soit pas ici ou dans la FAQ.",
       "routingTitle": "Départements et personnes",
@@ -2865,11 +2830,11 @@
       "notifyEmail": "Envoyer les résumés à ce courriel",
       "notifySms": "Envoyer les résumés et alertes d’urgence par texto à",
       "collectTime": "Demander à l’appelant la date et l’heure souhaitées",
-      "activate": "Activer l'IA",
-      "deactivate": "Désactiver l'IA",
+      "activate": "Activer la réceptionniste",
+      "deactivate": "Désactiver la réceptionniste",
       "activateError": "Impossible de modifier l'activation.",
       "editConfig": "Modifier la configuration",
-      "testAi": "Tester la réceptionniste IA",
+      "testAi": "Tester la réceptionniste",
       "viewHistory": "Voir l'historique des appels",
       "identityTitle": "Identité et personnalité",
       "receptionistName": "Nom de la réceptionniste",
@@ -2908,7 +2873,7 @@
       "confirmNone": "Aucune",
       "bookableServices": "Services réservables",
       "overview": {
-        "aiName": "Nom de l'IA",
+        "aiName": "Nom de la réceptionniste",
         "phone": "Numéro assigné",
         "language": "Langue",
         "voice": "Voix",
@@ -2958,7 +2923,7 @@
         "voicemail": "Messagerie vocale"
       },
       "test": {
-        "title": "Test de la réceptionniste IA",
+        "title": "Test de la réceptionniste",
         "badge": "Conversation simulée. Aucun appel réel, SMS ou courriel.",
         "language": "Langue",
         "scenario": "Scénario",
@@ -2967,7 +2932,7 @@
         "start": "Démarrer le test",
         "empty": "Démarrez un test pour parler à votre configuration.",
         "you": "Vous",
-        "ai": "IA",
+        "ai": "Réceptionniste",
         "system": "Système",
         "placeholder": "Écrivez comme un client…",
         "send": "Envoyer",
@@ -3005,11 +2970,11 @@
       "forwardingHelp": "Pour conserver votre numéro public, configurez un renvoi compatible chez votre opérateur vers le numéro TradeCatch, puis validez-le avant d’activer le service.",
       "forwardingAck": "J’ai vérifié que le renvoi d’appels fonctionne avec mon opérateur.",
       "routingTitle": "Routage",
-      "aiEnabled": "Réceptionniste IA activée",
+      "aiEnabled": "Réceptionniste activée",
       "inboundStrategy": "Stratégie d’entrée",
       "strategy": {
-        "ai_first": "IA d’abord",
-        "human_first": "Humain d’abord (puis IA si sans réponse)"
+        "ai_first": "Réceptionniste d’abord",
+        "human_first": "Humain d’abord (puis réceptionniste si sans réponse)"
       },
       "voiceEngine": "Moteur vocal",
       "engine": {
@@ -3038,8 +3003,8 @@
       "scenario": "Scénario",
       "language": "Langue",
       "scenarios": {
-        "ai_answers": "L’IA répond",
-        "human_first_missed_then_ai": "Humain d’abord, sans réponse → IA",
+        "ai_answers": "La réceptionniste répond",
+        "human_first_missed_then_ai": "Humain d’abord, sans réponse → réceptionniste",
         "transfer_request": "Demande de transfert",
         "appointment_request": "Demande de rendez-vous"
       },

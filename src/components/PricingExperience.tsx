@@ -12,14 +12,14 @@ export type PricingOutcomeGroup = {
 /** Routes a pricing tier is allowed to point at. */
 const TIER_HREFS = {
   "/book-audit": "/book-audit",
-  "/ai-receptionist": "/ai-receptionist",
+  "/receptionist": "/receptionist",
   "/pricing": "/pricing",
 } as const;
 
 type TierHref = keyof typeof TIER_HREFS;
 
 /** Plan ids accepted by the book-audit intake, so a lead stays attributable. */
-const TIER_PLAN_INTEREST = ["starter", "growth", "ai-receptionist"] as const;
+const TIER_PLAN_INTEREST = ["starter", "growth", "receptionist"] as const;
 
 type TierPlanInterest = (typeof TIER_PLAN_INTEREST)[number];
 
@@ -425,7 +425,7 @@ function PlanCard({
         </CTAButton>
         {tier.secondaryCtaLabel ? (
           <CTAButton
-            href={resolveHref(tier.secondaryCtaHref, "/ai-receptionist")}
+            href={resolveHref(tier.secondaryCtaHref, "/receptionist")}
             variant="ghost-ink"
             size="lg"
             className="w-full"

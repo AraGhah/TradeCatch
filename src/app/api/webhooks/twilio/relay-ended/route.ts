@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
  * If the AI handed off a dial, return <Dial>; otherwise finalize.
  */
 export async function POST(request: NextRequest) {
-  let form: Record<string, string> = {};
+  const form: Record<string, string> = {};
   try {
     const data = await request.formData();
     for (const [k, v] of data.entries()) {

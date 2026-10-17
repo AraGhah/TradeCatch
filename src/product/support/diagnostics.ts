@@ -22,7 +22,7 @@ export function diagnoseConfiguration(input: {
 }) {
   const findings: DiagnosticFinding[] = [];
   if (!orgHasFeature(input.plan, "MISSED_CALL_RECOVERY")) {
-    findings.push({ code: "plan", articleId: "billing", detail: "This plan does not include the AI receptionist." });
+    findings.push({ code: "plan", articleId: "billing", detail: "This plan does not include the Receptionist." });
   }
   if (!input.phone) findings.push({ code: "phone_missing", articleId: "phone", detail: "No business number is assigned." });
   if (!input.calendarConnected) {

@@ -40,7 +40,7 @@ Ops bearer (`MISSED_CALL_OPS_SECRET`) can also call the admin APIs without a bro
 
 ## Contractor dashboard nav
 
-Overview · AI Receptionist · Phone Calls · Leads · Conversations · Appointments ·
+Overview · Receptionist · Phone Calls · Leads · Conversations · Appointments ·
 Quotes & Follow-Ups · Analytics · Business Settings · Test Center
 
 Conversations → inbox. Analytics → overview. Test Center seeds/resets demo data

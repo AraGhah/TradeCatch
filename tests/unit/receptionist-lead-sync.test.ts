@@ -148,14 +148,14 @@ describe("receptionist ↔ website lead sync", () => {
 
     const updated = (await starter.getWebsiteLead(lead.id, "org_sync"))!;
     assert.equal(updated.status, "qualified");
-    assert.match(updated.message!, /Besoin d'un chauffe-eau\n\[Appel IA \d{4}-\d{2}-\d{2}\] évier qui coule/);
+    assert.match(updated.message!, /Besoin d'un chauffe-eau\n\[Appel de la réceptionniste \d{4}-\d{2}-\d{2}\] évier qui coule/);
 
     const cards = await growth.listPipeline("org_sync");
     assert.equal(cards.length, 1);
     assert.equal(cards[0]!.stage, "qualified");
     assert.equal(cards[0]!.source, "missed_call");
     assert.equal(cards[0]!.sourceRefId, call.id);
-    assert.match(cards[0]!.title, /Appel IA · Marie Tremblay — évier qui coule/);
+    assert.match(cards[0]!.title, /Appel de la réceptionniste · Marie Tremblay — évier qui coule/);
 
     const timeline = await growth.listTimeline("org_sync");
     assert.equal(timeline[0]!.kind, "ai_call");

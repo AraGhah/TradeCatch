@@ -25,7 +25,7 @@ import {
 import { randomUUID } from "@/lib/id";
 
 const DRAFT_STORAGE_KEY = "tradecatch-book-audit-draft";
-const PLAN_INTEREST_VALUES = ["starter", "growth", "ai-receptionist"] as const;
+const PLAN_INTEREST_VALUES = ["starter", "growth", "receptionist"] as const;
 
 type PlanInterest = (typeof PLAN_INTEREST_VALUES)[number];
 
