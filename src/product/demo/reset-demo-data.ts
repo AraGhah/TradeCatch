@@ -97,6 +97,8 @@ export const DEMO_RESET_TABLES = [
   "tc_privacy_requests",
   "tc_consent_records",
   "tc_audit_logs",
+  "tc_test_results",
+  "tc_test_runs",
 ] as const;
 
 export const DEMO_RESET_CONFIRMATION = "RESET_DEMO_DATA";
