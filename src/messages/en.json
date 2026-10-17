@@ -2744,6 +2744,10 @@
       "save": "Save privacy settings",
       "saved": "Privacy settings saved."
     },
+    "pilot": {
+      "headline": "Pilot feedback",
+      "intro": "Tell TradeCatch what failed or what should change. This stays with your business."
+    },
     "receptionist": {
       "headline": "AI Receptionist",
       "intro": "Configure, activate, and test your business's virtual receptionist. Each business has its own isolated configuration.",

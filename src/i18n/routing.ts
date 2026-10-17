@@ -57,6 +57,14 @@ export const routing = defineRouting({
       en: "/admin/qa",
       fr: "/admin/qa",
     },
+    "/admin/launch": {
+      en: "/admin/launch",
+      fr: "/admin/launch",
+    },
+    "/admin/pilots": {
+      en: "/admin/pilots",
+      fr: "/admin/pilots",
+    },
     "/admin/monitoring/api": {
       en: "/admin/monitoring/api",
       fr: "/admin/monitoring/api",
@@ -192,6 +200,10 @@ export const routing = defineRouting({
     "/app/settings/security": {
       en: "/app/settings/security",
       fr: "/app/parametres/securite",
+    },
+    "/app/feedback": {
+      en: "/app/feedback",
+      fr: "/app/commentaires",
     },
     "/app/automations": {
       en: "/app/automations",

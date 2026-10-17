@@ -2744,6 +2744,10 @@
       "save": "Enregistrer",
       "saved": "Paramètres de confidentialité enregistrés."
     },
+    "pilot": {
+      "headline": "Commentaires du pilote",
+      "intro": "Dites à TradeCatch ce qui a échoué ou ce qu’il faut changer. Cela reste lié à votre entreprise."
+    },
     "receptionist": {
       "headline": "Réceptionniste IA",
       "intro": "Configurez, activez et testez la réceptionniste virtuelle de votre entreprise. Chaque entreprise a sa propre configuration isolée.",

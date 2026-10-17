@@ -139,6 +139,10 @@ export default async function AppSettingsPage({
           <Link href="/app/settings/security" className="text-sm font-semibold text-navy underline">
             {t("security.headline")}
           </Link>
+          {" · "}
+          <Link href="/app/feedback" className="text-sm font-semibold text-navy underline">
+            {t("pilot.headline")}
+          </Link>
         </p>
         <SettingsIntegrationsForm
           initialNotifyEmail={settings.notifyEmail}
