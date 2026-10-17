@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireSameBusiness } from "@/product/security/access";
 import { getSaasStore } from "@/product/saas/runtime";
 import { getSupportService } from "@/product/support/runtime";
+import { canManageAccount } from "@/product/support/access";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
@@ -10,7 +11,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSameBusiness(id);
   if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
-  if (access.ctx.membership.role !== "owner" && access.ctx.membership.role !== "admin" && !access.ctx.isPlatformAdmin) {
+  if (!canManageAccount(access.ctx.membership.role, access.ctx.isPlatformAdmin)) {
     return NextResponse.json({ error: "Insufficient permissions." }, { status: 403 });
   }
   const org = await getSaasStore().getOrganization(id);

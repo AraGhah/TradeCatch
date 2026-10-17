@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSameBusiness } from "@/product/security/access";
-import { SupportError } from "@/product/support/service";
-import { diagnosticSnapshot } from "@/product/support/runtime";
+import { SupportError } from "@/product/support/errors";
+import { diagnosticSnapshot, findingsForCheck } from "@/product/support/diagnostics";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
@@ -19,17 +19,6 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid check." }, { status: 400 });
   try {
     const report = await diagnosticSnapshot(id);
-    const codes: Record<string, string[]> = {
-      ai: ["plan", "phone_missing"],
-      phone: ["phone_missing"],
-      calendar: ["calendar_disconnected"],
-      notifications: [],
-      sms: ["sms_unconfigured"],
-      automations: ["automation_off"],
-      subscription: ["plan"],
-      all: report.findings.map((finding) => finding.code),
-    };
-    const allowed = new Set(codes[parsed.data.check]);
     return NextResponse.json({
       ok: true,
       check: parsed.data.check,
@@ -37,7 +26,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       liveVerified: report.liveVerified,
       plan: report.plan,
       recentErrorCount: report.recentErrorCount,
-      findings: parsed.data.check === "all" ? report.findings : report.findings.filter((finding) => allowed.has(finding.code)),
+      findings: findingsForCheck(parsed.data.check, report.findings),
     });
   } catch (error) {
     const status = error instanceof SupportError ? error.status : 500;

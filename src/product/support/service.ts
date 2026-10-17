@@ -1,31 +1,42 @@
 import { redactAuditDetail } from "@/product/security/permissions";
-import { orgHasFeature, type PlanId } from "@/product/saas/entitlements";
-import { supportId, type AccountRequest, type SupportMessage, type SupportStore, type SupportTicket, type TicketPriority, type TicketStatus } from "./store";
+import type { PlanId } from "@/product/saas/entitlements";
+import { diagnoseConfiguration } from "./diagnostics";
+import { SupportError } from "./errors";
 
-export class SupportError extends Error {
-  constructor(message: string, readonly status = 400) {
-    super(message);
-    this.name = "SupportError";
-  }
-}
+export { SupportError } from "./errors";
+import { supportId, type SupportStore } from "./store";
+import type { AccountRequest, SupportMessage, SupportTicket, TicketKind, TicketPriority, TicketStatus } from "./types";
+
+type CreateTicketInput = {
+  organizationId: string;
+  subject: string;
+  category: SupportTicket["category"];
+  description: string;
+  priority: TicketPriority;
+  contactEmail: string;
+  relatedCallId?: string;
+  kind?: TicketKind;
+  attachmentNames?: string[];
+};
 
 const PRIORITIES = new Set<TicketPriority>(["normal", "high", "critical"]);
+const NOTIFY_STATUSES = new Set<TicketStatus>(["resolved", "investigating", "closed"]);
 
 export function createSupportService(deps: {
   store: SupportStore;
   now: () => Date;
   notify?: (input: { organizationId: string; ticketId: string; simulated?: boolean }) => Promise<void>;
 }) {
-  function clean(value: string) {
-    return redactAuditDetail(value);
-  }
-
-  function visible(message: SupportMessage, includeInternal: boolean) {
-    return includeInternal || !message.internal;
+  async function requireTicket(ticketId: string, organizationId?: string) {
+    const ticket = await deps.store.getTicket(ticketId);
+    if (!ticket || (organizationId && ticket.organizationId !== organizationId)) {
+      throw new SupportError("Ticket not found.", 404);
+    }
+    return ticket;
   }
 
   return {
-    async createTicket(input: Omit<SupportTicket, "id" | "status" | "createdAt" | "updatedAt" | "description" | "kind"> & { description: string; kind?: SupportTicket["kind"]; attachmentNames?: string[] }) {
+    async createTicket(input: CreateTicketInput) {
       if (!PRIORITIES.has(input.priority)) throw new SupportError("Invalid priority.", 400);
       const now = deps.now().toISOString();
       const ticket: SupportTicket = {
@@ -33,7 +44,7 @@ export function createSupportService(deps: {
         subject: input.subject.slice(0, 140),
         category: input.category,
         kind: input.kind ?? "issue",
-        description: clean(input.description),
+        description: redactAuditDetail(input.description),
         priority: input.priority,
         contactEmail: input.contactEmail,
         relatedCallId: input.relatedCallId,
@@ -43,9 +54,7 @@ export function createSupportService(deps: {
         updatedAt: now,
       };
       await deps.store.saveTicket(ticket);
-      for (const fileName of input.attachmentNames ?? []) {
-        await deps.store.saveAttachment({ id: supportId("att"), ticketId: ticket.id, fileName: fileName.slice(0, 120), createdAt: now });
-      }
+      await saveAttachments(deps.store, ticket.id, input.attachmentNames ?? [], now);
       await deps.store.saveEvent({ id: supportId("evt"), ticketId: ticket.id, action: "opened", createdAt: now });
       if (ticket.kind === "feature") {
         await deps.store.saveFeedback({ id: supportId("fb"), organizationId: ticket.organizationId, kind: "feature", body: ticket.subject, createdAt: now });
@@ -55,30 +64,25 @@ export function createSupportService(deps: {
     },
 
     async reply(input: { organizationId: string; ticketId: string; body: string; authorRole: "contractor" | "admin"; internal?: boolean }) {
-      const ticket = await deps.store.getTicket(input.ticketId);
-      if (!ticket || ticket.organizationId !== input.organizationId) throw new SupportError("Ticket not found.", 404);
+      const ticket = await requireTicket(input.ticketId, input.organizationId);
       if (input.internal && input.authorRole !== "admin") throw new SupportError("Insufficient permissions.", 403);
       const message: SupportMessage = {
         id: supportId("msg"),
         ticketId: ticket.id,
         authorRole: input.authorRole,
-        body: clean(input.body),
+        body: redactAuditDetail(input.body),
         internal: Boolean(input.internal),
         createdAt: deps.now().toISOString(),
       };
       await deps.store.saveMessage(message);
       if (input.authorRole === "admin" && !message.internal) {
-        ticket.status = ticket.status === "open" ? "investigating" : ticket.status;
-        ticket.updatedAt = message.createdAt;
-        await deps.store.saveTicket(ticket);
-        await deps.notify?.({ organizationId: ticket.organizationId, ticketId: ticket.id });
+        await markInvestigating(deps, ticket, message.createdAt);
       }
       return message;
     },
 
     async setStatus(ticketId: string, status: TicketStatus, patch?: { priority?: TicketPriority; assignedTo?: string }) {
-      const ticket = await deps.store.getTicket(ticketId);
-      if (!ticket) throw new SupportError("Ticket not found.", 404);
+      const ticket = await requireTicket(ticketId);
       if (patch?.priority && !PRIORITIES.has(patch.priority)) throw new SupportError("Invalid priority.", 400);
       ticket.status = status;
       if (patch?.priority) ticket.priority = patch.priority;
@@ -86,22 +90,20 @@ export function createSupportService(deps: {
       ticket.updatedAt = deps.now().toISOString();
       await deps.store.saveTicket(ticket);
       await deps.store.saveEvent({ id: supportId("evt"), ticketId: ticket.id, action: status, createdAt: ticket.updatedAt });
-      if (status === "resolved" || status === "investigating" || status === "closed") {
+      if (NOTIFY_STATUSES.has(status)) {
         await deps.notify?.({ organizationId: ticket.organizationId, ticketId: ticket.id });
       }
       return ticket;
     },
 
     async forBusiness(organizationId: string, ticketId: string) {
-      const ticket = await deps.store.getTicket(ticketId);
-      if (!ticket || ticket.organizationId !== organizationId) throw new SupportError("Ticket not found.", 404);
-      const messages = (await deps.store.listMessages(ticketId)).filter((message) => visible(message, false));
+      const ticket = await requireTicket(ticketId, organizationId);
+      const messages = (await deps.store.listMessages(ticketId)).filter((message) => !message.internal);
       return { ticket, messages };
     },
 
     async forAdmin(ticketId: string) {
-      const ticket = await deps.store.getTicket(ticketId);
-      if (!ticket) throw new SupportError("Ticket not found.", 404);
+      const ticket = await requireTicket(ticketId);
       return { ticket, messages: await deps.store.listMessages(ticketId) };
     },
 
@@ -114,13 +116,7 @@ export function createSupportService(deps: {
     },
 
     diagnose(input: { plan: PlanId; phone?: string | null; calendarConnected: boolean; automationEnabled: boolean; smsConfigured: boolean }) {
-      const findings = [];
-      if (!orgHasFeature(input.plan, "MISSED_CALL_RECOVERY")) findings.push({ code: "plan", articleId: "billing", detail: "This plan does not include the AI receptionist." });
-      if (!input.phone) findings.push({ code: "phone_missing", articleId: "phone", detail: "No business number is assigned." });
-      if (!input.calendarConnected) findings.push({ code: "calendar_disconnected", articleId: "calendar", detail: "Google Calendar is not connected. Appointments cannot be confirmed." });
-      if (!input.automationEnabled) findings.push({ code: "automation_off", articleId: "automations", detail: "Missed-call recovery is not enabled." });
-      if (!input.smsConfigured) findings.push({ code: "sms_unconfigured", articleId: "sms", detail: "Messaging is not configured." });
-      return { scope: "configuration" as const, liveVerified: false as const, findings };
+      return diagnoseConfiguration(input);
     },
 
     async requestAccountChange(organizationId: string, kind: AccountRequest["kind"]) {
@@ -136,4 +132,21 @@ export function createSupportService(deps: {
       return row;
     },
   };
+}
+
+async function saveAttachments(store: SupportStore, ticketId: string, names: string[], at: string) {
+  for (const fileName of names) {
+    await store.saveAttachment({ id: supportId("att"), ticketId, fileName: fileName.slice(0, 120), createdAt: at });
+  }
+}
+
+async function markInvestigating(
+  deps: { store: SupportStore; notify?: (input: { organizationId: string; ticketId: string }) => Promise<void> },
+  ticket: SupportTicket,
+  at: string,
+) {
+  if (ticket.status === "open") ticket.status = "investigating";
+  ticket.updatedAt = at;
+  await deps.store.saveTicket(ticket);
+  await deps.notify?.({ organizationId: ticket.organizationId, ticketId: ticket.id });
 }
