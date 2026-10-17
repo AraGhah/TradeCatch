@@ -58,6 +58,11 @@ export type SaasStore = {
     userId: string;
     role: Membership["role"];
   }): Promise<Membership>;
+  setMembershipRole(
+    organizationId: string,
+    userId: string,
+    role: Membership["role"],
+  ): Promise<Membership | null>;
   createMagicLink(link: MagicLink): Promise<void>;
   consumeMagicLink(
     tokenHash: string,

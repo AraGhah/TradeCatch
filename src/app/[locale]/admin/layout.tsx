@@ -1,8 +1,12 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
+import { AdminNav } from "@/components/admin/AdminNav";
 import { isPlatformAdminUser } from "@/product/saas/platform-admin";
 import { requireTenantContext } from "@/product/saas/tenant";
-import { Link } from "@/i18n/navigation";
+import { getSecurityService } from "@/product/security/runtime";
+
+export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({
   children,
@@ -21,60 +25,17 @@ export default async function AdminLayout({
   if (!isPlatformAdminUser(auth.ctx.user)) {
     redirect(locale === "fr" ? "/fr/app" : "/app");
   }
+  const verified = await getSecurityService().sessionAllowsAdmin(auth.ctx.user.id, auth.ctx.session.id);
 
   return (
     <div className="min-h-[70vh] border-b border-navy/10 bg-[var(--color-surface,#f7f5f1)]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 md:px-6 md:py-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy/70">
-            TradeCatch Admin
-          </p>
-          <nav className="flex flex-wrap gap-2 text-sm">
-            <Link
-              href="/admin"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              Businesses
-            </Link>
-            <Link
-              href="/admin/monitoring"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              System monitoring
-            </Link>
-            <Link
-              href="/admin/qa"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              Test Center
-            </Link>
-            <Link
-              href="/admin/launch"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              Launch readiness
-            </Link>
-            <Link
-              href="/admin/pilots"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              Pilot customers
-            </Link>
-            <Link
-              href="/admin/support"
-              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
-            >
-              Customer support
-            </Link>
-            <Link
-              href="/app"
-              className="rounded-md px-3 py-2 text-navy/70 hover:bg-navy/5"
-            >
-              Contractor app
-            </Link>
-          </nav>
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 md:grid-cols-[15.5rem_minmax(0,1fr)] md:px-6 md:py-10">
+        <aside className="md:sticky md:top-6 md:self-start">
+          <AdminNav />
+        </aside>
+        <div className="min-w-0">
+          {verified ? children : <AdminMfaGate organizationId={auth.ctx.organization.id} />}
         </div>
-        {children}
       </div>
     </div>
   );

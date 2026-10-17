@@ -67,6 +67,22 @@ export const routing = defineRouting({
       en: "/admin/support",
       fr: "/admin/support",
     },
+    "/admin/businesses": {
+      en: "/admin/businesses",
+      fr: "/admin/businesses",
+    },
+    "/admin/businesses/[id]": {
+      en: "/admin/businesses/[id]",
+      fr: "/admin/businesses/[id]",
+    },
+    "/admin/billing": {
+      en: "/admin/billing",
+      fr: "/admin/billing",
+    },
+    "/admin/analytics": {
+      en: "/admin/analytics",
+      fr: "/admin/analytics",
+    },
     "/admin/monitoring/api": {
       en: "/admin/monitoring/api",
       fr: "/admin/monitoring/api",

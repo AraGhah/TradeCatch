@@ -214,6 +214,17 @@ export function createMemorySaasStore(): SaasStore {
       );
     },
 
+    async setMembershipRole(organizationId, userId, role) {
+      for (const membership of memberships.values()) {
+        if (membership.organizationId === organizationId && membership.userId === userId) {
+          const next = { ...membership, role };
+          memberships.set(membership.id, next);
+          return next;
+        }
+      }
+      return null;
+    },
+
     async addMembership(input) {
       const existing = await this.getMembership(
         input.organizationId,
