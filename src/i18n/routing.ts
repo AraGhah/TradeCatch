@@ -9,7 +9,7 @@ export const routing = defineRouting({
     "/services": { en: "/services", fr: "/services" },
     "/how-it-works": { en: "/how-it-works", fr: "/fonctionnement" },
     "/industries": { en: "/industries", fr: "/industries" },
-    "/ai-receptionist": { en: "/ai-receptionist", fr: "/receptionniste-ia" },
+    "/receptionist": { en: "/receptionist", fr: "/receptionniste" },
     "/pricing": { en: "/pricing", fr: "/tarifs" },
     "/about": { en: "/about", fr: "/a-propos" },
     "/book-audit": { en: "/book-audit", fr: "/reserver-audit" },
@@ -26,10 +26,6 @@ export const routing = defineRouting({
     "/accessibility-statement": {
       en: "/accessibility-statement",
       fr: "/declaration-accessibilite",
-    },
-    "/cancellation-refund-policy": {
-      en: "/cancellation-refund-policy",
-      fr: "/politique-annulation-remboursement",
     },
     "/emergency-service-disclaimer": {
       en: "/emergency-service-disclaimer",
@@ -83,9 +79,9 @@ export const routing = defineRouting({
       en: "/admin/monitoring/jobs",
       fr: "/admin/monitoring/jobs",
     },
-    "/admin/monitoring/ai": {
-      en: "/admin/monitoring/ai",
-      fr: "/admin/monitoring/ai",
+    "/admin/monitoring/receptionist": {
+      en: "/admin/monitoring/receptionist",
+      fr: "/admin/monitoring/receptionist",
     },
     "/admin/monitoring/database": {
       en: "/admin/monitoring/database",

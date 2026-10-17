@@ -52,7 +52,7 @@ test.describe("receptionist workspace pages", () => {
 
     await page.goto("/app/receptionist");
     await expect(
-      page.getByRole("heading", { name: "AI receptionist settings" }),
+      page.getByRole("heading", { name: "Receptionist", level: 1, exact: true }),
     ).toBeVisible();
     await expect(
       page.getByText(/phone client is not linked yet/i),

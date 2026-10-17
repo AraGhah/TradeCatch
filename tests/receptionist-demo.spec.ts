@@ -23,16 +23,17 @@ async function demoSection(page: Page, path: string) {
   return section;
 }
 
-test.describe("receptionist demo on the AI receptionist page", () => {
+test.describe("receptionist demo on the receptionist page", () => {
   test("English: full service-request call ends with a summary card", async ({
     page,
   }) => {
-    const section = await demoSection(page, "/ai-receptionist");
+    const section = await demoSection(page, "/receptionist");
     await expect(
       section.getByText(/Nothing is sent, no phone is dialed/i),
     ).toBeVisible();
 
-    await section.getByRole("button", { name: "Start the call" }).click();
+    // Clicking a situation card starts the call straight away.
+    await section.getByRole("button", { name: /During business hours/ }).click();
     const log = section.getByRole("log");
     await expect(log).toContainText("Nord Plumbing (demo)");
 
@@ -55,15 +56,16 @@ test.describe("receptionist demo on the AI receptionist page", () => {
     await expect(summary).toContainText("Message taken");
 
     await section.getByRole("button", { name: "Start another call" }).click();
-    await expect(section.getByRole("button", { name: "Start the call" })).toBeVisible();
+    await expect(
+      section.getByRole("button", { name: /During business hours/ }),
+    ).toBeVisible();
   });
 
   test("French: emergency is bridged (simulated) with the 9-1-1 message", async ({
     page,
   }) => {
-    const section = await demoSection(page, "/fr/receptionniste-ia");
-    await section.getByRole("radio", { name: /Hors des heures/ }).check();
-    await section.getByRole("button", { name: /Démarrer l.appel/ }).click();
+    const section = await demoSection(page, "/fr/receptionniste");
+    await section.getByRole("button", { name: /Hors des heures/ }).click();
     const log = section.getByRole("log");
     await expect(log).toContainText("Plomberie Nord (démo)");
     await expect(log).toContainText(/fermés/);
@@ -75,7 +77,7 @@ test.describe("receptionist demo on the AI receptionist page", () => {
     await expect(section.locator("dl")).toContainText("Urgence");
   });
 
-  for (const path of ["/ai-receptionist", "/fr/receptionniste-ia"]) {
+  for (const path of ["/receptionist", "/fr/receptionniste"]) {
     test(`${path} demo has no WCAG A/AA violations, idle and mid-call`, async ({
       page,
     }) => {
@@ -93,7 +95,9 @@ test.describe("receptionist demo on the AI receptionist page", () => {
         ).toEqual([]);
       };
       await analyze();
-      await section.getByRole("button", { name: /^(Start the call|Démarrer)/ }).click();
+      await section
+        .getByRole("button", { name: /^(During business hours|Pendant les heures)/ })
+        .click();
       await expect(section.getByRole("log")).not.toBeEmpty();
       await analyze();
     });

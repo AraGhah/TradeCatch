@@ -5,7 +5,7 @@ scoped by `organization_id`. There is no shared knowledge across tenants.
 
 ## Dashboard
 
-`Dashboard → AI Receptionist` (`/app/receptionist`)
+`Dashboard → Receptionist` (`/app/receptionist`)
 
 - Overview: status, name, phone, language, voice, stats, activate/deactivate
 - Edit: identity, knowledge/FAQs, call handling, transfers, appointments

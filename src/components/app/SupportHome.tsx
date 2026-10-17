@@ -47,7 +47,7 @@ export function SupportHome({ organizationId, contactEmail }: { organizationId: 
         <label className="text-sm text-navy">{t("subject")}<input className="mt-1 w-full rounded-md border border-navy/15 px-3 py-2" value={subject} onChange={(event) => setSubject(event.target.value)} required /></label>
         <label className="text-sm text-navy">{t("category")}
           <select className="mt-1 w-full rounded-md border border-navy/15 px-3 py-2" value={category} onChange={(event) => setCategory(event.target.value)}>
-            {["ai", "calls", "sms", "appointments", "billing", "other"].map((item) => <option key={item} value={item}>{item}</option>)}
+            {["ai", "calls", "sms", "appointments", "billing", "other"].map((item) => <option key={item} value={item}>{item === "ai" ? "receptionist" : item}</option>)}
           </select>
         </label>
         <label className="text-sm text-navy">{t("kind")}

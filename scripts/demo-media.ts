@@ -15,6 +15,7 @@ import {
   LAYOUT,
   TTS_RATES,
   TTS_VOICES,
+  spokenText,
 } from "../src/components/demo-video/cuts";
 
 // The timeline reads narration-timing.json, which `script` exists to produce,
@@ -40,7 +41,11 @@ function script() {
     for (const locale of DEMO_LOCALES) {
       cuts[cut][locale] = CUT_SCRIPTS[cut].map((scene) => ({
         minSec: scene.minSec,
-        segments: scene.segments[locale],
+        // The voice reads respelled text; captions keep the printed text.
+        segments: scene.segments[locale].map((segment) => ({
+          ...segment,
+          text: spokenText(locale, segment.text),
+        })),
       }));
     }
   }

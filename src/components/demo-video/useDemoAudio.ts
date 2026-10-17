@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { spokenText } from "./cuts";
 import {
   DIALOGUE_SCENES,
   scenesFor,
@@ -175,21 +176,28 @@ export function useDemoAudio(
   }, []);
 
   const pickNaturalVoice = useCallback((loc: DemoLocale) => {
-    const voices = window.speechSynthesis.getVoices();
+    // Only voices of the right language are candidates. Ranking across all
+    // voices let a "Natural" English voice beat a plain French one and read
+    // the French script with an English accent.
+    const voices = window.speechSynthesis
+      .getVoices()
+      .filter((v) => v.lang.toLowerCase().replace("_", "-").startsWith(loc));
     const rank = (v: SpeechSynthesisVoice) => {
       let score = 0;
       const n = v.name;
       if (/Neural|Natural|Online|Premium|Enhanced/i.test(n)) score += 50;
       if (loc === "fr") {
-        if (/fr-CA|fr-FR|fr-/i.test(v.lang)) score += 40;
-        if (/Antoine|Jean|Henri|Denise|Julie|Sylvie/i.test(n)) score += 30;
+        // The site serves Québec: prefer fr-CA over fr-FR.
+        if (/fr[-_]CA/i.test(v.lang)) score += 40;
+        if (/Antoine|Jean|Sylvie|Thierry/i.test(n)) score += 30;
       } else {
-        if (/en-US|en-CA/i.test(v.lang)) score += 40;
+        if (/en[-_](US|CA)/i.test(v.lang)) score += 40;
         if (/Andrew|Brian|Guy|Davis|Jason|Tony|Aria|Jenny/i.test(n)) score += 30;
       }
       if (/Google|Microsoft/i.test(n)) score += 8;
       return score;
     };
+    // No match: leave the voice unset so the browser picks one for utter.lang.
     return [...voices].sort((a, b) => rank(b) - rank(a))[0] ?? null;
   }, []);
 
@@ -200,7 +208,7 @@ export function useDemoAudio(
       const scene = scenesFor(cutRef.current, loc)[sceneId - 1];
       const text = scene?.segments
         .filter((s) => s.voice !== "none")
-        .map((s) => s.text)
+        .map((s) => spokenText(loc, s.text))
         .join(" ");
       if (!text) return;
       const utter = new SpeechSynthesisUtterance(text);

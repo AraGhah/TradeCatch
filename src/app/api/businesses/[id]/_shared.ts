@@ -71,7 +71,7 @@ export async function authorizeBusinessMemberOrAdmin(
     return {
       ok: false,
       response: NextResponse.json(
-        { error: "AI Receptionist is not available on this plan." },
+        { error: "The Receptionist is not available on this plan." },
         { status: 403 },
       ),
     };

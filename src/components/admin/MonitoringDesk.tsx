@@ -25,12 +25,14 @@ type Overview = {
   note?: string;
 };
 
+const SERVICE_LABEL: Record<string, string> = { ai: "receptionist", ai_receptionist: "receptionist" };
+
 const LINKS = [
   { href: "/admin/monitoring", label: "Overview" },
   { href: "/admin/monitoring/api", label: "API" },
   { href: "/admin/monitoring/errors", label: "Errors" },
   { href: "/admin/monitoring/jobs", label: "Jobs" },
-  { href: "/admin/monitoring/ai", label: "AI" },
+  { href: "/admin/monitoring/receptionist", label: "Receptionist" },
   { href: "/admin/monitoring/database", label: "Database" },
   { href: "/admin/monitoring/deployments", label: "Deployments" },
   { href: "/admin/monitoring/costs", label: "Costs" },
@@ -89,7 +91,7 @@ export function MonitoringDesk({ section }: { section: "overview" | "api" | "err
           </article>
           {(data?.services || []).map((service) => (
             <article key={service.service} className="rounded-md bg-white p-4 ring-1 ring-navy/10">
-              <p className="text-xs uppercase tracking-wide text-navy/50">{service.service}</p>
+              <p className="text-xs uppercase tracking-wide text-navy/50">{SERVICE_LABEL[service.service] ?? service.service}</p>
               <p className="mt-2 font-semibold text-navy">{service.status}</p>
               <p className="mt-1 text-xs text-navy/60">{service.detail}</p>
             </article>
@@ -115,7 +117,7 @@ export function MonitoringDesk({ section }: { section: "overview" | "api" | "err
         <ul className="flex flex-col gap-2 text-sm">
           {(data?.recentErrors || data?.errors || []).map((error) => (
             <li key={error.id} className="rounded-md bg-white px-3 py-2 ring-1 ring-navy/10">
-              {error.service} · {error.errorCode} · {error.requestId}
+              {SERVICE_LABEL[error.service] ?? error.service} · {error.errorCode} · {error.requestId}
             </li>
           ))}
         </ul>
@@ -124,7 +126,7 @@ export function MonitoringDesk({ section }: { section: "overview" | "api" | "err
         <p className="text-sm text-navy">Pending retries {data?.jobs?.pending ?? 0} · Failed {data?.jobs?.failed ?? 0} · Dead letter {data?.jobs?.dead ?? 0}</p>
       ) : null}
       {section === "ai" ? (
-        <p className="text-sm text-navy">AI status {data?.ai?.status || "unknown"} · Failed sessions {data?.failedCalls ?? 0}</p>
+        <p className="text-sm text-navy">Receptionist status {data?.ai?.status || "unknown"} · Failed sessions {data?.failedCalls ?? 0}</p>
       ) : null}
       {section === "costs" ? (
         <p className="text-sm text-navy">
@@ -141,7 +143,7 @@ export function MonitoringDesk({ section }: { section: "overview" | "api" | "err
       ) : null}
       {section === "overview" ? (
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="rounded-md bg-navy px-3 py-2 text-sm text-white" onClick={() => simulate("ai_timeout")}>Simulate AI timeout</button>
+          <button type="button" className="rounded-md bg-navy px-3 py-2 text-sm text-white" onClick={() => simulate("ai_timeout")}>Simulate Receptionist timeout</button>
           <button type="button" className="rounded-md bg-navy px-3 py-2 text-sm text-white" onClick={() => simulate("job_failure")}>Simulate job failure</button>
           <button type="button" className="rounded-md bg-navy px-3 py-2 text-sm text-white" onClick={() => simulate("cost_threshold")}>Simulate cost threshold</button>
         </div>

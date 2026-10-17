@@ -67,7 +67,7 @@ export function PilotDesk() {
         {pilots.map((pilot) => (
           <li key={pilot.id}>
             <button type="button" className="text-left text-navy underline" onClick={() => open(pilot.id)}>
-              {pilot.businessName} · {pilot.pilotStatus} · phone {pilot.phoneStatus} · AI {pilot.aiStatus}
+              {pilot.businessName} · {pilot.pilotStatus} · phone {pilot.phoneStatus} · Receptionist {pilot.aiStatus}
             </button>
           </li>
         ))}

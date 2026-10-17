@@ -154,7 +154,7 @@ imperative runner itself is covered by `tests/unit/receptionist-core.test.ts`.
 
 ## Website ↔ receptionist sync
 
-- **Public demo** — `/ai-receptionist#try-it` runs this same engine (rule brain
+- **Public demo** — `/receptionist#try-it` runs this same engine (rule brain
   only) against a fictional plumbing business. `POST /api/receptionist/demo`
   has no side effects: no SMS, email, dialed number, database write or LLM call.
   The server keeps no state; each response carries the session as an

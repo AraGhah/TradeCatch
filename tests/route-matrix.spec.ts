@@ -12,7 +12,7 @@ const ROUTES = [
   "/services",
   "/how-it-works",
   "/industries",
-  "/ai-receptionist",
+  "/receptionist",
   "/about",
   "/faq",
   "/one-pager",
@@ -23,7 +23,6 @@ const ROUTES = [
   "/cookie-policy",
   "/acceptable-use-policy",
   "/accessibility-statement",
-  "/cancellation-refund-policy",
   "/emergency-service-disclaimer",
   "/fr",
   "/fr/reserver-audit",
@@ -31,7 +30,7 @@ const ROUTES = [
   "/fr/services",
   "/fr/fonctionnement",
   "/fr/industries",
-  "/fr/receptionniste-ia",
+  "/fr/receptionniste",
   "/fr/a-propos",
   "/fr/faq",
   "/fr/fiche-resume",
@@ -42,7 +41,6 @@ const ROUTES = [
   "/fr/politique-de-cookies",
   "/fr/politique-utilisation-acceptable",
   "/fr/declaration-accessibilite",
-  "/fr/politique-annulation-remboursement",
   "/fr/avis-services-urgence",
 ];
 
@@ -76,6 +74,26 @@ test.describe("route matrix", () => {
         `${path} returned ${response.status()}`,
       ).toBeLessThan(500);
       expect(response.status()).toBeLessThan(400);
+    });
+  }
+
+  // The receptionist page moved; old links and search results must follow.
+  for (const [from, to] of [
+    ["/ai-receptionist", "/receptionist"],
+    ["/fr/receptionniste-ia", "/fr/receptionniste"],
+  ]) {
+    test(`${from} permanently redirects to ${to}`, async ({ request }) => {
+      const response = await request.get(from, { maxRedirects: 0 });
+      expect(response.status()).toBe(308);
+      expect(new URL(response.headers()["location"], "http://x").pathname).toBe(to);
+    });
+  }
+
+  // The cancellation and refund policy page was removed.
+  for (const gone of ["/cancellation-refund-policy", "/fr/politique-annulation-remboursement"]) {
+    test(`${gone} is gone`, async ({ request }) => {
+      const response = await request.get(gone, { maxRedirects: 0 });
+      expect(response.status()).toBe(404);
     });
   }
 });

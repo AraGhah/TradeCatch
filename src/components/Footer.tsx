@@ -79,7 +79,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/ai-receptionist" className={linkClass}>
+                <Link href="/receptionist" className={linkClass}>
                   {nav("aiReceptionist")}
                 </Link>
               </li>
@@ -134,11 +134,6 @@ export function Footer() {
               <li>
                 <Link href="/accessibility-statement" className={linkClass}>
                   {t("legalLinks.accessibility")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/cancellation-refund-policy" className={linkClass}>
-                  {t("legalLinks.cancellation")}
                 </Link>
               </li>
               <li>

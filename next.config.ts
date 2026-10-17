@@ -71,6 +71,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // The receptionist page used to live under a different path. Keep old links,
+  // bookmarks and search results working.
+  async redirects() {
+    return [
+      {
+        source: "/ai-receptionist",
+        destination: "/receptionist",
+        permanent: true,
+      },
+      {
+        source: "/fr/receptionniste-ia",
+        destination: "/fr/receptionniste",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

@@ -91,7 +91,9 @@ def mix_scene(clips: list[tuple[Path, float]], duration: float, out: Path) -> No
         "-filter_complex", ";".join(filters),
         "-map", "[out]",
         "-t", str(duration),
-        "-ac", "1", "-ar", "24000", "-b:a", "48k",
+        # The Edge voices arrive as 48 kbps MP3; re-encoding at the same rate
+        # would smear the consonants a second time.
+        "-ac", "1", "-ar", "24000", "-b:a", "96k",
         str(out),
     ]
     subprocess.run(args, check=True)

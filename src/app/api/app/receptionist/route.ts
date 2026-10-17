@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
         getGrowthStore().addTimelineEvent({
           organizationId,
           kind: "receptionist_settings",
-          title: "AI receptionist settings updated",
+          title: "Receptionist settings updated",
           actor,
           at,
         }),

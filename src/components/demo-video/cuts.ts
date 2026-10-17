@@ -67,10 +67,35 @@ export const TTS_VOICES: Record<DemoLocale, Record<Exclude<Voice, "none">, strin
   },
 };
 
+/**
+ * French stays near the voices' natural pace. The earlier +22–26% (to match the
+ * English running time) compressed the vowels and ran the words together.
+ */
 export const TTS_RATES: Record<DemoLocale, Record<Exclude<Voice, "none">, string>> = {
   en: { narrator: "+14%", agent: "+12%", caller: "+12%", caller2: "+16%" },
-  fr: { narrator: "+26%", agent: "+22%", caller: "+22%", caller2: "+25%" },
+  fr: { narrator: "+4%", agent: "+2%", caller: "+2%", caller2: "+4%" },
 };
+
+/**
+ * What the voice should read when it differs from what is printed. Captions
+ * keep the original text. The French voices would otherwise read the English
+ * brand names with French letter rules and skip "10 h" as a bare "h".
+ */
+const SPOKEN_RESPELLING: Record<DemoLocale, [RegExp, string][]> = {
+  en: [],
+  fr: [
+    [/\bTradeCatch\b/g, "Trède Catch"],
+    [/\bNorthStar\b/g, "Nord Star"],
+    [/\b10 h\b/g, "dix heures"],
+  ],
+};
+
+export function spokenText(locale: DemoLocale, text: string): string {
+  return SPOKEN_RESPELLING[locale].reduce(
+    (out, [pattern, spoken]) => out.replace(pattern, spoken),
+    text,
+  );
+}
 
 /** Speaker labels used in the VTT track for dialogue lines. */
 export const SPEAKER_LABELS: Record<DemoLocale, Record<Voice, string>> = {

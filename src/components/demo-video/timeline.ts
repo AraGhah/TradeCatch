@@ -410,7 +410,7 @@ const BASE_UI = {
 
     // Closing
     closingHeadline: "Every call counts.",
-    closingSupport: "Your AI receptionist. Your leads. Your business.",
+    closingSupport: "Your receptionist. Your leads. Your business.",
     closingCtaLine: "See it on your own calls.",
     bookDemo: "Book your free audit",
   },
@@ -524,7 +524,7 @@ const BASE_UI = {
     customerReplied: "Le client a répondu",
 
     closingHeadline: "Chaque appel compte.",
-    closingSupport: "Votre réceptionniste IA. Vos demandes. Votre entreprise.",
+    closingSupport: "Votre réceptionniste. Vos demandes. Votre entreprise.",
     closingCtaLine: "Voyez-la sur vos propres appels.",
     bookDemo: "Réserver votre audit gratuit",
   },

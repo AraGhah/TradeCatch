@@ -27,7 +27,7 @@ export function evaluateLaunchReadiness(env: NodeJS.ProcessEnv, database: { ok: 
       detail: env.AUTH_SECRET?.trim() ? "Auth secret is configured." : "AUTH_SECRET is missing.",
     },
     databaseCheck(production, databaseUrl, database),
-    verified(production, Boolean(env.ANTHROPIC_API_KEY?.trim() || env.OPENAI_API_KEY?.trim()), env.LAUNCH_AI_VERIFIED === "1", "ai", "AI provider key"),
+    verified(production, Boolean(env.ANTHROPIC_API_KEY?.trim() || env.OPENAI_API_KEY?.trim()), env.LAUNCH_AI_VERIFIED === "1", "ai", "Receptionist provider key"),
     verified(production, Boolean(env.TWILIO_ACCOUNT_SID?.trim() && env.TWILIO_AUTH_TOKEN?.trim()), env.LAUNCH_PHONE_VERIFIED === "1", "phone", "Twilio"),
     stripeCheck(production, stripe, env.LAUNCH_STRIPE_VERIFIED === "1"),
     {

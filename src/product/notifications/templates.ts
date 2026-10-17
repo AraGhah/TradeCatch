@@ -74,7 +74,7 @@ const COPY: Record<NotificationType, { en: { title: string; body: string }; fr: 
     fr: { title: "Appel manqué récupéré", body: "{business} a repris la conversation avec {customer}." },
   },
   receptionist_offline: {
-    en: { title: "AI receptionist unavailable", body: "The receptionist for {business} is temporarily unavailable." },
+    en: { title: "Receptionist unavailable", body: "The receptionist for {business} is temporarily unavailable." },
     fr: { title: "Réceptionniste indisponible", body: "La réceptionniste de {business} est temporairement indisponible." },
   },
   automation_failure: {

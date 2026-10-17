@@ -21,7 +21,7 @@ export function LaunchReadinessPanel() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">Launch readiness</h1>
-      <p className="max-w-2xl text-sm text-navy/70">A staging test does not mark production phone, AI, or billing as ready. Real customer traffic stays off while a critical check needs attention or has failed.</p>
+      <p className="max-w-2xl text-sm text-navy/70">A staging test does not mark production phone, receptionist, or billing as ready. Real customer traffic stays off while a critical check needs attention or has failed.</p>
       <p className="text-lg font-semibold text-navy">{overall || "Checking…"}</p>
       <ul className="grid gap-2 md:grid-cols-2">
         {checks.map((check) => (

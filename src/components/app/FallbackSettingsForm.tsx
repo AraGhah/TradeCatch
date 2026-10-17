@@ -37,7 +37,7 @@ export function FallbackSettingsForm({ organizationId }: { organizationId: strin
   return (
     <form className="flex max-w-xl flex-col gap-4 rounded-md bg-white p-4 ring-1 ring-navy/10" onSubmit={(event) => { event.preventDefault(); void save(); }}>
       <label className="text-sm text-navy">
-        If the AI cannot connect
+        If the Receptionist cannot connect
         <select className="mt-1 block w-full rounded-md border border-navy/15 px-2 py-2" value={settings.aiUnavailable} onChange={(event) => setSettings({ ...settings, aiUnavailable: event.target.value as Settings["aiUnavailable"] })}>
           <option value="transfer">Transfer to the contractor number</option>
           <option value="voicemail">Take a voicemail</option>
