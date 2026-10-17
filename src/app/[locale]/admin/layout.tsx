@@ -49,6 +49,18 @@ export default async function AdminLayout({
               Test Center
             </Link>
             <Link
+              href="/admin/launch"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              Launch readiness
+            </Link>
+            <Link
+              href="/admin/pilots"
+              className="rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+            >
+              Pilot customers
+            </Link>
+            <Link
               href="/app"
               className="rounded-md px-3 py-2 text-navy/70 hover:bg-navy/5"
             >
