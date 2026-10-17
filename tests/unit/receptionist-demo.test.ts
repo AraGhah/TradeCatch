@@ -71,6 +71,21 @@ describe("website demo engine", () => {
     assert.match(r.summary!.nextStep, /Rappeler/);
   });
 
+  it("keeps a personal message instead of the service questionnaire", async () => {
+    const call = new Call("fr", "open");
+    await call.start();
+    let r = await call.say("je suis malade");
+    assert.match(agent(r), /malade/);
+    assert.equal(r.step, "name");
+    assert.doesNotMatch(agent(r), /adresse/);
+
+    r = await call.say("je m'appelle Marie Tremblay");
+    assert.equal(r.step, "callback");
+    r = await call.say("5145550199");
+    assert.notEqual(r.step, "address");
+    assert.notEqual(r.step, "preferred_time");
+  });
+
   it("answers an FAQ in English then closes", async () => {
     const call = new Call("en", "open");
     await call.start();

@@ -3123,7 +3123,7 @@
         "type": "Écrire",
         "typeHint": "Écrivez ce qu’un appelant dirait. Vous pouvez quand même activer les réponses à voix haute.",
         "unsupported": "La voix n’est pas disponible dans ce navigateur. Chrome, Edge et Safari la prennent en charge. Vous pouvez écrire à la place.",
-        "privacy": "Votre navigateur transforme votre voix en texte; TradeCatch reçoit seulement ce texte, jamais d’audio, et rien n’est enregistré.",
+        "privacy": "Votre navigateur transforme votre voix en texte; TradeCatch reçoit seulement ce texte, jamais d’audio, et ne l’enregistre pas. Les réponses sont lues avec la voix ElevenLabs de cette langue.",
         "micStart": "Commencer à parler",
         "micStop": "Arrêter le microphone",
         "listening": "J’écoute… vous pouvez parler.",

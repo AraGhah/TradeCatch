@@ -17,6 +17,7 @@ const apiFallbackCsp = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https://www.google-analytics.com",
   "font-src 'self'",
+  "media-src 'self' blob:",
   "connect-src 'self' https://www.google-analytics.com https://analytics.google.com https://challenges.cloudflare.com",
   "frame-src https://challenges.cloudflare.com https://cal.com https://calendly.com",
   "object-src 'none'",

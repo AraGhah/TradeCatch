@@ -281,6 +281,7 @@ export function CallDemo({
     const speech = text.trim();
     if (!speech || busyRef.current || endedRef.current) return;
     voice.cancelSpeech();
+    if (repliesAloudRef.current || voiceLiveRef.current) voice.prime();
     voice.stopListening();
     setInput("");
     setLines((prev) => [...prev, { role: "caller", text: speech }]);
@@ -329,7 +330,7 @@ export function CallDemo({
         : copy.systemLabel;
 
   const status = voice.listening
-    ? copy.voice.listening
+    ? voice.interim || copy.voice.listening
     : voice.speaking
       ? copy.voice.speaking
       : null;
@@ -609,13 +610,17 @@ export function CallDemo({
                   <input
                     id="demo-input"
                     ref={inputRef}
-                    value={voice.listening && voice.interim ? voice.interim : input}
-                    readOnly={voice.listening}
+                    value={input}
                     maxLength={400}
                     autoComplete="off"
-                    onChange={(e) => setInput(e.target.value)}
+                    onFocus={() => {
+                      if (voice.listening) voice.stopListening();
+                    }}
+                    onChange={(e) => {
+                      if (voice.listening) voice.stopListening();
+                      setInput(e.target.value);
+                    }}
                     placeholder={copy.inputPlaceholder}
-                    disabled={busy}
                     className={`min-w-0 flex-1 border border-[rgb(var(--ink-rgb)/0.25)] bg-white px-3 py-2.5 text-[15px] text-heading ${FOCUS}`}
                   />
                   <button

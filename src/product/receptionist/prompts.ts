@@ -50,6 +50,10 @@ export const PHRASES = {
     fr: "C'est noté.",
     en: "Noted.",
   },
+  notedDetail: {
+    fr: "J'ai noté : {detail}.",
+    en: "I've got that: {detail}.",
+  },
   wrapUp: {
     fr: "Merci {name}. J'ai bien noté votre demande et un membre de l'équipe vous rappellera {when}. Bonne journée!",
     en: "Thank you {name}. I've noted your request and someone from the team will call you back {when}. Have a great day!",
