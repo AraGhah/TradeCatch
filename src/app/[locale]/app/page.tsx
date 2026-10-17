@@ -21,6 +21,9 @@ export default async function AppDashboardPage({
   const clientId = auth.ctx.organization.missedCallClientId;
   let metrics = computeStarterDashboardMetrics([]);
   let linked = false;
+  let aiFinished = 0;
+  let appointmentsRequested = 0;
+  let recent: { id: string; title: string; detail: string; when: string }[] = [];
   let growthMetrics: {
     openPipelineValue: number;
     attributedRevenue: number;
@@ -37,6 +40,33 @@ export default async function AppDashboardPage({
       const leads = await store.listLeads(clientId);
       metrics = computeStarterDashboardMetrics(leads);
       linked = true;
+      appointmentsRequested = leads.filter((lead) => lead.becameBooking).length;
+      recent = [...leads]
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .slice(0, 5)
+        .map((lead) => ({
+          id: lead.id,
+          title: lead.customerName || lead.callerE164,
+          detail: lead.issueDescription ?? "",
+          when: lead.updatedAt,
+        }));
+      try {
+        const { getReceptionistRuntime } = await import(
+          "@/product/receptionist/runtime"
+        );
+        const runtime = getReceptionistRuntime();
+        await runtime.refresh();
+        const calls = await runtime.store.listSessions({
+          clientAccountId: clientId,
+          limit: 100,
+        });
+        aiFinished = calls.filter((call) => call.status === "completed").length;
+        appointmentsRequested += calls.filter(
+          (call) => call.outcome === "appointment_requested",
+        ).length;
+      } catch {
+        aiFinished = 0;
+      }
     } catch {
       linked = false;
     }
@@ -119,7 +149,41 @@ export default async function AppDashboardPage({
             </p>
           </div>
         ) : null}
+        <div className="rounded-md border border-navy/10 bg-white px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-navy/50">
+            {t("metrics.homeAi")}
+          </p>
+          <p className="mt-2 font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
+            {aiFinished}
+          </p>
+        </div>
+        <div className="rounded-md border border-navy/10 bg-white px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.06em] text-navy/50">
+            {t("metrics.homeAppointments")}
+          </p>
+          <p className="mt-2 font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
+            {appointmentsRequested}
+          </p>
+        </div>
       </div>
+
+      <section className="rounded-md border border-navy/10 bg-white px-4 py-4">
+        <h2 className="text-sm font-semibold text-navy">{t("metrics.homeActivity")}</h2>
+        {recent.length === 0 ? (
+          <p className="mt-2 text-sm text-navy/70">{t("metrics.homeActivityEmpty")}</p>
+        ) : (
+          <ul className="mt-3 flex flex-col gap-2">
+            {recent.map((item) => (
+              <li key={item.id} className="text-sm text-navy">
+                <Link href={`/app/leads/${item.id}`} className="font-semibold underline">
+                  {item.title}
+                </Link>
+                {item.detail ? <span className="text-navy/70"> · {item.detail}</span> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {growthMetrics ? (
         <div className="flex flex-col gap-3">

@@ -4,26 +4,76 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { NotificationBell } from "@/components/app/NotificationBell";
 
-const NAV_ITEMS = [
-  { href: "/app", key: "overview" },
-  { href: "/app/receptionist", key: "receptionist" },
-  { href: "/app/calls", key: "calls" },
-  { href: "/app/calls/settings", key: "phoneSettings" },
-  { href: "/app/leads", key: "leads" },
-  { href: "/app/conversations", key: "conversations" },
-  { href: "/app/bookings", key: "appointments" },
-  { href: "/app/quotes", key: "quotes" },
-  { href: "/app/automations", key: "automations" },
-  { href: "/app/notifications", key: "notifications" },
-  { href: "/app/analytics", key: "analytics" },
-  { href: "/app/settings", key: "settings" },
-  { href: "/app/support", key: "support" },
-  { href: "/app/help", key: "help" },
-  { href: "/app/test-center", key: "testCenter" },
+const GROUPS = [
+  {
+    label: "groupHome",
+    items: [{ href: "/app", key: "dashboard" }],
+  },
+  {
+    label: "groupCustomers",
+    items: [
+      { href: "/app/leads", key: "customers" },
+      { href: "/app/pipeline", key: "pipeline" },
+    ],
+  },
+  {
+    label: "groupReceptionist",
+    items: [
+      { href: "/app/receptionist", key: "receptionistConfig" },
+      { href: "/app/calls", key: "callHistory" },
+      { href: "/app/test-center", key: "testReceptionist" },
+    ],
+  },
+  {
+    label: "groupAppointments",
+    items: [
+      { href: "/app/bookings", key: "calendar" },
+      { href: "/app/bookings/availability", key: "availability" },
+    ],
+  },
+  {
+    label: "groupAutomations",
+    items: [
+      { href: "/app/automations/missed-call", key: "missedCall" },
+      { href: "/app/automations/quotes", key: "quoteFollowUps" },
+      { href: "/app/automations", key: "reminders" },
+    ],
+  },
+  {
+    label: "groupInsights",
+    items: [
+      { href: "/app/analytics", key: "analytics" },
+      { href: "/app/notifications", key: "notifications" },
+    ],
+  },
+  {
+    label: "groupAccount",
+    items: [
+      { href: "/app/settings/account", key: "account" },
+      { href: "/app/settings", key: "settings" },
+      { href: "/app/onboarding", key: "onboarding" },
+      { href: "/app/help", key: "help" },
+      { href: "/app/support", key: "support" },
+    ],
+  },
 ] as const;
+
+const ALL_HREFS = GROUPS.flatMap((group) => group.items.map((item) => item.href));
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
+
+function itemIsActive(pathname: string, href: string): boolean {
+  if (href === "/app") return pathname === "/app";
+  const matches = pathname === href || pathname.startsWith(`${href}/`);
+  if (!matches) return false;
+  return !ALL_HREFS.some(
+    (other) =>
+      other !== href &&
+      other.length > href.length &&
+      (pathname === other || pathname.startsWith(`${other}/`)),
+  );
+}
 
 export function AppShell({
   children,
@@ -55,8 +105,8 @@ export function AppShell({
 
   return (
     <div className="min-h-[70vh] border-b border-navy/10 bg-[var(--color-surface,#f7f5f1)]">
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 md:px-6 md:py-10">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 md:grid-cols-[15.5rem_minmax(0,1fr)] md:px-6 md:py-10">
+        <aside className="flex flex-col gap-6 md:sticky md:top-6 md:self-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy/70">
               TradeCatch
@@ -72,50 +122,57 @@ export function AppShell({
               {plan === "growth" ? t("plan.growth") : t("plan.starter")}
             </p>
           </div>
-          <nav
-            aria-label={t("nav.overview")}
-            className="flex flex-wrap items-center gap-2 text-sm font-medium"
-          >
+          <nav aria-label="TradeCatch" className="flex flex-col gap-5">
             {isPlatformAdmin ? (
               <Link
                 href="/admin"
-                className={`rounded-md px-3 py-2 text-navy/70 hover:bg-navy/5 ${FOCUS_RING}`}
+                className={`w-fit rounded-md px-2 py-1 text-sm text-navy/70 hover:bg-navy/5 ${FOCUS_RING}`}
               >
                 {t("nav.admin")}
               </Link>
             ) : null}
-            <NotificationBell organizationId={organizationId} />
-            {NAV_ITEMS.map((item) => {
-              const active =
-                item.href === "/app"
-                  ? pathname === "/app"
-                  : pathname === item.href ||
-                    pathname.startsWith(`${item.href}/`);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`rounded-md px-3 py-2 ${FOCUS_RING} ${
-                    active
-                      ? "bg-navy/10 text-navy"
-                      : "text-navy hover:bg-navy/5"
-                  }`}
-                >
-                  {t(`nav.${item.key}`)}
-                </Link>
-              );
-            })}
-            <button
-              type="button"
-              onClick={() => void logout()}
-              className={`rounded-md px-3 py-2 text-navy/70 hover:bg-navy/5 ${FOCUS_RING}`}
-            >
-              {t("nav.logout")}
-            </button>
+            {GROUPS.map((group) => (
+              <div key={group.label}>
+                <p className="px-2 font-mono text-[10px] tracking-[0.12em] text-navy/45 uppercase">
+                  {t(`nav.${group.label}`)}
+                </p>
+                <ul className="mt-1 flex flex-col">
+                  {group.items.map((item) => {
+                    const active = itemIsActive(pathname, item.href);
+                    return (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          aria-current={active ? "page" : undefined}
+                          className={`block rounded-md px-2 py-1.5 text-sm ${FOCUS_RING} ${
+                            active
+                              ? "bg-navy text-white"
+                              : "text-navy hover:bg-navy/5"
+                          }`}
+                        >
+                          {t(`nav.${item.key}`)}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </nav>
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className={`w-fit rounded-md px-2 py-1.5 text-sm text-navy/70 hover:bg-navy/5 ${FOCUS_RING}`}
+          >
+            {t("nav.logout")}
+          </button>
+        </aside>
+        <div className="min-w-0">
+          <div className="mb-6 flex justify-end">
+            <NotificationBell organizationId={organizationId} />
+          </div>
+          {children}
         </div>
-        {children}
       </div>
     </div>
   );
