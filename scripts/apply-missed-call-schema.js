@@ -119,6 +119,11 @@ async function main() {
       ["src", "product", "support", "schema.sql"],
       "018_support",
     );
+    await applyFile(
+      client,
+      ["src", "product", "gmail", "schema.sql"],
+      "019_gmail",
+    );
   } finally {
     await client.end();
   }

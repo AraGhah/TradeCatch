@@ -12,6 +12,8 @@ export const E2E_PORT = Number(process.env.TRADECATCH_E2E_PORT || 3100);
  * (`ERR_TOO_MANY_REDIRECTS`). See vercel/next.js#94745.
  */
 export const E2E_ORIGIN = `http://localhost:${E2E_PORT}`;
+/** Where tests/gmail.spec.ts serves its stand-in for Google. */
+export const GMAIL_E2E_PORT = Number(process.env.TRADECATCH_GMAIL_E2E_PORT || 4010);
 
 /**
  * Playwright boots a production server on a reserved port.
@@ -40,6 +42,13 @@ export default defineConfig({
       AUTH_SECRET: "tradecatch-e2e-session-secret-not-for-production",
       SAAS_DEV_LOGIN: "1",
       MISSED_CALL_OPS_SECRET: "tradecatch-e2e-ops-secret-not-for-production",
+      // Gmail: the app talks to tests/support/fake-google instead of Google.
+      GOOGLE_GMAIL_CLIENT_ID: "e2e-gmail-client-id",
+      GOOGLE_GMAIL_CLIENT_SECRET: "e2e-gmail-client-secret",
+      GMAIL_TEST_GOOGLE_BASE: `http://127.0.0.1:${GMAIL_E2E_PORT}`,
+      GMAIL_TEST_MIN_GAP_MS: "300",
+      GMAIL_WEBHOOK_TOKEN: "e2e-gmail-webhook-token",
+      GMAIL_PUBSUB_TOPIC: "projects/e2e/topics/gmail",
     },
   },
   use: {

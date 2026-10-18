@@ -9,15 +9,22 @@ import {
 import { requireTenantContext } from "@/product/saas/tenant";
 import { ApiKeyCreateButton } from "@/components/app/ApiKeyCreateButton";
 import { BusinessFeaturesForm } from "@/components/app/BusinessFeaturesForm";
+import { GmailSettings } from "@/components/app/GmailSettings";
 import { SettingsIntegrationsForm } from "@/components/app/SettingsIntegrationsForm";
 import { getGrowthStore } from "@/product/growth";
+import { asNotice } from "@/product/gmail/http";
+import { gmailConfigured, readGmailEnv } from "@/product/gmail/oauth";
+import { getGmailStore } from "@/product/gmail/runtime";
 
 export default async function AppSettingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ gmail?: string }>;
 }) {
   const { locale } = await params;
+  const query = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("app");
   const lang = locale === "fr" ? "fr" : "en";
@@ -32,6 +39,10 @@ export default async function AppSettingsPage({
   const settings = await getGrowthStore().getOrgSettings(
     auth.ctx.organization.id,
   );
+  const gmailAccount = await getGmailStore()
+    .getAccount(auth.ctx.organization.id, auth.ctx.user.id)
+    .catch(() => null);
+  const gmailEnv = readGmailEnv();
 
   return (
     <div className="flex flex-col gap-8">
@@ -41,6 +52,15 @@ export default async function AppSettingsPage({
         </h1>
         <p className="mt-2 text-navy/70">{t("settings.intro")}</p>
       </header>
+
+      <GmailSettings
+        configured={gmailConfigured(gmailEnv)}
+        status={gmailAccount?.status || "not_connected"}
+        email={gmailAccount?.email || null}
+        lastError={gmailAccount?.lastError || null}
+        lastSyncAt={gmailAccount?.lastSyncAt || null}
+        notice={asNotice(query.gmail)}
+      />
 
       <section className="rounded-md border border-navy/10 bg-white px-5 py-4">
         <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">

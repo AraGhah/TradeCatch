@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { GmailDashboardCard } from "@/components/app/GmailDashboardCard";
 import { DashboardView } from "@/components/app/dashboard/DashboardView";
 import { loadDashboardOverview } from "@/product/saas/dashboard-load";
 import { requireTenantContext } from "@/product/saas/tenant";
@@ -49,6 +50,9 @@ export default async function AppDashboardPage({
       customFrom={query.from}
       customTo={query.to}
       showGrowthUpsell={auth.ctx.organization.plan === "starter"}
+      afterHeader={
+        <GmailDashboardCard organizationId={auth.ctx.organization.id} userId={auth.ctx.user.id} />
+      }
     />
   );
 }

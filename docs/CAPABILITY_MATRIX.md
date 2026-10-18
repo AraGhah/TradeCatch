@@ -51,6 +51,7 @@ Status legend:
 | Owner-editable receptionist profile (multi-tenant)      | pilot        | `/app/receptionist`, `/api/app/receptionist`, `/api/receptionist/ops/profile` | `rc_profiles`                | unit + manual e2e | Owner edits content only; number + activation are founder-only. Canadian-number guard on dial targets. Changes reach other instances within ~30 s |
 | Auto-enroll website leads into email sequences          | pilot        | `POST /api/website-leads`, `/app/email`                            | `em_org_settings`                      | unit + manual e2e | Off by default; requires email + `consentAt`; CASL — never a purchased list |
 | Email follow-up automation (templates + sequences)      | pilot        | `/app/email`, `/api/app/email-automation`, `/api/growth/email/tick` | `em_*` tables + memory                 | unit       | Growth entitlement `EMAIL_AUTOMATION`; Resend; stops on reply/unsubscribe; signed unsubscribe link + List-Unsubscribe headers        |
+| Gmail inbox (per-user, read-only: poll + optional push + cron fallback) | pilot | `/app/mail`, `/app/settings`, `/api/app/gmail/*`, `/api/webhooks/gmail`, `/api/gmail/sync/tick` | `tc_gmail_accounts`, `tc_gmail_messages` (RLS on) | unit + e2e (fake Google) | `gmail.readonly` only; tokens AES-GCM sealed; per-user isolation; **not yet exercised against real Google** — see docs/GMAIL_SETUP.md |
 
 ## Recommended repair order
 
