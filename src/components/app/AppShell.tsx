@@ -2,6 +2,7 @@
 
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { useEffect, useState } from "react";
 import { NotificationBell } from "@/components/app/NotificationBell";
 
 const GROUPS = [
@@ -97,6 +98,11 @@ export function AppShell({
   const t = useTranslations("app");
   const pathname = usePathname();
   const isDemo = accountType === "demo";
+  const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    setNavOpen(false);
+  }, [pathname]);
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -104,8 +110,8 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-[70vh] border-b border-navy/10 bg-[var(--color-surface,#f7f5f1)]">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 md:grid-cols-[15.5rem_minmax(0,1fr)] md:px-6 md:py-10">
+    <div className="min-h-[70vh] border-b border-navy/10 bg-paper">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 md:grid-cols-[16rem_minmax(0,1fr)] md:px-6 md:py-10">
         <aside className="flex flex-col gap-6 md:sticky md:top-6 md:self-start">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy/70">
@@ -122,6 +128,15 @@ export function AppShell({
               {plan === "growth" ? t("plan.growth") : t("plan.starter")}
             </p>
           </div>
+          <button
+            type="button"
+            className={`w-fit rounded-md border border-navy/15 px-3 py-1.5 text-sm font-semibold text-navy md:hidden ${FOCUS_RING}`}
+            aria-expanded={navOpen}
+            onClick={() => setNavOpen((open) => !open)}
+          >
+            {navOpen ? t("nav.closeMenu") : t("nav.menu")}
+          </button>
+          <div className={navOpen ? "flex flex-col gap-6" : "hidden md:flex md:flex-col md:gap-6"}>
           <nav aria-label="TradeCatch" className="flex flex-col gap-5">
             {isPlatformAdmin ? (
               <Link
@@ -166,6 +181,7 @@ export function AppShell({
           >
             {t("nav.logout")}
           </button>
+          </div>
         </aside>
         <div className="min-w-0">
           <div className="mb-6 flex justify-end">
