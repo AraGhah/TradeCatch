@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { AppShell } from "@/components/app/AppShell";
+import { gmailConfigured } from "@/product/gmail/oauth";
 
 export default async function AppLayout({
   children,
@@ -27,6 +28,7 @@ export default async function AppLayout({
       accountType={auth.ctx.organization.accountType}
       isPlatformAdmin={auth.ctx.isPlatformAdmin}
       organizationId={auth.ctx.organization.id}
+      gmailEnabled={gmailConfigured()}
     >
       {children}
     </AppShell>

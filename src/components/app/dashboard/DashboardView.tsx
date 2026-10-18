@@ -28,27 +28,33 @@ export function DashboardView({
   customFrom,
   customTo,
   showGrowthUpsell,
+  afterHeader,
 }: {
   initial: DashboardOverview;
   pollQuery: string;
   customFrom?: string;
   customTo?: string;
   showGrowthUpsell: boolean;
+  /** Rendered directly under the page header (used for the Gmail summary card). */
+  afterHeader?: React.ReactNode;
 }) {
   const t = useTranslations("app.home");
   const crm = useTranslations("app.crm");
   const locale = useLocale() === "fr" ? "fr" : "en";
   const [data, setData] = useState(initial);
+  // Adopt fresh server data when the page re-renders (e.g. after router.refresh()),
+  // adjusting state during render rather than in an effect.
+  const [seenInitial, setSeenInitial] = useState(initial);
+  if (initial !== seenInitial) {
+    setSeenInitial(initial);
+    setData(initial);
+  }
   const [live, setLive] = useState<"ok" | "error">("ok");
   const [callFilter, setCallFilter] = useState<CallFilter>("all");
   const [leadStatus, setLeadStatus] = useState("all");
   const [appointmentStatus, setAppointmentStatus] = useState("all");
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
-
-  useEffect(() => {
-    setData(initial);
-  }, [initial]);
 
   useEffect(() => {
     let stop = false;
@@ -115,12 +121,12 @@ export function DashboardView({
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="font-mono text-[11px] tracking-[0.14em] text-orange uppercase">TradeCatch</p>
+          <p className="font-mono text-[11px] tracking-[0.14em] text-ember-text uppercase">TradeCatch</p>
           <h1 className="mt-1 font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
             {t("headline")}
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-navy/70">{t("intro")}</p>
-          <p className="mt-2 text-xs text-navy/50" aria-live="polite">
+          <p className="mt-2 text-xs text-navy/70" aria-live="polite">
             {live === "error" ? t("liveError") : t("live")} · {t("updated")} {formatWhen(data.generatedAt, locale)}
           </p>
         </div>
@@ -152,7 +158,7 @@ export function DashboardView({
           </div>
           <form className="flex flex-wrap items-end gap-2">
             <input type="hidden" name="range" value="custom" />
-            <label className="flex flex-col gap-1 text-xs font-semibold text-navy/60">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-navy/70">
               {t("range.from")}
               <input
                 type="date"
@@ -162,7 +168,7 @@ export function DashboardView({
                 className="rounded-md border border-navy/15 bg-white px-2 py-1.5 text-sm text-navy"
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-semibold text-navy/60">
+            <label className="flex flex-col gap-1 text-xs font-semibold text-navy/70">
               {t("range.to")}
               <input
                 type="date"
@@ -174,13 +180,15 @@ export function DashboardView({
             </label>
             <button
               type="submit"
-              className={`rounded-md bg-orange px-3 py-2 text-sm font-semibold text-white ${FOCUS}`}
+              className={`rounded-md bg-orange px-3 py-2 text-sm font-semibold text-navy ${FOCUS}`}
             >
               {t("range.apply")}
             </button>
           </form>
         </div>
       </header>
+
+      {afterHeader}
 
       {data.sources.calls === "unlinked" || data.sources.recovery === "unlinked" ? (
         <p className="rounded-xl border border-orange/30 bg-orange/10 px-4 py-3 text-sm text-navy">
@@ -212,7 +220,7 @@ export function DashboardView({
             <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
               {t("sectionAlerts")}
             </h2>
-            <Link href="/app/notifications" className="text-sm font-semibold text-orange hover:underline">
+            <Link href="/app/notifications" className="text-sm font-semibold text-ember-text hover:underline">
               {t("viewAll")}
             </Link>
           </div>
@@ -229,7 +237,7 @@ export function DashboardView({
                       {notice.priority === "critical" ? "● " : null}
                       {notice.title}
                     </span>
-                    <span className="text-xs text-navy/50">{formatWhen(notice.createdAt, locale)}</span>
+                    <span className="text-xs text-navy/70">{formatWhen(notice.createdAt, locale)}</span>
                     <span className="text-sm text-navy/70 sm:basis-full">{notice.message}</span>
                   </AppPathLink>
                 </li>
@@ -297,7 +305,7 @@ export function DashboardView({
             {t("sectionActivity")}
           </h2>
           {data.activity.length === 0 ? (
-            <p className="mt-4 text-sm text-navy/60">{t("activityEmpty")}</p>
+            <p className="mt-4 text-sm text-navy/70">{t("activityEmpty")}</p>
           ) : (
             <ul className="mt-3 flex flex-col" aria-live="polite">
               {data.activity.map((item) => (
@@ -326,7 +334,7 @@ export function DashboardView({
             <AiStat label={t("ai.followUp")} value={data.calls?.followUp.current} />
           </dl>
           {data.aiCalls.length === 0 ? (
-            <p className="mt-4 text-sm text-navy/60">{t("activityEmpty")}</p>
+            <p className="mt-4 text-sm text-navy/70">{t("activityEmpty")}</p>
           ) : (
             <ul className="mt-3 flex max-h-[28rem] flex-col gap-2 overflow-auto">
               {data.aiCalls.slice(0, 12).map((call) => (
@@ -343,7 +351,7 @@ export function DashboardView({
                   >
                     <span className="flex items-baseline justify-between gap-2">
                       <span className="font-semibold text-navy">{call.caller}</span>
-                      <span className="text-xs text-navy/50">{formatWhen(call.at, locale)}</span>
+                      <span className="text-xs text-navy/70">{formatWhen(call.at, locale)}</span>
                     </span>
                     <span className="mt-1 block text-sm text-navy/70">
                       {call.outcome ? t(`outcomes.${call.outcome}`) : t("classification.open")}
@@ -361,11 +369,11 @@ export function DashboardView({
         <section className="rounded-xl border border-navy/10 bg-white p-4 shadow-[var(--shadow-card)]" aria-labelledby="call-detail-title">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold tracking-wide text-navy/50 uppercase">{t("detailCall")}</p>
+              <p className="text-xs font-semibold tracking-wide text-navy/70 uppercase">{t("detailCall")}</p>
               <h2 id="call-detail-title" className="font-[family-name:var(--font-archivo)] text-xl font-extrabold text-navy">
                 {selectedAi?.caller || selectedRow?.caller}
               </h2>
-              <p className="text-sm text-navy/60">
+              <p className="text-sm text-navy/70">
                 {selectedAi?.phone || selectedRow?.phone} · {formatWhen((selectedAi || selectedRow)!.at, locale)}
               </p>
             </div>
@@ -376,7 +384,7 @@ export function DashboardView({
           {selectedAi?.summary || selectedRow?.summary ? (
             <p className="mt-3 text-sm text-navy">{selectedAi?.summary || selectedRow?.summary}</p>
           ) : (
-            <p className="mt-3 text-sm text-navy/60">{t("noSummary")}</p>
+            <p className="mt-3 text-sm text-navy/70">{t("noSummary")}</p>
           )}
           {selectedAi?.nextStep ? (
             <p className="mt-2 text-sm text-navy/80">
@@ -389,14 +397,14 @@ export function DashboardView({
               href={selectedAi.recordingUrl}
               target="_blank"
               rel="noreferrer"
-              className="mt-3 inline-flex text-sm font-semibold text-orange hover:underline"
+              className="mt-3 inline-flex text-sm font-semibold text-ember-text hover:underline"
             >
               {t("recording")}
             </a>
           ) : (
-            <p className="mt-3 text-xs text-navy/50">{t("noRecording")}</p>
+            <p className="mt-3 text-xs text-navy/70">{t("noRecording")}</p>
           )}
-          {selectedAi?.transcriptPurged ? <p className="mt-2 text-xs text-navy/50">{t("transcriptPurged")}</p> : null}
+          {selectedAi?.transcriptPurged ? <p className="mt-2 text-xs text-navy/70">{t("transcriptPurged")}</p> : null}
           {selectedAi && selectedAi.turns.length > 0 ? (
             <ol className="mt-4 flex flex-col gap-2">
               {selectedAi.turns.map((turn, index) => (
@@ -424,7 +432,7 @@ export function DashboardView({
         <section className="rounded-xl border border-navy/10 bg-white p-4 shadow-[var(--shadow-card)]">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold tracking-wide text-navy/50 uppercase">{t("detailAppointment")}</p>
+              <p className="text-xs font-semibold tracking-wide text-navy/70 uppercase">{t("detailAppointment")}</p>
               <h2 className="font-[family-name:var(--font-archivo)] text-xl font-extrabold text-navy">
                 {selectedAppointment.customerName || selectedAppointment.serviceName}
               </h2>
@@ -435,19 +443,19 @@ export function DashboardView({
           </div>
           <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
             <div>
-              <dt className="text-navy/50">{t("cols.service")}</dt>
+              <dt className="text-navy/70">{t("cols.service")}</dt>
               <dd className="font-semibold text-navy">{selectedAppointment.serviceName}</dd>
             </div>
             <div>
-              <dt className="text-navy/50">{t("cols.start")}</dt>
+              <dt className="text-navy/70">{t("cols.start")}</dt>
               <dd className="font-semibold text-navy">{formatWhen(selectedAppointment.startAt, locale)}</dd>
             </div>
             <div>
-              <dt className="text-navy/50">{t("cols.status")}</dt>
+              <dt className="text-navy/70">{t("cols.status")}</dt>
               <dd className="font-semibold text-navy">{t(`appointmentStatus.${selectedAppointment.status}`)}</dd>
             </div>
             <div>
-              <dt className="text-navy/50">{t("cols.source")}</dt>
+              <dt className="text-navy/70">{t("cols.source")}</dt>
               <dd className="font-semibold text-navy">{bookingSourceLabel(t, selectedAppointment.bookingSource)}</dd>
             </div>
           </dl>
@@ -481,6 +489,8 @@ export function DashboardView({
       />
 
       {data.sources.revenue === "ready" ? (
+        // A file download served by a route handler, not a page: <Link> would try to client-route it.
+        // eslint-disable-next-line @next/next/no-html-link-for-pages
         <a
           href="/api/app/analytics?format=csv"
           className="self-start text-sm font-semibold text-navy underline-offset-2 hover:underline"
@@ -541,7 +551,7 @@ function ActivityBody({
     <span className="flex flex-col gap-0.5">
       <span className="flex items-baseline justify-between gap-3">
         <span className="font-semibold text-navy group-hover:underline">{item.title}</span>
-        <span className="text-xs text-navy/45">{formatWhen(item.at, locale)}</span>
+        <span className="text-xs text-navy/70">{formatWhen(item.at, locale)}</span>
       </span>
       <span className="text-sm text-navy/65">
         {kind} · {label}
@@ -553,7 +563,7 @@ function ActivityBody({
 function AiStat({ label, value }: { label: string; value: number | undefined }) {
   return (
     <div className="rounded-lg bg-paper px-3 py-2">
-      <dt className="text-xs text-navy/55">{label}</dt>
+      <dt className="text-xs text-navy/70">{label}</dt>
       <dd className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{value ?? "—"}</dd>
     </div>
   );
@@ -576,24 +586,24 @@ function StatCard({ card, onOpen }: { card: CardModel; onOpen: () => void }) {
   const improved = card.tone === "bad" ? (change ?? 0) < 0 : (change ?? 0) > 0;
   const worsened = card.tone === "bad" ? (change ?? 0) > 0 : (change ?? 0) < 0;
   const changeClass = change == null || change === 0 || card.tone === "neutral"
-    ? "text-navy/50"
+    ? "text-navy/70"
     : improved
       ? "text-signal-text"
       : worsened
         ? "text-ember-text"
-        : "text-navy/50";
+        : "text-navy/70";
   return (
     <button
       type="button"
       onClick={onOpen}
       className={`rounded-xl border border-navy/10 bg-white px-4 py-4 text-left shadow-[var(--shadow-card)] motion-safe:transition motion-safe:hover:-translate-y-0.5 ${FOCUS}`}
     >
-      <span className="block text-xs font-semibold tracking-wide text-navy/50 uppercase">{card.label}</span>
+      <span className="block text-xs font-semibold tracking-wide text-navy/70 uppercase">{card.label}</span>
       <span className="mt-2 block font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
         {card.value}
       </span>
       <span className="mt-2 flex items-center justify-between gap-2">
-        <span className="text-xs text-navy/50">{card.hint || t("vsPrevious")}</span>
+        <span className="text-xs text-navy/70">{card.hint || t("vsPrevious")}</span>
         {card.delta ? (
           <span className={`text-xs font-semibold ${changeClass}`}>
             {change == null ? t("newPeriod") : `${change > 0 ? "+" : ""}${change}%`}

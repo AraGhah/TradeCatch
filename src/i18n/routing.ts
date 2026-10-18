@@ -191,6 +191,14 @@ export const routing = defineRouting({
       en: "/app/email",
       fr: "/app/courriels",
     },
+    "/app/mail": {
+      en: "/app/mail",
+      fr: "/app/courrier",
+    },
+    "/app/mail/[id]": {
+      en: "/app/mail/[id]",
+      fr: "/app/courrier/[id]",
+    },
     "/app/timeline": {
       en: "/app/timeline",
       fr: "/app/chronologie",

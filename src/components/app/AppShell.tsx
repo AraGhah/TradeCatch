@@ -2,7 +2,8 @@
 
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { GmailSyncBadge } from "@/components/app/GmailSyncBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
 
 const GROUPS = [
@@ -14,6 +15,7 @@ const GROUPS = [
     label: "groupCustomers",
     items: [
       { href: "/app/leads", key: "customers" },
+      { href: "/app/mail", key: "gmail" },
       { href: "/app/pipeline", key: "pipeline" },
     ],
   },
@@ -85,6 +87,7 @@ export function AppShell({
   accountType,
   isPlatformAdmin,
   organizationId,
+  gmailEnabled = false,
 }: {
   children: React.ReactNode;
   orgName: string;
@@ -94,15 +97,19 @@ export function AppShell({
   accountType?: string;
   isPlatformAdmin?: boolean;
   organizationId: string;
+  /** False when Google credentials are not configured: the Gmail entry would lead nowhere. */
+  gmailEnabled?: boolean;
 }) {
   const t = useTranslations("app");
   const pathname = usePathname();
   const isDemo = accountType === "demo";
   const [navOpen, setNavOpen] = useState(false);
-
-  useEffect(() => {
+  // Close the mobile menu after navigating. Adjusted during render rather than in an effect.
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (pathname !== menuPath) {
+    setMenuPath(pathname);
     setNavOpen(false);
-  }, [pathname]);
+  }
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -123,7 +130,7 @@ export function AppShell({
               ) : null}
             </p>
             <p className="mt-1 text-lg font-semibold text-navy">{orgName}</p>
-            <p className="text-sm text-navy/60">
+            <p className="text-sm text-navy/70">
               {userName} ·{" "}
               {plan === "growth" ? t("plan.growth") : t("plan.starter")}
             </p>
@@ -148,11 +155,13 @@ export function AppShell({
             ) : null}
             {GROUPS.map((group) => (
               <div key={group.label}>
-                <p className="px-2 font-mono text-[10px] tracking-[0.12em] text-navy/45 uppercase">
+                <p className="px-2 font-mono text-[10px] tracking-[0.12em] text-navy/70 uppercase">
                   {t(`nav.${group.label}`)}
                 </p>
                 <ul className="mt-1 flex flex-col">
-                  {group.items.map((item) => {
+                  {group.items
+                    .filter((item) => item.key !== "gmail" || gmailEnabled)
+                    .map((item) => {
                     const active = itemIsActive(pathname, item.href);
                     return (
                       <li key={item.href}>
@@ -166,6 +175,7 @@ export function AppShell({
                           }`}
                         >
                           {t(`nav.${item.key}`)}
+                          {item.key === "gmail" ? <GmailSyncBadge /> : null}
                         </Link>
                       </li>
                     );

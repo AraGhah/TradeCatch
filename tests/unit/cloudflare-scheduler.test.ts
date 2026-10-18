@@ -21,6 +21,7 @@ describe("Cloudflare scheduler", () => {
       "/api/growth/crm/tick",
       "/api/receptionist/tick",
       "/api/growth/email/tick",
+      "/api/gmail/sync/tick",
       "/api/scheduling/reconcile",
       "/api/monitoring/tick",
     ]);

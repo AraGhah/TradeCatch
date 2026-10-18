@@ -79,7 +79,7 @@ export function DashboardCharts({
                 aria-pressed={!hidden[item.key]}
                 onClick={() => setHidden((current) => ({ ...current, [item.key]: !current[item.key] }))}
                 className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                  hidden[item.key] ? "border-navy/10 text-navy/40" : "border-navy/15 text-navy"
+                  hidden[item.key] ? "border-navy/10 text-navy/70" : "border-navy/15 text-navy"
                 }`}
               >
                 <span
@@ -92,7 +92,7 @@ export function DashboardCharts({
           </div>
         </div>
         {!hasPoints ? (
-          <p className="mt-8 mb-6 text-center text-sm text-navy/60">{t("chart.empty")}</p>
+          <p className="mt-8 mb-6 text-center text-sm text-navy/70">{t("chart.empty")}</p>
         ) : (
           <div className="relative mt-3">
             <svg
@@ -187,7 +187,7 @@ export function DashboardCharts({
           {t("chart.outcomes")}
         </h2>
         {outcomes.length === 0 ? (
-          <p className="mt-8 text-sm text-navy/60">{t("chart.empty")}</p>
+          <p className="mt-8 text-sm text-navy/70">{t("chart.empty")}</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-3">
             {outcomes.map((item) => {

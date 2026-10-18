@@ -41,7 +41,7 @@ function Pager({
   const t = useTranslations("app.home");
   return (
     <div className="flex items-center justify-between gap-3 border-t border-navy/10 px-4 py-3 text-sm">
-      <p className="text-navy/60">{t("page", { page: page + 1, pages })}</p>
+      <p className="text-navy/70">{t("page", { page: page + 1, pages })}</p>
       <div className="flex gap-2">
         <button
           type="button"
@@ -127,11 +127,11 @@ export function CallsTable({
           <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
             {t("sectionCalls")}
           </h2>
-          <p className="mt-1 text-sm text-navy/60">
+          <p className="mt-1 text-sm text-navy/70">
             {t("showing", { count: filtered.length })}
           </p>
         </div>
-        <Link href="/app/calls" className="text-sm font-semibold text-orange hover:underline">
+        <Link href="/app/calls" className="text-sm font-semibold text-ember-text hover:underline">
           {t("viewAll")}
         </Link>
       </div>
@@ -166,11 +166,11 @@ export function CallsTable({
         </label>
       </div>
       {slice.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-navy/60">{t("emptyTable")}</p>
+        <p className="px-4 py-8 text-center text-sm text-navy/70">{t("emptyTable")}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[40rem] text-left text-sm">
-            <thead className="bg-paper text-xs uppercase tracking-wide text-navy/50">
+            <thead className="bg-paper text-xs uppercase tracking-wide text-navy/70">
               <tr>
                 <th className="px-4 py-2">
                   <button type="button" onClick={() => sort("at")}>{t("cols.when")}</button>
@@ -192,7 +192,7 @@ export function CallsTable({
                     <button type="button" className="font-semibold text-navy hover:underline" onClick={() => onOpen(row.id)}>
                       {row.caller}
                     </button>
-                    <p className="text-xs text-navy/50">{row.phone}</p>
+                    <p className="text-xs text-navy/70">{row.phone}</p>
                   </td>
                   <td className="px-4 py-3 text-navy/80">
                     {row.outcome ? t(`outcomes.${row.outcome}`) : t(`classification.${row.classification}`)}
@@ -263,9 +263,9 @@ export function LeadsTable({
           <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
             {t("sectionLeads")}
           </h2>
-          <p className="mt-1 text-sm text-navy/60">{t("showing", { count: filtered.length })}</p>
+          <p className="mt-1 text-sm text-navy/70">{t("showing", { count: filtered.length })}</p>
         </div>
-        <Link href="/app/leads" className="text-sm font-semibold text-orange hover:underline">
+        <Link href="/app/leads" className="text-sm font-semibold text-ember-text hover:underline">
           {t("viewAll")}
         </Link>
       </div>
@@ -300,11 +300,11 @@ export function LeadsTable({
         </label>
       </div>
       {slice.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-navy/60">{t("emptyTable")}</p>
+        <p className="px-4 py-8 text-center text-sm text-navy/70">{t("emptyTable")}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[40rem] text-left text-sm">
-            <thead className="bg-paper text-xs uppercase tracking-wide text-navy/50">
+            <thead className="bg-paper text-xs uppercase tracking-wide text-navy/70">
               <tr>
                 <th className="px-4 py-2">
                   <button type="button" onClick={() => sort("at")}>{t("cols.when")}</button>
@@ -329,12 +329,12 @@ export function LeadsTable({
                     >
                       {row.name}
                     </Link>
-                    {row.phone ? <p className="text-xs text-navy/50">{row.phone}</p> : null}
+                    {row.phone ? <p className="text-xs text-navy/70">{row.phone}</p> : null}
                   </td>
                   <td className="px-4 py-3 text-navy/80">{crm(`statuses.${row.status}`)}</td>
                   <td className="px-4 py-3 text-navy/70">
                     {row.service || "—"}
-                    <span className="mt-0.5 block text-xs text-navy/45">{crm(`sources.${row.source}`)}</span>
+                    <span className="mt-0.5 block text-xs text-navy/70">{crm(`sources.${row.source}`)}</span>
                   </td>
                 </tr>
               ))}
@@ -404,9 +404,9 @@ export function AppointmentsTable({
           <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
             {t("sectionAppointments")}
           </h2>
-          <p className="mt-1 text-sm text-navy/60">{t("showing", { count: filtered.length })}</p>
+          <p className="mt-1 text-sm text-navy/70">{t("showing", { count: filtered.length })}</p>
         </div>
-        <Link href="/app/bookings" className="text-sm font-semibold text-orange hover:underline">
+        <Link href="/app/bookings" className="text-sm font-semibold text-ember-text hover:underline">
           {t("viewAll")}
         </Link>
       </div>
@@ -441,11 +441,11 @@ export function AppointmentsTable({
         </label>
       </div>
       {slice.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-navy/60">{t("emptyTable")}</p>
+        <p className="px-4 py-8 text-center text-sm text-navy/70">{t("emptyTable")}</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[40rem] text-left text-sm">
-            <thead className="bg-paper text-xs uppercase tracking-wide text-navy/50">
+            <thead className="bg-paper text-xs uppercase tracking-wide text-navy/70">
               <tr>
                 <th className="px-4 py-2">
                   <button type="button" onClick={() => sort("startAt")}>{t("cols.start")}</button>

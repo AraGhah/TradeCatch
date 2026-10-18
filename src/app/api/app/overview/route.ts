@@ -7,6 +7,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const PRIVATE = { "Cache-Control": "private, no-store" };
+
 export async function GET(request: NextRequest) {
   const auth = await requireTenantContext();
   if (!auth.ok) return unauthorizedTenantResponse(auth.error);
@@ -19,8 +21,9 @@ export async function GET(request: NextRequest) {
       from: url.searchParams.get("from"),
       to: url.searchParams.get("to"),
     });
-    return NextResponse.json({ ok: true, overview });
+    // Per-workspace numbers: never let a shared cache hold or replay them.
+    return NextResponse.json({ ok: true, overview }, { headers: PRIVATE });
   } catch {
-    return NextResponse.json({ ok: false }, { status: 500 });
+    return NextResponse.json({ ok: false }, { status: 500, headers: PRIVATE });
   }
 }
