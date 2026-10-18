@@ -3902,6 +3902,8 @@
       "announceConfirm": "Type announce to send",
       "announceSend": "Queue announcement",
       "announceQueued": "Queued for {count} businesses.",
+      "tokenWait": "Checking the administrator token…",
+      "tokenError": "The administrator token could not be created. Reload the page.",
       "mfaTitle": "Administrator verification",
       "mfaBody": "This session still needs the six-digit code from your authenticator.",
       "mfaCode": "Code",

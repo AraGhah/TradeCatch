@@ -3902,6 +3902,8 @@
       "announceConfirm": "Tapez announce pour envoyer",
       "announceSend": "Mettre l’annonce en file",
       "announceQueued": "En file pour {count} entreprises.",
+      "tokenWait": "Vérification du jeton administrateur…",
+      "tokenError": "Le jeton administrateur n’a pas pu être créé. Rechargez la page.",
       "mfaTitle": "Vérification administrateur",
       "mfaBody": "Cette session a encore besoin du code à six chiffres de votre authentificateur.",
       "mfaCode": "Code",

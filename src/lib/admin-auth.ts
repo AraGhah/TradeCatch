@@ -1,6 +1,11 @@
+import { cookies } from "next/headers";
 import { authorizeOpsRequest, getOpsSecret } from "@/lib/ops-auth";
+import {
+  ADMIN_JWT_COOKIE,
+  verifyAdminJwt,
+} from "@/product/saas/auth/admin-jwt";
 import { isPlatformAdminUser } from "@/product/saas/platform-admin";
-import { requireTenantContext } from "@/product/saas/tenant";
+import { getAuthSecret, requireTenantContext } from "@/product/saas/tenant";
 import type { TenantContext } from "@/product/saas/types";
 
 export { isPlatformAdminUser, parseAdminEmails } from "@/product/saas/platform-admin";
@@ -52,5 +57,18 @@ export async function authorizeAdminRequest(request: Request): Promise<
   const { getSecurityService } = await import("@/product/security/runtime");
   const allowed = await getSecurityService().sessionAllowsAdmin(session.ctx.user.id, session.ctx.session.id);
   if (!allowed) return { ok: false, status: 403, error: "Administrator MFA verification is required." };
+  const token = await readMatchingAdminJwt(session.ctx.user.id, session.ctx.session.id);
+  if (!token) return { ok: false, status: 401, error: "Admin token required." };
   return { ok: true, via: "session", ctx: session.ctx };
+}
+
+export async function readMatchingAdminJwt(userId: string, sessionId: string) {
+  const secret = getAuthSecret();
+  if (!secret) return null;
+  const jar = await cookies();
+  const raw = jar.get(ADMIN_JWT_COOKIE)?.value;
+  if (!raw) return null;
+  const claims = await verifyAdminJwt(raw, secret);
+  if (!claims || claims.sub !== userId || claims.sid !== sessionId) return null;
+  return claims;
 }
