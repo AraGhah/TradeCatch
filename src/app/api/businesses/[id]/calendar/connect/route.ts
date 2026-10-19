@@ -15,6 +15,6 @@ export async function POST(_request: NextRequest, { params }: Params) {
       { status: 409 },
     );
   }
-  const { url } = buildGoogleAuthUrl(id);
+  const { url } = buildGoogleAuthUrl(id, access.ctx.user.id);
   return NextResponse.json({ ok: true, url });
 }

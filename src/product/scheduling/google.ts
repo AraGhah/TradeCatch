@@ -36,9 +36,9 @@ function secret() {
   return value;
 }
 
-export function buildGoogleAuthUrl(organizationId: string) {
+export function buildGoogleAuthUrl(organizationId: string, userId: string, nowMs = Date.now()) {
   const state = signState(
-    JSON.stringify({ organizationId, exp: Date.now() + 10 * 60_000, nonce: crypto.randomUUID() }),
+    JSON.stringify({ organizationId, userId, exp: nowMs + 10 * 60_000, nonce: crypto.randomUUID() }),
     secret(),
   );
   const params = new URLSearchParams({
@@ -54,12 +54,19 @@ export function buildGoogleAuthUrl(organizationId: string) {
   return { url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`, state };
 }
 
-export function readOAuthState(state: string): { organizationId: string } | null {
+export function readOAuthState(
+  state: string,
+  nowMs = Date.now(),
+): { organizationId: string; userId: string } | null {
   const raw = verifyState(state, secret());
   if (!raw) return null;
-  const parsed = JSON.parse(raw) as { organizationId?: string; exp?: number };
-  if (!parsed.organizationId || !parsed.exp || parsed.exp < Date.now()) return null;
-  return { organizationId: parsed.organizationId };
+  try {
+    const parsed = JSON.parse(raw) as { organizationId?: string; userId?: string; exp?: number };
+    if (!parsed.organizationId || !parsed.userId || !parsed.exp || parsed.exp < nowMs) return null;
+    return { organizationId: parsed.organizationId, userId: parsed.userId };
+  } catch {
+    return null;
+  }
 }
 
 export function sealTokens(tokens: GoogleTokens) {
