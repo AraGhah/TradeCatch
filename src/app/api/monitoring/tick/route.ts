@@ -5,6 +5,7 @@ import {
   missingOpsActorResponse,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
+import { recordServerError } from "@/lib/api-error";
 import { getReliabilityService } from "@/product/reliability/runtime";
 
 export const dynamic = "force-dynamic";
@@ -22,9 +23,10 @@ async function tick(request: NextRequest) {
     if (deployments.length === 0) await service.recordDeployment();
     return NextResponse.json({ ok: true, overall: overview.overall, checked: overview.services.length });
   } catch (error) {
+    const requestId = await recordServerError(error, { route: "monitoring.tick", request });
     return NextResponse.json(
-      { ok: false, component: "monitoring", error: error instanceof Error ? error.message : "monitor_check_failed" },
-      { status: 500 },
+      { ok: false, component: "monitoring", error: "monitor_check_failed", requestId },
+      { status: 500, headers: { "x-request-id": requestId } },
     );
   }
 }

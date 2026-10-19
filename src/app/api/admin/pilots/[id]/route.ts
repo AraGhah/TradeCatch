@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
+import { safeErrorResponse } from "@/lib/api-error";
 import { LaunchError } from "@/product/launch/service";
 import { currentReadiness, getLaunchService } from "@/product/launch/runtime";
 
@@ -39,7 +40,11 @@ export async function POST(request: NextRequest, { params }: Params) {
     if (!parsed.success) return NextResponse.json({ error: "Invalid live test result." }, { status: 400 });
     return NextResponse.json({ ok: true, test: await service.recordTest(id, parsed.data.scenario, parsed.data.status, parsed.data.note) });
   } catch (error) {
-    const status = error instanceof LaunchError ? error.status : 500;
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed." }, { status });
+    return safeErrorResponse(error, {
+      route: "admin.pilots.update",
+      request,
+      publicErrors: [LaunchError],
+      fallback: "Failed.",
+    });
   }
 }

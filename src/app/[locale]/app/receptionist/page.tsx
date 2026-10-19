@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { recordServerError } from "@/lib/api-error";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
@@ -40,8 +41,8 @@ export default async function AppReceptionistPage({
   try {
     await runtime.refresh(true);
   } catch (err) {
-    integrationError =
-      err instanceof Error ? err.message : "Receptionist runtime unavailable";
+    await recordServerError(err, { route: "app.receptionist.page" });
+    integrationError = "Receptionist runtime unavailable";
   }
 
   const profile = await runtime.profileStore.getProfile(organization.id);
