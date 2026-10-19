@@ -78,4 +78,45 @@ test.describe("security headers", () => {
     expect(response.status()).toBe(403);
     expect(await response.json()).toEqual({ error: "Cross-site request blocked." });
   });
+
+  test("malformed and oversized requests get a plain error with no internals", async ({
+    request,
+  }) => {
+    const leaks = /node_modules|\.tsx?:\d+|\bat \S+ \(|ECONNREFUSED|password|secret|postgres/i;
+    // Webhooks answer to anyone on the internet, so they are the routes to probe.
+    // (They are not behind the shared per-IP budgets other specs count on.)
+    const forged = await request.post("/api/webhooks/stripe", {
+      headers: { "Content-Type": "application/json", "Stripe-Signature": "t=1,v1=00" },
+      data: "{not json",
+    });
+    expect(forged.status()).toBe(401);
+    expect(await forged.json()).toEqual({ error: "Invalid webhook signature." });
+
+    const huge = await request.post("/api/webhooks/stripe", {
+      headers: { "Content-Type": "application/json" },
+      data: JSON.stringify({ filler: "x".repeat(600_000) }),
+    });
+    expect(huge.status()).toBe(413);
+    expect(await huge.text()).not.toMatch(leaks);
+
+    const wrongToken = await request.post("/api/webhooks/gmail?token=wrong", { data: {} });
+    expect(wrongToken.status()).toBe(401);
+    expect(await wrongToken.json()).toEqual({ error: "unauthorized" });
+    const garbage = await request.post("/api/webhooks/gmail?token=e2e-gmail-webhook-token", {
+      headers: { "Content-Type": "application/json" },
+      data: "{not json",
+    });
+    expect(garbage.status()).toBe(200);
+    expect(await garbage.json()).toEqual({ ok: true, ignored: true });
+
+    const calendar = await request.post("/api/webhooks/google-calendar", {
+      headers: { "X-Goog-Channel-Id": "org_x" },
+    });
+    expect(calendar.status()).toBe(401);
+    expect(await calendar.text()).not.toMatch(leaks);
+
+    const missing = await request.get("/api/does-not-exist");
+    expect(missing.status()).toBe(404);
+    expect(await missing.text()).not.toMatch(leaks);
+  });
 });
