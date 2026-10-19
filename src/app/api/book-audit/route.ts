@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
 import { bookAuditSchema } from "@/lib/validation/book-audit";
 import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
@@ -68,14 +69,14 @@ export async function POST(request: NextRequest) {
     return jsonError("Too many requests. Please try again later.", 429);
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return jsonError("Invalid request body.", 400);
-  }
+  const read = await readJsonBody(request, 32_768);
+  if (!read.ok)
+    return jsonError(
+      read.status === 413 ? read.error : "Invalid request body.",
+      read.status,
+    );
 
-  const parsed = requestSchema.safeParse(body);
+  const parsed = requestSchema.safeParse(read.data);
   if (!parsed.success) {
     return jsonError("Invalid form data.", 400);
   }

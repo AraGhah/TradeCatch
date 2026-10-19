@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { BodyTooLargeError, readBodyText } from "@/lib/request-body";
 import { z } from "zod";
 import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
 import {
@@ -52,7 +53,16 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const raw = await request.text();
+  let raw: string;
+  try {
+    // Bytes, not characters: 4 bytes is the most one UTF-8 character can take.
+    raw = await readBodyText(request, MAX_BODY_CHARS * 4);
+  } catch (error) {
+    if (error instanceof BodyTooLargeError) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
+    throw error;
+  }
   if (raw.length > MAX_BODY_CHARS) {
     return NextResponse.json({ error: "Payload too large" }, { status: 413 });
   }

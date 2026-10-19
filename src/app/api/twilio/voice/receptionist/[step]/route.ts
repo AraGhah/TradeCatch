@@ -1,4 +1,5 @@
 import { after, NextRequest, NextResponse } from "next/server";
+import { contentLengthExceeds } from "@/lib/request-body";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
 import { greetingFor } from "@/product/receptionist/prompts";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
@@ -36,6 +37,9 @@ function emptyTwiml() {
 async function parseForm(
   request: NextRequest,
 ): Promise<Record<string, string>> {
+  // Twilio form posts are a few KB. An empty parameter set can never match the
+  // request signature, so an oversized post is rejected by the check that follows.
+  if (contentLengthExceeds(request, 256 * 1024)) return {};
   const form = await request.formData();
   const params: Record<string, string> = {};
   for (const [k, v] of form.entries()) {

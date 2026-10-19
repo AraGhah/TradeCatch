@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { publicHttpsUrl } from "@/lib/safe-url";
 
 /** Configurable SMS qualification steps for website leads (mirrors Module A shape). */
 export const qualificationQuestionSchema = z.object({
@@ -13,8 +14,8 @@ export type QualificationQuestion = z.infer<typeof qualificationQuestionSchema>;
 
 export const orgSettingsSchema = z.object({
   notifyEmail: z.string().email().optional().nullable(),
-  googleReviewUrl: z.string().url().optional().nullable(),
-  crmWebhookUrl: z.string().url().optional().nullable(),
+  googleReviewUrl: publicHttpsUrl().optional().nullable(),
+  crmWebhookUrl: publicHttpsUrl().optional().nullable(),
   qualificationQuestions: z.array(qualificationQuestionSchema).max(12).optional(),
   onboardingCompletedAt: z.string().datetime().optional().nullable(),
   localeDefault: z.enum(["en", "fr"]).optional(),
