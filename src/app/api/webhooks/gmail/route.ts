@@ -1,15 +1,10 @@
-import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { safeEqual } from "@/lib/safe-compare";
 import { readGmailEnv } from "@/product/gmail/oauth";
+import { parseGmailPush } from "@/product/gmail/push";
 import { getGmailStore, isAccountActive, syncConnectedGmail } from "@/product/gmail/runtime";
 
 export const dynamic = "force-dynamic";
-
-function tokenMatches(given: string, expected: string): boolean {
-  const a = Buffer.from(given);
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
 
 function isNewer(pushed: string | undefined, known: string | null): boolean {
   if (!pushed || !known) return true;
@@ -29,26 +24,14 @@ function isNewer(pushed: string | undefined, known: string | null): boolean {
 export async function POST(request: NextRequest) {
   const env = readGmailEnv();
   const given = request.nextUrl.searchParams.get("token") || "";
-  if (!env.webhookToken || !tokenMatches(given, env.webhookToken)) {
+  if (!env.webhookToken || !safeEqual(given, env.webhookToken)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-  const body = (await request.json().catch(() => null)) as { message?: { data?: string } } | null;
-  const data = body?.message?.data;
-  if (!data) return NextResponse.json({ ok: true, ignored: true });
-
-  let email = "";
-  let historyId: string | undefined;
-  try {
-    const decoded = JSON.parse(Buffer.from(data, "base64").toString("utf8")) as {
-      emailAddress?: string;
-      historyId?: string | number;
-    };
-    email = decoded.emailAddress || "";
-    historyId = decoded.historyId === undefined ? undefined : String(decoded.historyId);
-  } catch {
-    return NextResponse.json({ ok: true, ignored: true });
-  }
-  if (!email) return NextResponse.json({ ok: true, ignored: true });
+  // Anything that is not a well-formed notification is acknowledged and dropped,
+  // so Pub/Sub does not keep redelivering it.
+  const push = parseGmailPush(await request.json().catch(() => null));
+  if (!push) return NextResponse.json({ ok: true, ignored: true });
+  const { email, historyId } = push;
 
   // The same address can be connected in more than one workspace.
   const accounts = await getGmailStore().findAccountsByEmail(email);
