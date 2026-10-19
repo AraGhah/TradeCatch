@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { forbiddenUnless } from "@/product/security/access";
 import { z } from "zod";
 import {
   forbiddenFeatureResponse,
@@ -96,7 +97,7 @@ async function auth() {
   if (!tenantHasFeature(result.ctx, "EMAIL_AUTOMATION")) {
     return { error: forbiddenFeatureResponse("EMAIL_AUTOMATION") };
   }
-  return { orgId: result.ctx.organization.id };
+  return { orgId: result.ctx.organization.id, ctx: result.ctx };
 }
 
 export async function GET() {
@@ -124,6 +125,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const a = await auth();
   if ("error" in a) return a.error;
+  const denied = forbiddenUnless(
+    a.ctx.membership.role,
+    "write_leads",
+    a.ctx.isPlatformAdmin,
+  );
+  if (denied) return denied;
 
   let json: unknown;
   try {

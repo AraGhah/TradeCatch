@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { forbiddenUnless } from "@/product/security/access";
 import { CrmError, getCrmService } from "@/product/crm/runtime";
 import {
   LEAD_PRIORITIES,
@@ -58,6 +59,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
+  const denied = forbiddenUnless(access.role, "write_leads", access.via === "admin");
+  if (denied) return denied;
 
   let body: {
     phoneE164?: string;

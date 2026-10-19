@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { forbiddenUnless } from "@/product/security/access";
 import { CrmError, getCrmService } from "@/product/crm/runtime";
 import { authorizeBusinessMemberOrAdmin } from "../../_shared";
 import { getSaasStore } from "@/product/saas/runtime";
@@ -28,6 +29,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id, leadId } = await params;
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
+  const denied = forbiddenUnless(access.role, "write_leads", access.via === "admin");
+  if (denied) return denied;
 
   let body: {
     status?: string;

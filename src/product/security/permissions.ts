@@ -6,6 +6,7 @@ export type SecurityAction =
   | "manage_billing"
   | "manage_ai"
   | "manage_security"
+  | "manage_settings"
   | "manage_members"
   | "view_recordings";
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { allows } from "@/product/security/permissions";
 import { z } from "zod";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { getReliabilityService } from "@/product/reliability/runtime";
@@ -17,7 +18,7 @@ async function access(organizationId: string, write: boolean) {
   if (tenant.ctx.organization.id !== organizationId && !tenant.ctx.isPlatformAdmin) {
     return { ok: false as const, status: 403 as const, error: "Not a member of this business." };
   }
-  if (write && tenant.ctx.membership.role === "member" && !tenant.ctx.isPlatformAdmin) {
+  if (write && !allows(tenant.ctx.membership.role, "manage_settings", tenant.ctx.isPlatformAdmin)) {
     return { ok: false as const, status: 403 as const, error: "Insufficient permissions." };
   }
   return { ok: true as const, ctx: tenant.ctx };
