@@ -1,7 +1,7 @@
 import { encryptSecret, decryptSecret } from "@/product/scheduling/crypto";
 import { allows, maskPhone, type SecurityAction } from "./permissions";
 import { securityId, safeDetail, type RecordingSettings, type SecurityStore } from "./store";
-import { generateTotpSecret, verifyTotp } from "./totp";
+import { generateTotpSecret, matchTotpCounter } from "./totp";
 import type { MemberRole } from "@/product/saas/types";
 
 export class SecurityError extends Error {
@@ -13,6 +13,17 @@ export class SecurityError extends Error {
 
 const LOGIN_WINDOW_MS = 15 * 60_000;
 const LOGIN_LIMIT = 5;
+const MFA_WINDOW_MS = 15 * 60_000;
+const MFA_FAILURE_LIMIT = 5;
+
+/**
+ * Where an administrator stands for one session.
+ * - unenrolled: no authenticator registered yet
+ * - pending: a secret was issued but never confirmed with a valid code
+ * - unverified: enrolled, but this session has not entered a code
+ * - verified: enrolled and this session entered a valid code
+ */
+export type MfaState = "unenrolled" | "pending" | "unverified" | "verified";
 
 export type SecurityDeps = {
   store: SecurityStore;
@@ -35,6 +46,13 @@ export function createSecurityService(deps: SecurityDeps) {
     };
     await deps.store.saveAudit(row);
     return row;
+  }
+
+  async function mfaStateOf(userId: string, sessionId: string): Promise<MfaState> {
+    const row = await deps.store.getMfa(userId);
+    if (!row) return "unenrolled";
+    if (!row.enabled) return "pending";
+    return (await deps.store.hasMfaVerification(sessionId)) ? "verified" : "unverified";
   }
 
   return {
@@ -67,7 +85,22 @@ export function createSecurityService(deps: SecurityDeps) {
       if (!allows(role, action, platformAdmin)) throw new SecurityError("Insufficient permissions.", 403);
     },
 
+    async mfaState(userId: string, sessionId: string): Promise<MfaState> {
+      return mfaStateOf(userId, sessionId);
+    },
+
+    /**
+     * Issues a new authenticator secret. Refused once MFA is enabled: if an
+     * enabled secret could be replaced by whoever holds the session, the second
+     * factor would protect nothing. Resetting a lost authenticator is an
+     * operator action performed out of band (see scripts/reset-admin-mfa.js).
+     */
     async enrollMfa(userId: string) {
+      const existing = await deps.store.getMfa(userId);
+      if (existing?.enabled) {
+        await audit({ actorUserId: userId, action: "mfa_enroll_refused", detail: "already enabled" });
+        throw new SecurityError("Administrator verification is already set up.", 409);
+      }
       const secret = generateTotpSecret();
       await deps.store.saveMfa({
         userId,
@@ -76,24 +109,56 @@ export function createSecurityService(deps: SecurityDeps) {
         updatedAt: deps.now().toISOString(),
       });
       await audit({ actorUserId: userId, action: "mfa_enroll_started" });
-      return { otpauth: `otpauth://totp/TradeCatch:${userId}?secret=${secret}&issuer=TradeCatch`, secret };
+      return {
+        otpauth: `otpauth://totp/TradeCatch:${encodeURIComponent(userId)}?secret=${secret}&issuer=TradeCatch`,
+        secret,
+      };
     },
 
+    /**
+     * Confirms enrollment (first valid code) or verifies a new session (every
+     * later sign-in). Failures are throttled per user and a code that was
+     * already accepted cannot be used twice.
+     */
     async confirmMfa(userId: string, sessionId: string, code: string) {
       const row = await deps.store.getMfa(userId);
       if (!row) throw new SecurityError("MFA is not enrolled.", 404);
-      const secret = decryptSecret(row.ciphertext, deps.secret());
-      if (!verifyTotp(secret, code, deps.now().getTime())) throw new SecurityError("Invalid authentication code.", 401);
-      await deps.store.saveMfa({ userId, ciphertext: row.ciphertext, enabled: true, updatedAt: deps.now().toISOString() });
+
+      const throttleKey = `mfa:${userId}`;
+      const nowMs = deps.now().getTime();
+      if ((await deps.store.countAttempts(throttleKey, MFA_WINDOW_MS, nowMs)) >= MFA_FAILURE_LIMIT) {
+        await audit({ actorUserId: userId, action: "mfa_rate_limited" });
+        throw new SecurityError("Too many attempts. Try again later.", 429);
+      }
+
+      let secret: string;
+      try {
+        secret = decryptSecret(row.ciphertext, deps.secret());
+      } catch {
+        await audit({ actorUserId: userId, action: "mfa_secret_unreadable" });
+        throw new SecurityError("Administrator verification could not be checked.", 409);
+      }
+
+      const counter = matchTotpCounter(secret, code, nowMs);
+      const fresh = counter !== null && (await deps.store.claimWebhook("totp", `${userId}:${counter}`));
+      if (!fresh) {
+        await deps.store.saveAttempt(throttleKey, deps.now().toISOString());
+        await audit({ actorUserId: userId, action: "mfa_failed" });
+        throw new SecurityError("Invalid authentication code.", 401);
+      }
+
+      const firstEnable = !row.enabled;
+      if (firstEnable) {
+        await deps.store.saveMfa({ userId, ciphertext: row.ciphertext, enabled: true, updatedAt: deps.now().toISOString() });
+      }
       await deps.store.saveMfaVerification({ sessionId, userId, verifiedAt: deps.now().toISOString() });
-      await audit({ actorUserId: userId, action: "mfa_enabled" });
+      await audit({ actorUserId: userId, action: firstEnable ? "mfa_enabled" : "mfa_verified", target: sessionId });
       return { enabled: true };
     },
 
+    /** Privileged (platform administrator) access requires a verified second factor. No exceptions for unenrolled admins. */
     async sessionAllowsAdmin(userId: string, sessionId: string) {
-      const row = await deps.store.getMfa(userId);
-      if (!row?.enabled) return true;
-      return deps.store.hasMfaVerification(sessionId);
+      return (await mfaStateOf(userId, sessionId)) === "verified";
     },
 
     async recording(organizationId: string): Promise<RecordingSettings> {

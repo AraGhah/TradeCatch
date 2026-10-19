@@ -51,7 +51,7 @@ function createPostgresSecurityStore(connectionString: string): SecurityStore {
       }));
     },
     async saveAttempt(email, at) {
-      await pool.query(`INSERT INTO tc_login_attempts (id, email, created_at) VALUES ($1,$2,$3)`, [`att_${Date.now()}`, email, at]);
+      await pool.query(`INSERT INTO tc_login_attempts (id, email, created_at) VALUES ($1,$2,$3)`, [`att_${crypto.randomUUID()}`, email, at]);
     },
     async countAttempts(email, sinceMs, nowMs) {
       const res = await pool.query(`SELECT count(*)::int AS n FROM tc_login_attempts WHERE email = $1 AND created_at >= $2`, [email, new Date(nowMs - sinceMs).toISOString()]);

@@ -6,16 +6,16 @@ import { authorizeAiTool, recordingDecision } from "../../src/product/security/g
 import { verifyStripeSignature } from "../../src/product/security/stripe-webhook";
 import { createMemorySecurityStore } from "../../src/product/security/store";
 import { createSecurityService } from "../../src/product/security/service";
-import { totpCode } from "../../src/product/security/totp";
+import { matchTotpCounter, totpCode } from "../../src/product/security/totp";
 import { validateTwilioSignature } from "../../src/product/missed-call/twilio";
 
 const NOW = new Date("2026-10-16T18:00:00.000Z");
 
-function service() {
+function service(clock: () => Date = () => NOW) {
   const sessions = [{ id: "ses_1", createdAt: NOW.toISOString(), organizationId: "biz-a", userAgent: "test" }];
   return createSecurityService({
     store: createMemorySecurityStore(),
-    now: () => NOW,
+    now: clock,
     secret: () => "test-secret",
     listSessions: async () => sessions,
     revokeSession: async (id) => {
@@ -95,5 +95,79 @@ describe("security and privacy", () => {
     assert.equal(await monitor.sessionAllowsAdmin("admin-1", "ses_other"), false);
     for (let i = 0; i < 5; i += 1) await monitor.noteLogin("owner@example.com");
     assert.equal(await monitor.loginAllowed("owner@example.com"), false);
+  });
+});
+
+describe("administrator MFA is mandatory and cannot be switched off", () => {
+  it("does not let an administrator without MFA through", async () => {
+    const monitor = service();
+    assert.equal(await monitor.mfaState("admin-1", "ses_1"), "unenrolled");
+    assert.equal(await monitor.sessionAllowsAdmin("admin-1", "ses_1"), false);
+
+    // A secret that was issued but never confirmed is not a second factor either.
+    await monitor.enrollMfa("admin-1");
+    assert.equal(await monitor.mfaState("admin-1", "ses_1"), "pending");
+    assert.equal(await monitor.sessionAllowsAdmin("admin-1", "ses_1"), false);
+  });
+
+  it("refuses to re-enroll once MFA is enabled (the session-holder bypass)", async () => {
+    const monitor = service();
+    const first = await monitor.enrollMfa("admin-1");
+    await monitor.confirmMfa("admin-1", "ses_1", totpCode(first.secret, NOW.getTime()));
+    assert.equal(await monitor.mfaState("admin-1", "ses_1"), "verified");
+
+    // Attack: someone holding only a fresh, unverified session of this admin
+    // posts to the enroll endpoint hoping to reset the factor to "disabled".
+    await assert.rejects(() => monitor.enrollMfa("admin-1"), /already set up/);
+
+    // The factor is still on, a new session is still locked out, and the
+    // original authenticator still works.
+    assert.equal(await monitor.mfaState("admin-1", "ses_attacker"), "unverified");
+    assert.equal(await monitor.sessionAllowsAdmin("admin-1", "ses_attacker"), false);
+    const events = (await monitor.listAudit()).map((row) => row.action);
+    assert.ok(events.includes("mfa_enroll_refused"));
+  });
+
+  it("throttles wrong codes and then rejects even the right code", async () => {
+    const monitor = service();
+    const enrolled = await monitor.enrollMfa("admin-1");
+    const good = totpCode(enrolled.secret, NOW.getTime());
+    for (let i = 0; i < 5; i += 1) {
+      await assert.rejects(() => monitor.confirmMfa("admin-1", "ses_1", "000000"), /Invalid authentication code/);
+    }
+    await assert.rejects(() => monitor.confirmMfa("admin-1", "ses_1", good), (error: Error & { status?: number }) => {
+      assert.equal(error.status, 429);
+      return true;
+    });
+    assert.equal(await monitor.sessionAllowsAdmin("admin-1", "ses_1"), false);
+    assert.ok((await monitor.listAudit()).some((row) => row.action === "mfa_rate_limited"));
+  });
+
+  it("does not accept the same code twice", async () => {
+    const monitor = service();
+    const enrolled = await monitor.enrollMfa("admin-1");
+    const code = totpCode(enrolled.secret, NOW.getTime());
+    await monitor.confirmMfa("admin-1", "ses_1", code);
+    await assert.rejects(() => monitor.confirmMfa("admin-1", "ses_2", code), /Invalid authentication code/);
+    assert.equal(await monitor.sessionAllowsAdmin("admin-1", "ses_2"), false);
+  });
+
+  it("verifies a later sign-in with a fresh code and audits it", async () => {
+    let now = NOW;
+    const monitor = service(() => now);
+    const enrolled = await monitor.enrollMfa("admin-1");
+    await monitor.confirmMfa("admin-1", "ses_1", totpCode(enrolled.secret, now.getTime()));
+    now = new Date(NOW.getTime() + 5 * 60_000);
+    assert.equal(await monitor.sessionAllowsAdmin("admin-1", "ses_2"), false);
+    await monitor.confirmMfa("admin-1", "ses_2", totpCode(enrolled.secret, now.getTime()));
+    assert.equal(await monitor.sessionAllowsAdmin("admin-1", "ses_2"), true);
+    assert.ok((await monitor.listAudit()).some((row) => row.action === "mfa_verified"));
+  });
+
+  it("reports which 30-second step a code belongs to", () => {
+    const secret = "JBSWY3DPEHPK3PXP";
+    const code = totpCode(secret, NOW.getTime());
+    assert.equal(matchTotpCounter(secret, code, NOW.getTime()), Math.floor(NOW.getTime() / 30_000));
+    assert.equal(matchTotpCounter(secret, "12345", NOW.getTime()), null);
   });
 });

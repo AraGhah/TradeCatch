@@ -78,6 +78,17 @@ export async function requireTenantContext(): Promise<
     return { ok: false, status: 403, error: "Organization is not active." };
   }
 
+  // Being on the administrator list identifies a person; it grants nothing by
+  // itself. Cross-tenant power (`isPlatformAdmin`) additionally needs a second
+  // factor verified for this very session, so every access helper that checks
+  // `ctx.isPlatformAdmin` is covered without each one remembering to ask.
+  const adminIdentity = isPlatformAdminUser(user);
+  let adminVerified = false;
+  if (adminIdentity) {
+    const { getSecurityService } = await import("@/product/security/runtime");
+    adminVerified = await getSecurityService().sessionAllowsAdmin(user.id, session.id);
+  }
+
   return {
     ok: true,
     ctx: {
@@ -86,7 +97,8 @@ export async function requireTenantContext(): Promise<
       organization,
       membership,
       features: featuresForPlan(organization.plan),
-      isPlatformAdmin: isPlatformAdminUser(user),
+      isPlatformAdminIdentity: adminIdentity,
+      isPlatformAdmin: adminIdentity && adminVerified,
     },
   };
 }

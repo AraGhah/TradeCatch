@@ -13,7 +13,6 @@ import {
   SESSION_TTL_SECONDS,
   signSessionClaims,
 } from "@/product/saas/auth/session-token";
-import { isPlatformAdminUser } from "@/product/saas/platform-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +51,9 @@ export async function POST(request: NextRequest) {
 
   let membership = await saas.getMembership(target.id, auth.ctx.user.id);
   if (!membership) {
-    if (isPlatformAdminUser(auth.ctx.user) && target.accountType === "demo") {
+    // Verified administrators only: a listed email without a verified second
+    // factor must not be able to grant itself ownership of anything.
+    if (auth.ctx.isPlatformAdmin && target.accountType === "demo") {
       membership = await saas.addMembership({
         organizationId: target.id,
         userId: auth.ctx.user.id,

@@ -34,12 +34,23 @@ export function totpCode(secret: string, at = Date.now()): string {
   return String(code).padStart(6, "0");
 }
 
-export function verifyTotp(secret: string, code: string, at = Date.now()): boolean {
+/**
+ * Returns the 30-second counter the code matched (within ±1 step of `at`), or
+ * null. Callers use the counter to refuse a code that was already accepted.
+ */
+export function matchTotpCounter(secret: string, code: string, at = Date.now()): number | null {
   const normalized = code.replace(/\s/g, "");
-  return [-1, 0, 1].some((window) => {
-    const expected = totpCode(secret, at + window * 30_000);
-    const a = Buffer.from(expected);
+  let matched: number | null = null;
+  for (const window of [-1, 0, 1]) {
+    const step = at + window * 30_000;
+    const a = Buffer.from(totpCode(secret, step));
     const b = Buffer.from(normalized);
-    return a.length === b.length && timingSafeEqual(a, b);
-  });
+    // Evaluate every window so timing does not reveal which one matched.
+    if (a.length === b.length && timingSafeEqual(a, b)) matched = Math.floor(step / 30_000);
+  }
+  return matched;
+}
+
+export function verifyTotp(secret: string, code: string, at = Date.now()): boolean {
+  return matchTotpCounter(secret, code, at) !== null;
 }

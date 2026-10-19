@@ -27,7 +27,8 @@ export default async function AdminLayout({
   if (!isPlatformAdminUser(auth.ctx.user)) {
     redirect(locale === "fr" ? "/fr/app" : "/app");
   }
-  const verified = await getSecurityService().sessionAllowsAdmin(auth.ctx.user.id, auth.ctx.session.id);
+  const mfaState = await getSecurityService().mfaState(auth.ctx.user.id, auth.ctx.session.id);
+  const verified = mfaState === "verified";
   let tokenReady = false;
   if (verified) {
     const current = await readMatchingAdminJwt(auth.ctx.user.id, auth.ctx.session.id);
@@ -45,7 +46,7 @@ export default async function AdminLayout({
           {verified ? (
             tokenReady ? children : <AdminTokenGate />
           ) : (
-            <AdminMfaGate organizationId={auth.ctx.organization.id} />
+            <AdminMfaGate organizationId={auth.ctx.organization.id} state={mfaState} />
           )}
         </div>
       </div>

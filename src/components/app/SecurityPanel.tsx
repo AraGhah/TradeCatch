@@ -4,7 +4,15 @@ import { useEffect, useState } from "react";
 
 type SessionRow = { id: string; createdAt: string; userAgent?: string };
 
-export function SecurityPanel({ organizationId, isAdmin }: { organizationId: string; isAdmin: boolean }) {
+export function SecurityPanel({
+  organizationId,
+  isAdmin,
+  locale = "en",
+}: {
+  organizationId: string;
+  isAdmin: boolean;
+  locale?: "en" | "fr";
+}) {
   const [sessions, setSessions] = useState<SessionRow[]>([]);
   const [message, setMessage] = useState("");
 
@@ -23,12 +31,6 @@ export function SecurityPanel({ organizationId, isAdmin }: { organizationId: str
     if (response.ok) setSessions((rows) => rows.filter((row) => row.id !== sessionId));
   }
 
-  async function enroll() {
-    const response = await fetch(`/api/businesses/${organizationId}/security/mfa`, { method: "POST" });
-    const body = (await response.json()) as { otpauth?: string; error?: string };
-    setMessage(body.otpauth ? "Administrator verification is ready. Confirm it with your authenticator code." : body.error || "MFA is not available.");
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <ul className="flex flex-col gap-2">
@@ -40,9 +42,11 @@ export function SecurityPanel({ organizationId, isAdmin }: { organizationId: str
         ))}
       </ul>
       {isAdmin ? (
-        <button type="button" className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white" onClick={() => enroll()}>
-          Turn on administrator verification
-        </button>
+        // Administrator verification is mandatory and set up on the admin console
+        // itself, so there is a single place that issues and confirms the key.
+        <a className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white" href={locale === "fr" ? "/fr/admin" : "/admin"}>
+          {locale === "fr" ? "Vérification administrateur" : "Administrator verification"}
+        </a>
       ) : null}
       {message ? <p className="text-sm text-navy">{message}</p> : null}
     </div>
