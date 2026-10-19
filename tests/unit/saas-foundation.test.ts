@@ -159,7 +159,11 @@ describe("session token HMAC", () => {
     assert.equal(claims?.oid, "org_1");
     assert.equal(claims?.plan, "starter");
 
-    const bad = token.slice(0, -2) + "aa";
+    // Flip a data bit in the middle of the signature (never the unused tail bits).
+    const dot = token.indexOf(".");
+    const middle = dot + 10;
+    const flipped = token[middle] === "A" ? "B" : "A";
+    const bad = token.slice(0, middle) + flipped + token.slice(middle + 1);
     assert.equal(await verifySessionClaims(bad, secret), null);
 
     const expired = await signSessionClaims(
@@ -174,4 +178,32 @@ describe("session token HMAC", () => {
     );
     assert.equal(await verifySessionClaims(expired, secret), null);
   });
+
+  it("accepts only the canonical spelling of a signature and never throws on junk", async () => {
+    const secret = "test-auth-secret-at-least-32-chars!!";
+    const token = await signSessionClaims(
+      { sid: "ses_1", uid: "usr_1", oid: "org_1", plan: "starter", exp: Math.floor(Date.now() / 1000) + 3600 },
+      secret,
+    );
+    const [payload, sig] = token.split(".");
+    assert.ok(await verifySessionClaims(token, secret));
+    // Same signature bytes, different spelling: refused, so a token has one valid string.
+    assert.equal(await verifySessionClaims(`${payload}.${respellSignature(sig!)}`, secret), null);
+    assert.equal(await verifySessionClaims(`${payload}.${sig}=`, secret), null);
+    for (const junk of ["", ".", "a.b.c", `${payload}.!!!`, `${payload}.${sig}%`, `!!!.${sig}`]) {
+      assert.equal(await verifySessionClaims(junk, secret), null);
+    }
+  });
 });
+
+const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+/**
+ * A 32-byte HMAC ends in a character that carries 4 data bits and 2 unused
+ * bits, so changing only the unused bits yields a different string that
+ * decodes to the same signature.
+ */
+function respellSignature(sig: string): string {
+  const index = BASE64URL.indexOf(sig.at(-1)!);
+  return sig.slice(0, -1) + BASE64URL[(index & ~3) | ((index + 1) & 3)];
+}

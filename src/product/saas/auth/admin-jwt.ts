@@ -37,7 +37,9 @@ function b64urlToBytes(value: string): Uint8Array | null {
     const binary = atob(padded + pad);
     const out = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
-    return out;
+    // atob ignores the unused trailing bits, so several spellings decode to the
+    // same bytes. Accept only the one spelling we would have issued.
+    return b64url(out) === value ? out : null;
   } catch {
     return null;
   }
