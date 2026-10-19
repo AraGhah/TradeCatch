@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
 import { hashToken } from "@/product/saas/ids";
 import { getSaasStore } from "@/product/saas/runtime";
@@ -101,13 +102,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let json: unknown;
-  try {
-    json = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
-  }
-  const parsed = bodySchema.safeParse(json);
+  const read = await readJsonBody(request, 32_768);
+  if (!read.ok)
+    return NextResponse.json({ error: read.error }, { status: read.status });
+  const parsed = bodySchema.safeParse(read.data);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid body." }, { status: 400 });
   }

@@ -1,7 +1,18 @@
 /**
  * Per-organization CRM/automation webhook forwarder (Zapier, Make, HubSpot, etc.).
  * Failures go to growth CRM DLQ for retry — not silent drop.
+ *
+ * The destination is typed in by the customer, so it is checked again here
+ * (not only when it was saved), redirects are never followed, and failures are
+ * reported as fixed codes: raw network errors would tell the customer which
+ * internal hosts and ports answer.
  */
+
+import {
+  checkOutboundUrl,
+  hostResolution,
+  type HostResolver,
+} from "./safe-url";
 
 export type ProductCrmEvent = {
   eventType: string;
@@ -14,9 +25,18 @@ export async function forwardProductEventToCrm(
   webhookUrl: string,
   event: ProductCrmEvent,
   secret?: string | null,
+  deps: { fetchImpl?: typeof fetch; resolver?: HostResolver } = {},
 ): Promise<{ ok: boolean; error?: string; status?: number }> {
-  const url = webhookUrl.trim();
-  if (!url) return { ok: false, error: "missing_url" };
+  const raw = webhookUrl.trim();
+  if (!raw) return { ok: false, error: "missing_url" };
+
+  const checked = checkOutboundUrl(raw);
+  if (!checked.ok) return { ok: false, error: "blocked_url" };
+  if (
+    (await hostResolution(checked.url.hostname, deps.resolver)) === "non-public"
+  ) {
+    return { ok: false, error: "blocked_url" };
+  }
 
   const body = {
     source: "tradecatch-product",
@@ -27,7 +47,7 @@ export async function forwardProductEventToCrm(
   };
 
   try {
-    const response = await fetch(url, {
+    const response = await (deps.fetchImpl ?? fetch)(checked.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -35,8 +55,18 @@ export async function forwardProductEventToCrm(
         ...(secret?.trim() ? { Authorization: `Bearer ${secret.trim()}` } : {}),
       },
       body: JSON.stringify(body),
+      redirect: "manual",
       signal: AbortSignal.timeout(8_000),
     });
+    if (response.status >= 300 && response.status < 400) {
+      // A redirect could lead somewhere the checks above never saw (and would
+      // carry the bearer secret with it).
+      return {
+        ok: false,
+        status: response.status,
+        error: "redirect_not_followed",
+      };
+    }
     if (!response.ok) {
       return {
         ok: false,
@@ -46,9 +76,9 @@ export async function forwardProductEventToCrm(
     }
     return { ok: true, status: response.status };
   } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "send_failed",
-    };
+    const timedOut =
+      err instanceof Error &&
+      (err.name === "TimeoutError" || err.name === "AbortError");
+    return { ok: false, error: timedOut ? "timeout" : "network_error" };
   }
 }

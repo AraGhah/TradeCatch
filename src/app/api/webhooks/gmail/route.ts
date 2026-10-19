@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/request-body";
 import { safeEqual } from "@/lib/safe-compare";
 import { readGmailEnv } from "@/product/gmail/oauth";
 import { parseGmailPush } from "@/product/gmail/push";
@@ -27,9 +28,11 @@ export async function POST(request: NextRequest) {
   if (!env.webhookToken || !safeEqual(given, env.webhookToken)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
+  const read = await readJsonBody(request, 65_536);
+  if (!read.ok && read.status === 413) return NextResponse.json({ error: read.error }, { status: 413 });
   // Anything that is not a well-formed notification is acknowledged and dropped,
   // so Pub/Sub does not keep redelivering it.
-  const push = parseGmailPush(await request.json().catch(() => null));
+  const push = read.ok ? parseGmailPush(read.data) : null;
   if (!push) return NextResponse.json({ ok: true, ignored: true });
   const { email, historyId } = push;
 

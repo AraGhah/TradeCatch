@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
 import { reportError } from "@/lib/errors";
 import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
@@ -60,14 +61,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 429 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ ok: false }, { status: 400 });
-  }
+  const read = await readJsonBody(request, 16_384);
+  if (!read.ok)
+    return NextResponse.json({ ok: false }, { status: read.status });
 
-  const parsed = bodySchema.safeParse(body);
+  const parsed = bodySchema.safeParse(read.data);
   if (!parsed.success) {
     return NextResponse.json({ ok: false }, { status: 400 });
   }

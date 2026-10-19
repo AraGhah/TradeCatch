@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { publicHttpsUrl } from "@/lib/safe-url";
 import { z } from "zod";
 import {
   forbiddenFeatureResponse,
@@ -17,7 +18,7 @@ const completeSchema = z.object({
 
 const setUrlSchema = z.object({
   action: z.literal("set-url"),
-  googleReviewUrl: z.string().url(),
+  googleReviewUrl: publicHttpsUrl(),
 });
 
 export async function GET() {

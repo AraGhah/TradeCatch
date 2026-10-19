@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
 import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
 import {
@@ -52,13 +53,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  let json: unknown;
-  try {
-    json = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-  const parsed = schema.safeParse(json);
+  const read = await readJsonBody(request, 4_096);
+  if (!read.ok)
+    return NextResponse.json({ error: read.error }, { status: read.status });
+  const parsed = schema.safeParse(read.data);
   const text = parsed.success ? demoSpeechText(parsed.data.text) : null;
   if (!parsed.success || !text) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
