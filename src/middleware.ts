@@ -1,10 +1,23 @@
 import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { isCrossSiteMutation } from "./lib/csrf";
 import { routing } from "./i18n/routing";
 import { enforceStagingAccess } from "./lib/staging-middleware";
 
 const handleI18n = createMiddleware(routing);
+
+/** Hostnames this deployment answers to: what the request was sent to, and the configured public site. */
+function acceptedHosts(request: NextRequest): Array<string | null> {
+  let site: string | null = null;
+  try {
+    const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+    site = configured ? new URL(configured).host : null;
+  } catch {
+    site = null;
+  }
+  return [request.nextUrl.host, request.headers.get("host"), request.headers.get("x-forwarded-host"), site];
+}
 
 /**
  * Staging HTTP Basic gate (when configured) + locale routing.
@@ -29,7 +42,14 @@ export default function middleware(request: NextRequest) {
 
   // API routes must not go through next-intl locale rewrites.
   const path = request.nextUrl.pathname;
-  if (path.startsWith("/api/") || path === "/health" || path === "/ready") {
+  if (path.startsWith("/api/")) {
+    // Second layer behind SameSite cookies; see src/lib/csrf.ts.
+    if (isCrossSiteMutation({ method: request.method, headers: request.headers, hosts: acceptedHosts(request) })) {
+      return NextResponse.json({ error: "Cross-site request blocked." }, { status: 403 });
+    }
+    return NextResponse.next();
+  }
+  if (path === "/health" || path === "/ready") {
     return NextResponse.next();
   }
 
