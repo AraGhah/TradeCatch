@@ -19,6 +19,7 @@
     "check:legal": "node scripts/check-legal-placeholders.js",
     "check:media": "node scripts/check-repo-media.js",
     "check:dev-audit": "node scripts/check-dev-audit-exceptions.js",
+    "check:secrets": "node scripts/check-secrets.js",
     "check:brace-expansion": "node scripts/check-brace-expansion.js",
     "test:unit": "tsx --test tests/unit/*.test.ts",
     "test:qa": "tsx --test tests/qa/*.test.ts",
