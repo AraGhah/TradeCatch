@@ -33,6 +33,17 @@ describe("admin JWT", () => {
     );
   });
 
+  it("accepts only the canonical spelling of the signature", async () => {
+    const token = await signAdminJwt({ sub: "usr_1", sid: "ses_1" }, secret, 1_700_000_000_000);
+    const [header, payload, sig] = token.split(".");
+    assert.ok(await verifyAdminJwt(token, secret, 1_700_000_000_000));
+    assert.equal(
+      await verifyAdminJwt(`${header}.${payload}.${respellSignature(sig!)}`, secret, 1_700_000_000_000),
+      null,
+    );
+    assert.equal(await verifyAdminJwt(`${header}.${payload}.${sig}=`, secret, 1_700_000_000_000), null);
+  });
+
   it("rejects an unsigned token that claims the admin role", async () => {
     const header = b64url(JSON.stringify({ alg: "none", typ: "JWT" }));
     const payload = b64url(
@@ -53,4 +64,16 @@ describe("admin JWT", () => {
 
 function b64url(value: string): string {
   return Buffer.from(value, "utf8").toString("base64url");
+}
+
+const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+/**
+ * A 32-byte HMAC ends in a character that carries 4 data bits and 2 unused
+ * bits, so changing only the unused bits yields a different string that
+ * decodes to the same signature.
+ */
+function respellSignature(sig: string): string {
+  const index = BASE64URL.indexOf(sig.at(-1)!);
+  return sig.slice(0, -1) + BASE64URL[(index & ~3) | ((index + 1) & 3)];
 }

@@ -6,22 +6,14 @@ import {
   type FeatureId,
 } from "./entitlements";
 import { getSaasStore } from "./runtime";
+import { getAuthSecret } from "./auth/secret";
 import {
   SESSION_COOKIE,
   verifySessionClaims,
 } from "./auth/session-token";
 import type { TenantContext } from "./types";
 
-export function getAuthSecret(
-  env: NodeJS.ProcessEnv = process.env,
-): string | null {
-  const secret =
-    env.AUTH_SECRET?.trim() ||
-    env.SESSION_SECRET?.trim() ||
-    env.MISSED_CALL_OPS_SECRET?.trim() ||
-    "";
-  return secret || null;
-}
+export { getAuthSecret };
 
 export async function readSessionClaimsFromCookies(): Promise<{
   claims: Awaited<ReturnType<typeof verifySessionClaims>>;

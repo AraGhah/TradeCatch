@@ -1,5 +1,6 @@
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import { getSaasStore } from "@/product/saas/runtime";
+import { requireSealingSecret } from "@/product/saas/auth/secret";
 import { createSecurityService } from "./service";
 import { createMemorySecurityStore, type SecurityStore } from "./store";
 
@@ -18,7 +19,7 @@ export function getSecurityService() {
   return createSecurityService({
     store: store(),
     now: () => new Date(),
-    secret: () => process.env.AUTH_SECRET?.trim() || "tradecatch-dev-secret",
+    secret: () => requireSealingSecret(),
     listSessions: (userId) => getSaasStore().listSessionsForUser(userId),
     revokeSession: (id, at) => getSaasStore().revokeSession(id, at),
   });

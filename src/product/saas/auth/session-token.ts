@@ -15,13 +15,20 @@ function b64url(bytes: ArrayBuffer | Uint8Array): string {
   return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-function b64urlToBytes(value: string): Uint8Array {
+function b64urlToBytes(value: string): Uint8Array | null {
+  if (!/^[A-Za-z0-9_-]+$/.test(value)) return null;
   const padded = value.replace(/-/g, "+").replace(/_/g, "/");
   const pad = padded.length % 4 === 0 ? "" : "=".repeat(4 - (padded.length % 4));
-  const binary = atob(padded + pad);
-  const out = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
-  return out;
+  try {
+    const binary = atob(padded + pad);
+    const out = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) out[i] = binary.charCodeAt(i);
+    // atob ignores the unused trailing bits, so several spellings decode to the
+    // same bytes. Accept only the one spelling we would have issued.
+    return b64url(out) === value ? out : null;
+  } catch {
+    return null;
+  }
 }
 
 async function importKey(secret: string): Promise<CryptoKey> {
@@ -54,18 +61,22 @@ export async function verifySessionClaims(
   const [payload, sig] = parts;
   if (!payload || !sig) return null;
 
+  const sigBytes = b64urlToBytes(sig);
+  const payloadBytes = b64urlToBytes(payload);
+  if (!sigBytes || !payloadBytes) return null;
+
   const key = await importKey(secret);
   const ok = await crypto.subtle.verify(
     "HMAC",
     key,
-    Uint8Array.from(b64urlToBytes(sig)),
+    Uint8Array.from(sigBytes),
     encoder.encode(payload),
   );
   if (!ok) return null;
 
   try {
     const json = JSON.parse(
-      new TextDecoder().decode(b64urlToBytes(payload)),
+      new TextDecoder().decode(payloadBytes),
     ) as Partial<SessionClaims>;
     if (
       typeof json.sid !== "string" ||
