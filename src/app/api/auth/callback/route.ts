@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getClientIp } from "@/lib/rate-limit";
+import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
 import {
   consumeMagicLinkAndCreateSession,
   sessionCookieOptions,
@@ -21,10 +21,25 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const ip = getClientIp(request);
+  // Tokens are 256-bit, so guessing is hopeless; this only caps the database
+  // work a flood of junk links can cause. When the proxy is not trusted every
+  // visitor is "unknown", so that shared bucket gets a much larger budget.
+  const budget = await rateLimitAsync({
+    key: `auth-callback:${ip}`,
+    limit: ip.startsWith("unknown") ? 600 : 60,
+    windowMs: 10 * 60_000,
+  });
+  if (!budget.allowed) {
+    return NextResponse.redirect(
+      new URL(`${loginPath}?error=rate_limited`, request.url),
+    );
+  }
+
   const result = await consumeMagicLinkAndCreateSession({
     rawToken: token,
     userAgent: request.headers.get("user-agent") || undefined,
-    ip: getClientIp(request),
+    ip,
   });
 
   if (!result.ok) {

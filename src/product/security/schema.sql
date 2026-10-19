@@ -81,6 +81,17 @@ CREATE TABLE IF NOT EXISTS tc_login_attempts (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Shared fixed-window rate-limit counters (src/lib/pg-rate-limit.ts). Rows
+-- are disposable: a missing row simply means "no recent requests".
+CREATE TABLE IF NOT EXISTS tc_rate_limits (
+  key TEXT PRIMARY KEY,
+  count INT NOT NULL,
+  reset_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS tc_rate_limits_reset_at
+  ON tc_rate_limits (reset_at);
+
 CREATE TABLE IF NOT EXISTS tc_webhook_receipts (
   provider TEXT NOT NULL,
   event_id TEXT NOT NULL,

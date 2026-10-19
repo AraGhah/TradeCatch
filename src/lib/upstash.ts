@@ -55,10 +55,14 @@ export async function upstashRateLimit(input: {
   const ttlSec = Math.max(1, Math.ceil(input.windowMs / 1000));
   const redisKey = `rl:${input.key}`;
   const count = Number(await upstashCommand(["INCR", redisKey], env));
-  if (count === 1) {
+  let ttl = Number(await upstashCommand(["TTL", redisKey], env));
+  if (ttl < 0) {
+    // INCR and EXPIRE are separate calls; if a previous caller died between
+    // them the counter would never reset and the key would stay blocked
+    // forever. A counter with no expiry is repaired here instead.
     await upstashCommand(["EXPIRE", redisKey, ttlSec], env);
+    ttl = ttlSec;
   }
-  const ttl = Number(await upstashCommand(["TTL", redisKey], env));
   const resetAt = Date.now() + (ttl > 0 ? ttl * 1000 : input.windowMs);
   const allowed = count <= input.limit;
   return {

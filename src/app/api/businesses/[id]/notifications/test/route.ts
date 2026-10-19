@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit-response";
 import { z } from "zod";
 import { requireNotificationAccess } from "@/product/notifications/access";
 import { getNotificationService } from "@/product/notifications/runtime";
@@ -22,6 +23,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireNotificationAccess(id, "write");
   if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  const limited = await enforceRateLimit({
+    scope: "notification-test",
+    subject: `${id}:${access.ctx.user.id}`,
+    limit: 20,
+    windowMs: 10 * 60_000,
+  });
+  if (limited) return limited;
   const parsed = schema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid notification test." }, { status: 400 });
   const service = getNotificationService();

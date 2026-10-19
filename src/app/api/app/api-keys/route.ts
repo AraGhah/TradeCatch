@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit-response";
 import { z } from "zod";
 import {
   forbiddenFeatureResponse,
@@ -25,6 +26,14 @@ export async function POST(request: NextRequest) {
   if (!tenantHasFeature(auth.ctx, "WEBSITE_LEAD_CAPTURE")) {
     return forbiddenFeatureResponse("WEBSITE_LEAD_CAPTURE");
   }
+
+  const limited = await enforceRateLimit({
+    scope: "api-key-create",
+    subject: `${auth.ctx.organization.id}:${auth.ctx.user.id}`,
+    limit: 10,
+    windowMs: 60 * 60_000,
+  });
+  if (limited) return limited;
 
   let json: unknown = {};
   try {
