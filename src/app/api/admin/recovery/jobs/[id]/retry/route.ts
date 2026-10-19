@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
+import { safeErrorResponse } from "@/lib/api-error";
 import { ReliabilityError } from "@/product/reliability/service";
 import { getReliabilityService } from "@/product/reliability/runtime";
 
@@ -14,7 +15,11 @@ export async function POST(request: Request, { params }: Params) {
     const operation = await getReliabilityService().retryOperation(id, access.via);
     return NextResponse.json({ ok: true, operation, duplicateCustomerMessage: false });
   } catch (error) {
-    const status = error instanceof ReliabilityError ? error.status : 500;
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Retry failed." }, { status });
+    return safeErrorResponse(error, {
+      route: "admin.recovery.retry",
+      request,
+      publicErrors: [ReliabilityError],
+      fallback: "Retry failed.",
+    });
   }
 }

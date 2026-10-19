@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
+import { safeErrorResponse } from "@/lib/api-error";
 import {
   deleteDemoBusiness,
   toDemoBusinessProfile,
@@ -44,8 +45,16 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     await deleteDemoBusiness(id);
     return NextResponse.json({ ok: true, deleted: id });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Delete failed";
-    const status = message.includes("not found") ? 404 : 500;
-    return NextResponse.json({ error: message }, { status });
+    if (error instanceof Error && error.message.includes("not found")) {
+      return NextResponse.json(
+        { error: "Demo business not found." },
+        { status: 404 },
+      );
+    }
+    return safeErrorResponse(error, {
+      route: "admin.demo-businesses.delete",
+      request,
+      fallback: "Delete failed.",
+    });
   }
 }

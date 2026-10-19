@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { recordServerError } from "@/lib/api-error";
 import {
   buildOverview,
   patchAiReceptionistSettings,
@@ -23,8 +24,8 @@ export async function GET(request: NextRequest, { params }: Params) {
   try {
     await runtime.refresh(true);
   } catch (err) {
-    integrationError =
-      err instanceof Error ? err.message : "Receptionist runtime unavailable";
+    await recordServerError(err, { route: "ai-receptionist.refresh", request });
+    integrationError = "Receptionist runtime unavailable";
   }
 
   const profile = await runtime.profileStore.getProfile(id);

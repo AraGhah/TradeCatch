@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
+import { safeErrorResponse } from "@/lib/api-error";
 import { resetDemoBusiness } from "@/product/demo/business-service";
 
 export const dynamic = "force-dynamic";
@@ -48,8 +49,16 @@ export async function POST(request: NextRequest, { params }: Params) {
       note: "Owner access retained. Only this demo business was reset.",
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Reset failed";
-    const status = message.includes("not found") ? 404 : 500;
-    return NextResponse.json({ error: message }, { status });
+    if (error instanceof Error && error.message.includes("not found")) {
+      return NextResponse.json(
+        { error: "Demo business not found." },
+        { status: 404 },
+      );
+    }
+    return safeErrorResponse(error, {
+      route: "admin.demo-businesses.reset",
+      request,
+      fallback: "Reset failed.",
+    });
   }
 }

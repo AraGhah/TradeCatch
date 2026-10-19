@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
+import { safeErrorResponse } from "@/lib/api-error";
 import { LaunchError } from "@/product/launch/service";
 import { getLaunchService } from "@/product/launch/runtime";
 
@@ -31,7 +32,11 @@ export async function POST(request: NextRequest) {
     const pilot = await getLaunchService().createPilot(parsed.data);
     return NextResponse.json({ ok: true, pilot });
   } catch (error) {
-    const status = error instanceof LaunchError ? error.status : 500;
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Failed." }, { status });
+    return safeErrorResponse(error, {
+      route: "admin.pilots.create",
+      request,
+      publicErrors: [LaunchError],
+      fallback: "Failed.",
+    });
   }
 }
