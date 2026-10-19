@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { test, expect, request as playwrightRequest, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { FakeGoogle } from "./support/fake-google";
@@ -606,6 +607,49 @@ test.describe("Gmail receiving", () => {
 
     const anon = await playwrightRequest.newContext({ baseURL: `http://localhost:${process.env.TRADECATCH_E2E_PORT || 3100}` });
     expect((await anon.get("/api/app/overview")).status()).toBe(401);
+    await anon.dispose();
+  });
+
+  test("calendar OAuth callback: a state only works for the person and business it was issued to", async () => {
+    // Google Calendar is not configured in this environment, so a state that clears
+    // every identity check ends in ?calendar=error (the token exchange), never in
+    // ?calendar=forbidden. Nothing here reaches Google.
+    const secret = "tradecatch-e2e-session-secret-not-for-production";
+    const mint = (organizationId: string, userId: string, exp = Date.now() + 60_000) => {
+      const body = Buffer.from(JSON.stringify({ organizationId, userId, exp, nonce: "e2e" })).toString("base64url");
+      return `${body}.${createHmac("sha256", secret).update(body).digest("base64url")}`;
+    };
+    const who = async (person: Person) => {
+      const me = (await (await person.page.request.get("/api/app/me")).json()) as {
+        user: { id: string };
+        organization: { id: string };
+      };
+      return { userId: me.user.id, orgId: me.organization.id };
+    };
+    const outcome = async (person: Person, state: string) => {
+      const res = await person.page.request.get(`/api/calendar/oauth/callback?code=x&state=${encodeURIComponent(state)}`, {
+        maxRedirects: 0,
+      });
+      expect(res.status()).toBe(307);
+      return new URL(res.headers().location).searchParams.get("calendar");
+    };
+    const a = await who(alice);
+    const b = await who(bob);
+
+    expect(await outcome(alice, mint(a.orgId, a.userId))).toBe("error");
+    // Another person's state, handed to Alice: right business, wrong user.
+    expect(await outcome(alice, mint(a.orgId, b.userId))).toBe("forbidden");
+    // Alice's own user id against Bob's business.
+    expect(await outcome(alice, mint(b.orgId, a.userId))).toBe("forbidden");
+    // Bob cannot use the state issued to Alice, and the reverse.
+    expect(await outcome(bob, mint(a.orgId, a.userId))).toBe("forbidden");
+    // Expired, tampered and unsigned states never reach the identity check.
+    expect(await outcome(alice, mint(a.orgId, a.userId, Date.now() - 1000))).toBe("expired");
+    expect(await outcome(alice, `${mint(a.orgId, a.userId)}x`)).toBe("expired");
+    // Not signed in at all.
+    const anon = await playwrightRequest.newContext({ baseURL: `http://localhost:${process.env.TRADECATCH_E2E_PORT || 3100}` });
+    const res = await anon.get(`/api/calendar/oauth/callback?code=x&state=${encodeURIComponent(mint(a.orgId, a.userId))}`, { maxRedirects: 0 });
+    expect(new URL(res.headers().location).searchParams.get("calendar")).toBe("forbidden");
     await anon.dispose();
   });
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { readOAuthState, exchangeGoogleCode, sealTokens, listGoogleCalendars } from "@/product/scheduling/google";
 import { getSchedulingStore } from "@/product/scheduling/runtime";
 import { requireTenantContext } from "@/product/saas/tenant";
+import { allows } from "@/product/security/permissions";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,15 @@ export async function GET(request: NextRequest) {
   const parsed = readOAuthState(state);
   if (!parsed) return NextResponse.redirect(`${back}?calendar=expired`);
   const tenant = await requireTenantContext();
-  if (!tenant.ok || (tenant.ctx.organization.id !== parsed.organizationId && !tenant.ctx.isPlatformAdmin)) {
+  if (!tenant.ok) return NextResponse.redirect(`${back}?calendar=forbidden`);
+  const { ctx } = tenant;
+  // The state was minted for one person acting on one business. Someone else who
+  // is handed the link (or a replay after a role change) must not attach a calendar.
+  if (
+    ctx.user.id !== parsed.userId ||
+    (ctx.organization.id !== parsed.organizationId && !ctx.isPlatformAdmin) ||
+    !allows(ctx.membership.role, "manage_settings", ctx.isPlatformAdmin)
+  ) {
     return NextResponse.redirect(`${back}?calendar=forbidden`);
   }
   try {
