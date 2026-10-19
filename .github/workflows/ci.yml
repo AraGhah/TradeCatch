@@ -9,11 +9,17 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# The jobs only read the repository; nothing here needs to write to it.
+permissions:
+  contents: read
+
 jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -22,6 +28,9 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: No committed secrets
+        run: npm run check:secrets
 
       - name: i18n parity
         run: npm run check:i18n
@@ -77,6 +86,8 @@ jobs:
     needs: quality
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
