@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { allows } from "@/product/security/permissions";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
 import { toDemoBusinessProfile } from "@/product/demo/business-service";
@@ -96,8 +97,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const tenant = await requireTenantContext();
     if (
       tenant.ok &&
-      tenant.ctx.membership.role === "member" &&
-      !tenant.ctx.isPlatformAdmin
+      !allows(tenant.ctx.membership.role, "manage_settings", tenant.ctx.isPlatformAdmin)
     ) {
       return NextResponse.json(
         { error: "Insufficient permissions to update business settings." },

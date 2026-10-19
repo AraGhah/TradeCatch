@@ -1,4 +1,5 @@
 import { requireTenantContext } from "@/product/saas/tenant";
+import { allows } from "@/product/security/permissions";
 
 export async function requireSchedulingAccess(
   organizationId: string,
@@ -16,8 +17,7 @@ export async function requireSchedulingAccess(
   }
   if (
     mode === "write" &&
-    tenant.ctx.membership.role === "member" &&
-    !tenant.ctx.isPlatformAdmin
+    !allows(tenant.ctx.membership.role, "manage_settings", tenant.ctx.isPlatformAdmin)
   ) {
     return {
       ok: false as const,

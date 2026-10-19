@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { publicHttpsUrl } from "@/lib/safe-url";
+import { forbiddenUnless } from "@/product/security/access";
 import { z } from "zod";
 import {
   forbiddenFeatureResponse,
@@ -48,6 +49,12 @@ export async function POST(request: NextRequest) {
   if (!tenantHasFeature(auth.ctx, "REVIEW_AUTOMATION")) {
     return forbiddenFeatureResponse("REVIEW_AUTOMATION");
   }
+  const denied = forbiddenUnless(
+    auth.ctx.membership.role,
+    "write_leads",
+    auth.ctx.isPlatformAdmin,
+  );
+  if (denied) return denied;
 
   let json: unknown;
   try {

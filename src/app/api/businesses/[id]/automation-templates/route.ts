@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
 
 export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
-  const access = await requireAutomationAccess(id, "read");
+  const access = await requireAutomationAccess(id, "write");
   if (!access.ok) {
     return NextResponse.json({ error: access.error }, { status: access.status });
   }

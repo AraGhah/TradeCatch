@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { allows } from "@/product/security/permissions";
 import {
   buildPhoneSettingsView,
   parsePhoneSettings,
@@ -45,7 +46,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
 
-  if (access.role === "member") {
+  if (!allows(access.role, "manage_settings", access.via === "admin")) {
     return NextResponse.json(
       { error: "Only an owner or admin can change phone settings." },
       { status: 403 },
