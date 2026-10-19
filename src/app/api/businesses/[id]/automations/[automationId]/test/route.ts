@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit-response";
 import { z } from "zod";
 import { requireAutomationAccess } from "@/product/sms-automation/access";
 import { AutomationError } from "@/product/sms-automation/service";
@@ -33,6 +34,13 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!access.ok) {
     return NextResponse.json({ error: access.error }, { status: access.status });
   }
+  const limited = await enforceRateLimit({
+    scope: "automation-test",
+    subject: `${id}:${access.ctx.user.id}`,
+    limit: 30,
+    windowMs: 10 * 60_000,
+  });
+  if (limited) return limited;
   let json: unknown;
   try {
     json = await request.json();
@@ -42,6 +50,16 @@ export async function POST(request: NextRequest, { params }: Params) {
   const parsed = schema.safeParse(json);
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid test request." }, { status: 400 });
+  }
+  if (parsed.data.action === "live_self") {
+    // The only action here that sends a real, billed text message.
+    const liveLimited = await enforceRateLimit({
+      scope: "automation-live-sms",
+      subject: `${id}:${access.ctx.user.id}`,
+      limit: 5,
+      windowMs: 60 * 60_000,
+    });
+    if (liveLimited) return liveLimited;
   }
   const services = getAutomationServices();
   const automations = await services.list(id);

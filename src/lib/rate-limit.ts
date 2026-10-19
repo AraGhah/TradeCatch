@@ -2,13 +2,15 @@ import { createMemoryStore, type TimedStore } from "./store";
 import { isE2eHarness } from "./config";
 import { isUpstashConfigured, upstashRateLimit } from "./upstash";
 
-// In-memory sliding-window rate limiter, keyed by IP + route.
+// Rate limiting. `rateLimit` is an in-memory fixed window; its state lives in
+// one process (one Worker isolate, one serverless function), so on its own the
+// effective limit is (per-instance limit × instance count).
 //
-// Residual risk: this state lives in a single Node process. Behind multiple
-// server instances (most production deployments, including Vercel's
-// serverless functions) each instance has its own counters, so the effective
-// limit is (per-instance limit × instance count). Set UPSTASH_REDIS_REST_* and
-// call `rateLimitAsync` so counters are shared — see src/lib/upstash.ts.
+// `rateLimitAsync` is what routes should call. It shares counters across all
+// instances, in this order: Upstash Redis when UPSTASH_REDIS_REST_* is set,
+// otherwise the application's Postgres (tc_rate_limits) when the durable store
+// is on, otherwise this process's memory. If a shared tier errors, the next tier
+// answers, so an outage degrades to per-instance limits and never to "no limit".
 
 type Bucket = { count: number; resetAt: number };
 
@@ -59,23 +61,69 @@ export function rateLimit({
   };
 }
 
-/**
- * Prefer shared Upstash counters when configured; otherwise in-memory.
- * Fail closed to in-memory if Redis errors so a Redis outage does not take
- * the form offline (still rate-limits per instance).
- */
+type Env = Record<string, string | undefined>;
+
+/** Same switch every Postgres-backed store uses: a URL and the durable flag. */
+function sharedDatabaseUrl(env: Env): string | null {
+  const url = env.DATABASE_URL?.trim();
+  const durable =
+    env.MISSED_CALL_DURABLE_STORE === "1" || env.SAAS_DURABLE_STORE === "1";
+  return url && durable ? url : null;
+}
+
+/** True when limits are counted across instances rather than per process. */
+export function sharedRateLimitConfigured(env: Env = process.env): boolean {
+  return isUpstashConfigured(env) || sharedDatabaseUrl(env) !== null;
+}
+
+const SWEEP_ONE_IN = 200;
+const reportedFailures = new Set<string>();
+
+/** One log line per failure kind per process, so an outage does not flood the logs. */
+function reportOnce(tier: string, error: unknown) {
+  if (reportedFailures.has(tier)) return;
+  reportedFailures.add(tier);
+  console.error(`[rate-limit] ${tier} failed; using the next tier`, error);
+}
+
+async function postgresRateLimit(
+  input: { key: string; limit: number; windowMs: number },
+  url: string,
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const [{ getPgPool }, shared] = await Promise.all([
+    import("../product/missed-call/postgres-store"),
+    import("./pg-rate-limit"),
+  ]);
+  const pool = getPgPool(url);
+  const result = await shared.pgRateLimit(pool, input);
+  if (Math.random() * SWEEP_ONE_IN < 1) {
+    shared
+      .pgRateLimitSweep(pool)
+      .catch((error) => reportOnce("postgres sweep", error));
+  }
+  return result;
+}
+
 export async function rateLimitAsync(input: {
   key: string;
   limit: number;
   windowMs: number;
-  env?: Record<string, string | undefined>;
+  env?: Env;
 }): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
   const env = input.env ?? process.env;
   if (isUpstashConfigured(env)) {
     try {
       return await upstashRateLimit({ ...input, env });
     } catch (err) {
-      console.error("[rate-limit] Upstash failed; falling back to memory", err);
+      reportOnce("Upstash", err);
+    }
+  }
+  const databaseUrl = sharedDatabaseUrl(env);
+  if (databaseUrl) {
+    try {
+      return await postgresRateLimit(input, databaseUrl);
+    } catch (err) {
+      reportOnce("Postgres", err);
     }
   }
   return rateLimit(input);
