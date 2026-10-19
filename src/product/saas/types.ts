@@ -82,6 +82,9 @@ export type TenantContext = {
   organization: Organization;
   membership: Membership;
   features: readonly FeatureId[];
+  /** The person is on the administrator list. Identity only: use for UI hints, never for authorization. */
+  isPlatformAdminIdentity: boolean;
+  /** Administrator whose session has passed the second factor. The only flag that unlocks cross-tenant access. */
   isPlatformAdmin: boolean;
 };
 

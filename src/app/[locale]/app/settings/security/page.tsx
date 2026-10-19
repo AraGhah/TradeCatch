@@ -17,8 +17,8 @@ export default async function SecuritySettingsPage({
       <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t("headline")}</h1>
       <p className="max-w-2xl text-sm text-navy/70">{t("intro")}</p>
       <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">{t("sessions")}</h2>
-      <SecurityPanel organizationId={auth.ctx.organization.id} isAdmin={auth.ctx.isPlatformAdmin} />
-      {auth.ctx.isPlatformAdmin ? <p className="text-sm text-navy/70">{t("mfaHint")}</p> : null}
+      <SecurityPanel organizationId={auth.ctx.organization.id} isAdmin={auth.ctx.isPlatformAdminIdentity} locale={locale === "fr" ? "fr" : "en"} />
+      {auth.ctx.isPlatformAdminIdentity ? <p className="text-sm text-navy/70">{t("mfaHint")}</p> : null}
     </div>
   );
 }

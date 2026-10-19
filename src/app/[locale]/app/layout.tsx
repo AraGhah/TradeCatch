@@ -26,7 +26,7 @@ export default async function AppLayout({
       userName={auth.ctx.user.name}
       locale={locale === "fr" ? "fr" : "en"}
       accountType={auth.ctx.organization.accountType}
-      isPlatformAdmin={auth.ctx.isPlatformAdmin}
+      isPlatformAdmin={auth.ctx.isPlatformAdminIdentity}
       organizationId={auth.ctx.organization.id}
       gmailEnabled={gmailConfigured()}
     >
