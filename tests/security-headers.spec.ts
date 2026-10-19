@@ -49,4 +49,33 @@ test.describe("security headers", () => {
     const headers = response.headers();
     expect(headers["x-content-type-options"]).toBe("nosniff");
   });
+
+  test("no API route opts in to cross-origin access", async ({ request }) => {
+    const origin = "https://evil.example";
+    for (const path of ["/api/health", "/api/app/me", "/api/book-audit"]) {
+      const simple = await request.get(path, { headers: { Origin: origin } });
+      expect(simple.headers()["access-control-allow-origin"], path).toBeUndefined();
+      const preflight = await request.fetch(path, {
+        method: "OPTIONS",
+        headers: {
+          Origin: origin,
+          "Access-Control-Request-Method": "POST",
+          "Access-Control-Request-Headers": "content-type",
+        },
+      });
+      expect(preflight.headers()["access-control-allow-origin"], path).toBeUndefined();
+      expect(preflight.headers()["access-control-allow-credentials"], path).toBeUndefined();
+    }
+  });
+
+  test("a cross-site write that carries a session cookie is refused before the route runs", async ({
+    request,
+  }) => {
+    const response = await request.post("/api/app/api-keys", {
+      headers: { "Sec-Fetch-Site": "cross-site", Cookie: "tc_session=not-a-real-session" },
+      data: { name: "x" },
+    });
+    expect(response.status()).toBe(403);
+    expect(await response.json()).toEqual({ error: "Cross-site request blocked." });
+  });
 });
