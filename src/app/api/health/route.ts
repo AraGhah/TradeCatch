@@ -13,6 +13,7 @@ import {
 } from "@/lib/config";
 import { authorizeOpsRequest } from "@/lib/ops-auth";
 import { getProductionSafetyIssues } from "@/lib/production-safety";
+import { getSecurityWarnings } from "@/lib/security-warnings";
 import {
   loadClientAccountFromEnv,
   validateClientConfig,
@@ -248,6 +249,8 @@ export async function GET(request: NextRequest) {
       ok: productionSafetyIssues.length === 0,
       issues: productionSafetyIssues,
     },
+    // Advisory only: never changes `ok` or the status code.
+    securityWarnings: realProduction && !e2eHarness ? getSecurityWarnings() : [],
   };
 
   const siteReady =
