@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/product/missed-call/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\" \"src/app/api/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/product/missed-call/**/*.{ts,tsx}\" \"src/lib/**/*.{ts,tsx}\" \"src/app/api/**/*.{ts,tsx}\"",
     "db:schema": "node scripts/apply-missed-call-schema.js",
+    "db:lockdown": "node scripts/lockdown-data-api.js",
     "db:backup": "node scripts/db-backup.js",
     "db:restore-drill": "node scripts/db-restore-drill.js",
     "db:seed:staging": "node scripts/seed-staging-demo.js",
