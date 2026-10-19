@@ -72,3 +72,8 @@ next-env.d.ts
 .wrangler
 .dev.vars*
 !.dev.vars.example
+
+# database backups hold customer data; never commit them
+/backups/
+*.dump
+*.dump.sha256
