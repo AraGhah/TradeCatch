@@ -1,4 +1,5 @@
-import { Pool } from "pg";
+import type { Pool } from "pg";
+import { createPostgresPool } from "@/lib/postgres-pool";
 import {
   defaultOrgSettings,
   type OrgSettings,
@@ -20,7 +21,7 @@ const pools = new Map<string, Pool>();
 function getPool(url: string) {
   let pool = pools.get(url);
   if (!pool) {
-    pool = new Pool({ connectionString: url, max: 5 });
+    pool = createPostgresPool({ connectionString: url, max: 5 });
     pools.set(url, pool);
   }
   return pool;
@@ -28,8 +29,9 @@ function getPool(url: string) {
 
 function mapSettings(row: Record<string, unknown>): OrgSettings {
   const rawQs = row.qualification_json;
-  let qualificationQuestions: QualificationQuestion[] =
-    defaultOrgSettings(String(row.organization_id)).qualificationQuestions;
+  let qualificationQuestions: QualificationQuestion[] = defaultOrgSettings(
+    String(row.organization_id),
+  ).qualificationQuestions;
   if (Array.isArray(rawQs)) {
     qualificationQuestions = rawQs as QualificationQuestion[];
   } else if (typeof rawQs === "string") {
@@ -138,7 +140,9 @@ function mapTimeline(row: Record<string, unknown>): TimelineEvent {
   };
 }
 
-export function createPostgresGrowthStore(connectionString: string): GrowthStore {
+export function createPostgresGrowthStore(
+  connectionString: string,
+): GrowthStore {
   const pool = getPool(connectionString);
 
   return {

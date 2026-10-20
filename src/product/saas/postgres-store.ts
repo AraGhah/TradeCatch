@@ -1,8 +1,13 @@
 import type { Pool, QueryResultRow } from "pg";
-import { Pool as PgPool } from "pg";
+import { createPostgresPool } from "@/lib/postgres-pool";
 import type { PlanId } from "./entitlements";
 import { newId, slugify } from "./ids";
-import { mapOrgRow, mapUserRow, type OrgRow, type UserRow } from "./org-mapping";
+import {
+  mapOrgRow,
+  mapUserRow,
+  type OrgRow,
+  type UserRow,
+} from "./org-mapping";
 import { normalizeEmail, type SaasStore } from "./store";
 import {
   mergeBusinessFeatures,
@@ -34,7 +39,7 @@ const pools = new Map<string, Pool>();
 function getPool(connectionString: string): Pool {
   let pool = pools.get(connectionString);
   if (!pool) {
-    pool = new PgPool({ connectionString, max: 5 });
+    pool = createPostgresPool({ connectionString, max: 5 });
     pools.set(connectionString, pool);
   }
   return pool;
