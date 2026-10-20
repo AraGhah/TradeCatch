@@ -92,7 +92,7 @@ export function PlanBreakEven({
             autoComplete="off"
             aria-describedby={hintId}
             aria-invalid={value === null}
-            className="min-w-0 flex-1 bg-transparent px-4 py-3.5 font-heading text-[24px] font-extrabold tracking-[-0.03em] text-heading outline-none"
+            className="min-w-0 flex-1 bg-transparent px-4 py-3.5 font-heading text-[24px] font-extrabold tracking-[-0.03em] text-heading tabular-nums outline-none"
           />
         </div>
         <p
@@ -131,7 +131,7 @@ export function PlanBreakEven({
                   {formatPlanMoney(monthly, locale)}
                 </p>
                 <div className="text-right sm:text-left">
-                  <p className="m-0 font-heading text-[18px] font-extrabold tracking-[-0.03em] text-heading">
+                  <p className="m-0 font-heading text-[18px] font-extrabold tracking-[-0.03em] text-heading tabular-nums">
                     {months === null ? "—" : describe(months)}
                   </p>
                   <div
