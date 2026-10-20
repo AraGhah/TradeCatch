@@ -11,6 +11,9 @@ Changes:
   No lint rule is disabled. Lint now rejects warnings as well as errors.
 - Exclude ignored local artifacts and generated browser reports from ESLint;
   application code and tracked tests remain checked.
+- Wait for the hydrated consent banner before booking-form browser tests type
+  into fields. A full local run exposed a startup race that cleared early input;
+  the three affected cases then passed three repetitions each.
 - Regenerate Worker binding/runtime declarations with the lockfile's Wrangler.
 - Run CI on development branch pushes and allow manual runs, so a revision can
   pass before being merged. Both quality and e2e are required on main, including
@@ -40,6 +43,9 @@ Validation:
 - Five release-gate unit tests cover successful runs and fail-closed cases,
   including other revisions/branches/workflows, skipped jobs and newer failed
   runs. An actual dirty checkout was rejected before any build or upload.
+- Local unit results: 654 passed, one existing skipped; QA: two passed.
+  Initial development-branch CI run 39516984789 passed both jobs, including all
+  158 browser tests. The final test-readiness change is checked again by CI.
 - Full unit/QA suites and the complete GitHub CI workflow are required before
   rollout. Browser tests use fictional accounts and fake providers; they do
   not send customer messages or charge payment methods.
