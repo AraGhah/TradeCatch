@@ -3,7 +3,10 @@ import { expect, test, type Page } from "@playwright/test";
 async function reviewRequest(page: Page) {
   await page.goto("/book-audit");
   const reject = page.getByRole("button", { name: "Reject non-essential" });
-  if (await reject.isVisible()) await reject.click();
+  // Every test starts in a fresh browser context. Wait for the hydrated
+  // consent banner before typing; otherwise hydration can replace early input.
+  await expect(reject).toBeVisible();
+  await reject.click();
   await page.locator("#audit-field-firstName").fill("TC002");
   await page.locator("#audit-field-lastName").fill("Synthetic");
   await page.getByRole("button", { name: "Continue" }).click();
