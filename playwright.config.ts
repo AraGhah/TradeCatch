@@ -13,7 +13,9 @@ export const E2E_PORT = Number(process.env.TRADECATCH_E2E_PORT || 3100);
  */
 export const E2E_ORIGIN = `http://localhost:${E2E_PORT}`;
 /** Where tests/gmail.spec.ts serves its stand-in for Google. */
-export const GMAIL_E2E_PORT = Number(process.env.TRADECATCH_GMAIL_E2E_PORT || 4010);
+export const GMAIL_E2E_PORT = Number(
+  process.env.TRADECATCH_GMAIL_E2E_PORT || 4010,
+);
 
 /**
  * Playwright boots a production server on a reserved port.
@@ -39,6 +41,18 @@ export default defineConfig({
       PORT: String(E2E_PORT),
       NEXT_PUBLIC_SITE_URL: E2E_ORIGIN,
       TRADECATCH_E2E: "1",
+      // The default harness exercises storage-disabled behavior. Never inherit
+      // a developer's production database or provider keys from .env.local.
+      DATABASE_URL: "",
+      MISSED_CALL_DURABLE_STORE: "",
+      SAAS_DURABLE_STORE: "",
+      ERROR_WEBHOOK_URL: "",
+      UPSTASH_REDIS_REST_URL: "",
+      UPSTASH_REDIS_REST_TOKEN: "",
+      TURNSTILE_SECRET_KEY: "",
+      RESEND_API_KEY: "",
+      LEADS_WEBHOOK_URL: "",
+      ELEVENLABS_API_KEY: "",
       AUTH_SECRET: "tradecatch-e2e-session-secret-not-for-production",
       SAAS_DEV_LOGIN: "1",
       MISSED_CALL_OPS_SECRET: "tradecatch-e2e-ops-secret-not-for-production",

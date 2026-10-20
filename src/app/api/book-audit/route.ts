@@ -7,13 +7,12 @@ import { verifyTurnstileToken } from "@/lib/turnstile";
 import { sendBookAuditEmails } from "@/lib/email";
 import { forwardLeadToCrm } from "@/lib/leads";
 import { reportError } from "@/lib/errors";
-import { createMemoryStore } from "@/lib/store";
-import { isUpstashConfigured, upstashClaimIdempotencyKey } from "@/lib/upstash";
 import {
   claimBookAuditDelivery,
   persistBookAuditLead,
   releaseBookAuditDeliveryClaim,
   updateBookAuditDelivery,
+  type PersistedBookAuditLead,
 } from "@/lib/book-audit-leads";
 import {
   getProductionConfigErrors,
@@ -26,10 +25,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
-// Duplicate-submission guard (per-instance). When Upstash is configured,
-// claims also go through Redis so multi-instance deploys share the window.
-const seenIdempotencyKeys = createMemoryStore();
-const IDEMPOTENCY_WINDOW_MS = 10 * 60 * 1000;
+const SAVE_ERROR =
+  "We couldn't save your request. Please try again or call us.";
 
 const requestSchema = bookAuditSchema.extend({
   idempotencyKey: z.string().uuid(),
@@ -95,8 +92,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  // Verify Turnstile before any idempotency side effects so concurrent
-  // unverified requests cannot burn the duplicate key.
+  // Do not consume a bot-verification token when storage is unavailable.
+  // This guard is only a readiness check; persistence must still succeed below.
+  if (
+    !isDurableMissedCallStoreConfigured() ||
+    !process.env.DATABASE_URL?.trim()
+  ) {
+    console.error("[book-audit] durable storage is not configured");
+    return jsonError(SAVE_ERROR, 503);
+  }
+
+  // Verify Turnstile before persisting the lead.
   const turnstileResult = await verifyTurnstileToken(
     payload.turnstileToken,
     ip,
@@ -111,42 +117,7 @@ export async function POST(request: NextRequest) {
     return jsonError("Bot verification failed. Please try again.", 400);
   }
 
-  const now = Date.now();
-  if (isUpstashConfigured()) {
-    try {
-      const claimed = await upstashClaimIdempotencyKey({
-        key: `book-audit:${idempotencyKey}`,
-        ttlMs: IDEMPOTENCY_WINDOW_MS,
-      });
-      if (!claimed) {
-        return NextResponse.json({ ok: true, duplicate: true });
-      }
-    } catch (err) {
-      console.error(
-        "[book-audit] Upstash idempotency failed; using memory",
-        err,
-      );
-    }
-  }
-
-  seenIdempotencyKeys.prune(IDEMPOTENCY_WINDOW_MS, now);
-  if (seenIdempotencyKeys.has(idempotencyKey)) {
-    return NextResponse.json({ ok: true, duplicate: true });
-  }
-
-  // Mark idempotency only after Turnstile passes; clear on total delivery failure.
-  seenIdempotencyKeys.set(idempotencyKey, now);
-
-  const durableConfigured = isDurableMissedCallStoreConfigured();
-  let persisted:
-    | {
-        id: string;
-        duplicate: boolean;
-        emailSent: boolean;
-        crmForwarded: boolean;
-      }
-    | null
-    | undefined;
+  let persisted: PersistedBookAuditLead | null;
 
   // Durable-first: write the lead before email/CRM so a later crash cannot
   // confirm success to the visitor while dropping the record.
@@ -163,84 +134,61 @@ export async function POST(request: NextRequest) {
       crmForwarded: false,
     });
   } catch (err) {
-    seenIdempotencyKeys.delete(idempotencyKey);
     await reportError(
       err instanceof Error
         ? err
         : new Error("book-audit durable persist failed"),
       { ip, trade: payload.trade },
     );
-    return jsonError(
-      "We couldn't save your request. Please try again or call us.",
-      503,
-    );
+    return jsonError(SAVE_ERROR, 503);
   }
 
-  if (durableConfigured && !persisted) {
-    seenIdempotencyKeys.delete(idempotencyKey);
+  if (!persisted) {
     await reportError(new Error("book-audit durable persist returned null"), {
       ip,
       trade: payload.trade,
     });
-    return jsonError(
-      "We couldn't save your request. Please try again or call us.",
-      503,
-    );
+    return jsonError(SAVE_ERROR, 503);
   }
 
   // Fully delivered on a prior attempt — clean duplicate response.
-  if (persisted?.duplicate && persisted.emailSent && persisted.crmForwarded) {
+  // PostgreSQL's unique key is the only duplicate authority. A cache claim
+  // cannot prove a lead was saved, especially while another request is saving.
+  if (persisted.duplicate && persisted.emailSent && persisted.crmForwarded) {
     return NextResponse.json({ ok: true, duplicate: true });
   }
 
-  let sent = false;
-  let forwarded = false;
-
-  if (persisted?.id && durableConfigured) {
-    // Only one concurrent worker may attempt undelivered channels.
-    const claim = await claimBookAuditDelivery(persisted.id);
-    if (!claim) {
-      return NextResponse.json({ ok: true, duplicate: true });
-    }
-    const needEmail = !claim.emailSent;
-    const needCrm = !claim.crmForwarded;
-    const results = await Promise.all([
-      needEmail
-        ? sendBookAuditEmails(payload)
-        : Promise.resolve({ sent: true }),
-      needCrm
-        ? forwardLeadToCrm(payload)
-        : Promise.resolve({ forwarded: true }),
-    ]);
-    sent = results[0].sent;
-    forwarded = results[1].forwarded;
-    try {
-      await updateBookAuditDelivery(persisted.id, {
-        emailSent: sent,
-        crmForwarded: forwarded,
-      });
-    } catch (err) {
-      await reportError(
-        err instanceof Error
-          ? err
-          : new Error("book-audit delivery status update failed"),
-        { ip, trade: payload.trade, leadId: persisted.id },
-      );
-    }
-    if (!sent || !forwarded) {
-      await releaseBookAuditDeliveryClaim(persisted.id);
-    }
-  } else {
-    const results = await Promise.all([
-      sendBookAuditEmails(payload),
-      forwardLeadToCrm(payload),
-    ]);
-    sent = results[0].sent;
-    forwarded = results[1].forwarded;
+  // Only one concurrent worker may attempt undelivered channels.
+  const claim = await claimBookAuditDelivery(persisted.id);
+  if (!claim) {
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
+  const needEmail = !claim.emailSent;
+  const needCrm = !claim.crmForwarded;
+  const results = await Promise.all([
+    needEmail ? sendBookAuditEmails(payload) : Promise.resolve({ sent: true }),
+    needCrm ? forwardLeadToCrm(payload) : Promise.resolve({ forwarded: true }),
+  ]);
+  const sent = results[0].sent;
+  const forwarded = results[1].forwarded;
+  try {
+    await updateBookAuditDelivery(persisted.id, {
+      emailSent: sent,
+      crmForwarded: forwarded,
+    });
+  } catch (err) {
+    await reportError(
+      err instanceof Error
+        ? err
+        : new Error("book-audit delivery status update failed"),
+      { ip, trade: payload.trade, leadId: persisted.id },
+    );
+  }
+  if (!sent || !forwarded) {
+    await releaseBookAuditDeliveryClaim(persisted.id);
   }
 
-  // Still accept the submission either way (it's durable if Postgres is
-  // configured). Only alert when a channel that IS configured actually
+  // The submission is already durable. Only alert when a configured channel
   // failed — neither channel being set up yet is an expected setup state,
   // not an incident, and shouldn't page anyone on every test submission.
   const emailConfigured = isResendConfigured();
@@ -275,6 +223,6 @@ export async function POST(request: NextRequest) {
     ok: true,
     emailSent: sent,
     crmForwarded: forwarded,
-    ...(persisted?.duplicate ? { duplicate: true } : {}),
+    ...(persisted.duplicate ? { duplicate: true } : {}),
   });
 }

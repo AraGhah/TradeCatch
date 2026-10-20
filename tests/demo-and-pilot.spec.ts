@@ -34,7 +34,9 @@ test.describe("first-demo journeys", () => {
     );
 
     await dialog.getByText("Transcript", { exact: true }).click();
-    await expect(dialog).toContainText("Illustrative demo with a fictional business");
+    await expect(dialog).toContainText(
+      "Illustrative demo with a fictional business",
+    );
     // The receptionist takes a request; it never promises a slot on the call.
     await expect(dialog).toContainText("I've sent your request");
 
@@ -51,9 +53,13 @@ test.describe("first-demo journeys", () => {
     await page.goto("/");
     await rejectCookiesIfVisible(page);
 
-    await page.getByRole("button", { name: "Watch the missed-call demo" }).click();
+    await page
+      .getByRole("button", { name: "Watch the missed-call demo" })
+      .click();
 
-    const dialog = page.getByRole("dialog", { name: "TradeCatch missed-call demo" });
+    const dialog = page.getByRole("dialog", {
+      name: "TradeCatch missed-call demo",
+    });
     await expect(dialog).toBeVisible();
     await expect(dialog.locator("video")).toHaveAttribute(
       "src",
@@ -115,7 +121,7 @@ test.describe("first-demo journeys", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 
-  test("the public audit wizard completes through its confirmation screen", async ({
+  test("the public audit wizard shows a save error when durable storage is disabled", async ({
     page,
   }) => {
     await page.goto("/book-audit");
@@ -150,9 +156,22 @@ test.describe("first-demo journeys", () => {
 
     const submit = page.getByRole("button", { name: "Submit request" });
     await expect(submit).not.toHaveAttribute("aria-disabled", "true");
+    const response = page.waitForResponse("**/api/book-audit");
     await submit.click();
+    expect((await response).status()).toBe(503);
     await expect(
       page.getByRole("heading", { name: "Got it. Your audit request is in." }),
+    ).not.toBeVisible();
+    await expect(
+      page
+        .getByRole("alert")
+        .filter({ hasText: "We couldn't submit your audit request" }),
+    ).toBeVisible();
+    await expect(submit).toHaveAttribute("aria-busy", "false");
+    await expect(
+      page.getByRole("heading", {
+        name: "Check your answers, then send it over.",
+      }),
     ).toBeVisible();
   });
 
