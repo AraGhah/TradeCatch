@@ -41,6 +41,7 @@ async function signIn(page: Page, plan: "starter" | "growth") {
   await page.getByLabel("Work email").fill(email);
   await page.getByRole("button", { name: "Email me a sign-in link" }).click();
   await page.getByRole("link", { name: "Open workspace" }).click();
+  await page.getByRole("button", { name: "Confirm and sign in" }).click();
   await expect(page).toHaveURL(/\/app(?:\/)?$/);
 }
 
