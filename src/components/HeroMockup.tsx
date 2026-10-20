@@ -45,101 +45,107 @@ export function HeroMockup({
 }) {
   const [shown, setShown] = useState<Msg[]>([]);
   const [typing, setTyping] = useState<"out" | "in" | null>(null);
-  const [parallax, setParallax] = useState(0);
   const [floatVisible, setFloatVisible] = useState(false);
-  const [reduceMotion, setReduceMotion] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  });
-  const timers = useRef<number[]>([]);
-  const threadRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let frameId: number | null = null;
-    function sync() {
-      setReduceMotion(media.matches);
-      if (media.matches) setParallax(0);
-    }
-    media.addEventListener("change", sync);
-
-    function onScroll() {
-      if (media.matches || frameId !== null) return;
-      frameId = window.requestAnimationFrame(() => {
-        frameId = null;
-        const next = Math.round(Math.min(window.scrollY, 1200) / 8) * 8;
-        setParallax((prev) => (prev === next ? prev : next));
-      });
-    }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      media.removeEventListener("change", sync);
-      window.removeEventListener("scroll", onScroll);
-      if (frameId !== null) window.cancelAnimationFrame(frameId);
-    };
-  }, []);
-
+  // GSAP drives the conversation loop and the scroll parallax. It is loaded on
+  // demand so it stays out of the first-load bundle; until it arrives the phone
+  // simply shows its empty thread, as it always did before the first message.
   useEffect(() => {
     let cancelled = false;
-    const clearTimers = () => {
-      timers.current.forEach((id) => window.clearTimeout(id));
-      timers.current = [];
-    };
+    let teardown: (() => void) | undefined;
 
-    function delay(ms: number) {
-      const d = reduceMotion ? Math.min(ms, 120) : ms;
-      return new Promise<void>((resolve) => {
-        const id = window.setTimeout(() => {
-          timers.current = timers.current.filter((t) => t !== id);
-          resolve();
-        }, d);
-        timers.current.push(id);
-      });
-    }
+    async function start() {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+      const root = rootRef.current;
+      if (cancelled || !root) return;
+      gsap.registerPlugin(ScrollTrigger);
 
-    async function run() {
-      while (!cancelled) {
+      const reset = () => {
         setShown([]);
         setTyping(null);
         setFloatVisible(false);
+      };
 
-        if (reduceMotion) {
-          setShown(messages);
-          setFloatVisible(true);
-          await delay(4000);
-          continue;
-        }
+      const mm = gsap.matchMedia();
 
-        for (let i = 0; i < messages.length; i++) {
-          if (cancelled) return;
-          const msg = messages[i];
+      // Reduced motion: show the finished conversation, no loop, no parallax.
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        setShown(messages);
+        setTyping(null);
+        setFloatVisible(true);
+      });
+
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        reset();
+
+        // One beat per message; times are seconds on the timeline.
+        const tl = gsap.timeline({
+          paused: true,
+          repeat: -1,
+          repeatDelay: RESTART_PAUSE_MS / 1000,
+          onRepeat: reset,
+        });
+        let t = 0;
+        messages.forEach((msg, i) => {
           const timing = TIMING[i] ?? { after: 800 };
-          const beat = { ...msg, ...timing };
-
-          if (beat.think && (beat.type === "out" || beat.type === "in")) {
-            setTyping(beat.type);
-            await delay(beat.think);
-            if (cancelled) return;
-            setTyping(null);
+          if (timing.think && (msg.type === "out" || msg.type === "in")) {
+            const side = msg.type;
+            tl.call(() => setTyping(side), undefined, t);
+            t += timing.think / 1000;
+            tl.call(() => setTyping(null), undefined, t);
           }
+          tl.call(
+            () => {
+              setShown((prev) => [...prev, msg]);
+              if (
+                msg.type === "win" ||
+                (msg.type === "event" && /ALERT|ALERTÉ|ALERTED/i.test(msg.text))
+              ) {
+                setFloatVisible(true);
+              }
+            },
+            undefined,
+            t,
+          );
+          t += timing.after / 1000;
+        });
+        tl.set({}, {}, t); // pad the last beat's trailing pause into the loop
 
-          setShown((prev) => [...prev, msg]);
-          if (msg.type === "event" && /ALERT|ALERTÉ|ALERTED/i.test(msg.text)) {
-            setFloatVisible(true);
-          }
-          if (msg.type === "win") setFloatVisible(true);
-          await delay(beat.after);
-        }
-        await delay(RESTART_PAUSE_MS);
-      }
+        // Only spend renders on the loop while the phone is on screen.
+        const visibility = ScrollTrigger.create({
+          trigger: root,
+          start: "top bottom",
+          end: "bottom top",
+          onToggle: (self) => tl.paused(!self.isActive),
+        });
+        tl.paused(!visibility.isActive);
+
+        // Drift up to 54px as the page scrolls past the first 1200px.
+        gsap.to(root, {
+          y: -54,
+          ease: "none",
+          scrollTrigger: {
+            trigger: document.documentElement,
+            start: 0,
+            end: 1200,
+            scrub: true,
+          },
+        });
+      });
+
+      teardown = () => mm.revert();
     }
 
-    run();
+    void start();
     return () => {
       cancelled = true;
-      clearTimers();
+      teardown?.();
     };
-  }, [messages, reduceMotion]);
+  }, [messages]);
 
   const staticDescription = messages
     .map((m) => m.text)
@@ -149,13 +155,9 @@ export function HeroMockup({
 
   return (
     <div
+      ref={rootRef}
       id="missed-call-demo"
       className="relative mx-auto w-full max-w-[384px] scroll-mt-28"
-      style={{
-        transform: reduceMotion
-          ? undefined
-          : `translateY(${parallax * -0.045}px)`,
-      }}
     >
       <p className="sr-only">{staticDescription || disclaimer}</p>
       <div
@@ -205,7 +207,6 @@ export function HeroMockup({
           </div>
 
           <div
-            ref={threadRef}
             className="flex flex-1 flex-col justify-end gap-2.5 overflow-hidden px-[18px] py-4"
             aria-hidden="true"
           >
