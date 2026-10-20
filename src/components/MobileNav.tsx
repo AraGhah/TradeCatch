@@ -102,13 +102,15 @@ export function MobileNav({
       </div>
 
       <nav className="flex flex-1 flex-col overflow-y-auto px-[clamp(20px,4vw,40px)] pt-4">
-        {links.map((link) => (
+        {links.map((link, i) => (
           <Link
             key={link.href}
             // @ts-expect-error - href comes from a typed union at call sites
             href={link.href}
             onClick={close}
-            className={`border-b border-white/[0.09] py-5 font-heading text-[26px] font-bold tracking-[-0.03em] text-white ${FOCUS_RING}`}
+            // The menu opens rarely, so its links earn a short staggered entrance.
+            style={{ animationDelay: `${60 + i * 40}ms` }}
+            className={`animate-tc-in border-b border-white/[0.09] py-5 font-heading text-[26px] font-bold tracking-[-0.03em] text-white ${FOCUS_RING}`}
           >
             {link.label}
           </Link>
