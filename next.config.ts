@@ -1,6 +1,7 @@
 import path from "path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
+import { loginConfirmationHeaders } from "./src/product/saas/auth/login-confirmation";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -78,6 +79,14 @@ const nextConfig: NextConfig = {
       {
         source: "/(.*)",
         headers: securityHeaders,
+      },
+      {
+        // OpenNext applies configured headers after Route Handler headers.
+        // Keep the token-bearing document private at both layers.
+        source: "/api/auth/callback",
+        headers: Object.entries(loginConfirmationHeaders).map(
+          ([key, value]) => ({ key, value }),
+        ),
       },
     ];
   },
