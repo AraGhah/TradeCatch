@@ -44,6 +44,10 @@ export const bookAuditSchema = z.object({
 });
 
 export type BookAuditPayload = z.infer<typeof bookAuditSchema>;
+export type BookAuditContactPayload = Omit<
+  BookAuditPayload,
+  "turnstileToken" | "companyWebsite"
+>;
 
 /**
  * Short capture wizard for outreach / founding-pilot intake.

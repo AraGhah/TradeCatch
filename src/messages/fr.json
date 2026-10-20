@@ -1544,7 +1544,7 @@
     "submit": "Soumettre la demande",
     "confirmation": {
       "headline": "C'est reçu. Votre demande d'audit est en main.",
-      "body": "Ara vous contactera sous peu pour confirmer un moment. Ayez sous la main votre volume d'appels récent, votre liste de soumissions ouvertes et les logiciels que vous utilisez actuellement.",
+        "body": "Votre demande est enregistrée de façon sécuritaire. Ara vous contactera pour confirmer un moment. Le courriel de confirmation pourrait arriver plus tard. Ayez sous la main votre volume d'appels récent, votre liste de soumissions ouvertes et les logiciels que vous utilisez actuellement.",
       "backToSite": "Retour au site",
       "submitAnother": "Soumettre une autre demande",
       "calendarHint": "Vous préférez choisir un horaire maintenant? Réservez un créneau de 20 minutes.",

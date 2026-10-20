@@ -73,11 +73,12 @@ function buildSlackPayload(
  * Discord/Slack incoming webhook, etc.). Configure ERROR_WEBHOOK_URL.
  *
  * Never throws — monitoring must not break the user path.
+ * Returns true only when the monitoring endpoint acknowledges the alert.
  */
 export async function reportError(
   error: unknown,
   context: Record<string, unknown> = {},
-): Promise<void> {
+): Promise<boolean> {
   const webhookUrl = process.env.ERROR_WEBHOOK_URL?.trim();
   const message =
     error instanceof Error
@@ -89,7 +90,7 @@ export async function reportError(
 
   console.error("[error]", message, context);
 
-  if (!webhookUrl) return;
+  if (!webhookUrl) return false;
 
   const payload = DISCORD_WEBHOOK_RE.test(webhookUrl)
     ? buildDiscordPayload(message, stack, context)
@@ -104,13 +105,17 @@ export async function reportError(
         };
 
   try {
-    await fetch(webhookUrl, {
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(4_000),
     });
+    if (!response.ok)
+      console.error("[error] webhook rejected", response.status);
+    return response.ok;
   } catch (sendError) {
     console.error("[error] webhook failed", sendError);
+    return false;
   }
 }

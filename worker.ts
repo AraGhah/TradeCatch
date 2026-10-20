@@ -8,6 +8,7 @@ type TradeCatchWorkerEnv = CloudflareEnv & {
   CRON_SECRET?: string;
   MISSED_CALL_OPS_SECRET?: string;
   NEXT_PUBLIC_SITE_URL?: string;
+  BOOK_AUDIT_RETRY_SECRET?: string;
 };
 
 // Preserve any cache Durable Object exports produced by OpenNext.
@@ -18,9 +19,14 @@ export { DOShardedTagCache } from "./.open-next/worker.js";
 // @ts-ignore -- generated during `opennextjs-cloudflare build`.
 export { BucketCachePurge } from "./.open-next/worker.js";
 
-function schedulerSecret(env: TradeCatchWorkerEnv): string {
+function schedulerSecret(env: TradeCatchWorkerEnv, path: string): string {
   const secret =
-    env.MISSED_CALL_OPS_SECRET?.trim() || env.CRON_SECRET?.trim() || "";
+    (path === "/api/book-audit/notifications/tick"
+      ? env.BOOK_AUDIT_RETRY_SECRET?.trim()
+      : "") ||
+    env.MISSED_CALL_OPS_SECRET?.trim() ||
+    env.CRON_SECRET?.trim() ||
+    "";
   if (!secret) {
     throw new Error(
       "Cloudflare scheduler requires MISSED_CALL_OPS_SECRET or CRON_SECRET",
@@ -40,7 +46,6 @@ export default {
   },
 
   async scheduled(controller, env, ctx) {
-    const secret = schedulerSecret(env);
     const origin = schedulerOrigin(env);
 
     try {
@@ -49,7 +54,7 @@ export default {
           new Request(new URL(path, origin), {
             method: "POST",
             headers: {
-              authorization: `Bearer ${secret}`,
+              authorization: `Bearer ${schedulerSecret(env, path)}`,
               "user-agent": "TradeCatch-Cloudflare-Scheduler/1.0",
               // Existing routes use this authenticated marker to distinguish a
               // scheduler from manual ops requests that require X-Ops-Actor.

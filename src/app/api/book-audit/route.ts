@@ -4,24 +4,19 @@ import { z } from "zod";
 import { bookAuditSchema } from "@/lib/validation/book-audit";
 import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
 import { verifyTurnstileToken } from "@/lib/turnstile";
-import { sendBookAuditEmails } from "@/lib/email";
-import { forwardLeadToCrm } from "@/lib/leads";
 import { reportError } from "@/lib/errors";
 import {
-  claimBookAuditDelivery,
   persistBookAuditLead,
-  releaseBookAuditDeliveryClaim,
-  updateBookAuditDelivery,
   type PersistedBookAuditLead,
 } from "@/lib/book-audit-leads";
 import {
   getProductionConfigErrors,
   isDurableMissedCallStoreConfigured,
-  isE2eHarness,
-  isLeadsWebhookConfigured,
-  isProductionRuntime,
-  isResendConfigured,
 } from "@/lib/config";
+import {
+  getBookAuditNotificationStatus,
+  processBookAuditNotifications,
+} from "@/lib/book-audit-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -151,78 +146,36 @@ export async function POST(request: NextRequest) {
     return jsonError(SAVE_ERROR, 503);
   }
 
-  // Fully delivered on a prior attempt — clean duplicate response.
-  // PostgreSQL's unique key is the only duplicate authority. A cache claim
-  // cannot prove a lead was saved, especially while another request is saving.
-  if (persisted.duplicate && persisted.emailSent && persisted.crmForwarded) {
-    return NextResponse.json({ ok: true, duplicate: true });
-  }
-
-  // Only one concurrent worker may attempt undelivered channels.
-  const claim = await claimBookAuditDelivery(persisted.id);
-  if (!claim) {
-    return NextResponse.json({ ok: true, duplicate: true });
-  }
-  const needEmail = !claim.emailSent;
-  const needCrm = !claim.crmForwarded;
-  const results = await Promise.all([
-    needEmail ? sendBookAuditEmails(payload) : Promise.resolve({ sent: true }),
-    needCrm ? forwardLeadToCrm(payload) : Promise.resolve({ forwarded: true }),
-  ]);
-  const sent = results[0].sent;
-  const forwarded = results[1].forwarded;
+  // The lead and its retry jobs have committed together. A delivery outage
+  // cannot change that fact or depend on the visitor submitting again.
+  let status = {
+    emailSent: persisted.emailSent,
+    customerEmailSent: false,
+    crmForwarded: persisted.crmForwarded,
+    notificationsDelivered: false,
+  };
   try {
-    await updateBookAuditDelivery(persisted.id, {
-      emailSent: sent,
-      crmForwarded: forwarded,
-    });
+    await processBookAuditNotifications({ leadId: persisted.id, limit: 3 });
+    status = await getBookAuditNotificationStatus(persisted.id);
   } catch (err) {
-    await reportError(
-      err instanceof Error
-        ? err
-        : new Error("book-audit delivery status update failed"),
-      { ip, trade: payload.trade, leadId: persisted.id },
-    );
-  }
-  if (!sent || !forwarded) {
-    await releaseBookAuditDeliveryClaim(persisted.id);
-  }
-
-  // The submission is already durable. Only alert when a configured channel
-  // failed — neither channel being set up yet is an expected setup state,
-  // not an incident, and shouldn't page anyone on every test submission.
-  const emailConfigured = isResendConfigured();
-  const crmConfigured = isLeadsWebhookConfigured();
-  const emailFailed = emailConfigured && !sent;
-  const crmFailed = crmConfigured && !forwarded;
-  if (emailFailed && crmFailed) {
-    await reportError(new Error("book-audit delivery failed (email + CRM)"), {
-      ip,
-      trade: payload.trade,
-      persisted: Boolean(persisted),
-    });
-  } else if (isProductionRuntime() && !isE2eHarness() && emailFailed) {
-    await reportError(new Error("book-audit email send failed"), {
-      ip,
-      trade: payload.trade,
-      forwarded,
-      persisted: Boolean(persisted),
+    console.error("[book-audit] initial notification processing deferred", {
+      leadId: persisted.id,
+      error: err instanceof Error ? err.name : "UnknownError",
     });
   }
 
-  console.info("[book-audit] submission accepted", {
-    ip,
-    trade: payload.trade,
-    preferredLanguage: payload.preferredLanguage,
-    emailSent: sent,
-    crmForwarded: forwarded,
-    persisted: Boolean(persisted),
+  console.info("[book-audit] lead saved", {
+    leadId: persisted.id,
+    notificationsDelivered: status.notificationsDelivered,
   });
 
   return NextResponse.json({
     ok: true,
-    emailSent: sent,
-    crmForwarded: forwarded,
+    leadSaved: true,
+    ...status,
+    notificationsStatus: status.notificationsDelivered
+      ? "delivered"
+      : "pending",
     ...(persisted.duplicate ? { duplicate: true } : {}),
   });
 }
