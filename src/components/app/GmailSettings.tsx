@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
+import { GmailSyncStatus } from "./GmailSyncStatus";
 import { GMAIL_EVENT } from "@/components/app/GmailSyncBadge";
 import type { GmailNotice } from "@/product/gmail/http";
+import type { GmailPublicStatus } from "@/product/gmail/types";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
@@ -30,6 +32,8 @@ export function GmailSettings({
   email,
   lastError,
   lastSyncAt,
+  pushEnabled = false,
+  pushConfigured = false,
   notice,
 }: {
   configured: boolean;
@@ -37,29 +41,33 @@ export function GmailSettings({
   email: string | null;
   lastError: string | null;
   lastSyncAt: string | null;
+  pushEnabled?: boolean;
+  pushConfigured?: boolean;
   notice: GmailNotice | null;
 }) {
   const t = useTranslations("app.gmail");
   const lang = useLocale() === "fr" ? "fr" : "en";
   const router = useRouter();
   const [pending, setPending] = useState<"disconnect" | "sync" | null>(null);
-  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    kind: "ok" | "error";
+    text: string;
+  } | null>(null);
 
   // A fresh redirect result wins; otherwise show what the last sync reported.
-  const problem = asProblem(notice) ?? (status === "not_connected" ? null : asProblem(lastError));
+  const problem =
+    asProblem(notice) ??
+    (status === "not_connected" ? null : asProblem(lastError));
   const connectHref = `/api/app/gmail/connect?locale=${lang}`;
-  const when = lastSyncAt
-    ? new Intl.DateTimeFormat(lang === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium", timeStyle: "short" }).format(
-        new Date(lastSyncAt),
-      )
-    : null;
 
   async function disconnect() {
     if (!window.confirm(t("disconnectConfirm"))) return;
     setPending("disconnect");
     setMessage(null);
     try {
-      const response = await fetch("/api/app/gmail/disconnect", { method: "POST" });
+      const response = await fetch("/api/app/gmail/disconnect", {
+        method: "POST",
+      });
       if (!response.ok) throw new Error(String(response.status));
       setMessage({ kind: "ok", text: t("disconnectedOk") });
       window.dispatchEvent(new CustomEvent(GMAIL_EVENT, { detail: {} }));
@@ -76,8 +84,16 @@ export function GmailSettings({
     setPending("sync");
     setMessage(null);
     try {
-      const response = await fetch("/api/app/gmail/sync?mode=manual", { method: "POST" });
-      const body = (await response.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      const response = await fetch("/api/app/gmail/sync?mode=manual", {
+        method: "POST",
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        status?: GmailPublicStatus;
+      };
+      if (body.status)
+        window.dispatchEvent(new CustomEvent(GMAIL_EVENT, { detail: body }));
       if (!response.ok || body.ok === false) {
         const key = asProblem(body.error ?? null) ?? "sync_failed";
         setMessage({ kind: "error", text: t(`errors.${key}`) });
@@ -91,24 +107,46 @@ export function GmailSettings({
   }
 
   const shownStatus =
-    status === "connected" && email ? t("status.connected", { email }) : t(`status.${status}`);
+    status === "connected" && email
+      ? t("status.connected", { email })
+      : t(`status.${status}`);
 
   return (
-    <section className="rounded-md border border-navy/10 bg-white px-5 py-4" aria-labelledby="gmail-settings-title">
-      <h2 id="gmail-settings-title" className="font-[family-name:var(--font-archivo)] text-lg font-extrabold text-navy">
+    <section
+      className="rounded-md border border-navy/10 bg-white px-5 py-4"
+      aria-labelledby="gmail-settings-title"
+    >
+      <h2
+        id="gmail-settings-title"
+        className="font-[family-name:var(--font-archivo)] text-lg font-extrabold text-navy"
+      >
         {t("title")}
       </h2>
       <p className="mt-2 text-sm text-navy/80">{t("intro")}</p>
       <p className="mt-1 text-sm text-navy/80">{t("privacy")}</p>
 
-      <p className="mt-3 text-sm font-semibold text-navy" data-testid="gmail-status">
+      <p
+        className="mt-3 text-sm font-semibold text-navy"
+        data-testid="gmail-status"
+      >
         {t("statusLabel")} {shownStatus}
       </p>
       {status !== "not_connected" ? (
-        <p className="mt-1 text-sm text-navy/70">
-          {when ? t("lastSync", { when }) : t("neverSynced")}
-        </p>
+        <GmailSyncStatus
+          lastSyncAt={lastSyncAt}
+          pushEnabled={pushEnabled}
+          pushConfigured={pushConfigured}
+        />
       ) : null}
+      <p className="mt-3 text-sm text-navy/80">
+        {t("replyAlertsHint")}{" "}
+        <Link
+          href="/app/settings/notifications"
+          className="font-semibold underline"
+        >
+          {t("configureReplyAlerts")}
+        </Link>
+      </p>
 
       <div aria-live="polite">
         {notice === "connected" && status === "connected" ? (
@@ -117,7 +155,11 @@ export function GmailSettings({
           </p>
         ) : null}
         {problem ? (
-          <p className="mt-2 text-sm text-ember-text" role="alert" data-testid="gmail-problem">
+          <p
+            className="mt-2 text-sm text-ember-text"
+            role="alert"
+            data-testid="gmail-problem"
+          >
             {t(`errors.${problem}`)}
           </p>
         ) : null}
@@ -170,7 +212,9 @@ export function GmailSettings({
         ) : null}
       </div>
       {!configured && status === "not_connected" && !problem ? (
-        <p className="mt-3 text-sm text-navy/80">{t("errors.not_configured")}</p>
+        <p className="mt-3 text-sm text-navy/80">
+          {t("errors.not_configured")}
+        </p>
       ) : null}
     </section>
   );

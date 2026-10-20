@@ -11,6 +11,7 @@ describe("Cloudflare scheduler", () => {
   it("maps each configured schedule to the expected internal routes", () => {
     assert.deepEqual(routesForCloudflareCron("* * * * *"), [
       "/api/book-audit/notifications/tick",
+      "/api/gmail/sync/tick",
       "/api/missed-call/escalations/tick",
       "/api/automations/tick",
       "/api/notifications/tick",
@@ -22,7 +23,6 @@ describe("Cloudflare scheduler", () => {
       "/api/growth/crm/tick",
       "/api/receptionist/tick",
       "/api/growth/email/tick",
-      "/api/gmail/sync/tick",
       "/api/scheduling/reconcile",
       "/api/monitoring/tick",
     ]);
@@ -65,6 +65,7 @@ describe("Cloudflare scheduler", () => {
 
     assert.deepEqual(result.completed, [
       "/api/book-audit/notifications/tick",
+      "/api/gmail/sync/tick",
       "/api/missed-call/escalations/tick",
       "/api/automations/tick",
       "/api/notifications/tick",

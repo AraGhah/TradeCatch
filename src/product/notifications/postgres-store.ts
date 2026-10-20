@@ -24,7 +24,9 @@ function noteFrom(row: Record<string, unknown>): ContractorNotification {
     appointmentId: row.appointment_id ? String(row.appointment_id) : undefined,
     callId: row.call_id ? String(row.call_id) : undefined,
     href: row.href ? String(row.href) : undefined,
-    consolidateKey: row.consolidate_key ? String(row.consolidate_key) : undefined,
+    consolidateKey: row.consolidate_key
+      ? String(row.consolidate_key)
+      : undefined,
     idempotencyKey: String(row.idempotency_key),
     simulated: Boolean(row.simulated),
     createdAt: new Date(String(row.created_at)).toISOString(),
@@ -32,7 +34,9 @@ function noteFrom(row: Record<string, unknown>): ContractorNotification {
   };
 }
 
-export function createPostgresNotificationStore(connectionString: string): NotificationStore {
+export function createPostgresNotificationStore(
+  connectionString: string,
+): NotificationStore {
   const pool = getPgPool(connectionString);
   const query = (text: string, values?: unknown[]) => pool.query(text, values);
 
@@ -43,23 +47,34 @@ export function createPostgresNotificationStore(connectionString: string): Notif
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
          ON CONFLICT (organization_id, idempotency_key) DO NOTHING
          RETURNING id`,
-        [row.id, row.organizationId, row.idempotencyKey, row.type, JSON.stringify(row.payload), row.status, row.attempts, row.createdAt, row.updatedAt],
+        [
+          row.id,
+          row.organizationId,
+          row.idempotencyKey,
+          row.type,
+          JSON.stringify(row.payload),
+          row.status,
+          row.attempts,
+          row.createdAt,
+          row.updatedAt,
+        ],
       );
       return res.rows[0] ? row : null;
     },
-    async claimOutbox(limit, nowIso) {
+    async claimOutbox(limit, nowIso, type) {
       const res = await query(
         `UPDATE tc_outbox_events SET status = 'processing', updated_at = $2
          WHERE id IN (
            SELECT id FROM tc_outbox_events
-           WHERE status = 'pending'
-              OR (status = 'processing' AND updated_at < $2::timestamptz - interval '10 minutes')
+           WHERE (status = 'pending'
+              OR (status = 'processing' AND updated_at < $2::timestamptz - interval '10 minutes'))
+             AND ($3::text IS NULL OR type = $3)
            ORDER BY created_at
            LIMIT $1
            FOR UPDATE SKIP LOCKED
          )
          RETURNING *`,
-        [limit, nowIso],
+        [limit, nowIso, type ?? null],
       );
       return res.rows.map((row) => ({
         id: String(row.id),
@@ -80,7 +95,10 @@ export function createPostgresNotificationStore(connectionString: string): Notif
       );
     },
     async findNotificationByKey(organizationId, key) {
-      const res = await query(`SELECT * FROM tc_notifications WHERE organization_id = $1 AND idempotency_key = $2`, [organizationId, key]);
+      const res = await query(
+        `SELECT * FROM tc_notifications WHERE organization_id = $1 AND idempotency_key = $2`,
+        [organizationId, key],
+      );
       return res.rows[0] ? noteFrom(res.rows[0]) : null;
     },
     async findRecentConsolidated(organizationId, key, sinceIso) {
@@ -97,15 +115,37 @@ export function createPostgresNotificationStore(connectionString: string): Notif
           href, consolidate_key, idempotency_key, simulated, created_at, updated_at
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
         ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, message = EXCLUDED.message, updated_at = EXCLUDED.updated_at`,
-        [row.id, row.organizationId, row.type, row.title, row.message, row.priority, row.leadId ?? null, row.appointmentId ?? null, row.callId ?? null, row.href ?? null, row.consolidateKey ?? null, row.idempotencyKey, row.simulated, row.createdAt, row.updatedAt],
+        [
+          row.id,
+          row.organizationId,
+          row.type,
+          row.title,
+          row.message,
+          row.priority,
+          row.leadId ?? null,
+          row.appointmentId ?? null,
+          row.callId ?? null,
+          row.href ?? null,
+          row.consolidateKey ?? null,
+          row.idempotencyKey,
+          row.simulated,
+          row.createdAt,
+          row.updatedAt,
+        ],
       );
     },
     async listNotifications(organizationId) {
-      const res = await query(`SELECT * FROM tc_notifications WHERE organization_id = $1 ORDER BY created_at DESC`, [organizationId]);
+      const res = await query(
+        `SELECT * FROM tc_notifications WHERE organization_id = $1 ORDER BY created_at DESC`,
+        [organizationId],
+      );
       return res.rows.map(noteFrom);
     },
     async getNotification(organizationId, id) {
-      const res = await query(`SELECT * FROM tc_notifications WHERE organization_id = $1 AND id = $2`, [organizationId, id]);
+      const res = await query(
+        `SELECT * FROM tc_notifications WHERE organization_id = $1 AND id = $2`,
+        [organizationId, id],
+      );
       return res.rows[0] ? noteFrom(res.rows[0]) : null;
     },
     async saveRecipient(row) {
@@ -116,7 +156,15 @@ export function createPostgresNotificationStore(connectionString: string): Notif
            read_at = EXCLUDED.read_at,
            acknowledged_at = EXCLUDED.acknowledged_at,
            acknowledged_by = EXCLUDED.acknowledged_by`,
-        [row.id, row.notificationId, row.organizationId, row.userId, row.readAt ?? null, row.acknowledgedAt ?? null, row.acknowledgedBy ?? null],
+        [
+          row.id,
+          row.notificationId,
+          row.organizationId,
+          row.userId,
+          row.readAt ?? null,
+          row.acknowledgedAt ?? null,
+          row.acknowledgedBy ?? null,
+        ],
       );
     },
     async listRecipients(organizationId, notificationId) {
@@ -129,9 +177,15 @@ export function createPostgresNotificationStore(connectionString: string): Notif
         notificationId: String(row.notification_id),
         organizationId: String(row.organization_id),
         userId: String(row.user_id),
-        readAt: row.read_at ? new Date(String(row.read_at)).toISOString() : undefined,
-        acknowledgedAt: row.acknowledged_at ? new Date(String(row.acknowledged_at)).toISOString() : undefined,
-        acknowledgedBy: row.acknowledged_by ? String(row.acknowledged_by) : undefined,
+        readAt: row.read_at
+          ? new Date(String(row.read_at)).toISOString()
+          : undefined,
+        acknowledgedAt: row.acknowledged_at
+          ? new Date(String(row.acknowledged_at)).toISOString()
+          : undefined,
+        acknowledgedBy: row.acknowledged_by
+          ? String(row.acknowledged_by)
+          : undefined,
       })) satisfies NotificationRecipient[];
     },
     async countUnread(organizationId, userId) {
@@ -152,13 +206,33 @@ export function createPostgresNotificationStore(connectionString: string): Notif
         ON CONFLICT (organization_id, idempotency_key) DO UPDATE SET
           status = EXCLUDED.status, attempts = EXCLUDED.attempts, next_attempt_at = EXCLUDED.next_attempt_at,
           last_error = EXCLUDED.last_error, provider_sid = EXCLUDED.provider_sid, updated_at = EXCLUDED.updated_at
+        WHERE tc_notification_deliveries.id = EXCLUDED.id
         RETURNING id`,
-        [row.id, row.notificationId, row.organizationId, row.recipientUserId ?? null, row.channel, row.status, row.attempts, row.nextAttemptAt ?? null, row.lastError ?? null, row.providerSid ?? null, row.destination ?? null, row.simulated, row.idempotencyKey, row.createdAt, row.updatedAt],
+        [
+          row.id,
+          row.notificationId,
+          row.organizationId,
+          row.recipientUserId ?? null,
+          row.channel,
+          row.status,
+          row.attempts,
+          row.nextAttemptAt ?? null,
+          row.lastError ?? null,
+          row.providerSid ?? null,
+          row.destination ?? null,
+          row.simulated,
+          row.idempotencyKey,
+          row.createdAt,
+          row.updatedAt,
+        ],
       );
       return res.rows[0] ? row : null;
     },
     async listDeliveries(organizationId) {
-      const res = await query(`SELECT * FROM tc_notification_deliveries WHERE organization_id = $1`, [organizationId]);
+      const res = await query(
+        `SELECT * FROM tc_notification_deliveries WHERE organization_id = $1`,
+        [organizationId],
+      );
       return res.rows.map(deliveryFrom);
     },
     async dueDeliveries(nowIso) {
@@ -168,13 +242,37 @@ export function createPostgresNotificationStore(connectionString: string): Notif
       );
       return res.rows.map(deliveryFrom);
     },
+    async claimDeliveries(nowIso, type) {
+      const res = await query(
+        `WITH due AS (
+          SELECT d.id FROM tc_notification_deliveries d
+          JOIN tc_notifications n ON n.id=d.notification_id AND n.organization_id=d.organization_id
+          WHERE ($2::text IS NULL OR n.type=$2) AND
+            ((d.status='pending' AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= $1)) OR
+             (d.status='processing' AND d.updated_at < $1::timestamptz - interval '10 minutes'))
+          ORDER BY d.created_at LIMIT 25 FOR UPDATE OF d SKIP LOCKED
+        ) UPDATE tc_notification_deliveries d SET status='processing',updated_at=$1
+          FROM due WHERE d.id=due.id RETURNING d.*`,
+        [nowIso, type ?? null],
+      );
+      return res.rows.map(deliveryFrom);
+    },
     async findDeliveryBySid(sid) {
-      const res = await query(`SELECT * FROM tc_notification_deliveries WHERE provider_sid = $1`, [sid]);
+      const res = await query(
+        `SELECT * FROM tc_notification_deliveries WHERE provider_sid = $1`,
+        [sid],
+      );
       return res.rows[0] ? deliveryFrom(res.rows[0]) : null;
     },
     async getPreferences(organizationId, userId) {
-      const res = await query(`SELECT settings_json FROM tc_notification_preferences WHERE organization_id = $1 AND user_id = $2`, [organizationId, userId]);
-      return (res.rows[0]?.settings_json as NotificationPreferences | undefined) ?? null;
+      const res = await query(
+        `SELECT settings_json FROM tc_notification_preferences WHERE organization_id = $1 AND user_id = $2`,
+        [organizationId, userId],
+      );
+      return (
+        (res.rows[0]?.settings_json as NotificationPreferences | undefined) ??
+        null
+      );
     },
     async savePreferences(row) {
       await query(
@@ -185,7 +283,10 @@ export function createPostgresNotificationStore(connectionString: string): Notif
       );
     },
     async getEscalation(organizationId) {
-      const res = await query(`SELECT * FROM tc_escalation_rules WHERE organization_id = $1`, [organizationId]);
+      const res = await query(
+        `SELECT * FROM tc_escalation_rules WHERE organization_id = $1`,
+        [organizationId],
+      );
       const row = res.rows[0];
       if (!row) return null;
       return {
@@ -215,14 +316,34 @@ export function createPostgresNotificationStore(connectionString: string): Notif
           email_enabled = EXCLUDED.email_enabled, sms_enabled = EXCLUDED.sms_enabled,
           acknowledgement_required = EXCLUDED.acknowledgement_required, delay_minutes = EXCLUDED.delay_minutes,
           max_attempts = EXCLUDED.max_attempts, after_hours = EXCLUDED.after_hours, updated_at = EXCLUDED.updated_at`,
-        [rule.organizationId, rule.enabled, rule.primaryUserId ?? null, rule.secondaryUserId ?? null, rule.secondaryPhoneE164 ?? null, rule.emailEnabled, rule.smsEnabled, rule.acknowledgementRequired, rule.delayMinutes, rule.maxAttempts, rule.afterHours, rule.updatedAt],
+        [
+          rule.organizationId,
+          rule.enabled,
+          rule.primaryUserId ?? null,
+          rule.secondaryUserId ?? null,
+          rule.secondaryPhoneE164 ?? null,
+          rule.emailEnabled,
+          rule.smsEnabled,
+          rule.acknowledgementRequired,
+          rule.delayMinutes,
+          rule.maxAttempts,
+          rule.afterHours,
+          rule.updatedAt,
+        ],
       );
     },
     async addEscalationAttempt(input) {
       await query(
         `INSERT INTO tc_escalation_attempts (id, organization_id, notification_id, recipient_user_id, outcome, at)
          VALUES ($1,$2,$3,$4,$5,$6)`,
-        [createId("esc"), input.organizationId, input.notificationId, input.recipientUserId ?? null, input.outcome, input.at],
+        [
+          createId("esc"),
+          input.organizationId,
+          input.notificationId,
+          input.recipientUserId ?? null,
+          input.outcome,
+          input.at,
+        ],
       );
     },
     async listEscalationAttempts(organizationId, notificationId) {
@@ -230,26 +351,48 @@ export function createPostgresNotificationStore(connectionString: string): Notif
         `SELECT outcome, at FROM tc_escalation_attempts WHERE organization_id = $1 AND notification_id = $2`,
         [organizationId, notificationId],
       );
-      return res.rows.map((row) => ({ outcome: String(row.outcome), at: new Date(String(row.at)).toISOString() }));
+      return res.rows.map((row) => ({
+        outcome: String(row.outcome),
+        at: new Date(String(row.at)).toISOString(),
+      }));
     },
     async addEvent(input) {
       await query(
         `INSERT INTO tc_notification_events (id, organization_id, notification_id, kind, detail, at) VALUES ($1,$2,$3,$4,$5,$6)`,
-        [createId("nevt"), input.organizationId, input.notificationId ?? null, input.kind, input.detail ?? null, input.at],
+        [
+          createId("nevt"),
+          input.organizationId,
+          input.notificationId ?? null,
+          input.kind,
+          input.detail ?? null,
+          input.at,
+        ],
       );
     },
     async saveAlert(row) {
       await query(
         `INSERT INTO tc_system_alerts (id, organization_id, component, severity, message, correlation_id, created_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [row.id, row.organizationId ?? null, row.component, row.severity, row.message.slice(0, 300), row.correlationId, row.createdAt],
+        [
+          row.id,
+          row.organizationId ?? null,
+          row.component,
+          row.severity,
+          row.message.slice(0, 300),
+          row.correlationId,
+          row.createdAt,
+        ],
       );
     },
     async listAlerts() {
-      const res = await query(`SELECT * FROM tc_system_alerts ORDER BY created_at DESC LIMIT 200`);
+      const res = await query(
+        `SELECT * FROM tc_system_alerts ORDER BY created_at DESC LIMIT 200`,
+      );
       return res.rows.map((row) => ({
         id: String(row.id),
-        organizationId: row.organization_id ? String(row.organization_id) : undefined,
+        organizationId: row.organization_id
+          ? String(row.organization_id)
+          : undefined,
         component: String(row.component),
         severity: row.severity as SystemAlert["severity"],
         message: String(row.message),
@@ -258,7 +401,9 @@ export function createPostgresNotificationStore(connectionString: string): Notif
       }));
     },
     async listOrganizations() {
-      const res = await query(`SELECT DISTINCT organization_id FROM tc_notifications`);
+      const res = await query(
+        `SELECT DISTINCT organization_id FROM tc_notifications`,
+      );
       return res.rows.map((row) => String(row.organization_id));
     },
   };
@@ -269,11 +414,15 @@ function deliveryFrom(row: Record<string, unknown>): NotificationDelivery {
     id: String(row.id),
     notificationId: String(row.notification_id),
     organizationId: String(row.organization_id),
-    recipientUserId: row.recipient_user_id ? String(row.recipient_user_id) : undefined,
+    recipientUserId: row.recipient_user_id
+      ? String(row.recipient_user_id)
+      : undefined,
     channel: row.channel as NotificationDelivery["channel"],
     status: row.status as NotificationDelivery["status"],
     attempts: Number(row.attempts),
-    nextAttemptAt: row.next_attempt_at ? new Date(String(row.next_attempt_at)).toISOString() : undefined,
+    nextAttemptAt: row.next_attempt_at
+      ? new Date(String(row.next_attempt_at)).toISOString()
+      : undefined,
     lastError: row.last_error ? String(row.last_error) : undefined,
     providerSid: row.provider_sid ? String(row.provider_sid) : undefined,
     destination: row.destination ? String(row.destination) : undefined,

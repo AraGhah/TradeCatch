@@ -16,11 +16,16 @@ const globalForNotifications = globalThis as unknown as {
 
 function createStore(): NotificationStore {
   const url = process.env.DATABASE_URL?.trim();
-  const wantDurable = isDurableMissedCallStoreConfigured() || process.env.SAAS_DURABLE_STORE === "1";
+  const wantDurable =
+    isDurableMissedCallStoreConfigured() ||
+    process.env.SAAS_DURABLE_STORE === "1";
   if (wantDurable && url) return createPostgresNotificationStore(url);
-  if (wantDurable && !url) throw new Error("[notifications] Durable store requires DATABASE_URL");
+  if (wantDurable && !url)
+    throw new Error("[notifications] Durable store requires DATABASE_URL");
   if (isProductionRuntime() && process.env.SAAS_REQUIRE_DURABLE === "1") {
-    throw new Error("[notifications] Refusing memory store when SAAS_REQUIRE_DURABLE=1");
+    throw new Error(
+      "[notifications] Refusing memory store when SAAS_REQUIRE_DURABLE=1",
+    );
   }
   return createMemoryNotificationStore();
 }
@@ -41,7 +46,8 @@ export function getNotificationService() {
     store: getNotificationStore(),
     now: () => new Date(),
     async listMembers(organizationId) {
-      const memberships = await getSaasStore().listMembershipsForOrganization(organizationId);
+      const memberships =
+        await getSaasStore().listMembershipsForOrganization(organizationId);
       const members = [];
       for (const membership of memberships) {
         const user = await getSaasStore().getUser(membership.userId);
@@ -70,24 +76,36 @@ export function getNotificationService() {
     },
     async sendEmail(input) {
       const result = await sendBusinessNotifyEmail({
+        idempotencyKey: input.idempotencyKey,
         toEmail: input.to,
         subject: input.subject,
         title: input.title,
         lines: [{ label: "Notice", value: input.message }],
       });
-      return { sent: result.sent, temporary: result.reason === "send_failed", reason: result.reason };
+      return {
+        sent: result.sent,
+        temporary: result.reason === "send_failed",
+        reason: result.reason,
+      };
     },
     async sendSms(input) {
-      if (shouldUseDryRunSms()) return { sent: false, temporary: false, reason: "dry_run" };
+      if (shouldUseDryRunSms())
+        return { sent: false, temporary: false, reason: "dry_run" };
       const sms = createTwilioSmsPort();
       const from = process.env.TWILIO_FROM_NUMBER?.trim();
-      if (!from) return { sent: false, temporary: false, reason: "missing_from" };
+      if (!from)
+        return { sent: false, temporary: false, reason: "missing_from" };
       try {
-        const sent = await sms.send({ toE164: input.to, fromE164: from, body: input.body });
+        const sent = await sms.send({
+          toE164: input.to,
+          fromE164: from,
+          body: input.body,
+        });
         return { sent: true, sid: sent.sid };
       } catch (error) {
         const message = error instanceof Error ? error.message : "sms_failed";
-        const temporary = !/Twilio SMS failed: 4/.test(message) || /\b429\b/.test(message);
+        const temporary =
+          !/Twilio SMS failed: 4/.test(message) || /\b429\b/.test(message);
         return { sent: false, temporary, reason: message.slice(0, 160) };
       }
     },

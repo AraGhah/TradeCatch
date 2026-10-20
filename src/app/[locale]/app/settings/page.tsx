@@ -13,7 +13,12 @@ import { GmailSettings } from "@/components/app/GmailSettings";
 import { SettingsIntegrationsForm } from "@/components/app/SettingsIntegrationsForm";
 import { getGrowthStore } from "@/product/growth";
 import { asNotice } from "@/product/gmail/http";
-import { gmailConfigured, readGmailEnv } from "@/product/gmail/oauth";
+import {
+  gmailConfigured,
+  gmailPushConfigured,
+  gmailWatchActive,
+  readGmailEnv,
+} from "@/product/gmail/oauth";
 import { getGmailStore } from "@/product/gmail/runtime";
 
 export default async function AppSettingsPage({
@@ -59,6 +64,8 @@ export default async function AppSettingsPage({
         email={gmailAccount?.email || null}
         lastError={gmailAccount?.lastError || null}
         lastSyncAt={gmailAccount?.lastSyncAt || null}
+        pushConfigured={gmailPushConfigured(gmailEnv)}
+        pushEnabled={gmailWatchActive(gmailAccount, gmailEnv)}
         notice={asNotice(query.gmail)}
       />
 
@@ -92,7 +99,9 @@ export default async function AppSettingsPage({
             {auth.ctx.organization.missedCallClientId}
           </p>
         ) : (
-          <p className="mt-2 text-sm text-navy/70">{t("dashboard.notLinked")}</p>
+          <p className="mt-2 text-sm text-navy/70">
+            {t("dashboard.notLinked")}
+          </p>
         )}
       </section>
 
@@ -146,29 +155,49 @@ export default async function AppSettingsPage({
         <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">
           {t("settings.integrations")}
         </h2>
-        <p className="mt-2 text-sm text-navy/70">{t("settings.integrationsIntro")}</p>
+        <p className="mt-2 text-sm text-navy/70">
+          {t("settings.integrationsIntro")}
+        </p>
         <p className="mt-2">
-          <Link href="/app/settings/calendar" className="text-sm font-semibold text-navy underline">
+          <Link
+            href="/app/settings/calendar"
+            className="text-sm font-semibold text-navy underline"
+          >
             {t("schedule.navCalendar")}
           </Link>
           {" · "}
-          <Link href="/app/settings/notifications" className="text-sm font-semibold text-navy underline">
+          <Link
+            href="/app/settings/notifications"
+            className="text-sm font-semibold text-navy underline"
+          >
             {t("alerts.settings")}
           </Link>
           {" · "}
-          <Link href="/app/settings/security" className="text-sm font-semibold text-navy underline">
+          <Link
+            href="/app/settings/security"
+            className="text-sm font-semibold text-navy underline"
+          >
             {t("security.headline")}
           </Link>
           {" · "}
-          <Link href="/app/feedback" className="text-sm font-semibold text-navy underline">
+          <Link
+            href="/app/feedback"
+            className="text-sm font-semibold text-navy underline"
+          >
             {t("pilot.headline")}
           </Link>
           {" · "}
-          <Link href="/app/settings/account" className="text-sm font-semibold text-navy underline">
+          <Link
+            href="/app/settings/account"
+            className="text-sm font-semibold text-navy underline"
+          >
             {t("account.headline")}
           </Link>
           {" · "}
-          <Link href="/app/support" className="text-sm font-semibold text-navy underline">
+          <Link
+            href="/app/support"
+            className="text-sm font-semibold text-navy underline"
+          >
             {t("support.headline")}
           </Link>
         </p>
@@ -185,7 +214,9 @@ export default async function AppSettingsPage({
           <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">
             {t("settings.apiKeyTitle")}
           </h2>
-          <p className="mt-2 text-sm text-navy/70">{t("settings.apiKeyIntro")}</p>
+          <p className="mt-2 text-sm text-navy/70">
+            {t("settings.apiKeyIntro")}
+          </p>
           <ApiKeyCreateButton />
         </section>
       ) : null}

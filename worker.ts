@@ -9,6 +9,7 @@ type TradeCatchWorkerEnv = CloudflareEnv & {
   MISSED_CALL_OPS_SECRET?: string;
   NEXT_PUBLIC_SITE_URL?: string;
   BOOK_AUDIT_RETRY_SECRET?: string;
+  GMAIL_SYNC_SECRET?: string;
 };
 
 // Preserve any cache Durable Object exports produced by OpenNext.
@@ -23,7 +24,9 @@ function schedulerSecret(env: TradeCatchWorkerEnv, path: string): string {
   const secret =
     (path === "/api/book-audit/notifications/tick"
       ? env.BOOK_AUDIT_RETRY_SECRET?.trim()
-      : "") ||
+      : path === "/api/gmail/sync/tick"
+        ? env.GMAIL_SYNC_SECRET?.trim()
+        : "") ||
     env.MISSED_CALL_OPS_SECRET?.trim() ||
     env.CRON_SECRET?.trim() ||
     "";

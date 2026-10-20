@@ -1,5 +1,14 @@
-import { GmailApiError, backoffMs, failureFromResponse, toGmailError } from "./errors";
-import { newMessageIds, parseGmailMessage, type GmailApiMessage } from "./parse";
+import {
+  GmailApiError,
+  backoffMs,
+  failureFromResponse,
+  toGmailError,
+} from "./errors";
+import {
+  newMessageIds,
+  parseGmailMessage,
+  type GmailApiMessage,
+} from "./parse";
 import {
   accessTokenFresh,
   gmailPushConfigured,
@@ -10,7 +19,11 @@ import {
   type GmailTokens,
 } from "./oauth";
 import type { GmailStore } from "./store";
-import type { GmailAccount, GmailFailureKind, ParsedGmailMessage } from "./types";
+import type {
+  GmailAccount,
+  GmailFailureKind,
+  ParsedGmailMessage,
+} from "./types";
 
 type FetchImpl = typeof fetch;
 
@@ -47,17 +60,25 @@ export function syncSkipReason(
   gapOverrideMs?: number,
 ): "backoff" | "recent" | null {
   if (account.nextSyncAt && Date.parse(account.nextSyncAt) > nowMs) {
-    if (trigger !== "manual" || HARD_BACKOFF.includes(account.lastError || "")) return "backoff";
+    if (trigger !== "manual" || HARD_BACKOFF.includes(account.lastError || ""))
+      return "backoff";
   }
   if (account.lastAttemptAt) {
     const since = nowMs - Date.parse(account.lastAttemptAt);
-    if (Number.isFinite(since) && since < (gapOverrideMs ?? MIN_GAP_MS[trigger])) return "recent";
+    if (
+      Number.isFinite(since) &&
+      since < (gapOverrideMs ?? MIN_GAP_MS[trigger])
+    )
+      return "recent";
   }
   return null;
 }
 
 type GmailClient = {
-  json<T = Record<string, unknown>>(path: string, init?: RequestInit): Promise<T>;
+  json<T = Record<string, unknown>>(
+    path: string,
+    init?: RequestInit,
+  ): Promise<T>;
   tokens(): GmailTokens;
 };
 
@@ -72,7 +93,12 @@ function createClient(input: {
   const base = input.env.apiBase!;
 
   async function refresh() {
-    tokens = await refreshGmailTokens(tokens, input.env, input.fetchImpl, input.nowMs());
+    tokens = await refreshGmailTokens(
+      tokens,
+      input.env,
+      input.fetchImpl,
+      input.nowMs(),
+    );
     await input.onTokens(tokens);
   }
 
@@ -81,11 +107,18 @@ function createClient(input: {
     try {
       response = await input.fetchImpl(`${base}${path}`, {
         ...init,
-        headers: { ...(init?.headers || {}), Authorization: `Bearer ${tokens.accessToken}` },
+        headers: {
+          ...(init?.headers || {}),
+          Authorization: `Bearer ${tokens.accessToken}`,
+        },
         signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
     } catch (error) {
-      throw new GmailApiError("sync_failed", 0, error instanceof Error ? error.message : "network");
+      throw new GmailApiError(
+        "sync_failed",
+        0,
+        error instanceof Error ? error.message : "network",
+      );
     }
     return { response, text: await response.text() };
   }
@@ -110,7 +143,11 @@ function createClient(input: {
       try {
         return (result.text ? JSON.parse(result.text) : {}) as T;
       } catch {
-        throw new GmailApiError("sync_failed", result.response.status, "response was not JSON");
+        throw new GmailApiError(
+          "sync_failed",
+          result.response.status,
+          "response was not JSON",
+        );
       }
     },
   };
@@ -132,7 +169,10 @@ type HistoryDelta = {
   more: boolean;
 };
 
-async function readHistory(client: GmailClient, startHistoryId: string): Promise<HistoryDelta> {
+async function readHistory(
+  client: GmailClient,
+  startHistoryId: string,
+): Promise<HistoryDelta> {
   const added = new Set<string>();
   const unread = new Map<string, boolean>();
   const removed = new Set<string>();
@@ -145,7 +185,12 @@ async function readHistory(client: GmailClient, startHistoryId: string): Promise
       startHistoryId,
       maxResults: String(HISTORY_PAGE_SIZE),
     });
-    for (const type of ["messageAdded", "messageDeleted", "labelAdded", "labelRemoved"]) {
+    for (const type of [
+      "messageAdded",
+      "messageDeleted",
+      "labelAdded",
+      "labelRemoved",
+    ]) {
       params.append("historyTypes", type);
     }
     if (pageToken) params.set("pageToken", pageToken);
@@ -187,7 +232,8 @@ async function readHistory(client: GmailClient, startHistoryId: string): Promise
       }
       for (const item of record.labelsRemoved || []) {
         const id = item.message?.id;
-        if (id && (item.labelIds || []).includes("UNREAD")) unread.set(id, false);
+        if (id && (item.labelIds || []).includes("UNREAD"))
+          unread.set(id, false);
       }
       if (record.id) latest = record.id;
     }
@@ -198,7 +244,13 @@ async function readHistory(client: GmailClient, startHistoryId: string): Promise
     if (!pageToken && page.historyId) latest = page.historyId;
   } while (pageToken && pages < MAX_HISTORY_PAGES);
 
-  return { added: [...added], unread, removed, historyId: latest, more: Boolean(pageToken) };
+  return {
+    added: [...added],
+    unread,
+    removed,
+    historyId: latest,
+    more: Boolean(pageToken),
+  };
 }
 
 type ListedMessage = { id?: string; threadId?: string };
@@ -226,7 +278,11 @@ async function listBootstrapIds(client: GmailClient): Promise<string[]> {
   return [...received.map((row) => row.id!), ...replies];
 }
 
-async function mapLimited<T, R>(items: T[], limit: number, run: (item: T) => Promise<R>): Promise<R[]> {
+async function mapLimited<T, R>(
+  items: T[],
+  limit: number,
+  run: (item: T) => Promise<R>,
+): Promise<R[]> {
   const results: R[] = new Array(items.length);
   let next = 0;
   async function worker() {
@@ -235,7 +291,9 @@ async function mapLimited<T, R>(items: T[], limit: number, run: (item: T) => Pro
       results[index] = await run(items[index]!);
     }
   }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  await Promise.all(
+    Array.from({ length: Math.min(limit, items.length) }, worker),
+  );
   return results;
 }
 
@@ -252,7 +310,10 @@ export async function syncGmailAccount(input: {
   trigger?: SyncTrigger;
   fetchImpl?: FetchImpl;
   /** Called once for each newly stored message that looks like a customer writing in. */
-  onCustomerEmail?: (message: ParsedGmailMessage & { id: string }, account: GmailAccount) => Promise<void>;
+  onCustomerEmail?: (
+    message: ParsedGmailMessage & { id: string },
+    account: GmailAccount,
+  ) => Promise<void>;
 }): Promise<SyncResult> {
   const { account, store } = input;
   const now = input.now ?? new Date();
@@ -261,11 +322,21 @@ export async function syncGmailAccount(input: {
   if (account.status !== "connected" || !account.tokenCiphertext) {
     return { ok: false, error: "needs_reconnect" };
   }
-  const skip = syncSkipReason(account, now.getTime(), trigger, input.env.testMinGapMs);
+  const skip = syncSkipReason(
+    account,
+    now.getTime(),
+    trigger,
+    input.env.testMinGapMs,
+  );
   if (skip === "backoff") {
-    return { ok: false, error: (account.lastError as GmailFailureKind) || "sync_failed", skipped: true };
+    return {
+      ok: false,
+      error: (account.lastError as GmailFailureKind) || "sync_failed",
+      skipped: true,
+    };
   }
-  if (skip === "recent") return { ok: true, added: 0, skipped: true, more: false };
+  if (skip === "recent")
+    return { ok: true, added: 0, skipped: true, more: false };
   if (!(await store.tryBeginSync(account.id, now, LEASE_MS))) {
     return { ok: true, added: 0, skipped: true, more: false };
   }
@@ -277,7 +348,12 @@ export async function syncGmailAccount(input: {
   }
 }
 
-async function run(input: Parameters<typeof syncGmailAccount>[0] & { now: Date; trigger: SyncTrigger }): Promise<SyncResult> {
+async function run(
+  input: Parameters<typeof syncGmailAccount>[0] & {
+    now: Date;
+    trigger: SyncTrigger;
+  },
+): Promise<SyncResult> {
   const { account, store, env, now } = input;
   const fetchImpl = input.fetchImpl ?? fetch;
   const nowIso = now.toISOString();
@@ -305,7 +381,9 @@ async function run(input: Parameters<typeof syncGmailAccount>[0] & { now: Date; 
     fetchImpl,
     nowMs: () => Date.now(),
     onTokens: async (next) => {
-      await store.updateAccount(account.id, { tokenCiphertext: sealGmailTokens(next, env) });
+      await store.updateAccount(account.id, {
+        tokenCiphertext: sealGmailTokens(next, env),
+      });
     },
   });
 
@@ -322,7 +400,8 @@ async function run(input: Parameters<typeof syncGmailAccount>[0] & { now: Date; 
       } catch (error) {
         // Google keeps history for about a week; older ids are gone. Start over
         // from the inbox listing instead of failing forever.
-        if (!(error instanceof GmailApiError) || error.status !== 404) throw error;
+        if (!(error instanceof GmailApiError) || error.status !== 404)
+          throw error;
         bootstrap = true;
         delta = null;
       }
@@ -330,7 +409,10 @@ async function run(input: Parameters<typeof syncGmailAccount>[0] & { now: Date; 
 
     let ids: string[];
     if (bootstrap) {
-      const profile = await client.json<{ emailAddress?: string; historyId?: string }>("/profile");
+      const profile = await client.json<{
+        emailAddress?: string;
+        historyId?: string;
+      }>("/profile");
       mailbox = profile.emailAddress || mailbox;
       // Taken before listing so mail arriving mid-listing is caught next time.
       historyId = profile.historyId || null;
@@ -341,48 +423,73 @@ async function run(input: Parameters<typeof syncGmailAccount>[0] & { now: Date; 
 
     if (delta) {
       for (const [gmailId, value] of delta.unread) {
-        if (!delta.removed.has(gmailId)) await store.setUnreadByGmailId(account.id, gmailId, value);
+        if (!delta.removed.has(gmailId))
+          await store.setUnreadByGmailId(account.id, gmailId, value);
       }
       await store.deleteByGmailIds(account.id, [...delta.removed]);
     }
 
-    const wanted = newMessageIds(new Set(), ids).filter((id) => !delta?.removed.has(id));
+    const wanted = newMessageIds(new Set(), ids).filter(
+      (id) => !delta?.removed.has(id),
+    );
     const known = await store.existingGmailIds(account.id, wanted);
     const fresh = newMessageIds(known, wanted).slice(-MAX_FETCH);
 
-    const loaded = await mapLimited(fresh, FETCH_CONCURRENCY, async (gmailId) => {
-      try {
-        return await client.json<GmailApiMessage>(`/messages/${encodeURIComponent(gmailId)}?format=full`);
-      } catch (error) {
-        // Deleted between the history entry and the fetch: nothing to import.
-        if (error instanceof GmailApiError && error.status === 404) return null;
-        throw error;
-      }
-    });
+    const loaded = await mapLimited(
+      fresh,
+      FETCH_CONCURRENCY,
+      async (gmailId) => {
+        try {
+          return await client.json<GmailApiMessage>(
+            `/messages/${encodeURIComponent(gmailId)}?format=full`,
+          );
+        } catch (error) {
+          // Deleted between the history entry and the fetch: nothing to import.
+          if (error instanceof GmailApiError && error.status === 404)
+            return null;
+          throw error;
+        }
+      },
+    );
 
     // On the very first connect there is no "since", so old mail must not page the user.
-    const notifyAfter = bootstrap ? Date.parse(account.lastSyncAt || "") : Number.NEGATIVE_INFINITY;
+    const notifyAfter = bootstrap
+      ? Date.parse(account.lastSyncAt || "")
+      : Number.NEGATIVE_INFINITY;
     let added = 0;
     for (const raw of loaded) {
       const parsed = raw ? parseGmailMessage(raw, mailbox) : null;
       if (!parsed) continue;
-      if (parsed.direction === "outbound" && !(await store.threadKnown(account.id, parsed.threadId))) {
+      if (
+        parsed.direction === "outbound" &&
+        !(await store.threadKnown(account.id, parsed.threadId))
+      ) {
         continue;
       }
-      const saved = await store.upsertMessage({
-        ...parsed,
-        organizationId: account.organizationId,
-        userId: account.userId,
-        accountId: account.id,
-      });
+      const recent = Date.parse(parsed.receivedAt) > notifyAfter;
+      const alert = parsed.important && parsed.unread && recent;
+      const saved = await store.upsertMessage(
+        {
+          ...parsed,
+          organizationId: account.organizationId,
+          userId: account.userId,
+          accountId: account.id,
+        },
+        alert,
+      );
       if (!saved.inserted) continue;
       added += 1;
-      const recent = Date.parse(parsed.receivedAt) > notifyAfter;
-      if (input.onCustomerEmail && parsed.important && parsed.unread && recent) {
+      if (input.onCustomerEmail && alert) {
         try {
-          await input.onCustomerEmail({ ...parsed, id: saved.message.id }, account);
+          await input.onCustomerEmail(
+            { ...parsed, id: saved.message.id },
+            account,
+          );
         } catch (error) {
-          console.warn("[gmail] notification skipped", error instanceof Error ? error.message : "unknown");
+          console.warn(
+            "[gmail] notification skipped",
+            error instanceof Error ? error.message : "unknown",
+          );
         }
       }
     }
@@ -399,10 +506,14 @@ async function run(input: Parameters<typeof syncGmailAccount>[0] & { now: Date; 
             labelFilterBehavior: "INCLUDE",
           }),
         });
-        if (watch.expiration) watchExpiration = new Date(Number(watch.expiration)).toISOString();
+        if (watch.expiration)
+          watchExpiration = new Date(Number(watch.expiration)).toISOString();
       } catch (error) {
         // Push is an accelerator; polling and cron keep working without it.
-        console.warn("[gmail] watch skipped", error instanceof Error ? error.message : "unknown");
+        console.warn(
+          "[gmail] watch skipped",
+          error instanceof Error ? error.message : "unknown",
+        );
       }
     }
 
@@ -433,7 +544,9 @@ async function run(input: Parameters<typeof syncGmailAccount>[0] & { now: Date; 
       await store.updateAccount(account.id, {
         lastError: failure.kind,
         failureCount: failures,
-        nextSyncAt: new Date(now.getTime() + backoffMs(failure, failures)).toISOString(),
+        nextSyncAt: new Date(
+          now.getTime() + backoffMs(failure, failures),
+        ).toISOString(),
       });
     }
     return { ok: false, error: failure.kind };
@@ -467,7 +580,11 @@ export async function downloadGmailAttachment(input: {
     return await fetchPart(input.attachment.attachmentId);
   } catch (error) {
     // Attachment ids are not guaranteed stable between fetches; look it up again by part id.
-    if (!(error instanceof GmailApiError) || ![400, 404].includes(error.status) || !input.attachment.partId) {
+    if (
+      !(error instanceof GmailApiError) ||
+      ![400, 404].includes(error.status) ||
+      !input.attachment.partId
+    ) {
       throw error;
     }
   }
@@ -504,12 +621,23 @@ export async function fetchGmailProfile(
     nowMs: () => Date.now(),
     onTokens: async () => undefined,
   });
-  const profile = await client.json<{ emailAddress?: string; historyId?: string }>("/profile");
-  if (!profile.emailAddress) throw new GmailApiError("sync_failed", 0, "profile had no address");
-  return { emailAddress: profile.emailAddress, historyId: profile.historyId ?? null };
+  const profile = await client.json<{
+    emailAddress?: string;
+    historyId?: string;
+  }>("/profile");
+  if (!profile.emailAddress)
+    throw new GmailApiError("sync_failed", 0, "profile had no address");
+  return {
+    emailAddress: profile.emailAddress,
+    historyId: profile.historyId ?? null,
+  };
 }
 
-export async function stopGmailWatch(tokens: GmailTokens, env: GmailEnv, fetchImpl: FetchImpl = fetch) {
+export async function stopGmailWatch(
+  tokens: GmailTokens,
+  env: GmailEnv,
+  fetchImpl: FetchImpl = fetch,
+) {
   const client = createClient({
     tokens,
     env,

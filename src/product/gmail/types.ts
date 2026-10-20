@@ -2,10 +2,7 @@ export type GmailAccountStatus = "connected" | "needs_reconnect";
 
 /** Why the last sync failed. Stored in `lastError` and shown to the user. */
 export type GmailFailureKind =
-  | "needs_reconnect"
-  | "rate_limited"
-  | "sync_failed"
-  | "config_error";
+  "needs_reconnect" | "rate_limited" | "sync_failed" | "config_error";
 
 export type GmailDirection = "inbound" | "outbound";
 
@@ -64,6 +61,7 @@ export type GmailMessage = GmailMessageSummary & {
 
 export type GmailPublicStatus = {
   configured: boolean;
+  pushConfigured: boolean;
   pushEnabled: boolean;
   status: GmailAccountStatus | "not_connected";
   email: string | null;

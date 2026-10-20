@@ -1,6 +1,7 @@
 export const CLOUDFLARE_CRON_ROUTES = {
   "* * * * *": [
     "/api/book-audit/notifications/tick",
+    "/api/gmail/sync/tick",
     "/api/missed-call/escalations/tick",
     "/api/automations/tick",
     "/api/notifications/tick",
@@ -12,7 +13,6 @@ export const CLOUDFLARE_CRON_ROUTES = {
     "/api/growth/crm/tick",
     "/api/receptionist/tick",
     "/api/growth/email/tick",
-    "/api/gmail/sync/tick",
     "/api/scheduling/reconcile",
     "/api/monitoring/tick",
   ],
