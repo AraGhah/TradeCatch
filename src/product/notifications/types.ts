@@ -7,6 +7,7 @@ export const NOTIFICATION_TYPES = [
   "appointment_canceled",
   "appointment_rescheduled",
   "customer_message",
+  "gmail_reply",
   "quote_response",
   "quote_accepted",
   "missed_call_recovered",
@@ -22,6 +23,7 @@ export type Priority = "normal" | "high" | "critical";
 export type Channel = "in_app" | "email" | "sms";
 export type DeliveryStatus =
   | "pending"
+  | "processing"
   | "submitted"
   | "delivered"
   | "failed"
@@ -138,6 +140,8 @@ export type OutboxEvent = {
 };
 
 export type NotificationPayload = {
+  /** Server-only routing: personal mailbox alerts must not fan out to the org. */
+  recipientUserId?: string;
   message?: string;
   customer?: string;
   service?: string;
@@ -162,6 +166,7 @@ export const TYPE_PRIORITY: Record<NotificationType, Priority> = {
   appointment_canceled: "normal",
   appointment_rescheduled: "normal",
   customer_message: "normal",
+  gmail_reply: "normal",
   quote_response: "high",
   quote_accepted: "high",
   missed_call_recovered: "normal",
@@ -181,6 +186,7 @@ export const TYPE_CATEGORY: Record<NotificationType, PreferenceCategory> = {
   appointment_canceled: "appointments",
   appointment_rescheduled: "appointments",
   customer_message: "replies",
+  gmail_reply: "replies",
   quote_response: "replies",
   quote_accepted: "quote_accepted",
   missed_call_recovered: "new_leads",

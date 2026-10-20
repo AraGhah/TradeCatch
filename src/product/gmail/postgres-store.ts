@@ -1,5 +1,6 @@
 import { createId } from "@/lib/id";
 import { getPgPool } from "@/product/missed-call/postgres-store";
+import { gmailReplyEvent } from "./notifications";
 import { clampLimit, type GmailAccountPatch, type GmailStore } from "./store";
 import type {
   GmailAccount,
@@ -8,7 +9,8 @@ import type {
   GmailMessageSummary,
 } from "./types";
 
-const iso = (value: unknown) => (value ? new Date(String(value)).toISOString() : null);
+const iso = (value: unknown) =>
+  value ? new Date(String(value)).toISOString() : null;
 
 function accountFrom(row: Record<string, unknown>): GmailAccount {
   return {
@@ -47,7 +49,9 @@ function summaryFrom(row: Record<string, unknown>): GmailMessageSummary {
 }
 
 function messageFrom(row: Record<string, unknown>): GmailMessage {
-  const attachments = Array.isArray(row.attachments) ? (row.attachments as GmailAttachment[]) : [];
+  const attachments = Array.isArray(row.attachments)
+    ? (row.attachments as GmailAttachment[])
+    : [];
   return {
     ...summaryFrom(row),
     organizationId: String(row.organization_id),
@@ -158,7 +162,9 @@ export function createPostgresGmailStore(connectionString: string): GmailStore {
     async updateAccount(id, patch) {
       const sets: string[] = [];
       const params: unknown[] = [id];
-      for (const key of Object.keys(PATCH_COLUMNS) as (keyof GmailAccountPatch)[]) {
+      for (const key of Object.keys(
+        PATCH_COLUMNS,
+      ) as (keyof GmailAccountPatch)[]) {
         if (!(key in patch)) continue;
         params.push(patch[key] ?? null);
         sets.push(`${PATCH_COLUMNS[key]} = $${params.length}`);
@@ -172,29 +178,42 @@ export function createPostgresGmailStore(connectionString: string): GmailStore {
       return (result.rowCount ?? 0) > 0;
     },
     async deleteAccount(organizationId, userId) {
-      await pool.query(`DELETE FROM tc_gmail_accounts WHERE organization_id = $1 AND user_id = $2`, [
-        organizationId,
-        userId,
-      ]);
+      await pool.query(
+        `DELETE FROM tc_gmail_accounts WHERE organization_id = $1 AND user_id = $2`,
+        [organizationId, userId],
+      );
     },
     async clearMessages(accountId) {
-      await pool.query(`DELETE FROM tc_gmail_messages WHERE account_id = $1`, [accountId]);
+      await pool.query(`DELETE FROM tc_gmail_messages WHERE account_id = $1`, [
+        accountId,
+      ]);
     },
     async tryBeginSync(accountId, now, leaseMs) {
       const result = await pool.query(
         `UPDATE tc_gmail_accounts SET sync_lease_until = $3
          WHERE id = $1 AND (sync_lease_until IS NULL OR sync_lease_until <= $2)`,
-        [accountId, now.toISOString(), new Date(now.getTime() + leaseMs).toISOString()],
+        [
+          accountId,
+          now.toISOString(),
+          new Date(now.getTime() + leaseMs).toISOString(),
+        ],
       );
       return (result.rowCount ?? 0) > 0;
     },
     async endSync(accountId) {
-      await pool.query(`UPDATE tc_gmail_accounts SET sync_lease_until = NULL WHERE id = $1`, [accountId]);
+      await pool.query(
+        `UPDATE tc_gmail_accounts SET sync_lease_until = NULL WHERE id = $1`,
+        [accountId],
+      );
     },
 
-    async upsertMessage(row) {
+    async upsertMessage(row, queueReplyAlert) {
+      const id = row.id || createId("gml");
+      const at = new Date().toISOString();
+      const event = gmailReplyEvent({ ...row, id, createdAt: at });
       const result = await pool.query(
-        `INSERT INTO tc_gmail_messages (
+        `WITH saved AS (
+         INSERT INTO tc_gmail_messages (
            id, organization_id, user_id, account_id, gmail_id, thread_id, from_name, from_email,
            subject, snippet, body_text, received_at, unread, has_attachments, attachments,
            important, direction, created_at
@@ -205,9 +224,15 @@ export function createPostgresGmailStore(connectionString: string): GmailStore {
            body_text = COALESCE(EXCLUDED.body_text, tc_gmail_messages.body_text),
            has_attachments = EXCLUDED.has_attachments,
            attachments = EXCLUDED.attachments
-         RETURNING *, (xmax = 0) AS inserted`,
+         RETURNING *, (xmax = 0) AS inserted
+         ), queued AS (
+           INSERT INTO tc_outbox_events (id,organization_id,idempotency_key,type,payload_json,status,attempts,created_at,updated_at)
+           SELECT $19,organization_id,$20,'gmail_reply',$21::jsonb,'pending',0,$18,$18 FROM saved
+           WHERE inserted AND $22::boolean
+           ON CONFLICT (organization_id,idempotency_key) DO NOTHING
+         ) SELECT * FROM saved`,
         [
-          row.id || createId("gml"),
+          id,
           row.organizationId,
           row.userId,
           row.accountId,
@@ -224,7 +249,11 @@ export function createPostgresGmailStore(connectionString: string): GmailStore {
           JSON.stringify(row.attachments),
           row.important,
           row.direction,
-          new Date().toISOString(),
+          at,
+          event.id,
+          event.idempotencyKey,
+          JSON.stringify(event.payload),
+          Boolean(queueReplyAlert),
         ],
       );
       const saved = result.rows[0] as Record<string, unknown>;

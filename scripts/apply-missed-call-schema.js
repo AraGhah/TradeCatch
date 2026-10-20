@@ -130,6 +130,12 @@ async function main() {
       ["src", "product", "saas", "stripe-billing.sql"],
       "021_stripe_billing",
     );
+    // Upgrade installations created before incremental Gmail sync support.
+    await applyFile(
+      client,
+      ["src", "product", "gmail", "schema.sql"],
+      "022_gmail_sync_columns",
+    );
   } finally {
     await client.end();
   }

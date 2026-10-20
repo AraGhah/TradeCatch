@@ -1,6 +1,12 @@
 import { isE2eHarness } from "@/lib/config";
-import { encryptSecret, decryptSecret, signState, verifyState } from "@/product/scheduling/crypto";
+import {
+  encryptSecret,
+  decryptSecret,
+  signState,
+  verifyState,
+} from "@/product/scheduling/crypto";
 import { GmailApiError, failureFromResponse } from "./errors";
+import type { GmailAccount } from "./types";
 
 /**
  * The one scope this feature needs: read messages and download attachments.
@@ -44,7 +50,9 @@ export type GmailEnv = {
 export function readGmailEnv(env: NodeJS.ProcessEnv = process.env): GmailEnv {
   const site = env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
   const e2e = isE2eHarness(env);
-  const testBase = e2e ? env.GMAIL_TEST_GOOGLE_BASE?.trim().replace(/\/$/, "") : "";
+  const testBase = e2e
+    ? env.GMAIL_TEST_GOOGLE_BASE?.trim().replace(/\/$/, "")
+    : "";
   const gap = Number(env.GMAIL_TEST_MIN_GAP_MS);
   return {
     clientId: env.GOOGLE_GMAIL_CLIENT_ID?.trim(),
@@ -60,7 +68,10 @@ export function readGmailEnv(env: NodeJS.ProcessEnv = process.env): GmailEnv {
     apiBase: testBase ? `${testBase}/gmail/v1/users/me` : GOOGLE.api,
     tokenUrl: testBase ? `${testBase}/token` : GOOGLE.token,
     revokeUrl: testBase ? `${testBase}/revoke` : GOOGLE.revoke,
-    testMinGapMs: e2e && env.GMAIL_TEST_MIN_GAP_MS !== undefined && Number.isFinite(gap) ? gap : undefined,
+    testMinGapMs:
+      e2e && env.GMAIL_TEST_MIN_GAP_MS !== undefined && Number.isFinite(gap)
+        ? gap
+        : undefined,
   };
 }
 
@@ -72,8 +83,21 @@ export function gmailPushConfigured(env: GmailEnv = readGmailEnv()): boolean {
   return Boolean(env.pubsubTopic && env.webhookToken);
 }
 
+export function gmailWatchActive(
+  account: Pick<GmailAccount, "status" | "watchExpiration"> | null | undefined,
+  env: GmailEnv = readGmailEnv(),
+  now = Date.now(),
+): boolean {
+  return (
+    gmailPushConfigured(env) &&
+    account?.status === "connected" &&
+    Date.parse(account.watchExpiration || "") > now
+  );
+}
+
 function requireSecret(env: GmailEnv): string {
-  if (!env.authSecret) throw new Error("AUTH_SECRET is required to protect Gmail tokens.");
+  if (!env.authSecret)
+    throw new Error("AUTH_SECRET is required to protect Gmail tokens.");
   return env.authSecret;
 }
 
@@ -128,7 +152,13 @@ export function readGmailState(
       locale?: string;
       exp?: number;
     };
-    if (!parsed.organizationId || !parsed.userId || !parsed.exp || parsed.exp < nowMs) return null;
+    if (
+      !parsed.organizationId ||
+      !parsed.userId ||
+      !parsed.exp ||
+      parsed.exp < nowMs
+    )
+      return null;
     return {
       organizationId: parsed.organizationId,
       userId: parsed.userId,
@@ -139,13 +169,22 @@ export function readGmailState(
   }
 }
 
-export function sealGmailTokens(tokens: GmailTokens, env: GmailEnv = readGmailEnv()): string {
+export function sealGmailTokens(
+  tokens: GmailTokens,
+  env: GmailEnv = readGmailEnv(),
+): string {
   return encryptSecret(JSON.stringify(tokens), requireSecret(env));
 }
 
-export function openGmailTokens(ciphertext: string, env: GmailEnv = readGmailEnv()): GmailTokens {
-  const parsed = JSON.parse(decryptSecret(ciphertext, requireSecret(env))) as GmailTokens;
-  if (!parsed.refreshToken || !parsed.accessToken) throw new Error("Invalid token payload");
+export function openGmailTokens(
+  ciphertext: string,
+  env: GmailEnv = readGmailEnv(),
+): GmailTokens {
+  const parsed = JSON.parse(
+    decryptSecret(ciphertext, requireSecret(env)),
+  ) as GmailTokens;
+  if (!parsed.refreshToken || !parsed.accessToken)
+    throw new Error("Invalid token payload");
   return parsed;
 }
 
@@ -170,14 +209,27 @@ async function tokenRequest(
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (error) {
-    throw new GmailApiError("sync_failed", 0, error instanceof Error ? error.message : "network");
+    throw new GmailApiError(
+      "sync_failed",
+      0,
+      error instanceof Error ? error.message : "network",
+    );
   }
   const text = await response.text();
-  if (!response.ok) throw failureFromResponse(response.status, text, response.headers.get("retry-after"));
+  if (!response.ok)
+    throw failureFromResponse(
+      response.status,
+      text,
+      response.headers.get("retry-after"),
+    );
   try {
     return JSON.parse(text) as TokenJson;
   } catch {
-    throw new GmailApiError("sync_failed", response.status, "token response was not JSON");
+    throw new GmailApiError(
+      "sync_failed",
+      response.status,
+      "token response was not JSON",
+    );
   }
 }
 
@@ -202,11 +254,17 @@ export async function exchangeGmailCode(
     }),
     fetchImpl,
   );
-  if (!json.access_token) throw new GmailApiError("sync_failed", 0, "no access token");
+  if (!json.access_token)
+    throw new GmailApiError("sync_failed", 0, "no access token");
   if (!(json.scope || "").split(/\s+/).includes(GMAIL_SCOPE)) {
-    throw new GmailApiError("needs_reconnect", 0, "gmail permission was not granted");
+    throw new GmailApiError(
+      "needs_reconnect",
+      0,
+      "gmail permission was not granted",
+    );
   }
-  if (!json.refresh_token) throw new GmailApiError("needs_reconnect", 0, "no refresh token");
+  if (!json.refresh_token)
+    throw new GmailApiError("needs_reconnect", 0, "no refresh token");
   return {
     accessToken: json.access_token,
     refreshToken: json.refresh_token,
@@ -230,7 +288,8 @@ export async function refreshGmailTokens(
     }),
     fetchImpl,
   );
-  if (!json.access_token) throw new GmailApiError("sync_failed", 0, "no access token");
+  if (!json.access_token)
+    throw new GmailApiError("sync_failed", 0, "no access token");
   return {
     accessToken: json.access_token,
     // Google only rotates the refresh token occasionally; keep ours otherwise.
@@ -258,6 +317,9 @@ export async function revokeGmailToken(
   }
 }
 
-export function accessTokenFresh(tokens: GmailTokens, nowMs = Date.now()): boolean {
+export function accessTokenFresh(
+  tokens: GmailTokens,
+  nowMs = Date.now(),
+): boolean {
   return Date.parse(tokens.expiresAt) - nowMs > 60_000;
 }

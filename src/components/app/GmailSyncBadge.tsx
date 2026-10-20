@@ -55,8 +55,9 @@ export function GmailSyncBadge() {
         const next = `${status.status}|${status.lastError}|${status.unread}`;
         const changed = Boolean(signature) && next !== signature;
         signature = next;
+        // A successful empty sync still updates the visible freshness time.
+        window.dispatchEvent(new CustomEvent(GMAIL_EVENT, { detail: body }));
         if ((body.added ?? 0) > 0 || changed) {
-          window.dispatchEvent(new CustomEvent(GMAIL_EVENT, { detail: body }));
           router.refresh();
         }
       } catch {

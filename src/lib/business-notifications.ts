@@ -30,6 +30,7 @@ export type BusinessNotifyInput = {
   lines: { label: string; value?: string | null }[];
   ctaUrl?: string;
   ctaLabel?: string;
+  idempotencyKey?: string;
 };
 
 export async function sendBusinessNotifyEmail(
@@ -65,12 +66,19 @@ export async function sendBusinessNotifyEmail(
   </div></body></html>`;
 
   try {
-    await resend.emails.send({
-      from: fromEmail,
-      to: input.toEmail,
-      subject: input.subject,
-      html,
-    });
+    const result = await resend.emails.send(
+      {
+        from: fromEmail,
+        to: input.toEmail,
+        subject: input.subject,
+        html,
+      },
+      input.idempotencyKey
+        ? { idempotencyKey: input.idempotencyKey }
+        : undefined,
+    );
+    if (result.error || !result.data?.id)
+      return { sent: false, reason: "send_failed" };
     return { sent: true };
   } catch (err) {
     console.error("[business-notify] send failed", err);

@@ -1,9 +1,7 @@
 import { createId } from "@/lib/id";
-import type {
-  GmailAccount,
-  GmailMessage,
-  GmailMessageSummary,
-} from "./types";
+import type { NotificationStore } from "@/product/notifications/store";
+import { gmailReplyEvent } from "./notifications";
+import type { GmailAccount, GmailMessage, GmailMessageSummary } from "./types";
 
 export type MessageFilter = {
   q?: string;
@@ -40,13 +38,22 @@ export type GmailAccountPatch = Partial<
   >
 >;
 
-export type NewGmailMessage = Omit<GmailMessage, "id" | "createdAt"> & { id?: string };
+export type NewGmailMessage = Omit<GmailMessage, "id" | "createdAt"> & {
+  id?: string;
+};
 
 export type GmailStore = {
-  getAccount(organizationId: string, userId: string): Promise<GmailAccount | null>;
+  getAccount(
+    organizationId: string,
+    userId: string,
+  ): Promise<GmailAccount | null>;
   findAccountsByEmail(email: string): Promise<GmailAccount[]>;
   /** Connected accounts that have not been tried recently and are not backing off. */
-  listAccountsDue(input: { nowIso: string; staleBeforeIso: string; limit: number }): Promise<GmailAccount[]>;
+  listAccountsDue(input: {
+    nowIso: string;
+    staleBeforeIso: string;
+    limit: number;
+  }): Promise<GmailAccount[]>;
   /** Insert or replace the row for (organization, user). Used only when connecting. */
   saveAccount(row: GmailAccount): Promise<void>;
   /** Partial update that never re-creates an account removed in the meantime. */
@@ -58,17 +65,41 @@ export type GmailStore = {
   tryBeginSync(accountId: string, now: Date, leaseMs: number): Promise<boolean>;
   endSync(accountId: string): Promise<void>;
 
-  upsertMessage(row: NewGmailMessage): Promise<{ message: GmailMessage; inserted: boolean }>;
+  upsertMessage(
+    row: NewGmailMessage,
+    queueReplyAlert?: boolean,
+  ): Promise<{ message: GmailMessage; inserted: boolean }>;
   existingGmailIds(accountId: string, gmailIds: string[]): Promise<Set<string>>;
   threadKnown(accountId: string, threadId: string): Promise<boolean>;
-  setUnreadByGmailId(accountId: string, gmailId: string, unread: boolean): Promise<void>;
+  setUnreadByGmailId(
+    accountId: string,
+    gmailId: string,
+    unread: boolean,
+  ): Promise<void>;
   deleteByGmailIds(accountId: string, gmailIds: string[]): Promise<void>;
 
-  listMessages(organizationId: string, userId: string, filter?: MessageFilter): Promise<GmailMessageSummary[]>;
-  getMessage(organizationId: string, userId: string, id: string): Promise<GmailMessage | null>;
-  listThread(organizationId: string, userId: string, threadId: string): Promise<GmailMessage[]>;
+  listMessages(
+    organizationId: string,
+    userId: string,
+    filter?: MessageFilter,
+  ): Promise<GmailMessageSummary[]>;
+  getMessage(
+    organizationId: string,
+    userId: string,
+    id: string,
+  ): Promise<GmailMessage | null>;
+  listThread(
+    organizationId: string,
+    userId: string,
+    threadId: string,
+  ): Promise<GmailMessage[]>;
   countUnread(organizationId: string, userId: string): Promise<number>;
-  setRead(organizationId: string, userId: string, id: string, read: boolean): Promise<boolean>;
+  setRead(
+    organizationId: string,
+    userId: string,
+    id: string,
+    read: boolean,
+  ): Promise<boolean>;
 };
 
 export function toSummary(message: GmailMessage): GmailMessageSummary {
@@ -104,7 +135,9 @@ function newerFirst(a: GmailMessage, b: GmailMessage): number {
   return diff !== 0 ? diff : b.id < a.id ? -1 : b.id > a.id ? 1 : 0;
 }
 
-export function createMemoryGmailStore(): GmailStore {
+export function createMemoryGmailStore(
+  notifications?: NotificationStore,
+): GmailStore {
   const accounts = new Map<string, GmailAccount>();
   const leases = new Map<string, number>();
   const messages = new Map<string, GmailMessage>();
@@ -113,8 +146,9 @@ export function createMemoryGmailStore(): GmailStore {
     [...accounts.values()].find(
       (row) => row.organizationId === organizationId && row.userId === userId,
     ) ?? null;
-  const owned = (organizationId: string, userId: string) => (message: GmailMessage) =>
-    message.organizationId === organizationId && message.userId === userId;
+  const owned =
+    (organizationId: string, userId: string) => (message: GmailMessage) =>
+      message.organizationId === organizationId && message.userId === userId;
 
   function removeMessages(accountId: string) {
     for (const [id, message] of messages) {
@@ -129,7 +163,8 @@ export function createMemoryGmailStore(): GmailStore {
     async findAccountsByEmail(email) {
       const wanted = email.trim().toLowerCase();
       return [...accounts.values()].filter(
-        (row) => row.email?.toLowerCase() === wanted && row.status === "connected",
+        (row) =>
+          row.email?.toLowerCase() === wanted && row.status === "connected",
       );
     },
     async listAccountsDue({ nowIso, staleBeforeIso, limit }) {
@@ -138,9 +173,15 @@ export function createMemoryGmailStore(): GmailStore {
       return [...accounts.values()]
         .filter((row) => row.status === "connected" && row.tokenCiphertext)
         .filter((row) => !row.nextSyncAt || Date.parse(row.nextSyncAt) <= now)
-        .filter((row) => !row.lastAttemptAt || Date.parse(row.lastAttemptAt) <= stale)
+        .filter(
+          (row) => !row.lastAttemptAt || Date.parse(row.lastAttemptAt) <= stale,
+        )
         .filter((row) => (leases.get(row.id) ?? 0) <= now)
-        .sort((a, b) => Date.parse(a.lastAttemptAt || "0") - Date.parse(b.lastAttemptAt || "0"))
+        .sort(
+          (a, b) =>
+            Date.parse(a.lastAttemptAt || "0") -
+            Date.parse(b.lastAttemptAt || "0"),
+        )
         .slice(0, limit);
     },
     async saveAccount(row) {
@@ -151,7 +192,11 @@ export function createMemoryGmailStore(): GmailStore {
     async updateAccount(id, patch) {
       const existing = accounts.get(id);
       if (!existing) return false;
-      accounts.set(id, { ...existing, ...patch, updatedAt: new Date().toISOString() });
+      accounts.set(id, {
+        ...existing,
+        ...patch,
+        updatedAt: new Date().toISOString(),
+      });
       return true;
     },
     async deleteAccount(organizationId, userId) {
@@ -174,11 +219,14 @@ export function createMemoryGmailStore(): GmailStore {
       leases.delete(accountId);
     },
 
-    async upsertMessage(row) {
+    async upsertMessage(row, queueReplyAlert) {
       // Mirrors the foreign key in Postgres: no mail for an account that was disconnected mid-sync.
-      if (!accounts.has(row.accountId)) throw new Error("gmail account no longer exists");
+      if (!accounts.has(row.accountId))
+        throw new Error("gmail account no longer exists");
       const existing = [...messages.values()].find(
-        (message) => message.accountId === row.accountId && message.gmailId === row.gmailId,
+        (message) =>
+          message.accountId === row.accountId &&
+          message.gmailId === row.gmailId,
       );
       if (existing) {
         // Read state is deliberately kept: the user may have read it here already.
@@ -198,6 +246,8 @@ export function createMemoryGmailStore(): GmailStore {
         id: row.id || createId("gml"),
         createdAt: new Date().toISOString(),
       };
+      if (queueReplyAlert && notifications)
+        await notifications.insertOutbox(gmailReplyEvent(message));
       messages.set(message.id, message);
       return { message, inserted: true };
     },
@@ -205,18 +255,24 @@ export function createMemoryGmailStore(): GmailStore {
       const wanted = new Set(gmailIds);
       const found = new Set<string>();
       for (const message of messages.values()) {
-        if (message.accountId === accountId && wanted.has(message.gmailId)) found.add(message.gmailId);
+        if (message.accountId === accountId && wanted.has(message.gmailId))
+          found.add(message.gmailId);
       }
       return found;
     },
     async threadKnown(accountId, threadId) {
       return [...messages.values()].some(
-        (message) => message.accountId === accountId && message.threadId === threadId,
+        (message) =>
+          message.accountId === accountId && message.threadId === threadId,
       );
     },
     async setUnreadByGmailId(accountId, gmailId, unread) {
       for (const [id, message] of messages) {
-        if (message.accountId === accountId && message.gmailId === gmailId && message.direction === "inbound") {
+        if (
+          message.accountId === accountId &&
+          message.gmailId === gmailId &&
+          message.direction === "inbound"
+        ) {
           messages.set(id, { ...message, unread });
         }
       }
@@ -224,7 +280,8 @@ export function createMemoryGmailStore(): GmailStore {
     async deleteByGmailIds(accountId, gmailIds) {
       const wanted = new Set(gmailIds);
       for (const [id, message] of messages) {
-        if (message.accountId === accountId && wanted.has(message.gmailId)) messages.delete(id);
+        if (message.accountId === accountId && wanted.has(message.gmailId))
+          messages.delete(id);
       }
     },
 
@@ -255,12 +312,20 @@ export function createMemoryGmailStore(): GmailStore {
     },
     async countUnread(organizationId, userId) {
       return [...messages.values()].filter(
-        (message) => owned(organizationId, userId)(message) && message.direction === "inbound" && message.unread,
+        (message) =>
+          owned(organizationId, userId)(message) &&
+          message.direction === "inbound" &&
+          message.unread,
       ).length;
     },
     async setRead(organizationId, userId, id, read) {
       const message = messages.get(id);
-      if (!message || !owned(organizationId, userId)(message) || message.direction !== "inbound") return false;
+      if (
+        !message ||
+        !owned(organizationId, userId)(message) ||
+        message.direction !== "inbound"
+      )
+        return false;
       messages.set(id, { ...message, unread: !read });
       return true;
     },

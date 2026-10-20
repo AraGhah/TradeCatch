@@ -156,7 +156,7 @@ test.describe("Gmail receiving", () => {
     await expect(alice.page.getByText("Gmail is connected. New emails show up here automatically.")).toBeVisible();
     await expect(alice.page.locator('[data-testid="gmail-status"]:visible')).toContainText("Connected · alice@gmail.com");
     await expect(alice.page.getByRole("button", { name: "Disconnect" })).toBeVisible();
-    await expect(alice.page.getByText(/Last checked/)).toBeVisible();
+    await expect(alice.page.getByText(/Last successful sync/)).toBeVisible();
   });
 
   test("the browser never receives tokens or secrets", async () => {
@@ -680,5 +680,63 @@ test.describe("Gmail receiving", () => {
     expect(
       results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(" ")).join(", ")}`),
     ).toEqual([]);
+  });
+  test("reply alert channels are configurable and Gmail shows successful sync freshness", async () => {
+    const me = (await (await alice.page.request.get("/api/app/me")).json()) as {
+      organization: { id: string };
+    };
+    const url = `/api/businesses/${me.organization.id}/notification-preferences`;
+    const original = (await (await alice.page.request.get(url)).json()) as {
+      preferences: Record<string, unknown>;
+    };
+    await alice.page.goto("/app/settings");
+    await expect(
+      alice.page.getByRole("link", { name: "Choose reply alerts" }),
+    ).toBeVisible();
+    await alice.page.getByRole("link", { name: "Choose reply alerts" }).click();
+    const row = alice.page.getByRole("group", {
+      name: "Customer replies, including Gmail",
+    });
+    await row.getByLabel("Email", { exact: true }).check();
+    await row.getByLabel("SMS", { exact: true }).check();
+    await alice.page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(alice.page.getByText("Saved.", { exact: true })).toBeVisible();
+    const saved = (await (await alice.page.request.get(url)).json()) as {
+      preferences: {
+        categories: { replies: { email: boolean; sms: boolean } };
+      };
+    };
+    expect(saved.preferences.categories.replies).toMatchObject({
+      email: true,
+      sms: true,
+    });
+    await alice.page.request.put(url, { data: original.preferences });
+    await bob.page.goto("/app/settings");
+    const status = (await (
+      await bob.page.request.get("/api/app/gmail/status")
+    ).json()) as { status: { lastSyncAt: string | null } };
+    expect(status.status.lastSyncAt).not.toBeNull();
+    await expect(
+      bob.page.getByTestId("gmail-last-successful-sync"),
+    ).toContainText("Last successful sync");
+    const updated = new Date(Date.now() + 1000).toISOString();
+    await bob.page.evaluate(
+      (value) =>
+        window.dispatchEvent(
+          new CustomEvent("tradecatch:gmail", { detail: { status: value } }),
+        ),
+      {
+        ...status.status,
+        lastSyncAt: updated,
+        pushEnabled: false,
+        pushConfigured: false,
+      },
+    );
+    await expect(
+      bob.page.getByTestId("gmail-last-successful-sync").locator("time"),
+    ).toHaveAttribute("datetime", updated);
+    await expect(bob.page.getByTestId("gmail-sync-mode")).toContainText(
+      "five minutes",
+    );
   });
 });
