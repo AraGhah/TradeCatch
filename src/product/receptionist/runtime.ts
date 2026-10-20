@@ -50,6 +50,7 @@ type RuntimeState = {
  */
 const globalForReceptionist = globalThis as unknown as {
   __tradecatchReceptionist?: RuntimeState;
+  __tradecatchReceptionistReadStore?: ReceptionistStore;
 };
 
 function wantsDurable(): { wantDurable: boolean; url?: string } {
@@ -225,6 +226,12 @@ function state(): RuntimeState {
     globalForReceptionist.__tradecatchReceptionist = bootstrap();
   }
   return globalForReceptionist.__tradecatchReceptionist;
+}
+
+/** Archive reads do not initialize the voice engine, profiles, or providers. */
+export function getReceptionistReadStore(): ReceptionistStore {
+  if(globalForReceptionist.__tradecatchReceptionist) return globalForReceptionist.__tradecatchReceptionist.store;
+  return globalForReceptionist.__tradecatchReceptionistReadStore ??= createStores().store;
 }
 
 export function getReceptionistRuntime() {

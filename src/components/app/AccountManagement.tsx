@@ -42,6 +42,8 @@ export function AccountManagement({
   const [serviceArea, setServiceArea] = useState(initialServiceArea);
   const [industry, setIndustry] = useState(initialIndustry);
   const [message, setMessage] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(false);
 
   const roleLabel: Record<MemberRole, string> = {
     owner: t("roleOwner"),
@@ -68,12 +70,60 @@ export function AccountManagement({
 
   async function request(path: string, body?: object) {
     const response = await fetch(path, {
-      method: path.endsWith("/export") ? "GET" : "POST",
+      method: "POST",
       headers: { "content-type": "application/json" },
-      body: path.endsWith("/export") ? undefined : JSON.stringify(body ?? {}),
+      body: JSON.stringify(body ?? {}),
     });
     const payload = await response.json();
     setMessage(response.ok ? JSON.stringify(payload) : t("error"));
+  }
+
+  async function downloadExport() {
+    if (exporting) return;
+    setExporting(true);
+    setExportError(false);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `/api/businesses/${organizationId}/account/export`,
+        { cache: "no-store" },
+      );
+      if (
+        !response.ok ||
+        !response.headers
+          .get("content-type")
+          ?.toLowerCase()
+          .startsWith("application/zip")
+      )
+        throw new Error("Export unavailable");
+      const blob = await response.blob();
+      if (!blob.size) throw new Error("Empty archive");
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download =
+        response.headers
+          .get("content-disposition")
+          ?.match(/filename="([a-zA-Z0-9_.-]+)"/)?.[1] ??
+        "tradecatch-account-export.zip";
+      document.body.appendChild(link);
+      try {
+        link.click();
+      } finally {
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      }
+      setMessage(
+        response.headers.get("x-export-status") === "partial"
+          ? t("exportPartial")
+          : t("exportDownloaded"),
+      );
+    } catch {
+      setExportError(true);
+      setMessage(t("exportError"));
+    } finally {
+      setExporting(false);
+    }
   }
 
   const field =
@@ -144,14 +194,14 @@ export function AccountManagement({
       <div className="flex flex-wrap gap-2">
         <button type="button" className="rounded-md border border-navy/15 px-3 py-2 text-sm" onClick={() => void request(`/api/businesses/${organizationId}/account/lifecycle`, { kind: "suspension" })}>{t("suspend")}</button>
         <button type="button" className="rounded-md border border-navy/15 px-3 py-2 text-sm" onClick={() => void request(`/api/businesses/${organizationId}/account/lifecycle`, { kind: "reactivation" })}>{t("reactivate")}</button>
-        <button type="button" className="rounded-md border border-navy/15 px-3 py-2 text-sm" onClick={() => void request(`/api/businesses/${organizationId}/account/export`)}>{t("export")}</button>
+        <button type="button" className="rounded-md border border-navy/15 px-3 py-2 text-sm" disabled={exporting} aria-busy={exporting} onClick={() => void downloadExport()}>{exporting ? t("exportPreparing") : t("export")}</button>
         <button type="button" className="rounded-md border border-navy/15 px-3 py-2 text-sm" onClick={() => void request(`/api/businesses/${organizationId}/account/deletion-request`)}>{t("deletion")}</button>
       </div>
       <p className="text-sm text-navy/70">{t("deletionNote")}</p>
       {billingPortalUrl ? <a className="text-sm font-semibold text-navy underline" href={billingPortalUrl}>{t("billing")}</a> : <p className="text-sm text-navy/70">{t("billingMissing")}</p>}
       <Link href="/app/settings/security" className="text-sm font-semibold text-navy underline">{t("sessions")}</Link>
       <Link href="/app/settings/notifications" className="text-sm font-semibold text-navy underline">{t("alerts")}</Link>
-      {message ? <p className="text-sm text-navy">{message}</p> : null}
+      {message ? <p role={exportError ? "alert" : "status"} aria-live="polite" className="text-sm text-navy">{message}</p> : null}
     </div>
   );
 }

@@ -320,6 +320,10 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
       return call;
     },
 
+    async listCalls(clientAccountId, limit = 1001) {
+      const {rows}=await q<{payload:CallRecord}>(db,'SELECT payload FROM mc_calls WHERE client_account_id=$1 ORDER BY called_at DESC LIMIT $2',[clientAccountId,limit]);
+      return rows.map(row=>row.payload);
+    },
     async getCall(id) {
       const { rows } = await q<{ payload: CallRecord }>(
         db,
@@ -596,21 +600,22 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
       return rows[0]?.payload ?? null;
     },
 
-    async listLeads(clientAccountId) {
+    async listLeads(clientAccountId, limit) {
       const { rows } = clientAccountId
         ? await q<{ payload: LeadRecord }>(
             db,
             `SELECT payload FROM mc_leads
              WHERE client_account_id = $1
                AND deleted_at IS NULL
-             ORDER BY updated_at DESC`,
-            [clientAccountId],
+             ORDER BY updated_at DESC LIMIT $2`,
+            [clientAccountId,limit ?? null],
           )
         : await q<{ payload: LeadRecord }>(
             db,
             `SELECT payload FROM mc_leads
              WHERE deleted_at IS NULL
-             ORDER BY updated_at DESC`,
+             ORDER BY updated_at DESC LIMIT $1`,
+            [limit ?? null],
           );
       return rows.map((r) => r.payload);
     },

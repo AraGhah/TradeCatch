@@ -216,13 +216,9 @@ export function createPostgresGrowthStore(
       return mapAppointment(rows[0]);
     },
 
-    async listAppointments(organizationId) {
-      const { rows } = await pool.query(
-        `SELECT * FROM tc_appointments
-         WHERE organization_id = $1 ORDER BY starts_at ASC`,
-        [organizationId],
-      );
-      return rows.map(mapAppointment);
+    async listAppointments(organizationId, limit) {
+      const res=await pool.query('SELECT * FROM tc_appointments WHERE organization_id=$1 ORDER BY starts_at ASC LIMIT $2',[organizationId,limit ?? null]);
+      return res.rows.map(mapAppointment);
     },
 
     async getAppointment(id, organizationId) {

@@ -24,7 +24,7 @@ export type StarterStore = {
     id: string,
     organizationId: string,
   ): Promise<WebsiteLead | null>;
-  listWebsiteLeads(organizationId: string): Promise<WebsiteLead[]>;
+  listWebsiteLeads(organizationId: string, limit?: number): Promise<WebsiteLead[]>;
   updateWebsiteLead(
     id: string,
     organizationId: string,
@@ -46,7 +46,7 @@ export type StarterStore = {
   // Quotes
   createQuoteThread(thread: QuoteThread): Promise<QuoteThread>;
   getQuoteThread(id: string, organizationId: string): Promise<QuoteThread | null>;
-  listQuoteThreads(organizationId: string): Promise<QuoteThread[]>;
+  listQuoteThreads(organizationId: string, limit?: number): Promise<QuoteThread[]>;
   findActiveQuoteByPhone(
     organizationId: string,
     phoneE164: string,
@@ -58,7 +58,7 @@ export type StarterStore = {
   ): Promise<QuoteThread | null>;
   listDueQuoteThreads(nowIso: string, limit: number): Promise<QuoteThread[]>;
   addQuoteMessage(message: Omit<QuoteMessage, "id"> & { id?: string }): Promise<QuoteMessage>;
-  listQuoteMessages(threadId: string): Promise<QuoteMessage[]>;
+  listQuoteMessages(threadId: string, limit?: number): Promise<QuoteMessage[]>;
 
   // Inbox
   upsertInboxItem(
@@ -143,10 +143,10 @@ export function createMemoryStarterStore(): StarterStore {
       return lead;
     },
 
-    async listWebsiteLeads(organizationId) {
+    async listWebsiteLeads(organizationId, limit) {
       return [...website.values()]
         .filter((l) => l.organizationId === organizationId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0,limit);
     },
 
     async updateWebsiteLead(id, organizationId, patch) {
@@ -168,10 +168,10 @@ export function createMemoryStarterStore(): StarterStore {
       return t;
     },
 
-    async listQuoteThreads(organizationId) {
+    async listQuoteThreads(organizationId, limit) {
       return [...quotes.values()]
         .filter((t) => t.organizationId === organizationId)
-        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0,limit);
     },
 
     async findActiveQuoteByPhone(organizationId, phoneE164) {
@@ -224,10 +224,10 @@ export function createMemoryStarterStore(): StarterStore {
       return row;
     },
 
-    async listQuoteMessages(threadId) {
+    async listQuoteMessages(threadId, limit) {
       return [...(quoteMessages.get(threadId) ?? [])].sort((a, b) =>
         a.at.localeCompare(b.at),
-      );
+      ).slice(0,limit);
     },
 
     async upsertInboxItem(input) {

@@ -22,7 +22,7 @@ export type SchedulingStore = {
   saveService(service: ServiceType): Promise<ServiceType>;
   listTechnicians(organizationId: string): Promise<Technician[]>;
   saveTechnician(technician: Technician): Promise<Technician>;
-  listAppointments(organizationId: string): Promise<ScheduleAppointment[]>;
+  listAppointments(organizationId: string, limit?: number): Promise<ScheduleAppointment[]>;
   getAppointment(organizationId: string, id: string): Promise<ScheduleAppointment | null>;
   findByIdempotency(organizationId: string, key: string): Promise<ScheduleAppointment | null>;
   insertIfFree(row: ScheduleAppointment, bufferMinutes: number): Promise<ScheduleAppointment | null>;
@@ -90,10 +90,11 @@ export function createMemorySchedulingStore(): SchedulingStore {
       technicians.set(technician.id, structuredClone(technician));
       return structuredClone(technician);
     },
-    async listAppointments(organizationId) {
+    async listAppointments(organizationId, limit) {
       return [...appointments.values()]
         .filter((a) => a.organizationId === organizationId)
         .sort((a, b) => a.startAt.localeCompare(b.startAt))
+        .slice(0,limit)
         .map((a) => structuredClone(a));
     },
     async getAppointment(organizationId, id) {

@@ -1,5 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
+import { readFile } from "node:fs/promises";
+import { readExportZip } from "./support/read-export-zip";
 
 /**
  * Workspace pages added for the AI receptionist. The E2E harness has no linked
@@ -72,6 +74,26 @@ test.describe("receptionist workspace pages", () => {
           `${v.id}: ${v.help} ${JSON.stringify(v.nodes.map((n) => n.target))}`,
       ),
     ).toEqual([]);
+
+    await page.goto("/app/settings/account");
+    const me=await (await page.request.get("/api/app/me")).json();
+    const orgId=me.organization.id;
+    expect((await page.request.get("/api/businesses/another-business/account/export")).status()).toBe(403);
+    const downloadPromise=page.waitForEvent("download");
+    await page.getByRole("button",{name:"Export data",exact:true}).click();
+    const download=await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/^tradecatch-account-export-.*\.zip$/);
+    const path=await download.path();expect(path).toBeTruthy();
+    const archive=readExportZip(await readFile(path!));
+    expect(JSON.parse(archive["manifest.json"]).organizationId).toBe(orgId);
+    expect(archive["README.txt"]).toContain("Excluded:");
+    expect(archive["customers.csv"]).toBeTruthy();
+    await expect(page.getByRole("status").filter({hasText:"Your account archive has downloaded"})).toBeVisible();
+    await page.route(`**/api/businesses/${orgId}/account/export`,route=>route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:"test failure"})}));
+    await page.getByRole("button",{name:"Export data",exact:true}).click();
+    await expect(page.getByRole("alert").filter({hasText:"Could not download your account archive"})).toBeVisible();
+    await expect(page.getByRole("button",{name:"Export data",exact:true})).toBeEnabled();
+    await page.unroute(`**/api/businesses/${orgId}/account/export`);
 
     await page.goto("/app/email");
     await expect(

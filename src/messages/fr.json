@@ -3096,7 +3096,11 @@
       "setupCalendar": "Calendrier",
       "setupTest": "Tester la réceptionniste",
       "setupAutomations": "Activer les automatisations",
-      "alerts": "Préférences d’alertes"
+      "alerts": "Préférences d’alertes",
+      "exportPreparing": "Préparation du téléchargement…",
+      "exportDownloaded": "Votre archive a été téléchargée. Consultez README.txt et manifest.json pour son contenu.",
+      "exportPartial": "Votre archive a été téléchargée avec des sections manquantes ou limitées. Consultez README.txt et manifest.json.",
+      "exportError": "Impossible de télécharger votre archive. Veuillez réessayer plus tard."
     },
     "receptionist": {
       "headline": "Réceptionniste",

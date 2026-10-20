@@ -26,6 +26,7 @@ export type UpsertCustomerInput = {
 };
 
 export type CrmStore = {
+  listCustomers(organizationId: string, limit?: number): Promise<Customer[]>;
   upsertCustomer(input: UpsertCustomerInput): Promise<Customer>;
   getCustomer(organizationId: string, id: string): Promise<Customer | null>;
   findCustomerByPhone(
@@ -103,7 +104,7 @@ export type CrmStore = {
     organizationId: string,
     customerId: string,
   ): Promise<Conversation | null>;
-  listConversations(organizationId: string): Promise<Conversation[]>;
+  listConversations(organizationId: string, limit?: number): Promise<Conversation[]>;
   updateConversation(
     organizationId: string,
     id: string,
@@ -118,6 +119,7 @@ export type CrmStore = {
   listMessages(
     organizationId: string,
     conversationId: string,
+    limit?: number,
   ): Promise<CrmMessage[]>;
   latestMessage(
     organizationId: string,
