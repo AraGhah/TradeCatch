@@ -183,7 +183,11 @@ h3,
 h4 {
   font-family: var(--font-heading);
   letter-spacing: -0.04em;
+  /* At 800 weight the tight tracking eats the word gaps ("talktoanyone");
+     word-spacing hands that room back without loosening the letters. */
+  word-spacing: 0.08em;
   font-weight: 800;
+  text-wrap: balance;
 }
 
 ::selection {
@@ -227,14 +231,14 @@ h4 {
 .text-hero {
   font-size: clamp(40px, 5.6vw, 74px);
   line-height: 0.98;
-  letter-spacing: -0.042em;
+  letter-spacing: -0.04em;
   font-weight: 800;
 }
 
 .text-page-hero {
   font-size: clamp(36px, 4.8vw, 62px);
   line-height: 1.02;
-  letter-spacing: -0.042em;
+  letter-spacing: -0.04em;
   font-weight: 800;
 }
 
