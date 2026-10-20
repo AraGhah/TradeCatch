@@ -6,10 +6,19 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const access = await authorizeAdminRequest(request);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const service = getReliabilityService();
   const overview = await service.overview();
   const ai = overview.services.find((row) => row.service === "ai_receptionist");
   const errors = await service.listErrors({ service: "ai_receptionist" });
-  return NextResponse.json({ ok: true, ai, failedCalls: errors.length, errors });
+  return NextResponse.json({
+    ok: true,
+    ai,
+    failedCalls: errors.length,
+    errors,
+  });
 }

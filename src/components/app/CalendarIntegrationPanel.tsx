@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 type Status = {
@@ -11,27 +11,41 @@ type Status = {
   lastError?: string;
 };
 
-export function CalendarIntegrationPanel({ organizationId }: { organizationId: string }) {
+export function CalendarIntegrationPanel({
+  organizationId,
+}: {
+  organizationId: string;
+}) {
   const t = useTranslations("app.schedule");
   const [calendar, setCalendar] = useState<Status | null>(null);
   const [calendarId, setCalendarId] = useState("");
   const [summary, setSummary] = useState("");
   const [message, setMessage] = useState<string | null>(null);
 
-  async function load() {
-    const res = await fetch(`/api/businesses/${organizationId}/calendar/status`);
-    const data = (await res.json()) as { calendar?: Status };
-    setCalendar(data.calendar ?? null);
-    setCalendarId(data.calendar?.calendarId ?? "");
-    setSummary(data.calendar?.calendarSummary ?? "");
-  }
+  const load = useCallback(
+    () =>
+      fetch(`/api/businesses/${organizationId}/calendar/status`)
+        .then(async (response) => ({
+          response,
+          data: (await response.json()) as { calendar?: Status },
+        }))
+        .then(({ data }) => {
+          setCalendar(data.calendar ?? null);
+          setCalendarId(data.calendar?.calendarId ?? "");
+          setSummary(data.calendar?.calendarSummary ?? "");
+        }),
+    [organizationId],
+  );
 
   useEffect(() => {
     void load();
-  }, [organizationId]);
+  }, [load]);
 
   async function connect() {
-    const res = await fetch(`/api/businesses/${organizationId}/calendar/connect`, { method: "POST" });
+    const res = await fetch(
+      `/api/businesses/${organizationId}/calendar/connect`,
+      { method: "POST" },
+    );
     const data = (await res.json()) as { url?: string; error?: string };
     if (data.url) {
       window.location.href = data.url;
@@ -57,24 +71,41 @@ export function CalendarIntegrationPanel({ organizationId }: { organizationId: s
         {calendar?.calendarSummary ? ` · ${calendar.calendarSummary}` : ""}
       </p>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={() => void connect()} className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white">
+        <button
+          type="button"
+          onClick={() => void connect()}
+          className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white"
+        >
           {t("connect")}
         </button>
         <button
           type="button"
           onClick={() =>
-            void fetch(`/api/businesses/${organizationId}/calendar/disconnect`, { method: "POST" }).then(() => load())
+            void fetch(
+              `/api/businesses/${organizationId}/calendar/disconnect`,
+              { method: "POST" },
+            ).then(() => load())
           }
           className="rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold"
         >
           {t("disconnect")}
         </button>
       </div>
-      <label className="text-sm">{t("calendarId")}
-        <input value={calendarId} onChange={(event) => setCalendarId(event.target.value)} className="mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5" />
+      <label className="text-sm">
+        {t("calendarId")}
+        <input
+          value={calendarId}
+          onChange={(event) => setCalendarId(event.target.value)}
+          className="mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5"
+        />
       </label>
-      <label className="text-sm">{t("summary")}
-        <input value={summary} onChange={(event) => setSummary(event.target.value)} className="mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5" />
+      <label className="text-sm">
+        {t("summary")}
+        <input
+          value={summary}
+          onChange={(event) => setSummary(event.target.value)}
+          className="mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5"
+        />
       </label>
       <button
         type="button"
@@ -83,7 +114,10 @@ export function CalendarIntegrationPanel({ organizationId }: { organizationId: s
           void fetch(`/api/businesses/${organizationId}/calendar/calendars`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ calendarId, summary: summary || calendarId }),
+            body: JSON.stringify({
+              calendarId,
+              summary: summary || calendarId,
+            }),
           }).then(async (res) => {
             setMessage(res.ok ? t("saved") : t("error"));
             await load();

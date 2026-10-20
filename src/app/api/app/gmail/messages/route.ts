@@ -6,16 +6,23 @@ export const dynamic = "force-dynamic";
 
 const PAGE = 30;
 
-function readCursor(value: string | null): { receivedAt: string; id: string } | undefined {
+function readCursor(
+  value: string | null,
+): { receivedAt: string; id: string } | undefined {
   if (!value) return undefined;
   const [receivedAt, id] = value.split("|");
-  if (!receivedAt || !id || !Number.isFinite(Date.parse(receivedAt))) return undefined;
+  if (!receivedAt || !id || !Number.isFinite(Date.parse(receivedAt)))
+    return undefined;
   return { receivedAt, id };
 }
 
 export async function GET(request: NextRequest) {
   const auth = await requireTenantContext();
-  if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: auth.status });
+  if (!auth.ok)
+    return NextResponse.json(
+      { error: "unauthorized" },
+      { status: auth.status },
+    );
   const params = request.nextUrl.searchParams;
   const filter = params.get("filter");
   const { organization, user } = auth.ctx;

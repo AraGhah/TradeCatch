@@ -24,7 +24,11 @@ export async function PATCH(request: NextRequest) {
   const { getSecurityService } = await import("@/product/security/runtime");
   const { recordSecurityEvent } = await import("@/product/security/hooks");
   try {
-    getSecurityService().assertPermission(auth.ctx.membership.role, "manage_ai", auth.ctx.isPlatformAdmin);
+    getSecurityService().assertPermission(
+      auth.ctx.membership.role,
+      "manage_ai",
+      auth.ctx.isPlatformAdmin,
+    );
   } catch {
     await recordSecurityEvent({
       organizationId: auth.ctx.organization.id,
@@ -32,7 +36,10 @@ export async function PATCH(request: NextRequest) {
       action: "permission_denied",
       target: "settings",
     });
-    return NextResponse.json({ error: "Insufficient permissions." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Insufficient permissions." },
+      { status: 403 },
+    );
   }
 
   let json: unknown;

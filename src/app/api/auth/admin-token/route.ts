@@ -18,18 +18,37 @@ export async function POST() {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
   if (!isPlatformAdminUser(auth.ctx.user)) {
-    return NextResponse.json({ error: "Platform administrator access required." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Platform administrator access required." },
+      { status: 403 },
+    );
   }
-  const allowed = await getSecurityService().sessionAllowsAdmin(auth.ctx.user.id, auth.ctx.session.id);
+  const allowed = await getSecurityService().sessionAllowsAdmin(
+    auth.ctx.user.id,
+    auth.ctx.session.id,
+  );
   if (!allowed) {
-    return NextResponse.json({ error: "Administrator MFA verification is required." }, { status: 403 });
+    return NextResponse.json(
+      { error: "Administrator MFA verification is required." },
+      { status: 403 },
+    );
   }
   const secret = getAuthSecret();
   if (!secret) {
-    return NextResponse.json({ error: "Auth is not configured (AUTH_SECRET)." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Auth is not configured (AUTH_SECRET)." },
+      { status: 401 },
+    );
   }
-  const token = await signAdminJwt({ sub: auth.ctx.user.id, sid: auth.ctx.session.id }, secret);
+  const token = await signAdminJwt(
+    { sub: auth.ctx.user.id, sid: auth.ctx.session.id },
+    secret,
+  );
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(ADMIN_JWT_COOKIE, token, adminJwtCookieOptions(ADMIN_JWT_TTL_SECONDS));
+  response.cookies.set(
+    ADMIN_JWT_COOKIE,
+    token,
+    adminJwtCookieOptions(ADMIN_JWT_TTL_SECONDS),
+  );
   return response;
 }

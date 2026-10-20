@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
       : JSON.stringify(body.message ?? {});
   const msg = parseRelayMessage(raw);
   if (!msg) {
-    return NextResponse.json({ error: "Invalid relay message" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid relay message" },
+      { status: 400 },
+    );
   }
 
   const runtime = getReceptionistRuntime();

@@ -130,7 +130,10 @@ in `wrangler.jsonc`.
    `npm run check:module-a` in an environment containing the production values.
 3. Run `npm run cf-typegen` whenever Worker bindings change and commit the generated
    `worker-configuration.d.ts`.
-4. Run the complete pre-deploy checks above, then `npm run deploy`.
+4. Push the development branch and require both CI jobs to pass before merging.
+   After pushing main, wait for its CI run, then use `npm run deploy`.
+   Deploy/upload scripts reject dirty checkouts, stale revisions and unsuccessful CI.
+   See [the release gate](docs/TC-009_VERIFICATION.md) for requirements.
 5. Confirm `/api/health`, all three cron triggers, Twilio webhooks, and the real
    missed-call flow in staging before routing client traffic.
 

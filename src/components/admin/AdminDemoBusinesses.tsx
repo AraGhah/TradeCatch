@@ -164,7 +164,7 @@ export function AdminDemoBusinesses() {
       setError(json.error || t("errors.switch"));
       return;
     }
-    window.location.href = locale === "fr" ? "/fr/app" : "/app";
+    window.location.assign(locale === "fr" ? "/fr/app" : "/app");
   }
 
   return (
@@ -216,7 +216,11 @@ export function AdminDemoBusinesses() {
             <label key={key} className="flex flex-col gap-1 text-sm text-navy">
               <span className="font-medium">{t(`fields.${key}`)}</span>
               <input
-                required={key === "businessName" || key === "ownerEmail" || key === "industry"}
+                required={
+                  key === "businessName" ||
+                  key === "ownerEmail" ||
+                  key === "industry"
+                }
                 type={type}
                 value={form[key]}
                 onChange={(e) =>

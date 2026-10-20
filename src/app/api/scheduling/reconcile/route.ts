@@ -5,7 +5,10 @@ import {
   missingOpsActorResponse,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
-import { getSchedulingStore, reconcileGoogleBusy } from "@/product/scheduling/runtime";
+import {
+  getSchedulingStore,
+  reconcileGoogleBusy,
+} from "@/product/scheduling/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +17,11 @@ async function tick(request: NextRequest) {
   const audit = logOpsAccess(request, "scheduling.reconcile");
   const isCron = Boolean(request.headers.get("x-vercel-cron"));
   if (audit.missingActor && !isCron) return missingOpsActorResponse();
-  return NextResponse.json({ ok: true, note: "Per-business reconcile runs when a calendar is connected.", ready: Boolean(getSchedulingStore()) });
+  return NextResponse.json({
+    ok: true,
+    note: "Per-business reconcile runs when a calendar is connected.",
+    ready: Boolean(getSchedulingStore()),
+  });
 }
 
 export async function POST(request: NextRequest) {

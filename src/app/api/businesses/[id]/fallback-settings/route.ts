@@ -15,11 +15,29 @@ const schema = z.object({
 async function access(organizationId: string, write: boolean) {
   const tenant = await requireTenantContext();
   if (!tenant.ok) return tenant;
-  if (tenant.ctx.organization.id !== organizationId && !tenant.ctx.isPlatformAdmin) {
-    return { ok: false as const, status: 403 as const, error: "Not a member of this business." };
+  if (
+    tenant.ctx.organization.id !== organizationId &&
+    !tenant.ctx.isPlatformAdmin
+  ) {
+    return {
+      ok: false as const,
+      status: 403 as const,
+      error: "Not a member of this business.",
+    };
   }
-  if (write && !allows(tenant.ctx.membership.role, "manage_settings", tenant.ctx.isPlatformAdmin)) {
-    return { ok: false as const, status: 403 as const, error: "Insufficient permissions." };
+  if (
+    write &&
+    !allows(
+      tenant.ctx.membership.role,
+      "manage_settings",
+      tenant.ctx.isPlatformAdmin,
+    )
+  ) {
+    return {
+      ok: false as const,
+      status: 403 as const,
+      error: "Insufficient permissions.",
+    };
   }
   return { ok: true as const, ctx: tenant.ctx };
 }
@@ -27,16 +45,25 @@ async function access(organizationId: string, write: boolean) {
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const gate = await access(id, false);
-  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
-  return NextResponse.json({ ok: true, settings: await getReliabilityService().fallback(id) });
+  if (!gate.ok)
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
+  return NextResponse.json({
+    ok: true,
+    settings: await getReliabilityService().fallback(id),
+  });
 }
 
 export async function PUT(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const gate = await access(id, true);
-  if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
+  if (!gate.ok)
+    return NextResponse.json({ error: gate.error }, { status: gate.status });
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid fallback settings." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: "Invalid fallback settings." },
+      { status: 400 },
+    );
   const current = await getReliabilityService().fallback(id);
   const settings = await getReliabilityService().saveFallback({
     ...current,

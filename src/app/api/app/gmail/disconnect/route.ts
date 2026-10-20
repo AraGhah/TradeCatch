@@ -16,7 +16,11 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) return forbiddenOrigin();
   const auth = await requireTenantContext();
-  if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: auth.status });
+  if (!auth.ok)
+    return NextResponse.json(
+      { error: "unauthorized" },
+      { status: auth.status },
+    );
   const { organization, user } = auth.ctx;
   const env = readGmailEnv();
   const store = getGmailStore();
@@ -27,7 +31,8 @@ export async function POST(request: NextRequest) {
   if (account?.tokenCiphertext) {
     try {
       let tokens = openGmailTokens(account.tokenCiphertext, env);
-      if (!accessTokenFresh(tokens)) tokens = await refreshGmailTokens(tokens, env);
+      if (!accessTokenFresh(tokens))
+        tokens = await refreshGmailTokens(tokens, env);
       await stopGmailWatch(tokens, env).catch(() => undefined);
       await revokeGmailToken(tokens, env);
     } catch {

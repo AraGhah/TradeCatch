@@ -12,12 +12,18 @@ async function gate(organizationId: string) {
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await gate(id);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const service = getSecurityService();
   const sessions = await service.sessions(access.ctx.user.id);
   return NextResponse.json({
     ok: true,
-    sessions: sessions.filter((row) => row.organizationId === id || access.ctx.isPlatformAdmin),
+    sessions: sessions.filter(
+      (row) => row.organizationId === id || access.ctx.isPlatformAdmin,
+    ),
     role: access.ctx.membership.role,
   });
 }

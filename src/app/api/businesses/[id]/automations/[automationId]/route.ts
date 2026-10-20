@@ -10,8 +10,18 @@ type Params = { params: Promise<{ id: string; automationId: string }> };
 
 const patchSchema = z.object({
   trigger: z.string().trim().min(1).max(60).optional(),
-  initialDelayMinutes: z.number().int().min(0).max(60 * 24 * 30).optional(),
-  secondDelayMinutes: z.number().int().min(0).max(60 * 24 * 60).optional(),
+  initialDelayMinutes: z
+    .number()
+    .int()
+    .min(0)
+    .max(60 * 24 * 30)
+    .optional(),
+  secondDelayMinutes: z
+    .number()
+    .int()
+    .min(0)
+    .max(60 * 24 * 60)
+    .optional(),
   language: z.enum(["en", "fr", "customer"]).optional(),
   maxAttempts: z.number().int().min(1).max(5).optional(),
   windowStartHour: z.number().int().min(0).max(23).optional(),
@@ -36,7 +46,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id, automationId } = await params;
   const access = await requireAutomationAccess(id, "write");
   if (!access.ok) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   }
   let json: unknown;
   try {

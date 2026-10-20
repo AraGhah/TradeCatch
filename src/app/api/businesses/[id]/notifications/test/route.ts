@@ -22,7 +22,11 @@ const schema = z.object({
 export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireNotificationAccess(id, "write");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const limited = await enforceRateLimit({
     scope: "notification-test",
     subject: `${id}:${access.ctx.user.id}`,
@@ -31,9 +35,14 @@ export async function POST(request: NextRequest, { params }: Params) {
   });
   if (limited) return limited;
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid notification test." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: "Invalid notification test." },
+      { status: 400 },
+    );
   const service = getNotificationService();
-  const key = parsed.data.idempotencyKey || `sim:${parsed.data.type}:${Date.now()}`;
+  const key =
+    parsed.data.idempotencyKey || `sim:${parsed.data.type}:${Date.now()}`;
   const queued = await service.enqueue({
     organizationId: id,
     type: parsed.data.type,
@@ -42,12 +51,16 @@ export async function POST(request: NextRequest, { params }: Params) {
       ...parsed.data,
       simulated: true,
       live: false,
-      href: parsed.data.type.startsWith("appointment") ? "/app/bookings" : "/app/leads",
+      href: parsed.data.type.startsWith("appointment")
+        ? "/app/bookings"
+        : "/app/leads",
     },
   });
   await service.processDue(10);
   if (parsed.data.escalate) {
-    await service.processEscalations(new Date(Date.now() + 24 * 60 * 60 * 1000));
+    await service.processEscalations(
+      new Date(Date.now() + 24 * 60 * 60 * 1000),
+    );
   }
   return NextResponse.json({ ok: true, ...queued, simulated: true });
 }

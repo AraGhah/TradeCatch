@@ -23,7 +23,11 @@ const schema = z.object({
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireNotificationAccess(id, "read");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const rule = await getNotificationService().getEscalation(id);
   return NextResponse.json({ ok: true, rule });
 }
@@ -31,9 +35,24 @@ export async function GET(_request: NextRequest, { params }: Params) {
 export async function PUT(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireNotificationAccess(id, "write");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid escalation rule." }, { status: 400 });
-  const rule: EscalationRule = { ...parsed.data, organizationId: id, updatedAt: new Date().toISOString() };
-  return NextResponse.json({ ok: true, rule: await getNotificationService().saveEscalation(rule) });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: "Invalid escalation rule." },
+      { status: 400 },
+    );
+  const rule: EscalationRule = {
+    ...parsed.data,
+    organizationId: id,
+    updatedAt: new Date().toISOString(),
+  };
+  return NextResponse.json({
+    ok: true,
+    rule: await getNotificationService().saveEscalation(rule),
+  });
 }

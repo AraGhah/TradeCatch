@@ -140,7 +140,9 @@ export async function POST(
             await events.append({
               organizationId: orgId,
               clientAccountId:
-                session?.clientAccountId || config?.clientAccountId || "unknown",
+                session?.clientAccountId ||
+                config?.clientAccountId ||
+                "unknown",
               callSid,
               sessionId: session?.id,
               kind: "incoming",
@@ -151,7 +153,9 @@ export async function POST(
             await events.append({
               organizationId: orgId,
               clientAccountId:
-                session?.clientAccountId || config?.clientAccountId || "unknown",
+                session?.clientAccountId ||
+                config?.clientAccountId ||
+                "unknown",
               callSid,
               sessionId: session?.id,
               kind: "human_ring",

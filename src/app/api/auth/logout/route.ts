@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { sessionCookieOptions } from "@/product/saas/auth/magic-link";
-import { ADMIN_JWT_COOKIE, adminJwtCookieOptions } from "@/product/saas/auth/admin-jwt";
+import {
+  ADMIN_JWT_COOKIE,
+  adminJwtCookieOptions,
+} from "@/product/saas/auth/admin-jwt";
 import { SESSION_COOKIE } from "@/product/saas/auth/session-token";
 import { getSaasStore } from "@/product/saas/runtime";
 import { readSessionClaimsFromCookies } from "@/product/saas/tenant";

@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
-import {
-  authorizeBusinessMemberOrAdmin,
-  loadClientForOrg,
-} from "../_shared";
+import { authorizeBusinessMemberOrAdmin, loadClientForOrg } from "../_shared";
 
 export const dynamic = "force-dynamic";
 
@@ -55,8 +52,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     calls: calls.map((c) => ({
       id: c.id,
       callSid: c.callSid,
-      simulated:
-        c.callSid.startsWith("sim_") || c.callSid.startsWith("demo_"),
+      simulated: c.callSid.startsWith("sim_") || c.callSid.startsWith("demo_"),
       direction: "inbound" as const,
       fromE164: c.fromE164,
       toE164: c.toE164,

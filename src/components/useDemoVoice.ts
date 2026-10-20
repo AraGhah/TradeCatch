@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 
 /**
  * Voice for the website demo. The visitor speaks through the browser (Web
@@ -348,7 +354,7 @@ export function useDemoVoice(locale: "fr" | "en") {
     const epoch = audioEpoch.current;
     const audio = replyAudio.current ?? new Audio();
     replyAudio.current = audio;
-    audio.src = SILENT_WAV;
+    audio.setAttribute("src", SILENT_WAV);
     void audio
       .play()
       .then(() => {

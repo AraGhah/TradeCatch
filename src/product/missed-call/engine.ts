@@ -52,9 +52,8 @@ async function deferOpeningSms(input: {
   disposition: string;
 }): Promise<boolean> {
   try {
-    const { deferMissedCallOpening } = await import(
-      "@/product/sms-automation/hooks"
-    );
+    const { deferMissedCallOpening } =
+      await import("@/product/sms-automation/hooks");
     return await deferMissedCallOpening(input);
   } catch (err) {
     console.warn("[sms-automation] missed-call defer skipped", err);

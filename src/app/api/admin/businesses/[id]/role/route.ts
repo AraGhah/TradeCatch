@@ -19,10 +19,16 @@ export async function POST(
   context: { params: Promise<{ id: string }> },
 ) {
   const access = await authorizeAdminRequest(request);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
-  if (!access.ctx) return NextResponse.json({ error: "session" }, { status: 403 });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
+  if (!access.ctx)
+    return NextResponse.json({ error: "session" }, { status: 403 });
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "role" }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json({ error: "role" }, { status: 400 });
   const { id } = await context.params;
   const store = getSaasStore();
   const members = await store.listMembershipsForOrganization(id);
@@ -31,8 +37,13 @@ export async function POST(
     userId: parsed.data.userId,
     next: parsed.data.role,
   });
-  if (!decision.ok) return NextResponse.json({ error: decision.error }, { status: 400 });
-  const updated = await store.setMembershipRole(id, parsed.data.userId, decision.role);
+  if (!decision.ok)
+    return NextResponse.json({ error: decision.error }, { status: 400 });
+  const updated = await store.setMembershipRole(
+    id,
+    parsed.data.userId,
+    decision.role,
+  );
   if (!updated) return NextResponse.json({ error: "member" }, { status: 404 });
   clearPlatformSnapshot();
   await recordSecurityEvent({

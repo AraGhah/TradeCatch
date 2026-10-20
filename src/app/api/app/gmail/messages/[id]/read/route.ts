@@ -14,13 +14,21 @@ type Params = { params: Promise<{ id: string }> };
 export async function POST(request: NextRequest, { params }: Params) {
   if (!isSameOrigin(request)) return forbiddenOrigin();
   const auth = await requireTenantContext();
-  if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: auth.status });
+  if (!auth.ok)
+    return NextResponse.json(
+      { error: "unauthorized" },
+      { status: auth.status },
+    );
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as { read?: unknown };
   const read = body.read !== false;
   const { organization, user } = auth.ctx;
   const store = getGmailStore();
   const updated = await store.setRead(organization.id, user.id, id, read);
-  if (!updated) return NextResponse.json({ error: "not_found" }, { status: 404 });
-  return NextResponse.json({ ok: true, unread: await store.countUnread(organization.id, user.id) });
+  if (!updated)
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  return NextResponse.json({
+    ok: true,
+    unread: await store.countUnread(organization.id, user.id),
+  });
 }

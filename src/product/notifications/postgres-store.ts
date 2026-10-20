@@ -3,7 +3,6 @@ import { getPgPool } from "@/product/missed-call/postgres-store";
 import type { NotificationStore } from "./store";
 import type {
   ContractorNotification,
-  EscalationRule,
   NotificationDelivery,
   NotificationPayload,
   NotificationPreferences,

@@ -29,7 +29,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id, leadId } = await params;
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
-  const denied = forbiddenUnless(access.role, "write_leads", access.via === "admin");
+  const denied = forbiddenUnless(
+    access.role,
+    "write_leads",
+    access.via === "admin",
+  );
   if (denied) return denied;
 
   let body: {
@@ -51,8 +55,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const service = getCrmService();
     let assignedToName: string | null | undefined;
     if (body.assignedToUserId) {
-      const memberships = await getSaasStore().listMembershipsForOrganization(id);
-      const member = memberships.find((m) => m.userId === body.assignedToUserId);
+      const memberships =
+        await getSaasStore().listMembershipsForOrganization(id);
+      const member = memberships.find(
+        (m) => m.userId === body.assignedToUserId,
+      );
       if (!member) {
         return NextResponse.json(
           { error: "That person is not on this business." },
@@ -88,6 +95,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error("[crm] update lead", err);
-    return NextResponse.json({ error: "Could not update the lead." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Could not update the lead." },
+      { status: 500 },
+    );
   }
 }

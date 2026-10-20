@@ -10,7 +10,11 @@ type Params = { params: Promise<{ id: string; sessionId: string }> };
 export async function POST(request: NextRequest, { params }: Params) {
   const { id, sessionId } = await params;
   const access = await requireSameBusiness(id);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   try {
     await getSecurityService().revokeOwnSession(access.ctx.user.id, sessionId);
     return NextResponse.json({ ok: true });

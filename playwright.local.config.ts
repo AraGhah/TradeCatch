@@ -1,7 +1,7 @@
 import base, { E2E_PORT } from "./playwright.config";
 
 // Temporary: reuse the build already on disk instead of rebuilding.
-export default {
+const config = {
   ...base,
   webServer: {
     ...base.webServer,
@@ -9,3 +9,5 @@ export default {
     timeout: 120_000,
   },
 };
+
+export default config;

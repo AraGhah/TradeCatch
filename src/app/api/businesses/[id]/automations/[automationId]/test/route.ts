@@ -32,7 +32,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id, automationId } = await params;
   const access = await requireAutomationAccess(id, "write");
   if (!access.ok) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   }
   const limited = await enforceRateLimit({
     scope: "automation-test",
@@ -49,7 +52,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
   const parsed = schema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid test request." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid test request." },
+      { status: 400 },
+    );
   }
   if (parsed.data.action === "live_self") {
     // The only action here that sends a real, billed text message.
@@ -65,13 +71,19 @@ export async function POST(request: NextRequest, { params }: Params) {
   const automations = await services.list(id);
   const automation = automations.find((row) => row.id === automationId);
   if (!automation || automation.organizationId !== id) {
-    return NextResponse.json({ error: "Automation not found." }, { status: 404 });
+    return NextResponse.json(
+      { error: "Automation not found." },
+      { status: 404 },
+    );
   }
   try {
     const action = parsed.data.action;
     if (action === "simulate_missed_call") {
       if (automation.type !== "missed_call_recovery") {
-        return NextResponse.json({ error: "Wrong automation." }, { status: 409 });
+        return NextResponse.json(
+          { error: "Wrong automation." },
+          { status: 409 },
+        );
       }
       const result = await services.simulateMissedCall({
         organizationId: id,
@@ -84,7 +96,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
     if (action === "simulate_quote") {
       if (automation.type !== "quote_followup") {
-        return NextResponse.json({ error: "Wrong automation." }, { status: 409 });
+        return NextResponse.json(
+          { error: "Wrong automation." },
+          { status: 409 },
+        );
       }
       const result = await services.simulateQuote({
         organizationId: id,
@@ -113,7 +128,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
     if (action === "accept_quote" || action === "reject_quote") {
       if (!parsed.data.threadId) {
-        return NextResponse.json({ error: "threadId is required." }, { status: 400 });
+        return NextResponse.json(
+          { error: "threadId is required." },
+          { status: 400 },
+        );
       }
       const canceled = await services.setQuoteOutcome(
         id,

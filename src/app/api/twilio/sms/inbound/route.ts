@@ -79,9 +79,8 @@ export async function POST(request: NextRequest) {
   let crmOrgId: string | null = null;
   let automationPaused = false;
   try {
-    const { resolveOrganizationFromSmsTo: resolveOrg } = await import(
-      "@/product/starter/org-context"
-    );
+    const { resolveOrganizationFromSmsTo: resolveOrg } =
+      await import("@/product/starter/org-context");
     const linked = await resolveOrg(to);
     crmOrgId = linked?.id ?? null;
     if (!crmOrgId) {
@@ -97,7 +96,10 @@ export async function POST(request: NextRequest) {
     }
     if (crmOrgId) {
       const { getCrmService } = await import("@/product/crm/runtime");
-      automationPaused = await getCrmService().isAutomationPaused(crmOrgId, from);
+      automationPaused = await getCrmService().isAutomationPaused(
+        crmOrgId,
+        from,
+      );
     }
   } catch (err) {
     console.warn("[crm] pause check skipped", err);
@@ -144,72 +146,72 @@ export async function POST(request: NextRequest) {
     console.warn("[starter/sms] quote dispatcher skipped", err);
   }
 
-    if (crmOrgId && body.trim()) {
-      try {
-        const { getCrmService } = await import("@/product/crm/runtime");
-        const crm = getCrmService();
+  if (crmOrgId && body.trim()) {
+    try {
+      const { getCrmService } = await import("@/product/crm/runtime");
+      const crm = getCrmService();
+      await crm.capture({
+        organizationId: crmOrgId,
+        source: "sms",
+        phoneE164: from,
+        actor: "sms",
+        message: {
+          direction: "inbound",
+          body,
+          fromE164: from,
+          toE164: to,
+          automated: false,
+          providerMessageSid: params.MessageSid,
+          deliveryStatus: "delivered",
+        },
+      });
+      for (const reply of replies) {
         await crm.capture({
           organizationId: crmOrgId,
           source: "sms",
           phoneE164: from,
           actor: "sms",
           message: {
-            direction: "inbound",
-            body,
-            fromE164: from,
-            toE164: to,
-            automated: false,
-            providerMessageSid: params.MessageSid,
-            deliveryStatus: "delivered",
+            direction: "outbound",
+            body: reply,
+            fromE164: to,
+            toE164: from,
+            automated: true,
+            simulated: false,
+            deliveryStatus: "queued",
           },
         });
-        for (const reply of replies) {
-          await crm.capture({
-            organizationId: crmOrgId,
-            source: "sms",
-            phoneE164: from,
-            actor: "sms",
-            message: {
-              direction: "outbound",
-              body: reply,
-              fromE164: to,
-              toE164: from,
-              automated: true,
-              simulated: false,
-              deliveryStatus: "queued",
-            },
-          });
-        }
-      } catch (err) {
-        console.warn("[crm] sms sync skipped", err);
       }
+    } catch (err) {
+      console.warn("[crm] sms sync skipped", err);
     }
+  }
 
-    if (crmOrgId && body.trim()) {
-      try {
-        const { getAutomationServices } = await import(
-          "@/product/sms-automation/runtime"
-        );
-        await getAutomationServices().applyInbound({
-          organizationId: crmOrgId,
-          fromE164: from,
-          body,
-          messageSid: params.MessageSid,
-          skipCrm: true,
-        });
-        const { emitBusinessEvent } = await import("@/product/notifications/hooks");
-        await emitBusinessEvent({
-          organizationId: crmOrgId,
-          type: "customer_message",
-          idempotencyKey: `sms:${params.MessageSid}`,
-          service: "Customer reply",
-          href: "/app/conversations",
-          consolidateKey: params.MessageSid,
-        });
-      } catch (err) {
-        console.warn("[sms-automation] inbound skipped", err);
-      }
+  if (crmOrgId && body.trim()) {
+    try {
+      const { getAutomationServices } =
+        await import("@/product/sms-automation/runtime");
+      await getAutomationServices().applyInbound({
+        organizationId: crmOrgId,
+        fromE164: from,
+        body,
+        messageSid: params.MessageSid,
+        skipCrm: true,
+      });
+      const { emitBusinessEvent } =
+        await import("@/product/notifications/hooks");
+      await emitBusinessEvent({
+        organizationId: crmOrgId,
+        type: "customer_message",
+        idempotencyKey: `sms:${params.MessageSid}`,
+        service: "Customer reply",
+        href: "/app/conversations",
+        consolidateKey: params.MessageSid,
+      });
+    } catch (err) {
+      console.warn("[sms-automation] inbound skipped", err);
     }
+  }
 
   return new NextResponse(twimlMessages(replies), {
     status: 200,

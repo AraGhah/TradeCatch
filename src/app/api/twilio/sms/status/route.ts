@@ -50,9 +50,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { getAutomationServices } = await import(
-      "@/product/sms-automation/runtime"
-    );
+    const { getAutomationServices } =
+      await import("@/product/sms-automation/runtime");
     await getAutomationServices().applyDeliveryStatus({
       providerSid: sid,
       providerStatus: status,
@@ -65,7 +64,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { getNotificationService } = await import("@/product/notifications/runtime");
+    const { getNotificationService } =
+      await import("@/product/notifications/runtime");
     await getNotificationService().applyProviderStatus(sid, status);
   } catch (err) {
     console.warn("[notifications] status skipped", err);

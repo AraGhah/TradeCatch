@@ -25,7 +25,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       phoneE164: `+1438${suffix}`,
       displayName: "Alex Démo",
       service: "plumbing",
-      description: "Simulated leak under the kitchen sink. No real customer was contacted.",
+      description:
+        "Simulated leak under the kitchen sink. No real customer was contacted.",
       location: "Montréal",
       priority: "high",
       preferredLanguage: "fr",
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error("[crm] simulate lead", err);
-    return NextResponse.json({ error: "Could not simulate a lead." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Could not simulate a lead." },
+      { status: 500 },
+    );
   }
 }

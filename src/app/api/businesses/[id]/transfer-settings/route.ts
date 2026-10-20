@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { putTransferSettings } from "@/product/receptionist/ai-receptionist-service";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
-import {
-  authorizeBusinessMemberOrAdmin,
-  loadClientForOrg,
-} from "../_shared";
+import { authorizeBusinessMemberOrAdmin, loadClientForOrg } from "../_shared";
 
 export const dynamic = "force-dynamic";
 

@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readOAuthState, exchangeGoogleCode, sealTokens, listGoogleCalendars } from "@/product/scheduling/google";
+import {
+  readOAuthState,
+  exchangeGoogleCode,
+  sealTokens,
+  listGoogleCalendars,
+} from "@/product/scheduling/google";
 import { getSchedulingStore } from "@/product/scheduling/runtime";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { allows } from "@/product/security/permissions";
@@ -11,7 +16,9 @@ export async function GET(request: NextRequest) {
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const oauthError = url.searchParams.get("error");
-  const site = (process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000").replace(/\/$/, "");
+  const site = (
+    process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+  ).replace(/\/$/, "");
   const back = `${site}/app/settings/calendar`;
   if (oauthError || !code || !state) {
     return NextResponse.redirect(`${back}?calendar=denied`);
@@ -43,7 +50,9 @@ export async function GET(request: NextRequest) {
       expiresAt: tokens.expiresAt,
       scope: "calendar.events calendar.freebusy calendar.calendarlist.readonly",
     });
-    const hint = calendars[0] ? `&calendarId=${encodeURIComponent(calendars[0].id)}` : "";
+    const hint = calendars[0]
+      ? `&calendarId=${encodeURIComponent(calendars[0].id)}`
+      : "";
     return NextResponse.redirect(`${back}?calendar=choose${hint}`);
   } catch {
     return NextResponse.redirect(`${back}?calendar=error`);

@@ -18,13 +18,20 @@ const patchSchema = z.object({
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id, appointmentId } = await params;
   const access = await requireSchedulingAccess(id, "read");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   try {
     const detail = await getSchedulingService().get(id, appointmentId);
     return NextResponse.json({ ok: true, ...detail });
   } catch (error) {
     if (error instanceof SchedulingError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
     throw error;
   }
@@ -33,15 +40,27 @@ export async function GET(_request: NextRequest, { params }: Params) {
 export async function PATCH(request: NextRequest, { params }: Params) {
   const { id, appointmentId } = await params;
   const access = await requireSchedulingAccess(id, "write");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const parsed = patchSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid update." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json({ error: "Invalid update." }, { status: 400 });
   try {
-    const appointment = await getSchedulingService().updateDetails(id, appointmentId, parsed.data);
+    const appointment = await getSchedulingService().updateDetails(
+      id,
+      appointmentId,
+      parsed.data,
+    );
     return NextResponse.json({ ok: true, appointment });
   } catch (error) {
     if (error instanceof SchedulingError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
     throw error;
   }

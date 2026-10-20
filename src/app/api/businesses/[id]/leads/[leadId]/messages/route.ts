@@ -12,7 +12,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id, leadId } = await params;
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
-  const denied = forbiddenUnless(access.role, "write_leads", access.via === "admin");
+  const denied = forbiddenUnless(
+    access.role,
+    "write_leads",
+    access.via === "admin",
+  );
   if (denied) return denied;
 
   let body: { body?: string };
@@ -33,7 +37,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       conversationId: lead.conversationId,
       body: body.body ?? "",
       actor: access.userEmail,
-      simulated: shouldUseDryRunSms() || access.organization.accountType === "demo",
+      simulated:
+        shouldUseDryRunSms() || access.organization.accountType === "demo",
     });
     return NextResponse.json({ ok: true, message });
   } catch (err) {
@@ -41,6 +46,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error("[crm] send message", err);
-    return NextResponse.json({ error: "Could not save the message." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Could not save the message." },
+      { status: 500 },
+    );
   }
 }

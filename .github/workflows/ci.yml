@@ -2,8 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [main, Ara]
   pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -44,7 +44,7 @@ jobs:
       - name: Dev audit exception expiry
         run: npm run check:dev-audit
 
-      - name: Format check (core Module A files)
+      - name: Format check
         run: npm run format:check
 
       - name: Typecheck

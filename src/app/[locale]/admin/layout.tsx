@@ -27,13 +27,20 @@ export default async function AdminLayout({
   if (!isPlatformAdminUser(auth.ctx.user)) {
     redirect(locale === "fr" ? "/fr/app" : "/app");
   }
-  const mfaState = await getSecurityService().mfaState(auth.ctx.user.id, auth.ctx.session.id);
+  const mfaState = await getSecurityService().mfaState(
+    auth.ctx.user.id,
+    auth.ctx.session.id,
+  );
   const verified = mfaState === "verified";
   let tokenReady = false;
   if (verified) {
-    const current = await readMatchingAdminJwt(auth.ctx.user.id, auth.ctx.session.id);
-    const refreshBy = Date.now() + 15 * 60 * 1000;
-    tokenReady = Boolean(current && current.exp * 1000 > refreshBy);
+    tokenReady = Boolean(
+      await readMatchingAdminJwt(
+        auth.ctx.user.id,
+        auth.ctx.session.id,
+        15 * 60 * 1000,
+      ),
+    );
   }
 
   return (
@@ -44,9 +51,16 @@ export default async function AdminLayout({
         </aside>
         <div className="min-w-0">
           {verified ? (
-            tokenReady ? children : <AdminTokenGate />
+            tokenReady ? (
+              children
+            ) : (
+              <AdminTokenGate />
+            )
           ) : (
-            <AdminMfaGate organizationId={auth.ctx.organization.id} state={mfaState} />
+            <AdminMfaGate
+              organizationId={auth.ctx.organization.id}
+              state={mfaState}
+            />
           )}
         </div>
       </div>
