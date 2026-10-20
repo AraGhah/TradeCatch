@@ -7,7 +7,10 @@ import { test, expect } from "@playwright/test";
 // this file across multiple worker processes, each with its own module
 // state, so a per-process counter can collide between workers.
 function nextTestIp() {
-  const octets = Array.from({ length: 4 }, () => Math.floor(Math.random() * 255) + 1);
+  const octets = Array.from(
+    { length: 4 },
+    () => Math.floor(Math.random() * 255) + 1,
+  );
   return octets.join(".");
 }
 
@@ -64,14 +67,17 @@ test.describe("/api/book-audit", () => {
     expect(response.status()).toBe(400);
   });
 
-  test("accepts a fully valid payload", async ({ request }) => {
+  test("rejects a valid payload when durable storage is disabled", async ({
+    request,
+  }) => {
     const response = await request.post("/api/book-audit", {
       headers: { "x-forwarded-for": nextTestIp() },
       data: validPayload(),
     });
-    expect(response.status()).toBe(200);
+    expect(response.status()).toBe(503);
     const body = await response.json();
-    expect(body.ok).toBe(true);
+    expect(body.error).toBeTruthy();
+    expect(body.ok).toBeUndefined();
   });
 
   test("silently no-ops when the honeypot field is filled", async ({
@@ -88,7 +94,7 @@ test.describe("/api/book-audit", () => {
     expect(body).toEqual({ ok: true });
   });
 
-  test("treats a repeated idempotency key as a duplicate", async ({
+  test("does not acknowledge an unsaved retry as a duplicate", async ({
     request,
   }) => {
     const ip = nextTestIp();
@@ -97,15 +103,16 @@ test.describe("/api/book-audit", () => {
       headers: { "x-forwarded-for": ip },
       data: payload,
     });
-    expect(first.status()).toBe(200);
+    expect(first.status()).toBe(503);
 
     const second = await request.post("/api/book-audit", {
       headers: { "x-forwarded-for": ip },
       data: payload,
     });
-    expect(second.status()).toBe(200);
+    expect(second.status()).toBe(503);
     const body = await second.json();
-    expect(body.duplicate).toBe(true);
+    expect(body.error).toBeTruthy();
+    expect(body.duplicate).toBeUndefined();
   });
 
   test("rate-limits rapid repeated submissions from the same client", async ({
