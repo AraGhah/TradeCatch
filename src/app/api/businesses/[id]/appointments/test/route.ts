@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
-import { getSchedulingStore, getSchedulingService } from "@/product/scheduling/runtime";
-import { createSchedulingService, SchedulingError } from "@/product/scheduling/service";
+import {
+  getSchedulingStore,
+  getSchedulingService,
+} from "@/product/scheduling/runtime";
+import {
+  createSchedulingService,
+  SchedulingError,
+} from "@/product/scheduling/service";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 const schema = z.object({
-  action: z.enum(["availability", "book", "reschedule", "cancel", "calendar_failure"]),
+  action: z.enum([
+    "availability",
+    "book",
+    "reschedule",
+    "cancel",
+    "calendar_failure",
+  ]),
   serviceId: z.string().optional(),
   startAt: z.string().optional(),
   customerName: z.string().optional(),
@@ -21,9 +33,14 @@ const schema = z.object({
 export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSchedulingAccess(id, "write");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid test." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json({ error: "Invalid test." }, { status: 400 });
   const live = getSchedulingService();
   try {
     if (parsed.data.action === "availability") {
@@ -33,7 +50,11 @@ export async function POST(request: NextRequest, { params }: Params) {
         serviceAddress: parsed.data.serviceAddress,
         from: parsed.data.startAt,
       });
-      return NextResponse.json({ ok: true, confirmed: false, slots: result.slots });
+      return NextResponse.json({
+        ok: true,
+        confirmed: false,
+        slots: result.slots,
+      });
     }
     if (parsed.data.action === "calendar_failure") {
       const failing = createSchedulingService({
@@ -71,7 +92,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       }
     }
     if (!parsed.data.startAt && parsed.data.action === "book") {
-      return NextResponse.json({ error: "startAt is required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "startAt is required." },
+        { status: 400 },
+      );
     }
     if (parsed.data.action === "book") {
       const result = await live.book({
@@ -88,17 +112,31 @@ export async function POST(request: NextRequest, { params }: Params) {
       return NextResponse.json(result);
     }
     if (!parsed.data.appointmentId) {
-      return NextResponse.json({ error: "appointmentId is required." }, { status: 400 });
+      return NextResponse.json(
+        { error: "appointmentId is required." },
+        { status: 400 },
+      );
     }
     if (parsed.data.action === "reschedule") {
-      const result = await live.reschedule(id, parsed.data.appointmentId, parsed.data.startAt || "");
+      const result = await live.reschedule(
+        id,
+        parsed.data.appointmentId,
+        parsed.data.startAt || "",
+      );
       return NextResponse.json(result, { status: result.ok ? 200 : 409 });
     }
-    const result = await live.cancel(id, parsed.data.appointmentId, "simulation");
+    const result = await live.cancel(
+      id,
+      parsed.data.appointmentId,
+      "simulation",
+    );
     return NextResponse.json(result, { status: result.ok ? 200 : 409 });
   } catch (error) {
     if (error instanceof SchedulingError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
     throw error;
   }

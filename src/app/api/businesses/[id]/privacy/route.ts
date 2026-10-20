@@ -17,12 +17,23 @@ const schema = z.object({
 async function gate(organizationId: string, write: boolean) {
   const tenant = await requireTenantContext();
   if (!tenant.ok) return tenant;
-  if (tenant.ctx.organization.id !== organizationId && !tenant.ctx.isPlatformAdmin) {
-    return { ok: false as const, status: 403 as const, error: "Not a member of this business." };
+  if (
+    tenant.ctx.organization.id !== organizationId &&
+    !tenant.ctx.isPlatformAdmin
+  ) {
+    return {
+      ok: false as const,
+      status: 403 as const,
+      error: "Not a member of this business.",
+    };
   }
   if (write) {
     try {
-      getSecurityService().assertPermission(tenant.ctx.membership.role, "manage_ai", tenant.ctx.isPlatformAdmin);
+      getSecurityService().assertPermission(
+        tenant.ctx.membership.role,
+        "manage_ai",
+        tenant.ctx.isPlatformAdmin,
+      );
     } catch (error) {
       const status = error instanceof SecurityError ? error.status : 403;
       return { ok: false as const, status, error: "Insufficient permissions." };
@@ -34,16 +45,35 @@ async function gate(organizationId: string, write: boolean) {
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await gate(id, false);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
-  return NextResponse.json({ ok: true, settings: await getSecurityService().recording(id) });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
+  return NextResponse.json({
+    ok: true,
+    settings: await getSecurityService().recording(id),
+  });
 }
 
 export async function PUT(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await gate(id, true);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid privacy settings." }, { status: 400 });
-  const settings = await getSecurityService().saveRecording({ organizationId: id, ...parsed.data, updatedAt: new Date().toISOString() });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: "Invalid privacy settings." },
+      { status: 400 },
+    );
+  const settings = await getSecurityService().saveRecording({
+    organizationId: id,
+    ...parsed.data,
+    updatedAt: new Date().toISOString(),
+  });
   return NextResponse.json({ ok: true, settings });
 }

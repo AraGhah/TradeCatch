@@ -6,14 +6,26 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const access = await authorizeAdminRequest(request);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const qa = getQaService();
-  return NextResponse.json({ ok: true, suites: qa.catalog(), runs: await qa.history() });
+  return NextResponse.json({
+    ok: true,
+    suites: qa.catalog(),
+    runs: await qa.history(),
+  });
 }
 
 export async function POST(request: NextRequest) {
   const access = await authorizeAdminRequest(request);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const body = (await request.json().catch(() => ({}))) as { suite?: string };
   const suite = body.suite || "all";
   if (!getQaService().catalog().includes(suite)) {

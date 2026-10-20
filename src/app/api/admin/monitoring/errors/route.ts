@@ -6,7 +6,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   const access = await authorizeAdminRequest(request);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const url = new URL(request.url);
   const errors = await getReliabilityService().listErrors({
     organizationId: url.searchParams.get("business") || undefined,

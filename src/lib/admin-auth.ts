@@ -7,7 +7,10 @@ import {
 import { getAuthSecret, requireTenantContext } from "@/product/saas/tenant";
 import type { TenantContext } from "@/product/saas/types";
 
-export { isPlatformAdminUser, parseAdminEmails } from "@/product/saas/platform-admin";
+export {
+  isPlatformAdminUser,
+  parseAdminEmails,
+} from "@/product/saas/platform-admin";
 
 export async function requirePlatformAdmin(): Promise<
   | { ok: true; via: "session"; ctx: TenantContext }
@@ -53,7 +56,11 @@ const READ_ONLY_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
  * the single choke point so a new admin route cannot forget to log itself.
  * Only the method and path are stored: never the body, never a secret.
  */
-async function auditAdminMutation(request: Request, via: "ops" | "session", actorUserId?: string) {
+async function auditAdminMutation(
+  request: Request,
+  via: "ops" | "session",
+  actorUserId?: string,
+) {
   if (READ_ONLY_METHODS.has(request.method.toUpperCase())) return;
   const { recordSecurityEvent } = await import("@/product/security/hooks");
   let path = "unknown";
@@ -62,7 +69,10 @@ async function auditAdminMutation(request: Request, via: "ops" | "session", acto
   } catch {
     // keep "unknown"
   }
-  const opsActor = via === "ops" ? request.headers.get("x-ops-actor")?.trim().slice(0, 60) : undefined;
+  const opsActor =
+    via === "ops"
+      ? request.headers.get("x-ops-actor")?.trim().slice(0, 60)
+      : undefined;
   await recordSecurityEvent({
     actorUserId,
     action: "admin_request",
@@ -71,7 +81,9 @@ async function auditAdminMutation(request: Request, via: "ops" | "session", acto
   });
 }
 
-export async function authorizeAdminRequest(request: Request): Promise<
+export async function authorizeAdminRequest(
+  request: Request,
+): Promise<
   | { ok: true; via: "ops" | "session"; ctx?: TenantContext }
   | { ok: false; status: 401 | 403; error: string }
 > {
@@ -86,15 +98,30 @@ export async function authorizeAdminRequest(request: Request): Promise<
   // requireTenantContext already folds the second factor into isPlatformAdmin;
   // this re-check keeps the guarantee local to the admin entry point.
   const { getSecurityService } = await import("@/product/security/runtime");
-  const allowed = await getSecurityService().sessionAllowsAdmin(session.ctx.user.id, session.ctx.session.id);
-  if (!allowed) return { ok: false, status: 403, error: "Administrator MFA verification is required." };
-  const token = await readMatchingAdminJwt(session.ctx.user.id, session.ctx.session.id);
+  const allowed = await getSecurityService().sessionAllowsAdmin(
+    session.ctx.user.id,
+    session.ctx.session.id,
+  );
+  if (!allowed)
+    return {
+      ok: false,
+      status: 403,
+      error: "Administrator MFA verification is required.",
+    };
+  const token = await readMatchingAdminJwt(
+    session.ctx.user.id,
+    session.ctx.session.id,
+  );
   if (!token) return { ok: false, status: 401, error: "Admin token required." };
   await auditAdminMutation(request, "session", session.ctx.user.id);
   return { ok: true, via: "session", ctx: session.ctx };
 }
 
-export async function readMatchingAdminJwt(userId: string, sessionId: string) {
+export async function readMatchingAdminJwt(
+  userId: string,
+  sessionId: string,
+  minValidityMs = 0,
+) {
   const secret = getAuthSecret();
   if (!secret) return null;
   const jar = await cookies();
@@ -102,5 +129,6 @@ export async function readMatchingAdminJwt(userId: string, sessionId: string) {
   if (!raw) return null;
   const claims = await verifyAdminJwt(raw, secret);
   if (!claims || claims.sub !== userId || claims.sid !== sessionId) return null;
+  if (claims.exp * 1000 <= Date.now() + minValidityMs) return null;
   return claims;
 }

@@ -7,7 +7,10 @@ import {
   requireTenantContext,
   unauthorizedTenantResponse,
 } from "@/product/saas/tenant";
-import { ADMIN_JWT_COOKIE, adminJwtCookieOptions } from "@/product/saas/auth/admin-jwt";
+import {
+  ADMIN_JWT_COOKIE,
+  adminJwtCookieOptions,
+} from "@/product/saas/auth/admin-jwt";
 import {
   SESSION_COOKIE,
   SESSION_TTL_SECONDS,
@@ -69,7 +72,10 @@ export async function POST(request: NextRequest) {
 
   const secret = getAuthSecret();
   if (!secret) {
-    return NextResponse.json({ error: "Auth is not configured." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Auth is not configured." },
+      { status: 500 },
+    );
   }
 
   const now = new Date();
@@ -109,6 +115,9 @@ export async function POST(request: NextRequest) {
     path: "/",
     expires: expiresAt,
   });
-  response.cookies.set(ADMIN_JWT_COOKIE, "", { ...adminJwtCookieOptions(0), maxAge: 0 });
+  response.cookies.set(ADMIN_JWT_COOKIE, "", {
+    ...adminJwtCookieOptions(0),
+    maxAge: 0,
+  });
   return response;
 }

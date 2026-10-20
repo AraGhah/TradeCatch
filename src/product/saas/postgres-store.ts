@@ -1,6 +1,5 @@
 import type { Pool, QueryResultRow } from "pg";
 import { createPostgresPool } from "@/lib/postgres-pool";
-import type { PlanId } from "./entitlements";
 import { newId, slugify } from "./ids";
 import {
   mapOrgRow,

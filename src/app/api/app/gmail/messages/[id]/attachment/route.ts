@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toGmailError } from "@/product/gmail/errors";
 import { attachmentDisposition } from "@/product/gmail/http";
-import { openGmailTokens, readGmailEnv, sealGmailTokens } from "@/product/gmail/oauth";
+import {
+  openGmailTokens,
+  readGmailEnv,
+  sealGmailTokens,
+} from "@/product/gmail/oauth";
 import { getGmailStore } from "@/product/gmail/runtime";
 import { downloadGmailAttachment } from "@/product/gmail/sync";
 import { requireTenantContext } from "@/product/saas/tenant";
@@ -14,7 +18,11 @@ const MAX_BYTES = 25 * 1024 * 1024;
 
 export async function GET(request: NextRequest, { params }: Params) {
   const auth = await requireTenantContext();
-  if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: auth.status });
+  if (!auth.ok)
+    return NextResponse.json(
+      { error: "unauthorized" },
+      { status: auth.status },
+    );
   const { id } = await params;
   const part = request.nextUrl.searchParams.get("part") || "";
   const { organization, user } = auth.ctx;
@@ -24,9 +32,13 @@ export async function GET(request: NextRequest, { params }: Params) {
   // Ownership is checked against the stored message, so a guessed id from
   // another user's mailbox is a plain 404.
   const message = await store.getMessage(organization.id, user.id, id);
-  const attachment = message?.attachments.find((item) => item.attachmentId === part);
-  if (!message || !attachment) return NextResponse.json({ error: "not_found" }, { status: 404 });
-  if (attachment.size > MAX_BYTES) return NextResponse.json({ error: "too_large" }, { status: 413 });
+  const attachment = message?.attachments.find(
+    (item) => item.attachmentId === part,
+  );
+  if (!message || !attachment)
+    return NextResponse.json({ error: "not_found" }, { status: 404 });
+  if (attachment.size > MAX_BYTES)
+    return NextResponse.json({ error: "too_large" }, { status: 413 });
 
   const account = await store.getAccount(organization.id, user.id);
   if (!account?.tokenCiphertext || account.status !== "connected") {
@@ -39,10 +51,13 @@ export async function GET(request: NextRequest, { params }: Params) {
       gmailId: message.gmailId,
       attachment,
       onTokens: async (tokens) => {
-        await store.updateAccount(account.id, { tokenCiphertext: sealGmailTokens(tokens, env) });
+        await store.updateAccount(account.id, {
+          tokenCiphertext: sealGmailTokens(tokens, env),
+        });
       },
     });
-    if (!data) return NextResponse.json({ error: "not_found" }, { status: 404 });
+    if (!data)
+      return NextResponse.json({ error: "not_found" }, { status: 404 });
     return new NextResponse(new Uint8Array(data), {
       headers: {
         "Content-Type": "application/octet-stream",
@@ -61,6 +76,9 @@ export async function GET(request: NextRequest, { params }: Params) {
       });
       return NextResponse.json({ error: "needs_reconnect" }, { status: 409 });
     }
-    return NextResponse.json({ error: failure.kind }, { status: failure.kind === "rate_limited" ? 429 : 502 });
+    return NextResponse.json(
+      { error: failure.kind },
+      { status: failure.kind === "rate_limited" ? 429 : 502 },
+    );
   }
 }

@@ -88,8 +88,7 @@ export async function GET(request: NextRequest) {
   if (production && !includeDetails) {
     const publicEnv = resolveTradeCatchEnv();
     const publicDemo =
-      isStagingRuntime() ||
-      process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === "1";
+      isStagingRuntime() || process.env.NEXT_PUBLIC_DEMO_MODE?.trim() === "1";
     return NextResponse.json(
       {
         ok: true,
@@ -250,7 +249,8 @@ export async function GET(request: NextRequest) {
       issues: productionSafetyIssues,
     },
     // Advisory only: never changes `ok` or the status code.
-    securityWarnings: realProduction && !e2eHarness ? getSecurityWarnings() : [],
+    securityWarnings:
+      realProduction && !e2eHarness ? getSecurityWarnings() : [],
   };
 
   const siteReady =

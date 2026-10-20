@@ -62,8 +62,7 @@ export function createTwilioSmsPort(
   const sid = env.TWILIO_ACCOUNT_SID?.trim();
   const token = env.TWILIO_AUTH_TOKEN?.trim();
   const dryRun = shouldUseDryRunSms(env);
-  const isLiveProd =
-    env.NODE_ENV === "production" && !isStagingRuntime(env);
+  const isLiveProd = env.NODE_ENV === "production" && !isStagingRuntime(env);
 
   if (dryRun) {
     return createDryRunSmsPort();

@@ -13,7 +13,11 @@ export const dynamic = "force-dynamic";
 export async function POST(request: NextRequest) {
   if (!isSameOrigin(request)) return forbiddenOrigin();
   const auth = await requireTenantContext();
-  if (!auth.ok) return NextResponse.json({ error: "unauthorized" }, { status: auth.status });
+  if (!auth.ok)
+    return NextResponse.json(
+      { error: "unauthorized" },
+      { status: auth.status },
+    );
   const trigger: SyncTrigger =
     request.nextUrl.searchParams.get("mode") === "manual" ? "manual" : "auto";
   const { organization, user } = auth.ctx;
@@ -23,8 +27,21 @@ export async function POST(request: NextRequest) {
   if (!result.ok) {
     return NextResponse.json(
       { ok: false, error: result.error, status },
-      { status: result.error === "not_connected" ? 200 : result.error === "rate_limited" ? 429 : 409 },
+      {
+        status:
+          result.error === "not_connected"
+            ? 200
+            : result.error === "rate_limited"
+              ? 429
+              : 409,
+      },
     );
   }
-  return NextResponse.json({ ok: true, added: result.added, skipped: result.skipped, more: result.more, status });
+  return NextResponse.json({
+    ok: true,
+    added: result.added,
+    skipped: result.skipped,
+    more: result.more,
+    status,
+  });
 }

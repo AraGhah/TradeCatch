@@ -6,7 +6,14 @@ export const dynamic = "force-dynamic";
 
 async function guard(request: Request) {
   const access = await authorizeAdminRequest(request);
-  if (!access.ok) return { access, response: NextResponse.json({ error: access.error }, { status: access.status }) };
+  if (!access.ok)
+    return {
+      access,
+      response: NextResponse.json(
+        { error: access.error },
+        { status: access.status },
+      ),
+    };
   return { access, response: null };
 }
 
@@ -17,10 +24,17 @@ export async function GET(request: Request) {
   const view = url.searchParams.get("view") || "overview";
   const service = getReliabilityService();
   if (view === "errors") {
-    return NextResponse.json({ ok: true, errors: await service.listErrors({ service: url.searchParams.get("service") || undefined }) });
+    return NextResponse.json({
+      ok: true,
+      errors: await service.listErrors({
+        service: url.searchParams.get("service") || undefined,
+      }),
+    });
   }
-  if (view === "jobs") return NextResponse.json({ ok: true, jobs: await service.jobs() });
-  if (view === "costs") return NextResponse.json({ ok: true, costs: await service.costs() });
+  if (view === "jobs")
+    return NextResponse.json({ ok: true, jobs: await service.jobs() });
+  if (view === "costs")
+    return NextResponse.json({ ok: true, costs: await service.costs() });
   if (view === "calls") {
     const errors = await service.listErrors({ service: "ai_receptionist" });
     return NextResponse.json({ ok: true, failedCalls: errors.length, errors });

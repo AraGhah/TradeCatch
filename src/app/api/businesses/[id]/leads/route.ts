@@ -51,7 +51,10 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ ok: true, leads });
   } catch (err) {
     console.error("[crm] list leads", err);
-    return NextResponse.json({ error: "Could not load leads." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Could not load leads." },
+      { status: 500 },
+    );
   }
 }
 
@@ -59,7 +62,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
-  const denied = forbiddenUnless(access.role, "write_leads", access.via === "admin");
+  const denied = forbiddenUnless(
+    access.role,
+    "write_leads",
+    access.via === "admin",
+  );
   if (denied) return denied;
 
   let body: {
@@ -92,12 +99,19 @@ export async function POST(request: NextRequest, { params }: Params) {
       preferredLanguage: body.preferredLanguage,
       actor: access.userEmail,
     });
-    return NextResponse.json({ ok: true, lead: result.lead, created: result.created });
+    return NextResponse.json({
+      ok: true,
+      lead: result.lead,
+      created: result.created,
+    });
   } catch (err) {
     if (err instanceof CrmError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error("[crm] create lead", err);
-    return NextResponse.json({ error: "Could not create the lead." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Could not create the lead." },
+      { status: 500 },
+    );
   }
 }

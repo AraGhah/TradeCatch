@@ -17,7 +17,10 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireAutomationAccess(id, "read");
   if (!access.ok) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   }
   const automations = await getAutomationServices().list(id);
   return NextResponse.json({ ok: true, automations });
@@ -27,7 +30,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireAutomationAccess(id, "write");
   if (!access.ok) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   }
   let json: unknown;
   try {
@@ -37,7 +43,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
   const parsed = createSchema.safeParse(json);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid automation type." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Invalid automation type." },
+      { status: 400 },
+    );
   }
   try {
     const automations = await getAutomationServices().list(id);

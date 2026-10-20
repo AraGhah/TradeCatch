@@ -13,7 +13,9 @@ export type TradeCatchEnvironment = "production" | "staging" | "development";
 
 type RuntimeEnvironment = Record<string, string | undefined>;
 
-function normalizeEnvName(raw: string | undefined): TradeCatchEnvironment | null {
+function normalizeEnvName(
+  raw: string | undefined,
+): TradeCatchEnvironment | null {
   const value = raw?.trim().toLowerCase();
   if (value === "production" || value === "prod") return "production";
   if (value === "staging" || value === "stage" || value === "demo") {
@@ -128,7 +130,7 @@ export function isStagingAccessConfigured(
 ): boolean {
   return Boolean(
     env.STAGING_BASIC_AUTH_USER?.trim() &&
-      env.STAGING_BASIC_AUTH_PASSWORD?.trim(),
+    env.STAGING_BASIC_AUTH_PASSWORD?.trim(),
   );
 }
 

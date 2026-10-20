@@ -11,7 +11,10 @@ export async function POST(_request: Request, { params }: Params) {
   const { id, jobId } = await params;
   const access = await requireAutomationAccess(id, "write");
   if (!access.ok) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   }
   try {
     const job = await getAutomationServices().cancelJob(id, jobId);

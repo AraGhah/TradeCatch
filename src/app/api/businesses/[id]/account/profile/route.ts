@@ -23,12 +23,22 @@ const schema = z.object({
 export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSameBusiness(id);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
-  if (!canManageAccount(access.ctx.membership.role, access.ctx.isPlatformAdmin)) {
-    return NextResponse.json({ error: "Insufficient permissions." }, { status: 403 });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
+  if (
+    !canManageAccount(access.ctx.membership.role, access.ctx.isPlatformAdmin)
+  ) {
+    return NextResponse.json(
+      { error: "Insufficient permissions." },
+      { status: 403 },
+    );
   }
   const parsed = schema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid account." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json({ error: "Invalid account." }, { status: 400 });
   const updated = await getSaasStore().updateOrganization(id, {
     name: parsed.data.name,
     city: parsed.data.city ?? null,
@@ -39,12 +49,21 @@ export async function POST(request: NextRequest, { params }: Params) {
         ? undefined
         : parsed.data.phoneE164 || null,
   });
-  if (!updated) return NextResponse.json({ error: "Business not found." }, { status: 404 });
+  if (!updated)
+    return NextResponse.json({ error: "Business not found." }, { status: 404 });
   await recordSecurityEvent({
     organizationId: id,
     actorUserId: access.ctx.user.id,
     action: "account_profile_updated",
     target: id,
   });
-  return NextResponse.json({ ok: true, organization: { id: updated.id, name: updated.name, city: updated.city, serviceArea: updated.serviceArea } });
+  return NextResponse.json({
+    ok: true,
+    organization: {
+      id: updated.id,
+      name: updated.name,
+      city: updated.city,
+      serviceArea: updated.serviceArea,
+    },
+  });
 }

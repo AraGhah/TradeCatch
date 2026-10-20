@@ -7,10 +7,7 @@ import {
 } from "@/product/receptionist/appointment-sim";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
-import {
-  authorizeBusinessMemberOrAdmin,
-  loadClientForOrg,
-} from "../_shared";
+import { authorizeBusinessMemberOrAdmin, loadClientForOrg } from "../_shared";
 
 export const dynamic = "force-dynamic";
 

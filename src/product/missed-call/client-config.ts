@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  isRealProductionRuntime,
-  isStagingRuntime,
-} from "@/lib/environment";
+import { isRealProductionRuntime, isStagingRuntime } from "@/lib/environment";
 import { demoClientAccount } from "./fixtures";
 import { defaultApprovedQuestions } from "./messaging";
 import { defaultUrgencyRubric } from "./urgency";

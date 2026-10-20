@@ -8,14 +8,22 @@ type Params = { params: Promise<{ id: string }> };
 export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireNotificationAccess(id, "read");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const url = new URL(request.url);
-  const rows = await getNotificationService().listForUser(id, access.ctx.user.id, {
-    type: url.searchParams.get("type") || undefined,
-    priority: url.searchParams.get("priority") || undefined,
-    status: url.searchParams.get("status") || undefined,
-    q: url.searchParams.get("q") || undefined,
-  });
+  const rows = await getNotificationService().listForUser(
+    id,
+    access.ctx.user.id,
+    {
+      type: url.searchParams.get("type") || undefined,
+      priority: url.searchParams.get("priority") || undefined,
+      status: url.searchParams.get("status") || undefined,
+      q: url.searchParams.get("q") || undefined,
+    },
+  );
   return NextResponse.json({
     ok: true,
     notifications: rows.map((row) => ({

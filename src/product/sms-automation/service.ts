@@ -13,7 +13,6 @@ import {
 import type {
   AutomationConfig,
   AutomationRecord,
-  AutomationType,
   ConsentBasis,
   HistoryRow,
   JobPayload,

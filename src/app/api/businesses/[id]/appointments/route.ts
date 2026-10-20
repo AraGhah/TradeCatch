@@ -25,7 +25,11 @@ const createSchema = z.object({
 export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSchedulingAccess(id, "read");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const url = new URL(request.url);
   const service = getSchedulingService();
   const [appointments, technicians, connection] = await Promise.all([
@@ -37,15 +41,28 @@ export async function GET(request: NextRequest, { params }: Params) {
     service.listTechnicians(id),
     service.connectionStatus(id),
   ]);
-  return NextResponse.json({ ok: true, appointments, technicians, calendar: connection });
+  return NextResponse.json({
+    ok: true,
+    appointments,
+    technicians,
+    calendar: connection,
+  });
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSchedulingAccess(id, "write");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const parsed = createSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid appointment." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: "Invalid appointment." },
+      { status: 400 },
+    );
   try {
     const result = await getSchedulingService().book({
       organizationId: id,
@@ -55,7 +72,10 @@ export async function POST(request: NextRequest, { params }: Params) {
     return NextResponse.json(result, { status: result.confirmed ? 201 : 200 });
   } catch (error) {
     if (error instanceof SchedulingError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
     throw error;
   }

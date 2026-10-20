@@ -10,7 +10,10 @@ type Params = { params: Promise<{ id: string }> };
 
 const rulesSchema = z.object({
   timezone: z.string().min(1),
-  days: z.record(z.string(), z.object({ open: z.string(), close: z.string() }).nullable()),
+  days: z.record(
+    z.string(),
+    z.object({ open: z.string(), close: z.string() }).nullable(),
+  ),
   defaultDurationMinutes: z.number().int().min(15).max(480),
   bufferMinutes: z.number().int().min(0).max(240),
   travelBufferMinutes: z.number().int().min(0).max(240),
@@ -23,7 +26,11 @@ const rulesSchema = z.object({
 export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSchedulingAccess(id, "read");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const url = new URL(request.url);
   if (url.searchParams.get("slots") === "1") {
     const result = await getSchedulingService().availability({
@@ -43,9 +50,17 @@ export async function GET(request: NextRequest, { params }: Params) {
 export async function PUT(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSchedulingAccess(id, "write");
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const parsed = rulesSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: "Invalid availability." }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: "Invalid availability." },
+      { status: 400 },
+    );
   try {
     const current = await getSchedulingService().getRules(id);
     const next: AvailabilityRules = {
@@ -58,7 +73,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
     return NextResponse.json({ ok: true, rules });
   } catch (error) {
     if (error instanceof SchedulingError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
     throw error;
   }

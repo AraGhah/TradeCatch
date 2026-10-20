@@ -33,7 +33,10 @@ export async function GET(request: NextRequest) {
   const auth = await requireTenantContext();
   if (!auth.ok) return siteRedirect("/login", locale);
   // The state was minted for one person; it cannot attach a mailbox to another.
-  if (state.organizationId !== auth.ctx.organization.id || state.userId !== auth.ctx.user.id) {
+  if (
+    state.organizationId !== auth.ctx.organization.id ||
+    state.userId !== auth.ctx.user.id
+  ) {
     return siteRedirect("/app/settings", locale, "denied");
   }
 
@@ -46,7 +49,8 @@ export async function GET(request: NextRequest) {
 
     // Reconnecting the same address resumes where it left off. A different
     // address starts clean so the old mailbox's mail never shows under it.
-    const sameMailbox = existing?.email?.toLowerCase() === profile.emailAddress.toLowerCase();
+    const sameMailbox =
+      existing?.email?.toLowerCase() === profile.emailAddress.toLowerCase();
     if (existing && !sameMailbox) await store.clearMessages(existing.id);
 
     await store.saveAccount({
@@ -67,12 +71,20 @@ export async function GET(request: NextRequest) {
       updatedAt: now,
     });
 
-    const first = await syncConnectedGmail(state.organizationId, state.userId, "manual");
+    const first = await syncConnectedGmail(
+      state.organizationId,
+      state.userId,
+      "manual",
+    );
     if (!first.ok && first.error !== "not_connected") {
       return siteRedirect("/app/settings", locale, first.error);
     }
     return siteRedirect("/app/settings", locale, "connected");
   } catch (error) {
-    return siteRedirect("/app/settings", locale, noticeFor(toGmailError(error)));
+    return siteRedirect(
+      "/app/settings",
+      locale,
+      noticeFor(toGmailError(error)),
+    );
   }
 }

@@ -66,7 +66,10 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await authorizeBusinessAccess(request, id);
   if (!access.ok) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   }
 
   const saas = getSaasStore();
@@ -89,7 +92,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await authorizeBusinessAccess(request, id);
   if (!access.ok) {
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   }
 
   // Employees (member role) cannot change plan/features — owners and admins can.
@@ -97,7 +103,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     const tenant = await requireTenantContext();
     if (
       tenant.ok &&
-      !allows(tenant.ctx.membership.role, "manage_settings", tenant.ctx.isPlatformAdmin)
+      !allows(
+        tenant.ctx.membership.role,
+        "manage_settings",
+        tenant.ctx.isPlatformAdmin,
+      )
     ) {
       return NextResponse.json(
         { error: "Insufficient permissions to update business settings." },

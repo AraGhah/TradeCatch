@@ -9,7 +9,11 @@ type Params = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, { params }: Params) {
   const access = await authorizeAdminRequest(request);
-  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status });
+  if (!access.ok)
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const { id } = await params;
   try {
     const incident = await getReliabilityService().acknowledge(id, access.via);

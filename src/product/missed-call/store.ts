@@ -189,7 +189,13 @@ export function createMemoryStore(): MissedCallStore {
       calls.set(call.id, call);
       return call;
     },
-    async listCalls(clientAccountId, limit = 1001) {return [...calls.values()].filter(c=>c.clientAccountId===clientAccountId).sort((a,b)=>b.calledAt.localeCompare(a.calledAt)).slice(0,limit).map(c=>structuredClone(c));},
+    async listCalls(clientAccountId, limit = 1001) {
+      return [...calls.values()]
+        .filter((c) => c.clientAccountId === clientAccountId)
+        .sort((a, b) => b.calledAt.localeCompare(a.calledAt))
+        .slice(0, limit)
+        .map((c) => structuredClone(c));
+    },
     async getCall(id) {
       return calls.get(id) ?? null;
     },
@@ -335,10 +341,13 @@ export function createMemoryStore(): MissedCallStore {
     async listLeads(clientAccountId, limit) {
       const all = [...leads.values()];
       if (!clientAccountId)
-        return all.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0,limit);
+        return all
+          .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+          .slice(0, limit);
       return all
         .filter((l) => l.clientAccountId === clientAccountId)
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0,limit);
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .slice(0, limit);
     },
     async isSmsSuppressed(clientAccountId, phoneE164, opts) {
       const record = suppressions.get(
