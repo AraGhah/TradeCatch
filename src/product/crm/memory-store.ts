@@ -66,6 +66,9 @@ export function createMemoryCrmStore(): CrmStore {
   }
 
   return {
+    async listCustomers(organizationId, limit = 1001) {
+      return [...customers.values()].filter(c=>c.organizationId===organizationId).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,limit).map(clone);
+    },
     async upsertCustomer(input: UpsertCustomerInput) {
       const key = phoneKey(input.phoneE164);
       const existing = [...customers.values()].find(
@@ -245,10 +248,11 @@ export function createMemoryCrmStore(): CrmStore {
       return rows[0] ? clone(rows[0]) : null;
     },
 
-    async listConversations(organizationId) {
+    async listConversations(organizationId, limit) {
       return [...conversations.values()]
         .filter((c) => c.organizationId === organizationId)
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+        .slice(0,limit)
         .map(clone);
     },
 
@@ -289,7 +293,7 @@ export function createMemoryCrmStore(): CrmStore {
       return clone(row);
     },
 
-    async listMessages(organizationId, conversationId) {
+    async listMessages(organizationId, conversationId, limit) {
       return messages
         .filter(
           (m) =>
@@ -297,6 +301,7 @@ export function createMemoryCrmStore(): CrmStore {
             m.conversationId === conversationId,
         )
         .sort((a, b) => a.at.localeCompare(b.at))
+        .slice(0,limit)
         .map(clone);
     },
 

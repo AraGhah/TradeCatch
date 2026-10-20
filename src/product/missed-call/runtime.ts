@@ -15,6 +15,7 @@ import {
  * Production (non-E2E) refuses memory fallback — webhooks must fail closed.
  */
 const globalForMissedCall = globalThis as unknown as {
+  __tradecatchMissedCallReadStore?: MissedCallStore;
   __tradecatchMissedCall?: {
     store: MissedCallStore;
     engine: MissedCallEngine;
@@ -63,6 +64,12 @@ function bootstrap() {
   });
 
   return { store, engine, ready, durable };
+}
+
+/** Read access must not seed the env client or initialize an SMS engine. */
+export function getMissedCallReadStore(): MissedCallStore {
+  if(globalForMissedCall.__tradecatchMissedCall) return globalForMissedCall.__tradecatchMissedCall.store;
+  return globalForMissedCall.__tradecatchMissedCallReadStore ??= createStore().store;
 }
 
 export function getMissedCallRuntime() {

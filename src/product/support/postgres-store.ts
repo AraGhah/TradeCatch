@@ -13,8 +13,8 @@ export function createPostgresSupportStore(connectionString: string): SupportSto
         [row.id, row.organizationId, row.subject, row.category, row.kind, row.description, row.priority, row.status, row.contactEmail, row.relatedCallId ?? null, row.assignedTo ?? null, row.createdAt, row.updatedAt],
       );
     },
-    async listTickets(organizationId) {
-      const res = await pool.query(`SELECT * FROM tc_support_tickets WHERE ($1::text IS NULL OR organization_id = $1) ORDER BY created_at DESC`, [organizationId ?? null]);
+    async listTickets(organizationId, limit) {
+      const res = await pool.query(`SELECT * FROM tc_support_tickets WHERE ($1::text IS NULL OR organization_id = $1) ORDER BY created_at DESC LIMIT $2`, [organizationId ?? null,limit ?? null]);
       return res.rows.map(ticketFrom);
     },
     async getTicket(id) {
@@ -27,8 +27,8 @@ export function createPostgresSupportStore(connectionString: string): SupportSto
         [row.id, row.ticketId, row.authorRole, row.body, row.internal, row.createdAt],
       );
     },
-    async listMessages(ticketId) {
-      const res = await pool.query(`SELECT * FROM tc_support_messages WHERE ticket_id = $1 ORDER BY created_at`, [ticketId]);
+    async listMessages(ticketId, limit) {
+      const res = await pool.query(`SELECT * FROM tc_support_messages WHERE ticket_id = $1 ORDER BY created_at LIMIT $2`, [ticketId,limit ?? null]);
       return res.rows.map((row) => ({
         id: String(row.id),
         ticketId: String(row.ticket_id),
@@ -54,8 +54,8 @@ export function createPostgresSupportStore(connectionString: string): SupportSto
         [row.id, row.organizationId, row.kind, row.status, row.phoneRouting, row.createdAt],
       );
     },
-    async listAccountRequests(organizationId) {
-      const res = await pool.query(`SELECT * FROM tc_account_requests WHERE organization_id = $1 ORDER BY created_at DESC`, [organizationId]);
+    async listAccountRequests(organizationId, limit) {
+      const res = await pool.query(`SELECT * FROM tc_account_requests WHERE organization_id = $1 ORDER BY created_at DESC LIMIT $2`, [organizationId,limit ?? null]);
       return res.rows.map((row) => ({
         id: String(row.id),
         organizationId: String(row.organization_id),

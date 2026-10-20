@@ -3096,7 +3096,11 @@
       "setupCalendar": "Calendar",
       "setupTest": "Test the receptionist",
       "setupAutomations": "Turn automations on",
-      "alerts": "Notification preferences"
+      "alerts": "Notification preferences",
+      "exportPreparing": "Preparing download…",
+      "exportDownloaded": "Your account archive has downloaded. Check README.txt and manifest.json for its contents.",
+      "exportPartial": "Your archive has downloaded with missing or limited sections. Check README.txt and manifest.json for details.",
+      "exportError": "Could not download your account archive. Please try again later."
     },
     "receptionist": {
       "headline": "Receptionist",

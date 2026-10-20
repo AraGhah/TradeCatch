@@ -12,6 +12,7 @@ export type MissedCallStore = {
   saveClient(client: ClientAccount): Promise<void>;
   findClientBySmsFromNumber(n: string): Promise<ClientAccount | null>;
   saveCall(call: CallRecord): Promise<CallRecord>;
+  listCalls(clientAccountId: string, limit?: number): Promise<CallRecord[]>;
   getCall(id: string): Promise<CallRecord | null>;
   findCallByTwilioSid(sid: string): Promise<CallRecord | null>;
   findActiveWorkflowByDedupeKey(
@@ -58,7 +59,7 @@ export type MissedCallStore = {
   saveLead(lead: LeadRecord): Promise<void>;
   getLead(id: string): Promise<LeadRecord | null>;
   getLeadByWorkflowId(workflowId: string): Promise<LeadRecord | null>;
-  listLeads(clientAccountId?: string): Promise<LeadRecord[]>;
+  listLeads(clientAccountId?: string, limit?: number): Promise<LeadRecord[]>;
   isSmsSuppressed(
     clientAccountId: string,
     phoneE164: string,
@@ -188,6 +189,7 @@ export function createMemoryStore(): MissedCallStore {
       calls.set(call.id, call);
       return call;
     },
+    async listCalls(clientAccountId, limit = 1001) {return [...calls.values()].filter(c=>c.clientAccountId===clientAccountId).sort((a,b)=>b.calledAt.localeCompare(a.calledAt)).slice(0,limit).map(c=>structuredClone(c));},
     async getCall(id) {
       return calls.get(id) ?? null;
     },
@@ -330,13 +332,13 @@ export function createMemoryStore(): MissedCallStore {
       const id = leadByWorkflow.get(workflowId);
       return id ? (leads.get(id) ?? null) : null;
     },
-    async listLeads(clientAccountId) {
+    async listLeads(clientAccountId, limit) {
       const all = [...leads.values()];
       if (!clientAccountId)
-        return all.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+        return all.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0,limit);
       return all
         .filter((l) => l.clientAccountId === clientAccountId)
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)).slice(0,limit);
     },
     async isSmsSuppressed(clientAccountId, phoneE164, opts) {
       const record = suppressions.get(

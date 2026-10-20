@@ -1,4 +1,5 @@
-import { Pool } from "pg";
+import type { Pool } from "pg";
+import { createPostgresPool } from "@/lib/postgres-pool";
 import { createId } from "@/lib/id";
 import { phoneKey } from "./phone";
 import type { CrmStore, UpsertCustomerInput } from "./store";
@@ -22,7 +23,7 @@ const pools = new Map<string, Pool>();
 function getPool(url: string) {
   let pool = pools.get(url);
   if (!pool) {
-    pool = new Pool({ connectionString: url, max: 5 });
+    pool = createPostgresPool({ connectionString: url, max: 5 });
     pools.set(url, pool);
   }
   return pool;
@@ -173,6 +174,10 @@ export function createPostgresCrmStore(url: string): CrmStore {
   const pool = getPool(url);
 
   return {
+    async listCustomers(organizationId, limit = 1001) {
+      const res = await pool.query('SELECT * FROM tc_customers WHERE organization_id=$1 ORDER BY id LIMIT $2',[organizationId,limit]);
+      return res.rows.map(mapCustomer);
+    },
     async upsertCustomer(input: UpsertCustomerInput) {
       const id = input.id ?? createId("cus");
       const res = await pool.query(
@@ -344,7 +349,7 @@ export function createPostgresCrmStore(url: string): CrmStore {
              c.email ILIKE $8 OR l.service ILIKE $8 OR
              l.description ILIKE $8 OR l.location ILIKE $8
            )
-         ORDER BY l.created_at DESC
+         ORDER BY l.created_at DESC, l.id DESC
          LIMIT $9 OFFSET $10`,
         [
           organizationId,
@@ -484,12 +489,12 @@ export function createPostgresCrmStore(url: string): CrmStore {
       return res.rows[0] ? mapConversation(res.rows[0]) : null;
     },
 
-    async listConversations(organizationId) {
+    async listConversations(organizationId, limit) {
       const res = await pool.query(
         `SELECT * FROM tc_conversations
          WHERE organization_id = $1
-         ORDER BY updated_at DESC`,
-        [organizationId],
+         ORDER BY updated_at DESC LIMIT $2`,
+        [organizationId,limit ?? null],
       );
       return res.rows.map(mapConversation);
     },
@@ -549,12 +554,12 @@ export function createPostgresCrmStore(url: string): CrmStore {
       return res.rows[0] ? mapMessage(res.rows[0]) : null;
     },
 
-    async listMessages(organizationId, conversationId) {
+    async listMessages(organizationId, conversationId, limit) {
       const res = await pool.query(
         `SELECT * FROM tc_crm_messages
          WHERE organization_id = $1 AND conversation_id = $2
-         ORDER BY at ASC`,
-        [organizationId, conversationId],
+         ORDER BY at ASC LIMIT $3`,
+        [organizationId, conversationId,limit ?? null],
       );
       return res.rows.map(mapMessage);
     },

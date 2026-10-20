@@ -126,7 +126,7 @@ export type GrowthStore = {
       "id" | "createdAt" | "updatedAt" | "reminder24hSent" | "reminder2hSent"
     > & { id?: string },
   ): Promise<Appointment>;
-  listAppointments(organizationId: string): Promise<Appointment[]>;
+  listAppointments(organizationId: string, limit?: number): Promise<Appointment[]>;
   getAppointment(
     id: string,
     organizationId: string,
@@ -253,10 +253,10 @@ export function createMemoryGrowthStore(): GrowthStore {
       return row;
     },
 
-    async listAppointments(organizationId) {
+    async listAppointments(organizationId, limit) {
       return [...appointments.values()]
         .filter((a) => a.organizationId === organizationId)
-        .sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+        .sort((a, b) => a.startsAt.localeCompare(b.startsAt)).slice(0,limit);
     },
 
     async getAppointment(id, organizationId) {

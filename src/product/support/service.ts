@@ -96,10 +96,11 @@ export function createSupportService(deps: {
       return ticket;
     },
 
-    async forBusiness(organizationId: string, ticketId: string) {
+    async forBusiness(organizationId: string, ticketId: string, limit?: number) {
       const ticket = await requireTicket(ticketId, organizationId);
-      const messages = (await deps.store.listMessages(ticketId)).filter((message) => !message.internal);
-      return { ticket, messages };
+      const all = await deps.store.listMessages(ticketId, limit);
+      const messages = all.filter((message) => !message.internal);
+      return { ticket, messages, capped: limit !== undefined && all.length >= limit };
     },
 
     async forAdmin(ticketId: string) {
@@ -107,12 +108,12 @@ export function createSupportService(deps: {
       return { ticket, messages: await deps.store.listMessages(ticketId) };
     },
 
-    list(organizationId?: string) {
-      return deps.store.listTickets(organizationId);
+    list(organizationId?: string, limit?: number) {
+      return deps.store.listTickets(organizationId,limit);
     },
 
-    accountRequests(organizationId: string) {
-      return deps.store.listAccountRequests(organizationId);
+    accountRequests(organizationId: string, limit?: number) {
+      return deps.store.listAccountRequests(organizationId,limit);
     },
 
     diagnose(input: { plan: PlanId; phone?: string | null; calendarConnected: boolean; automationEnabled: boolean; smsConfigured: boolean }) {

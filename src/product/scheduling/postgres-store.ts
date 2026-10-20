@@ -202,11 +202,8 @@ export function createPostgresSchedulingStore(connectionString: string): Schedul
       );
       return technician;
     },
-    async listAppointments(organizationId) {
-      const res = await pool.query(
-        `SELECT * FROM tc_schedule_appointments WHERE organization_id = $1 ORDER BY start_at`,
-        [organizationId],
-      );
+    async listAppointments(organizationId, limit) {
+      const res=await pool.query('SELECT * FROM tc_schedule_appointments WHERE organization_id=$1 ORDER BY start_at LIMIT $2',[organizationId,limit ?? null]);
       return res.rows.map(appointmentFrom);
     },
     async getAppointment(organizationId, id) {

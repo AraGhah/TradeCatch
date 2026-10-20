@@ -1,4 +1,5 @@
-import { Pool } from "pg";
+import type { Pool } from "pg";
+import { createPostgresPool } from "@/lib/postgres-pool";
 import type { StarterStore } from "./memory-store";
 import type {
   InboxItem,
@@ -13,7 +14,7 @@ const pools = new Map<string, Pool>();
 function getPool(url: string) {
   let pool = pools.get(url);
   if (!pool) {
-    pool = new Pool({ connectionString: url, max: 5 });
+    pool = createPostgresPool({ connectionString: url, max: 5 });
     pools.set(url, pool);
   }
   return pool;
@@ -148,14 +149,9 @@ export function createPostgresStarterStore(connectionString: string): StarterSto
       return rows[0] ? mapWebsite(rows[0]) : null;
     },
 
-    async listWebsiteLeads(organizationId) {
-      const { rows } = await pool.query(
-        `SELECT * FROM tc_website_leads
-         WHERE organization_id = $1
-         ORDER BY created_at DESC`,
-        [organizationId],
-      );
-      return rows.map(mapWebsite);
+    async listWebsiteLeads(organizationId, limit) {
+      const res=await pool.query('SELECT * FROM tc_website_leads WHERE organization_id=$1 ORDER BY created_at DESC LIMIT $2',[organizationId,limit ?? null]);
+      return res.rows.map(mapWebsite);
     },
 
     async updateWebsiteLead(id, organizationId, patch) {
@@ -229,12 +225,12 @@ export function createPostgresStarterStore(connectionString: string): StarterSto
       return rows[0] ? mapQuote(rows[0]) : null;
     },
 
-    async listQuoteThreads(organizationId) {
+    async listQuoteThreads(organizationId, limit) {
       const { rows } = await pool.query(
         `SELECT * FROM tc_quote_threads
          WHERE organization_id = $1
-         ORDER BY created_at DESC`,
-        [organizationId],
+         ORDER BY created_at DESC LIMIT $2`,
+        [organizationId,limit ?? null],
       );
       return rows.map(mapQuote);
     },
@@ -316,11 +312,11 @@ export function createPostgresStarterStore(connectionString: string): StarterSto
       } satisfies QuoteMessage;
     },
 
-    async listQuoteMessages(threadId) {
+    async listQuoteMessages(threadId, limit) {
       const { rows } = await pool.query(
         `SELECT id::text AS id, thread_id, direction, body, step_index, at
-         FROM tc_quote_messages WHERE thread_id = $1 ORDER BY at ASC`,
-        [threadId],
+         FROM tc_quote_messages WHERE thread_id = $1 ORDER BY at ASC LIMIT $2`,
+        [threadId,limit ?? null],
       );
       return rows.map((row) => ({
         id: String(row.id),
