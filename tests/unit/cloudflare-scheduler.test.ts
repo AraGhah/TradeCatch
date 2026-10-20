@@ -10,6 +10,7 @@ import {
 describe("Cloudflare scheduler", () => {
   it("maps each configured schedule to the expected internal routes", () => {
     assert.deepEqual(routesForCloudflareCron("* * * * *"), [
+      "/api/book-audit/notifications/tick",
       "/api/missed-call/escalations/tick",
       "/api/automations/tick",
       "/api/notifications/tick",
@@ -51,7 +52,10 @@ describe("Cloudflare scheduler", () => {
       /failed for 1 route/,
     );
 
-    assert.equal(invoked.length, routesForCloudflareCron("*/15 * * * *").length);
+    assert.equal(
+      invoked.length,
+      routesForCloudflareCron("*/15 * * * *").length,
+    );
   });
 
   it("returns the completed routes when every invocation succeeds", async () => {
@@ -60,6 +64,7 @@ describe("Cloudflare scheduler", () => {
     );
 
     assert.deepEqual(result.completed, [
+      "/api/book-audit/notifications/tick",
       "/api/missed-call/escalations/tick",
       "/api/automations/tick",
       "/api/notifications/tick",

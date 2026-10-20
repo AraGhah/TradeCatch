@@ -1544,7 +1544,7 @@
     "submit": "Submit request",
     "confirmation": {
       "headline": "Got it. Your audit request is in.",
-      "body": "Ara will follow up shortly to confirm a time. Have your recent call volume, your open quote list and any software you currently run handy for the call.",
+        "body": "Your request is safely saved. Ara will follow up to confirm a time. Email confirmation may arrive later. Have your recent call volume, your open quote list and any software you currently run handy for the call.",
       "backToSite": "Back to the site",
       "submitAnother": "Submit another",
       "calendarHint": "Prefer to pick a time now? Book a 20-minute slot on the calendar.",

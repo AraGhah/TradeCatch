@@ -1,4 +1,4 @@
-import type { BookAuditPayload } from "@/lib/validation/book-audit";
+import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
 
 /**
  * Forwards a validated audit lead to an external CRM / automation tool
@@ -8,7 +8,9 @@ import type { BookAuditPayload } from "@/lib/validation/book-audit";
  * Returns { forwarded: false } when unset — emails still go out.
  */
 export async function forwardLeadToCrm(
-  payload: BookAuditPayload,
+  payload: BookAuditContactPayload,
+  idempotencyKey?: string,
+  receivedAt = new Date().toISOString(),
 ): Promise<{ forwarded: boolean }> {
   const webhookUrl = process.env.LEADS_WEBHOOK_URL?.trim();
   if (!webhookUrl) {
@@ -17,7 +19,7 @@ export async function forwardLeadToCrm(
 
   const body = {
     source: "tradecatch-book-audit",
-    receivedAt: new Date().toISOString(),
+    receivedAt,
     lead: {
       firstName: payload.firstName,
       lastName: payload.lastName,
@@ -47,6 +49,7 @@ export async function forwardLeadToCrm(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
         ...(process.env.LEADS_WEBHOOK_SECRET
           ? { Authorization: `Bearer ${process.env.LEADS_WEBHOOK_SECRET}` }
           : {}),

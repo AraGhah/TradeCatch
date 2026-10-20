@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import type { BookAuditPayload } from "@/lib/validation/book-audit";
+import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
 
 let client: Resend | null = null;
 
@@ -43,7 +43,8 @@ function brandedShell(title: string, inner: string): string {
 }
 
 export async function sendBookAuditNotifyEmail(
-  payload: BookAuditPayload,
+  payload: BookAuditContactPayload,
+  idempotencyKey?: string,
 ): Promise<{ sent: boolean }> {
   const resend = getClient();
   const fromEmail = process.env.RESEND_FROM_EMAIL;
@@ -85,14 +86,17 @@ export async function sendBookAuditNotifyEmail(
   );
 
   try {
-    const notifyResult = await resend.emails.send({
-      from: fromEmail,
-      to: notifyEmail,
-      replyTo: payload.email,
-      subject: `New audit request: ${payload.company} (${payload.trade})`,
-      html: notifyHtml,
-    });
-    if (notifyResult.error) {
+    const notifyResult = await resend.emails.send(
+      {
+        from: fromEmail,
+        to: notifyEmail,
+        replyTo: payload.email,
+        subject: `New audit request: ${payload.company} (${payload.trade})`,
+        html: notifyHtml,
+      },
+      { idempotencyKey, signal: AbortSignal.timeout(8_000) },
+    );
+    if (notifyResult.error || !notifyResult.data?.id) {
       console.error(
         "[email] notify email rejected by Resend",
         notifyResult.error,
@@ -107,7 +111,8 @@ export async function sendBookAuditNotifyEmail(
 }
 
 export async function sendBookAuditCustomerEmail(
-  payload: BookAuditPayload,
+  payload: BookAuditContactPayload,
+  idempotencyKey?: string,
 ): Promise<{ sent: boolean }> {
   const resend = getClient();
   const fromEmail = process.env.RESEND_FROM_EMAIL;
@@ -134,13 +139,16 @@ export async function sendBookAuditCustomerEmail(
        <p>Questions in the meantime? Reply to this email or call <a href="tel:+14389936997">438·993·6997</a>.</p>`;
 
   try {
-    const leadResult = await resend.emails.send({
-      from: fromEmail,
-      to: payload.email,
-      subject: leadSubject,
-      html: brandedShell(leadSubject, leadInner),
-    });
-    if (leadResult.error) {
+    const leadResult = await resend.emails.send(
+      {
+        from: fromEmail,
+        to: payload.email,
+        subject: leadSubject,
+        html: brandedShell(leadSubject, leadInner),
+      },
+      { idempotencyKey, signal: AbortSignal.timeout(8_000) },
+    );
+    if (leadResult.error || !leadResult.data?.id) {
       console.error(
         "[email] lead confirmation rejected by Resend",
         leadResult.error,
@@ -152,30 +160,4 @@ export async function sendBookAuditCustomerEmail(
     console.error("[email] failed to send customer confirmation", error);
     return { sent: false };
   }
-}
-
-/**
- * Sends internal notification first, then customer confirmation.
- * `sent` reflects the ops-critical notify channel so retries do not
- * re-spam the customer when only the notify leg failed previously.
- */
-export async function sendBookAuditEmails(
-  payload: BookAuditPayload,
-): Promise<{ sent: boolean; customerSent: boolean; notifySent: boolean }> {
-  const notify = await sendBookAuditNotifyEmail(payload);
-  const customer = notify.sent
-    ? await sendBookAuditCustomerEmail(payload)
-    : { sent: false };
-
-  if (notify.sent && !customer.sent) {
-    console.error(
-      "[email] notify succeeded but customer confirmation failed — lead is still actionable",
-    );
-  }
-
-  return {
-    sent: notify.sent,
-    notifySent: notify.sent,
-    customerSent: customer.sent,
-  };
 }

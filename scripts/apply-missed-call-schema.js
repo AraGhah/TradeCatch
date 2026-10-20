@@ -124,6 +124,11 @@ async function main() {
       ["src", "product", "gmail", "schema.sql"],
       "019_gmail",
     );
+    await applyFile(
+      client,
+      ["src", "lib", "book-audit-notifications.sql"],
+      "020_book_audit_notifications",
+    );
   } finally {
     await client.end();
   }

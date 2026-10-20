@@ -392,7 +392,11 @@ export function BookAuditForm() {
         }),
       });
 
-      if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as {
+        ok?: boolean;
+        leadSaved?: boolean;
+      } | null;
+      if (!response.ok || result?.ok !== true || result?.leadSaved !== true) {
         failSubmission("generic");
         return;
       }

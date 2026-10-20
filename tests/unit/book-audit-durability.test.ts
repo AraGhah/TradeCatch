@@ -30,6 +30,7 @@ type Rows = { rows: Record<string, unknown>[] };
 let insert: (params: unknown[]) => Promise<Rows>;
 let inserts: number;
 let deliveries: number;
+let notificationRows: { channel: string; delivered: boolean }[];
 let ip = 0;
 
 function payload() {
@@ -78,8 +79,11 @@ beforeEach(() => {
   });
   inserts = 0;
   deliveries = 0;
-  insert = async () => ({
-    rows: [{ id: "bal_test", email_sent: false, crm_forwarded: false }],
+  notificationRows = ["notify_email", "customer_email", "crm"].map(
+    (channel) => ({ channel, delivered: false }),
+  );
+  insert = async (params) => ({
+    rows: [{ id: params[0], email_sent: false, crm_forwarded: false }],
   });
   Reflect.set(
     Pool.prototype,
@@ -91,12 +95,8 @@ beforeEach(() => {
         inserts++;
         return insert(params);
       }
-      if (sql.includes("SELECT id, email_sent"))
-        return {
-          rows: [{ id: "bal_existing", email_sent: true, crm_forwarded: true }],
-        };
-      if (sql.includes("RETURNING email_sent"))
-        return { rows: [{ email_sent: false, crm_forwarded: false }] };
+      if (sql.includes("SELECT channel, delivered_at"))
+        return { rows: notificationRows };
       return { rows: [] };
     },
   );
@@ -217,7 +217,7 @@ describe("book-audit durable acceptance", () => {
     assert.equal(commands.includes("SET"), false);
   });
 
-  it("accepts a saved lead when email and CRM fail, only delivering after the save", async () => {
+  it("accepts a saved lead with pending notifications without claiming delivery", async () => {
     const save = insert;
     insert = async (params) => {
       assert.equal(deliveries, 0);
@@ -230,19 +230,44 @@ describe("book-audit durable acceptance", () => {
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), {
       ok: true,
+      leadSaved: true,
       emailSent: false,
+      customerEmailSent: false,
       crmForwarded: false,
+      notificationsDelivered: false,
+      notificationsStatus: "pending",
     });
     assert.equal(inserts, 1);
-    assert.equal(deliveries, 2);
+    assert.equal(deliveries, 0);
   });
 
   it("acknowledges duplicates only after PostgreSQL finds the saved lead", async () => {
-    insert = async () => ({ rows: [] });
+    insert = async () => ({
+      rows: [{ id: "bal_existing", email_sent: true, crm_forwarded: true }],
+    });
+    notificationRows = notificationRows.map((row) => ({
+      ...row,
+      delivered: true,
+    }));
     const response = await submit();
     assert.equal(response.status, 200);
-    assert.deepEqual(await response.json(), { ok: true, duplicate: true });
+    assert.deepEqual(await response.json(), {
+      ok: true,
+      leadSaved: true,
+      duplicate: true,
+      emailSent: true,
+      customerEmailSent: true,
+      crmForwarded: true,
+      notificationsDelivered: true,
+      notificationsStatus: "delivered",
+    });
     assert.equal(inserts, 1);
+    assert.equal(deliveries, 0);
+  });
+
+  it("rejects an atomic save that returns no lead", async () => {
+    insert = async () => ({ rows: [] });
+    assert.equal((await submit()).status, 503);
     assert.equal(deliveries, 0);
   });
 });
