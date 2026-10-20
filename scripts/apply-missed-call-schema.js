@@ -104,11 +104,7 @@ async function main() {
       ["src", "product", "security", "schema.sql"],
       "015_security",
     );
-    await applyFile(
-      client,
-      ["src", "product", "qa", "schema.sql"],
-      "016_qa",
-    );
+    await applyFile(client, ["src", "product", "qa", "schema.sql"], "016_qa");
     await applyFile(
       client,
       ["src", "product", "launch", "schema.sql"],
@@ -128,6 +124,11 @@ async function main() {
       client,
       ["src", "lib", "book-audit-notifications.sql"],
       "020_book_audit_notifications",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "saas", "stripe-billing.sql"],
+      "021_stripe_billing",
     );
   } finally {
     await client.end();

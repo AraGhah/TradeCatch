@@ -1,4 +1,5 @@
-import { Pool, type PoolClient, type QueryResultRow } from "pg";
+import type { Pool, PoolClient, QueryResultRow } from "pg";
+import { createPostgresPool } from "@/lib/postgres-pool";
 import type {
   CallRecord,
   ClientAccount,
@@ -30,7 +31,7 @@ let pool: Pool | null = null;
 
 export function getPgPool(connectionString: string): Pool {
   if (!pool) {
-    pool = new Pool({
+    pool = createPostgresPool({
       connectionString,
       max: 5,
       idleTimeoutMillis: 20_000,
