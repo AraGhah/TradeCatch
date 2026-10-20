@@ -26,7 +26,7 @@ export function DashboardPreview({
           >
             <p
               data-count
-              className="font-heading text-[28px] font-extrabold tracking-[-0.03em] text-white"
+              className="font-heading text-[28px] font-extrabold tracking-[-0.03em] text-white tabular-nums"
             >
               {metric.value}
             </p>
