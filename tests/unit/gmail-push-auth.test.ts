@@ -55,7 +55,7 @@ test("Gmail push requires a signed Google identity and rejects URL credentials",
     email: env.pushServiceAccount,
     email_verified: true,
   })
-    .setProtectedHeader({ alg: "RS256", kid: "test-google" })
+    .setProtectedHeader({ alg: "RS256", kid: testGoogleJwks.keys[0].kid })
     .setIssuer("https://accounts.google.com")
     .setAudience(env.pushAudience)
     .setSubject("123")

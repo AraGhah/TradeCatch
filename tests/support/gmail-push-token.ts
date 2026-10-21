@@ -1,14 +1,19 @@
-import { generateKeyPairSync } from "node:crypto";
+import { createHash, generateKeyPairSync } from "node:crypto";
 import { SignJWT } from "jose";
 
 const { privateKey, publicKey } = generateKeyPairSync("rsa", {
   modulusLength: 2048,
 });
+// A restarted fake provider must advertise a new key ID, as Google does when
+// rotating keys, so the running application's JWKS cache can refresh it.
+const kid = createHash("sha256")
+  .update(publicKey.export({ format: "der", type: "spki" }))
+  .digest("hex");
 export const testGoogleJwks = {
   keys: [
     {
       ...publicKey.export({ format: "jwk" }),
-      kid: "test-google",
+      kid,
       alg: "RS256",
       use: "sig",
     },
@@ -26,6 +31,6 @@ export async function testPushToken(overrides: Record<string, unknown> = {}) {
     email_verified: true,
     ...overrides,
   })
-    .setProtectedHeader({ alg: "RS256", kid: "test-google" })
+    .setProtectedHeader({ alg: "RS256", kid })
     .sign(privateKey);
 }
