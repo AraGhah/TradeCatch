@@ -120,7 +120,12 @@ const TERMINAL_CALL_STATUSES = new Set([
 ]);
 
 /** Steps where free-form speech is screened for emergencies. */
-const EMERGENCY_SCREEN_STEPS = new Set(["language", "reason", "anything_else"]);
+const EMERGENCY_SCREEN_STEPS = new Set([
+  "language",
+  "reason",
+  "offer_slot",
+  "anything_else",
+]);
 
 const URGENCY_RANK = { routine: 0, priority: 1, critical: 2 } as const;
 
