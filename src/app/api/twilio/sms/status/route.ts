@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureMissedCallReady } from "@/product/missed-call/runtime";
+import { getMissedCallReadStore } from "@/product/missed-call/runtime";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { store } = await ensureMissedCallReady();
+    const store = getMissedCallReadStore();
     const updated = await store.applyOutboundProviderStatus(sid, status);
     if (!updated) {
       console.warn("[twilio/sms/status] unknown MessageSid", sid, status);
@@ -66,9 +66,14 @@ export async function POST(request: NextRequest) {
   try {
     const { getNotificationService } =
       await import("@/product/notifications/runtime");
-    await getNotificationService().applyProviderStatus(sid, status);
+    await getNotificationService().applyProviderStatus(
+      sid,
+      status,
+      params.ErrorCode,
+    );
   } catch (err) {
-    console.warn("[notifications] status skipped", err);
+    console.error("[notifications] status processing failed", err);
+    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

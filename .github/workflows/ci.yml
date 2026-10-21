@@ -68,10 +68,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Unit tests (including PostgreSQL Stripe reconciliation)
+      - name: Unit tests (including PostgreSQL billing and notification recovery)
         run: npm run test:unit
         env:
           STRIPE_BILLING_TEST_DATABASE_URL: postgresql://postgres:billing-ci-not-for-production@127.0.0.1:5432/tc003_staging
+          NOTIFICATION_TEST_DATABASE_URL: postgresql://postgres:billing-ci-not-for-production@127.0.0.1:5432/tc003_staging
 
       - name: Quality assurance suite
         run: npm run test:qa

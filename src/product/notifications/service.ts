@@ -67,9 +67,9 @@ export type NotificationDeps = {
   }>;
 };
 
-const MAX_ATTEMPTS = 3;
+import { MAX_DELIVERY_ATTEMPTS, scheduleRetry } from "./delivery-policy";
+const MAX_ATTEMPTS = MAX_DELIVERY_ATTEMPTS;
 const GROUP_MS = 15 * 60_000;
-const RATE_LIMIT = 40;
 
 function hrefFor(type: NotificationType, payload: NotificationPayload): string {
   if (payload.href) return payload.href;
@@ -111,7 +111,7 @@ function defaultRule(organizationId: string, at: string): EscalationRule {
 export function createNotificationService(deps: NotificationDeps) {
   async function prefsFor(org: NoticeOrg, member: NoticeMember) {
     const existing = await deps.store.getPreferences(org.id, member.userId);
-    if (existing) return existing;
+    if (existing) return { ...existing, dailySummary: false };
     const created = defaultPreferences(
       org.id,
       member.userId,
@@ -153,11 +153,106 @@ export function createNotificationService(deps: NotificationDeps) {
     );
   }
 
+  async function recoverSms(delivery: NotificationDelivery) {
+    if (
+      delivery.channel !== "sms" ||
+      !["failed", "dead"].includes(delivery.status) ||
+      delivery.recoveryHandledAt
+    )
+      return;
+    const org = await deps.loadOrg(delivery.organizationId);
+    const note = org
+      ? await deps.store.getNotification(org.id, delivery.notificationId)
+      : null;
+    if (!org || !note) return;
+    await deps.store.saveAlert({
+      id: delivery.id + ":sms_failure",
+      organizationId: org.id,
+      component: "sms",
+      severity: note.priority === "critical" ? "critical" : "high",
+      message:
+        "SMS notification could not be delivered after bounded recovery.",
+      correlationId: delivery.id,
+      createdAt: deps.now().toISOString(),
+    });
+    const rule =
+      (await deps.store.getEscalation(org.id)) ??
+      defaultRule(org.id, deps.now().toISOString());
+    if (
+      note.priority !== "normal" &&
+      rule.enabled &&
+      rule.emailEnabled &&
+      org.status === "active"
+    ) {
+      const members = await deps.listMembers(org.id);
+      const backup = rule.secondaryUserId
+        ? members.find((member) => member.userId === rule.secondaryUserId)
+        : (members.find(
+            (member) =>
+              ["owner", "admin"].includes(member.role) &&
+              member.userId !== delivery.recipientUserId,
+          ) ??
+          members.find(
+            (member) =>
+              member.userId === delivery.recipientUserId &&
+              ["owner", "admin"].includes(member.role),
+          ));
+      if (backup?.email) {
+        const people = await deps.store.listRecipients(org.id, note.id);
+        if (!people.some((person) => person.userId === backup.userId))
+          await deps.store.saveRecipient({
+            id: note.id + ":" + backup.userId + ":sms_recovery",
+            notificationId: note.id,
+            organizationId: org.id,
+            userId: backup.userId,
+          });
+        // Stable keys make callback duplication and worker-crash recovery safe.
+        await deps.store.saveDelivery(
+          {
+            id: delivery.id + ":backup_email",
+            notificationId: note.id,
+            organizationId: org.id,
+            recipientUserId: backup.userId,
+            channel: "email",
+            status: "pending",
+            attempts: 0,
+            nextAttemptAt: deps.now().toISOString(),
+            destination: backup.email,
+            simulated:
+              delivery.simulated ||
+              note.simulated ||
+              org.accountType === "demo",
+            idempotencyKey: delivery.id + ":backup_email",
+            createdAt: deps.now().toISOString(),
+            updatedAt: deps.now().toISOString(),
+          },
+          true,
+        );
+      }
+    }
+    await deps.store.markSmsRecovered(delivery.id, deps.now().toISOString());
+  }
+
   async function attempt(
     delivery: NotificationDelivery,
     notification: ContractorNotification,
     org: NoticeOrg,
   ) {
+    // Re-check current membership before sending a delayed email.
+    if (delivery.channel === "email") {
+      const member = (await deps.listMembers(org.id)).find(
+        (m) =>
+          m.userId === delivery.recipientUserId &&
+          m.email === delivery.destination,
+      );
+      if (!member) {
+        delivery.status = "canceled";
+        delivery.lastError = "recipient_changed";
+        delivery.updatedAt = deps.now().toISOString();
+        await deps.store.saveDelivery(delivery);
+        return;
+      }
+    }
     let externalMessage = notification.message;
     if (notification.type === "gmail_reply" && delivery.channel !== "in_app") {
       const member = (await deps.listMembers(org.id)).find(
@@ -212,7 +307,17 @@ export function createNotificationService(deps: NotificationDeps) {
       await deps.store.saveDelivery(delivery);
       return;
     }
+    if (delivery.attempts >= MAX_ATTEMPTS) {
+      delivery.status = "dead";
+      delivery.updatedAt = deps.now().toISOString();
+      await deps.store.saveDelivery(delivery);
+      await recoverSms(delivery);
+      return;
+    }
+    // Persist the attempt before contacting the provider. A crash must not
+    // reset the bounded retry budget; quiet-hour deferrals do not spend it.
     delivery.attempts += 1;
+    await deps.store.saveDelivery(delivery);
     try {
       if (delivery.channel === "email") {
         const result = await deps.sendEmail?.({
@@ -261,7 +366,9 @@ export function createNotificationService(deps: NotificationDeps) {
       if (!temporary || delivery.attempts >= MAX_ATTEMPTS) {
         delivery.status = temporary ? "dead" : "failed";
         await deps.store.saveAlert({
-          id: createId("alert"),
+          id:
+            delivery.id +
+            (delivery.channel === "sms" ? ":sms_failure" : ":failure"),
           organizationId: org.id,
           component: delivery.channel,
           severity: "high",
@@ -270,14 +377,11 @@ export function createNotificationService(deps: NotificationDeps) {
           createdAt: deps.now().toISOString(),
         });
       } else {
-        delivery.status = "pending";
-        const wait = [1, 5, 15][delivery.attempts - 1] ?? 15;
-        delivery.nextAttemptAt = new Date(
-          deps.now().getTime() + wait * 60_000,
-        ).toISOString();
+        scheduleRetry(delivery, deps.now());
       }
       delivery.updatedAt = deps.now().toISOString();
       await deps.store.saveDelivery(delivery);
+      await recoverSms(delivery);
     }
   }
 
@@ -295,11 +399,6 @@ export function createNotificationService(deps: NotificationDeps) {
     if (!(await deps.store.getEscalation(org.id)))
       await deps.store.saveEscalation(rule);
     const members = await deps.listMembers(org.id);
-    const recent = await deps.store.listDeliveries(org.id);
-    const recentCount = recent.filter(
-      (row) => Date.parse(row.createdAt) > deps.now().getTime() - 10 * 60_000,
-    ).length;
-    const limited = recentCount >= RATE_LIMIT;
     for (const member of members) {
       if (payload.recipientUserId && payload.recipientUserId !== member.userId)
         continue;
@@ -357,12 +456,6 @@ export function createNotificationService(deps: NotificationDeps) {
         channels.sms ? "sms" : null,
       ].filter((channel): channel is Channel => Boolean(channel));
       for (const channel of selected) {
-        if (
-          limited &&
-          channel !== "in_app" &&
-          notification.type !== "gmail_reply"
-        )
-          continue;
         const destination =
           channel === "email"
             ? member.email
@@ -370,17 +463,13 @@ export function createNotificationService(deps: NotificationDeps) {
               ? org.phoneE164 || undefined
               : undefined;
         if (channel !== "in_app" && !destination) continue;
-        let when = allowedNow(notification.priority, prefs, rule, org)
+        const when = allowedNow(notification.priority, prefs, rule, org)
           ? deps.now().toISOString()
           : nextWindowStart(
               deps.now(),
               org.timezone || "America/Toronto",
               windowConfig(prefs),
             ).toISOString();
-        if (limited && channel !== "in_app")
-          when = new Date(
-            Math.max(Date.parse(when), deps.now().getTime() + 10 * 60_000),
-          ).toISOString();
         const delivery: NotificationDelivery = {
           id: createId("ndlv"),
           notificationId: notification.id,
@@ -515,6 +604,8 @@ export function createNotificationService(deps: NotificationDeps) {
         event.updatedAt = deps.now().toISOString();
         await deps.store.saveOutbox(event);
       }
+      for (const failed of await deps.store.listUnrecoveredSms())
+        await recoverSms(failed);
       const due = await deps.store.claimDeliveries(
         deps.now().toISOString(),
         type,
@@ -591,8 +682,7 @@ export function createNotificationService(deps: NotificationDeps) {
             createdAt: deps.now().toISOString(),
             updatedAt: deps.now().toISOString(),
           };
-          const saved = await deps.store.saveDelivery(delivery);
-          if (saved) await attempt(saved, note, org);
+          await deps.store.saveDelivery(delivery);
           await deps.store.addEscalationAttempt({
             organizationId,
             notificationId: note.id,
@@ -750,6 +840,7 @@ export function createNotificationService(deps: NotificationDeps) {
     },
 
     async savePreferences(row: NotificationPreferences) {
+      row.dailySummary = false;
       row.updatedAt = deps.now().toISOString();
       await deps.store.savePreferences(row);
       return row;
@@ -792,15 +883,15 @@ export function createNotificationService(deps: NotificationDeps) {
       return rows;
     },
 
-    async applyProviderStatus(sid: string, status: string) {
-      const delivery = await deps.store.findDeliveryBySid(sid);
+    async applyProviderStatus(sid: string, status: string, errorCode?: string) {
+      const delivery = await deps.store.applySmsStatus(
+        sid,
+        status,
+        errorCode,
+        deps.now().toISOString(),
+      );
       if (!delivery) return false;
-      if (status === "delivered") delivery.status = "delivered";
-      else if (status === "failed" || status === "undelivered")
-        delivery.status = "failed";
-      else delivery.status = "submitted";
-      delivery.updatedAt = deps.now().toISOString();
-      await deps.store.saveDelivery(delivery);
+      await recoverSms(delivery);
       return true;
     },
   };
