@@ -133,7 +133,16 @@ export async function POST(request: NextRequest) {
 
     // A 303 turns the form POST into a fresh GET of the workspace.
     const response = NextResponse.redirect(
-      new URL(locale === "fr" ? "/fr/app" : "/app", request.url),
+      new URL(
+        result.billingOnly
+          ? locale === "fr"
+            ? "/fr/facturation"
+            : "/billing"
+          : locale === "fr"
+            ? "/fr/app"
+            : "/app",
+        request.url,
+      ),
       {
         status: 303,
         headers: privateHeaders,

@@ -211,6 +211,34 @@ for (const mode of stagingUrl ? ["memory", "postgres"] : ["memory"]) {
       );
     });
 
+    it("sends inactive owners to billing recovery while still refusing inactive members", async () => {
+      const owner = await fixture();
+      await store.updateOrganization(owner.organization.id, {
+        status: "suspended",
+      });
+      const confirmation = await form(owner.token);
+      const response = await submit(
+        owner.token,
+        confirmation.nonce,
+        confirmation.cookie,
+      );
+      assert.equal(response.headers.get("location"), origin + "/billing");
+      assert.ok(response.cookies.get("tc_session"));
+      const member = await fixture();
+      await store.setMembershipRole(
+        member.organization.id,
+        member.user.id,
+        "member",
+      );
+      await store.updateOrganization(member.organization.id, {
+        status: "suspended",
+      });
+      const denied = await form(member.token);
+      const rejected = await submit(member.token, denied.nonce, denied.cookie);
+      assert.match(rejected.headers.get("location")!, /\/login\?error=/);
+      assert.equal(rejected.cookies.get("tc_session"), undefined);
+    });
+
     it("permits only one session when two confirmations race", async () => {
       const f = await fixture();
       const page = await form(f.token);

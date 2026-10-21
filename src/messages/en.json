@@ -3075,7 +3075,7 @@
       "deletion": "Request deletion",
       "deletionNote": "Deletion is reviewed first. Records are not erased by this request.",
       "billing": "Open billing",
-      "billingMissing": "Stripe billing opens here when the customer portal is configured.",
+      "billingMissing": "This business is not linked to Stripe billing yet. Contact support to set it up.",
       "sessions": "Sessions and security",
       "phone": "Business phone",
       "phoneHint": "Canadian number in international form, for example +14385551234.",
@@ -3100,7 +3100,15 @@
       "exportPreparing": "Preparing download…",
       "exportDownloaded": "Your account archive has downloaded. Check README.txt and manifest.json for its contents.",
       "exportPartial": "Your archive has downloaded with missing or limited sections. Check README.txt and manifest.json for details.",
-      "exportError": "Could not download your account archive. Please try again later."
+      "exportError": "Could not download your account archive. Please try again later.",
+      "billingOpening": "Opening billing…",
+      "billingError": "Billing could not be opened. Please try again or contact support.",
+      "billingRecovery": "Your workspace is not active. Owners and administrators can still manage billing here. Account access updates after Stripe confirms an active subscription.",
+      "billingActive": "Manage your subscription, invoices and payment method securely through Stripe.",
+      "billingBack": "Back to workspace",
+      "billingNoPermission": "Only an owner or administrator can manage billing.",
+      "billingHeadline": "Billing",
+      "billingSupport": "Contact support"
     },
     "receptionist": {
       "headline": "Receptionist",
