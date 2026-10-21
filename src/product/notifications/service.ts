@@ -3,7 +3,18 @@ import {
   isInsideSendingWindow,
   nextWindowStart,
 } from "@/product/sms-automation/window";
-import { defaultPreferences, renderNotice } from "./templates";
+import {
+  isSummaryDue,
+  localDateKey,
+  startOfLocalDay,
+  usableTimeZone,
+} from "./daily-summary";
+import {
+  defaultPreferences,
+  renderDailySummary,
+  renderNotice,
+  withDefaultCategories,
+} from "./templates";
 import type { NotificationStore } from "./store";
 import {
   TYPE_CATEGORY,
@@ -111,7 +122,11 @@ function defaultRule(organizationId: string, at: string): EscalationRule {
 export function createNotificationService(deps: NotificationDeps) {
   async function prefsFor(org: NoticeOrg, member: NoticeMember) {
     const existing = await deps.store.getPreferences(org.id, member.userId);
-    if (existing) return { ...existing, dailySummary: false };
+    if (existing)
+      return {
+        ...existing,
+        categories: withDefaultCategories(existing.categories),
+      };
     const created = defaultPreferences(
       org.id,
       member.userId,
@@ -492,29 +507,79 @@ export function createNotificationService(deps: NotificationDeps) {
     }
   }
 
+  async function enqueueEvent(input: {
+    organizationId: string;
+    type: NotificationType;
+    idempotencyKey: string;
+    payload?: NotificationPayload;
+  }) {
+    const org = await deps.loadOrg(input.organizationId);
+    if (!org) throw new NotificationError("Business not found.", 404);
+    if (input.type === "gmail_reply" && !input.payload?.recipientUserId)
+      throw new NotificationError("Mailbox owner required.");
+    const inserted = await deps.store.insertOutbox({
+      id: createId("outbox"),
+      organizationId: input.organizationId,
+      idempotencyKey: input.idempotencyKey,
+      type: input.type,
+      payload: input.payload ?? {},
+      status: "pending",
+      attempts: 0,
+      createdAt: deps.now().toISOString(),
+      updatedAt: deps.now().toISOString(),
+    });
+    return { queued: Boolean(inserted), duplicate: !inserted };
+  }
+
   return {
-    async enqueue(input: {
-      organizationId: string;
-      type: NotificationType;
-      idempotencyKey: string;
-      payload?: NotificationPayload;
-    }) {
-      const org = await deps.loadOrg(input.organizationId);
-      if (!org) throw new NotificationError("Business not found.", 404);
-      if (input.type === "gmail_reply" && !input.payload?.recipientUserId)
-        throw new NotificationError("Mailbox owner required.");
-      const inserted = await deps.store.insertOutbox({
-        id: createId("outbox"),
-        organizationId: input.organizationId,
-        idempotencyKey: input.idempotencyKey,
-        type: input.type,
-        payload: input.payload ?? {},
-        status: "pending",
-        attempts: 0,
-        createdAt: deps.now().toISOString(),
-        updatedAt: deps.now().toISOString(),
-      });
-      return { queued: Boolean(inserted), duplicate: !inserted };
+    enqueue: enqueueEvent,
+
+    /**
+     * Queues one summary per opted-in member for the local day that is ending.
+     * A business becomes due at DAILY_SUMMARY_HOUR in its own time zone; the
+     * outbox's unique key per member and local date makes any number of
+     * overlapping or repeated runs produce exactly one summary.
+     */
+    async generateDailySummaries(asOf = deps.now()) {
+      const horizon = new Date(asOf.getTime() - 36 * 3_600_000).toISOString();
+      let queued = 0;
+      let duplicates = 0;
+      for (const organizationId of await deps.store.listOrganizations(
+        horizon,
+      )) {
+        const org = await deps.loadOrg(organizationId);
+        if (!org || org.status !== "active") continue;
+        const zone = usableTimeZone(org.timezone);
+        if (!isSummaryDue(asOf, zone)) continue;
+        const day = localDateKey(asOf, zone);
+        const sinceIso = startOfLocalDay(asOf, zone).toISOString();
+        const untilIso = asOf.toISOString();
+        for (const member of await deps.listMembers(org.id)) {
+          const prefs = await prefsFor(org, member);
+          if (!prefs.dailySummary) continue;
+          const message = renderDailySummary(
+            prefs.language,
+            org.name,
+            await deps.store.countActivity({
+              organizationId: org.id,
+              userId: member.userId,
+              sinceIso,
+              untilIso,
+            }),
+          );
+          // A quiet day sends nothing rather than an empty message.
+          if (!message) continue;
+          const result = await enqueueEvent({
+            organizationId: org.id,
+            type: "daily_summary",
+            idempotencyKey: `daily-summary:${member.userId}:${day}`,
+            payload: { recipientUserId: member.userId, message },
+          });
+          if (result.queued) queued += 1;
+          else duplicates += 1;
+        }
+      }
+      return { queued, duplicates };
     },
 
     async processDue(limit = 25, type?: NotificationType) {
@@ -841,7 +906,6 @@ export function createNotificationService(deps: NotificationDeps) {
     },
 
     async savePreferences(row: NotificationPreferences) {
-      row.dailySummary = false;
       row.updatedAt = deps.now().toISOString();
       await deps.store.savePreferences(row);
       return row;

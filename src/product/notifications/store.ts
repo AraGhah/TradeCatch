@@ -94,7 +94,18 @@ export type NotificationStore = {
   }): Promise<void>;
   saveAlert(row: SystemAlert): Promise<void>;
   listAlerts(): Promise<SystemAlert[]>;
-  listOrganizations(): Promise<string[]>;
+  /** Organizations with notification activity; `sinceIso` bounds the scan. */
+  listOrganizations(sinceIso?: string): Promise<string[]>;
+  /**
+   * What reached one member between two instants, by notification type. Daily
+   * summaries themselves are never counted.
+   */
+  countActivity(input: {
+    organizationId: string;
+    userId: string;
+    sinceIso: string;
+    untilIso: string;
+  }): Promise<Partial<Record<NotificationType, number>>>;
 };
 
 export function createMemoryNotificationStore(): NotificationStore {
@@ -342,8 +353,34 @@ export function createMemoryNotificationStore(): NotificationStore {
     async listAlerts() {
       return alerts.map((row) => structuredClone(row));
     },
-    async listOrganizations() {
-      return [...new Set([...notes.values()].map((row) => row.organizationId))];
+    async listOrganizations(sinceIso) {
+      return [
+        ...new Set(
+          [...notes.values()]
+            .filter((row) => !sinceIso || row.createdAt >= sinceIso)
+            .map((row) => row.organizationId),
+        ),
+      ];
+    },
+    async countActivity({ organizationId, userId, sinceIso, untilIso }) {
+      const counts: Partial<Record<NotificationType, number>> = {};
+      for (const recipient of recipients.values()) {
+        if (
+          recipient.organizationId !== organizationId ||
+          recipient.userId !== userId
+        )
+          continue;
+        const note = notes.get(recipient.notificationId);
+        if (
+          !note ||
+          note.type === "daily_summary" ||
+          note.createdAt < sinceIso ||
+          note.createdAt >= untilIso
+        )
+          continue;
+        counts[note.type] = (counts[note.type] ?? 0) + 1;
+      }
+      return counts;
     },
   };
 }
