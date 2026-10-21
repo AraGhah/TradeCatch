@@ -26,7 +26,8 @@ function schedulerSecret(env: TradeCatchWorkerEnv, path: string): string {
   const secret =
     (path === "/api/book-audit/notifications/tick"
       ? env.BOOK_AUDIT_RETRY_SECRET?.trim()
-      : path === "/api/notifications/tick"
+      : path === "/api/notifications/tick" ||
+          path === "/api/notifications/daily-summary/tick"
         ? env.NOTIFICATION_RETRY_SECRET?.trim()
         : path === "/api/gmail/sync/tick"
           ? env.GMAIL_SYNC_SECRET?.trim()

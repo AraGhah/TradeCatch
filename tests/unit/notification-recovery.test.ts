@@ -356,20 +356,20 @@ function recoveryChecks(factory: () => NotificationStore, durable: boolean) {
     for (let i = 0; i < 8; i++) await h.service.processDue(2);
     assert.equal(h.emails.length, 4);
   });
-  it("makes daily-summary unavailable and normalizes legacy enabled preferences", async () => {
+  it("keeps an opted-in daily summary preference", async () => {
     const prefs = await h.service.getPreferences(
       h.organizationId,
       "owner",
       "en",
     );
+    assert.equal(prefs.dailySummary, false, "summaries are opt-in");
     prefs.dailySummary = true;
-    await h.store.savePreferences(prefs);
+    assert.equal((await h.service.savePreferences(prefs)).dailySummary, true);
     assert.equal(
       (await h.service.getPreferences(h.organizationId, "owner", "en"))
         .dailySummary,
-      false,
+      true,
     );
-    assert.equal((await h.service.savePreferences(prefs)).dailySummary, false);
   });
   it("keeps Gmail-only processing from recovering unrelated SMS failures", async () => {
     const first = await h.urgent();

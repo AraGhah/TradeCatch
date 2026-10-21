@@ -22,7 +22,7 @@ const schema = z.object({
   quietEnd: z.string(),
   quietEnabled: z.boolean(),
   language: z.enum(["en", "fr"]),
-  dailySummary: z.literal(false).optional().default(false),
+  dailySummary: z.boolean(),
   scope: z.enum(["all", "assigned"]),
 });
 

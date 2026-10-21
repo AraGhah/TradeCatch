@@ -19,8 +19,16 @@ export const DEFAULT_CHANNELS: Record<PreferenceCategory, ChannelPrefs> = {
   quote_accepted: yes(true, false),
   transfer_failed: yes(true, true),
   automation_failures: yes(true, false),
+  daily_summary: yes(true, false),
   system: yes(false, false),
 };
+
+/** Stored preferences predate newer categories; fill any gap from the defaults. */
+export function withDefaultCategories(
+  stored: Partial<NotificationPreferences["categories"]> | undefined,
+): NotificationPreferences["categories"] {
+  return { ...structuredClone(DEFAULT_CHANNELS), ...stored };
+}
 
 export function defaultPreferences(
   organizationId: string,
@@ -227,6 +235,148 @@ export function publicLabel(value?: string): string {
   const trimmed = value.trim();
   if (/^\+?\d{8,}$/.test(trimmed.replace(/[\s()-]/g, ""))) return "Customer";
   return trimmed.slice(0, 80);
+}
+
+type Plural = [one: string, other: string];
+
+/** Order is the order the summary lists them in: what needs attention first. */
+const SUMMARY_LABELS: [
+  NotificationType,
+  { en: Plural; fr: Plural },
+][] = [
+  [
+    "receptionist_offline",
+    {
+      en: ["receptionist outage", "receptionist outages"],
+      fr: ["panne de la réceptionniste", "pannes de la réceptionniste"],
+    },
+  ],
+  [
+    "urgent_request",
+    {
+      en: ["urgent request", "urgent requests"],
+      fr: ["demande urgente", "demandes urgentes"],
+    },
+  ],
+  [
+    "human_requested",
+    {
+      en: ["request to speak with a person", "requests to speak with a person"],
+      fr: [
+        "demande de parler à une personne",
+        "demandes de parler à une personne",
+      ],
+    },
+  ],
+  [
+    "transfer_failed",
+    {
+      en: ["failed call transfer", "failed call transfers"],
+      fr: ["transfert d’appel échoué", "transferts d’appel échoués"],
+    },
+  ],
+  [
+    "lead_created",
+    {
+      en: ["new lead", "new leads"],
+      fr: ["nouveau prospect", "nouveaux prospects"],
+    },
+  ],
+  [
+    "missed_call_recovered",
+    {
+      en: ["recovered missed call", "recovered missed calls"],
+      fr: ["appel manqué récupéré", "appels manqués récupérés"],
+    },
+  ],
+  [
+    "appointment_confirmed",
+    {
+      en: ["appointment confirmed", "appointments confirmed"],
+      fr: ["rendez-vous confirmé", "rendez-vous confirmés"],
+    },
+  ],
+  [
+    "appointment_rescheduled",
+    {
+      en: ["appointment rescheduled", "appointments rescheduled"],
+      fr: ["rendez-vous déplacé", "rendez-vous déplacés"],
+    },
+  ],
+  [
+    "appointment_canceled",
+    {
+      en: ["appointment canceled", "appointments canceled"],
+      fr: ["rendez-vous annulé", "rendez-vous annulés"],
+    },
+  ],
+  [
+    "customer_message",
+    {
+      en: ["customer message", "customer messages"],
+      fr: ["message client", "messages clients"],
+    },
+  ],
+  [
+    "gmail_reply",
+    {
+      en: ["customer email", "customer emails"],
+      fr: ["courriel client", "courriels clients"],
+    },
+  ],
+  [
+    "quote_response",
+    {
+      en: ["quote response", "quote responses"],
+      fr: ["réponse à une soumission", "réponses à des soumissions"],
+    },
+  ],
+  [
+    "quote_accepted",
+    {
+      en: ["accepted quote", "accepted quotes"],
+      fr: ["soumission acceptée", "soumissions acceptées"],
+    },
+  ],
+  [
+    "automation_failure",
+    {
+      en: ["automation failure", "automation failures"],
+      fr: ["échec d’automatisation", "échecs d’automatisation"],
+    },
+  ],
+  [
+    "calendar_disconnected",
+    {
+      en: ["calendar disconnection", "calendar disconnections"],
+      fr: ["déconnexion du calendrier", "déconnexions du calendrier"],
+    },
+  ],
+  [
+    "support_update",
+    {
+      en: ["support update", "support updates"],
+      fr: ["mise à jour du support", "mises à jour du support"],
+    },
+  ],
+];
+
+/** Counts only: a summary that leaves the app never repeats customer details. */
+export function renderDailySummary(
+  language: "en" | "fr",
+  business: string,
+  counts: Partial<Record<NotificationType, number>>,
+) {
+  const parts: string[] = [];
+  for (const [type, labels] of SUMMARY_LABELS) {
+    const count = counts[type] ?? 0;
+    if (count > 0) parts.push(`${count} ${labels[language][count === 1 ? 0 : 1]}`);
+  }
+  if (parts.length === 0) return null;
+  const list = parts.join(", ");
+  return language === "fr"
+    ? `Aujourd’hui chez ${business} : ${list}.`
+    : `Today at ${business}: ${list}.`;
 }
 
 export function renderNotice(

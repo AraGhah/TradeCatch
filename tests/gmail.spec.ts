@@ -695,8 +695,11 @@ test.describe("Gmail receiving", () => {
       alice.page.getByRole("link", { name: "Choose reply alerts" }),
     ).toBeVisible();
     await alice.page.getByRole("link", { name: "Choose reply alerts" }).click();
-    await expect(alice.page.getByLabel("Daily summary", { exact: true })).toHaveCount(0);
-    expect((await alice.page.request.put(url, { data: { ...original.preferences, dailySummary: true } })).status()).toBe(400);
+    const dailySummary = alice.page.getByLabel("Daily summary", {
+      exact: true,
+    });
+    await expect(dailySummary).toBeVisible();
+    await dailySummary.check();
     const row = alice.page.getByRole("group", {
       name: "Customer replies, including Gmail",
     });
@@ -706,9 +709,11 @@ test.describe("Gmail receiving", () => {
     await expect(alice.page.getByText("Saved.", { exact: true })).toBeVisible();
     const saved = (await (await alice.page.request.get(url)).json()) as {
       preferences: {
+        dailySummary: boolean;
         categories: { replies: { email: boolean; sms: boolean } };
       };
     };
+    expect(saved.preferences.dailySummary).toBe(true);
     expect(saved.preferences.categories.replies).toMatchObject({
       email: true,
       sms: true,

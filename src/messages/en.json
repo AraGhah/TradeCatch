@@ -2877,6 +2877,7 @@
         "quote_accepted": "Accepted quotes",
         "transfer_failed": "Failed transfers",
         "automation_failures": "Automation problems",
+        "daily_summary": "Where to send the daily summary",
         "system": "System updates"
       },
       "gmailRepliesHint": "Important, unread customer emails alert only the mailbox owner. Email goes to your account email; SMS goes to your configured business number. External alerts hide message contents. Email and SMS require configured delivery providers.",

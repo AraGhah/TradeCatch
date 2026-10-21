@@ -135,6 +135,16 @@ export function NotificationPreferencesForm({
         </select>
       </label>
       <label className="text-sm">
+        <input
+          type="checkbox"
+          checked={prefs.dailySummary}
+          onChange={(event) =>
+            setPrefs({ ...prefs, dailySummary: event.target.checked })
+          }
+        />{" "}
+        {t("summary")}
+      </label>
+      <label className="text-sm">
         {t("scope")}
         <select
           value={prefs.scope}

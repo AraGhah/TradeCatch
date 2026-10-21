@@ -13,6 +13,7 @@ import type {
   NotificationPayload,
   NotificationPreferences,
   NotificationRecipient,
+  NotificationType,
   OutboxEvent,
   SystemAlert,
 } from "./types";
@@ -510,11 +511,30 @@ export function createPostgresNotificationStore(
         createdAt: new Date(String(row.created_at)).toISOString(),
       }));
     },
-    async listOrganizations() {
+    async listOrganizations(sinceIso) {
       const res = await query(
-        `SELECT DISTINCT organization_id FROM tc_notifications`,
+        `SELECT DISTINCT organization_id FROM tc_notifications
+         WHERE $1::timestamptz IS NULL OR created_at >= $1`,
+        [sinceIso ?? null],
       );
       return res.rows.map((row) => String(row.organization_id));
+    },
+    async countActivity({ organizationId, userId, sinceIso, untilIso }) {
+      const res = await query(
+        `SELECT n.type, count(*)::int AS total
+         FROM tc_notifications n
+         JOIN tc_notification_recipients r
+           ON r.notification_id = n.id AND r.organization_id = n.organization_id
+         WHERE n.organization_id = $1 AND r.user_id = $2
+           AND n.created_at >= $3 AND n.created_at < $4
+           AND n.type <> 'daily_summary'
+         GROUP BY n.type`,
+        [organizationId, userId, sinceIso, untilIso],
+      );
+      const counts: Partial<Record<NotificationType, number>> = {};
+      for (const row of res.rows)
+        counts[row.type as NotificationType] = Number(row.total);
+      return counts;
     },
   };
 }
