@@ -72,6 +72,18 @@ export async function PUT(request: NextRequest, { params }: Params) {
       { status: 403 },
     );
   }
+  try {
+    getSecurityService().assertPermission(
+      tenant.ctx.membership.role,
+      "manage_security",
+      tenant.ctx.isPlatformAdmin,
+    );
+  } catch {
+    return NextResponse.json(
+      { error: "Insufficient permissions." },
+      { status: 403 },
+    );
+  }
   const body = z
     .object({
       requestId: z.string(),
@@ -86,18 +98,25 @@ export async function PUT(request: NextRequest, { params }: Params) {
       { status: 400 },
     );
   try {
-    const result = await getSecurityService().completePrivacyRequest(
+    await getSecurityService().completePrivacyRequest(
       id,
       body.data.requestId,
       body.data,
     );
-    return NextResponse.json({
-      ok: true,
-      redacted: result.redacted,
-      status: result.request.status,
-    });
+    return NextResponse.json(
+      { error: "Privacy fulfillment has not been verified." },
+      { status: 409 },
+    );
   } catch (error) {
     const status = error instanceof SecurityError ? error.status : 500;
-    return NextResponse.json({ error: "Request not found." }, { status });
+    return NextResponse.json(
+      {
+        error:
+          error instanceof SecurityError
+            ? error.message
+            : "Privacy request could not be processed.",
+      },
+      { status },
+    );
   }
 }

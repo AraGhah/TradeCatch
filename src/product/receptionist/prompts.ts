@@ -94,8 +94,8 @@ export const PHRASES = {
     en: "Sorry, I didn't catch that. Could you say it again?",
   },
   voicemailIntro: {
-    fr: "Je vais plutôt prendre un message. Laissez votre nom, votre numéro et votre demande après le bip, puis appuyez sur le carré.",
-    en: "Let me take a message instead. Please leave your name, number and request after the beep, then press pound.",
+    fr: "Votre message sera enregistré pour que notre équipe puisse vous répondre. Si vous ne souhaitez pas être enregistré, raccrochez avant le bip. Sinon, laissez votre nom, votre numéro et votre demande après le bip, puis appuyez sur le carré.",
+    en: "Your message will be recorded so our team can respond. If you do not want to be recorded, hang up before the beep. Otherwise, leave your name, number and request after the beep, then press pound.",
   },
   voicemailThanks: {
     fr: "Merci, votre message a été transmis à l'équipe. Au revoir.",

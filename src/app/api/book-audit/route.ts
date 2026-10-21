@@ -12,6 +12,7 @@ import {
 import {
   getProductionConfigErrors,
   isDurableMissedCallStoreConfigured,
+  requiresProductionLeadProtection,
 } from "@/lib/config";
 import {
   getBookAuditNotificationStatus,
@@ -104,7 +105,10 @@ export async function POST(request: NextRequest) {
     "book-audit",
   );
 
-  if (turnstileResult.configured && !turnstileResult.success) {
+  if (
+    !turnstileResult.success &&
+    (turnstileResult.configured || requiresProductionLeadProtection())
+  ) {
     console.warn("[book-audit] Turnstile rejected", {
       ip,
       reason: turnstileResult.error,

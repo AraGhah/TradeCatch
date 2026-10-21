@@ -4,6 +4,7 @@ import {
   sendBookAuditNotifyEmail,
 } from "@/lib/email";
 import { reportError } from "@/lib/errors";
+import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
 import { randomUUID } from "@/lib/id";
 import { forwardLeadToCrm } from "@/lib/leads";
 import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
@@ -60,7 +61,7 @@ async function deliver(job: BookAuditNotificationJob): Promise<boolean> {
       );
       // A recovery before the alert is sent no longer needs escalation.
       if (pending.rows.length === 0) return true;
-      return reportError(
+      const reported = await reportError(
         new Error(
           "Booking lead saved, but notification delivery remains unsuccessful",
         ),
@@ -73,6 +74,26 @@ async function deliver(job: BookAuditNotificationJob): Promise<boolean> {
             "Check booking notification providers and retry the pending queue",
         },
       );
+      if (reported) return true;
+      const toEmail =
+        process.env.ADMIN_ALERT_EMAIL?.trim() ||
+        process.env.RESEND_NOTIFY_EMAIL?.trim();
+      if (!toEmail) return false;
+      return (
+        await sendBusinessNotifyEmail({
+          toEmail,
+          subject: "TradeCatch: booking notifications need attention",
+          title: "Booking saved; notifications still pending",
+          lines: [
+            { label: "Lead reference", value: job.lead_id },
+            {
+              label: "Pending channels",
+              value: pending.rows.map((row) => row.channel).join(", "),
+            },
+          ],
+          idempotencyKey: key,
+        })
+      ).sent;
     }
   }
 }
