@@ -2,7 +2,20 @@ import type { NotificationDelivery, Priority } from "./types";
 
 export const MAX_DELIVERY_ATTEMPTS = 3;
 export const DELIVERY_RATE_LIMIT = 40;
+/**
+ * Extra external dispatches per window that only critical alerts may use, so a
+ * burst of ordinary messages can never delay an urgent one. The organization's
+ * total stays bounded at DELIVERY_RATE_LIMIT + CRITICAL_DELIVERY_RESERVE.
+ */
+export const CRITICAL_DELIVERY_RESERVE = 10;
 export const DELIVERY_WINDOW_MS = 10 * 60_000;
+
+/** The most external dispatches an organization may hold in one window when this priority reserves one. */
+export function dispatchCeiling(priority?: Priority) {
+  return priority === "critical"
+    ? DELIVERY_RATE_LIMIT + CRITICAL_DELIVERY_RESERVE
+    : DELIVERY_RATE_LIMIT;
+}
 
 export function priorityRank(priority?: Priority) {
   return priority === "critical" ? 0 : priority === "high" ? 1 : 2;

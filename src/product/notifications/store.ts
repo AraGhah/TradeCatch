@@ -1,8 +1,8 @@
 import { createId } from "@/lib/id";
 import {
   applySmsStatus,
-  DELIVERY_RATE_LIMIT,
   DELIVERY_WINDOW_MS,
+  dispatchCeiling,
   priorityRank,
 } from "./delivery-policy";
 import { TYPE_PRIORITY } from "./types";
@@ -270,16 +270,23 @@ export function createMemoryNotificationStore(): NotificationStore {
               priorityRank(notes.get(b.notificationId)?.priority) ||
             a.createdAt.localeCompare(b.createdAt),
         );
+      const windowStart = Date.parse(nowIso) - DELIVERY_WINDOW_MS;
+      for (let i = reservations.length - 1; i >= 0; i--)
+        if (Date.parse(reservations[i].at) <= windowStart)
+          reservations.splice(i, 1);
       const claimed: NotificationDelivery[] = [];
       for (const row of rows) {
         if (claimed.length >= Math.max(1, Math.min(limit, 25))) break;
         if (row.channel !== "in_app") {
           const used = reservations.filter(
-            (r) =>
-              r.organizationId === row.organizationId &&
-              Date.parse(r.at) > Date.parse(nowIso) - DELIVERY_WINDOW_MS,
+            (r) => r.organizationId === row.organizationId,
           ).length;
-          if (used >= DELIVERY_RATE_LIMIT) continue;
+          // Rows are in priority order, so critical alerts reserve first and
+          // the reserve above the base limit is theirs alone.
+          if (
+            used >= dispatchCeiling(notes.get(row.notificationId)?.priority)
+          )
+            continue;
           reservations.push({ organizationId: row.organizationId, at: nowIso });
         }
         row.status = "processing";

@@ -1,4 +1,4 @@
-# Notification delivery (TC-011, TC-012, TC-013)
+# Notification delivery (TC-011, TC-012, TC-013, TC-014, TC-015)
 
 Business notifications use PostgreSQL outbox events and delivery rows. Production refuses an in-memory notification store. Apply `npm run db:schema` before deploying this change (migration `023_notification_delivery_reliability`).
 
@@ -14,7 +14,13 @@ Recovery email and system-alert keys are stable. Interrupted or concurrent callb
 
 ## Durable overflow queue
 
-Fan-out saves all selected deliveries, including those beyond capacity. Capacity is forty external email/SMS dispatch reservations per organization in a rolling ten-minute window. In-app delivery does not use external capacity. Retries and expired worker leases reserve capacity too, conservatively preventing bursts after a worker interruption. A transaction and advisory lock serialize quota reservations across concurrent request/cron workers. Critical alerts rank before high and normal alerts, then oldest first. Excess rows stay pending and drain as capacity expires; a full window is not a delivery failure.
+Fan-out saves every recipient's delivery, including those beyond capacity: nothing is counted or dropped when messages are generated. The limit is applied only when a delivery is claimed for sending, which is the single path to every external email and SMS (`claimDeliveries`, then `attempt`).
+
+- **Limit:** forty external email/SMS dispatch reservations per organization in a rolling ten-minute window (`DELIVERY_RATE_LIMIT`, `DELIVERY_WINDOW_MS`). In-app delivery does not use external capacity. Organizations do not share capacity.
+- **Critical reserve:** critical alerts (urgent requests, receptionist outages) may use ten more reservations (`CRITICAL_DELIVERY_RESERVE`), so an organization is bounded at fifty per window in total. High and normal messages are held to the base forty even when the reserve is free, so a burst of ordinary messages can never delay a critical alert. Within one claim, critical alerts reserve first and ordinary messages only get what is left under the base limit.
+- **Atomic and shared:** each delivery is counted as it is reserved, one `tc_notification_dispatches` row per claimed delivery, inside a transaction that holds an advisory lock. Concurrent request, cron and manual workers therefore share one count, and the memory store (tests and local development only) applies the same rules.
+- **Retries:** retries and expired worker leases reserve capacity again, conservatively preventing bursts after a worker interruption.
+- **Queueing:** critical alerts rank before high and normal alerts, then oldest first. Excess rows stay pending and drain as reservations leave the window; a full window is not a delivery failure, and a critical alert beyond the fifty is held, not discarded, until capacity returns.
 
 Each scheduled notification run handles at most ten events and ten deliveries, leaving remaining rows for subsequent runs. Worker database connections are reused only within an invocation and closed before that invocation ends, avoiding a separate TCP/TLS connection for every SQL statement without sharing sockets across requests.
 
@@ -46,6 +52,8 @@ When the Receptionist cannot continue a live call, the caller is sent to the bac
 ## Validation
 
 `tests/unit/receptionist-outage.test.ts` covers the outage path: delivery to owners and admins by every channel (memory and PostgreSQL), opt-out and opt-in, night delivery, de-duplication per window, the failure handler's isolation of its two steps, the engine's reporting rules, and a full webhook run in which the session store fails mid-call, the caller still receives backup-line TwiML and the owner receives one critical alert.
+
+`tests/unit/notification-rate-limit.test.ts` covers the limiter on the memory and PostgreSQL stores: fan-out to many recipients, overlapping workers, claims racing at the same instant, the critical reserve and its ceiling, organization isolation, and a mixed-traffic run that checks every window against the limits and that nothing is lost.
 
 `tests/unit/notification-recovery.test.ts` exercises transient/permanent callback failures, bounded retries, duplicates, out-of-order events, concurrent workers, crash recovery, backup membership changes, durable overflow, priority and retired preferences. Set `NOTIFICATION_TEST_DATABASE_URL` to isolated loopback PostgreSQL (`notifications_staging` or CI's `tc003_staging`) to require the real database variants. CI supplies this database for every quality run. Fake providers are used; these tests do not send SMS or email. `tests/unit/daily-summary.test.ts` covers the daily summary job (memory and PostgreSQL). The Gmail browser scenario saves the daily summary setting through the preferences form.
 

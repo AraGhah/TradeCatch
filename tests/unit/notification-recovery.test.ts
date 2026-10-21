@@ -290,13 +290,18 @@ function recoveryChecks(factory: () => NotificationStore, durable: boolean) {
       idempotencyKey: "priority",
     });
     await h.service.processDue();
-    assert.equal(h.texts.length, 0, "capacity is still full");
+    assert.equal(
+      h.texts.length,
+      1,
+      "the critical SMS uses the reserve instead of waiting for the window",
+    );
+    assert.equal(h.emails.length, 40, "normal messages still wait");
     h.advance(10);
     const claims = await h.store.claimDeliveries(h.now());
     assert.equal(
-      claims.some((row) => row.channel === "sms"),
-      true,
-      "critical SMS claims newly available capacity",
+      claims.filter((row) => row.channel === "email").length,
+      6,
+      "queued messages claim newly available capacity",
     );
     assert.equal(new Set(claims.map((row) => row.id)).size, claims.length);
     if (durable) {

@@ -1,6 +1,7 @@
 import { createId } from "@/lib/id";
 import {
   applySmsStatus,
+  CRITICAL_DELIVERY_RESERVE,
   DELIVERY_RATE_LIMIT,
   priorityRank,
 } from "./delivery-policy";
@@ -282,13 +283,27 @@ export function createPostgresNotificationStore(
               ((d.status='pending' AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= $1)) OR
                (d.status='processing' AND d.updated_at < $1::timestamptz - interval '10 minutes'))
           ), external AS (
-            SELECT *, row_number() OVER (PARTITION BY organization_id ORDER BY priority,created_at,id) AS position
+            SELECT *, (priority = 0) AS is_critical,
+              row_number() OVER (PARTITION BY organization_id, (priority = 0) ORDER BY priority,created_at,id) AS position
             FROM candidates WHERE channel <> 'in_app'
+          ), quota_usage AS (
+            SELECT o.organization_id,
+              (SELECT count(*) FROM tc_notification_dispatches r WHERE r.organization_id=o.organization_id) AS used,
+              (SELECT count(*) FROM external x WHERE x.organization_id=o.organization_id AND x.is_critical) AS waiting_critical
+            FROM (SELECT DISTINCT organization_id FROM external) o
+          ), room AS (
+            -- Critical alerts reserve first, up to the base limit plus the
+            -- critical reserve; everything else only gets what is left under
+            -- the base limit after them.
+            SELECT organization_id,
+              GREATEST(0, $3::int + $5::int - used) AS critical_room,
+              GREATEST(0, $3::int - used - LEAST(waiting_critical, GREATEST(0, $3::int + $5::int - used))) AS normal_room
+            FROM quota_usage
           ), eligible AS (
             SELECT id,priority,created_at FROM candidates WHERE channel='in_app'
             UNION ALL
-            SELECT e.id,e.priority,e.created_at FROM external e
-            WHERE e.position <= $3 - (SELECT count(*) FROM tc_notification_dispatches r WHERE r.organization_id=e.organization_id)
+            SELECT e.id,e.priority,e.created_at FROM external e JOIN room r ON r.organization_id=e.organization_id
+            WHERE e.position <= CASE WHEN e.is_critical THEN r.critical_room ELSE r.normal_room END
           ), due AS (
             SELECT d.id FROM eligible e JOIN tc_notification_deliveries d ON d.id=e.id
             ORDER BY e.priority,e.created_at,d.id LIMIT $4 FOR UPDATE OF d SKIP LOCKED
@@ -300,6 +315,7 @@ export function createPostgresNotificationStore(
             type ?? null,
             DELIVERY_RATE_LIMIT,
             Math.max(1, Math.min(limit, 25)),
+            CRITICAL_DELIVERY_RESERVE,
           ],
         );
         for (const row of res.rows) {
