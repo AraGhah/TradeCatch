@@ -1,6 +1,7 @@
 import {
   isDurableMissedCallStoreConfigured,
   isProductionRuntime,
+  isE2eHarness,
 } from "@/lib/config";
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
 import { shouldUseDryRunSms } from "@/lib/environment";
@@ -22,9 +23,9 @@ function createStore(): NotificationStore {
   if (wantDurable && url) return createPostgresNotificationStore(url);
   if (wantDurable && !url)
     throw new Error("[notifications] Durable store requires DATABASE_URL");
-  if (isProductionRuntime() && process.env.SAAS_REQUIRE_DURABLE === "1") {
+  if (isProductionRuntime() && !isE2eHarness()) {
     throw new Error(
-      "[notifications] Refusing memory store when SAAS_REQUIRE_DURABLE=1",
+      "[notifications] Production notifications require durable PostgreSQL storage",
     );
   }
   return createMemoryNotificationStore();

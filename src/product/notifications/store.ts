@@ -1,4 +1,11 @@
 import { createId } from "@/lib/id";
+import {
+  applySmsStatus,
+  DELIVERY_RATE_LIMIT,
+  DELIVERY_WINDOW_MS,
+  priorityRank,
+} from "./delivery-policy";
+import { TYPE_PRIORITY } from "./types";
 import type {
   ContractorNotification,
   EscalationRule,
@@ -40,7 +47,10 @@ export type NotificationStore = {
     notificationId?: string,
   ): Promise<NotificationRecipient[]>;
   countUnread(organizationId: string, userId: string): Promise<number>;
-  saveDelivery(row: NotificationDelivery): Promise<NotificationDelivery | null>;
+  saveDelivery(
+    row: NotificationDelivery,
+    onlyIfNew?: boolean,
+  ): Promise<NotificationDelivery | null>;
   listDeliveries(organizationId: string): Promise<NotificationDelivery[]>;
   dueDeliveries(nowIso: string): Promise<NotificationDelivery[]>;
   claimDeliveries(
@@ -48,6 +58,14 @@ export type NotificationStore = {
     type?: NotificationType,
   ): Promise<NotificationDelivery[]>;
   findDeliveryBySid(sid: string): Promise<NotificationDelivery | null>;
+  applySmsStatus(
+    sid: string,
+    status: string,
+    errorCode: string | undefined,
+    nowIso: string,
+  ): Promise<NotificationDelivery | null>;
+  listUnrecoveredSms(): Promise<NotificationDelivery[]>;
+  markSmsRecovered(id: string, nowIso: string): Promise<void>;
   getPreferences(
     organizationId: string,
     userId: string,
@@ -92,6 +110,7 @@ export function createMemoryNotificationStore(): NotificationStore {
     at: string;
   }[] = [];
   const alerts: SystemAlert[] = [];
+  const reservations: { organizationId: string; at: string }[] = [];
 
   return {
     async insertOutbox(row) {
@@ -114,7 +133,12 @@ export function createMemoryNotificationStore(): NotificationStore {
               row.updatedAt <
                 new Date(Date.parse(nowIso) - 10 * 60_000).toISOString()),
         )
-        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .sort(
+          (a, b) =>
+            priorityRank(TYPE_PRIORITY[a.type]) -
+              priorityRank(TYPE_PRIORITY[b.type]) ||
+            a.createdAt.localeCompare(b.createdAt),
+        )
         .slice(0, limit);
       for (const row of rows) {
         row.status = "processing";
@@ -182,14 +206,14 @@ export function createMemoryNotificationStore(): NotificationStore {
       }
       return count;
     },
-    async saveDelivery(row) {
+    async saveDelivery(row, onlyIfNew = false) {
       const dupe = [...deliveries.values()].find(
         (item) =>
           item.organizationId === row.organizationId &&
           item.idempotencyKey === row.idempotencyKey &&
           item.id !== row.id,
       );
-      if (dupe) return null;
+      if (dupe || (onlyIfNew && deliveries.has(row.id))) return null;
       deliveries.set(row.id, structuredClone(row));
       return structuredClone(row);
     },
@@ -208,6 +232,17 @@ export function createMemoryNotificationStore(): NotificationStore {
         .map((row) => structuredClone(row));
     },
     async claimDeliveries(nowIso, type) {
+      for (const row of deliveries.values()) {
+        if (
+          (row.status === "pending" ||
+            (row.status === "processing" &&
+              Date.parse(row.updatedAt) < Date.parse(nowIso) - 600_000)) &&
+          row.attempts >= 3
+        ) {
+          row.status = "dead";
+          row.updatedAt = nowIso;
+        }
+      }
       const rows = [...deliveries.values()]
         .filter(
           (row) =>
@@ -217,19 +252,60 @@ export function createMemoryNotificationStore(): NotificationStore {
               (row.status === "processing" &&
                 Date.parse(row.updatedAt) < Date.parse(nowIso) - 600_000)),
         )
-        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-        .slice(0, 25);
+        .sort(
+          (a, b) =>
+            priorityRank(notes.get(a.notificationId)?.priority) -
+              priorityRank(notes.get(b.notificationId)?.priority) ||
+            a.createdAt.localeCompare(b.createdAt),
+        );
+      const claimed: NotificationDelivery[] = [];
       for (const row of rows) {
+        if (claimed.length >= 25) break;
+        if (row.channel !== "in_app") {
+          const used = reservations.filter(
+            (r) =>
+              r.organizationId === row.organizationId &&
+              Date.parse(r.at) > Date.parse(nowIso) - DELIVERY_WINDOW_MS,
+          ).length;
+          if (used >= DELIVERY_RATE_LIMIT) continue;
+          reservations.push({ organizationId: row.organizationId, at: nowIso });
+        }
         row.status = "processing";
+        row.providerSid = undefined;
         row.updatedAt = nowIso;
+        claimed.push(row);
       }
-      return structuredClone(rows);
+      return structuredClone(claimed);
     },
     async findDeliveryBySid(sid) {
       const row = [...deliveries.values()].find(
         (item) => item.providerSid === sid,
       );
       return row ? structuredClone(row) : null;
+    },
+    async applySmsStatus(sid, status, errorCode, nowIso) {
+      const row = [...deliveries.values()].find(
+        (item) => item.providerSid === sid,
+      );
+      if (!row) return null;
+      applySmsStatus(row, status, errorCode, nowIso);
+      return structuredClone(row);
+    },
+    async listUnrecoveredSms() {
+      return structuredClone(
+        [...deliveries.values()]
+          .filter(
+            (row) =>
+              row.channel === "sms" &&
+              ["failed", "dead"].includes(row.status) &&
+              !row.recoveryHandledAt,
+          )
+          .slice(0, 25),
+      );
+    },
+    async markSmsRecovered(id, nowIso) {
+      const row = deliveries.get(id);
+      if (row) row.recoveryHandledAt = nowIso;
     },
     async getPreferences(organizationId, userId) {
       return structuredClone(prefs.get(`${organizationId}:${userId}`) ?? null);
@@ -258,7 +334,8 @@ export function createMemoryNotificationStore(): NotificationStore {
       return;
     },
     async saveAlert(row) {
-      alerts.push(structuredClone(row));
+      if (!alerts.some((alert) => alert.id === row.id))
+        alerts.push(structuredClone(row));
     },
     async listAlerts() {
       return alerts.map((row) => structuredClone(row));

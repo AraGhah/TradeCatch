@@ -110,6 +110,7 @@ export type NotificationDelivery = {
   nextAttemptAt?: string;
   lastError?: string;
   providerSid?: string;
+  recoveryHandledAt?: string;
   destination?: string;
   simulated: boolean;
   idempotencyKey: string;

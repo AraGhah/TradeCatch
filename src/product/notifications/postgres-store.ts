@@ -1,6 +1,12 @@
 import { createId } from "@/lib/id";
+import {
+  applySmsStatus,
+  DELIVERY_RATE_LIMIT,
+  priorityRank,
+} from "./delivery-policy";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import type { NotificationStore } from "./store";
+import { TYPE_PRIORITY } from "./types";
 import type {
   ContractorNotification,
   NotificationDelivery,
@@ -68,24 +74,33 @@ export function createPostgresNotificationStore(
            WHERE (status = 'pending'
               OR (status = 'processing' AND updated_at < $2::timestamptz - interval '10 minutes'))
              AND ($3::text IS NULL OR type = $3)
-           ORDER BY created_at
+           ORDER BY CASE WHEN type IN ('urgent_request','receptionist_offline') THEN 0 WHEN type IN ('human_requested','transfer_failed','quote_response','quote_accepted','automation_failure','calendar_disconnected') THEN 1 ELSE 2 END, created_at
            LIMIT $1
            FOR UPDATE SKIP LOCKED
          )
          RETURNING *`,
         [limit, nowIso, type ?? null],
       );
-      return res.rows.map((row) => ({
-        id: String(row.id),
-        organizationId: String(row.organization_id),
-        idempotencyKey: String(row.idempotency_key),
-        type: row.type,
-        payload: row.payload_json as NotificationPayload,
-        status: "processing" as const,
-        attempts: Number(row.attempts),
-        createdAt: new Date(String(row.created_at)).toISOString(),
-        updatedAt: nowIso,
-      })) satisfies OutboxEvent[];
+      return res.rows
+        .sort(
+          (a, b) =>
+            priorityRank(TYPE_PRIORITY[a.type as keyof typeof TYPE_PRIORITY]) -
+              priorityRank(
+                TYPE_PRIORITY[b.type as keyof typeof TYPE_PRIORITY],
+              ) ||
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+        )
+        .map((row) => ({
+          id: String(row.id),
+          organizationId: String(row.organization_id),
+          idempotencyKey: String(row.idempotency_key),
+          type: row.type,
+          payload: row.payload_json as NotificationPayload,
+          status: "processing" as const,
+          attempts: Number(row.attempts),
+          createdAt: new Date(String(row.created_at)).toISOString(),
+          updatedAt: nowIso,
+        })) satisfies OutboxEvent[];
     },
     async saveOutbox(row) {
       await query(
@@ -196,7 +211,7 @@ export function createPostgresNotificationStore(
       );
       return Number(res.rows[0]?.n ?? 0);
     },
-    async saveDelivery(row) {
+    async saveDelivery(row, onlyIfNew = false) {
       const res = await query(
         `INSERT INTO tc_notification_deliveries (
           id, notification_id, organization_id, recipient_user_id, channel, status, attempts,
@@ -205,7 +220,7 @@ export function createPostgresNotificationStore(
         ON CONFLICT (organization_id, idempotency_key) DO UPDATE SET
           status = EXCLUDED.status, attempts = EXCLUDED.attempts, next_attempt_at = EXCLUDED.next_attempt_at,
           last_error = EXCLUDED.last_error, provider_sid = EXCLUDED.provider_sid, updated_at = EXCLUDED.updated_at
-        WHERE tc_notification_deliveries.id = EXCLUDED.id
+        WHERE tc_notification_deliveries.id = EXCLUDED.id AND NOT $16::boolean
         RETURNING id`,
         [
           row.id,
@@ -223,6 +238,7 @@ export function createPostgresNotificationStore(
           row.idempotencyKey,
           row.createdAt,
           row.updatedAt,
+          onlyIfNew,
         ],
       );
       return res.rows[0] ? row : null;
@@ -242,19 +258,59 @@ export function createPostgresNotificationStore(
       return res.rows.map(deliveryFrom);
     },
     async claimDeliveries(nowIso, type) {
-      const res = await query(
-        `WITH due AS (
-          SELECT d.id FROM tc_notification_deliveries d
-          JOIN tc_notifications n ON n.id=d.notification_id AND n.organization_id=d.organization_id
-          WHERE ($2::text IS NULL OR n.type=$2) AND
-            ((d.status='pending' AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= $1)) OR
-             (d.status='processing' AND d.updated_at < $1::timestamptz - interval '10 minutes'))
-          ORDER BY d.created_at LIMIT 25 FOR UPDATE OF d SKIP LOCKED
-        ) UPDATE tc_notification_deliveries d SET status='processing',updated_at=$1
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        // Serialize quota reservations, not network sends.
+        await client.query("SELECT pg_advisory_xact_lock(74113, 12)");
+        await client.query(
+          "DELETE FROM tc_notification_dispatches WHERE reserved_at <= $1::timestamptz - interval '10 minutes'",
+          [nowIso],
+        );
+        await client.query(
+          "UPDATE tc_notification_deliveries SET status='dead',updated_at=$1 WHERE attempts >= 3 AND (status='pending' OR (status='processing' AND updated_at < $1::timestamptz - interval '10 minutes'))",
+          [nowIso],
+        );
+        const res = await client.query(
+          `WITH candidates AS (
+            SELECT d.id, d.organization_id, d.channel, d.created_at,
+              CASE n.priority WHEN 'critical' THEN 0 WHEN 'high' THEN 1 ELSE 2 END AS priority
+            FROM tc_notification_deliveries d
+            JOIN tc_notifications n ON n.id=d.notification_id AND n.organization_id=d.organization_id
+            WHERE ($2::text IS NULL OR n.type=$2) AND
+              ((d.status='pending' AND (d.next_attempt_at IS NULL OR d.next_attempt_at <= $1)) OR
+               (d.status='processing' AND d.updated_at < $1::timestamptz - interval '10 minutes'))
+          ), external AS (
+            SELECT *, row_number() OVER (PARTITION BY organization_id ORDER BY priority,created_at,id) AS position
+            FROM candidates WHERE channel <> 'in_app'
+          ), eligible AS (
+            SELECT id,priority,created_at FROM candidates WHERE channel='in_app'
+            UNION ALL
+            SELECT e.id,e.priority,e.created_at FROM external e
+            WHERE e.position <= $3 - (SELECT count(*) FROM tc_notification_dispatches r WHERE r.organization_id=e.organization_id)
+          ), due AS (
+            SELECT d.id FROM eligible e JOIN tc_notification_deliveries d ON d.id=e.id
+            ORDER BY e.priority,e.created_at,d.id LIMIT 25 FOR UPDATE OF d SKIP LOCKED
+          )
+          UPDATE tc_notification_deliveries d SET status='processing',provider_sid=NULL,updated_at=$1
           FROM due WHERE d.id=due.id RETURNING d.*`,
-        [nowIso, type ?? null],
-      );
-      return res.rows.map(deliveryFrom);
+          [nowIso, type ?? null, DELIVERY_RATE_LIMIT],
+        );
+        for (const row of res.rows) {
+          if (row.channel !== "in_app")
+            await client.query(
+              "INSERT INTO tc_notification_dispatches (id,organization_id,delivery_id,reserved_at) VALUES ($1,$2,$3,$4)",
+              [createId("dispatch"), row.organization_id, row.id, nowIso],
+            );
+        }
+        await client.query("COMMIT");
+        return res.rows.map(deliveryFrom);
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
     },
     async findDeliveryBySid(sid) {
       const res = await query(
@@ -262,6 +318,48 @@ export function createPostgresNotificationStore(
         [sid],
       );
       return res.rows[0] ? deliveryFrom(res.rows[0]) : null;
+    },
+    async applySmsStatus(sid, status, errorCode, nowIso) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const result = await client.query(
+          "SELECT * FROM tc_notification_deliveries WHERE provider_sid=$1 FOR UPDATE",
+          [sid],
+        );
+        const row = result.rows[0] ? deliveryFrom(result.rows[0]) : null;
+        if (row && applySmsStatus(row, status, errorCode, nowIso)) {
+          await client.query(
+            "UPDATE tc_notification_deliveries SET status=$2,next_attempt_at=$3,last_error=$4,updated_at=$5 WHERE id=$1",
+            [
+              row.id,
+              row.status,
+              row.nextAttemptAt ?? null,
+              row.lastError ?? null,
+              nowIso,
+            ],
+          );
+        }
+        await client.query("COMMIT");
+        return row;
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+    async listUnrecoveredSms() {
+      const result = await query(
+        "SELECT * FROM tc_notification_deliveries WHERE channel='sms' AND status IN ('failed','dead') AND recovery_handled_at IS NULL ORDER BY updated_at LIMIT 25",
+      );
+      return result.rows.map(deliveryFrom);
+    },
+    async markSmsRecovered(id, nowIso) {
+      await query(
+        "UPDATE tc_notification_deliveries SET recovery_handled_at=$2 WHERE id=$1",
+        [id, nowIso],
+      );
     },
     async getPreferences(organizationId, userId) {
       const res = await query(
@@ -371,7 +469,7 @@ export function createPostgresNotificationStore(
     async saveAlert(row) {
       await query(
         `INSERT INTO tc_system_alerts (id, organization_id, component, severity, message, correlation_id, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+         VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`,
         [
           row.id,
           row.organizationId ?? null,
@@ -424,6 +522,9 @@ function deliveryFrom(row: Record<string, unknown>): NotificationDelivery {
       : undefined,
     lastError: row.last_error ? String(row.last_error) : undefined,
     providerSid: row.provider_sid ? String(row.provider_sid) : undefined,
+    recoveryHandledAt: row.recovery_handled_at
+      ? new Date(String(row.recovery_handled_at)).toISOString()
+      : undefined,
     destination: row.destination ? String(row.destination) : undefined,
     simulated: Boolean(row.simulated),
     idempotencyKey: String(row.idempotency_key),

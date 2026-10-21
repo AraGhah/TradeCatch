@@ -695,6 +695,8 @@ test.describe("Gmail receiving", () => {
       alice.page.getByRole("link", { name: "Choose reply alerts" }),
     ).toBeVisible();
     await alice.page.getByRole("link", { name: "Choose reply alerts" }).click();
+    await expect(alice.page.getByLabel("Daily summary", { exact: true })).toHaveCount(0);
+    expect((await alice.page.request.put(url, { data: { ...original.preferences, dailySummary: true } })).status()).toBe(400);
     const row = alice.page.getByRole("group", {
       name: "Customer replies, including Gmail",
     });

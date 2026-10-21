@@ -303,6 +303,7 @@ describe("Gmail outbox in isolated PostgreSQL", { skip: !databaseUrl }, () => {
     for (const file of [
       "src/product/missed-call/schema.sql",
       "src/product/notifications/schema.sql",
+      "src/product/notifications/delivery-reliability.sql",
       "src/product/gmail/schema.sql",
     ])
       await pool.query(readFileSync(file, "utf8"));
