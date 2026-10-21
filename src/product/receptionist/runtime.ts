@@ -1,4 +1,5 @@
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
+import { runAfterResponse } from "@/lib/after-response";
 import {
   isDurableMissedCallStoreConfigured,
   isE2eHarness,
@@ -13,6 +14,7 @@ import { loadReceptionistConfigsFromEnv } from "./config";
 import { createReceptionistEngine, type ReceptionistEngine } from "./engine";
 import { createLlmClientFromEnv, type LlmClient } from "./llm";
 import { createReceptionistNotifier } from "./notifications";
+import { handleReceptionistFailure } from "./outage";
 import { createPostgresReceptionistStore } from "./postgres-store";
 import { loadProfileConfigs } from "./profile-loader";
 import {
@@ -198,6 +200,10 @@ function bootstrap(): RuntimeState {
 
     async lookupContext(input) {
       return lookupCallerContext(await leadSyncDeps(store), input);
+    },
+
+    onFailure(failure) {
+      void runAfterResponse(() => handleReceptionistFailure(failure));
     },
 
     async onFinalized(session, config) {

@@ -40,6 +40,7 @@ export type PreferenceCategory =
   | "transfer_failed"
   | "automation_failures"
   | "daily_summary"
+  | "outages"
   | "system";
 
 export type ChannelPrefs = { inApp: boolean; email: boolean; sms: boolean };
@@ -192,7 +193,7 @@ export const TYPE_CATEGORY: Record<NotificationType, PreferenceCategory> = {
   quote_response: "replies",
   quote_accepted: "quote_accepted",
   missed_call_recovered: "new_leads",
-  receptionist_offline: "system",
+  receptionist_offline: "outages",
   automation_failure: "automation_failures",
   calendar_disconnected: "automation_failures",
   daily_summary: "daily_summary",

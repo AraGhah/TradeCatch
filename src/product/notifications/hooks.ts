@@ -47,3 +47,27 @@ export async function emitTransferFailed(clientAccountId: string, callId: string
     console.warn("[notifications] transfer alert skipped", error instanceof Error ? error.message : "unknown");
   }
 }
+
+/**
+ * At most one outage alert per business per window: a failing receptionist
+ * can fail every call for hours, and owners need to hear about it once, then
+ * again as a reminder if it keeps going, not once per caller.
+ */
+export const OUTAGE_ALERT_WINDOW_MS = 30 * 60_000;
+
+export function outageAlertKey(organizationId: string, at: Date): string {
+  return `receptionist-offline:${organizationId}:${Math.floor(at.getTime() / OUTAGE_ALERT_WINDOW_MS)}`;
+}
+
+/** Raises the critical "receptionist unavailable" alert for a business. */
+export async function emitReceptionistOutage(
+  organizationId: string,
+  at: Date = new Date(),
+) {
+  await emitBusinessEvent({
+    organizationId,
+    type: "receptionist_offline",
+    idempotencyKey: outageAlertKey(organizationId, at),
+    href: "/app/calls",
+  });
+}

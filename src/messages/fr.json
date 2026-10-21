@@ -2878,8 +2878,10 @@
         "transfer_failed": "Transferts échoués",
         "automation_failures": "Problèmes d’automatisation",
         "daily_summary": "Où envoyer le résumé quotidien",
+        "outages": "Pannes de la réceptionniste",
         "system": "Mises à jour système"
       },
+      "outagesHint": "Envoyé immédiatement aux propriétaires et aux administrateurs lorsque la réceptionniste ne peut pas répondre à un appel. Le courriel est envoyé à l’adresse de votre compte ; le SMS, au numéro professionnel configuré. Les fournisseurs de livraison doivent être configurés.",
       "gmailRepliesHint": "Les courriels clients importants et non lus n’alertent que le propriétaire de la boîte. Le courriel est envoyé à l’adresse de votre compte ; le SMS, au numéro professionnel configuré. Les alertes externes masquent le contenu des messages. Les fournisseurs de livraison doivent être configurés.",
       "quietStart": "Début des heures calmes",
       "quietEnd": "Fin des heures calmes",

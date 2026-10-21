@@ -33,7 +33,19 @@ Daily summaries are opt-in per member (the "Daily summary" checkbox in notificat
 - **Exactly once:** the outbox key is `daily-summary:<member>:<local date>`, so overlapping, repeated or concurrent runs create one summary per member per local day. A day with no activity creates none. A missed run is not back-filled the next day.
 - **Existing preferences:** stored preferences saved before this setting existed are filled in from the defaults when read, so the new row appears without a migration. The earlier migration that cleared stored `dailySummary: true` values has already run, so members who had opted in under the old, non-functional setting need to opt in again.
 
+## Receptionist outage alerts
+
+When the Receptionist cannot continue a live call, the caller is sent to the backup line or voicemail (the fail-safe plan) and the business's owners and admins are told.
+
+- **Detection:** the receptionist engine reports every fail-safe it takes through `onFailure` (`ReceptionistFailure`: business, operation, error code). `handleReceptionistFailure` (`src/product/receptionist/outage.ts`) resolves the business from the profile's `clientAccountId`, records a high-severity reliability failure for the platform, and queues one `receptionist_offline` event through the outbox. Both steps are independent, so a monitoring failure cannot hide the owner alert or the reverse. Work runs after the response (`runAfterResponse`) so the caller's TwiML is never delayed or lost.
+- **Not outages:** calls the receptionist deliberately declines (unknown number, handling mode, routing reject) and a language-model failure that falls back to the rule brain are not reported.
+- **Platform-wide boot failure:** if the receptionist runtime cannot start at all, no business can be identified. This records a critical reliability failure (incident and `ADMIN_ALERT_EMAIL`) instead of owner alerts.
+- **Who and how:** owners and admins only, whatever their scope. The dedicated "Receptionist outages" row in notification preferences defaults to in-app, email and SMS on. Owners can switch email or SMS off per person. The event is critical, so quiet hours do not hold it. Preferences saved before this row existed pick up the default when read.
+- **Once per window:** the outbox key is `receptionist-offline:<business>:<30-minute bucket>`, so a burst of failed calls raises one alert and a failure that continues is repeated every 30 minutes.
+
 ## Validation
+
+`tests/unit/receptionist-outage.test.ts` covers the outage path: delivery to owners and admins by every channel (memory and PostgreSQL), opt-out and opt-in, night delivery, de-duplication per window, the failure handler's isolation of its two steps, the engine's reporting rules, and a full webhook run in which the session store fails mid-call, the caller still receives backup-line TwiML and the owner receives one critical alert.
 
 `tests/unit/notification-recovery.test.ts` exercises transient/permanent callback failures, bounded retries, duplicates, out-of-order events, concurrent workers, crash recovery, backup membership changes, durable overflow, priority and retired preferences. Set `NOTIFICATION_TEST_DATABASE_URL` to isolated loopback PostgreSQL (`notifications_staging` or CI's `tc003_staging`) to require the real database variants. CI supplies this database for every quality run. Fake providers are used; these tests do not send SMS or email. `tests/unit/daily-summary.test.ts` covers the daily summary job (memory and PostgreSQL). The Gmail browser scenario saves the daily summary setting through the preferences form.
 

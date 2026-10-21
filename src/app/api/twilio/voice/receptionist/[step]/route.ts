@@ -109,6 +109,18 @@ export async function POST(
     await runtime.refresh();
   } catch (err) {
     console.error("[receptionist] runtime unavailable", err);
+    // No runtime means no business can be identified, so owners cannot be told
+    // individually; this opens a platform incident and alerts the operators.
+    void deferTask(async () => {
+      const { recordFailure } = await import("@/product/reliability/hooks");
+      await recordFailure({
+        service: "ai_receptionist",
+        operation: "runtime_boot",
+        errorCode: "RECEPTIONIST_RUNTIME_UNAVAILABLE",
+        severity: "critical",
+        retryable: true,
+      });
+    });
     if (step === "status") return emptyTwiml();
     // No runtime means no config either: generic apology + hang up.
     return xml(
@@ -280,10 +292,12 @@ export async function POST(
       } catch {
         /* fall through to the generic fail-safe */
       }
-    } else if (step === "incoming") {
-      config = engine.resolveConfig(form.To || form.Called || "");
     }
-    return render(engine.failSafePlan(config, sessionId, language));
+    // The session store may be what failed: the dialed number still names the business.
+    config ??= engine.resolveConfig(form.To || form.Called || "");
+    return render(
+      engine.failSafePlan(config, sessionId, language, { operation: step }),
+    );
   }
 
   return emptyTwiml();
