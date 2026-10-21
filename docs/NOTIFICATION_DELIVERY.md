@@ -16,6 +16,8 @@ Recovery email and system-alert keys are stable. Interrupted or concurrent callb
 
 Fan-out saves all selected deliveries, including those beyond capacity. Capacity is forty external email/SMS dispatch reservations per organization in a rolling ten-minute window. In-app delivery does not use external capacity. Retries and expired worker leases reserve capacity too, conservatively preventing bursts after a worker interruption. A transaction and advisory lock serialize quota reservations across concurrent request/cron workers. Critical alerts rank before high and normal alerts, then oldest first. Excess rows stay pending and drain as capacity expires; a full window is not a delivery failure.
 
+Each scheduled notification run handles at most ten events and ten deliveries, leaving remaining rows for subsequent runs. Worker database connections are reused only within an invocation and closed before that invocation ends, avoiding a separate TCP/TLS connection for every SQL statement without sharing sockets across requests.
+
 The existing every-minute Cloudflare schedule calls `/api/notifications/tick`, independently of dashboard activity. Provision `NOTIFICATION_RETRY_SECRET` as a Worker secret, using the staged versions-secret workflow. The Worker and endpoint use this dedicated bearer credential. Existing ops credentials remain a fallback when the dedicated credential is absent. Never commit or log its value.
 
 All escalation deliveries also enter the same claimed queue. Quiet-hour and mailbox-owner privacy rules remain in effect.

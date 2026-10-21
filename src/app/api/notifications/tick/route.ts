@@ -23,7 +23,7 @@ async function tick(request: NextRequest) {
   const isCron = Boolean(request.headers.get("x-vercel-cron"));
   if (audit.missingActor && !isCron) return missingOpsActorResponse();
   const service = getNotificationService();
-  const processed = await service.processDue(25);
+  const processed = await service.processDue(10);
   const escalated = await service.processEscalations();
   return NextResponse.json({ ok: true, ...processed, ...escalated });
 }

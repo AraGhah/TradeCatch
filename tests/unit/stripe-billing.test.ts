@@ -17,7 +17,10 @@ import { POST } from "../../src/app/api/webhooks/stripe/route";
 import { closePgPool } from "../../src/product/missed-call/postgres-store";
 import { createPostgresSaasStore } from "../../src/product/saas/postgres-store";
 import { orgHasFeature } from "../../src/product/saas/entitlements";
-import { createPostgresPool } from "../../src/lib/postgres-pool";
+import {
+  createPostgresPool,
+  withPostgresRequestScope,
+} from "../../src/lib/postgres-pool";
 
 const names = [
   "DATABASE_URL",
@@ -370,6 +373,64 @@ describe("Stripe billing in isolated PostgreSQL", { skip: !url }, () => {
       status: "churned",
       growthAccess: false,
     });
+  });
+  it("reuses a Worker connection for a batch, isolates concurrent invocations and closes every scope", async () => {
+    Object.defineProperty(globalThis, "WebSocketPair", {
+      value: class {},
+      configurable: true,
+    });
+    const scoped = createPostgresPool({ connectionString: url });
+    const seen: number[] = [];
+    try {
+      const batch = async () =>
+        withPostgresRequestScope(async () => {
+          const pids = new Set<number>();
+          for (let i = 0; i < 60; i++) {
+            const result = await scoped.query("SELECT pg_backend_pid() AS pid");
+            pids.add(result.rows[0].pid);
+          }
+          const client = await scoped.connect();
+          try {
+            await client.query("BEGIN");
+            const result = await client.query("SELECT pg_backend_pid() AS pid");
+            pids.add(result.rows[0].pid);
+            await client.query("ROLLBACK");
+          } finally {
+            client.release();
+          }
+          assert.equal(pids.size, 1);
+          const pid = [...pids][0];
+          seen.push(pid);
+          return pid;
+        });
+      const concurrent = await Promise.all([batch(), batch()]);
+      assert.notEqual(
+        concurrent[0],
+        concurrent[1],
+        "concurrent invocations never share sockets",
+      );
+      const later = await batch();
+      assert.equal(
+        concurrent.includes(later),
+        false,
+        "a later invocation opens a fresh socket",
+      );
+      const open = await pool.query(
+        "SELECT pid FROM pg_stat_activity WHERE pid=ANY($1::int[])",
+        [seen],
+      );
+      assert.equal(open.rowCount, 0, "all invocation sockets have closed");
+      await assert.rejects(
+        withPostgresRequestScope(async () => {
+          await scoped.query("SELECT 1");
+          throw Error("synthetic worker failure");
+        }),
+        /synthetic worker failure/,
+      );
+    } finally {
+      await scoped.end();
+      Reflect.deleteProperty(globalThis, "WebSocketPair");
+    }
   });
   it("closes Worker connections after queries and transactions without sharing sockets", async () => {
     Object.defineProperty(globalThis, "WebSocketPair", {

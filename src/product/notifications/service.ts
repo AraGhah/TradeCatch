@@ -609,6 +609,7 @@ export function createNotificationService(deps: NotificationDeps) {
       const due = await deps.store.claimDeliveries(
         deps.now().toISOString(),
         type,
+        limit,
       );
       for (const delivery of due) {
         const org = await deps.loadOrg(delivery.organizationId);

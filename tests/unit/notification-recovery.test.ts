@@ -339,6 +339,23 @@ function recoveryChecks(factory: () => NotificationStore, durable: boolean) {
       "all pending normal alerts eventually drain",
     );
   });
+  it("limits both event fan-out and delivery claims to the requested batch size", async () => {
+    for (let i = 0; i < 4; i++)
+      await h.service.enqueue({
+        organizationId: h.organizationId,
+        type: "lead_created",
+        idempotencyKey: "batch_" + i,
+      });
+    await h.service.processDue(2);
+    assert.equal((await h.store.listNotifications(h.organizationId)).length, 2);
+    const deliveries = await h.store.listDeliveries(h.organizationId);
+    assert.equal(
+      deliveries.filter((row) => row.status !== "pending").length,
+      2,
+    );
+    for (let i = 0; i < 8; i++) await h.service.processDue(2);
+    assert.equal(h.emails.length, 4);
+  });
   it("makes daily-summary unavailable and normalizes legacy enabled preferences", async () => {
     const prefs = await h.service.getPreferences(
       h.organizationId,
