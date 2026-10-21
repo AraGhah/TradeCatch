@@ -604,7 +604,7 @@ export function createNotificationService(deps: NotificationDeps) {
         event.updatedAt = deps.now().toISOString();
         await deps.store.saveOutbox(event);
       }
-      for (const failed of await deps.store.listUnrecoveredSms())
+      for (const failed of await deps.store.listUnrecoveredSms(type))
         await recoverSms(failed);
       const due = await deps.store.claimDeliveries(
         deps.now().toISOString(),

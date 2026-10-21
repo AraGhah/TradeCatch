@@ -26,7 +26,7 @@ export function applySmsStatus(
   if (delivery.channel !== "sms") return false;
   if (
     (status === "delivered" || status === "read") &&
-    (delivery.status === "submitted" || delivery.status === "pending")
+    ["submitted", "pending", "failed", "dead"].includes(delivery.status)
   ) {
     delivery.status = "delivered";
     delivery.nextAttemptAt = undefined;

@@ -64,7 +64,7 @@ export type NotificationStore = {
     errorCode: string | undefined,
     nowIso: string,
   ): Promise<NotificationDelivery | null>;
-  listUnrecoveredSms(): Promise<NotificationDelivery[]>;
+  listUnrecoveredSms(type?: NotificationType): Promise<NotificationDelivery[]>;
   markSmsRecovered(id: string, nowIso: string): Promise<void>;
   getPreferences(
     organizationId: string,
@@ -291,11 +291,12 @@ export function createMemoryNotificationStore(): NotificationStore {
       applySmsStatus(row, status, errorCode, nowIso);
       return structuredClone(row);
     },
-    async listUnrecoveredSms() {
+    async listUnrecoveredSms(type) {
       return structuredClone(
         [...deliveries.values()]
           .filter(
             (row) =>
+              (!type || notes.get(row.notificationId)?.type === type) &&
               row.channel === "sms" &&
               ["failed", "dead"].includes(row.status) &&
               !row.recoveryHandledAt,
