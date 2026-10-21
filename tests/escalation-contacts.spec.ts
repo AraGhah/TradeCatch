@@ -132,9 +132,11 @@ for (const locale of ["en", "fr"] as const) {
     );
     loadFails = true;
     await page.reload();
-    await expect(page.getByRole("alert")).toContainText(
-      isFr ? "Impossible de charger" : "Could not load",
-    );
+    await expect(
+      page
+        .getByRole("alert")
+        .filter({ hasText: isFr ? "Impossible de charger" : "Could not load" }),
+    ).toContainText(isFr ? "Impossible de charger" : "Could not load");
     loadFails = false;
     await page
       .getByRole("button", {
