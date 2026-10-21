@@ -488,7 +488,7 @@ async function run(
         } catch (error) {
           console.warn(
             "[gmail] notification skipped",
-            error instanceof Error ? error.message : "unknown",
+            error instanceof Error ? error.name : "unknown",
           );
         }
       }
@@ -512,7 +512,7 @@ async function run(
         // Push is an accelerator; polling and cron keep working without it.
         console.warn(
           "[gmail] watch skipped",
-          error instanceof Error ? error.message : "unknown",
+          error instanceof Error ? error.name : "unknown",
         );
       }
     }

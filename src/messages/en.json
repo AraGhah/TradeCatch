@@ -2668,6 +2668,7 @@
       "pollingFallback": "Background checks usually run every five minutes while you are away. Fast Gmail updates are not configured.",
       "replyAlertsHint": "Choose email or SMS alerts for important replies. These optional alerts keep your mailbox private.",
       "configureReplyAlerts": "Choose reply alerts",
+      "syncDelayed": "Gmail has not synced successfully in the last 15 minutes. Try Refresh; reconnect if the delay continues.",
       "neverSynced": "Not checked yet",
       "connect": "Connect Gmail",
       "reconnect": "Reconnect Gmail",

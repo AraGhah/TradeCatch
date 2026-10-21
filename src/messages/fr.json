@@ -2668,6 +2668,7 @@
       "pollingFallback": "En votre absence, les vérifications ont généralement lieu toutes les cinq minutes. Les mises à jour Gmail rapides ne sont pas configurées.",
       "replyAlertsHint": "Choisissez les alertes courriel ou SMS pour les réponses importantes. Ces alertes facultatives protègent votre boîte privée.",
       "configureReplyAlerts": "Choisir les alertes de réponse",
+      "syncDelayed": "Gmail ne s’est pas synchronisé depuis au moins 15 minutes. Actualisez, puis reconnectez Gmail si le retard persiste.",
       "neverSynced": "Pas encore vérifié",
       "connect": "Connecter Gmail",
       "reconnect": "Reconnecter Gmail",

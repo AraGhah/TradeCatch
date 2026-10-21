@@ -96,23 +96,48 @@ export async function syncConnectedGmail(
 }
 
 /** Cron fallback: the oldest-attempted connected mailboxes first, a few at a time. */
-export async function syncAccountsDue(limit = 10, now = new Date()) {
+export async function syncAccountsDue(limit = 2, now = new Date()) {
+  limit = Number.isFinite(limit)
+    ? Math.max(1, Math.min(25, Math.trunc(limit)))
+    : 2;
   const store = getGmailStore();
   const due = await store.listAccountsDue({
     nowIso: now.toISOString(),
     staleBeforeIso: new Date(
       now.getTime() - (readGmailEnv().testMinGapMs ?? 5 * 60_000),
     ).toISOString(),
-    limit,
+    limit: limit + 1,
   });
   const summary = {
-    attempted: due.length,
+    attempted: 0,
     synced: 0,
     failed: 0,
     skipped: 0,
     added: 0,
+    batchLimit: limit,
+    capacityLimited: due.length > limit,
+    delayedInBatch: 0,
+    oldestSuccessfulSyncAgeSeconds: 0,
   };
-  for (const account of due) {
+  const started = Date.now();
+  for (const account of due.slice(0, limit)) {
+    if (Date.now() - started > 20_000) {
+      summary.capacityLimited = true;
+      break;
+    }
+    summary.attempted += 1;
+    const age = Math.max(
+      0,
+      Math.floor(
+        (now.getTime() - Date.parse(account.lastSyncAt || account.createdAt)) /
+          1000,
+      ),
+    );
+    summary.oldestSuccessfulSyncAgeSeconds = Math.max(
+      summary.oldestSuccessfulSyncAgeSeconds,
+      age,
+    );
+    if (age > 15 * 60) summary.delayedInBatch += 1;
     try {
       if (!(await isAccountActive(account))) {
         // Stamp the attempt so inactive workspaces rotate to the back of the queue
@@ -134,15 +159,15 @@ export async function syncAccountsDue(limit = 10, now = new Date()) {
         summary.synced += 1;
         if (!result.skipped) summary.added += result.added;
       } else summary.failed += 1;
-    } catch (error) {
+    } catch {
       summary.failed += 1;
-      console.warn(
-        "[gmail] cron sync failed",
-        error instanceof Error ? error.message : "unknown",
-      );
+      console.warn("[gmail] cron sync failed");
     }
   }
   await processGmailAlerts();
+  if (summary.capacityLimited || summary.delayedInBatch || summary.failed) {
+    console.warn("[gmail] sync health", JSON.stringify(summary));
+  }
   return summary;
 }
 

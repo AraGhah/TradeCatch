@@ -106,8 +106,8 @@ test.describe("security headers", () => {
       headers: { "Content-Type": "application/json" },
       data: "{not json",
     });
-    expect(garbage.status()).toBe(200);
-    expect(await garbage.json()).toEqual({ ok: true, ignored: true });
+    expect(garbage.status()).toBe(401);
+    expect(await garbage.json()).toEqual({ error: "unauthorized" });
 
     const calendar = await request.post("/api/webhooks/google-calendar", {
       headers: { "X-Goog-Channel-Id": "org_x" },

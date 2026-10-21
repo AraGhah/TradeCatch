@@ -38,7 +38,8 @@ export type GmailEnv = {
   authSecret?: string;
   siteUrl?: string;
   pubsubTopic?: string;
-  webhookToken?: string;
+  pushAudience?: string;
+  pushServiceAccount?: string;
   /** Overridable only inside the local E2E harness (see readGmailEnv). */
   apiBase?: string;
   tokenUrl?: string;
@@ -63,7 +64,8 @@ export function readGmailEnv(env: NodeJS.ProcessEnv = process.env): GmailEnv {
     authSecret: env.AUTH_SECRET?.trim() || env.SESSION_SECRET?.trim(),
     siteUrl: site.replace(/\/$/, ""),
     pubsubTopic: env.GMAIL_PUBSUB_TOPIC?.trim(),
-    webhookToken: env.GMAIL_WEBHOOK_TOKEN?.trim(),
+    pushAudience: env.GMAIL_PUSH_AUDIENCE?.trim(),
+    pushServiceAccount: env.GMAIL_PUSH_SERVICE_ACCOUNT?.trim(),
     authUrl: testBase ? `${testBase}/o/oauth2/v2/auth` : GOOGLE.auth,
     apiBase: testBase ? `${testBase}/gmail/v1/users/me` : GOOGLE.api,
     tokenUrl: testBase ? `${testBase}/token` : GOOGLE.token,
@@ -80,7 +82,7 @@ export function gmailConfigured(env: GmailEnv = readGmailEnv()): boolean {
 }
 
 export function gmailPushConfigured(env: GmailEnv = readGmailEnv()): boolean {
-  return Boolean(env.pubsubTopic && env.webhookToken);
+  return Boolean(env.pubsubTopic && env.pushAudience && env.pushServiceAccount);
 }
 
 export function gmailWatchActive(

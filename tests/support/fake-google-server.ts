@@ -1,10 +1,22 @@
 import http from "node:http";
+import { testGoogleJwks } from "./gmail-push-token";
 import type { FakeGoogle } from "./fake-google";
 
 /** Serves a FakeGoogle over real HTTP so a separate Next.js process can call it. */
-export function startFakeGoogleServer(google: FakeGoogle, port: number): Promise<http.Server> {
+export function startFakeGoogleServer(
+  google: FakeGoogle,
+  port: number,
+): Promise<http.Server> {
   const server = http.createServer(async (req, res) => {
     try {
+      if (req.url === "/oauth2/v3/certs") {
+        res.writeHead(200, {
+          "content-type": "application/json",
+          "cache-control": "public, max-age=3600",
+        });
+        res.end(JSON.stringify(testGoogleJwks));
+        return;
+      }
       const chunks: Buffer[] = [];
       for await (const chunk of req) chunks.push(chunk as Buffer);
       const headers = new Headers();

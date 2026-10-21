@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/request-body";
-import { safeEqual } from "@/lib/safe-compare";
+import { authorizeGmailPush } from "@/product/gmail/push-auth";
 import { readGmailEnv } from "@/product/gmail/oauth";
 import { parseGmailPush } from "@/product/gmail/push";
 import {
@@ -29,8 +29,7 @@ function isNewer(pushed: string | undefined, known: string | null): boolean {
  */
 export async function POST(request: NextRequest) {
   const env = readGmailEnv();
-  const given = request.nextUrl.searchParams.get("token") || "";
-  if (!env.webhookToken || !safeEqual(given, env.webhookToken)) {
+  if (!(await authorizeGmailPush(request, env))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const read = await readJsonBody(request, 65_536);

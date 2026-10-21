@@ -22,7 +22,8 @@ const OPS = {
   Authorization: "Bearer tradecatch-e2e-ops-secret-not-for-production",
   "X-Ops-Actor": "playwright-gmail",
 };
-const WEBHOOK = "/api/webhooks/gmail?token=e2e-gmail-webhook-token";
+const WEBHOOK = "/api/webhooks/gmail";
+import { testPushToken } from "./support/gmail-push-token";
 
 const google = new FakeGoogle();
 let server: Awaited<ReturnType<typeof startFakeGoogleServer>>;
@@ -343,20 +344,20 @@ test.describe("Gmail receiving", () => {
     expect(bad.status()).toBe(401);
     const missing = await anon.post("/api/webhooks/gmail", { data: pubsub("alice@gmail.com", box.historyId) });
     expect(missing.status()).toBe(401);
-    const unknown = await anon.post(WEBHOOK, { data: pubsub("nobody@gmail.com", box.historyId) });
+    const unknown = await anon.post(WEBHOOK, { headers: { Authorization: `Bearer ${await testPushToken()}` }, data: pubsub("nobody@gmail.com", box.historyId) });
     expect(await unknown.json()).toMatchObject({ ok: true, synced: 0 });
-    const junk = await anon.post(WEBHOOK, { data: { message: { data: "###" } } });
+    const junk = await anon.post(WEBHOOK, { headers: { Authorization: `Bearer ${await testPushToken()}` }, data: { message: { data: "###" } } });
     expect(junk.status()).toBe(200);
     expect(await junk.json()).toMatchObject({ ignored: true });
 
     await alice.page.goto("/app/settings"); // let the page's own sync settle first
     await alice.page.waitForTimeout(500);
-    const good = await anon.post(WEBHOOK, { data: pubsub("alice@gmail.com", box.historyId) });
+    const good = await anon.post(WEBHOOK, { headers: { Authorization: `Bearer ${await testPushToken()}` }, data: pubsub("alice@gmail.com", box.historyId) });
     expect(await good.json()).toMatchObject({ ok: true });
     await expect
       .poll(async () => subjects((await api<ListBody>(alice.page, "/api/app/gmail/messages")).body), { timeout: 10_000 })
       .toContain("Pushed in");
-    const stale = await anon.post(WEBHOOK, { data: pubsub("alice@gmail.com", 1) });
+    const stale = await anon.post(WEBHOOK, { headers: { Authorization: `Bearer ${await testPushToken()}` }, data: pubsub("alice@gmail.com", 1) });
     expect(await stale.json()).toMatchObject({ ok: true, synced: 0 });
     await anon.dispose();
   });
