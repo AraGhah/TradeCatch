@@ -293,7 +293,7 @@ export function createPostgresNotificationStore(
             ORDER BY e.priority,e.created_at,d.id LIMIT 25 FOR UPDATE OF d SKIP LOCKED
           )
           UPDATE tc_notification_deliveries d SET status='processing',provider_sid=NULL,updated_at=$1
-          FROM due WHERE d.id=due.id RETURNING d.*`,
+          FROM due WHERE d.id=due.id RETURNING d.*, (SELECT c.priority FROM candidates c WHERE c.id=d.id) AS dispatch_priority`,
           [nowIso, type ?? null, DELIVERY_RATE_LIMIT],
         );
         for (const row of res.rows) {
@@ -304,7 +304,14 @@ export function createPostgresNotificationStore(
             );
         }
         await client.query("COMMIT");
-        return res.rows.map(deliveryFrom);
+        return res.rows
+          .sort(
+            (a, b) =>
+              Number(a.dispatch_priority) - Number(b.dispatch_priority) ||
+              new Date(a.created_at).getTime() -
+                new Date(b.created_at).getTime(),
+          )
+          .map(deliveryFrom);
       } catch (error) {
         await client.query("ROLLBACK");
         throw error;
