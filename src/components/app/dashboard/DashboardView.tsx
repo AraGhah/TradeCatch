@@ -745,6 +745,7 @@ function activityDetail(
     const outcomes = [
       "message_taken",
       "appointment_requested",
+      "appointment_booked",
       "transferred",
       "emergency_transferred",
       "faq_answered",

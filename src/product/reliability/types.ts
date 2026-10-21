@@ -1,7 +1,11 @@
-const SECRET = /(?:sk_(?:live|test)_[A-Za-z0-9]+|Bearer\s+\S+|ya29\.[A-Za-z0-9._-]+|AKIA[0-9A-Z]{16}|whsec_[A-Za-z0-9]+)/gi;
+const SECRET =
+  /(?:sk_(?:live|test)_[A-Za-z0-9]+|Bearer\s+\S+|ya29\.[A-Za-z0-9._-]+|AKIA[0-9A-Z]{16}|whsec_[A-Za-z0-9]+)/gi;
 
 export function redactDiagnostic(value: string): string {
-  return value.replace(SECRET, "[redacted]").replace(/\b(?:\d[ -]*?){13,19}\b/g, "[redacted]").slice(0, 300);
+  return value
+    .replace(SECRET, "[redacted]")
+    .replace(/\b(?:\d[ -]*?){13,19}\b/g, "[redacted]")
+    .slice(0, 300);
 }
 
 export type ServiceName =
@@ -78,4 +82,11 @@ export type ServiceHealth = {
   checkedAt: string;
   detail?: string;
   required: boolean;
+  state?:
+    | "unconfigured"
+    | "configured"
+    | "connected"
+    | "operational"
+    | "delivery_verified";
+  evidenceAt?: string;
 };

@@ -18,7 +18,7 @@ export type GoogleTokens = {
 export function googleCalendarConfigured() {
   return Boolean(
     process.env.GOOGLE_CALENDAR_CLIENT_ID?.trim() &&
-      process.env.GOOGLE_CALENDAR_CLIENT_SECRET?.trim(),
+    process.env.GOOGLE_CALENDAR_CLIENT_SECRET?.trim(),
   );
 }
 
@@ -26,19 +26,30 @@ function redirectUri() {
   if (process.env.GOOGLE_CALENDAR_REDIRECT_URI?.trim()) {
     return process.env.GOOGLE_CALENDAR_REDIRECT_URI.trim();
   }
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
+  const site =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";
   return `${site.replace(/\/$/, "")}/api/calendar/oauth/callback`;
 }
 
 function secret() {
   const value = process.env.AUTH_SECRET?.trim();
-  if (!value) throw new Error("AUTH_SECRET is required to protect calendar tokens.");
+  if (!value)
+    throw new Error("AUTH_SECRET is required to protect calendar tokens.");
   return value;
 }
 
-export function buildGoogleAuthUrl(organizationId: string, userId: string, nowMs = Date.now()) {
+export function buildGoogleAuthUrl(
+  organizationId: string,
+  userId: string,
+  nowMs = Date.now(),
+) {
   const state = signState(
-    JSON.stringify({ organizationId, userId, exp: nowMs + 10 * 60_000, nonce: crypto.randomUUID() }),
+    JSON.stringify({
+      organizationId,
+      userId,
+      exp: nowMs + 10 * 60_000,
+      nonce: crypto.randomUUID(),
+    }),
     secret(),
   );
   const params = new URLSearchParams({
@@ -51,7 +62,10 @@ export function buildGoogleAuthUrl(organizationId: string, userId: string, nowMs
     scope: SCOPES,
     state,
   });
-  return { url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`, state };
+  return {
+    url: `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`,
+    state,
+  };
 }
 
 export function readOAuthState(
@@ -61,8 +75,18 @@ export function readOAuthState(
   const raw = verifyState(state, secret());
   if (!raw) return null;
   try {
-    const parsed = JSON.parse(raw) as { organizationId?: string; userId?: string; exp?: number };
-    if (!parsed.organizationId || !parsed.userId || !parsed.exp || parsed.exp < nowMs) return null;
+    const parsed = JSON.parse(raw) as {
+      organizationId?: string;
+      userId?: string;
+      exp?: number;
+    };
+    if (
+      !parsed.organizationId ||
+      !parsed.userId ||
+      !parsed.exp ||
+      parsed.exp < nowMs
+    )
+      return null;
     return { organizationId: parsed.organizationId, userId: parsed.userId };
   } catch {
     return null;
@@ -95,7 +119,10 @@ async function tokenRequest(body: URLSearchParams) {
   return json;
 }
 
-export async function exchangeGoogleCode(code: string, previousRefresh?: string): Promise<GoogleTokens> {
+export async function exchangeGoogleCode(
+  code: string,
+  previousRefresh?: string,
+): Promise<GoogleTokens> {
   const json = await tokenRequest(
     new URLSearchParams({
       code,
@@ -108,11 +135,15 @@ export async function exchangeGoogleCode(code: string, previousRefresh?: string)
   return {
     accessToken: json.access_token!,
     refreshToken: json.refresh_token || previousRefresh || "",
-    expiresAt: new Date(Date.now() + (json.expires_in ?? 3600) * 1000).toISOString(),
+    expiresAt: new Date(
+      Date.now() + (json.expires_in ?? 3600) * 1000,
+    ).toISOString(),
   };
 }
 
-export async function refreshGoogleTokens(tokens: GoogleTokens): Promise<GoogleTokens> {
+export async function refreshGoogleTokens(
+  tokens: GoogleTokens,
+): Promise<GoogleTokens> {
   const json = await tokenRequest(
     new URLSearchParams({
       refresh_token: tokens.refreshToken,
@@ -124,13 +155,20 @@ export async function refreshGoogleTokens(tokens: GoogleTokens): Promise<GoogleT
   return {
     ...tokens,
     accessToken: json.access_token!,
-    expiresAt: new Date(Date.now() + (json.expires_in ?? 3600) * 1000).toISOString(),
+    expiresAt: new Date(
+      Date.now() + (json.expires_in ?? 3600) * 1000,
+    ).toISOString(),
   };
 }
 
-async function googleFetch(accessToken: string, url: string, init?: RequestInit) {
+async function googleFetch(
+  accessToken: string,
+  url: string,
+  init?: RequestInit,
+) {
   const response = await fetch(url, {
     ...init,
+    signal: init?.signal ?? AbortSignal.timeout(5000),
     headers: {
       Authorization: `Bearer ${accessToken}`,
       "Content-Type": "application/json",
@@ -174,18 +212,30 @@ export function createGoogleCalendarPort(input: {
       return calls.externalCalls;
     },
     async freeBusy(fromIso, untilIso) {
-      const { response, json } = await authed("https://www.googleapis.com/calendar/v3/freeBusy", {
-        method: "POST",
-        body: JSON.stringify({
-          timeMin: fromIso,
-          timeMax: untilIso,
-          items: [{ id: input.calendarId || "primary" }],
-        }),
-      });
-      if (!response.ok) return [];
-      const calendars = (json.calendars ?? {}) as Record<string, { busy?: { start: string; end: string }[] }>;
-      const busy = Object.values(calendars)[0]?.busy ?? [];
-      return busy.map((block) => ({ startAt: block.start, endAt: block.end })) satisfies BusyBlock[];
+      const { response, json } = await authed(
+        "https://www.googleapis.com/calendar/v3/freeBusy",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            timeMin: fromIso,
+            timeMax: untilIso,
+            items: [{ id: input.calendarId || "primary" }],
+          }),
+        },
+      );
+      if (!response.ok) throw new Error("Calendar availability check failed");
+      const calendars = (json.calendars ?? {}) as Record<
+        string,
+        { busy?: { start: string; end: string }[]; errors?: unknown[] }
+      >;
+      const result = calendars[input.calendarId || "primary"];
+      if (!result || result.errors?.length || !Array.isArray(result.busy))
+        throw new Error("Calendar availability is unknown");
+      const busy = result.busy;
+      return busy.map((block) => ({
+        startAt: block.start,
+        endAt: block.end,
+      })) satisfies BusyBlock[];
     },
     async createEvent(appointment: ScheduleAppointment) {
       const { response, json } = await authed(
@@ -195,8 +245,14 @@ export function createGoogleCalendarPort(input: {
           body: JSON.stringify({
             summary: `${appointment.serviceName} — ${appointment.customerName ?? "Customer"}`,
             description: appointment.serviceAddress ?? "",
-            start: { dateTime: appointment.startAt, timeZone: appointment.timezone },
-            end: { dateTime: appointment.endAt, timeZone: appointment.timezone },
+            start: {
+              dateTime: appointment.startAt,
+              timeZone: appointment.timezone,
+            },
+            end: {
+              dateTime: appointment.endAt,
+              timeZone: appointment.timezone,
+            },
           }),
         },
       );
@@ -211,8 +267,14 @@ export function createGoogleCalendarPort(input: {
         {
           method: "PATCH",
           body: JSON.stringify({
-            start: { dateTime: appointment.startAt, timeZone: appointment.timezone },
-            end: { dateTime: appointment.endAt, timeZone: appointment.timezone },
+            start: {
+              dateTime: appointment.startAt,
+              timeZone: appointment.timezone,
+            },
+            end: {
+              dateTime: appointment.endAt,
+              timeZone: appointment.timezone,
+            },
           }),
         },
       );
@@ -223,7 +285,9 @@ export function createGoogleCalendarPort(input: {
         `https://www.googleapis.com/calendar/v3/calendars/${calendarId}/events/${encodeURIComponent(eventId)}`,
         { method: "DELETE" },
       );
-      return response.ok || response.status === 404 ? { ok: true as const } : { error: "calendar_error" };
+      return response.ok || response.status === 404
+        ? { ok: true as const }
+        : { error: "calendar_error" };
     },
   };
 }
@@ -234,14 +298,23 @@ export async function listGoogleCalendars(tokens: GoogleTokens) {
     "https://www.googleapis.com/calendar/v3/users/me/calendarList",
   );
   if (!response.ok) return [];
-  const items = (json.items ?? []) as { id: string; summary?: string; accessRole?: string }[];
+  const items = (json.items ?? []) as {
+    id: string;
+    summary?: string;
+    accessRole?: string;
+  }[];
   return items
-    .filter((item) => item.accessRole === "owner" || item.accessRole === "writer")
+    .filter(
+      (item) => item.accessRole === "owner" || item.accessRole === "writer",
+    )
     .map((item) => ({ id: item.id, summary: item.summary || item.id }));
 }
 
 export async function revokeGoogleToken(accessToken: string) {
-  await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(accessToken)}`, {
-    method: "POST",
-  }).catch(() => undefined);
+  await fetch(
+    `https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(accessToken)}`,
+    {
+      method: "POST",
+    },
+  ).catch(() => undefined);
 }

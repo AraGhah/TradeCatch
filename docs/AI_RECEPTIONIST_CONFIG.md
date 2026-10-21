@@ -47,6 +47,35 @@ Activation still requires a phone number (ops-assigned, org phone, or Module A S
 - Identify as a virtual receptionist
 - Offer human transfer when unsure
 
+## Phone booking (opt-in)
+
+Off by default. The owner turns it on with **Book appointments during the call**
+in the receptionist settings (`appointmentSettings.phoneBooking`). Everything else
+keeps working as before: the call collects name, address, callback number and a
+preferred time, and the team confirms.
+
+When it is on, an appointment call that has those details:
+
+1. reads the caller's wish (day, part of day or clock time) and asks the
+   scheduling service for open times, which applies the business hours, notice
+   window, daily cap, buffers, existing bookings and the calendar connection;
+2. reads up to three numbered openings; the caller answers by voice or by
+   pressing 1–3, and may ask for other times (two rounds at most);
+3. reserves the pick through the scheduling service (idempotent per call and
+   time, serialised per business) and says it is **booked** only when that
+   returned a confirmation. A time taken meanwhile is replaced by another offer.
+
+The call falls back to a request the team confirms, with no promise made, when:
+the service the caller describes needs approval or is an emergency type, the
+business uses Google Calendar without a connection, nothing is open, the caller
+declines or stays unclear, or the scheduler fails or is slow. Calls the
+receptionist booked end as `appointment_booked` and show in the call log and
+dashboard separately from `appointment_requested`.
+
+The owner's "test conversation" in settings never reserves a slot. This has not
+been validated on live Twilio traffic; keep describing the feature publicly as
+appointment requests confirmed by your team.
+
 ## Simulated appointments
 
 `appointment-sim.ts` keeps an in-memory calendar per organization for tests.

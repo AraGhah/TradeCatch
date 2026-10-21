@@ -45,7 +45,10 @@ export default async function AppCallsPage({
     ).length,
     emergencies: calls.filter((c) => c.urgency?.level === "critical").length,
     requests: calls.filter(
-      (c) => c.outcome === "message_taken" || c.outcome === "appointment_requested",
+      (c) =>
+        c.outcome === "message_taken" ||
+        c.outcome === "appointment_requested" ||
+        c.outcome === "appointment_booked",
     ).length,
   };
 

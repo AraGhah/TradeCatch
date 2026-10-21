@@ -2534,6 +2534,7 @@
       "outcomes": {
         "message_taken": "Message taken",
         "appointment_requested": "Appointment requested",
+        "appointment_booked": "Appointment booked",
         "transferred": "Transferred",
         "emergency_transferred": "Emergency transferred",
         "faq_answered": "Question answered",
@@ -3222,6 +3223,8 @@
       "confirmBoth": "SMS and email",
       "confirmNone": "None",
       "bookableServices": "Bookable services",
+      "phoneBooking": "Let the receptionist book an open time during the call",
+      "phoneBookingHelp": "Off: the receptionist only notes the time the caller wants and your team confirms it. On: for appointment requests it reads out up to three open times from your Schedule (hours, service types, connected Google Calendar) and reserves the one the caller picks. Services that need approval, and emergencies, stay requests. Only appointments made in TradeCatch or on a connected calendar block a time.",
       "overview": {
         "aiName": "Receptionist name",
         "phone": "Assigned phone number",
@@ -3230,6 +3233,7 @@
         "business": "Business",
         "calls": "Calls handled",
         "appointments": "Appointments booked",
+        "appointmentsRequested": "Appointment requests",
         "transfers": "Transfers",
         "lastActivity": "Last activity",
         "mode": "Call mode"

@@ -52,6 +52,41 @@ describe("appointment scheduling", () => {
     assert.equal(sunday.slots.length, 0);
   });
 
+  it("lists the whole working day and closes a day only once it holds the maximum bookings", async () => {
+    const { service } = setup();
+    const rules = await service.getRules("org-a");
+    assert.equal(rules.maxDailyBookings, 8);
+    const day = (from: string, until: string) =>
+      service.availability({ organizationId: "org-a", from, until });
+
+    const open = await day("2026-10-19T12:00:00.000Z", "2026-10-19T23:00:00.000Z");
+    const starts = open.slots.map((slot) => slot.startAt);
+    assert.equal(starts.includes("2026-10-19T12:00:00.000Z"), true, "08:00 local");
+    assert.equal(starts.includes("2026-10-19T19:00:00.000Z"), true, "15:00 local is offered, not cut off after the morning");
+    assert.equal(starts.includes("2026-10-19T21:00:00.000Z"), true, "17:00 local, the last 60-minute start");
+
+    rules.maxDailyBookings = 2;
+    await service.saveRules(rules);
+    for (const startAt of ["2026-10-19T12:00:00.000Z", "2026-10-19T16:00:00.000Z"]) {
+      const booked = await service.book({
+        organizationId: "org-a",
+        startAt,
+        customerName: "Test Customer",
+        source: "simulation",
+      });
+      assert.equal(booked.confirmed, true, startAt);
+    }
+    assert.equal((await day("2026-10-19T12:00:00.000Z", "2026-10-19T23:00:00.000Z")).slots.length, 0, "a full day offers nothing");
+    const refused = await service.book({
+      organizationId: "org-a",
+      startAt: "2026-10-19T19:00:00.000Z",
+      customerName: "Third Customer",
+      source: "simulation",
+    });
+    assert.equal(refused.confirmed, false, "the daily maximum is enforced when reserving too");
+    assert.ok((await day("2026-10-20T12:00:00.000Z", "2026-10-20T23:00:00.000Z")).slots.length > 0, "the next day is unaffected");
+  });
+
   it("keeps local 8:00 on both sides of daylight saving", () => {
     const winter = listSlots({
       rules: {

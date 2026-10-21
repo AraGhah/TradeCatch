@@ -90,6 +90,7 @@ export function ReceptionistOverview({
             ["business", overview.businessName],
             ["calls", String(overview.callsHandled)],
             ["appointments", String(overview.appointmentsBooked)],
+            ["appointmentsRequested", String(overview.appointmentsRequested)],
             ["transfers", String(overview.transfers)],
             [
               "lastActivity",

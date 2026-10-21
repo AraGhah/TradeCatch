@@ -40,7 +40,10 @@ export type AiReceptionistOverview = {
   /** Saved config vs live phone connection (Task 4). */
   operationalConnection: "not_connected" | "configured" | "error";
   callsHandled: number;
+  /** Reserved by the scheduling backend while the caller was on the line. */
   appointmentsBooked: number;
+  /** A time was captured for the team to confirm — nothing was reserved. */
+  appointmentsRequested: number;
   transfers: number;
   lastActivityAt: string | null;
   settings: ProfileSettings;
@@ -80,6 +83,9 @@ export function buildOverview(input: {
 
   const completed = input.calls.filter((c) => c.status === "completed" || c.finalizedAt);
   const appointmentsBooked = completed.filter(
+    (c) => c.outcome === "appointment_booked",
+  ).length;
+  const appointmentsRequested = completed.filter(
     (c) => c.outcome === "appointment_requested",
   ).length;
   const transfers = completed.filter(
@@ -121,6 +127,7 @@ export function buildOverview(input: {
         : "not_connected",
     callsHandled: completed.length,
     appointmentsBooked,
+    appointmentsRequested,
     transfers,
     lastActivityAt: last ?? null,
     settings,

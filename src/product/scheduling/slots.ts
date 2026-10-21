@@ -124,9 +124,11 @@ export function listSlots(input: {
     }
     if (blocked) continue;
     if (rules.maxDailyBookings != null) {
+      // A day is full when it already holds the maximum number of bookings.
+      // Listing several possible start times is not booking them: counting
+      // the listed slots cut every day off after its first few hours.
       const count = occupied.filter((block) => block.counts && block.day === day).length;
-      const already = slots.filter((slot) => localKey(new Date(slot.startAt), tz) === day).length;
-      if (count + already >= rules.maxDailyBookings) continue;
+      if (count >= rules.maxDailyBookings) continue;
     }
     const label = new Intl.DateTimeFormat("en-CA", {
       timeZone: tz,

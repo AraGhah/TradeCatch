@@ -27,6 +27,10 @@ export const OUTCOME_LABEL: Record<
     fr: "Rendez-vous demandé",
     en: "Appointment requested",
   },
+  appointment_booked: {
+    fr: "Rendez-vous réservé",
+    en: "Appointment booked",
+  },
   transferred: { fr: "Transféré", en: "Transferred" },
   emergency_transferred: {
     fr: "Urgence transférée",
@@ -47,6 +51,10 @@ function nextStepText(
   const lastTransfer = session.transfers.at(-1);
   const callback = session.slots.callbackE164 ?? session.fromE164;
   switch (outcome) {
+    case "appointment_booked":
+      return fr
+        ? `Rendez-vous confirmé : ${session.booking?.label ?? "voir le calendrier"}. Aucun rappel requis.`
+        : `Appointment confirmed: ${session.booking?.label ?? "see the calendar"}. No callback needed.`;
     case "emergency_transferred":
       return fr
         ? `URGENT : confirmer que ${lastTransfer?.targetName ?? "l'équipe de garde"} a bien pris l'appel.`
@@ -137,7 +145,13 @@ export function buildCallSummary(
   const transferred = session.transfers.find((t) => t.status === "completed");
 
   return {
-    headline: `${urgencyPrefix}${INTENT_LABEL[intent][lang]} — ${who} (${OUTCOME_LABEL[outcome][lang]})`,
+    headline: `${urgencyPrefix}${
+      outcome === "appointment_booked"
+        ? lang === "fr"
+          ? "Rendez-vous"
+          : "Appointment"
+        : INTENT_LABEL[intent][lang]
+    } — ${who} (${OUTCOME_LABEL[outcome][lang]})`,
     language: session.language,
     intent,
     outcome,
@@ -148,6 +162,16 @@ export function buildCallSummary(
     serviceAddress: session.slots.serviceAddress,
     issue: session.slots.issue,
     preferredTime: session.slots.preferredTime,
+    appointment:
+      session.booking && session.booking.status !== "offering"
+        ? {
+            status: session.booking.status,
+            startAt: session.booking.startAt,
+            label: session.booking.label,
+            appointmentId: session.booking.appointmentId,
+            serviceName: session.booking.serviceName,
+          }
+        : undefined,
     message: session.slots.message,
     transferredTo: transferred?.targetName,
     afterHours: session.afterHours,

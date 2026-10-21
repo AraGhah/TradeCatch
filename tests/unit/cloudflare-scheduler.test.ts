@@ -8,6 +8,40 @@ import {
 } from "../../src/lib/cloudflare-scheduler";
 
 describe("Cloudflare scheduler", () => {
+  it("does not treat HTTP 200 with failed work as a successful job", async () => {
+    const results: boolean[] = [];
+    await assert.rejects(
+      runCloudflareCron(
+        "* * * * *",
+        async () => Response.json({ ok: true, failed: 1 }),
+        async (_path, ok) => {
+          results.push(ok);
+        },
+      ),
+      /failed for/,
+    );
+    assert.ok(results.length > 0 && results.every((ok) => !ok));
+  });
+  it("records each actual result and continues after invocation failures", async () => {
+    const results: { path: string; ok: boolean }[] = [];
+    await assert.rejects(
+      runCloudflareCron(
+        "* * * * *",
+        async (path) => {
+          if (path.includes("gmail")) throw Error("network down");
+          return new Response(null, {
+            status: path.includes("automations") ? 503 : 200,
+          });
+        },
+        async (path, ok) => {
+          results.push({ path, ok });
+        },
+      ),
+    );
+    assert.equal(results.length, routesForCloudflareCron("* * * * *").length);
+    assert.equal(results.filter((r) => !r.ok).length, 2);
+    assert.equal(results.find((r) => r.path.includes("gmail"))?.ok, false);
+  });
   it("maps each configured schedule to the expected internal routes", () => {
     assert.deepEqual(routesForCloudflareCron("* * * * *"), [
       "/api/book-audit/notifications/tick",

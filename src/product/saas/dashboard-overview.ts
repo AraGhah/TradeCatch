@@ -153,6 +153,7 @@ export type DashboardAiCall = {
   followUp: boolean;
   transferred: boolean;
   appointmentRequested: boolean;
+  appointmentBooked: boolean;
   turns: { speaker: "caller" | "agent"; text: string }[];
 };
 
@@ -250,6 +251,7 @@ export type DashboardOverview = {
 const ANSWERED = new Set([
   "message_taken",
   "appointment_requested",
+  "appointment_booked",
   "transferred",
   "emergency_transferred",
   "faq_answered",
@@ -497,6 +499,7 @@ function callHandledByAi(call: DashboardCallInput): boolean {
   return (
     call.outcome === "message_taken" ||
     call.outcome === "appointment_requested" ||
+    call.outcome === "appointment_booked" ||
     call.outcome === "faq_answered"
   );
 }
@@ -975,6 +978,7 @@ export function buildDashboardOverview(input: {
           followUp,
           transferred,
           appointmentRequested: call.outcome === "appointment_requested",
+          appointmentBooked: call.outcome === "appointment_booked",
           turns: call.turns
             .filter((turn) => turn.text.trim())
             .slice(-8)

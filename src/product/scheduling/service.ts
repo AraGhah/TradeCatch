@@ -26,8 +26,13 @@ export type CalendarPort = {
   connected: boolean;
   externalCalls: number;
   freeBusy(fromIso: string, untilIso: string): Promise<BusyBlock[]>;
-  createEvent(appointment: ScheduleAppointment): Promise<{ id: string } | { error: string }>;
-  updateEvent(eventId: string, appointment: ScheduleAppointment): Promise<{ ok: true } | { error: string }>;
+  createEvent(
+    appointment: ScheduleAppointment,
+  ): Promise<{ id: string } | { error: string }>;
+  updateEvent(
+    eventId: string,
+    appointment: ScheduleAppointment,
+  ): Promise<{ ok: true } | { error: string }>;
   deleteEvent(eventId: string): Promise<{ ok: true } | { error: string }>;
 };
 
@@ -47,8 +52,17 @@ export type SchedulingDeps = {
     simulated: boolean;
     leadId?: string;
   }) => Promise<void>;
-  cancelNotices?: (organizationId: string, appointmentId: string, reason: string) => Promise<void>;
-  notify?: (input: { organizationId: string; title: string; reason: string; refId: string }) => Promise<void>;
+  cancelNotices?: (
+    organizationId: string,
+    appointmentId: string,
+    reason: string,
+  ) => Promise<void>;
+  notify?: (input: {
+    organizationId: string;
+    title: string;
+    reason: string;
+    refId: string;
+  }) => Promise<void>;
   onDisconnected?: (organizationId: string) => Promise<void>;
   linkLead?: (input: {
     organizationId: string;
@@ -62,6 +76,8 @@ export type SchedulingDeps = {
 };
 
 export type BookInput = {
+  /** Phone webhook deadline; an expired attempt must not become a late booking. */
+  deadlineAt?: number;
   organizationId: string;
   serviceId?: string;
   serviceName?: string;
@@ -75,6 +91,12 @@ export type BookInput = {
   source: ScheduleAppointment["bookingSource"];
   idempotencyKey?: string;
   simulated?: boolean;
+  /**
+   * When the time is no longer free, record a pending request for the
+   * contractor (default). Callers that offer another time on the spot, such as
+   * the phone receptionist, pass `false` to get a plain `conflict` back.
+   */
+  requestIfUnavailable?: boolean;
 };
 
 export type BookResult = {
@@ -86,11 +108,46 @@ export type BookResult = {
 };
 
 const DEFAULT_SERVICES: Omit<ServiceType, "id" | "organizationId">[] = [
-  { name: "Drain inspection", description: "Short inspection visit", durationMinutes: 30, bookingMode: "automatic", eligibleTechnicianIds: [], active: true },
-  { name: "Plumbing consultation", description: "Initial consultation, not a repair promise", durationMinutes: 60, bookingMode: "consultation", eligibleTechnicianIds: [], active: true },
-  { name: "Water heater repair", description: "On-site repair when the business allows automatic booking", durationMinutes: 90, bookingMode: "automatic", eligibleTechnicianIds: [], active: true },
-  { name: "Emergency plumbing", description: "Escalate to the contractor", durationMinutes: 60, bookingMode: "escalate", eligibleTechnicianIds: [], active: true },
-  { name: "Major installation", description: "Requires contractor approval", durationMinutes: 120, bookingMode: "manual_approval", eligibleTechnicianIds: [], active: true },
+  {
+    name: "Drain inspection",
+    description: "Short inspection visit",
+    durationMinutes: 30,
+    bookingMode: "automatic",
+    eligibleTechnicianIds: [],
+    active: true,
+  },
+  {
+    name: "Plumbing consultation",
+    description: "Initial consultation, not a repair promise",
+    durationMinutes: 60,
+    bookingMode: "consultation",
+    eligibleTechnicianIds: [],
+    active: true,
+  },
+  {
+    name: "Water heater repair",
+    description: "On-site repair when the business allows automatic booking",
+    durationMinutes: 90,
+    bookingMode: "automatic",
+    eligibleTechnicianIds: [],
+    active: true,
+  },
+  {
+    name: "Emergency plumbing",
+    description: "Escalate to the contractor",
+    durationMinutes: 60,
+    bookingMode: "escalate",
+    eligibleTechnicianIds: [],
+    active: true,
+  },
+  {
+    name: "Major installation",
+    description: "Requires contractor approval",
+    durationMinutes: 120,
+    bookingMode: "manual_approval",
+    eligibleTechnicianIds: [],
+    active: true,
+  },
 ];
 
 function localParts(iso: string, timeZone: string) {
@@ -157,7 +214,11 @@ export function createSchedulingService(deps: SchedulingDeps) {
     };
     await deps.store.saveRules(rules);
     for (const service of DEFAULT_SERVICES) {
-      await deps.store.saveService({ ...service, id: createId("svc"), organizationId });
+      await deps.store.saveService({
+        ...service,
+        id: createId("svc"),
+        organizationId,
+      });
     }
     await deps.store.saveTechnician({
       id: createId("tech"),
@@ -183,7 +244,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
       deps.store.listBusy(input.organizationId),
       deps.store.listTechnicians(input.organizationId),
     ]);
-    const duration = input.service?.durationMinutes ?? rules.defaultDurationMinutes;
+    const duration =
+      input.service?.durationMinutes ?? rules.defaultDurationMinutes;
     const buffer = input.service?.bufferMinutes ?? rules.bufferMinutes;
     const eligible = technicians.filter((tech) => {
       if (!tech.active) return false;
@@ -193,7 +255,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
       }
       return true;
     });
-    const people: (Technician | undefined)[] = eligible.length > 0 ? eligible : [undefined];
+    const people: (Technician | undefined)[] =
+      eligible.length > 0 ? eligible : [undefined];
     const slots: Slot[] = [];
     for (const person of people) {
       slots.push(
@@ -213,7 +276,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
         }),
       );
     }
-    return slots.sort((a, b) => a.startAt.localeCompare(b.startAt)).slice(0, 48);
+    return slots
+      .sort((a, b) => a.startAt.localeCompare(b.startAt))
+      .slice(0, 48);
   }
 
   async function record(
@@ -249,7 +314,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
     },
 
     async saveService(service: ServiceType) {
-      if (service.durationMinutes < 15) throw new SchedulingError("Duration is too short.");
+      if (service.durationMinutes < 15)
+        throw new SchedulingError("Duration is too short.");
       return deps.store.saveService(service);
     },
 
@@ -267,7 +333,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
       technicianId?: string;
     }) {
       const services = await this.listServices(input.organizationId);
-      const service = input.serviceId ? services.find((row) => row.id === input.serviceId) : undefined;
+      const service = input.serviceId
+        ? services.find((row) => row.id === input.serviceId)
+        : undefined;
       const from = input.from ? new Date(input.from) : deps.now();
       const until = input.until
         ? new Date(input.until)
@@ -283,15 +351,20 @@ export function createSchedulingService(deps: SchedulingDeps) {
       return { slots, service };
     },
 
-    async list(organizationId: string, filter?: { status?: string; technicianId?: string; q?: string }) {
+    async list(
+      organizationId: string,
+      filter?: { status?: string; technicianId?: string; q?: string },
+    ) {
       await ensure(organizationId);
       const rows = await deps.store.listAppointments(organizationId);
       return rows.filter((row) => {
         if (row.status === "hold") return false;
         if (filter?.status && row.status !== filter.status) return false;
-        if (filter?.technicianId && row.technicianId !== filter.technicianId) return false;
+        if (filter?.technicianId && row.technicianId !== filter.technicianId)
+          return false;
         if (filter?.q) {
-          const hay = `${row.customerName ?? ""} ${row.customerPhoneE164 ?? ""} ${row.serviceName}`.toLowerCase();
+          const hay =
+            `${row.customerName ?? ""} ${row.customerPhoneE164 ?? ""} ${row.serviceName}`.toLowerCase();
           if (!hay.includes(filter.q.toLowerCase())) return false;
         }
         return true;
@@ -307,23 +380,43 @@ export function createSchedulingService(deps: SchedulingDeps) {
 
     async book(input: BookInput): Promise<BookResult> {
       return withOrgLock(input.organizationId, async () => {
+        if (input.deadlineAt && Date.now() >= input.deadlineAt)
+          return {
+            ok: false,
+            confirmed: false,
+            reason: "booking_timed_out",
+            alternatives: [],
+          };
         if (input.idempotencyKey) {
-          const existing = await deps.store.findByIdempotency(input.organizationId, input.idempotencyKey);
+          const existing = await deps.store.findByIdempotency(
+            input.organizationId,
+            input.idempotencyKey,
+          );
           if (existing) {
-            return { ok: true, confirmed: existing.status === "confirmed", appointment: existing, alternatives: [] };
+            return {
+              ok: true,
+              confirmed: existing.status === "confirmed",
+              appointment: existing,
+              alternatives: [],
+            };
           }
         }
         const rules = await ensure(input.organizationId);
         const services = await deps.store.listServices(input.organizationId);
         const service = input.serviceId
           ? services.find((row) => row.id === input.serviceId && row.active)
-          : services.find((row) => row.name === input.serviceName && row.active);
-        if (input.serviceId && !service) throw new SchedulingError("Unknown service.", 404);
+          : services.find(
+              (row) => row.name === input.serviceName && row.active,
+            );
+        if (input.serviceId && !service)
+          throw new SchedulingError("Unknown service.", 404);
         const chosen = service;
-        const duration = chosen?.durationMinutes ?? rules.defaultDurationMinutes;
+        const duration =
+          chosen?.durationMinutes ?? rules.defaultDurationMinutes;
         const buffer = chosen?.bufferMinutes ?? rules.bufferMinutes;
         const start = new Date(input.startAt);
-        if (Number.isNaN(start.getTime())) throw new SchedulingError("Invalid start time.");
+        if (Number.isNaN(start.getTime()))
+          throw new SchedulingError("Invalid start time.");
         const end = new Date(start.getTime() + duration * 60_000);
         const windowFrom = new Date(start.getTime() - 60_000);
         const windowUntil = new Date(end.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -347,7 +440,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
           start.toISOString(),
         );
 
-        const needsReview = chosen?.bookingMode === "manual_approval" || chosen?.bookingMode === "escalate";
+        const needsReview =
+          chosen?.bookingMode === "manual_approval" ||
+          chosen?.bookingMode === "escalate";
         const calendar = input.simulated
           ? createSimulatedCalendar()
           : await deps.calendar(input.organizationId);
@@ -355,6 +450,20 @@ export function createSchedulingService(deps: SchedulingDeps) {
           !input.simulated &&
           rules.calendarMode === "google" &&
           (!calendar.connected || calendar.kind !== "google");
+
+        if (
+          !match &&
+          input.requestIfUnavailable === false &&
+          !needsReview &&
+          !calendarBlocksConfirmation
+        ) {
+          return {
+            ok: false,
+            confirmed: false,
+            reason: "conflict",
+            alternatives: alternatives.slice(0, 6),
+          };
+        }
 
         const base: ScheduleAppointment = {
           id: createId("appt"),
@@ -373,7 +482,12 @@ export function createSchedulingService(deps: SchedulingDeps) {
           timezone: rules.timezone,
           status: "pending",
           bookingSource: input.source,
-          appointmentKind: chosen?.bookingMode === "consultation" ? "consultation" : needsReview || calendarBlocksConfirmation ? "request" : "job",
+          appointmentKind:
+            chosen?.bookingMode === "consultation"
+              ? "consultation"
+              : needsReview || calendarBlocksConfirmation
+                ? "request"
+                : "job",
           idempotencyKey: input.idempotencyKey,
           simulated: Boolean(input.simulated),
           createdAt: deps.now().toISOString(),
@@ -394,32 +508,94 @@ export function createSchedulingService(deps: SchedulingDeps) {
           );
         }
         if (!match || needsReview || calendarBlocksConfirmation) {
-          const saved = await deps.store.insertIfFree({ ...base, status: "pending" }, 0);
+          const saved = await deps.store.insertIfFree(
+            { ...base, status: "pending" },
+            0,
+          );
           const appointment = saved ?? base;
-          if (saved) await record(appointment, "request_recorded", needsReview ? chosen?.bookingMode : calendarBlocksConfirmation ? "calendar_disconnected" : "unavailable");
+          if (saved)
+            await record(
+              appointment,
+              "request_recorded",
+              needsReview
+                ? chosen?.bookingMode
+                : calendarBlocksConfirmation
+                  ? "calendar_disconnected"
+                  : "unavailable",
+            );
           await deps.notify?.({
             organizationId: input.organizationId,
             title: appointment.customerName || appointment.serviceName,
-            reason: needsReview ? "Appointment needs contractor approval" : "Appointment request saved for review",
+            reason: needsReview
+              ? "Appointment needs contractor approval"
+              : "Appointment request saved for review",
             refId: appointment.id,
           });
           return {
             ok: Boolean(saved) || needsReview || calendarBlocksConfirmation,
             confirmed: false,
-            reason: needsReview ? chosen?.bookingMode : calendarBlocksConfirmation ? "calendar_unavailable" : "unavailable",
+            reason: needsReview
+              ? chosen?.bookingMode
+              : calendarBlocksConfirmation
+                ? "calendar_unavailable"
+                : "unavailable",
             appointment: saved ?? undefined,
             alternatives: alternatives.slice(0, 6),
           };
         }
 
-        const reserved = await deps.store.insertIfFree({ ...base, status: "confirmed" }, buffer);
-        if (!reserved || reserved.id !== base.id && reserved.status) {
+        // Other workers must see a hold, never a confirmation, while the
+        // calendar event is still being created.
+        if (input.deadlineAt && Date.now() >= input.deadlineAt)
+          return {
+            ok: false,
+            confirmed: false,
+            reason: "booking_timed_out",
+            alternatives: [],
+          };
+        const reserved = await deps.store.insertIfFree(
+          {
+            ...base,
+            status: "hold",
+            holdExpiresAt: new Date(
+              deps.now().getTime() + 5 * 60_000,
+            ).toISOString(),
+          },
+          buffer,
+        );
+        if (!reserved || (reserved.id !== base.id && reserved.status)) {
           if (reserved && reserved.idempotencyKey === input.idempotencyKey) {
-            return { ok: true, confirmed: reserved.status === "confirmed", appointment: reserved, alternatives: [] };
+            return {
+              ok: true,
+              confirmed: reserved.status === "confirmed",
+              appointment: reserved,
+              alternatives: [],
+            };
           }
-          return { ok: false, confirmed: false, reason: "conflict", alternatives: alternatives.slice(0, 6) };
+          return {
+            ok: false,
+            confirmed: false,
+            reason: "conflict",
+            alternatives: alternatives.slice(0, 6),
+          };
         }
         const created = await calendar.createEvent(reserved);
+        if (
+          !("error" in created) &&
+          input.deadlineAt &&
+          Date.now() >= input.deadlineAt
+        ) {
+          reserved.status = "canceled";
+          reserved.cancelReason = "booking_timed_out";
+          await deps.store.saveAppointment(reserved);
+          await calendar.deleteEvent(created.id);
+          return {
+            ok: false,
+            confirmed: false,
+            reason: "booking_timed_out",
+            alternatives: [],
+          };
+        }
         if ("error" in created) {
           reserved.status = "canceled";
           reserved.cancelReason = "calendar_sync_failed";
@@ -427,7 +603,13 @@ export function createSchedulingService(deps: SchedulingDeps) {
           await deps.store.saveAppointment(reserved);
           await record(reserved, "calendar_failed", created.error);
           const request = await deps.store.insertIfFree(
-            { ...base, id: createId("appt"), status: "pending", appointmentKind: "request", idempotencyKey: undefined },
+            {
+              ...base,
+              id: createId("appt"),
+              status: "pending",
+              appointmentKind: "request",
+              idempotencyKey: undefined,
+            },
             0,
           );
           return {
@@ -439,6 +621,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
           };
         }
         reserved.calendarEventId = created.id;
+        reserved.status = "confirmed";
+        reserved.holdExpiresAt = undefined;
         reserved.updatedAt = deps.now().toISOString();
         const linked = await deps.linkLead?.({
           organizationId: input.organizationId,
@@ -449,7 +633,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
           startAt: reserved.startAt,
           simulated: reserved.simulated,
         });
-        if (linked && "leadId" in linked && linked.leadId) reserved.leadId = linked.leadId;
+        if (linked && "leadId" in linked && linked.leadId)
+          reserved.leadId = linked.leadId;
         await deps.store.saveAppointment(reserved);
         await record(reserved, "confirmed", created.id);
         const when = localParts(reserved.startAt, rules.timezone);
@@ -473,18 +658,32 @@ export function createSchedulingService(deps: SchedulingDeps) {
           reason: "New appointment confirmed",
           refId: reserved.id,
         });
-        return { ok: true, confirmed: true, appointment: reserved, alternatives: [] };
+        return {
+          ok: true,
+          confirmed: true,
+          appointment: reserved,
+          alternatives: [],
+        };
       });
     },
 
-    async reschedule(organizationId: string, appointmentId: string, startAt: string) {
+    async reschedule(
+      organizationId: string,
+      appointmentId: string,
+      startAt: string,
+    ) {
       return withOrgLock(organizationId, async () => {
-        const current = await deps.store.getAppointment(organizationId, appointmentId);
-        if (!current || current.status === "canceled") throw new SchedulingError("Appointment not found.", 404);
+        const current = await deps.store.getAppointment(
+          organizationId,
+          appointmentId,
+        );
+        if (!current || current.status === "canceled")
+          throw new SchedulingError("Appointment not found.", 404);
         const rules = await ensure(organizationId);
         const services = await deps.store.listServices(organizationId);
         const service = services.find((row) => row.id === current.serviceId);
-        const duration = Date.parse(current.endAt) - Date.parse(current.startAt);
+        const duration =
+          Date.parse(current.endAt) - Date.parse(current.startAt);
         const start = new Date(startAt);
         const end = new Date(start.getTime() + duration);
         const alternatives = await slotsFor({
@@ -509,38 +708,78 @@ export function createSchedulingService(deps: SchedulingDeps) {
           start.toISOString(),
         );
         if (!match) {
-          return { ok: false as const, confirmed: false, reason: "unavailable", alternatives: alternatives.slice(0, 6), appointment: current };
+          return {
+            ok: false as const,
+            confirmed: false,
+            reason: "unavailable",
+            alternatives: alternatives.slice(0, 6),
+            appointment: current,
+          };
         }
-        const previous = { startAt: current.startAt, endAt: current.endAt, eventId: current.calendarEventId };
+        const previous = {
+          startAt: current.startAt,
+          endAt: current.endAt,
+          eventId: current.calendarEventId,
+        };
         current.startAt = start.toISOString();
         current.endAt = end.toISOString();
         current.updatedAt = deps.now().toISOString();
         const buffer = service?.bufferMinutes ?? rules.bufferMinutes;
-        const reinserted = await deps.store.insertIfFree({ ...current, id: `${current.id}_move`, idempotencyKey: undefined, status: "hold", holdExpiresAt: new Date(deps.now().getTime() + 60_000).toISOString() }, buffer);
+        const reinserted = await deps.store.insertIfFree(
+          {
+            ...current,
+            id: `${current.id}_move`,
+            idempotencyKey: undefined,
+            status: "hold",
+            holdExpiresAt: new Date(
+              deps.now().getTime() + 60_000,
+            ).toISOString(),
+          },
+          buffer,
+        );
         if (!reinserted) {
           current.startAt = previous.startAt;
           current.endAt = previous.endAt;
-          return { ok: false as const, confirmed: false, reason: "conflict", alternatives: alternatives.slice(0, 6), appointment: current };
+          return {
+            ok: false as const,
+            confirmed: false,
+            reason: "conflict",
+            alternatives: alternatives.slice(0, 6),
+            appointment: current,
+          };
         }
         const calendar = current.simulated
           ? createSimulatedCalendar()
           : await deps.calendar(organizationId);
         if (current.calendarEventId) {
-          const updated = await calendar.updateEvent(current.calendarEventId, current);
+          const updated = await calendar.updateEvent(
+            current.calendarEventId,
+            current,
+          );
           if ("error" in updated) {
             current.startAt = previous.startAt;
             current.endAt = previous.endAt;
             reinserted.status = "canceled";
             await deps.store.saveAppointment(reinserted);
             await deps.store.saveAppointment(current);
-            return { ok: false as const, confirmed: false, reason: "calendar_error", alternatives: alternatives.slice(0, 6), appointment: current };
+            return {
+              ok: false as const,
+              confirmed: false,
+              reason: "calendar_error",
+              alternatives: alternatives.slice(0, 6),
+              appointment: current,
+            };
           }
         }
         reinserted.status = "canceled";
         reinserted.cancelReason = "reschedule_hold";
         await deps.store.saveAppointment(reinserted);
         await deps.store.saveAppointment(current);
-        await record(current, "rescheduled", `${previous.startAt}->${current.startAt}`);
+        await record(
+          current,
+          "rescheduled",
+          `${previous.startAt}->${current.startAt}`,
+        );
         await deps.notify?.({
           organizationId,
           title: current.customerName || current.serviceName,
@@ -563,21 +802,38 @@ export function createSchedulingService(deps: SchedulingDeps) {
             leadId: current.leadId,
           });
         }
-        return { ok: true as const, confirmed: current.status === "confirmed", appointment: current, alternatives: [] };
+        return {
+          ok: true as const,
+          confirmed: current.status === "confirmed",
+          appointment: current,
+          alternatives: [],
+        };
       });
     },
 
-    async cancel(organizationId: string, appointmentId: string, reason?: string) {
-      const current = await deps.store.getAppointment(organizationId, appointmentId);
+    async cancel(
+      organizationId: string,
+      appointmentId: string,
+      reason?: string,
+    ) {
+      const current = await deps.store.getAppointment(
+        organizationId,
+        appointmentId,
+      );
       if (!current) throw new SchedulingError("Appointment not found.", 404);
-      if (current.status === "canceled") return { ok: true, appointment: current };
+      if (current.status === "canceled")
+        return { ok: true, appointment: current };
       if (current.calendarEventId) {
         const calendar = current.simulated
           ? createSimulatedCalendar()
           : await deps.calendar(organizationId);
         const removed = await calendar.deleteEvent(current.calendarEventId);
         if ("error" in removed) {
-          return { ok: false as const, reason: "calendar_error", appointment: current };
+          return {
+            ok: false as const,
+            reason: "calendar_error",
+            appointment: current,
+          };
         }
       }
       current.status = "canceled";
@@ -585,7 +841,11 @@ export function createSchedulingService(deps: SchedulingDeps) {
       current.updatedAt = deps.now().toISOString();
       await deps.store.saveAppointment(current);
       await record(current, "canceled", current.cancelReason);
-      await deps.cancelNotices?.(organizationId, current.id, "appointment_canceled");
+      await deps.cancelNotices?.(
+        organizationId,
+        current.id,
+        "appointment_canceled",
+      );
       await deps.notify?.({
         organizationId,
         title: current.customerName || current.serviceName,
@@ -598,15 +858,27 @@ export function createSchedulingService(deps: SchedulingDeps) {
     async updateDetails(
       organizationId: string,
       appointmentId: string,
-      patch: { technicianId?: string; customerName?: string; serviceAddress?: string; status?: "completed" },
+      patch: {
+        technicianId?: string;
+        customerName?: string;
+        serviceAddress?: string;
+        status?: "completed";
+      },
     ) {
-      const current = await deps.store.getAppointment(organizationId, appointmentId);
+      const current = await deps.store.getAppointment(
+        organizationId,
+        appointmentId,
+      );
       if (!current) throw new SchedulingError("Appointment not found.", 404);
       if (patch.customerName) current.customerName = patch.customerName;
       if (patch.serviceAddress) current.serviceAddress = patch.serviceAddress;
       if (patch.technicianId) {
         const technicians = await deps.store.listTechnicians(organizationId);
-        const tech = technicians.find((row) => row.id === patch.technicianId && row.organizationId === organizationId);
+        const tech = technicians.find(
+          (row) =>
+            row.id === patch.technicianId &&
+            row.organizationId === organizationId,
+        );
         if (!tech) throw new SchedulingError("Unknown technician.", 404);
         current.technicianId = tech.id;
         current.technicianName = tech.name;
@@ -620,7 +892,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
       return current;
     },
 
-    async connectionStatus(organizationId: string): Promise<CalendarConnectionPublic> {
+    async connectionStatus(
+      organizationId: string,
+    ): Promise<CalendarConnectionPublic> {
       const rules = await ensure(organizationId);
       if (rules.calendarMode !== "google") {
         return { provider: "google", status: "simulated" };
@@ -650,9 +924,14 @@ export function createSchedulingService(deps: SchedulingDeps) {
       await deps.onDisconnected?.(organizationId);
     },
 
-    async selectCalendar(organizationId: string, calendarId: string, summary: string) {
+    async selectCalendar(
+      organizationId: string,
+      calendarId: string,
+      summary: string,
+    ) {
       const row = await deps.store.getConnection(organizationId);
-      if (!row || row.status === "disconnected") throw new SchedulingError("Calendar is not connected.", 409);
+      if (!row || row.status === "disconnected")
+        throw new SchedulingError("Calendar is not connected.", 409);
       row.calendarId = calendarId;
       row.calendarSummary = summary;
       row.status = "connected";

@@ -38,6 +38,35 @@ export const PHRASES = {
     fr: "Quel moment vous conviendrait le mieux pour qu'on vous rappelle ou qu'on passe?",
     en: "When would be the best time for us to call you back or come by?",
   },
+  /** Phone booking: every time read out comes from the scheduling backend. */
+  offerSlots: {
+    fr: "Voici les disponibilités : {options}. Dites ou appuyez sur le numéro de votre choix.",
+    en: "Here are the openings I have: {options}. Please say or press the number you'd like.",
+  },
+  offerNearest: {
+    fr: "Je n'ai rien à ce moment-là. Les prochaines disponibilités sont : {options}. Dites ou appuyez sur le numéro de votre choix.",
+    en: "I don't have anything at that time. The next openings are: {options}. Please say or press the number you'd like.",
+  },
+  offerMore: {
+    fr: "D'accord. J'ai aussi : {options}. Dites ou appuyez sur le numéro de votre choix.",
+    en: "Okay. I also have: {options}. Please say or press the number you'd like.",
+  },
+  slotTaken: {
+    fr: "Ce moment vient tout juste d'être pris. J'ai plutôt : {options}. Dites ou appuyez sur le numéro de votre choix.",
+    en: "That time was just taken. I have these instead: {options}. Please say or press the number you'd like.",
+  },
+  offerRepeat: {
+    fr: "Désolée, je n'ai pas bien compris. Je répète : {options}. Dites ou appuyez sur le numéro de votre choix.",
+    en: "Sorry, I didn't catch that. Again: {options}. Please say or press the number you'd like.",
+  },
+  bookedConfirmed: {
+    fr: "C'est confirmé, {name} : votre rendez-vous est le {when}. L'équipe a été avisée. Merci et bonne journée!",
+    en: "You're booked, {name}: your appointment is {when}. The team has been notified. Thank you, and have a great day!",
+  },
+  bookingRequestOnly: {
+    fr: "Je n'ai pas pu réserver un moment automatiquement. J'ai bien noté votre demande et un membre de l'équipe vous rappellera pour confirmer un rendez-vous. Merci {name}!",
+    en: "I wasn't able to reserve a time automatically. I've noted your request and someone from the team will call you to confirm an appointment. Thank you {name}!",
+  },
   anythingElse: {
     fr: "Y a-t-il autre chose que je peux faire pour vous?",
     en: "Is there anything else I can help you with?",

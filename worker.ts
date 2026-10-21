@@ -4,6 +4,7 @@
 import openNextWorker from "./.open-next/worker.js";
 import { runCloudflareCron } from "./src/lib/cloudflare-scheduler";
 import { withPostgresRequestScope } from "./src/lib/postgres-pool";
+import { recordScheduledJob } from "./src/product/reliability/job-health";
 
 type TradeCatchWorkerEnv = CloudflareEnv & {
   CRON_SECRET?: string;
@@ -12,6 +13,7 @@ type TradeCatchWorkerEnv = CloudflareEnv & {
   BOOK_AUDIT_RETRY_SECRET?: string;
   GMAIL_SYNC_SECRET?: string;
   NOTIFICATION_RETRY_SECRET?: string;
+  MONITORING_SECRET?: string;
 };
 
 // Preserve any cache Durable Object exports produced by OpenNext.
@@ -24,14 +26,16 @@ export { BucketCachePurge } from "./.open-next/worker.js";
 
 function schedulerSecret(env: TradeCatchWorkerEnv, path: string): string {
   const secret =
-    (path === "/api/book-audit/notifications/tick"
-      ? env.BOOK_AUDIT_RETRY_SECRET?.trim()
-      : path === "/api/notifications/tick" ||
-          path === "/api/notifications/daily-summary/tick"
-        ? env.NOTIFICATION_RETRY_SECRET?.trim()
-        : path === "/api/gmail/sync/tick"
-          ? env.GMAIL_SYNC_SECRET?.trim()
-          : "") ||
+    (path === "/api/monitoring/tick"
+      ? env.MONITORING_SECRET?.trim()
+      : path === "/api/book-audit/notifications/tick"
+        ? env.BOOK_AUDIT_RETRY_SECRET?.trim()
+        : path === "/api/notifications/tick" ||
+            path === "/api/notifications/daily-summary/tick"
+          ? env.NOTIFICATION_RETRY_SECRET?.trim()
+          : path === "/api/gmail/sync/tick"
+            ? env.GMAIL_SYNC_SECRET?.trim()
+            : "") ||
     env.MISSED_CALL_OPS_SECRET?.trim() ||
     env.CRON_SECRET?.trim() ||
     "";
@@ -60,21 +64,24 @@ export default {
 
     try {
       const result = await withPostgresRequestScope(() =>
-        runCloudflareCron(controller.cron, (path) =>
-          openNextWorker.fetch(
-            new Request(new URL(path, origin), {
-              method: "POST",
-              headers: {
-                authorization: `Bearer ${schedulerSecret(env, path)}`,
-                "user-agent": "TradeCatch-Cloudflare-Scheduler/1.0",
-                // Existing routes use this authenticated marker to distinguish a
-                // scheduler from manual ops requests that require X-Ops-Actor.
-                "x-vercel-cron": "cloudflare",
-              },
-            }),
-            env,
-            ctx,
-          ),
+        runCloudflareCron(
+          controller.cron,
+          (path) =>
+            openNextWorker.fetch(
+              new Request(new URL(path, origin), {
+                method: "POST",
+                headers: {
+                  authorization: `Bearer ${schedulerSecret(env, path)}`,
+                  "user-agent": "TradeCatch-Cloudflare-Scheduler/1.0",
+                  // Existing routes use this authenticated marker to distinguish a
+                  // scheduler from manual ops requests that require X-Ops-Actor.
+                  "x-vercel-cron": "cloudflare",
+                },
+              }),
+              env,
+              ctx,
+            ),
+          (path, ok) => recordScheduledJob(path, ok),
         ),
       );
       console.log(
