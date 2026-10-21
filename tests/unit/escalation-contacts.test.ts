@@ -147,6 +147,30 @@ describe("employee escalation contacts", () => {
       /verified phone/,
     );
   });
+  it("reaches a selected primary employee for urgent requests while preserving ordinary assigned-only scope", async () => {
+    const h = harness();
+    await h.service.saveEscalation({
+      ...(await h.service.getEscalation("org")),
+      primaryUserId: "backup",
+    });
+    await h.service.enqueue({
+      organizationId: "org",
+      type: "urgent_request",
+      idempotencyKey: "selected-primary",
+      payload: { live: true },
+    });
+    await h.service.processDue();
+    assert.ok(h.texts.includes("+15145550102"));
+    assert.equal((await h.service.listForUser("org", "backup")).length, 1);
+    await h.service.enqueue({
+      organizationId: "org",
+      type: "lead_created",
+      idempotencyKey: "unassigned-normal",
+      payload: { assigneeUserId: "owner" },
+    });
+    await h.service.processDue();
+    assert.equal((await h.service.listForUser("org", "backup")).length, 1);
+  });
   it("queues the backup's verified personal number and cancels delivery if verification is revoked", async () => {
     const h = harness();
     await h.service.saveEscalation({
