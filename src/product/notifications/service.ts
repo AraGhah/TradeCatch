@@ -22,6 +22,7 @@ import {
   type Channel,
   type ContractorNotification,
   type EscalationRule,
+  type EscalationContact,
   type NotificationDelivery,
   type NotificationPayload,
   type NotificationPreferences,
@@ -34,6 +35,7 @@ export class NotificationError extends Error {
   constructor(
     message: string,
     readonly status = 400,
+    readonly code?: string,
   ) {
     super(message);
     this.name = "NotificationError";
@@ -42,11 +44,22 @@ export class NotificationError extends Error {
 
 export type NoticeMember = {
   userId: string;
+  name?: string;
   role: "owner" | "admin" | "member" | "viewer";
   email: string;
   locale: "en" | "fr";
   phoneE164?: string;
+  phoneVerifiedAt?: string;
 };
+
+function verifiedPhone(member: NoticeMember, now: Date): string | undefined {
+  const at = Date.parse(member.phoneVerifiedAt || "");
+  return /^\+[1-9]\d{7,14}$/.test(member.phoneE164 || "") &&
+    Number.isFinite(at) &&
+    at <= now.getTime()
+    ? member.phoneE164
+    : undefined;
+}
 
 export type NoticeOrg = {
   id: string;
@@ -253,6 +266,26 @@ export function createNotificationService(deps: NotificationDeps) {
     notification: ContractorNotification,
     org: NoticeOrg,
   ) {
+    const personalSms =
+      delivery.channel === "sms" &&
+      (delivery.idempotencyKey.includes(":escalation:") ||
+        delivery.idempotencyKey.endsWith(":personal"));
+    // A personal SMS queued for escalation must still belong to this member.
+    if (personalSms) {
+      const member = (await deps.listMembers(org.id)).find(
+        (m) => m.userId === delivery.recipientUserId,
+      );
+      if (
+        !member ||
+        verifiedPhone(member, deps.now()) !== delivery.destination
+      ) {
+        delivery.status = "canceled";
+        delivery.lastError = "recipient_changed";
+        delivery.updatedAt = deps.now().toISOString();
+        await deps.store.saveDelivery(delivery);
+        return;
+      }
+    }
     // Re-check current membership before sending a delayed email.
     if (delivery.channel === "email") {
       const member = (await deps.listMembers(org.id)).find(
@@ -348,7 +381,11 @@ export function createNotificationService(deps: NotificationDeps) {
           });
         delivery.status = "submitted";
       } else if (delivery.channel === "sms") {
-        if (!org.phoneE164 || delivery.destination !== org.phoneE164) {
+        if (
+          !delivery.destination ||
+          (!personalSms &&
+            (!org.phoneE164 || delivery.destination !== org.phoneE164))
+        ) {
           delivery.status = "canceled";
           delivery.lastError = "unauthorized_destination";
           delivery.updatedAt = deps.now().toISOString();
@@ -482,7 +519,9 @@ export function createNotificationService(deps: NotificationDeps) {
           channel === "email"
             ? member.email
             : channel === "sms"
-              ? org.phoneE164 || undefined
+              ? rule.primaryUserId && notification.priority !== "normal"
+                ? verifiedPhone(member, deps.now())
+                : org.phoneE164 || undefined
               : undefined;
         if (channel !== "in_app" && !destination) continue;
         const when = allowedNow(notification.priority, prefs, rule, org)
@@ -503,7 +542,7 @@ export function createNotificationService(deps: NotificationDeps) {
           nextAttemptAt: when,
           destination,
           simulated: notification.simulated || org.accountType === "demo",
-          idempotencyKey: `${notification.id}:${member.userId}:${channel}`,
+          idempotencyKey: `${notification.id}:${member.userId}:${channel}${channel === "sms" && rule.primaryUserId && notification.priority !== "normal" ? ":personal" : ""}`,
           createdAt: deps.now().toISOString(),
           updatedAt: deps.now().toISOString(),
         };
@@ -730,6 +769,14 @@ export function createNotificationService(deps: NotificationDeps) {
             (member) => member.userId === rule.secondaryUserId,
           );
           if (!backup) continue;
+          const phone = verifiedPhone(backup, deps.now());
+          const channel =
+            rule.smsEnabled && phone
+              ? "sms"
+              : rule.emailEnabled
+                ? "email"
+                : null;
+          if (!channel) continue;
           if (people.some((person) => person.userId === backup.userId))
             continue;
           await deps.store.saveRecipient({
@@ -743,13 +790,11 @@ export function createNotificationService(deps: NotificationDeps) {
             notificationId: note.id,
             organizationId,
             recipientUserId: backup.userId,
-            channel: rule.smsEnabled ? "sms" : "email",
+            channel,
             status: "pending",
             attempts: 0,
             nextAttemptAt: deps.now().toISOString(),
-            destination: rule.smsEnabled
-              ? org.phoneE164 || undefined
-              : backup.email,
+            destination: channel === "sms" ? phone : backup.email,
             simulated: note.simulated,
             idempotencyKey: `${note.id}:${backup.userId}:escalation:${prior.length + 1}`,
             createdAt: deps.now().toISOString(),
@@ -925,7 +970,59 @@ export function createNotificationService(deps: NotificationDeps) {
       );
     },
 
+    async listEscalationContacts(
+      organizationId: string,
+    ): Promise<EscalationContact[]> {
+      return (await deps.listMembers(organizationId))
+        .map((member) => ({
+          userId: member.userId,
+          name: member.name?.trim() || member.email,
+          role: member.role,
+          verifiedPhoneE164: verifiedPhone(member, deps.now()),
+        }))
+        .sort(
+          (a, b) =>
+            a.name.localeCompare(b.name) || a.userId.localeCompare(b.userId),
+        );
+    },
+
     async saveEscalation(rule: EscalationRule) {
+      const contacts = await this.listEscalationContacts(rule.organizationId);
+      for (const id of [rule.primaryUserId, rule.secondaryUserId]) {
+        if (id && !contacts.some((contact) => contact.userId === id))
+          throw new NotificationError(
+            "Choose a current employee of this business.",
+            400,
+            "contactUnavailable",
+          );
+      }
+      if (rule.primaryUserId && rule.primaryUserId === rule.secondaryUserId)
+        throw new NotificationError(
+          "Choose different primary and backup employees.",
+          400,
+          "sameContact",
+        );
+      const primary = contacts.find(
+        (contact) => contact.userId === rule.primaryUserId,
+      );
+      const backup = contacts.find(
+        (contact) => contact.userId === rule.secondaryUserId,
+      );
+      if (
+        rule.enabled &&
+        rule.smsEnabled &&
+        !rule.emailEnabled &&
+        [primary, backup].some(
+          (contact) => contact && !contact.verifiedPhoneE164,
+        )
+      )
+        throw new NotificationError(
+          "SMS-only contacts need verified phone numbers. Enable email or choose another employee.",
+          400,
+          "smsNeedsVerifiedPhones",
+        );
+      // Discard a client-supplied phone; the selected member is authoritative.
+      rule.secondaryPhoneE164 = backup?.verifiedPhoneE164;
       rule.updatedAt = deps.now().toISOString();
       rule.delayMinutes = Math.min(Math.max(rule.delayMinutes, 1), 240);
       rule.maxAttempts = Math.min(Math.max(rule.maxAttempts, 1), 5);

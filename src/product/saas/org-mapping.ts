@@ -34,6 +34,8 @@ export type UserRow = {
   name: string;
   locale: string;
   platform_role?: string | null;
+  notification_phone_e164?: string | null;
+  notification_phone_verified_at?: Date | string | null;
   created_at: Date | string;
   updated_at: Date | string;
 };
@@ -81,6 +83,14 @@ export function mapUserRow(row: UserRow): User {
     locale: row.locale === "fr" ? "fr" : "en",
     platformRole:
       row.platform_role === "admin" ? "admin" : ("none" as PlatformRole),
+    ...(row.notification_phone_e164 && row.notification_phone_verified_at
+      ? {
+          notificationPhoneE164: row.notification_phone_e164,
+          notificationPhoneVerifiedAt: toIso(
+            row.notification_phone_verified_at,
+          ),
+        }
+      : {}),
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
   };

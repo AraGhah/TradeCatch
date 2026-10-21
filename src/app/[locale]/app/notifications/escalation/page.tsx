@@ -1,8 +1,13 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { EscalationRulesForm } from "@/components/app/EscalationRulesForm";
+import { allows } from "@/product/security/permissions";
 
-export default async function EscalationPage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function EscalationPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("app.alerts");
@@ -11,9 +16,22 @@ export default async function EscalationPage({ params }: { params: Promise<{ loc
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t("escalation")}</h1>
+        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+          {t("escalation")}
+        </h1>
       </header>
-      <EscalationRulesForm organizationId={auth.ctx.organization.id} />
+      {allows(
+        auth.ctx.membership.role,
+        "manage_settings",
+        auth.ctx.isPlatformAdmin,
+      ) ? (
+        <EscalationRulesForm
+          key={auth.ctx.organization.id}
+          organizationId={auth.ctx.organization.id}
+        />
+      ) : (
+        <p className="text-sm text-navy/70">{t("manageContactsRequired")}</p>
+      )}
     </div>
   );
 }

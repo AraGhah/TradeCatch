@@ -239,6 +239,8 @@ function recoveryChecks(factory: () => NotificationStore, durable: boolean) {
     assert.equal(h.emails.length, 0);
   });
   it("honors disabled recovery and does not send a queued fallback to a removed member", async () => {
+    h.members[1].phoneE164 = "+15145550128";
+    h.members[1].phoneVerifiedAt = h.now();
     await h.service.saveEscalation({
       ...(await h.service.getEscalation(h.organizationId)),
       emailEnabled: false,

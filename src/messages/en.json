@@ -2933,7 +2933,26 @@
       "open": "Open",
       "save": "Save",
       "adminTitle": "System alerts",
-      "adminEmpty": "No system alerts."
+      "adminEmpty": "No system alerts.",
+      "contactsLoading": "Loading employees…",
+      "contactLoadError": "Could not load employees. Try again.",
+      "manageContactsRequired": "An owner or administrator can manage escalation contacts.",
+      "defaultPrimary": "Default recipients",
+      "noBackup": "No backup employee",
+      "noContacts": "No employees are available for this business.",
+      "phoneVerified": "Verified phone",
+      "phoneNotVerified": "No verified phone",
+      "verifiedPhoneHelp": "SMS uses the selected employee’s verified phone. If none is available, email is used when enabled. Phone verification cannot be completed on this screen.",
+      "contactUnavailable": "Choose a current employee of this business.",
+      "sameContact": "Choose different primary and backup employees.",
+      "smsNeedsVerifiedPhones": "SMS-only contacts need verified phone numbers. Enable email or choose another employee.",
+      "saving": "Saving…",
+      "contactRoles": {
+        "owner": "Owner",
+        "admin": "Administrator",
+        "member": "Employee",
+        "viewer": "Viewer"
+      }
     },
     "pipeline": {
       "headline": "Jobs in progress",

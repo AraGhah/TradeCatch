@@ -138,6 +138,11 @@ async function main() {
     // Upgrade installations created before incremental Gmail sync support.
     await applyFile(
       client,
+      ["src", "product", "saas", "notification-contacts.sql"],
+      "025_verified_notification_contacts",
+    );
+    await applyFile(
+      client,
       ["src", "product", "gmail", "schema.sql"],
       "022_gmail_sync_columns",
     );

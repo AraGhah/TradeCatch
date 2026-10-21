@@ -2933,7 +2933,26 @@
       "open": "Ouvrir",
       "save": "Enregistrer",
       "adminTitle": "Alertes système",
-      "adminEmpty": "Aucune alerte système."
+      "adminEmpty": "Aucune alerte système.",
+      "contactsLoading": "Chargement des employés…",
+      "contactLoadError": "Impossible de charger les employés. Réessayez.",
+      "manageContactsRequired": "Un propriétaire ou un administrateur peut gérer les contacts d’escalade.",
+      "defaultPrimary": "Destinataires par défaut",
+      "noBackup": "Aucun employé de secours",
+      "noContacts": "Aucun employé n’est disponible pour cette entreprise.",
+      "phoneVerified": "Téléphone vérifié",
+      "phoneNotVerified": "Aucun téléphone vérifié",
+      "verifiedPhoneHelp": "Les textos utilisent le téléphone vérifié de l’employé choisi. Sinon, le courriel est utilisé s’il est activé. La vérification du téléphone ne peut pas être effectuée sur cet écran.",
+      "contactUnavailable": "Choisissez un employé actuel de cette entreprise.",
+      "sameContact": "Choisissez des employés différents comme destinataire principal et de secours.",
+      "smsNeedsVerifiedPhones": "Les contacts recevant uniquement des textos doivent avoir un téléphone vérifié. Activez le courriel ou choisissez un autre employé.",
+      "saving": "Enregistrement…",
+      "contactRoles": {
+        "owner": "Propriétaire",
+        "admin": "Administrateur",
+        "member": "Employé",
+        "viewer": "Observateur"
+      }
     },
     "pipeline": {
       "headline": "Travaux en cours",
