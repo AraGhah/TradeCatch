@@ -15,7 +15,9 @@ function keysForRuntime(): JWTVerifyGetKey {
   if (isE2eHarness() && base) {
     const url = `${base.replace(/\/$/, "")}/oauth2/v3/certs`;
     if (!testKeys || testKeysUrl !== url) {
-      testKeys = createRemoteJWKSet(new URL(url));
+      // Retry workers rotate their fake provider immediately. Google's production
+      // verifier above retains its normal refresh cooldown.
+      testKeys = createRemoteJWKSet(new URL(url), { cooldownDuration: 0 });
       testKeysUrl = url;
     }
     return testKeys;

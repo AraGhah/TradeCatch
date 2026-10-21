@@ -375,13 +375,20 @@ test.describe("Gmail receiving", () => {
     await alice.page.waitForTimeout(500); // the fallback only picks mailboxes not tried within the staleness window
     const denied = await anon.post("/api/gmail/sync/tick");
     expect(denied.status()).toBe(401);
-    const tick = await anon.post("/api/gmail/sync/tick", { headers: { Authorization: OPS.Authorization, "x-vercel-cron": "cloudflare" } });
-    expect(tick.status()).toBe(200);
-    expect((await tick.json()).attempted).toBeGreaterThanOrEqual(1);
+    // Other repeat/retry fixtures may also be due. Exercise successive bounded
+    // batches, observing through an authenticated API read without reopening the
+    // dashboard or restoring the browser's signed-in cookie jar.
+    await expect.poll(async () => {
+      const tick = await anon.post("/api/gmail/sync/tick", { headers: { Authorization: OPS.Authorization, "x-vercel-cron": "cloudflare" } });
+      expect(tick.status()).toBe(200);
+      const observed = await anon.get("/api/app/gmail/messages", { headers: { Cookie: session.map(c=>`${c.name}=${c.value}`).join("; ") } });
+      expect(observed.status()).toBe(200);
+      return subjects(await observed.json()).includes("Sent while signed out");
+    }, {timeout:10_000,intervals:[350,500]}).toBe(true);
     await anon.dispose();
 
     // Signing back in resumes the same account (restoring the cookie stands in for it,
-    // which keeps this file inside the shared magic-link rate limit).
+    // so this check does not request an additional login token).
     await alice.context.addCookies(session);
     const after = (await api<ListBody>(alice.page, "/api/app/gmail/messages")).body;
     expect(after.messages.length).toBe(before + 1);
