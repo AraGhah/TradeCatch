@@ -354,6 +354,20 @@ function recoveryChecks(factory: () => NotificationStore, durable: boolean) {
     );
     assert.equal((await h.service.savePreferences(prefs)).dailySummary, false);
   });
+  it("keeps Gmail-only processing from recovering unrelated SMS failures", async () => {
+    const first = await h.urgent();
+    first.status = "dead";
+    await h.store.saveDelivery(first);
+    await h.service.processDue(25, "gmail_reply");
+    assert.equal(
+      (await h.store.listDeliveries(h.organizationId)).some((row) =>
+        row.id.endsWith(":backup_email"),
+      ),
+      false,
+    );
+    await h.service.processDue();
+    assert.equal(h.emails.length, 1);
+  });
   it("counts an abandoned provider attempt toward the retry ceiling", async () => {
     const note = await h.urgent();
     const row: NotificationDelivery = {

@@ -349,9 +349,10 @@ export function createPostgresNotificationStore(
         client.release();
       }
     },
-    async listUnrecoveredSms() {
+    async listUnrecoveredSms(type) {
       const result = await query(
-        "SELECT * FROM tc_notification_deliveries WHERE channel='sms' AND status IN ('failed','dead') AND recovery_handled_at IS NULL ORDER BY updated_at LIMIT 25",
+        "SELECT d.* FROM tc_notification_deliveries d JOIN tc_notifications n ON n.id=d.notification_id AND n.organization_id=d.organization_id WHERE d.channel='sms' AND d.status IN ('failed','dead') AND d.recovery_handled_at IS NULL AND ($1::text IS NULL OR n.type=$1) ORDER BY d.updated_at LIMIT 25",
+        [type ?? null],
       );
       return result.rows.map(deliveryFrom);
     },
