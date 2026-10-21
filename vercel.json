@@ -26,7 +26,7 @@
     },
     {
       "path": "/api/gmail/sync/tick",
-      "schedule": "*/15 * * * *"
+      "schedule": "* * * * *"
     }
   ]
 }

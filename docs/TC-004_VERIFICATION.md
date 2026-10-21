@@ -43,10 +43,10 @@ and `RESEND_FROM_EMAIL`. SMS needs Twilio credentials, `TWILIO_FROM_NUMBER`, and
 organization's business phone number. Demo organizations always simulate delivery.
 
 For Google push, configure `GOOGLE_GMAIL_CLIENT_ID`, `GOOGLE_GMAIL_CLIENT_SECRET`,
-the redirect URI, `GMAIL_PUBSUB_TOPIC`, and `GMAIL_WEBHOOK_TOKEN`. Create the Pub/Sub
+the redirect URI, `GMAIL_PUBSUB_TOPIC`, `GMAIL_PUSH_AUDIENCE`, and `GMAIL_PUSH_SERVICE_ACCOUNT`. Create the Pub/Sub
 topic in the OAuth client's project, give
 `gmail-api-push@system.gserviceaccount.com` publisher access, and create an HTTPS
-push subscription targeting `/api/webhooks/gmail?token=<configured-secret>`.
+authenticated OIDC push subscription targeting `/api/webhooks/gmail` (no query; see GMAIL_SETUP.md).
 Keep secret values in secure server settings. Connecting/syncing a mailbox then
 registers its watch automatically; background polling remains available when a
 watch cannot be registered or has expired.

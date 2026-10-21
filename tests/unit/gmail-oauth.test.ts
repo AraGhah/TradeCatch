@@ -124,9 +124,9 @@ describe("gmail OAuth", () => {
     }
   });
 
-  it("reports push as configured only when both the topic and the shared secret exist", () => {
+  it("reports push as configured only when the topic, audience and service account exist", () => {
     assert.equal(gmailPushConfigured({ ...TEST_ENV, pubsubTopic: "projects/p/topics/t" }), false);
-    assert.equal(gmailPushConfigured({ ...TEST_ENV, pubsubTopic: "projects/p/topics/t", webhookToken: "s" }), true);
+    assert.equal(gmailPushConfigured({ ...TEST_ENV, pubsubTopic: "projects/p/topics/t", pushAudience: "https://example.test/api/webhooks/gmail", pushServiceAccount: "push@p.iam.gserviceaccount.com" }), true);
   });
 });
 

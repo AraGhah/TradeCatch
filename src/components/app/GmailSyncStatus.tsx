@@ -21,6 +21,13 @@ export function GmailSyncStatus({
     pushEnabled,
     pushConfigured,
   });
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    const update = () => setNow(Date.now());
+    update();
+    const timer = window.setInterval(update, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   useEffect(() => {
     const update = (event: Event) => {
       const status = (event as CustomEvent<{ status?: GmailPublicStatus }>)
@@ -57,6 +64,12 @@ export function GmailSyncStatus({
               : "pollingFallback",
         )}
       </p>
+      {now !== null &&
+        (!valid || now - Date.parse(current.lastSyncAt!) > 15 * 60_000) && (
+          <p className="mt-1 text-amber-800" data-testid="gmail-sync-delayed">
+            {t("syncDelayed")}
+          </p>
+        )}
     </div>
   );
 }

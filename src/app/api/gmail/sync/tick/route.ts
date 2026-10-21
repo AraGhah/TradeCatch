@@ -22,7 +22,7 @@ async function tick(request: NextRequest) {
 
   const batch = Number(process.env.GMAIL_CRON_BATCH);
   const result = await syncAccountsDue(
-    Number.isFinite(batch) && batch > 0 ? Math.min(batch, 25) : 10,
+    Number.isFinite(batch) && batch > 0 ? Math.min(Math.trunc(batch), 25) : 2,
   );
   return NextResponse.json({ ok: true, ...result });
 }
