@@ -1,8 +1,9 @@
+import { isRealProductionRuntime } from "./environment";
+
 /**
  * Production configuration guards.
- * Missing Turnstile/Resend is allowed in every environment (with warnings) so
- * book-audit keeps accepting leads while those services are being set up —
- * see getProductionConfigErrors below for the (now-empty) hard-block list.
+ * Production booking intake requires bot protection and durable storage.
+ * Email outages leave durable retry work rather than blocking saved leads.
  *
  * For deployment isolation (staging vs live), prefer helpers in
  * `@/lib/environment` — especially `isRealProductionRuntime()` and
@@ -25,8 +26,8 @@ export {
 
 export function isTurnstileConfigured(): boolean {
   return Boolean(
-    process.env.TURNSTILE_SECRET_KEY &&
-    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+    process.env.TURNSTILE_SECRET_KEY?.trim() &&
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim(),
   );
 }
 
@@ -34,7 +35,8 @@ export function isResendConfigured(): boolean {
   return Boolean(
     process.env.RESEND_API_KEY &&
     process.env.RESEND_FROM_EMAIL &&
-    process.env.RESEND_NOTIFY_EMAIL,
+    (process.env.RESEND_NOTIFY_EMAIL?.trim() ||
+      process.env.ADMIN_ALERT_EMAIL?.trim()),
   );
 }
 
@@ -74,11 +76,41 @@ export function isE2eHarness(
   }
 }
 
-/**
- * Intentionally always empty: book-audit no longer refuses submissions when
- * Turnstile/Resend are unconfigured. Kept as a call site so a future hard
- * requirement (if ever needed) has an obvious place to live.
- */
+export function requiresProductionLeadProtection(): boolean {
+  return isProductionRuntime() && !isE2eHarness();
+}
+
+/** Staging production builds enforce the same boundary; only the local harness is exempt. */
 export function getProductionConfigErrors(): string[] {
-  return [];
+  if (!requiresProductionLeadProtection()) return [];
+  const errors: string[] = [];
+  const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY?.trim();
+  if (!secret) errors.push("TURNSTILE_SECRET_KEY");
+  if (!siteKey) errors.push("NEXT_PUBLIC_TURNSTILE_SITE_KEY");
+  // Cloudflare's public dummy keys must never protect the live site.
+  if (isRealProductionRuntime()) {
+    if (
+      [
+        "1x0000000000000000000000000000000AA",
+        "2x0000000000000000000000000000000AA",
+        "3x0000000000000000000000000000000AA",
+      ].includes(secret || "")
+    )
+      errors.push("TURNSTILE_SECRET_KEY must not be a test key");
+    if (
+      [
+        "1x00000000000000000000AA",
+        "2x00000000000000000000AB",
+        "1x00000000000000000000BB",
+        "2x00000000000000000000BB",
+        "3x00000000000000000000FF",
+      ].includes(siteKey || "")
+    )
+      errors.push("NEXT_PUBLIC_TURNSTILE_SITE_KEY must not be a test key");
+  }
+  if (!isDurableMissedCallStoreConfigured())
+    errors.push("MISSED_CALL_DURABLE_STORE");
+  if (!process.env.DATABASE_URL?.trim()) errors.push("DATABASE_URL");
+  return errors;
 }

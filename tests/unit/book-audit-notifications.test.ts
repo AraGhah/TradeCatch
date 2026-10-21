@@ -32,6 +32,10 @@ const managed = [
   "MISSED_CALL_OPS_SECRET",
   "CRON_SECRET",
   "TURNSTILE_SECRET_KEY",
+  "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+  "NEXT_PUBLIC_SITE_URL",
+  "TRADECATCH_E2E",
+  "ADMIN_ALERT_EMAIL",
   "RESEND_API_KEY",
   "RESEND_FROM_EMAIL",
   "RESEND_NOTIFY_EMAIL",
@@ -173,10 +177,19 @@ describe(
         RESEND_NOTIFY_EMAIL: "admin@example.com",
         LEADS_WEBHOOK_URL: "https://crm.example.com",
         ERROR_WEBHOOK_URL: "https://monitor.example.com",
+        TURNSTILE_SECRET_KEY: "tc024-test-secret",
+        NEXT_PUBLIC_TURNSTILE_SITE_KEY: "tc024-test-site",
+        NEXT_PUBLIC_SITE_URL: "https://staging.example.com",
       });
       await db.query("TRUNCATE mc_book_audit_leads CASCADE");
-      mock.method(globalThis, "fetch", async () =>
-        Response.json({ message: "simulated outage" }, { status: 503 }),
+      mock.method(globalThis, "fetch", async (url: unknown) =>
+        String(url).includes("/turnstile/v0/siteverify")
+          ? Response.json({
+              success: true,
+              hostname: "staging.example.com",
+              action: "book-audit",
+            })
+          : Response.json({ message: "simulated outage" }, { status: 503 }),
       );
     });
     function payload(): BookAuditPayload {
@@ -403,6 +416,63 @@ describe(
             [id],
           )
         ).rows[0].delivered_at,
+      );
+    });
+
+    it("falls back to the administrator email when the monitoring webhook is absent", async () => {
+      const id = await save();
+      for (let n = 0; n < 3; n++) {
+        await due(id);
+        await processBookAuditNotifications({
+          leadId: id,
+          send: async () => false,
+        });
+      }
+      delete process.env.ERROR_WEBHOOK_URL;
+      process.env.ADMIN_ALERT_EMAIL = "privacy-admin@example.invalid";
+      let alerts = 0;
+      mock.method(
+        globalThis,
+        "fetch",
+        async (_url: unknown, init?: RequestInit) => {
+          const body = JSON.parse(String(init?.body));
+          if (
+            body.subject === "TradeCatch: booking notifications need attention"
+          ) {
+            alerts++;
+            assert.ok(
+              JSON.stringify(body.to).includes("privacy-admin@example.invalid"),
+            );
+            assert.equal(
+              String(body.html).includes("customer@example.com"),
+              false,
+            );
+            assert.equal(
+              new Headers(init?.headers).get("idempotency-key"),
+              `book-audit/${id}/admin_alert`,
+            );
+            return Response.json({ id: "tc024-accepted-alert" });
+          }
+          return Response.json(
+            { error: "staging provider down" },
+            { status: 503 },
+          );
+        },
+      );
+      await due(id);
+      await processBookAuditNotifications({ leadId: id });
+      assert.equal(alerts, 1);
+      assert.ok(
+        (
+          await db.query(
+            "SELECT delivered_at FROM mc_book_audit_notifications WHERE lead_id=$1 AND channel='admin_alert'",
+            [id],
+          )
+        ).rows[0].delivered_at,
+      );
+      assert.equal(
+        (await getBookAuditNotificationStatus(id)).notificationsDelivered,
+        false,
       );
     });
 

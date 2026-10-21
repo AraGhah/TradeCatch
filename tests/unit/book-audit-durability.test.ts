@@ -16,6 +16,9 @@ const envKeys = [
   "MISSED_CALL_DURABLE_STORE",
   "SAAS_DURABLE_STORE",
   "TURNSTILE_SECRET_KEY",
+  "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+  "NEXT_PUBLIC_SITE_URL",
+  "ADMIN_ALERT_EMAIL",
   "ERROR_WEBHOOK_URL",
   "RESEND_API_KEY",
   "RESEND_FROM_EMAIL",
@@ -76,6 +79,9 @@ beforeEach(() => {
     RESEND_FROM_EMAIL: "test@example.com",
     RESEND_NOTIFY_EMAIL: "ops@example.com",
     LEADS_WEBHOOK_URL: "https://crm.example.com",
+    TURNSTILE_SECRET_KEY: "tc024-test-secret",
+    NEXT_PUBLIC_TURNSTILE_SITE_KEY: "tc024-test-site",
+    NEXT_PUBLIC_SITE_URL: "https://staging.example.com",
   });
   inserts = 0;
   deliveries = 0;
@@ -100,7 +106,13 @@ beforeEach(() => {
       return { rows: [] };
     },
   );
-  mock.method(globalThis, "fetch", async () => {
+  mock.method(globalThis, "fetch", async (url: unknown) => {
+    if (String(url).includes("/turnstile/v0/siteverify"))
+      return Response.json({
+        success: true,
+        hostname: "staging.example.com",
+        action: "book-audit",
+      });
     deliveries++;
     return Response.json(
       { message: "Simulated delivery failure" },
@@ -123,6 +135,62 @@ afterEach(() => {
 after(closePgPool);
 
 describe("book-audit durable acceptance", () => {
+  it("does not let the E2E flag exempt a public origin", async () => {
+    process.env.TRADECATCH_E2E = "1";
+    delete process.env.TURNSTILE_SECRET_KEY;
+    assert.equal((await submit()).status, 503);
+    assert.equal(inserts, 0);
+  });
+  it("preserves the loopback-only harness without pretending storage is optional", async () => {
+    process.env.TRADECATCH_E2E = "1";
+    process.env.NEXT_PUBLIC_SITE_URL = "http://localhost:3000";
+    delete process.env.TURNSTILE_SECRET_KEY;
+    assert.equal((await submit()).status, 200);
+    delete process.env.MISSED_CALL_DURABLE_STORE;
+    assert.equal((await submit()).status, 503);
+  });
+  it("rejects public Turnstile dummy keys on the live production site", async () => {
+    process.env.TRADECATCH_ENV = "production";
+    process.env.TURNSTILE_SECRET_KEY = "1x0000000000000000000000000000000AA";
+    process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY = "1x00000000000000000000AA";
+    assert.equal((await submit()).status, 503);
+    assert.equal(inserts, 0);
+  });
+  for (const key of [
+    "TURNSTILE_SECRET_KEY",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY",
+  ]) {
+    for (const value of [undefined, "   "]) {
+      it(`rejects missing or blank ${key} before any database or provider work`, async () => {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+        assert.equal((await submit()).status, 503);
+        assert.equal(inserts, 0);
+        assert.equal(deliveries, 0);
+      });
+    }
+  }
+  for (const result of [
+    { success: false },
+    { success: true, hostname: "localhost", action: "book-audit" },
+    { success: true, hostname: "staging.example.com", action: "login" },
+    { success: true, hostname: "staging.example.com" },
+    { success: "yes" },
+  ]) {
+    it(`does not save a lead for invalid verification ${JSON.stringify(result)}`, async () => {
+      mock.method(globalThis, "fetch", async () => Response.json(result));
+      assert.equal((await submit()).status, 400);
+      assert.equal(inserts, 0);
+      assert.equal(deliveries, 0);
+    });
+  }
+  it("does not save when the verifier is unavailable", async () => {
+    mock.method(globalThis, "fetch", async () => {
+      throw new Error("staging verifier unavailable");
+    });
+    assert.equal((await submit()).status, 400);
+    assert.equal(inserts, 0);
+  });
   for (const environment of ["staging", "production"]) {
     it(`rejects disabled storage on ${environment}, including repeated submissions`, async () => {
       process.env.TRADECATCH_ENV = environment;
@@ -202,6 +270,12 @@ describe("book-audit durable acceptance", () => {
       globalThis,
       "fetch",
       async (_url: unknown, init?: RequestInit) => {
+        if (String(_url).includes("/turnstile/v0/siteverify"))
+          return Response.json({
+            success: true,
+            hostname: "staging.example.com",
+            action: "book-audit",
+          });
         const [command] = JSON.parse(String(init?.body));
         commands.push(command);
         return Response.json({
@@ -222,6 +296,14 @@ describe("book-audit durable acceptance", () => {
     insert = async (params) => {
       assert.equal(deliveries, 0);
       const storedPayload = JSON.parse(String(params[11]));
+      assert.equal(params[6], true);
+      assert.equal(params[7], false);
+      assert.match(
+        String(params[8]),
+        /I agree to be contacted about this request/,
+      );
+      assert.equal(params[9], "book-audit");
+      assert.ok(Number.isFinite(Date.parse(String(params[10]))));
       assert.equal(storedPayload.turnstileToken, undefined);
       assert.equal(storedPayload.email, "tc001@example.com");
       return save(params);

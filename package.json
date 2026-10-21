@@ -30,9 +30,9 @@
     "check:cloudflare-bundle": "wrangler deploy --dry-run --outdir .wrangler/dry-run",
     "check:cloudflare-bundle:staging": "wrangler deploy --env staging --dry-run --outdir .wrangler/dry-run-staging",
     "preview": "node scripts/clear-open-next.js && opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "node scripts/require-green-ci.js && node scripts/clear-open-next.js && opennextjs-cloudflare build && node scripts/require-green-ci.js && opennextjs-cloudflare deploy",
-    "deploy:staging": "node scripts/require-green-ci.js --staging && node scripts/clear-open-next.js && opennextjs-cloudflare build && node scripts/require-green-ci.js --staging && opennextjs-cloudflare deploy --env staging",
-    "upload": "node scripts/require-green-ci.js && node scripts/clear-open-next.js && opennextjs-cloudflare build && node scripts/require-green-ci.js && opennextjs-cloudflare upload",
+    "deploy": "node scripts/release-cloudflare.js deploy",
+    "deploy:staging": "node scripts/release-cloudflare.js deploy --staging",
+    "upload": "node scripts/release-cloudflare.js upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv --env-file scripts/wrangler-types.env",
     "cf-typecheck": "wrangler types --check --env-interface CloudflareEnv --env-file scripts/wrangler-types.env",
     "check:release": "node scripts/require-green-ci.js"

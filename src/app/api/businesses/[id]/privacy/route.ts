@@ -70,10 +70,22 @@ export async function PUT(request: NextRequest, { params }: Params) {
       { error: "Invalid privacy settings." },
       { status: 400 },
     );
-  const settings = await getSecurityService().saveRecording({
-    organizationId: id,
-    ...parsed.data,
-    updatedAt: new Date().toISOString(),
-  });
-  return NextResponse.json({ ok: true, settings });
+  try {
+    const settings = await getSecurityService().saveRecording({
+      organizationId: id,
+      ...parsed.data,
+      updatedAt: new Date().toISOString(),
+    });
+    return NextResponse.json({ ok: true, settings });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof SecurityError
+            ? error.message
+            : "Unable to save privacy settings.",
+      },
+      { status: error instanceof SecurityError ? error.status : 500 },
+    );
+  }
 }

@@ -48,7 +48,9 @@ export async function sendBookAuditNotifyEmail(
 ): Promise<{ sent: boolean }> {
   const resend = getClient();
   const fromEmail = process.env.RESEND_FROM_EMAIL;
-  const notifyEmail = process.env.RESEND_NOTIFY_EMAIL;
+  const notifyEmail =
+    process.env.RESEND_NOTIFY_EMAIL?.trim() ||
+    process.env.ADMIN_ALERT_EMAIL?.trim();
 
   if (!resend || !fromEmail || !notifyEmail) {
     console.warn(

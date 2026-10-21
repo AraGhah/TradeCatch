@@ -9,7 +9,7 @@ export async function verifyTurnstileToken(
   remoteIp?: string,
   expectedAction = "book-audit",
 ): Promise<{ configured: boolean; success: boolean; error?: string }> {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
+  const secret = process.env.TURNSTILE_SECRET_KEY?.trim();
   if (!secret) {
     console.warn(
       "[turnstile] TURNSTILE_SECRET_KEY is not set — skipping bot verification.",
@@ -50,11 +50,17 @@ export async function verifyTurnstileToken(
       };
     }
 
-    const allowedHosts = new Set(["localhost"]);
+    const allowedHosts = new Set<string>();
+    if (!requiresProductionLeadProtection()) allowedHosts.add("localhost");
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
     if (siteUrl) {
       try {
-        allowedHosts.add(new URL(siteUrl).hostname.toLowerCase());
+        const host = new URL(siteUrl).hostname.toLowerCase();
+        if (
+          !requiresProductionLeadProtection() ||
+          !["localhost", "127.0.0.1", "[::1]"].includes(host)
+        )
+          allowedHosts.add(host);
       } catch {
         throw new Error("NEXT_PUBLIC_SITE_URL is not a valid URL");
       }
@@ -94,3 +100,4 @@ export async function verifyTurnstileToken(
     return { configured: true, success: false, error: message };
   }
 }
+import { requiresProductionLeadProtection } from "./config";
