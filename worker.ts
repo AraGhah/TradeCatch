@@ -3,6 +3,7 @@
 // @ts-ignore -- .open-next/worker.js is generated after a clean type-check.
 import openNextWorker from "./.open-next/worker.js";
 import { runCloudflareCron } from "./src/lib/cloudflare-scheduler";
+import { withPostgresRequestScope } from "./src/lib/postgres-pool";
 
 type TradeCatchWorkerEnv = CloudflareEnv & {
   CRON_SECRET?: string;
@@ -48,27 +49,31 @@ function schedulerOrigin(env: TradeCatchWorkerEnv): string {
 
 export default {
   fetch(request, env, ctx) {
-    return openNextWorker.fetch(request, env, ctx);
+    return withPostgresRequestScope(() =>
+      openNextWorker.fetch(request, env, ctx),
+    );
   },
 
   async scheduled(controller, env, ctx) {
     const origin = schedulerOrigin(env);
 
     try {
-      const result = await runCloudflareCron(controller.cron, (path) =>
-        openNextWorker.fetch(
-          new Request(new URL(path, origin), {
-            method: "POST",
-            headers: {
-              authorization: `Bearer ${schedulerSecret(env, path)}`,
-              "user-agent": "TradeCatch-Cloudflare-Scheduler/1.0",
-              // Existing routes use this authenticated marker to distinguish a
-              // scheduler from manual ops requests that require X-Ops-Actor.
-              "x-vercel-cron": "cloudflare",
-            },
-          }),
-          env,
-          ctx,
+      const result = await withPostgresRequestScope(() =>
+        runCloudflareCron(controller.cron, (path) =>
+          openNextWorker.fetch(
+            new Request(new URL(path, origin), {
+              method: "POST",
+              headers: {
+                authorization: `Bearer ${schedulerSecret(env, path)}`,
+                "user-agent": "TradeCatch-Cloudflare-Scheduler/1.0",
+                // Existing routes use this authenticated marker to distinguish a
+                // scheduler from manual ops requests that require X-Ops-Actor.
+                "x-vercel-cron": "cloudflare",
+              },
+            }),
+            env,
+            ctx,
+          ),
         ),
       );
       console.log(

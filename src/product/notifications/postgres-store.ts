@@ -257,7 +257,7 @@ export function createPostgresNotificationStore(
       );
       return res.rows.map(deliveryFrom);
     },
-    async claimDeliveries(nowIso, type) {
+    async claimDeliveries(nowIso, type, limit = 25) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -290,11 +290,16 @@ export function createPostgresNotificationStore(
             WHERE e.position <= $3 - (SELECT count(*) FROM tc_notification_dispatches r WHERE r.organization_id=e.organization_id)
           ), due AS (
             SELECT d.id FROM eligible e JOIN tc_notification_deliveries d ON d.id=e.id
-            ORDER BY e.priority,e.created_at,d.id LIMIT 25 FOR UPDATE OF d SKIP LOCKED
+            ORDER BY e.priority,e.created_at,d.id LIMIT $4 FOR UPDATE OF d SKIP LOCKED
           )
           UPDATE tc_notification_deliveries d SET status='processing',provider_sid=NULL,updated_at=$1
           FROM due WHERE d.id=due.id RETURNING d.*, (SELECT c.priority FROM candidates c WHERE c.id=d.id) AS dispatch_priority`,
-          [nowIso, type ?? null, DELIVERY_RATE_LIMIT],
+          [
+            nowIso,
+            type ?? null,
+            DELIVERY_RATE_LIMIT,
+            Math.max(1, Math.min(limit, 25)),
+          ],
         );
         for (const row of res.rows) {
           if (row.channel !== "in_app")

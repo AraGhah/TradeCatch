@@ -56,6 +56,7 @@ export type NotificationStore = {
   claimDeliveries(
     nowIso: string,
     type?: NotificationType,
+    limit?: number,
   ): Promise<NotificationDelivery[]>;
   findDeliveryBySid(sid: string): Promise<NotificationDelivery | null>;
   applySmsStatus(
@@ -231,7 +232,7 @@ export function createMemoryNotificationStore(): NotificationStore {
         )
         .map((row) => structuredClone(row));
     },
-    async claimDeliveries(nowIso, type) {
+    async claimDeliveries(nowIso, type, limit = 25) {
       for (const row of deliveries.values()) {
         if (
           (row.status === "pending" ||
@@ -260,7 +261,7 @@ export function createMemoryNotificationStore(): NotificationStore {
         );
       const claimed: NotificationDelivery[] = [];
       for (const row of rows) {
-        if (claimed.length >= 25) break;
+        if (claimed.length >= Math.max(1, Math.min(limit, 25))) break;
         if (row.channel !== "in_app") {
           const used = reservations.filter(
             (r) =>
