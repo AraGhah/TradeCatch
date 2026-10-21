@@ -95,3 +95,60 @@ use a later event or a fresh Stripe subscription update to refresh its state.
 References: [subscription webhooks](https://docs.stripe.com/billing/subscriptions/webhooks),
 [event ordering and retries](https://docs.stripe.com/webhooks), and
 [Stripe test PaymentMethods](https://docs.stripe.com/testing).
+
+## TC-009 / TC-010 — Subscription checks and customer billing portal
+
+TC-009 repeats the subscription-sync finding originally fixed as Problem 3.
+The current webhook already covers creation, updates, cancellation, payment
+failure and recovery. Its PostgreSQL suite is now mandatory in the quality job,
+using a disposable PostgreSQL 16 service and fictional data. It no longer skips
+that suite in GitHub Actions. Local validation ran 50 focused tests with zero
+failures/skips against isolated PostgreSQL, covering billing, portal access and
+login confirmation.
+
+TC-010 replaces STRIPE_BILLING_PORTAL_URL with POST /api/billing/portal.
+Owners/admins of the signed-in organization can create a fresh Stripe session.
+The endpoint reads customer_id and livemode from tc_stripe_customers, never from
+the browser, an email address, a URL parameter or organization metadata supplied
+by the caller. Unlinked businesses receive HTTP 409; provider/storage/configuration
+failures return a generic HTTP 503. No customer is automatically created.
+
+The existing live/test API keys are reused. Demo organizations require test-mode
+bindings, and production organizations require live-mode bindings. The portal
+uses the Stripe account's default Billing Portal configuration in the matching
+mode: enable the desired invoice, payment-method and subscription features in
+Stripe's portal settings before customer use. A missing/default inactive portal
+configuration fails visibly; it never falls back to a shared static URL.
+
+The server fixes return_url to /billing (French /fr/facturation) on the configured
+NEXT_PUBLIC_SITE_URL origin. Browser-supplied return URLs and customer/mode/org
+overrides are rejected. JSON clients receive the validated Stripe session URL
+and navigate there; ordinary form POSTs receive a 303 redirect. The only allowed
+destination is an HTTPS billing.stripe.com portal session. Responses are private
+and not cached. Session URLs/tokens and provider response bodies are not logged
+or included in audit events.
+
+The endpoint verifies a signed, unexpired, non-revoked session and current
+membership. It requires the organization's own owner/admin role; platform-admin
+status alone grants no billing override. It rejects cross-site cookie writes and
+oversized/invalid bodies, limits requests to five per user/business per ten
+minutes, and records billing_portal_created / billing_portal_failed audit events.
+
+Billing recovery is available outside /app. Inactive owners/admins may complete
+normal magic-link confirmation and reach the billing page; inactive members
+cannot sign in. Billing access returns no product features for inactive accounts.
+All normal tenant/feature helpers still reject inactive organizations, and only
+the webhook can restore the plan/access after Stripe confirms an active state.
+The page and button are available in English and French, with retryable errors.
+
+Focused tests cover authorization, tenant isolation, forged/revoked/expired and
+mismatched sessions, POST/303 behavior, CSRF, input bounds, mode separation, bad
+provider responses, missing bindings, recovery restrictions and rate limits.
+Browser coverage exercises missing-link/provider errors and a fake Stripe portal
+redirect without contacting payment providers. Full CI remains the release gate.
+
+No new database migration or Stripe package is required. The customer-binding
+tables from migration 021_stripe_billing remain the system of record.
+
+Portal API reference:
+[Create a portal session](https://docs.stripe.com/api/customer_portal/sessions/create).

@@ -39,6 +39,7 @@ export const routing = defineRouting({
       en: "/demo-video",
       fr: "/demo-video",
     },
+    "/billing": { en: "/billing", fr: "/facturation" },
     "/login": {
       en: "/login",
       fr: "/connexion",

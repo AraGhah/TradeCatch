@@ -55,7 +55,11 @@ test.describe("receptionist workspace pages", () => {
 
     await page.goto("/app/receptionist");
     await expect(
-      page.getByRole("heading", { name: "Receptionist", level: 1, exact: true }),
+      page.getByRole("heading", {
+        name: "Receptionist",
+        level: 1,
+        exact: true,
+      }),
     ).toBeVisible();
     await expect(
       page.getByText(/phone client is not linked yet/i),
@@ -76,23 +80,52 @@ test.describe("receptionist workspace pages", () => {
     ).toEqual([]);
 
     await page.goto("/app/settings/account");
-    const me=await (await page.request.get("/api/app/me")).json();
-    const orgId=me.organization.id;
-    expect((await page.request.get("/api/businesses/another-business/account/export")).status()).toBe(403);
-    const downloadPromise=page.waitForEvent("download");
-    await page.getByRole("button",{name:"Export data",exact:true}).click();
-    const download=await downloadPromise;
-    expect(download.suggestedFilename()).toMatch(/^tradecatch-account-export-.*\.zip$/);
-    const path=await download.path();expect(path).toBeTruthy();
-    const archive=readExportZip(await readFile(path!));
+    const me = await (await page.request.get("/api/app/me")).json();
+    const orgId = me.organization.id;
+    expect(
+      (
+        await page.request.get(
+          "/api/businesses/another-business/account/export",
+        )
+      ).status(),
+    ).toBe(403);
+    const downloadPromise = page.waitForEvent("download");
+    await page
+      .getByRole("button", { name: "Export data", exact: true })
+      .click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(
+      /^tradecatch-account-export-.*\.zip$/,
+    );
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    const archive = readExportZip(await readFile(path!));
     expect(JSON.parse(archive["manifest.json"]).organizationId).toBe(orgId);
     expect(archive["README.txt"]).toContain("Excluded:");
     expect(archive["customers.csv"]).toBeTruthy();
-    await expect(page.getByRole("status").filter({hasText:"Your account archive has downloaded"})).toBeVisible();
-    await page.route(`**/api/businesses/${orgId}/account/export`,route=>route.fulfill({status:503,contentType:"application/json",body:JSON.stringify({error:"test failure"})}));
-    await page.getByRole("button",{name:"Export data",exact:true}).click();
-    await expect(page.getByRole("alert").filter({hasText:"Could not download your account archive"})).toBeVisible();
-    await expect(page.getByRole("button",{name:"Export data",exact:true})).toBeEnabled();
+    await expect(
+      page
+        .getByRole("status")
+        .filter({ hasText: "Your account archive has downloaded" }),
+    ).toBeVisible();
+    await page.route(`**/api/businesses/${orgId}/account/export`, (route) =>
+      route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({ error: "test failure" }),
+      }),
+    );
+    await page
+      .getByRole("button", { name: "Export data", exact: true })
+      .click();
+    await expect(
+      page
+        .getByRole("alert")
+        .filter({ hasText: "Could not download your account archive" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Export data", exact: true }),
+    ).toBeEnabled();
     await page.unroute(`**/api/businesses/${orgId}/account/export`);
 
     await page.goto("/app/email");
@@ -126,10 +159,66 @@ test.describe("receptionist workspace pages", () => {
           `${v.id}: ${v.help} ${JSON.stringify(v.nodes.map((n) => n.target))}`,
       ),
     ).toEqual([]);
+
+    await page.goto("/app/settings/account");
+    const billing = page.getByRole("button", {
+      name: "Open billing",
+      exact: true,
+    });
+    await expect(billing).toBeVisible();
+    await page.route("**/api/billing/portal", (route) =>
+      route.fulfill({ status: 409, json: { code: "not_linked" } }),
+    );
+    await billing.click();
+    await expect(
+      page
+        .getByRole("alert")
+        .filter({ hasText: "not linked to Stripe billing" }),
+    ).toBeVisible();
+    await expect(billing).toBeEnabled();
+    await page.unroute("**/api/billing/portal");
+    await page.route("**/api/billing/portal", (route) =>
+      route.fulfill({ status: 503, json: { code: "unavailable" } }),
+    );
+    await billing.click();
+    await expect(
+      page
+        .getByRole("alert")
+        .filter({ hasText: "Billing could not be opened" }),
+    ).toBeVisible();
+    await expect(billing).toBeEnabled();
+    await page.unroute("**/api/billing/portal");
+    await page.route("https://billing.stripe.com/p/session/test_e2e", (route) =>
+      route.fulfill({
+        contentType: "text/html",
+        body: "<h1>Stripe test portal</h1>",
+      }),
+    );
+    await page.route("**/api/billing/portal", (route) => {
+      expect(route.request().method()).toBe("POST");
+      expect(route.request().postDataJSON()).toEqual({ locale: "en" });
+      return route.fulfill({
+        status: 200,
+        json: { url: "https://billing.stripe.com/p/session/test_e2e" },
+      });
+    });
+    await billing.click();
+    await expect(page).toHaveURL(
+      "https://billing.stripe.com/p/session/test_e2e",
+    );
+    await expect(
+      page.getByRole("heading", { name: "Stripe test portal" }),
+    ).toBeVisible();
   });
 
   test("owner API refuses unauthenticated access", async ({ request }) => {
     expect((await request.get("/api/app/receptionist")).status()).toBe(401);
+    expect(
+      (
+        await request.post("/api/billing/portal", { data: { locale: "en" } })
+      ).status(),
+    ).toBe(401);
+    expect((await request.get("/api/billing/portal")).status()).toBe(405);
     expect(
       (await request.put("/api/app/receptionist", { data: {} })).status(),
     ).toBe(401);

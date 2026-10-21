@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { requireTenantContext } from "@/product/saas/tenant";
+import {
+  requireBillingContext,
+  requireTenantContext,
+} from "@/product/saas/tenant";
 import { AppShell } from "@/components/app/AppShell";
 import { gmailConfigured } from "@/product/gmail/oauth";
 
@@ -16,6 +19,12 @@ export default async function AppLayout({
 
   const auth = await requireTenantContext();
   if (!auth.ok) {
+    if (auth.status === 403) {
+      const billing = await requireBillingContext();
+      if (billing.ok && billing.ctx.organization.status !== "active") {
+        redirect(locale === "fr" ? "/fr/facturation" : "/billing");
+      }
+    }
     redirect(locale === "fr" ? "/fr/connexion" : "/login");
   }
 

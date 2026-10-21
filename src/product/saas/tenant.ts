@@ -1,16 +1,10 @@
 import { cookies } from "next/headers";
+import { canManageBilling } from "./billing-access";
 import { isPlatformAdminUser } from "@/product/saas/platform-admin";
-import {
-  featuresForPlan,
-  orgHasFeature,
-  type FeatureId,
-} from "./entitlements";
+import { featuresForPlan, orgHasFeature, type FeatureId } from "./entitlements";
 import { getSaasStore } from "./runtime";
 import { getAuthSecret } from "./auth/secret";
-import {
-  SESSION_COOKIE,
-  verifySessionClaims,
-} from "./auth/session-token";
+import { SESSION_COOKIE, verifySessionClaims } from "./auth/session-token";
 import type { TenantContext } from "./types";
 
 export { getAuthSecret };
@@ -33,7 +27,9 @@ export async function readSessionClaimsFromCookies(): Promise<{
  * Verifies signed cookie then loads org membership from the SaaS store
  * (revocation + status checks).
  */
-export async function requireTenantContext(): Promise<
+async function resolveTenantContext(
+  billingOnly = false,
+): Promise<
   | { ok: true; ctx: TenantContext }
   | { ok: false; status: 401 | 403; error: string }
 > {
@@ -58,10 +54,7 @@ export async function requireTenantContext(): Promise<
   ) {
     return { ok: false, status: 401, error: "Session expired." };
   }
-  if (
-    session.userId !== claims.uid ||
-    session.organizationId !== claims.oid
-  ) {
+  if (session.userId !== claims.uid || session.organizationId !== claims.oid) {
     return { ok: false, status: 401, error: "Session mismatch." };
   }
 
@@ -74,8 +67,16 @@ export async function requireTenantContext(): Promise<
   if (!user || !organization || !membership) {
     return { ok: false, status: 403, error: "Membership not found." };
   }
-  if (organization.status !== "active") {
+  if (organization.status !== "active" && !billingOnly) {
     return { ok: false, status: 403, error: "Organization is not active." };
+  }
+
+  if (billingOnly && !canManageBilling(membership.role)) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Billing requires an owner or administrator.",
+    };
   }
 
   // Being on the administrator list identifies a person; it grants nothing by
@@ -86,7 +87,10 @@ export async function requireTenantContext(): Promise<
   let adminVerified = false;
   if (adminIdentity) {
     const { getSecurityService } = await import("@/product/security/runtime");
-    adminVerified = await getSecurityService().sessionAllowsAdmin(user.id, session.id);
+    adminVerified = await getSecurityService().sessionAllowsAdmin(
+      user.id,
+      session.id,
+    );
   }
 
   return {
@@ -96,7 +100,10 @@ export async function requireTenantContext(): Promise<
       user,
       organization,
       membership,
-      features: featuresForPlan(organization.plan),
+      features:
+        organization.status === "active"
+          ? featuresForPlan(organization.plan)
+          : [],
       isPlatformAdminIdentity: adminIdentity,
       isPlatformAdmin: adminIdentity && adminVerified,
     },
@@ -123,4 +130,14 @@ export function forbiddenFeatureResponse(feature: FeatureId) {
 
 export function unauthorizedTenantResponse(message = "Unauthorized") {
   return Response.json({ error: message }, { status: 401 });
+}
+
+/** Normal application access always requires an active organization. */
+export function requireTenantContext() {
+  return resolveTenantContext();
+}
+
+/** Billing recovery only. Never use this helper to authorize product features. */
+export function requireBillingContext() {
+  return resolveTenantContext(true);
 }

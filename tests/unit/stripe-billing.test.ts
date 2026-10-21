@@ -12,6 +12,7 @@ import {
 } from "node:test";
 import { NextRequest } from "next/server";
 import { Pool } from "pg";
+import { createStripePortalSession } from "../../src/product/saas/stripe-portal";
 import { POST } from "../../src/app/api/webhooks/stripe/route";
 import { closePgPool } from "../../src/product/missed-call/postgres-store";
 import { createPostgresSaasStore } from "../../src/product/saas/postgres-store";
@@ -143,22 +144,37 @@ describe("Stripe billing in isolated PostgreSQL", { skip: !url }, () => {
     networkFailure = false;
     customerOrg = organizationId;
     customerDeleted = false;
-    mock.method(globalThis, "fetch", async (input: string | URL | Request) => {
-      if (networkFailure) return Response.json({}, { status: 503 });
-      const parsed = new URL(String(input));
-      if (parsed.pathname.endsWith("/customers/cus_test") && customerDeleted)
-        return Response.json({ id: "cus_test", deleted: true });
-      if (parsed.pathname.endsWith("/customers/cus_test"))
-        return Response.json({
-          id: "cus_test",
-          livemode: false,
-          metadata: customerOrg ? { organization_id: customerOrg } : {},
-        });
-      assert.equal(parsed.pathname, "/v1/subscriptions");
-      assert.equal(parsed.searchParams.get("customer"), "cus_test");
-      assert.equal(parsed.searchParams.get("status"), "all");
-      return Response.json({ data: subscriptions, has_more: false });
-    });
+    mock.method(
+      globalThis,
+      "fetch",
+      async (input: string | URL | Request, init?: RequestInit) => {
+        if (networkFailure) return Response.json({}, { status: 503 });
+        const parsed = new URL(String(input));
+        if (parsed.pathname.endsWith("/customers/cus_test") && customerDeleted)
+          return Response.json({ id: "cus_test", deleted: true });
+        if (parsed.pathname.endsWith("/customers/cus_test"))
+          return Response.json({
+            id: "cus_test",
+            livemode: false,
+            metadata: customerOrg ? { organization_id: customerOrg } : {},
+          });
+        if (parsed.pathname === "/v1/billing_portal/sessions") {
+          assert.equal(init?.method, "POST");
+          const body = new URLSearchParams(String(init?.body));
+          assert.equal(body.get("customer"), "cus_test");
+          assert.equal(body.get("locale"), "fr");
+          return Response.json({
+            customer: "cus_test",
+            livemode: false,
+            url: "https://billing.stripe.com/p/session/test_staging",
+          });
+        }
+        assert.equal(parsed.pathname, "/v1/subscriptions");
+        assert.equal(parsed.searchParams.get("customer"), "cus_test");
+        assert.equal(parsed.searchParams.get("status"), "all");
+        return Response.json({ data: subscriptions, has_more: false });
+      },
+    );
   });
   after(async () => {
     await pool?.end();
@@ -182,6 +198,28 @@ describe("Stripe billing in isolated PostgreSQL", { skip: !url }, () => {
       status: "active",
       growthAccess: true,
     });
+  });
+  it("opens billing only after the webhook has persisted the organization customer binding", async () => {
+    await assert.rejects(() =>
+      createStripePortalSession(
+        { id: organizationId, accountType: "demo" },
+        "fr",
+      ),
+    );
+    await deliver(event("customer.subscription.created"));
+    assert.equal(
+      await createStripePortalSession(
+        { id: organizationId, accountType: "demo" },
+        "fr",
+      ),
+      "https://billing.stripe.com/p/session/test_staging",
+    );
+    await assert.rejects(() =>
+      createStripePortalSession(
+        { id: "org_someone_else", accountType: "demo" },
+        "fr",
+      ),
+    );
   });
   it("deduplicates concurrent deliveries only after committed synchronization", async () => {
     const e = event();

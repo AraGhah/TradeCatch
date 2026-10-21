@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { stripeSecretKey } from "./stripe-key";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import type { PlanId } from "./entitlements";
 
@@ -74,14 +75,7 @@ function idOf(value: z.infer<typeof reference>) {
 }
 
 function configuration(livemode: boolean) {
-  const key = (
-    livemode
-      ? process.env.STRIPE_SECRET_KEY
-      : process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY
-  )?.trim();
-  if (!key?.startsWith(livemode ? "sk_live_" : "sk_test_")) {
-    throw new Error("Stripe API key is missing or has the wrong mode.");
-  }
+  const key = stripeSecretKey(livemode);
   const prices = new Map<string, PlanId>();
   for (const plan of ["starter", "growth"] as const) {
     const name = `STRIPE_${livemode ? "" : "TEST_"}PRICE_${plan.toUpperCase()}`;

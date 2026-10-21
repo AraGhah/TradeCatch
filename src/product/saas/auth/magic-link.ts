@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { canManageBilling } from "../billing-access";
 import { isE2eHarness, isProductionRuntime } from "@/lib/config";
 import { hashToken, newId, randomToken } from "../ids";
 import { getSaasStore } from "../runtime";
@@ -131,7 +132,13 @@ export async function consumeMagicLinkAndCreateSession(input: {
   userAgent?: string;
   ip?: string;
 }): Promise<
-  | { ok: true; cookieValue: string; user: User; maxAge: number }
+  | {
+      ok: true;
+      cookieValue: string;
+      user: User;
+      maxAge: number;
+      billingOnly: boolean;
+    }
   | { ok: false; error: string }
 > {
   const secret = getAuthSecret();
@@ -164,13 +171,18 @@ export async function consumeMagicLinkAndCreateSession(input: {
   }
 
   const organization = await store.getOrganization(organizationId);
-  if (!organization || organization.status !== "active") {
+  if (!organization) {
     return { ok: false, error: "Organization unavailable." };
   }
 
   const membership = await store.getMembership(organization.id, user.id);
   if (!membership) {
     return { ok: false, error: "Not a member of this organization." };
+  }
+
+  const billingOnly = organization.status !== "active";
+  if (billingOnly && !canManageBilling(membership.role)) {
+    return { ok: false, error: "Organization unavailable." };
   }
 
   const expiresAt = new Date(now.getTime() + SESSION_TTL_SECONDS * 1000);
@@ -199,6 +211,7 @@ export async function consumeMagicLinkAndCreateSession(input: {
   return {
     ok: true,
     cookieValue,
+    billingOnly,
     user,
     maxAge: SESSION_TTL_SECONDS,
   };

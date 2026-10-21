@@ -3075,7 +3075,7 @@
       "deletion": "Demander la suppression",
       "deletionNote": "La suppression est examinée d’abord. Cette demande n’efface pas les dossiers.",
       "billing": "Ouvrir la facturation",
-      "billingMissing": "La facturation Stripe s’ouvre ici lorsque le portail client est configuré.",
+      "billingMissing": "Cette entreprise n’est pas encore liée à la facturation Stripe. Contactez le soutien pour la configurer.",
       "sessions": "Sessions et sécurité",
       "phone": "Téléphone de l’entreprise",
       "phoneHint": "Numéro canadien au format international, par exemple +14385551234.",
@@ -3100,7 +3100,15 @@
       "exportPreparing": "Préparation du téléchargement…",
       "exportDownloaded": "Votre archive a été téléchargée. Consultez README.txt et manifest.json pour son contenu.",
       "exportPartial": "Votre archive a été téléchargée avec des sections manquantes ou limitées. Consultez README.txt et manifest.json.",
-      "exportError": "Impossible de télécharger votre archive. Veuillez réessayer plus tard."
+      "exportError": "Impossible de télécharger votre archive. Veuillez réessayer plus tard.",
+      "billingOpening": "Ouverture de la facturation…",
+      "billingError": "Impossible d’ouvrir la facturation. Réessayez ou contactez le soutien.",
+      "billingRecovery": "Votre espace de travail est inactif. Les propriétaires et administrateurs peuvent gérer la facturation ici. L’accès est mis à jour lorsque Stripe confirme un abonnement actif.",
+      "billingActive": "Gérez votre abonnement, vos factures et votre mode de paiement en toute sécurité avec Stripe.",
+      "billingBack": "Retour à l’espace de travail",
+      "billingNoPermission": "Seuls les propriétaires et administrateurs peuvent gérer la facturation.",
+      "billingHeadline": "Facturation",
+      "billingSupport": "Contacter le soutien"
     },
     "receptionist": {
       "headline": "Réceptionniste",
