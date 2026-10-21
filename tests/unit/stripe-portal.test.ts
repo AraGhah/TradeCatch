@@ -27,6 +27,8 @@ const names = [
   "STRIPE_SECRET_KEY",
   "NEXT_PUBLIC_SITE_URL",
   "TRADECATCH_ADMIN_EMAILS",
+  "STRIPE_BILLING_PORTAL_CONFIGURATION",
+  "STRIPE_TEST_BILLING_PORTAL_CONFIGURATION",
   "UPSTASH_REDIS_REST_URL",
   "UPSTASH_REDIS_REST_TOKEN",
 ];
@@ -185,6 +187,16 @@ describe("customer-specific billing portal", () => {
       [f.organization.id],
     );
     assert.ok(sqlCalls.some((c) => c.sql.includes("tc_audit_logs")));
+  });
+  it("uses only the mode-specific server portal configuration", async () => {
+    const f = await fixture();
+    process.env.STRIPE_BILLING_PORTAL_CONFIGURATION = "bpc_live_fixture";
+    process.env.STRIPE_TEST_BILLING_PORTAL_CONFIGURATION = "bpc_test_fixture";
+    assert.equal((await call(request(f.cookie))).status, 200);
+    assert.equal(
+      new URLSearchParams(String(requests[0].init?.body)).get("configuration"),
+      "bpc_test_fixture",
+    );
   });
   it("redirects ordinary form submissions with 303, and creates a French return URL", async () => {
     const f = await fixture("admin");

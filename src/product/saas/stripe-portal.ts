@@ -68,6 +68,19 @@ export async function createStripePortalSession(
     locale === "fr" ? "/fr/facturation" : "/billing",
     site.origin,
   ).href;
+  const configuration = (
+    row.livemode
+      ? process.env.STRIPE_BILLING_PORTAL_CONFIGURATION
+      : process.env.STRIPE_TEST_BILLING_PORTAL_CONFIGURATION
+  )?.trim();
+  if (configuration && !/^bpc_[a-zA-Z0-9_]+$/.test(configuration))
+    throw new BillingPortalError("unavailable");
+  const params = new URLSearchParams({
+    customer: row.customer_id,
+    return_url: returnUrl,
+    locale,
+  });
+  if (configuration) params.set("configuration", configuration);
   const response = await fetch(
     "https://api.stripe.com/v1/billing_portal/sessions",
     {
@@ -77,11 +90,7 @@ export async function createStripePortalSession(
         "Stripe-Version": "2025-02-24.acacia",
         "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: new URLSearchParams({
-        customer: row.customer_id,
-        return_url: returnUrl,
-        locale,
-      }),
+      body: params,
       signal: AbortSignal.timeout(8_000),
       cache: "no-store",
     },

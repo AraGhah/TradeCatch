@@ -160,6 +160,14 @@ test.describe("receptionist workspace pages", () => {
       ),
     ).toEqual([]);
 
+    await page.goto("/billing");
+    await expect(
+      page.getByRole("heading", { name: "Billing", exact: true }),
+    ).toBeVisible();
+    const billingAccessibility = await new AxeBuilder({ page })
+      .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+      .analyze();
+    expect(billingAccessibility.violations.map((row) => row.id)).toEqual([]);
     await page.goto("/app/settings/account");
     const billing = page.getByRole("button", {
       name: "Open billing",
