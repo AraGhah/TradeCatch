@@ -466,7 +466,12 @@ export function createNotificationService(deps: NotificationDeps) {
         !payload.recipientUserId &&
         (member.role === "member" || member.role === "viewer") &&
         prefs.scope === "assigned" &&
-        payload.assigneeUserId !== member.userId
+        payload.assigneeUserId !== member.userId &&
+        !(
+          rule.enabled &&
+          rule.primaryUserId === member.userId &&
+          notification.priority !== "normal"
+        )
       ) {
         continue;
       }
