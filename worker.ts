@@ -5,6 +5,7 @@ import openNextWorker from "./.open-next/worker.js";
 import { runCloudflareCron } from "./src/lib/cloudflare-scheduler";
 import { withPostgresRequestScope } from "./src/lib/postgres-pool";
 import { recordScheduledJob } from "./src/product/reliability/job-health";
+import { workerLoginPreview } from "./src/product/saas/auth/login-preview";
 
 type TradeCatchWorkerEnv = CloudflareEnv & {
   CRON_SECRET?: string;
@@ -14,6 +15,7 @@ type TradeCatchWorkerEnv = CloudflareEnv & {
   GMAIL_SYNC_SECRET?: string;
   NOTIFICATION_RETRY_SECRET?: string;
   MONITORING_SECRET?: string;
+  TRADECATCH_ENV?: string;
 };
 
 // Preserve any cache Durable Object exports produced by OpenNext.
@@ -54,6 +56,8 @@ function schedulerOrigin(env: TradeCatchWorkerEnv): string {
 
 export default {
   fetch(request, env, ctx) {
+    const preview = workerLoginPreview(request, env);
+    if (preview) return preview;
     return withPostgresRequestScope(() =>
       openNextWorker.fetch(request, env, ctx),
     );

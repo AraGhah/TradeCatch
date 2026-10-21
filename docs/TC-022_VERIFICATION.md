@@ -18,3 +18,15 @@ once in a browser with JavaScript disabled, and removes the account and sessions
 
 The flow prevents consumption by passive GET/HEAD scanners. A tool deliberately
 submitting the confirmation form is outside that passive-preview guarantee.
+# Worker resource usage
+
+Cloudflare serves the read-only callback GET/HEAD from a small shared preview
+handler before loading the Next application server. Email scanners and repeated
+previews therefore do not initialize the application, database pools or token
+store. Next uses the same renderer and cookie policy in development. POST still
+passes through middleware, rate limiting, nonce validation and atomic token
+consumption. Staging configurations continue through their access gate.
+
+`worker-login-preview.test.ts` covers private response headers, nonce generation
+and reuse, malformed input, HEAD, and delegation of mutations and staging traffic.
+

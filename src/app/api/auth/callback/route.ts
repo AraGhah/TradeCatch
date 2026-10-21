@@ -2,11 +2,8 @@ import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
 import { BodyTooLargeError, readBodyText } from "@/lib/request-body";
-import { randomToken } from "@/product/saas/ids";
-import {
-  loginConfirmationHtml,
-  loginConfirmationHeaders as privateHeaders,
-} from "@/product/saas/auth/login-confirmation";
+import { loginPreview } from "@/product/saas/auth/login-preview";
+import { loginConfirmationHeaders as privateHeaders } from "@/product/saas/auth/login-confirmation";
 import {
   consumeMagicLinkAndCreateSession,
   sessionCookieOptions,
@@ -37,31 +34,7 @@ function loginError(request: NextRequest, locale: "en" | "fr", error: string) {
 
 // Reading or previewing an emailed link must never touch the token store.
 export function GET(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get("token")?.trim();
-  const locale = localeFor(request.nextUrl.searchParams.get("locale"));
-  if (!token) return loginError(request, locale, "missing_token");
-  if (!noncePattern.test(token))
-    return loginError(request, locale, "Invalid or expired link.");
-
-  const existing = request.cookies.get(confirmationCookie)?.value ?? "";
-  const nonce = noncePattern.test(existing) ? existing : randomToken(32);
-  const response = new NextResponse(
-    loginConfirmationHtml({ token, nonce, locale }),
-    {
-      headers: {
-        ...privateHeaders,
-        "Content-Type": "text/html; charset=utf-8",
-      },
-    },
-  );
-  response.cookies.set(confirmationCookie, nonce, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-    path: "/",
-    maxAge: 20 * 60,
-  });
-  return response;
+  return loginPreview(request, process.env.NODE_ENV === "production");
 }
 
 export function HEAD() {
