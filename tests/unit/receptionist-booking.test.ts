@@ -528,6 +528,15 @@ async function confirmed(ctx: Ctx) {
 }
 
 describe("phone booking — a call that books", () => {
+  it("preserves emergency routing when an emergency is reported during slot selection", async () => {
+    const ctx = setup();
+    const offer = await callToOffer(ctx, "CA-emergency-at-offer");
+    const plan = await say(ctx, offer, "There is a gas leak and I smell gas");
+    assert.equal((await confirmed(ctx)).length, 0);
+    const session = await ctx.store.getSession(plan.sessionId!);
+    assert.equal(session?.intent, "emergency");
+    assert.ok(plan.verbs.some((v) => v.verb === "dial"));
+  });
   it("reads real openings, reserves the pick and only then says it is booked", async () => {
     const ctx = setup();
     let plan = await callToOffer(ctx, "CA1");
