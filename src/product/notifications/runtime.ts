@@ -8,7 +8,8 @@ import { shouldUseDryRunSms } from "@/lib/environment";
 import { createTwilioSmsPort } from "@/product/missed-call/twilio";
 import { getSaasStore } from "@/product/saas/runtime";
 import { createPostgresNotificationStore } from "./postgres-store";
-import { createNotificationService } from "./service";
+import { createNotificationService, type NoticeMember } from "./service";
+import type { SaasStore } from "@/product/saas/store";
 import { createMemoryNotificationStore, type NotificationStore } from "./store";
 
 const globalForNotifications = globalThis as unknown as {
@@ -42,26 +43,39 @@ export function resetNotificationRuntimeForTests() {
   delete globalForNotifications.__tradecatchNotifications;
 }
 
+export async function loadNotificationMembers(
+  organizationId: string,
+  store: SaasStore = getSaasStore(),
+): Promise<NoticeMember[]> {
+  const memberships =
+    await store.listMembershipsForOrganization(organizationId);
+  const users = await store.listUsers(
+    memberships.map((membership) => membership.userId),
+  );
+  const byId = new Map(users.map((user) => [user.id, user]));
+  return memberships.flatMap((membership) => {
+    const user = byId.get(membership.userId);
+    return user
+      ? [
+          {
+            userId: user.id,
+            name: user.name,
+            role: membership.role,
+            email: user.email,
+            locale: user.locale,
+            phoneE164: user.notificationPhoneE164,
+            phoneVerifiedAt: user.notificationPhoneVerifiedAt,
+          },
+        ]
+      : [];
+  });
+}
+
 export function getNotificationService() {
   return createNotificationService({
     store: getNotificationStore(),
     now: () => new Date(),
-    async listMembers(organizationId) {
-      const memberships =
-        await getSaasStore().listMembershipsForOrganization(organizationId);
-      const members = [];
-      for (const membership of memberships) {
-        const user = await getSaasStore().getUser(membership.userId);
-        if (!user) continue;
-        members.push({
-          userId: user.id,
-          role: membership.role,
-          email: user.email,
-          locale: user.locale,
-        });
-      }
-      return members;
-    },
+    listMembers: loadNotificationMembers,
     async loadOrg(organizationId) {
       const org = await getSaasStore().getOrganization(organizationId);
       if (!org) return null;

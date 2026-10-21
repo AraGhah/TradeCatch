@@ -1,8 +1,5 @@
 import type { FeatureId, PlanId } from "./entitlements";
-import type {
-  AccountType,
-  BusinessFeatureFlags,
-} from "@/product/demo/types";
+import type { AccountType, BusinessFeatureFlags } from "@/product/demo/types";
 import { DEFAULT_DEMO_FEATURES } from "@/product/demo/types";
 
 export type OrgStatus = "active" | "suspended" | "churned";
@@ -34,6 +31,9 @@ export type User = {
   name: string;
   locale: "en" | "fr";
   platformRole: PlatformRole;
+  /** Populated only after trusted phone-ownership verification, never by settings forms. */
+  notificationPhoneE164?: string;
+  notificationPhoneVerifiedAt?: string;
   createdAt: string;
   updatedAt: string;
 };

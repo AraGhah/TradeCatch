@@ -73,6 +73,14 @@ export type EscalationRule = {
   updatedAt: string;
 };
 
+export type EscalationContact = {
+  userId: string;
+  name: string;
+  role: "owner" | "admin" | "member" | "viewer";
+  /** Only an ownership-verified personal phone is exposed to settings managers. */
+  verifiedPhoneE164?: string;
+};
+
 export type ContractorNotification = {
   id: string;
   organizationId: string;
