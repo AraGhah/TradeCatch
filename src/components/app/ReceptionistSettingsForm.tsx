@@ -134,6 +134,9 @@ export function ReceptionistSettingsForm({
   const [bookable, setBookable] = useState(
     initial.appointmentSettings.bookableServices.join(", "),
   );
+  const [phoneBooking, setPhoneBooking] = useState(
+    initial.appointmentSettings.phoneBooking ?? false,
+  );
   const [notifyEmail, setNotifyEmail] = useState(initial.notifyEmail ?? "");
   const [notifySms, setNotifySms] = useState(initial.notifySmsE164 ?? "");
   const [collectTime, setCollectTime] = useState(initial.collectPreferredTime);
@@ -228,6 +231,7 @@ export function ReceptionistSettingsForm({
         maxDailyBookings: maxDaily ? Number(maxDaily) : undefined,
         confirmationMethod: confirmMethod,
         bookableServices: listLines(bookable),
+        phoneBooking,
       },
       notifyEmail: notifyEmail.trim(),
       notifySmsE164: notifySms.trim(),
@@ -814,6 +818,18 @@ export function ReceptionistSettingsForm({
           {t("appointmentTitle")}
         </legend>
         <p className="mt-1 text-xs text-navy/60">{t("appointmentIntro")}</p>
+        <label className="mt-3 flex items-center gap-2 text-sm text-navy">
+          <input
+            type="checkbox"
+            checked={phoneBooking}
+            onChange={(e) => setPhoneBooking(e.target.checked)}
+            aria-describedby="phone-booking-help"
+          />
+          {t("phoneBooking")}
+        </label>
+        <p id="phone-booking-help" className="mt-1 text-xs text-navy/70">
+          {t("phoneBookingHelp")}
+        </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="text-xs text-navy/70">
             {t("duration")}

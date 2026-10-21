@@ -15,6 +15,7 @@ import { createReceptionistEngine, type ReceptionistEngine } from "./engine";
 import { createLlmClientFromEnv, type LlmClient } from "./llm";
 import { createReceptionistNotifier } from "./notifications";
 import { handleReceptionistFailure } from "./outage";
+import { createPhoneScheduler } from "./phone-booking";
 import { createPostgresReceptionistStore } from "./postgres-store";
 import { loadProfileConfigs } from "./profile-loader";
 import {
@@ -205,6 +206,23 @@ function bootstrap(): RuntimeState {
     onFailure(failure) {
       void runAfterResponse(() => handleReceptionistFailure(failure));
     },
+    // Only used for businesses that turned on phone booking in their profile.
+    scheduler: createPhoneScheduler({
+      async scheduling() {
+        const { getSchedulingService } =
+          await import("@/product/scheduling/runtime");
+        return getSchedulingService();
+      },
+      async findOrganizationId(config) {
+        if (isRealProductionRuntime() && !isE2eHarness() && !durable)
+          return null;
+        const { getSaasStore } = await import("@/product/saas/runtime");
+        const org = await getSaasStore().findOrganizationByMissedCallClientId(
+          config.clientAccountId,
+        );
+        return org && org.status === "active" ? org.id : null;
+      },
+    }),
 
     async onFinalized(session, config) {
       await syncFinalizedCall(await leadSyncDeps(store), config, session);
@@ -236,8 +254,10 @@ function state(): RuntimeState {
 
 /** Archive reads do not initialize the voice engine, profiles, or providers. */
 export function getReceptionistReadStore(): ReceptionistStore {
-  if(globalForReceptionist.__tradecatchReceptionist) return globalForReceptionist.__tradecatchReceptionist.store;
-  return globalForReceptionist.__tradecatchReceptionistReadStore ??= createStores().store;
+  if (globalForReceptionist.__tradecatchReceptionist)
+    return globalForReceptionist.__tradecatchReceptionist.store;
+  return (globalForReceptionist.__tradecatchReceptionistReadStore ??=
+    createStores().store);
 }
 
 export function getReceptionistRuntime() {

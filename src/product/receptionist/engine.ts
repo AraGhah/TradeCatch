@@ -22,6 +22,18 @@ import {
   wrapUpOutcome,
   wrapUpReply,
 } from "./brain-rules";
+import {
+  localDayWindow,
+  matchOffered,
+  parseTimePreference,
+  pickOffers,
+  readOptions,
+  spokenSlotLabel,
+  toOfferedSlots,
+  type OpeningsResult,
+  type ReceptionistScheduler,
+  type ReserveResult,
+} from "./booking";
 import type { LlmClient } from "./llm";
 import { detectLanguage } from "./nlu";
 import type { ReceptionistNotifier } from "./notifications";
@@ -36,8 +48,10 @@ import { isConflictError, type ReceptionistStore } from "./store";
 import { buildCallSummary, generateAiSummary } from "./summary";
 import type {
   AgentDecision,
+  CallBooking,
   CallContext,
   CallSession,
+  CallSlots,
   CallTurn,
   ReceptionistBrain,
   ReceptionistConfig,
@@ -77,21 +91,24 @@ export type ReceptionistEngineDeps = {
     session: CallSession,
     config: ReceptionistConfig,
   ) => Promise<void>;
-  /**
-   * A caller was sent to the fail-safe because the receptionist itself broke.
-   * Fire-and-forget by contract: the implementation owns delivery (platform
-   * monitoring, owner alerts) and must not delay or throw into the live call.
-   */
+  /** Scheduling is used only after the owner's phone-booking opt-in. */
+  scheduler?: ReceptionistScheduler;
+  /** Report an outage without delaying the live call. Delivery owns its lifetime. */
   onFailure?: (failure: ReceptionistFailure) => void;
 };
 
-/** What the engine knows when the receptionist fails a live call. */
 export type ReceptionistFailure = {
-  /** Links the failure to a business; absent when no business could be identified. */
   clientAccountId?: string;
   operation: string;
   errorCode: string;
 };
+
+/** Twilio allows ~15 s per webhook; a slow calendar must not eat all of it. */
+const SCHEDULER_TIMEOUT_MS = 7000;
+/** Lists of times read out per call before falling back to a request. */
+const MAX_OFFER_ROUNDS = 2;
+/** Answers that matched no offered time before falling back to a request. */
+const MAX_OFFER_MISSES = 2;
 
 const TERMINAL_CALL_STATUSES = new Set([
   "completed",
@@ -150,6 +167,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       Boolean(opts.dtmfDigits) ||
       session.step === "callback_number" ||
       session.step === "callback" ||
+      session.step === "offer_slot" ||
       session.step === "language";
     return {
       verb: "gather",
@@ -168,7 +186,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         opts.dtmfDigits ??
         (session.step === "callback_number"
           ? 10
-          : session.step === "language"
+          : session.step === "language" || session.step === "offer_slot"
             ? 1
             : undefined),
       hints: hintsFor(config),
@@ -524,6 +542,363 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     };
   }
 
+  /* ---------------------------------------------------------------------- */
+  /* Phone booking                                                           */
+  /*                                                                         */
+  /* Deterministic on purpose: every time read out comes from the scheduling */
+  /* backend, and "booked" is spoken only after it returns `confirmed`. The  */
+  /* brain (rules or LLM) never reaches this stage.                          */
+  /* ---------------------------------------------------------------------- */
+
+  function reportBookingFailure(errorCode: string) {
+    void import("@/product/reliability/hooks")
+      .then(({ recordFailure }) =>
+        recordFailure({
+          service: "ai_receptionist",
+          operation: "book_appointment",
+          errorCode,
+          severity: "medium",
+          retryable: true,
+        }),
+      )
+      .catch(() => undefined);
+  }
+
+  /** A scheduling call that answers inside the webhook budget, or null. */
+  async function withinBudget<T>(task: () => Promise<T>): Promise<T | null> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        task(),
+        new Promise<null>((resolve) => {
+          timer = setTimeout(() => resolve(null), SCHEDULER_TIMEOUT_MS);
+        }),
+      ]);
+    } catch (err) {
+      console.error("[receptionist] scheduling call failed", err);
+      return null;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  }
+
+  /** Owner opted in, the caller wants an appointment and the details are in. */
+  function bookingReady(
+    config: ReceptionistConfig,
+    session: CallSession,
+    slots: CallSlots,
+    intent: CallSession["intent"],
+  ): boolean {
+    return (
+      Boolean(deps.scheduler) &&
+      config.phoneBooking === true &&
+      intent === "appointment" &&
+      !session.booking &&
+      Boolean(slots.callerName && slots.serviceAddress && slots.callbackE164)
+    );
+  }
+
+  /** Back to what a call did before booking existed: a request the team confirms. */
+  function fallBackToRequest(
+    config: ReceptionistConfig,
+    session: CallSession,
+    reason: string,
+    chosenLabel?: string,
+  ): { session: CallSession; plan: VoicePlan } {
+    const lang = session.language;
+    const reply = phrase("bookingRequestOnly", lang, {
+      name: session.slots.callerName,
+    });
+    const next: CallSession = {
+      ...session,
+      step: "done",
+      outcome: "appointment_requested",
+      booking: {
+        timezone: config.timezone,
+        rounds: 0,
+        misses: 0,
+        ...session.booking,
+        status: "requested",
+        offered: [],
+        fallbackReason: reason,
+      },
+      slots: chosenLabel
+        ? { ...session.slots, preferredTime: chosenLabel }
+        : session.slots,
+      turns: [
+        ...session.turns,
+        turn("agent", reply, { action: "end_call", brain: "guardrail" }),
+      ],
+    };
+    return {
+      session: next,
+      plan: {
+        sessionId: next.id,
+        verbs: [say(config, lang, reply), { verb: "hangup" }],
+      },
+    };
+  }
+
+  function presentOffers(
+    config: ReceptionistConfig,
+    session: CallSession,
+    booking: CallBooking,
+    kind:
+      "offerSlots" | "offerNearest" | "offerMore" | "slotTaken" | "offerRepeat",
+    wish?: string,
+  ): { session: CallSession; plan: VoicePlan } {
+    const reply = phrase(kind, session.language, {
+      options: readOptions(booking.offered),
+    });
+    const next: CallSession = {
+      ...session,
+      step: "offer_slot",
+      booking,
+      slots: wish
+        ? { ...session.slots, preferredTime: wish.trim().slice(0, 200) }
+        : session.slots,
+      turns: [
+        ...session.turns,
+        turn("agent", reply, { action: "ask", brain: "rules" }),
+      ],
+    };
+    return {
+      session: next,
+      plan: {
+        sessionId: next.id,
+        verbs: [listen(config, next, [{ text: reply }])],
+      },
+    };
+  }
+
+  async function openingsFor(
+    config: ReceptionistConfig,
+    session: CallSession,
+    input: { serviceId?: string; from: Date; until?: Date },
+  ): Promise<OpeningsResult> {
+    const result = await withinBudget(() =>
+      deps.scheduler!.listOpenings({
+        config,
+        issue: session.slots.issue,
+        serviceId: input.serviceId,
+        serviceAddress: session.slots.serviceAddress,
+        language: session.language,
+        from: input.from,
+        until: input.until,
+      }),
+    );
+    if (!result) reportBookingFailure("OPENINGS_UNAVAILABLE");
+    return result ?? { ok: false, reason: "unavailable" };
+  }
+
+  /** Read out up to three real openings, ranked by what the caller asked for. */
+  async function beginBooking(
+    config: ReceptionistConfig,
+    session: CallSession,
+    wish?: string,
+  ): Promise<{ session: CallSession; plan: VoicePlan }> {
+    const now = clock.now();
+    const pref = wish ? parseTimePreference(wish, now, config.timezone) : {};
+    const day = pref.dateKey
+      ? localDayWindow(pref.dateKey, config.timezone)
+      : null;
+
+    const first = await openingsFor(config, session, {
+      from: day && day.from > now ? day.from : now,
+      until: day?.until,
+    });
+    if (!first.ok) return fallBackToRequest(config, session, first.reason);
+
+    let opened = first;
+    let { picks, exact } = pickOffers(first.slots, pref, first.timezone);
+    if (picks.length === 0 && day) {
+      // Nothing on the day they asked for: read the next openings instead.
+      const wider = await openingsFor(config, session, {
+        serviceId: first.service.id,
+        from: now,
+      });
+      if (!wider.ok) return fallBackToRequest(config, session, wider.reason);
+      opened = wider;
+      picks = pickOffers(wider.slots, {}, wider.timezone).picks;
+      exact = false;
+    }
+    if (picks.length === 0) {
+      return fallBackToRequest(config, session, "no_openings");
+    }
+
+    return presentOffers(
+      config,
+      session,
+      {
+        status: "offering",
+        serviceId: opened.service.id,
+        serviceName: opened.service.name,
+        timezone: opened.timezone,
+        offered: toOfferedSlots(picks, opened.timezone, session.language),
+        rounds: 1,
+        misses: 0,
+      },
+      exact ? "offerSlots" : "offerNearest",
+      wish,
+    );
+  }
+
+  function settleReservation(
+    config: ReceptionistConfig,
+    session: CallSession,
+    booking: CallBooking,
+    chosenLabel: string,
+    reserved: ReserveResult | null,
+  ): { session: CallSession; plan: VoicePlan } {
+    const lang = session.language;
+
+    if (reserved?.status === "confirmed") {
+      const label = spokenSlotLabel(reserved.startAt, booking.timezone, lang);
+      const reply = phrase("bookedConfirmed", lang, {
+        name: session.slots.callerName,
+        when: label,
+      });
+      const next: CallSession = {
+        ...session,
+        step: "done",
+        outcome: "appointment_booked",
+        booking: {
+          ...booking,
+          status: "booked",
+          offered: [],
+          appointmentId: reserved.appointmentId,
+          startAt: reserved.startAt,
+          label,
+        },
+        turns: [
+          ...session.turns,
+          turn("agent", reply, { action: "end_call", brain: "rules" }),
+        ],
+      };
+      return {
+        session: next,
+        plan: {
+          sessionId: next.id,
+          verbs: [say(config, lang, reply), { verb: "hangup" }],
+        },
+      };
+    }
+
+    if (reserved?.status === "conflict" && booking.rounds <= MAX_OFFER_ROUNDS) {
+      // Someone else took it while we were talking: offer what is still free.
+      const { picks } = pickOffers(reserved.alternatives, {}, booking.timezone);
+      if (picks.length > 0) {
+        return presentOffers(
+          config,
+          session,
+          {
+            ...booking,
+            offered: toOfferedSlots(picks, booking.timezone, lang),
+            rounds: booking.rounds + 1,
+            misses: 0,
+          },
+          "slotTaken",
+        );
+      }
+    }
+
+    const reason =
+      reserved === null
+        ? "reserve_timeout"
+        : reserved.status === "request"
+          ? reserved.reason
+          : reserved.status === "conflict"
+            ? "slot_taken"
+            : "reserve_error";
+    if (reserved === null || reserved.status === "error") {
+      reportBookingFailure("RESERVE_FAILED");
+    }
+    return fallBackToRequest(config, session, reason, chosenLabel);
+  }
+
+  /** The caller's answer to a list of openings. */
+  async function answerOffer(
+    config: ReceptionistConfig,
+    session: CallSession,
+    utterance: string,
+    digits?: string,
+  ): Promise<{ session: CallSession; plan: VoicePlan }> {
+    const booking = session.booking;
+    if (!booking || booking.status !== "offering" || !deps.scheduler) {
+      return fallBackToRequest(config, session, "booking_unavailable");
+    }
+    const answer = matchOffered(
+      utterance,
+      digits,
+      booking.offered,
+      booking.timezone,
+    );
+
+    if (answer.kind === "pick") {
+      const chosen = booking.offered[answer.index]!;
+      const reserved = await withinBudget(() =>
+        deps.scheduler!.reserve({
+          config,
+          serviceId: booking.serviceId,
+          serviceName: booking.serviceName,
+          startAt: chosen.startAt,
+          callerName: session.slots.callerName,
+          callbackE164: session.slots.callbackE164,
+          serviceAddress: session.slots.serviceAddress,
+          language: session.language,
+          // A repeated webhook must never book the same time twice.
+          idempotencyKey: `rcs:${session.id}:${chosen.startAt}`,
+        }),
+      );
+      return settleReservation(
+        config,
+        session,
+        booking,
+        chosen.label,
+        reserved,
+      );
+    }
+
+    if (answer.kind === "decline") {
+      if (booking.rounds >= MAX_OFFER_ROUNDS) {
+        return fallBackToRequest(config, session, "declined_openings");
+      }
+      const last = booking.offered.at(-1)!;
+      const more = await openingsFor(config, session, {
+        serviceId: booking.serviceId,
+        from: new Date(Date.parse(last.startAt) + 30 * 60_000),
+      });
+      if (!more.ok) return fallBackToRequest(config, session, more.reason);
+      const { picks } = pickOffers(more.slots, {}, more.timezone);
+      if (picks.length === 0) {
+        return fallBackToRequest(config, session, "no_more_openings");
+      }
+      return presentOffers(
+        config,
+        session,
+        {
+          ...booking,
+          timezone: more.timezone,
+          offered: toOfferedSlots(picks, more.timezone, session.language),
+          rounds: booking.rounds + 1,
+          misses: 0,
+        },
+        "offerMore",
+      );
+    }
+
+    const misses = booking.misses + 1;
+    if (misses >= MAX_OFFER_MISSES) {
+      return fallBackToRequest(config, session, "unclear_answer");
+    }
+    return presentOffers(
+      config,
+      session,
+      { ...booking, misses },
+      "offerRepeat",
+    );
+  }
+
   async function finalizeSession(
     sessionId: string,
   ): Promise<CallSession | null> {
@@ -697,7 +1072,8 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         fromE164: input.fromE164,
         toE164: input.toE164,
         language: config.defaultLanguage,
-        status: routing.action === "ring_human" ? "transferring" : "in_progress",
+        status:
+          routing.action === "ring_human" ? "transferring" : "in_progress",
         step: bilingual ? "language" : "reason",
         afterHours: isAfterHours(config, at),
         slots: {},
@@ -866,17 +1242,25 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             const prompts =
               session.step === "language"
                 ? languageMenuPrompts()
-                : [
-                    { text: phrase("reprompt", session.language) },
-                    {
-                      text: questionForStep(
-                        session.step,
-                        session.language,
-                        session,
-                        session.slots,
-                      ),
-                    },
-                  ];
+                : session.step === "offer_slot" && session.booking
+                  ? [
+                      {
+                        text: phrase("offerRepeat", session.language, {
+                          options: readOptions(session.booking.offered),
+                        }),
+                      },
+                    ]
+                  : [
+                      { text: phrase("reprompt", session.language) },
+                      {
+                        text: questionForStep(
+                          session.step,
+                          session.language,
+                          session,
+                          session.slots,
+                        ),
+                      },
+                    ];
             return {
               session: next,
               result: {
@@ -965,6 +1349,21 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             }
           }
 
+          // Phone booking runs before the turn cap: it bounds itself (a few
+          // rounds of openings, a few unclear answers) and must not be cut
+          // off one turn before the caller picks a time.
+          if (next.step === "offer_slot") {
+            const r = await answerOffer(config, next, speech, digits);
+            return { session: r.session, result: r.plan };
+          }
+          if (
+            next.step === "preferred_time" &&
+            bookingReady(config, next, next.slots, next.intent)
+          ) {
+            const r = await beginBooking(config, next, speech);
+            return { session: r.session, result: r.plan };
+          }
+
           // Turn cap: wrap up politely with what we have.
           if (next.callerTurnCount > config.maxTurns) {
             const reply = wrapUpReply(next.language, next, next.slots);
@@ -995,6 +1394,24 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             utterance: speech,
             digits,
           });
+
+          // The brain is about to close an appointment call without a
+          // reservation (e.g. the owner turned off the preferred-time
+          // question): offer real openings first.
+          const collected = { ...next.slots, ...decision.slots };
+          const intent = decision.intent ?? next.intent;
+          if (
+            decision.action.type === "end_call" &&
+            bookingReady(config, next, collected, intent)
+          ) {
+            const r = await beginBooking(
+              config,
+              { ...next, slots: collected, intent },
+              collected.preferredTime,
+            );
+            return { session: r.session, result: r.plan };
+          }
+
           const applied = applyDecision(config, next, decision);
           return { session: applied.session, result: applied.plan };
         },

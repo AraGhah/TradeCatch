@@ -56,10 +56,12 @@ export function redactSession(
     ...session,
     turns: [],
     slots: {},
+    booking: undefined,
     recordingUrl: undefined,
     summary: session.summary
       ? {
           ...session.summary,
+          appointment: undefined,
           callerName: undefined,
           callbackE164: undefined,
           serviceAddress: undefined,

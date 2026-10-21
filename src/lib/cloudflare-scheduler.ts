@@ -29,6 +29,7 @@ export function routesForCloudflareCron(cron: string): readonly string[] {
 export async function runCloudflareCron(
   cron: string,
   invoke: (path: string) => Promise<Response>,
+  observe?: (path: string, ok: boolean) => Promise<void>,
 ): Promise<{ completed: string[] }> {
   const routes = routesForCloudflareCron(cron);
   if (routes.length === 0) {
@@ -45,13 +46,33 @@ export async function runCloudflareCron(
     try {
       const response = await invoke(path);
       if (!response.ok) {
-        const detail = (await response.text()).slice(0, 512);
-        throw new Error(
-          `${path} returned ${response.status}${detail ? `: ${detail}` : ""}`,
-        );
+        await response.body?.cancel();
+        throw new Error(`${path} returned ${response.status}`);
       }
+      if (response.headers.get("content-type")?.includes("application/json")) {
+        const result = (await response.clone().json()) as {
+          ok?: boolean;
+          failed?: number;
+          outcomes?: { status?: string }[];
+        };
+        if (
+          result.ok === false ||
+          (typeof result.failed === "number" && result.failed > 0) ||
+          result.outcomes?.some((row) =>
+            ["failed", "dead", "retry"].includes(row.status || ""),
+          )
+        ) {
+          throw new Error(`${path} reported failed work`);
+        }
+      }
+      await observe?.(path, true);
       completed.push(path);
     } catch (error) {
+      try {
+        await observe?.(path, false);
+      } catch {
+        console.error("[monitoring] Job result could not be persisted");
+      }
       failures.push(
         error instanceof Error
           ? error

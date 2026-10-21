@@ -2534,6 +2534,7 @@
       "outcomes": {
         "message_taken": "Message pris",
         "appointment_requested": "Rendez-vous demandé",
+        "appointment_booked": "Rendez-vous réservé",
         "transferred": "Transféré",
         "emergency_transferred": "Urgence transférée",
         "faq_answered": "Question répondue",
@@ -3222,6 +3223,8 @@
       "confirmBoth": "SMS et courriel",
       "confirmNone": "Aucune",
       "bookableServices": "Services réservables",
+      "phoneBooking": "Laisser la réceptionniste réserver une plage pendant l’appel",
+      "phoneBookingHelp": "Désactivé : la réceptionniste note seulement le moment souhaité par l’appelant et votre équipe le confirme. Activé : pour une demande de rendez-vous, elle propose jusqu’à trois plages de votre horaire (heures d’ouverture, types de service, Google Calendar connecté) et réserve celle que l’appelant choisit. Les services qui exigent une approbation, et les urgences, restent des demandes. Seuls les rendez-vous pris dans TradeCatch ou sur un calendrier connecté bloquent une plage.",
       "overview": {
         "aiName": "Nom de la réceptionniste",
         "phone": "Numéro assigné",
@@ -3230,6 +3233,7 @@
         "business": "Entreprise",
         "calls": "Appels traités",
         "appointments": "Rendez-vous pris",
+        "appointmentsRequested": "Demandes de rendez-vous",
         "transfers": "Transferts",
         "lastActivity": "Dernière activité",
         "mode": "Mode d'appel"

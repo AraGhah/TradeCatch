@@ -32,8 +32,10 @@ Safety rules (enforced in code, not prompts):
   `HARDCODED_CRITICAL_TRIGGERS` as Module A. The caller is told to dial 9-1-1
   and is bridged to `emergencyTransferE164`; the owner is texted immediately.
 - The agent never diagnoses, gives repair/safety instructions, quotes prices or
-  promises an arrival time / booked slot (approved copy in `prompts.ts`; the LLM
-  prompt forbids it and replies are length-capped).
+  promises an arrival time. It says a slot is booked only after the scheduling
+  service reserved it (approved copy in `prompts.ts`; the LLM prompt forbids
+  confirming anything, a reply that claims a booking is replaced by the rule
+  brain, and replies are length-capped).
 - LLM output is Zod-validated. Transfers only to configured routing ids, never
   after hours. Any error, timeout, or invalid output falls back to the rule brain.
 - Failure never means dead air: a technical error apologizes, then dials
@@ -218,8 +220,14 @@ lead capture. The response reports `emailSequence: { enrolled, reason }`.
 - Turn-based Twilio speech recognition — expect ~1–3 s per turn, not
   sub-second speech-to-speech. A realtime path (OpenAI Realtime / LiveKit) would
   be a new transport on top of the same config and summary pipeline.
-- No calendar availability lookup or booking by phone: the agent captures a
-  preferred time window for a human to confirm.
+- Phone booking is opt-in per business (`appointmentSettings.phoneBooking`,
+  default off) and is a deterministic engine stage, not a brain decision: the
+  scheduling service lists the openings and reserves the pick (`booking.ts`,
+  `phone-booking.ts`). With it off, or whenever a time cannot be reserved
+  (approval-only service, Google calendar not connected, taken mid-call, scheduler
+  error), the call ends as `appointment_requested` for a human to confirm.
+  Time parsing is best-effort (day, part of day, clock time) and the owner "test
+  conversation" never reserves a slot.
 - Call recording is limited to voicemail; whole-call recording needs a consent
   announcement decision (Québec Law 25 / Criminal Code s.184) before enabling.
 - Not validated on live Twilio traffic yet.

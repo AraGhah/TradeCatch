@@ -117,6 +117,7 @@ export const receptionistConfigSchema = z.object({
     )
     .optional(),
   collectPreferredTime: z.boolean().default(true),
+  phoneBooking: z.boolean().default(false),
   maxTurns: z.number().int().min(3).max(30).default(12),
   notifications: z.array(notificationChannelSchema).default([]),
   smsFromE164: e164.optional(),

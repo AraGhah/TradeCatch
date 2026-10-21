@@ -105,6 +105,11 @@ export type ReceptionistConfig = {
   urgencyRubric: UrgencyRubricEntry[];
   /** Ask the caller for a preferred appointment window. */
   collectPreferredTime: boolean;
+  /**
+   * Owner opt-in: offer real open times and reserve one during the call.
+   * Off (default) = the call only captures a requested window for the team.
+   */
+  phoneBooking?: boolean;
   /** Hard cap on caller turns before the agent wraps up with a message. */
   maxTurns: number;
   notifications: NotificationChannel[];
@@ -127,6 +132,8 @@ export type CallStep =
   | "callback"
   | "callback_number"
   | "preferred_time"
+  /** Open times were read out; waiting for the caller to choose one. */
+  | "offer_slot"
   | "anything_else"
   | "voicemail"
   | "done";
@@ -145,7 +152,10 @@ export type CallStatus =
 
 export type CallOutcome =
   | "message_taken"
+  /** A time was captured for the team to confirm — nothing was reserved. */
   | "appointment_requested"
+  /** The scheduling backend reserved the slot while the caller was on the line. */
+  | "appointment_booked"
   | "transferred"
   | "emergency_transferred"
   | "faq_answered"
@@ -161,6 +171,35 @@ export type CallSlots = {
   preferredTime?: string;
   /** Free-form message when the caller only wants to leave a note. */
   message?: string;
+};
+
+/** An open time read to the caller. `label` is already in the call language. */
+export type OfferedSlot = {
+  startAt: string;
+  endAt: string;
+  label: string;
+};
+
+/**
+ * Phone-booking state for one call. `booked` is set only after the scheduling
+ * backend returned a confirmed reservation; everything else is a request.
+ */
+export type CallBooking = {
+  status: "offering" | "booked" | "requested";
+  serviceId?: string;
+  serviceName?: string;
+  /** Business-local zone the labels were rendered in. */
+  timezone: string;
+  offered: OfferedSlot[];
+  /** How many lists of times were read out (capped). */
+  rounds: number;
+  /** Answers that matched no offered time. */
+  misses: number;
+  appointmentId?: string;
+  startAt?: string;
+  label?: string;
+  /** Why the call fell back to a request, when it did. */
+  fallbackReason?: string;
 };
 
 export type CallTurn = {
@@ -223,6 +262,14 @@ export type CallSummary = {
   serviceAddress?: string;
   issue?: string;
   preferredTime?: string;
+  /** Present when the call went through phone booking. */
+  appointment?: {
+    status: "booked" | "requested";
+    startAt?: string;
+    label?: string;
+    appointmentId?: string;
+    serviceName?: string;
+  };
   message?: string;
   transferredTo?: string;
   afterHours: boolean;
@@ -248,6 +295,7 @@ export type CallSession = {
   outcome?: CallOutcome;
   afterHours: boolean;
   slots: CallSlots;
+  booking?: CallBooking;
   urgency?: UrgencyClassification;
   turns: CallTurn[];
   silenceCount: number;

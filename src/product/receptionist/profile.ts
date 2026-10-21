@@ -123,6 +123,11 @@ export const appointmentSettingsSchema = z.object({
     .enum(["sms", "email", "both", "none"])
     .default("sms"),
   bookableServices: stringList(20, 80),
+  /**
+   * Owner opt-in: the receptionist reads out open times from the schedule and
+   * reserves the one the caller picks. Off = it only takes a requested time.
+   */
+  phoneBooking: z.boolean().default(false),
 });
 
 export const collectFieldsSchema = z.object({
@@ -231,6 +236,7 @@ export const profileSettingsSchema = z.object({
     bookingNoticeHours: 2,
     confirmationMethod: "sms",
     bookableServices: [],
+    phoneBooking: false,
   }),
   collectFields: collectFieldsSchema.default({
     name: true,
@@ -474,6 +480,7 @@ export function buildProfileConfig(
       ownerPhone(client),
     collectPreferredTime:
       s.collectPreferredTime !== false && collect.preferredDate !== false,
+    phoneBooking: s.appointmentSettings?.phoneBooking === true,
     notifications,
     smsFromE164: client.smsFromNumber,
   };

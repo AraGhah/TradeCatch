@@ -1,8 +1,17 @@
 import { reliabilityId, type ReliabilityStore } from "./store";
-import { redactDiagnostic, type HealthStatus, type ServiceHealth, type ServiceName, type Severity } from "./types";
+import {
+  redactDiagnostic,
+  type HealthStatus,
+  type ServiceHealth,
+  type ServiceName,
+  type Severity,
+} from "./types";
 
 export class ReliabilityError extends Error {
-  constructor(message: string, readonly status = 400) {
+  constructor(
+    message: string,
+    readonly status = 400,
+  ) {
     super(message);
     this.name = "ReliabilityError";
   }
@@ -10,30 +19,50 @@ export class ReliabilityError extends Error {
 
 const REQUIRED = new Set<ServiceName>(["api", "database", "jobs"]);
 
-export type Probe = { service: ServiceName; status: HealthStatus; detail?: string };
+export type Probe = Omit<ServiceHealth, "checkedAt" | "required">;
 
 export type ReliabilityDeps = {
   store: ReliabilityStore;
   now: () => Date;
   environment: () => string;
   probe: () => Promise<Probe[]>;
-  notifyAdmin?: (input: { title: string; severity: Severity; simulated: boolean }) => Promise<void>;
+  notifyAdmin?: (input: {
+    title: string;
+    severity: Severity;
+    simulated: boolean;
+  }) => Promise<void>;
   version?: () => string;
 };
 
 function percentile(values: number[], ratio: number) {
   if (values.length === 0) return 0;
   const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.min(sorted.length - 1, Math.ceil(sorted.length * ratio) - 1);
+  const index = Math.min(
+    sorted.length - 1,
+    Math.ceil(sorted.length * ratio) - 1,
+  );
   return sorted[Math.max(0, index)];
 }
 
 export function createReliabilityService(deps: ReliabilityDeps) {
-  async function openIncident(input: { service: string; severity: Severity; title: string; organizationId?: string; correlationId: string; simulated: boolean }) {
+  async function openIncident(input: {
+    service: string;
+    severity: Severity;
+    title: string;
+    organizationId?: string;
+    correlationId: string;
+    simulated: boolean;
+  }) {
     const open = (await deps.store.listIncidents()).find(
-      (row) => row.status !== "resolved" && row.service === input.service && row.organizationId === input.organizationId,
+      (row) =>
+        row.status !== "resolved" &&
+        row.service === input.service &&
+        row.organizationId === input.organizationId,
     );
-    if (open) return open;
+    if (open) {
+      await deliverIncident(open, input.simulated);
+      return open;
+    }
     const incident = {
       id: reliabilityId("inc"),
       organizationId: input.organizationId,
@@ -45,9 +74,49 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       createdAt: deps.now().toISOString(),
     };
     await deps.store.saveIncident(incident);
-    await deps.store.addIncidentEvent({ incidentId: incident.id, kind: "opened", at: incident.createdAt });
-    await deps.notifyAdmin?.({ title: incident.title, severity: incident.severity, simulated: input.simulated });
+    await deps.store.addIncidentEvent({
+      incidentId: incident.id,
+      kind: "opened",
+      at: incident.createdAt,
+    });
+    await deliverIncident(incident, input.simulated);
     return incident;
+  }
+
+  async function deliverIncident(
+    incident: { id: string; title: string; severity: Severity },
+    simulated: boolean,
+  ) {
+    const events = await deps.store.listIncidentEvents(incident.id);
+    if (events.some((e) => e.kind === "admin_notified")) return;
+    const lastFailure = events
+      .filter((e) => e.kind === "admin_notification_failed")
+      .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0];
+    if (
+      lastFailure &&
+      deps.now().getTime() - Date.parse(lastFailure.at) < 5 * 60_000
+    )
+      return;
+    try {
+      if (!deps.notifyAdmin) throw new Error("No alert provider");
+      await deps.notifyAdmin({
+        title: incident.title,
+        severity: incident.severity,
+        simulated,
+      });
+      await deps.store.addIncidentEvent({
+        incidentId: incident.id,
+        kind: "admin_notified",
+        at: deps.now().toISOString(),
+      });
+    } catch {
+      await deps.store.addIncidentEvent({
+        incidentId: incident.id,
+        kind: "admin_notification_failed",
+        at: deps.now().toISOString(),
+      });
+      console.warn("[monitoring] Administrator alert remains undelivered");
+    }
   }
 
   return {
@@ -80,8 +149,12 @@ export function createReliabilityService(deps: ReliabilityDeps) {
         createdAt: deps.now().toISOString(),
       };
       await deps.store.saveError(row);
-      const recent = (await deps.store.listErrors({ service: input.service })).filter(
-        (item) => Date.parse(item.createdAt) > deps.now().getTime() - 5 * 60_000 && item.severity !== "low",
+      const recent = (
+        await deps.store.listErrors({ service: input.service })
+      ).filter(
+        (item) =>
+          Date.parse(item.createdAt) > deps.now().getTime() - 5 * 60_000 &&
+          item.severity !== "low",
       );
       if (input.severity === "critical" || recent.length >= 3) {
         await openIncident({
@@ -98,38 +171,102 @@ export function createReliabilityService(deps: ReliabilityDeps) {
 
     async recordRequest(status: number, durationMs: number) {
       const statusClass = status >= 500 ? "5xx" : status >= 400 ? "4xx" : "2xx";
-      await deps.store.saveObservation({ statusClass, durationMs, at: deps.now().toISOString() });
+      await deps.store.saveObservation({
+        statusClass,
+        durationMs,
+        at: deps.now().toISOString(),
+      });
     },
 
-    async overview() {
+    async overview(options: { notifyOnFailure?: boolean } = {}) {
       const probes = await deps.probe();
       const checkedAt = deps.now().toISOString();
       const services: ServiceHealth[] = probes.map((probe) => ({
         ...probe,
+        status:
+          probe.state &&
+          !["operational", "delivery_verified"].includes(probe.state) &&
+          probe.status === "healthy"
+            ? "unknown"
+            : probe.status,
         checkedAt,
         required: REQUIRED.has(probe.service),
       }));
       for (const service of services) {
-        await deps.store.saveHealth({ service: service.service, status: service.status, detail: service.detail, checkedAt });
+        await deps.store.saveHealth({
+          service: service.service,
+          status: service.status,
+          detail: service.detail,
+          checkedAt,
+        });
       }
-      const requiredDown = services.some((service) => service.required && service.status === "unavailable");
-      const requiredDegraded = services.some((service) => service.required && (service.status === "degraded" || service.status === "unknown"));
-      const overall: HealthStatus = requiredDown ? "unavailable" : requiredDegraded ? "degraded" : "healthy";
+      if (options.notifyOnFailure) {
+        for (const service of services) {
+          if (
+            service.status === "unavailable" ||
+            service.status === "degraded" ||
+            (service.required && service.status === "unknown")
+          ) {
+            await openIncident({
+              service: `health:${service.service}`,
+              severity: service.required ? "high" : "medium",
+              title: `${service.service} health check failed or remains unverified`,
+              correlationId: reliabilityId("health"),
+              simulated: deps.environment() !== "production",
+            });
+          }
+        }
+        // Retry persisted administrator alerts even if their originating probe recovered.
+        for (const incident of await deps.store.listIncidents()) {
+          if (
+            incident.status !== "resolved" &&
+            incident.service.startsWith("health:")
+          )
+            await deliverIncident(
+              incident,
+              deps.environment() !== "production",
+            );
+        }
+      }
+      const requiredDown = services.some(
+        (service) => service.required && service.status === "unavailable",
+      );
+      const requiredDegraded = services.some(
+        (service) =>
+          service.required &&
+          (service.status === "degraded" || service.status === "unknown"),
+      );
+      const overall: HealthStatus = requiredDown
+        ? "unavailable"
+        : requiredDegraded
+          ? "degraded"
+          : "healthy";
       const observations = await deps.store.listObservations();
       const durations = observations.map((row) => row.durationMs);
-      const serverErrors = observations.filter((row) => row.statusClass === "5xx").length;
-      const errorRate = observations.length === 0 ? 0 : serverErrors / observations.length;
+      const serverErrors = observations.filter(
+        (row) => row.statusClass === "5xx",
+      ).length;
+      const errorRate =
+        observations.length === 0 ? 0 : serverErrors / observations.length;
       return {
         overall,
         services,
         requests: observations.length,
         success: observations.filter((row) => row.statusClass === "2xx").length,
-        clientErrors: observations.filter((row) => row.statusClass === "4xx").length,
+        clientErrors: observations.filter((row) => row.statusClass === "4xx")
+          .length,
         serverErrors,
         errorRate,
-        averageMs: durations.length ? Math.round(durations.reduce((sum, value) => sum + value, 0) / durations.length) : 0,
+        averageMs: durations.length
+          ? Math.round(
+              durations.reduce((sum, value) => sum + value, 0) /
+                durations.length,
+            )
+          : 0,
         p95Ms: percentile(durations, 0.95),
-        incidents: (await deps.store.listIncidents()).filter((row) => row.status !== "resolved"),
+        incidents: (await deps.store.listIncidents()).filter(
+          (row) => row.status !== "resolved",
+        ),
         recentErrors: (await deps.store.listErrors()).slice(-8).reverse(),
       };
     },
@@ -148,7 +285,12 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       incident.status = "investigating";
       incident.acknowledgedAt = deps.now().toISOString();
       await deps.store.saveIncident(incident);
-      await deps.store.addIncidentEvent({ incidentId: id, kind: "acknowledged", actor, at: incident.acknowledgedAt });
+      await deps.store.addIncidentEvent({
+        incidentId: id,
+        kind: "acknowledged",
+        actor,
+        at: incident.acknowledgedAt,
+      });
       return incident;
     },
 
@@ -158,7 +300,12 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       incident.status = "resolved";
       incident.resolvedAt = deps.now().toISOString();
       await deps.store.saveIncident(incident);
-      await deps.store.addIncidentEvent({ incidentId: id, kind: "resolved", actor, at: incident.resolvedAt });
+      await deps.store.addIncidentEvent({
+        incidentId: id,
+        kind: "resolved",
+        actor,
+        at: incident.resolvedAt,
+      });
       return incident;
     },
 
@@ -171,7 +318,9 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       error: string;
       simulated?: boolean;
     }) {
-      const existing = (await deps.store.listOperations()).find((row) => row.idempotencyKey === input.idempotencyKey);
+      const existing = (await deps.store.listOperations()).find(
+        (row) => row.idempotencyKey === input.idempotencyKey,
+      );
       if (existing) return existing;
       const row = {
         id: reliabilityId("op"),
@@ -193,25 +342,42 @@ export function createReliabilityService(deps: ReliabilityDeps) {
     async retryOperation(id: string, actor: string) {
       const row = await deps.store.getOperation(id);
       if (!row) throw new ReliabilityError("Operation not found.", 404);
-      if (!row.retryable || row.status === "dead" || row.status === "resolved") {
+      if (
+        !row.retryable ||
+        row.status === "dead" ||
+        row.status === "resolved"
+      ) {
         throw new ReliabilityError("This operation cannot be retried.", 409);
       }
       if (row.attempts >= 3) {
         row.status = "dead";
         row.updatedAt = deps.now().toISOString();
         await deps.store.saveOperation(row);
-        await deps.store.addRecovery({ operationId: id, outcome: "dead", actor, at: row.updatedAt });
+        await deps.store.addRecovery({
+          operationId: id,
+          outcome: "dead",
+          actor,
+          at: row.updatedAt,
+        });
         return row;
       }
       row.attempts += 1;
       row.status = row.attempts >= 3 ? "dead" : "retrying";
       row.updatedAt = deps.now().toISOString();
       await deps.store.saveOperation(row);
-      await deps.store.addRecovery({ operationId: id, outcome: row.status, actor, at: row.updatedAt });
+      await deps.store.addRecovery({
+        operationId: id,
+        outcome: row.status,
+        actor,
+        at: row.updatedAt,
+      });
       return row;
     },
 
-    async recordDeployment(input?: { status?: "successful" | "failed" | "rolled_back"; version?: string }) {
+    async recordDeployment(input?: {
+      status?: "successful" | "failed" | "rolled_back";
+      version?: string;
+    }) {
       const row = {
         id: reliabilityId("dep"),
         version: input?.version || deps.version?.() || "unknown",
@@ -227,7 +393,13 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       return deps.store.listDeployments();
     },
 
-    async recordUsage(input: { service: string; units: number; centsPerUnit: number; organizationId?: string; simulated?: boolean }) {
+    async recordUsage(input: {
+      service: string;
+      units: number;
+      centsPerUnit: number;
+      organizationId?: string;
+      simulated?: boolean;
+    }) {
       const estimatedCents = Math.round(input.units * input.centsPerUnit);
       await deps.store.saveCost({
         id: reliabilityId("cost"),
@@ -239,7 +411,10 @@ export function createReliabilityService(deps: ReliabilityDeps) {
         simulated: input.simulated !== false,
         createdAt: deps.now().toISOString(),
       });
-      const total = (await deps.store.listCosts()).reduce((sum, row) => sum + row.estimatedCents, 0);
+      const total = (await deps.store.listCosts()).reduce(
+        (sum, row) => sum + row.estimatedCents,
+        0,
+      );
       const budget = Number(process.env.RELIABILITY_BUDGET_CENTS || 10_000);
       let level: Severity | null = null;
       if (total >= budget) level = "critical";
@@ -254,7 +429,11 @@ export function createReliabilityService(deps: ReliabilityDeps) {
           simulated: input.simulated !== false,
         });
       }
-      return { estimatedCents, totalEstimatedCents: total, confirmed: false as const };
+      return {
+        estimatedCents,
+        totalEstimatedCents: total,
+        confirmed: false as const,
+      };
     },
 
     async costs() {
@@ -262,13 +441,21 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       return {
         estimated: true as const,
         confirmed: false as const,
-        totalEstimatedCents: rows.reduce((sum, row) => sum + row.estimatedCents, 0),
+        totalEstimatedCents: rows.reduce(
+          (sum, row) => sum + row.estimatedCents,
+          0,
+        ),
         rows,
       };
     },
 
     async recordSchedulerTick() {
-      await deps.store.saveHealth({ service: "scheduler_tick", status: "healthy", detail: "cron invoked", checkedAt: deps.now().toISOString() });
+      await deps.store.saveHealth({
+        service: "scheduler_tick",
+        status: "healthy",
+        detail: "cron invoked",
+        checkedAt: deps.now().toISOString(),
+      });
     },
 
     async jobs() {
@@ -282,24 +469,31 @@ export function createReliabilityService(deps: ReliabilityDeps) {
     },
 
     async fallback(organizationId: string) {
-      return (await deps.store.getFallback(organizationId)) ?? {
-        organizationId,
-        aiUnavailable: "transfer" as const,
-        calendarUnavailable: "collect_request" as const,
-        databaseUnavailable: "do_not_claim_saved" as const,
-        transferFailed: "voicemail" as const,
-        updatedAt: deps.now().toISOString(),
-      };
+      return (
+        (await deps.store.getFallback(organizationId)) ?? {
+          organizationId,
+          aiUnavailable: "transfer" as const,
+          calendarUnavailable: "collect_request" as const,
+          databaseUnavailable: "do_not_claim_saved" as const,
+          transferFailed: "voicemail" as const,
+          updatedAt: deps.now().toISOString(),
+        }
+      );
     },
 
-    async saveFallback(row: Awaited<ReturnType<ReliabilityStore["getFallback"]>> & object) {
+    async saveFallback(
+      row: Awaited<ReturnType<ReliabilityStore["getFallback"]>> & object,
+    ) {
       const next = { ...row, updatedAt: deps.now().toISOString() };
       await deps.store.saveFallback(next);
       return next;
     },
 
     /** A database outage must not be reported as a successful write. */
-    databaseResult<T>(available: boolean, value: T): { ok: true; value: T } | { ok: false; error: "database_unavailable" } {
+    databaseResult<T>(
+      available: boolean,
+      value: T,
+    ): { ok: true; value: T } | { ok: false; error: "database_unavailable" } {
       if (!available) return { ok: false, error: "database_unavailable" };
       return { ok: true, value };
     },

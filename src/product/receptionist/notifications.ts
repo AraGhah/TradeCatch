@@ -48,6 +48,9 @@ function smsBody(config: ReceptionistConfig, summary: CallSummary): string {
       ? `${fr ? "Adresse" : "Address"}: ${summary.serviceAddress}`
       : "",
     summary.issue ? `${fr ? "Demande" : "Request"}: ${summary.issue}` : "",
+    summary.appointment?.status === "booked" && summary.appointment.label
+      ? `${fr ? "Rendez-vous confirmé" : "Appointment confirmed"}: ${summary.appointment.label}`
+      : "",
     summary.preferredTime
       ? `${fr ? "Moment" : "Time"}: ${summary.preferredTime}`
       : "",
@@ -92,6 +95,13 @@ function emailInput(
       { label: fr ? "Rappel" : "Callback", value: summary.callbackE164 },
       { label: fr ? "Adresse" : "Address", value: summary.serviceAddress },
       { label: fr ? "Demande" : "Request", value: summary.issue },
+      {
+        label: fr ? "Rendez-vous réservé" : "Appointment booked",
+        value:
+          summary.appointment?.status === "booked"
+            ? summary.appointment.label
+            : undefined,
+      },
       {
         label: fr ? "Moment souhaité" : "Preferred time",
         value: summary.preferredTime,
