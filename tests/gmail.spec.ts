@@ -11,10 +11,9 @@ import { startFakeGoogleServer } from "./support/fake-google-server";
  * sealing, sync, notifications, the inbox UI, cookies and sessions. Only
  * Google itself is substituted.
  *
- * Sign-in budget: magic-link requests are limited to 5 per 15 minutes per IP
- * for the whole server process, and the other specs already use 3. This file
- * therefore signs in exactly twice (Alice and Bob) and reuses those sessions
- * for the owner-dashboard checks at the end. Do not add sign-ins here.
+ * Reuse Alice/Bob sessions for the dashboard checks. Synthetic client addresses
+ * isolate this suite's sign-in quota, including restarted retry workers, from
+ * other suites. The localhost-only harness already supports these headers.
  */
 
 const PORT = Number(process.env.TRADECATCH_GMAIL_E2E_PORT || 4010);
@@ -36,7 +35,7 @@ const pubsub = (email: string, historyId: string | number) => ({
 type Person = { email: string; page: Page; context: BrowserContext };
 
 async function signUp(browser: Browser, label: string): Promise<Person> {
-  const context = await browser.newContext();
+  const context = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": `203.0.113.${20 + test.info().workerIndex % 200}` } });
   const page = await context.newPage();
   const email = `gmail-${label}-${Date.now()}@example.test`;
   const provision = await page.request.post("/api/missed-call/ops/provision-organization", {
@@ -54,7 +53,9 @@ async function signIn(page: Page, email: string) {
     .waitForFunction(() => Boolean(document.querySelector('div[style*="transform"]')), undefined, { timeout: 10_000 })
     .catch(() => undefined);
   await page.getByLabel("Work email").fill(email);
+  const response = page.waitForResponse(r => r.url().endsWith("/api/auth/magic-link") && r.request().method() === "POST");
   await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  expect((await response).status()).toBe(200);
   await page.getByRole("link", { name: "Open workspace" }).click();
   await page.getByRole("button", { name: "Confirm and sign in" }).click();
   await expect(page).toHaveURL(/\/app(?:\/)?$/);
