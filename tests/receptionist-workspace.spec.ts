@@ -16,6 +16,11 @@ const OPS = {
 };
 
 async function signIn(page: Page, plan: "starter" | "growth") {
+  // The localhost-only harness trusts these synthetic documentation addresses.
+  // Each retry worker gets its own client quota; production limits stay intact.
+  await page.setExtraHTTPHeaders({
+    "x-forwarded-for": `198.51.100.${20 + (test.info().workerIndex % 200)}`,
+  });
   const email = `ws-${plan}-${Date.now()}-${test.info().workerIndex}@example.test`;
   const provision = await page.request.post(
     "/api/missed-call/ops/provision-organization",
@@ -41,7 +46,13 @@ async function signIn(page: Page, plan: "starter" | "growth") {
     )
     .catch(() => undefined);
   await page.getByLabel("Work email").fill(email);
+  const response = page.waitForResponse(
+    (r) =>
+      r.url().endsWith("/api/auth/magic-link") &&
+      r.request().method() === "POST",
+  );
   await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  expect((await response).status()).toBe(200);
   await page.getByRole("link", { name: "Open workspace" }).click();
   await page.getByRole("button", { name: "Confirm and sign in" }).click();
   await expect(page).toHaveURL(/\/app(?:\/)?$/);
