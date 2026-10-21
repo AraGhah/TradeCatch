@@ -261,6 +261,10 @@ describe(
           toE164: client.smsFromNumber,
           body: word,
         });
+        assert.equal(smsPort.sent.length, 1);
+        assert.equal(smsPort.sent[0].toE164, caller);
+        assert.match(smsPort.sent[0].body, /désabonné.*unsubscribed/);
+        const sentAfterConfirmation = smsPort.sent.length;
         const restarted = createPostgresStore(scoped);
         assert.equal(await restarted.isSmsSuppressed(client.id, caller), true);
         const next = createMissedCallEngine({
@@ -277,7 +281,7 @@ describe(
         });
         assert.equal(result.smsSent, false);
         assert.equal(result.suppressedReason, "opt_out");
-        assert.equal(smsPort.sent.length, 0);
+        assert.equal(smsPort.sent.length, sentAfterConfirmation);
       });
     }
   },
