@@ -20,6 +20,8 @@ export const DEFAULT_CHANNELS: Record<PreferenceCategory, ChannelPrefs> = {
   transfer_failed: yes(true, true),
   automation_failures: yes(true, false),
   daily_summary: yes(true, false),
+  // Receptionist outages are critical: reach owners outside the app by default.
+  outages: yes(true, true),
   system: yes(false, false),
 };
 
@@ -177,11 +179,11 @@ const COPY: Record<
   receptionist_offline: {
     en: {
       title: "Receptionist unavailable",
-      body: "The receptionist for {business} is temporarily unavailable.",
+      body: "The receptionist for {business} could not answer a call. Callers were sent to your backup line or voicemail. Check Calls for details.",
     },
     fr: {
       title: "Réceptionniste indisponible",
-      body: "La réceptionniste de {business} est temporairement indisponible.",
+      body: "La réceptionniste de {business} n’a pas pu répondre à un appel. Les appelants ont été dirigés vers votre ligne de secours ou la boîte vocale. Consultez les appels pour les détails.",
     },
   },
   automation_failure: {

@@ -2878,8 +2878,10 @@
         "transfer_failed": "Failed transfers",
         "automation_failures": "Automation problems",
         "daily_summary": "Where to send the daily summary",
+        "outages": "Receptionist outages",
         "system": "System updates"
       },
+      "outagesHint": "Sent right away to owners and admins when the receptionist cannot answer a call. Email goes to your account email; SMS goes to your configured business number. Email and SMS require configured delivery providers.",
       "gmailRepliesHint": "Important, unread customer emails alert only the mailbox owner. Email goes to your account email; SMS goes to your configured business number. External alerts hide message contents. Email and SMS require configured delivery providers.",
       "quietStart": "Quiet hours start",
       "quietEnd": "Quiet hours end",

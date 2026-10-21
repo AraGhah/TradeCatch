@@ -417,6 +417,13 @@ export function createNotificationService(deps: NotificationDeps) {
     for (const member of members) {
       if (payload.recipientUserId && payload.recipientUserId !== member.userId)
         continue;
+      // Outages are for the people who can act on them, whatever their scope.
+      if (
+        notification.type === "receptionist_offline" &&
+        member.role !== "owner" &&
+        member.role !== "admin"
+      )
+        continue;
       const prefs = await prefsFor(org, member);
       if (
         !payload.recipientUserId &&

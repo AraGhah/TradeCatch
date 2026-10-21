@@ -65,6 +65,9 @@ export function NotificationPreferencesForm({
           {key === "replies" ? (
             <p className="mb-2 text-sm text-navy/70">{t("gmailRepliesHint")}</p>
           ) : null}
+          {key === "outages" ? (
+            <p className="mb-2 text-sm text-navy/70">{t("outagesHint")}</p>
+          ) : null}
           {(["inApp", "email", "sms"] as const).map((channel) => (
             <label key={channel} className="mr-4 text-sm text-navy">
               <input

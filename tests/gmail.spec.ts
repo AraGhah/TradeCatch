@@ -705,18 +705,32 @@ test.describe("Gmail receiving", () => {
     });
     await row.getByLabel("Email", { exact: true }).check();
     await row.getByLabel("SMS", { exact: true }).check();
+    // Receptionist outages reach owners by email and SMS unless they opt out.
+    const outages = alice.page.getByRole("group", {
+      name: "Receptionist outages",
+    });
+    await expect(outages.getByLabel("Email", { exact: true })).toBeChecked();
+    await expect(outages.getByLabel("SMS", { exact: true })).toBeChecked();
+    await outages.getByLabel("SMS", { exact: true }).uncheck();
     await alice.page.getByRole("button", { name: "Save", exact: true }).click();
     await expect(alice.page.getByText("Saved.", { exact: true })).toBeVisible();
     const saved = (await (await alice.page.request.get(url)).json()) as {
       preferences: {
         dailySummary: boolean;
-        categories: { replies: { email: boolean; sms: boolean } };
+        categories: {
+          replies: { email: boolean; sms: boolean };
+          outages: { email: boolean; sms: boolean };
+        };
       };
     };
     expect(saved.preferences.dailySummary).toBe(true);
     expect(saved.preferences.categories.replies).toMatchObject({
       email: true,
       sms: true,
+    });
+    expect(saved.preferences.categories.outages).toMatchObject({
+      email: true,
+      sms: false,
     });
     await alice.page.request.put(url, { data: original.preferences });
     await bob.page.goto("/app/settings");

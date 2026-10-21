@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import { after, before, beforeEach, describe, it } from "node:test";
 import { NextRequest } from "next/server";
-import { Pool } from "pg";
+import { createNotificationTestSchema } from "../support/notification-pg-schema";
 import {
   createNotificationService,
   type NoticeMember,
@@ -36,9 +35,24 @@ function harness(
     options.organizationId ?? "summary_fixture_" + randomUUID().slice(0, 8);
   let now = Date.parse(MORNING);
   const members: NoticeMember[] = [
-    { userId: "owner", role: "owner", email: "owner@example.test", locale: "en" },
-    { userId: "admin_fr", role: "admin", email: "admin@example.test", locale: "fr" },
-    { userId: "opted_out", role: "admin", email: "out@example.test", locale: "en" },
+    {
+      userId: "owner",
+      role: "owner",
+      email: "owner@example.test",
+      locale: "en",
+    },
+    {
+      userId: "admin_fr",
+      role: "admin",
+      email: "admin@example.test",
+      locale: "fr",
+    },
+    {
+      userId: "opted_out",
+      role: "admin",
+      email: "out@example.test",
+      locale: "en",
+    },
   ];
   const emails: { to: string; subject: string; message: string }[] = [];
   const service = createNotificationService({
@@ -85,7 +99,10 @@ function harness(
     );
     await service.savePreferences(prefs);
   }
-  async function event(type: Parameters<typeof service.enqueue>[0]["type"], key: string) {
+  async function event(
+    type: Parameters<typeof service.enqueue>[0]["type"],
+    key: string,
+  ) {
     await service.enqueue({
       organizationId,
       type,
@@ -162,11 +179,14 @@ function summaryChecks(factory: () => NotificationStore) {
     );
 
     assert.equal((await h.summariesFor("opted_out")).length, 0);
-    const bodies = h.emails.filter((mail) => mail.subject === "Daily summary" || mail.subject === "Résumé quotidien");
-    assert.deepEqual(
-      bodies.map((mail) => mail.to).sort(),
-      ["admin@example.test", "owner@example.test"],
+    const bodies = h.emails.filter(
+      (mail) =>
+        mail.subject === "Daily summary" || mail.subject === "Résumé quotidien",
     );
+    assert.deepEqual(bodies.map((mail) => mail.to).sort(), [
+      "admin@example.test",
+      "owner@example.test",
+    ]);
     for (const mail of bodies)
       assert.doesNotMatch(
         mail.message,
@@ -214,8 +234,7 @@ function summaryChecks(factory: () => NotificationStore) {
     assert.equal(summaries.length, 2);
     assert.ok(
       summaries.some(
-        (row) =>
-          row.note.message === "Today at Plomberie Nord: 1 new lead.",
+        (row) => row.note.message === "Today at Plomberie Nord: 1 new lead.",
       ),
     );
   });
@@ -303,12 +322,24 @@ describe("daily notification summaries", () => {
       "2026-03-08T05:00:00.000Z",
     );
     assert.equal(
-      startOfLocalDay(new Date("2026-10-21T13:00:00Z"), "Asia/Kolkata").toISOString(),
+      startOfLocalDay(
+        new Date("2026-10-21T13:00:00Z"),
+        "Asia/Kolkata",
+      ).toISOString(),
       "2026-10-20T18:30:00.000Z",
     );
-    assert.equal(localDateKey(new Date("2026-10-21T05:30:00Z"), "Pacific/Auckland"), "2026-10-21");
-    assert.equal(localDateKey(new Date("2026-10-21T05:30:00Z"), "America/Toronto"), "2026-10-21");
-    assert.equal(localDateKey(new Date("2026-10-21T03:30:00Z"), "America/Toronto"), "2026-10-20");
+    assert.equal(
+      localDateKey(new Date("2026-10-21T05:30:00Z"), "Pacific/Auckland"),
+      "2026-10-21",
+    );
+    assert.equal(
+      localDateKey(new Date("2026-10-21T05:30:00Z"), "America/Toronto"),
+      "2026-10-21",
+    );
+    assert.equal(
+      localDateKey(new Date("2026-10-21T03:30:00Z"), "America/Toronto"),
+      "2026-10-20",
+    );
   });
 });
 
@@ -328,10 +359,13 @@ describe("daily summary scheduled endpoint", () => {
     resetNotificationRuntimeForTests();
     const call = (headers: Record<string, string>) =>
       dailySummaryTick(
-        new NextRequest("https://example.test/api/notifications/daily-summary/tick", {
-          method: "POST",
-          headers,
-        }),
+        new NextRequest(
+          "https://example.test/api/notifications/daily-summary/tick",
+          {
+            method: "POST",
+            headers,
+          },
+        ),
       );
     try {
       assert.equal((await call({})).status, 401);
@@ -360,27 +394,16 @@ describe(
   "daily notification summaries in isolated PostgreSQL",
   { skip: !databaseUrl },
   () => {
-    let pool: Pool;
+    let schema: Awaited<ReturnType<typeof createNotificationTestSchema>>;
     before(async () => {
-      const url = new URL(databaseUrl!);
-      assert.equal(url.hostname, "127.0.0.1");
-      assert.ok(
-        ["/tc003_staging", "/notifications_staging"].includes(url.pathname),
-      );
-      pool = new Pool({ connectionString: databaseUrl });
-      await pool.query(
-        "CREATE TABLE IF NOT EXISTS mc_schema_migrations (id TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT now())",
-      );
-      for (const file of ["schema.sql", "delivery-reliability.sql"]) {
-        await pool.query(
-          readFileSync("src/product/notifications/" + file, "utf8"),
-        );
-      }
+      schema = await createNotificationTestSchema(databaseUrl!);
     });
     after(async () => {
-      await pool?.end();
       await closePgPool();
+      await schema?.drop();
     });
-    summaryChecks(() => createPostgresNotificationStore(databaseUrl!));
+    summaryChecks(() =>
+      createPostgresNotificationStore(schema.connectionString),
+    );
   },
 );

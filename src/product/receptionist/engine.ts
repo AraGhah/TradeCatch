@@ -77,6 +77,20 @@ export type ReceptionistEngineDeps = {
     session: CallSession,
     config: ReceptionistConfig,
   ) => Promise<void>;
+  /**
+   * A caller was sent to the fail-safe because the receptionist itself broke.
+   * Fire-and-forget by contract: the implementation owns delivery (platform
+   * monitoring, owner alerts) and must not delay or throw into the live call.
+   */
+  onFailure?: (failure: ReceptionistFailure) => void;
+};
+
+/** What the engine knows when the receptionist fails a live call. */
+export type ReceptionistFailure = {
+  /** Links the failure to a business; absent when no business could be identified. */
+  clientAccountId?: string;
+  operation: string;
+  errorCode: string;
 };
 
 const TERMINAL_CALL_STATUSES = new Set([
@@ -211,11 +225,21 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
   /**
    * Safe plan when anything throws: apologize, then a human (fallback line)
    * or voicemail. Never dead air.
+   *
+   * `cause: "declined"` is for calls we chose not to answer (unknown number,
+   * outside the configured handling mode): same apology, but nothing broke, so
+   * nothing is reported. Anything else is a receptionist failure and is
+   * reported for monitoring and owner alerts.
    */
   function failSafePlan(
     config: ReceptionistConfig | null,
     sessionId: string | null,
     lang: ReceptionistLanguage = config?.defaultLanguage ?? "fr",
+    opts: {
+      cause?: "error" | "declined";
+      clientAccountId?: string;
+      operation?: string;
+    } = {},
   ): VoicePlan {
     const voice =
       config?.voices[lang] ??
@@ -228,15 +252,17 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         voice,
       },
     ];
-    void import("@/product/reliability/hooks").then(({ recordFailure }) =>
-      recordFailure({
-        service: "ai_receptionist",
-        operation: "continue_call",
-        errorCode: "AI_SESSION_FAILED",
-        severity: "high",
-        retryable: true,
-      }),
-    );
+    if (opts.cause !== "declined") {
+      try {
+        deps.onFailure?.({
+          clientAccountId: opts.clientAccountId ?? config?.clientAccountId,
+          operation: opts.operation ?? "continue_call",
+          errorCode: "AI_SESSION_FAILED",
+        });
+      } catch (err) {
+        console.warn("[receptionist] failure report skipped", err);
+      }
+    }
     if (config?.fallbackTransferE164) {
       verbs.push({
         verb: "dial",
@@ -633,7 +659,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         console.error("[receptionist] no enabled config for number", {
           to: input.toE164,
         });
-        return failSafePlan(null, null);
+        return failSafePlan(null, null, undefined, { cause: "declined" });
       }
 
       const at = clock.now();
@@ -642,7 +668,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           to: input.toE164,
           mode: config.callHandlingMode,
         });
-        return failSafePlan(null, null);
+        return failSafePlan(null, null, undefined, { cause: "declined" });
       }
 
       const phone = {
@@ -659,7 +685,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
 
       if (routing.action === "reject") {
         console.info("[receptionist] routing rejected call", routing.reason);
-        return failSafePlan(config, null);
+        return failSafePlan(config, null, undefined, { cause: "declined" });
       }
 
       const bilingual = config.languages.length > 1;
@@ -807,7 +833,13 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         async (session) => {
           const config = configFor(session);
           if (!config)
-            return { session: null, result: failSafePlan(null, session.id) };
+            return {
+              session: null,
+              result: failSafePlan(null, session.id, session.language, {
+                clientAccountId: session.clientAccountId,
+                operation: "handle_gather",
+              }),
+            };
           if (session.status !== "in_progress" || session.step === "done") {
             return { session: null, result: hangupPlan(session.id) };
           }
