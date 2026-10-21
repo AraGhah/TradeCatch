@@ -152,3 +152,11 @@ tables from migration 021_stripe_billing remain the system of record.
 
 Portal API reference:
 [Create a portal session](https://docs.stripe.com/api/customer_portal/sessions/create).
+
+Optional server-only configuration selectors: STRIPE_BILLING_PORTAL_CONFIGURATION
+(live) and STRIPE_TEST_BILLING_PORTAL_CONFIGURATION (test). Set a bpc_ ID to use
+an API-created configuration instead of Stripe's dashboard default. Test-mode
+sessions never fall back to the live configuration selector. A dedicated test
+configuration was provisioned for verification; it enables invoice history,
+payment-method updates and cancellation at period end. No live configuration
+or live credential was created or changed.
