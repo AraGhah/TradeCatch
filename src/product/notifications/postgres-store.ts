@@ -26,6 +26,7 @@ function noteFrom(row: Record<string, unknown>): ContractorNotification {
     type: row.type as ContractorNotification["type"],
     title: String(row.title),
     message: String(row.message),
+    content: row.content_json as ContractorNotification["content"],
     priority: row.priority as ContractorNotification["priority"],
     leadId: row.lead_id ? String(row.lead_id) : undefined,
     appointmentId: row.appointment_id ? String(row.appointment_id) : undefined,
@@ -128,9 +129,9 @@ export function createPostgresNotificationStore(
       await query(
         `INSERT INTO tc_notifications (
           id, organization_id, type, title, message, priority, lead_id, appointment_id, call_id,
-          href, consolidate_key, idempotency_key, simulated, created_at, updated_at
-        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-        ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, message = EXCLUDED.message, updated_at = EXCLUDED.updated_at`,
+          href, consolidate_key, idempotency_key, simulated, created_at, updated_at, content_json
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+        ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, message = EXCLUDED.message, updated_at = EXCLUDED.updated_at, content_json = EXCLUDED.content_json`,
         [
           row.id,
           row.organizationId,
@@ -147,6 +148,7 @@ export function createPostgresNotificationStore(
           row.simulated,
           row.createdAt,
           row.updatedAt,
+          row.content ? JSON.stringify(row.content) : null,
         ],
       );
     },

@@ -87,6 +87,8 @@ export type ContractorNotification = {
   type: NotificationType;
   title: string;
   message: string;
+  /** Template inputs retained for per-recipient rendering, including retries. */
+  content?: { type: NotificationType; payload: NotificationPayload }[];
   priority: Priority;
   leadId?: string;
   appointmentId?: string;

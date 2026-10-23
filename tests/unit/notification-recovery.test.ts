@@ -432,7 +432,11 @@ describe(
       await pool.query(
         "CREATE TABLE IF NOT EXISTS mc_schema_migrations (id TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT now())",
       );
-      for (const file of ["schema.sql", "delivery-reliability.sql"]) {
+      for (const file of [
+        "schema.sql",
+        "delivery-reliability.sql",
+        "localized-content.sql",
+      ]) {
         await pool.query(
           readFileSync("src/product/notifications/" + file, "utf8"),
         );

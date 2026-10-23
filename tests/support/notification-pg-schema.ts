@@ -28,7 +28,11 @@ export async function createNotificationTestSchema(databaseUrl: string) {
     await scoped.query(
       "CREATE TABLE IF NOT EXISTS mc_schema_migrations (id TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT now())",
     );
-    for (const file of ["schema.sql", "delivery-reliability.sql"]) {
+    for (const file of [
+      "schema.sql",
+      "delivery-reliability.sql",
+      "localized-content.sql",
+    ]) {
       await scoped.query(
         readFileSync("src/product/notifications/" + file, "utf8"),
       );
