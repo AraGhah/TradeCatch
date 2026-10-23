@@ -1,5 +1,8 @@
 import type { BookAuditPayload } from "@/lib/validation/book-audit";
-import { isDurableMissedCallStoreConfigured } from "@/lib/config";
+import {
+  isDurableMissedCallStoreConfigured,
+  isLeadsWebhookConfigured,
+} from "@/lib/config";
 import { createId } from "@/lib/id";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 
@@ -22,6 +25,7 @@ export type PersistedBookAuditLead = {
   duplicate: boolean;
   emailSent: boolean;
   crmForwarded: boolean;
+  nativeCrmSynced: boolean;
 };
 
 /** Drop one-time tokens and honeypot fields from durable JSON evidence. */
@@ -54,6 +58,7 @@ export async function persistBookAuditLead(
     id: string;
     email_sent: boolean;
     crm_forwarded: boolean;
+    native_crm_synced: boolean;
   }>(
     `WITH lead AS (INSERT INTO mc_book_audit_leads (
          id, idempotency_key, email, phone, company, preferred_language,
@@ -65,18 +70,26 @@ export async function persistBookAuditLead(
        )
        ON CONFLICT (idempotency_key) DO UPDATE
          SET idempotency_key = EXCLUDED.idempotency_key
-       RETURNING id, email_sent, crm_forwarded, updated_at
+       RETURNING id, email_sent, crm_forwarded, updated_at, payload
+     ), native AS (
+       INSERT INTO tc_platform_sales_leads (lead_id)
+       SELECT id FROM lead
+       WHERE COALESCE(payload->>'retention_state', '') NOT IN ('purged_pending','purged')
+       ON CONFLICT (lead_id) DO UPDATE SET lead_id=EXCLUDED.lead_id
+       RETURNING lead_id
      ), queued AS (
        INSERT INTO mc_book_audit_notifications (lead_id, channel, delivered_at)
        SELECT lead.id, c.channel,
          CASE WHEN (c.channel = 'notify_email' AND lead.email_sent)
                 OR (c.channel = 'crm' AND lead.crm_forwarded)
               THEN lead.updated_at ELSE NULL END
-       FROM lead
+       FROM lead JOIN native ON native.lead_id=lead.id
        CROSS JOIN (VALUES ('notify_email'), ('customer_email'), ('crm')) AS c(channel)
+       WHERE c.channel <> 'crm' OR $16::boolean
        ON CONFLICT DO NOTHING
      )
-     SELECT id, email_sent, crm_forwarded FROM lead`,
+     SELECT lead.id, email_sent, crm_forwarded, true AS native_crm_synced
+     FROM lead JOIN native ON native.lead_id=lead.id`,
     [
       id,
       input.idempotencyKey,
@@ -93,6 +106,7 @@ export async function persistBookAuditLead(
       input.emailSent,
       input.crmForwarded,
       now,
+      isLeadsWebhookConfigured(),
     ],
   );
 
@@ -102,6 +116,7 @@ export async function persistBookAuditLead(
       duplicate: inserted.rows[0].id !== id,
       emailSent: inserted.rows[0].email_sent,
       crmForwarded: inserted.rows[0].crm_forwarded,
+      nativeCrmSynced: inserted.rows[0].native_crm_synced,
     };
   }
 

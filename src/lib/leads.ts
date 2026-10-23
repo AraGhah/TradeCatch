@@ -1,8 +1,9 @@
 import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
 
 /**
- * Forwards a validated audit lead to an external CRM / automation tool
- * (Zapier, Make, n8n, HubSpot webhook, Airtable automation, etc.).
+ * Optional external forwarding of TradeCatch's own sales bookings.
+ * Native platform sales CRM synchronization is independent and atomic with storage.
+ * Contractor-specific CRM webhooks remain scoped through product/growth integrations.
  *
  * Configure LEADS_WEBHOOK_URL with a POST endpoint that accepts JSON.
  * Returns { forwarded: false } when unset — emails still go out.

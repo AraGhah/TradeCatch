@@ -231,6 +231,7 @@ test.describe("receptionist workspace pages", () => {
   });
 
   test("owner API refuses unauthenticated access", async ({ request }) => {
+    expect((await request.get("/api/admin/sales-leads")).status()).toBe(401);
     expect((await request.get("/api/app/receptionist")).status()).toBe(401);
     expect(
       (
@@ -253,5 +254,21 @@ test.describe("receptionist workspace pages", () => {
         })
       ).status(),
     ).toBe(401);
+  });
+  test("contractors cannot read TradeCatch sales leads or open its sales dashboard", async ({
+    page,
+  }) => {
+    await signIn(page, "starter");
+    const response = await page.request.get("/api/admin/sales-leads");
+    expect(response.status()).toBe(403);
+    expect(response.headers()["cache-control"]).toContain("no-store");
+    expect(await response.text()).not.toContain("leads");
+    await page.goto("/admin/sales");
+    await expect(page).toHaveURL(/\/app\/?$/);
+    const ops = await page.request.get("/api/admin/sales-leads", {
+      headers: OPS,
+    });
+    expect(ops.status()).toBe(503); // Authorized, but no database in the browser harness.
+    expect(await ops.text()).not.toContain("DATABASE_URL");
   });
 });

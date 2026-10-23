@@ -16,8 +16,14 @@ export const routing = defineRouting({
     "/faq": { en: "/faq", fr: "/faq" },
     "/help": { en: "/help", fr: "/aide" },
     "/help/[id]": { en: "/help/[id]", fr: "/aide/[id]" },
-    "/privacy-policy": { en: "/privacy-policy", fr: "/politique-de-confidentialite" },
-    "/terms-of-service": { en: "/terms-of-service", fr: "/conditions-utilisation" },
+    "/privacy-policy": {
+      en: "/privacy-policy",
+      fr: "/politique-de-confidentialite",
+    },
+    "/terms-of-service": {
+      en: "/terms-of-service",
+      fr: "/conditions-utilisation",
+    },
     "/cookie-policy": { en: "/cookie-policy", fr: "/politique-de-cookies" },
     "/acceptable-use-policy": {
       en: "/acceptable-use-policy",
@@ -48,6 +54,7 @@ export const routing = defineRouting({
       en: "/admin",
       fr: "/admin",
     },
+    "/admin/sales": { en: "/admin/sales", fr: "/admin/sales" },
     "/admin/monitoring": {
       en: "/admin/monitoring",
       fr: "/admin/monitoring",

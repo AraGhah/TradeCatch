@@ -132,6 +132,11 @@ async function main() {
     );
     await applyFile(
       client,
+      ["src", "product", "sales-crm", "schema.sql"],
+      "027_native_sales_crm",
+    );
+    await applyFile(
+      client,
       ["src", "product", "notifications", "delivery-reliability.sql"],
       "023_notification_delivery_reliability",
     );

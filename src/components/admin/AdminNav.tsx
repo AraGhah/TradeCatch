@@ -7,6 +7,7 @@ const GROUPS = [
   {
     items: [
       { href: "/admin", key: "navOverview" },
+      { href: "/admin/sales", key: "navSales" },
       { href: "/admin/businesses", key: "navBusinesses" },
       { href: "/admin/billing", key: "navBilling" },
       { href: "/admin/analytics", key: "navAnalytics" },
@@ -38,7 +39,10 @@ function active(pathname: string, href: string) {
   const matches = pathname === href || pathname.startsWith(`${href}/`);
   if (!matches) return false;
   return !ALL.some(
-    (other) => other !== href && other.length > href.length && (pathname === other || pathname.startsWith(`${other}/`)),
+    (other) =>
+      other !== href &&
+      other.length > href.length &&
+      (pathname === other || pathname.startsWith(`${other}/`)),
   );
 }
 
@@ -47,7 +51,9 @@ export function AdminNav() {
   const pathname = usePathname();
   return (
     <nav aria-label="TradeCatch Admin" className="flex flex-col gap-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy/70">TradeCatch Admin</p>
+      <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy/70">
+        TradeCatch Admin
+      </p>
       {GROUPS.map((group) => (
         <ul key={group.items[0].href} className="flex flex-col">
           {group.items.map((item) => {

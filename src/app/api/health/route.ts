@@ -125,6 +125,7 @@ export async function GET(request: NextRequest) {
   const databaseUrl = process.env.DATABASE_URL?.trim();
   let database: boolean | null = null;
   let schemaOk: boolean | null = null;
+  let nativeSalesCrm: boolean | null = null;
   let diagnosticsComplete = false;
   let queue:
     | {
@@ -146,7 +147,7 @@ export async function GET(request: NextRequest) {
         const pool = getPgPool(databaseUrl);
         await pool.query("SELECT 1");
         database = true;
-        const schema = await pool.query<{ ok: boolean }>(
+        const schema = await pool.query<{ ok: boolean; native_crm: boolean }>(
           `SELECT (
              to_regclass('public.mc_workflows') IS NOT NULL
              AND to_regclass('public.mc_outbound_messages') IS NOT NULL
@@ -163,10 +164,16 @@ export async function GET(request: NextRequest) {
                FROM mc_schema_migrations
                WHERE id = ANY($1::text[])
              ) = cardinality($1::text[])
-           ) AS ok`,
+           ) AS ok,
+           (to_regclass('public.tc_platform_sales_leads') IS NOT NULL
+             AND EXISTS (SELECT 1 FROM mc_schema_migrations WHERE id='027_native_sales_crm')
+             AND EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='mc_book_audit_notifications' AND column_name='cancelled_at')
+           ) AS native_crm`,
           [REQUIRED_SCHEMA_MIGRATIONS],
         );
         schemaOk = Boolean(schema.rows[0]?.ok);
+        nativeSalesCrm = Boolean(schema.rows[0]?.native_crm);
 
         const stats = await pool.query<{
           queued: string;
@@ -208,6 +215,7 @@ export async function GET(request: NextRequest) {
         diagnosticsComplete = true;
       } catch (error) {
         database = false;
+        nativeSalesCrm = false;
         schemaOk = false;
         queue = null;
         escalationsLastTick = null;
@@ -222,6 +230,11 @@ export async function GET(request: NextRequest) {
     resend: isResendConfigured(),
     turnstile: isTurnstileConfigured(),
     leadsWebhook: Boolean(process.env.LEADS_WEBHOOK_URL?.trim()),
+    nativeSalesCrm,
+    externalCrmWebhook: {
+      configured: Boolean(process.env.LEADS_WEBHOOK_URL?.trim()),
+      required: false,
+    },
     calendar: Boolean(process.env.NEXT_PUBLIC_CALENDAR_URL?.trim()),
     errorWebhook: Boolean(process.env.ERROR_WEBHOOK_URL?.trim()),
     analytics: Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim()),
@@ -283,6 +296,7 @@ export async function GET(request: NextRequest) {
   const degraded =
     !siteReady ||
     (moduleAExpected && !moduleAReady) ||
+    (durableConfigured && nativeSalesCrm !== true) ||
     queueBackedUp ||
     Boolean(cronStale);
 

@@ -12,6 +12,7 @@ import {
 import {
   getProductionConfigErrors,
   isDurableMissedCallStoreConfigured,
+  isLeadsWebhookConfigured,
   requiresProductionLeadProtection,
 } from "@/lib/config";
 import {
@@ -156,6 +157,8 @@ export async function POST(request: NextRequest) {
     emailSent: persisted.emailSent,
     customerEmailSent: false,
     crmForwarded: persisted.crmForwarded,
+    nativeCrmSynced: persisted.nativeCrmSynced,
+    externalCrmConfigured: isLeadsWebhookConfigured(),
     notificationsDelivered: false,
   };
   try {

@@ -3937,6 +3937,29 @@
     "hint": "No real customers are contacted. Production is untouched."
   },
   "admin": {
+    "sales": {
+      "title": "TradeCatch sales leads",
+      "intro": "Audit requests for TradeCatch. These are separate from contractor customer leads.",
+      "company": "Business",
+      "contact": "Contact",
+      "request": "Request",
+      "received": "Received",
+      "loading": "Loading sales leads…",
+      "error": "Sales leads could not be loaded.",
+      "retry": "Try again",
+      "empty": "No sales leads yet.",
+      "pages": "Sales lead pages",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page}",
+      "stages": {
+        "new": "New",
+        "contacted": "Contacted",
+        "qualified": "Qualified",
+        "won": "Won",
+        "lost": "Lost"
+      }
+    },
     "headline": "Demo businesses",
     "intro": "Create fictional contractor accounts, open their dashboards, generate simulated data, and reset without touching production customers.",
     "createButton": "+ Create Demo Business",
@@ -3976,6 +3999,7 @@
     },
     "platform": {
       "navOverview": "Overview",
+      "navSales": "TradeCatch sales",
       "navBusinesses": "Businesses",
       "navBilling": "Billing",
       "navAnalytics": "Analytics",

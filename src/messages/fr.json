@@ -3937,6 +3937,29 @@
     "hint": "Aucun vrai client n’est contacté. La production n’est pas modifiée."
   },
   "admin": {
+    "sales": {
+      "title": "Prospects de TradeCatch",
+      "intro": "Demandes d’audit pour TradeCatch, distinctes des prospects clients des entrepreneurs.",
+      "company": "Entreprise",
+      "contact": "Contact",
+      "request": "Demande",
+      "received": "Reçue",
+      "loading": "Chargement des prospects…",
+      "error": "Impossible de charger les prospects.",
+      "retry": "Réessayer",
+      "empty": "Aucun prospect pour le moment.",
+      "pages": "Pages des prospects",
+      "previous": "Précédente",
+      "next": "Suivante",
+      "page": "Page {page}",
+      "stages": {
+        "new": "Nouveau",
+        "contacted": "Contacté",
+        "qualified": "Qualifié",
+        "won": "Gagné",
+        "lost": "Perdu"
+      }
+    },
     "headline": "Entreprises démo",
     "intro": "Créez des comptes entrepreneurs fictifs, ouvrez leurs tableaux de bord, générez des données simulées et réinitialisez sans toucher aux clients de production.",
     "createButton": "+ Créer une entreprise démo",
@@ -3976,6 +3999,7 @@
     },
     "platform": {
       "navOverview": "Aperçu",
+      "navSales": "Ventes TradeCatch",
       "navBusinesses": "Entreprises",
       "navBilling": "Facturation",
       "navAnalytics": "Analytique",

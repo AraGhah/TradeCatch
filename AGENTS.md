@@ -13,5 +13,6 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - For each programming task, create a dedicated Git branch named after the program title. Do not add the `codex/` prefix unless explicitly requested.
 - Complete and verify the task on that branch using appropriate engineering, security, and repository-specific skills and best practices.
 - When the task is complete, create a commit whose message is the title of the problem/task.
+- Use exactly one implementation commit per problem; do not combine different problems into one commit.
 - Push the completed work to the `main` branch as requested by the repository owner, using the repository's normal safe Git workflow.
 - Select and apply the relevant available skills for each task so the result is functional, maintainable, and secure.

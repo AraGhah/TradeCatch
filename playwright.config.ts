@@ -59,6 +59,8 @@ export default defineConfig({
       STRIPE_TEST_WEBHOOK_SECRET: "",
       AUTH_SECRET: "tradecatch-e2e-session-secret-not-for-production",
       SAAS_DEV_LOGIN: "1",
+      // Synthetic platform identity for exercising real admin MFA/session gates.
+      TRADECATCH_ADMIN_EMAILS: "sales-admin@example.test",
       MISSED_CALL_OPS_SECRET: "tradecatch-e2e-ops-secret-not-for-production",
       // Gmail: the app talks to tests/support/fake-google instead of Google.
       GOOGLE_GMAIL_CLIENT_ID: "e2e-gmail-client-id",

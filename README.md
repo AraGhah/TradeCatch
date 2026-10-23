@@ -102,6 +102,8 @@ Core product path (call → SMS → collect → tech accept → notify). Domain 
 - Workspace: `/app` after the founder links `missedCallClientId` (`POST /api/missed-call/ops/link-organization`).
 - Entitlements: `src/product/saas/entitlements.ts` — enforced on `/api/app/*`.
 - Apply schemas: `npm run db:schema` · readiness: `npm run check:module-a`
+- Native booking sales CRM: [migration, deployment and rollback](docs/NATIVE_SALES_CRM.md).
+  Existing deployments use the targeted `npm run db:migrate-native-sales-crm` migration.
 - Set `AUTH_SECRET` (and optionally `SAAS_DEV_LOGIN=1` for local sign-in without email)
 
 ## Monitoring & backups
