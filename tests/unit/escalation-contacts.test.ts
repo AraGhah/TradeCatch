@@ -247,6 +247,7 @@ describe(
         "saas/notification-contacts.sql",
         "notifications/schema.sql",
         "notifications/delivery-reliability.sql",
+        "notifications/localized-content.sql",
       ])
         await db.query(readFileSync("src/product/" + file, "utf8"));
     });

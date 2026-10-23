@@ -135,6 +135,11 @@ async function main() {
       ["src", "product", "notifications", "delivery-reliability.sql"],
       "023_notification_delivery_reliability",
     );
+    await applyFile(
+      client,
+      ["src", "product", "notifications", "localized-content.sql"],
+      "026_notification_localized_content",
+    );
     // Upgrade installations created before incremental Gmail sync support.
     await applyFile(
       client,

@@ -16,6 +16,7 @@ import {
   withDefaultCategories,
 } from "./templates";
 import type { NotificationStore } from "./store";
+import { quietHours } from "./preferences";
 import {
   TYPE_CATEGORY,
   TYPE_PRIORITY,
@@ -152,6 +153,55 @@ export function createNotificationService(deps: NotificationDeps) {
     return created;
   }
 
+  function localized(
+    note: ContractorNotification,
+    org: NoticeOrg,
+    language: "en" | "fr",
+    external = false,
+  ) {
+    const content = note.content?.length
+      ? note.content
+      : [{ type: note.type, payload: {} }];
+    const rendered = content.map(({ type, payload }) => {
+      const text = renderNotice(
+        type,
+        language,
+        type === "gmail_reply"
+          ? {
+              business: org.name,
+            }
+          : {
+              business: org.name,
+              customer: payload.customer,
+              service: payload.service,
+              location: payload.location,
+              when: payload.whenLabel,
+            },
+      );
+      return {
+        ...text,
+        message:
+          !(external && type === "gmail_reply") && payload.message
+            ? payload.message
+            : text.message,
+      };
+    });
+    // Legacy custom content (for example a targeted daily summary) is retained.
+    const result = {
+      ...note,
+      title: rendered[0].title,
+      message:
+        !note.content?.length && note.type === "daily_summary"
+          ? note.message
+          : rendered
+              .map((text) => text.message)
+              .join(" ")
+              .slice(0, 500),
+    };
+    delete result.content;
+    return result;
+  }
+
   function windowConfig(prefs: NotificationPreferences) {
     const [sh, sm] = prefs.quietEnd.split(":").map(Number);
     const [eh, em] = prefs.quietStart.split(":").map(Number);
@@ -176,7 +226,7 @@ export function createNotificationService(deps: NotificationDeps) {
     const config = windowConfig(prefs);
     return isInsideSendingWindow(
       deps.now(),
-      org.timezone || "America/Toronto",
+      usableTimeZone(org.timezone),
       config,
     );
   }
@@ -270,74 +320,50 @@ export function createNotificationService(deps: NotificationDeps) {
       delivery.channel === "sms" &&
       (delivery.idempotencyKey.includes(":escalation:") ||
         delivery.idempotencyKey.endsWith(":personal"));
-    // A personal SMS queued for escalation must still belong to this member.
-    if (personalSms) {
-      const member = (await deps.listMembers(org.id)).find(
-        (m) => m.userId === delivery.recipientUserId,
-      );
-      if (
-        !member ||
-        verifiedPhone(member, deps.now()) !== delivery.destination
-      ) {
-        delivery.status = "canceled";
-        delivery.lastError = "recipient_changed";
-        delivery.updatedAt = deps.now().toISOString();
-        await deps.store.saveDelivery(delivery);
-        return;
-      }
+    // Re-check membership and ownership before sending delayed notifications.
+    const member = (await deps.listMembers(org.id)).find(
+      (m) => m.userId === delivery.recipientUserId,
+    );
+    if (
+      !member ||
+      (personalSms &&
+        verifiedPhone(member, deps.now()) !== delivery.destination) ||
+      (delivery.channel === "email" && member.email !== delivery.destination)
+    ) {
+      delivery.status = "canceled";
+      delivery.lastError = "recipient_changed";
+      delivery.updatedAt = deps.now().toISOString();
+      await deps.store.saveDelivery(delivery);
+      return;
     }
-    // Re-check current membership before sending a delayed email.
-    if (delivery.channel === "email") {
-      const member = (await deps.listMembers(org.id)).find(
-        (m) =>
-          m.userId === delivery.recipientUserId &&
-          m.email === delivery.destination,
-      );
-      if (!member) {
-        delivery.status = "canceled";
-        delivery.lastError = "recipient_changed";
-        delivery.updatedAt = deps.now().toISOString();
-        await deps.store.saveDelivery(delivery);
-        return;
-      }
+    const prefs = await prefsFor(org, member);
+    if (
+      notification.type === "gmail_reply" &&
+      delivery.channel !== "in_app" &&
+      !prefs.categories.replies[delivery.channel]
+    ) {
+      delivery.status = "canceled";
+      delivery.lastError = "recipient_or_preferences_changed";
+      delivery.updatedAt = deps.now().toISOString();
+      await deps.store.saveDelivery(delivery);
+      return;
     }
-    let externalMessage = notification.message;
-    if (notification.type === "gmail_reply" && delivery.channel !== "in_app") {
-      const member = (await deps.listMembers(org.id)).find(
-        (m) => m.userId === delivery.recipientUserId,
-      );
-      const prefs = member ? await prefsFor(org, member) : null;
-      if (
-        !member ||
-        !prefs?.categories.replies[delivery.channel] ||
-        (delivery.channel === "email" && delivery.destination !== member.email)
-      ) {
-        delivery.status = "canceled";
-        delivery.lastError = "recipient_or_preferences_changed";
-        delivery.updatedAt = deps.now().toISOString();
-        await deps.store.saveDelivery(delivery);
-        return;
-      }
-      const rule =
-        (await deps.store.getEscalation(org.id)) ??
-        defaultRule(org.id, deps.now().toISOString());
-      if (!allowedNow(notification.priority, prefs, rule, org)) {
-        delivery.status = "pending";
-        delivery.nextAttemptAt = nextWindowStart(
-          deps.now(),
-          org.timezone,
-          windowConfig(prefs),
-        ).toISOString();
-        delivery.updatedAt = deps.now().toISOString();
-        await deps.store.saveDelivery(delivery);
-        return;
-      }
-      // External alerts reveal no sender, subject, or message body, including
-      // when the configured business SMS number is shared with colleagues.
-      externalMessage = renderNotice("gmail_reply", prefs.language, {
-        business: org.name,
-      }).message;
+    const rule =
+      (await deps.store.getEscalation(org.id)) ??
+      defaultRule(org.id, deps.now().toISOString());
+    if (!allowedNow(notification.priority, prefs, rule, org)) {
+      delivery.status = "pending";
+      delivery.nextAttemptAt = nextWindowStart(
+        deps.now(),
+        usableTimeZone(org.timezone),
+        windowConfig(prefs),
+      ).toISOString();
+      delivery.updatedAt = deps.now().toISOString();
+      await deps.store.saveDelivery(delivery);
+      return;
     }
+    const text = localized(notification, org, prefs.language, true);
+    const externalMessage = text.message;
     if (
       delivery.simulated ||
       notification.simulated ||
@@ -371,8 +397,8 @@ export function createNotificationService(deps: NotificationDeps) {
         const result = await deps.sendEmail?.({
           idempotencyKey: delivery.idempotencyKey,
           to: delivery.destination || "",
-          subject: notification.title,
-          title: notification.title,
+          subject: text.title,
+          title: text.title,
           message: externalMessage,
         });
         if (!result?.sent)
@@ -533,7 +559,7 @@ export function createNotificationService(deps: NotificationDeps) {
           ? deps.now().toISOString()
           : nextWindowStart(
               deps.now(),
-              org.timezone || "America/Toronto",
+              usableTimeZone(org.timezone),
               windowConfig(prefs),
             ).toISOString();
         const delivery: NotificationDelivery = {
@@ -675,6 +701,10 @@ export function createNotificationService(deps: NotificationDeps) {
             when: event.payload.whenLabel,
           });
           grouped.message = `${grouped.message} ${extra.message}`.slice(0, 500);
+          grouped.content = [
+            ...(grouped.content ?? [{ type: grouped.type, payload: {} }]),
+            { type: event.type, payload: event.payload },
+          ].slice(0, 32);
           grouped.updatedAt = deps.now().toISOString();
           await deps.store.saveNotification(grouped);
           await deps.store.addEvent({
@@ -702,6 +732,7 @@ export function createNotificationService(deps: NotificationDeps) {
           type: event.type,
           title: rendered.title,
           message: event.payload.message || rendered.message,
+          content: [{ type: event.type, payload: event.payload }],
           priority: TYPE_PRIORITY[event.type],
           leadId: event.payload.leadId,
           appointmentId: event.payload.appointmentId,
@@ -833,7 +864,14 @@ export function createNotificationService(deps: NotificationDeps) {
         deps.store.listNotifications(organizationId),
         deps.store.listRecipients(organizationId),
       ]);
+      const org = await deps.loadOrg(organizationId);
+      const member = (await deps.listMembers(organizationId)).find(
+        (m) => m.userId === userId,
+      );
+      if (!org || !member) return [];
+      const prefs = await prefsFor(org, member);
       return notes
+        .map((note) => localized(note, org, prefs.language))
         .map((note) => ({
           note,
           recipient: recipients.find(
@@ -890,7 +928,19 @@ export function createNotificationService(deps: NotificationDeps) {
         organizationId,
         notificationId,
       );
-      return { notification: note, recipient, deliveries, escalation };
+      const org = await deps.loadOrg(organizationId);
+      const member = (await deps.listMembers(organizationId)).find(
+        (m) => m.userId === userId,
+      );
+      if (!org || !member)
+        throw new NotificationError("Notification not found.", 404);
+      const prefs = await prefsFor(org, member);
+      return {
+        notification: localized(note, org, prefs.language),
+        recipient,
+        deliveries,
+        escalation,
+      };
     },
 
     async markRead(
@@ -963,6 +1013,8 @@ export function createNotificationService(deps: NotificationDeps) {
     },
 
     async savePreferences(row: NotificationPreferences) {
+      if (!quietHours.safeParse(row).success)
+        throw new NotificationError("Invalid quiet hours.");
       row.updatedAt = deps.now().toISOString();
       await deps.store.savePreferences(row);
       return row;

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_CHANNELS } from "@/product/notifications/templates";
 import type { PreferenceCategory } from "@/product/notifications/types";
+import { quietHours } from "@/product/notifications/preferences";
 
 const KEYS = Object.keys(DEFAULT_CHANNELS) as PreferenceCategory[];
 
@@ -44,6 +45,10 @@ export function NotificationPreferencesForm({
       className="flex max-w-2xl flex-col gap-3"
       onSubmit={(event) => {
         event.preventDefault();
+        if (!quietHours.safeParse(prefs).success) {
+          setMessage(t("invalidQuietHours"));
+          return;
+        }
         void fetch(
           `/api/businesses/${organizationId}/notification-preferences`,
           {
@@ -94,6 +99,8 @@ export function NotificationPreferencesForm({
       <label className="text-sm">
         <input
           type="checkbox"
+          role="switch"
+          aria-checked={prefs.quietEnabled}
           checked={prefs.quietEnabled}
           onChange={(event) =>
             setPrefs({ ...prefs, quietEnabled: event.target.checked })
@@ -106,6 +113,7 @@ export function NotificationPreferencesForm({
         <span className="mt-1 flex gap-2">
           <input
             type="time"
+            required
             aria-label={t("quietEnd")}
             value={prefs.quietEnd}
             onChange={(event) =>
@@ -115,6 +123,7 @@ export function NotificationPreferencesForm({
           />
           <input
             type="time"
+            required
             aria-label={t("quietStart")}
             value={prefs.quietStart}
             onChange={(event) =>
@@ -166,7 +175,11 @@ export function NotificationPreferencesForm({
       >
         {t("save")}
       </button>
-      {message ? <p className="text-sm">{message}</p> : null}
+      {message ? (
+        <p role="status" className="text-sm">
+          {message}
+        </p>
+      ) : null}
     </form>
   );
 }

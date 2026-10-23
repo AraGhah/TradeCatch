@@ -1,7 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
+import { randomUUID } from "node:crypto";
 
 async function signIn(page: Page, locale: "en" | "fr") {
-  const email = `escalation-${locale}-${Date.now()}@example.invalid`;
+  const email = `escalation-${locale}-${randomUUID()}@example.invalid`;
   const provision = await page.request.post(
     "/api/missed-call/ops/provision-organization",
     {
@@ -41,6 +42,77 @@ async function signIn(page: Page, locale: "en" | "fr") {
 }
 
 for (const locale of ["en", "fr"] as const) {
+  test(`quiet-hours switch and minute values persist with server validation (${locale})`, async ({
+    page,
+  }) => {
+    await signIn(page, locale);
+    const isFr = locale === "fr";
+    await page.goto(`${isFr ? "/fr" : ""}/app/settings/notifications`);
+    const toggle = page.getByRole("switch", {
+      name: isFr ? "Heures calmes" : "Quiet hours",
+      exact: true,
+    });
+    await expect(toggle).toBeChecked();
+    await toggle.uncheck();
+    await page
+      .getByLabel(isFr ? "Début des heures calmes" : "Quiet hours start", {
+        exact: true,
+      })
+      .fill("20:17");
+    await page
+      .getByLabel(isFr ? "Fin des heures calmes" : "Quiet hours end", {
+        exact: true,
+      })
+      .fill("08:37");
+    const saved = page.waitForResponse(
+      (r) =>
+        r.url().includes("/notification-preferences") &&
+        r.request().method() === "PUT",
+    );
+    await page
+      .getByRole("button", { name: isFr ? "Enregistrer" : "Save", exact: true })
+      .click();
+    const response = await saved;
+    expect(response.status()).toBe(200);
+    const { preferences } = await response.json();
+    expect(preferences).toMatchObject({
+      quietEnabled: false,
+      quietStart: "20:17",
+      quietEnd: "08:37",
+    });
+    await page.reload();
+    await expect(toggle).not.toBeChecked();
+    await toggle.check();
+    await page
+      .getByLabel(isFr ? "Fin des heures calmes" : "Quiet hours end", {
+        exact: true,
+      })
+      .fill("20:17");
+    await page
+      .getByRole("button", { name: isFr ? "Enregistrer" : "Save", exact: true })
+      .click();
+    await expect(page.getByRole("status")).toContainText(
+      isFr ? "différents" : "different start and end",
+    );
+    const endpoint = `/api/businesses/${preferences.organizationId}/notification-preferences`;
+    for (const quietStart of ["24:00", "12:60", "", "08:37"]) {
+      expect(
+        (
+          await page.request.put(endpoint, {
+            data: { ...preferences, quietEnabled: true, quietStart },
+          })
+        ).status(),
+      ).toBe(400);
+    }
+    expect(
+      (
+        await page.request.put(
+          "/api/businesses/another-org/notification-preferences",
+          { data: preferences },
+        )
+      ).status(),
+    ).toBe(403);
+  });
   test(`employee dropdowns save IDs and recover from errors (${locale})`, async ({
     page,
   }) => {

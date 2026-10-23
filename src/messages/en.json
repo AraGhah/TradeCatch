@@ -2886,6 +2886,7 @@
       "outagesHint": "Sent right away to owners and admins when the receptionist cannot answer a call. Email goes to your account email; SMS goes to your configured business number. Email and SMS require configured delivery providers.",
       "gmailRepliesHint": "Important, unread customer emails alert only the mailbox owner. Email goes to your account email; SMS goes to your configured business number. External alerts hide message contents. Email and SMS require configured delivery providers.",
       "quietStart": "Quiet hours start",
+      "invalidQuietHours": "Enter valid quiet hours with different start and end times.",
       "quietEnd": "Quiet hours end",
       "headline": "Notifications",
       "intro": "Notifications are created from backend events and remain stored after you leave the dashboard.",

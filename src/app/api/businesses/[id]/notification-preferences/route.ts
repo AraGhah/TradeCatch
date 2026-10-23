@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireNotificationAccess } from "@/product/notifications/access";
 import { getNotificationService } from "@/product/notifications/runtime";
 import { DEFAULT_CHANNELS } from "@/product/notifications/templates";
+import { quietHours } from "@/product/notifications/preferences";
 import type {
   NotificationPreferences,
   PreferenceCategory,
@@ -16,15 +17,14 @@ const channel = z.object({
   email: z.boolean(),
   sms: z.boolean(),
 });
-const schema = z.object({
-  categories: z.record(z.string(), channel),
-  quietStart: z.string(),
-  quietEnd: z.string(),
-  quietEnabled: z.boolean(),
-  language: z.enum(["en", "fr"]),
-  dailySummary: z.boolean(),
-  scope: z.enum(["all", "assigned"]),
-});
+const schema = z
+  .object({
+    categories: z.record(z.string(), channel),
+    language: z.enum(["en", "fr"]),
+    dailySummary: z.boolean(),
+    scope: z.enum(["all", "assigned"]),
+  })
+  .and(quietHours);
 
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
@@ -58,7 +58,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
     );
   const categories = { ...DEFAULT_CHANNELS };
   for (const [key, value] of Object.entries(parsed.data.categories)) {
-    if (key in categories) categories[key as PreferenceCategory] = value;
+    if (Object.hasOwn(categories, key))
+      categories[key as PreferenceCategory] = value;
   }
   const row: NotificationPreferences = {
     organizationId: id,
@@ -69,8 +70,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
     quietEnabled: parsed.data.quietEnabled,
     language: parsed.data.language,
     dailySummary: parsed.data.dailySummary,
-    scope:
-      access.ctx.membership.role === "member" ? "assigned" : parsed.data.scope,
+    scope: ["member", "viewer"].includes(access.ctx.membership.role)
+      ? "assigned"
+      : parsed.data.scope,
     updatedAt: new Date().toISOString(),
   };
   const preferences = await getNotificationService().savePreferences(row);
