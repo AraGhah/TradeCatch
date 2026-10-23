@@ -34,6 +34,7 @@ const MANAGED_ENV_KEYS = [
   "MISSED_CALL_HUMAN_REVIEW_PHONE",
   "MISSED_CALL_CONTRACTOR_NAME",
   "MISSED_CALL_TIMEZONE",
+  "LEADS_WEBHOOK_URL",
 ] as const;
 
 const originalEnv = new Map(
@@ -48,6 +49,8 @@ type DetailedHealthBody = {
     clientRouting: boolean;
     database: boolean | null;
     schemaOk: boolean | null;
+    nativeSalesCrm: boolean | null;
+    externalCrmWebhook: { configured: boolean; required: boolean };
     diagnosticsComplete: boolean;
     queue: {
       queued: number;
@@ -89,7 +92,7 @@ function installQueryStub(
   Reflect.set(Pool.prototype, "query", query);
 }
 
-function installSuccessfulProbeStub(): () => number {
+function installSuccessfulProbeStub(nativeCrm = true): () => number {
   let calls = 0;
   installQueryStub(async () => {
     calls += 1;
@@ -97,7 +100,7 @@ function installSuccessfulProbeStub(): () => number {
       case 1:
         return { rows: [{ ok: true }] };
       case 2:
-        return { rows: [{ ok: true }] };
+        return { rows: [{ ok: true, native_crm: nativeCrm }] };
       case 3:
         return {
           rows: [{ queued: "0", retry: "0", sending: "0", stale_sending: "0" }],
@@ -247,6 +250,20 @@ describe("health route", () => {
     assert.equal(body.checks.diagnosticsComplete, true);
     assert.equal(body.checks.escalationsFresh, true);
     assert.equal(body.moduleA.ready, true);
+    assert.equal(body.checks.nativeSalesCrm, true);
+    assert.deepEqual(body.checks.externalCrmWebhook, {
+      configured: false,
+      required: false,
+    });
     assert.equal(queryCalls(), 4);
+  });
+  it("distinguishes a missing native CRM migration from an optional webhook", async () => {
+    installSuccessfulProbeStub(false);
+    const response = await GET(healthRequest("health-ops-secret"));
+    const body = (await response.json()) as DetailedHealthBody;
+    assert.equal(response.status, 503);
+    assert.equal(body.checks.database, true);
+    assert.equal(body.checks.nativeSalesCrm, false);
+    assert.equal(body.checks.externalCrmWebhook.required, false);
   });
 });

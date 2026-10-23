@@ -33,7 +33,11 @@ type Rows = { rows: Record<string, unknown>[] };
 let insert: (params: unknown[]) => Promise<Rows>;
 let inserts: number;
 let deliveries: number;
-let notificationRows: { channel: string; delivered: boolean }[];
+let notificationRows: {
+  channel: string;
+  delivered: boolean;
+  native_crm_synced: boolean;
+}[];
 let ip = 0;
 
 function payload() {
@@ -86,10 +90,17 @@ beforeEach(() => {
   inserts = 0;
   deliveries = 0;
   notificationRows = ["notify_email", "customer_email", "crm"].map(
-    (channel) => ({ channel, delivered: false }),
+    (channel) => ({ channel, delivered: false, native_crm_synced: true }),
   );
   insert = async (params) => ({
-    rows: [{ id: params[0], email_sent: false, crm_forwarded: false }],
+    rows: [
+      {
+        id: params[0],
+        email_sent: false,
+        crm_forwarded: false,
+        native_crm_synced: true,
+      },
+    ],
   });
   Reflect.set(
     Pool.prototype,
@@ -101,7 +112,7 @@ beforeEach(() => {
         inserts++;
         return insert(params);
       }
-      if (sql.includes("SELECT channel, delivered_at"))
+      if (sql.includes("AS delivered"))
         return { rows: notificationRows };
       return { rows: [] };
     },
@@ -316,6 +327,8 @@ describe("book-audit durable acceptance", () => {
       emailSent: false,
       customerEmailSent: false,
       crmForwarded: false,
+      nativeCrmSynced: true,
+      externalCrmConfigured: true,
       notificationsDelivered: false,
       notificationsStatus: "pending",
     });
@@ -340,6 +353,8 @@ describe("book-audit durable acceptance", () => {
       emailSent: true,
       customerEmailSent: true,
       crmForwarded: true,
+      nativeCrmSynced: true,
+      externalCrmConfigured: true,
       notificationsDelivered: true,
       notificationsStatus: "delivered",
     });

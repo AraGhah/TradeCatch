@@ -1,4 +1,8 @@
-import { isDurableMissedCallStoreConfigured } from "@/lib/config";
+import {
+  isDurableMissedCallStoreConfigured,
+  isLeadsWebhookConfigured,
+} from "@/lib/config";
+import { reconcileBookingSalesLeads } from "@/product/sales-crm/service";
 import {
   sendBookAuditCustomerEmail,
   sendBookAuditNotifyEmail,
@@ -56,8 +60,9 @@ async function deliver(job: BookAuditNotificationJob): Promise<boolean> {
         attempts: number;
       }>(
         `SELECT channel, attempts FROM mc_book_audit_notifications
-         WHERE lead_id = $1 AND channel <> 'admin_alert' AND delivered_at IS NULL`,
-        [job.lead_id],
+         WHERE lead_id = $1 AND channel <> 'admin_alert' AND delivered_at IS NULL
+           AND cancelled_at IS NULL AND (channel <> 'crm' OR $2::boolean)`,
+        [job.lead_id, isLeadsWebhookConfigured()],
       );
       // A recovery before the alert is sent no longer needs escalation.
       if (pending.rows.length === 0) return true;
@@ -108,6 +113,7 @@ export async function processBookAuditNotifications(
   } = {},
 ) {
   const db = database();
+  await reconcileBookingSalesLeads(input.leadId);
   const limit = Math.min(25, Math.max(1, input.limit ?? 12));
   const result = { attempted: 0, delivered: 0, failed: 0 };
   const started = Date.now();
@@ -117,6 +123,7 @@ export async function processBookAuditNotifications(
       `WITH candidate AS (
          SELECT lead_id, channel FROM mc_book_audit_notifications
          WHERE delivered_at IS NULL AND next_attempt_at <= now()
+           AND cancelled_at IS NULL AND (channel <> 'crm' OR $3::boolean)
            AND (leased_until IS NULL OR leased_until <= now())
            AND ($1::text IS NULL OR lead_id = $1)
          ORDER BY next_attempt_at, lead_id, channel
@@ -131,7 +138,7 @@ export async function processBookAuditNotifications(
        )
        SELECT c.*, l.payload, l.created_at AS submitted_at FROM claimed c
        JOIN mc_book_audit_leads l ON l.id = c.lead_id`,
-      [input.leadId ?? null, token],
+      [input.leadId ?? null, token, isLeadsWebhookConfigured()],
     );
     const job = claimed.rows[0];
     if (!job) break;
@@ -156,7 +163,7 @@ export async function processBookAuditNotifications(
              next_attempt_at = now() + ($5::int * interval '1 second'),
              last_error = CASE WHEN $4 THEN NULL ELSE 'Delivery failed or provider is not configured' END,
              lease_token = NULL, leased_until = NULL
-         WHERE lead_id = $1 AND channel = $2 AND lease_token = $3
+         WHERE lead_id = $1 AND channel = $2 AND lease_token = $3 AND cancelled_at IS NULL
          RETURNING lead_id, channel, attempts, delivered_at
        ), alert AS (
          INSERT INTO mc_book_audit_notifications (lead_id, channel)
@@ -179,11 +186,18 @@ export async function processBookAuditNotifications(
 
 export async function getBookAuditNotificationStatus(leadId: string) {
   const jobs = await database().query<{
-    channel: BookAuditNotificationChannel;
+    channel: BookAuditNotificationChannel | null;
     delivered: boolean;
+    cancelled: boolean;
+    native_crm_synced: boolean;
+    crm_forwarded: boolean;
   }>(
-    `SELECT channel, delivered_at IS NOT NULL AS delivered
-     FROM mc_book_audit_notifications WHERE lead_id = $1 AND channel <> 'admin_alert'`,
+    `SELECT j.channel, j.delivered_at IS NOT NULL AS delivered, j.cancelled_at IS NOT NULL AS cancelled,
+       n.lead_id IS NOT NULL AS native_crm_synced, l.crm_forwarded
+     FROM mc_book_audit_leads l
+     LEFT JOIN tc_platform_sales_leads n ON n.lead_id=l.id
+     LEFT JOIN mc_book_audit_notifications j ON j.lead_id=l.id AND j.channel <> 'admin_alert'
+     WHERE l.id=$1`,
     [leadId],
   );
   const delivered = (channel: BookAuditNotificationChannel) =>
@@ -191,8 +205,18 @@ export async function getBookAuditNotificationStatus(leadId: string) {
   return {
     emailSent: delivered("notify_email"),
     customerEmailSent: delivered("customer_email"),
-    crmForwarded: delivered("crm"),
+    crmForwarded: delivered("crm") || Boolean(jobs.rows[0]?.crm_forwarded),
+    nativeCrmSynced: Boolean(jobs.rows[0]?.native_crm_synced),
+    externalCrmConfigured: isLeadsWebhookConfigured(),
     notificationsDelivered:
-      jobs.rows.length === 3 && jobs.rows.every((row) => row.delivered),
+      delivered("notify_email") &&
+      delivered("customer_email") &&
+      jobs.rows
+        .filter(
+          (row) =>
+            !row.cancelled &&
+            (row.channel !== "crm" || isLeadsWebhookConfigured()),
+        )
+        .every((row) => row.delivered),
   };
 }

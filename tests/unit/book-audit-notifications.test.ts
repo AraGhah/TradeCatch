@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import {
   after,
   afterEach,
@@ -21,6 +23,13 @@ import {
 } from "../../src/lib/book-audit-notifications";
 import { reportError } from "../../src/lib/errors";
 import { authorizeOpsRequest } from "../../src/lib/ops-auth";
+import {
+  reconcileBookingSalesLeads,
+  listSalesLeads,
+} from "../../src/product/sales-crm/service";
+import { GET as salesLeads } from "../../src/app/api/admin/sales-leads/route";
+import { createPostgresCrmStore } from "../../src/product/crm/postgres-store";
+import { salesLeadPageSchema } from "../../src/product/sales-crm/types";
 import { closePgPool } from "../../src/product/missed-call/postgres-store";
 import type { BookAuditPayload } from "../../src/lib/validation/book-audit";
 
@@ -155,14 +164,13 @@ describe(
     before(async () => {
       db = new Pool({ connectionString: testUrl });
       const source = readFileSync("src/product/missed-call/schema.sql", "utf8");
-      await db.query(
-        source.match(
-          /CREATE TABLE IF NOT EXISTS mc_book_audit_leads \([\s\S]*?\n\);/,
-        )![0],
-      );
+      await db.query(source);
       await db.query(
         readFileSync("src/lib/book-audit-notifications.sql", "utf8"),
       );
+      await db.query(readFileSync("src/product/sales-crm/schema.sql", "utf8"));
+      await db.query(readFileSync("src/product/saas/schema.sql", "utf8"));
+      await db.query(readFileSync("src/product/crm/schema.sql", "utf8"));
     });
     after(async () => {
       await closePgPool();
@@ -231,6 +239,371 @@ describe(
         [id],
       );
     }
+
+    it("atomically synchronizes a booking into platform sales with no external webhook or tenant assignment", async () => {
+      delete process.env.LEADS_WEBHOOK_URL;
+      const id = await save();
+      const sales = await listSalesLeads();
+      assert.equal(sales.leads.length, 1);
+      assert.equal(sales.leads[0].id, id);
+      assert.equal(sales.leads[0].company, payload().company);
+      assert.equal(sales.leads[0].email, payload().email);
+      assert.equal(JSON.stringify(sales).includes("turnstileToken"), false);
+      assert.equal((await db.query("SELECT * FROM tc_customers")).rowCount, 0);
+      assert.equal((await db.query("SELECT * FROM tc_leads")).rowCount, 0);
+      assert.equal(
+        (await db.query("SELECT * FROM tc_organizations")).rowCount,
+        0,
+      );
+      const jobs = await db.query(
+        "SELECT channel FROM mc_book_audit_notifications WHERE lead_id=$1 ORDER BY channel",
+        [id],
+      );
+      assert.deepEqual(
+        jobs.rows.map((row) => row.channel),
+        ["customer_email", "notify_email"],
+      );
+      const status = await getBookAuditNotificationStatus(id);
+      assert.equal(status.nativeCrmSynced, true);
+      assert.equal(status.crmForwarded, false);
+      assert.equal(status.externalCrmConfigured, false);
+      assert.equal(status.notificationsDelivered, false);
+    });
+
+    it("rolls back booking storage and jobs on native sync failure and succeeds with the same idempotency key on retry", async () => {
+      const input = {
+        idempotencyKey: randomUUID(),
+        payload: payload(),
+        consent: {
+          wording: "Test",
+          source: "test",
+          at: new Date().toISOString(),
+        },
+        emailSent: false,
+        crmForwarded: false,
+      };
+      await db.query(
+        "ALTER TABLE tc_platform_sales_leads ADD CONSTRAINT reject_native_sync CHECK (stage='won') NOT VALID",
+      );
+      try {
+        await assert.rejects(() => persistBookAuditLead(input));
+      } finally {
+        await db.query(
+          "ALTER TABLE tc_platform_sales_leads DROP CONSTRAINT reject_native_sync",
+        );
+      }
+      assert.equal(
+        (await db.query("SELECT * FROM mc_book_audit_leads")).rowCount,
+        0,
+      );
+      assert.equal(
+        (await db.query("SELECT * FROM mc_book_audit_notifications")).rowCount,
+        0,
+      );
+      const saved = await persistBookAuditLead(input);
+      assert.equal(saved?.nativeCrmSynced, true);
+      assert.equal(
+        (
+          await db.query(
+            "SELECT * FROM tc_platform_sales_leads WHERE lead_id=$1",
+            [saved!.id],
+          )
+        ).rowCount,
+        1,
+      );
+    });
+
+    it("reports native sync independently of retained notification jobs and preserves historical external acknowledgments", async () => {
+      const id = await save();
+      await db.query(
+        "UPDATE mc_book_audit_leads SET crm_forwarded=true WHERE id=$1",
+        [id],
+      );
+      await db.query(
+        "DELETE FROM mc_book_audit_notifications WHERE lead_id=$1",
+        [id],
+      );
+      const status = await getBookAuditNotificationStatus(id);
+      assert.equal(status.nativeCrmSynced, true);
+      assert.equal(status.crmForwarded, true);
+      assert.equal(status.emailSent, false);
+      assert.equal(status.notificationsDelivered, false);
+    });
+
+    it("deduplicates concurrent native captures by the original booking ID", async () => {
+      const input = {
+        idempotencyKey: randomUUID(),
+        payload: payload(),
+        consent: {
+          wording: "Test",
+          source: "test",
+          at: new Date().toISOString(),
+        },
+        emailSent: false,
+        crmForwarded: false,
+      };
+      const rows = await Promise.all(
+        Array.from({ length: 8 }, () => persistBookAuditLead(input)),
+      );
+      assert.equal(new Set(rows.map((row) => row!.id)).size, 1);
+      assert.equal(
+        (await db.query("SELECT * FROM tc_platform_sales_leads")).rowCount,
+        1,
+      );
+      const again = await persistBookAuditLead({
+        ...input,
+        payload: {
+          ...payload(),
+          company: "Forged duplicate",
+          email: "forged@example.invalid",
+        },
+      });
+      assert.equal(again!.duplicate, true);
+      assert.equal(
+        (await listSalesLeads()).leads[0].company,
+        payload().company,
+      );
+    });
+
+    it("keeps platform sales out of contractor queries and permits only authenticated platform API reads", async () => {
+      await save();
+      const tenantCrm = createPostgresCrmStore(testUrl!);
+      assert.deepEqual(await tenantCrm.listLeads("unrelated-customer"), []);
+      const response = await salesLeads(
+        new Request("http://localhost/api/admin/sales-leads", {
+          headers: auth,
+        }),
+      );
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get("cache-control")!, /private.*no-store/);
+      const body = salesLeadPageSchema.parse(await response.json());
+      assert.equal(body.leads.length, 1);
+      assert.equal(body.leads[0].email, payload().email);
+      assert.equal(JSON.stringify(body).includes("consentWording"), false);
+      for (const suffix of [
+        "?page=0",
+        "?page=1001",
+        "?organizationId=some-customer",
+      ]) {
+        assert.equal(
+          (
+            await salesLeads(
+              new Request(`http://localhost/api/admin/sales-leads${suffix}`, {
+                headers: auth,
+              }),
+            )
+          ).status,
+          400,
+        );
+      }
+    });
+
+    it("cancels unconfigured historical external jobs without claiming delivery and independently retries email", async () => {
+      const id = await save(); // Legacy configured external job exists.
+      await db.query(
+        "UPDATE mc_book_audit_notifications SET attempts=3,last_error='provider_failed' WHERE lead_id=$1 AND channel='crm'",
+        [id],
+      );
+      delete process.env.LEADS_WEBHOOK_URL;
+      await processBookAuditNotifications({
+        leadId: id,
+        send: async () => true,
+      });
+      const [job] = (
+        await db.query(
+          "SELECT * FROM mc_book_audit_notifications WHERE lead_id=$1 AND channel='crm'",
+          [id],
+        )
+      ).rows;
+      assert.ok(job.cancelled_at);
+      assert.equal(job.cancel_reason, "external_crm_not_configured");
+      assert.equal(job.attempts, 3);
+      assert.equal(job.last_error, "provider_failed");
+      assert.equal(job.delivered_at, null);
+      const status = await getBookAuditNotificationStatus(id);
+      assert.equal(status.nativeCrmSynced, true);
+      assert.equal(status.crmForwarded, false);
+      assert.equal(status.notificationsDelivered, true);
+      assert.equal(
+        (
+          await db.query(
+            "SELECT * FROM mc_book_audit_notifications WHERE channel='admin_alert'",
+          )
+        ).rowCount,
+        0,
+      );
+      assert.equal(
+        (
+          await db.query(
+            "SELECT crm_forwarded FROM mc_book_audit_leads WHERE id=$1",
+            [id],
+          )
+        ).rows[0].crm_forwarded,
+        false,
+      );
+      process.env.LEADS_WEBHOOK_URL = "https://crm.example.com";
+      const keys: string[] = [];
+      await due(id);
+      await processBookAuditNotifications({
+        leadId: id,
+        send: async (job) => {
+          keys.push(job.channel);
+          return true;
+        },
+      });
+      assert.deepEqual(keys, ["crm"]);
+      assert.equal(
+        (await getBookAuditNotificationStatus(id)).crmForwarded,
+        true,
+      );
+    });
+
+    it("does not cancel a live external lease or alter already delivered external history", async () => {
+      const active = await save(),
+        delivered = await save();
+      await db.query(
+        "UPDATE mc_book_audit_notifications SET lease_token='active',leased_until=now()+interval '2 minutes' WHERE lead_id=$1 AND channel='crm'",
+        [active],
+      );
+      await db.query(
+        "UPDATE mc_book_audit_notifications SET delivered_at=now(),attempts=1 WHERE lead_id=$1 AND channel='crm'",
+        [delivered],
+      );
+      delete process.env.LEADS_WEBHOOK_URL;
+      await reconcileBookingSalesLeads();
+      let rows = await db.query(
+        "SELECT * FROM mc_book_audit_notifications WHERE channel='crm'",
+      );
+      assert.ok(rows.rows.every((row) => row.cancelled_at === null));
+      await db.query(
+        "UPDATE mc_book_audit_notifications SET leased_until=now()-interval '1 second' WHERE lead_id=$1 AND channel='crm'",
+        [active],
+      );
+      await reconcileBookingSalesLeads();
+      rows = await db.query(
+        "SELECT * FROM mc_book_audit_notifications WHERE channel='crm'",
+      );
+      assert.equal(
+        rows.rows.filter((row) => row.cancelled_at !== null).length,
+        1,
+      );
+      assert.ok(
+        rows.rows.find((row) => row.lead_id === delivered).delivered_at,
+      );
+    });
+
+    it("backfills retained bookings idempotently, retries catch-up failures, and never resurrects purged PII", async () => {
+      const id = await save(),
+        purged = await save();
+      await db.query("DELETE FROM tc_platform_sales_leads");
+      await db.query(
+        'UPDATE mc_book_audit_leads SET payload=\'{"retention_state":"purged"}\' WHERE id=$1',
+        [purged],
+      );
+      await db.query(
+        "ALTER TABLE tc_platform_sales_leads ADD CONSTRAINT reject_catchup CHECK (stage='won') NOT VALID",
+      );
+      try {
+        await assert.rejects(() => reconcileBookingSalesLeads());
+      } finally {
+        await db.query(
+          "ALTER TABLE tc_platform_sales_leads DROP CONSTRAINT reject_catchup",
+        );
+      }
+      await reconcileBookingSalesLeads();
+      await reconcileBookingSalesLeads();
+      const migration = readFileSync(
+        "src/product/sales-crm/schema.sql",
+        "utf8",
+      );
+      await db.query(migration);
+      await db.query(migration);
+      assert.deepEqual(
+        (await listSalesLeads()).leads.map((row) => row.id),
+        [id],
+      );
+      await db.query(
+        'UPDATE mc_book_audit_leads SET payload=\'{"retention_state":"purged_pending"}\' WHERE id=$1',
+        [id],
+      );
+      assert.deepEqual((await listSalesLeads()).leads, []);
+    });
+
+    it("denies public-role access to the native sales projection even with table grants", async () => {
+      await save();
+      const client = await db.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("CREATE ROLE tc_native_sales_public_test NOLOGIN");
+        await client.query(
+          "GRANT SELECT,INSERT,UPDATE,DELETE ON tc_platform_sales_leads TO tc_native_sales_public_test",
+        );
+        await client.query("SET LOCAL ROLE tc_native_sales_public_test");
+        assert.equal(
+          (await client.query("SELECT * FROM tc_platform_sales_leads"))
+            .rowCount,
+          0,
+        );
+        assert.equal(
+          (await client.query("UPDATE tc_platform_sales_leads SET stage='won'"))
+            .rowCount,
+          0,
+        );
+      } finally {
+        await client.query("ROLLBACK");
+        client.release();
+      }
+    });
+
+    it("runs the targeted migration transactionally and records completion only after a successful backfill", async () => {
+      const id = await save();
+      await db.query(
+        "DELETE FROM mc_schema_migrations WHERE id='027_native_sales_crm'",
+      );
+      await db.query(
+        "ALTER TABLE tc_platform_sales_leads ADD CONSTRAINT reject_migration CHECK (stage='won') NOT VALID",
+      );
+      const run = () =>
+        promisify(execFile)(
+          process.execPath,
+          ["scripts/migrate-native-sales-crm.js"],
+          {
+            env: { ...process.env, DATABASE_URL: testUrl },
+            timeout: 15_000,
+          },
+        );
+      try {
+        await assert.rejects(run);
+      } finally {
+        await db.query(
+          "ALTER TABLE tc_platform_sales_leads DROP CONSTRAINT reject_migration",
+        );
+      }
+      assert.equal(
+        (
+          await db.query(
+            "SELECT id FROM mc_schema_migrations WHERE id='027_native_sales_crm'",
+          )
+        ).rowCount,
+        0,
+      );
+      assert.equal(
+        (await db.query("SELECT id FROM mc_book_audit_leads WHERE id=$1", [id]))
+          .rowCount,
+        1,
+      );
+      await run();
+      const repeated = await run();
+      assert.match(repeated.stdout, /already applied/);
+      assert.equal(
+        (
+          await db.query(
+            "SELECT id FROM mc_schema_migrations WHERE id='027_native_sales_crm'",
+          )
+        ).rowCount,
+        1,
+      );
+    });
 
     it("commits three durable jobs with the lead and rolls back if the outbox insert fails", async () => {
       const id = await save();
@@ -588,13 +961,13 @@ describe(
         "SELECT channel, delivered_at FROM mc_book_audit_notifications WHERE lead_id=$1",
         [id],
       );
-      assert.equal(jobs.rowCount, 2);
+      assert.equal(jobs.rowCount, 1);
       assert.ok(
         jobs.rows.find((j) => j.channel === "notify_email").delivered_at,
       );
       assert.equal(
-        jobs.rows.find((j) => j.channel === "crm").delivered_at,
-        null,
+        jobs.rows.some((j) => j.channel === "crm"),
+        false,
       );
       assert.equal(
         (await getBookAuditNotificationStatus(id)).customerEmailSent,
