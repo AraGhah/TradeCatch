@@ -1,43 +1,81 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { z } from "zod";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
-type Row = {
-  id: string;
-  title: string;
-  message: string;
-  priority: "normal" | "high" | "critical";
-  type: string;
-  href?: string;
-  createdAt: string;
-  readAt?: string;
-  acknowledgedAt?: string;
-};
+const rowSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  message: z.string(),
+  priority: z.enum(["normal", "high", "critical"]),
+  type: z.string(),
+  href: z.string().optional(),
+  createdAt: z.string(),
+  readAt: z.string().optional(),
+  acknowledgedAt: z.string().optional(),
+});
+type Row = z.infer<typeof rowSchema>;
 
 export function NotificationCenter({
   organizationId,
 }: {
   organizationId: string;
 }) {
+  // Never carry cached notifications across business boundaries.
+  return (
+    <BusinessNotifications
+      key={organizationId}
+      organizationId={organizationId}
+    />
+  );
+}
+
+function BusinessNotifications({ organizationId }: { organizationId: string }) {
   const t = useTranslations("app.alerts");
   const [rows, setRows] = useState<Row[]>([]);
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
   const [query, setQuery] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [actionError, setActionError] = useState(false);
+  const [acting, setActing] = useState(false);
+  const pending = useRef<AbortController | null>(null);
 
   const load = useCallback(async () => {
+    pending.current?.abort();
+    const controller = new AbortController();
+    pending.current = controller;
+    setLoading(true);
+    setLoadError(false);
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     if (priority) params.set("priority", priority);
     if (query) params.set("q", query);
-    const res = await fetch(
-      `/api/businesses/${organizationId}/notifications?${params}`,
-    );
-    const data = (await res.json()) as { notifications?: Row[] };
-    setRows(data.notifications ?? []);
+    try {
+      const res = await fetch(
+        `/api/businesses/${organizationId}/notifications?${params}`,
+        {
+          signal: controller.signal,
+          cache: "no-store",
+        },
+      );
+      if (!res.ok) throw new Error("Notifications unavailable");
+      const data = z
+        .object({ notifications: z.array(rowSchema) })
+        .parse(await res.json());
+      if (controller.signal.aborted) return;
+      setRows(data.notifications);
+      setLoaded(true);
+    } catch {
+      if (!controller.signal.aborted) setLoadError(true);
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
   }, [organizationId, status, priority, query]);
 
   useEffect(() => {
@@ -54,24 +92,38 @@ export function NotificationCenter({
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       stop = true;
+      pending.current?.abort();
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, [load]);
 
-  async function act(id: string, action: "read" | "acknowledge") {
-    const res = await fetch(
-      `/api/businesses/${organizationId}/notifications/${id}/${action}`,
-      { method: action === "read" ? "PATCH" : "POST" },
-    );
-    setMessage(res.ok ? t("saved") : t("error"));
-    await load();
+  async function act(id?: string, action: "read" | "acknowledge" = "read") {
+    if (acting) return;
+    setActing(true);
+    setMessage(null);
+    setActionError(false);
+    try {
+      const res = await fetch(
+        `/api/businesses/${organizationId}/notifications/${id ? `${encodeURIComponent(id)}/${action}` : "read-all"}`,
+        { method: id && action === "read" ? "PATCH" : "POST" },
+      );
+      if (!res.ok) throw new Error("Notification update failed");
+      setMessage(t("saved"));
+      await load();
+    } catch {
+      setActionError(true);
+      setMessage(t("error"));
+    } finally {
+      setActing(false);
+    }
   }
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-2">
         <select
+          aria-label={t("all")}
           value={status}
           onChange={(event) => setStatus(event.target.value)}
           className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
@@ -82,6 +134,7 @@ export function NotificationCenter({
           <option value="acknowledged">{t("acknowledged")}</option>
         </select>
         <select
+          aria-label={t("priorityFilter")}
           value={priority}
           onChange={(event) => setPriority(event.target.value)}
           className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
@@ -92,6 +145,7 @@ export function NotificationCenter({
           <option value="critical">{t("critical")}</option>
         </select>
         <input
+          aria-label={t("search")}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("search")}
@@ -99,6 +153,7 @@ export function NotificationCenter({
         />
         <button
           type="button"
+          disabled={loading}
           onClick={() => void load()}
           className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold"
         >
@@ -106,12 +161,8 @@ export function NotificationCenter({
         </button>
         <button
           type="button"
-          onClick={() =>
-            void fetch(
-              `/api/businesses/${organizationId}/notifications/read-all`,
-              { method: "POST" },
-            ).then(() => load())
-          }
+          disabled={acting}
+          onClick={() => void act()}
           className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold"
         >
           {t("markAll")}
@@ -129,11 +180,27 @@ export function NotificationCenter({
           {t("escalation")}
         </Link>
       </div>
-      {rows.length === 0 ? (
+      {loading ? <p role="status">{t("loading")}</p> : null}
+      {loadError ? (
+        <div role="alert" className="text-sm text-red-700">
+          <p>
+            {t("loadError")}
+            {rows.length ? ` ${t("stale")}` : ""}
+          </p>
+          <button
+            type="button"
+            className="mt-2 font-semibold underline"
+            onClick={() => void load()}
+          >
+            {t("retry")}
+          </button>
+        </div>
+      ) : null}
+      {rows.length === 0 && loaded && !loading && !loadError ? (
         <p className="rounded-md border border-dashed border-navy/20 bg-white px-4 py-8 text-center text-navy/60">
           {t("empty")}
         </p>
-      ) : (
+      ) : rows.length > 0 ? (
         <ul className="divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white">
           {rows.map((row) => (
             <li
@@ -174,6 +241,7 @@ export function NotificationCenter({
                 ) : null}
                 <button
                   type="button"
+                  disabled={acting}
                   onClick={() => void act(row.id, "read")}
                   className="text-sm font-semibold text-navy"
                 >
@@ -181,6 +249,7 @@ export function NotificationCenter({
                 </button>
                 <button
                   type="button"
+                  disabled={acting}
                   onClick={() => void act(row.id, "acknowledge")}
                   className="text-sm font-semibold text-navy"
                 >
@@ -190,8 +259,15 @@ export function NotificationCenter({
             </li>
           ))}
         </ul>
-      )}
-      {message ? <p className="text-sm text-navy">{message}</p> : null}
+      ) : null}
+      {message ? (
+        <p
+          role={actionError ? "alert" : "status"}
+          className="text-sm text-navy"
+        >
+          {message}
+        </p>
+      ) : null}
     </div>
   );
 }
