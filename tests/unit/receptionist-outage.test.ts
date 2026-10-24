@@ -125,6 +125,7 @@ function serviceHarness(store: NotificationStore, startAt = DAYTIME) {
     service,
     store,
     organizationId,
+    members,
     emails,
     texts,
     raise,
@@ -157,7 +158,10 @@ function outageChecks(factory: () => NotificationStore) {
       "owner@example.test",
     ]);
     assert.equal(h.texts.length, 2);
-    assert.deepEqual(h.texts.map((text) => text.to).sort(), ["+15145550121", "+15145550122"]);
+    assert.deepEqual(h.texts.map((text) => text.to).sort(), [
+      "+15145550121",
+      "+15145550122",
+    ]);
     for (const external of [
       ...h.emails.map((m) => m.message),
       ...h.texts.map((t) => t.body),
@@ -208,6 +212,59 @@ function outageChecks(factory: () => NotificationStore) {
     assert.ok(h.emails.some((mail) => mail.to === "owner@example.test"));
   });
 
+  it("rechecks enabled external channels after a queued outage is deferred", async () => {
+    const night = serviceHarness(factory(), NIGHT);
+    await night.service.saveEscalation({
+      ...(await night.service.getEscalation(night.organizationId)),
+      afterHours: false,
+    });
+    await night.raise();
+    assert.equal(night.emails.length, 0);
+    assert.equal(night.texts.length, 0);
+    const prefs = await night.service.getPreferences(
+      night.organizationId,
+      "owner",
+      "en",
+    );
+    prefs.categories.outages = { inApp: true, email: false, sms: false };
+    await night.service.savePreferences(prefs);
+    night.advance(6 * 60);
+    await night.service.processDue();
+    assert.deepEqual(
+      night.emails.map((mail) => mail.to),
+      ["admin@example.test"],
+    );
+    assert.deepEqual(
+      night.texts.map((sms) => sms.to),
+      ["+15145550122"],
+    );
+    const ownerExternal = (
+      await night.store.listDeliveries(night.organizationId)
+    ).filter(
+      (row) => row.recipientUserId === "owner" && row.channel !== "in_app",
+    );
+    assert.equal(ownerExternal.length, 2);
+    assert.ok(ownerExternal.every((row) => row.status === "canceled"));
+  });
+  it("cancels deferred outage delivery after an owner loses their responsible role", async () => {
+    const night = serviceHarness(factory(), NIGHT);
+    await night.service.saveEscalation({
+      ...(await night.service.getEscalation(night.organizationId)),
+      afterHours: false,
+    });
+    await night.raise();
+    night.members[0].role = "member";
+    night.advance(6 * 60);
+    await night.service.processDue();
+    assert.deepEqual(
+      night.emails.map((mail) => mail.to),
+      ["admin@example.test"],
+    );
+    assert.deepEqual(
+      night.texts.map((sms) => sms.to),
+      ["+15145550122"],
+    );
+  });
   it("applies the default to preferences saved before outages had their own setting", async () => {
     const stored = defaultPreferences(
       h.organizationId,

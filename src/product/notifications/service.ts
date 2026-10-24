@@ -351,9 +351,12 @@ export function createNotificationService(deps: NotificationDeps) {
       return;
     }
     if (
-      notification.type === "gmail_reply" &&
+      (notification.type === "gmail_reply" ||
+        notification.type === "receptionist_offline") &&
       delivery.channel !== "in_app" &&
-      !prefs.categories.replies[delivery.channel]
+      (!prefs.categories[TYPE_CATEGORY[notification.type]][delivery.channel] ||
+        (notification.type === "receptionist_offline" &&
+          !["owner", "admin"].includes(member.role)))
     ) {
       delivery.status = "canceled";
       delivery.lastError = "recipient_or_preferences_changed";
