@@ -222,10 +222,14 @@ export function createPostgresNotificationStore(
           id, notification_id, organization_id, recipient_user_id, channel, status, attempts,
           next_attempt_at, last_error, provider_sid, destination, simulated, idempotency_key, created_at, updated_at
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-        ON CONFLICT (organization_id, idempotency_key) DO UPDATE SET
+        ${
+          onlyIfNew
+            ? "ON CONFLICT DO NOTHING"
+            : `ON CONFLICT (organization_id, idempotency_key) DO UPDATE SET
           status = EXCLUDED.status, attempts = EXCLUDED.attempts, next_attempt_at = EXCLUDED.next_attempt_at,
           last_error = EXCLUDED.last_error, provider_sid = EXCLUDED.provider_sid, updated_at = EXCLUDED.updated_at
-        WHERE tc_notification_deliveries.id = EXCLUDED.id AND NOT $16::boolean
+        WHERE tc_notification_deliveries.id = EXCLUDED.id`
+        }
         RETURNING id`,
         [
           row.id,
@@ -243,7 +247,6 @@ export function createPostgresNotificationStore(
           row.idempotencyKey,
           row.createdAt,
           row.updatedAt,
-          onlyIfNew,
         ],
       );
       return res.rows[0] ? row : null;
