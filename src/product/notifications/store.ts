@@ -4,6 +4,7 @@ import {
   DELIVERY_WINDOW_MS,
   dispatchCeiling,
   priorityRank,
+  escalationOutcome,
 } from "./delivery-policy";
 import { TYPE_PRIORITY } from "./types";
 import type {
@@ -283,9 +284,7 @@ export function createMemoryNotificationStore(): NotificationStore {
           ).length;
           // Rows are in priority order, so critical alerts reserve first and
           // the reserve above the base limit is theirs alone.
-          if (
-            used >= dispatchCeiling(notes.get(row.notificationId)?.priority)
-          )
+          if (used >= dispatchCeiling(notes.get(row.notificationId)?.priority))
             continue;
           reservations.push({ organizationId: row.organizationId, at: nowIso });
         }
@@ -344,11 +343,26 @@ export function createMemoryNotificationStore(): NotificationStore {
       attempts.push(input);
     },
     async listEscalationAttempts(organizationId, notificationId) {
-      return attempts.filter(
+      const history = attempts.filter(
         (row) =>
           row.organizationId === organizationId &&
-          row.notificationId === notificationId,
+          row.notificationId === notificationId &&
+          !["backup_notified", "backup_queued"].includes(row.outcome),
       );
+      return [
+        ...history,
+        ...[...deliveries.values()]
+          .filter(
+            (row) =>
+              row.organizationId === organizationId &&
+              row.notificationId === notificationId &&
+              row.idempotencyKey.includes(":escalation:"),
+          )
+          .map((row) => ({
+            outcome: escalationOutcome(row.status),
+            at: row.createdAt,
+          })),
+      ];
     },
     async addEvent() {
       return;

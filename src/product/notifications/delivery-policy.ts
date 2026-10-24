@@ -10,6 +10,27 @@ export const DELIVERY_RATE_LIMIT = 40;
 export const CRITICAL_DELIVERY_RESERVE = 10;
 export const DELIVERY_WINDOW_MS = 10 * 60_000;
 
+/** Escalation history reflects durable provider state, never queue insertion. */
+export function escalationOutcome(
+  status: NotificationDelivery["status"],
+): string {
+  switch (status) {
+    case "delivered":
+      return "backup_notified";
+    case "submitted":
+      return "backup_submitted";
+    case "failed":
+    case "dead":
+      return "backup_failed";
+    case "canceled":
+      return "backup_canceled";
+    case "simulated":
+      return "backup_simulated";
+    default:
+      return "backup_queued";
+  }
+}
+
 /** The most external dispatches an organization may hold in one window when this priority reserves one. */
 export function dispatchCeiling(priority?: Priority) {
   return priority === "critical"

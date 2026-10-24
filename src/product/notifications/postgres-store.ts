@@ -4,6 +4,7 @@ import {
   CRITICAL_DELIVERY_RESERVE,
   DELIVERY_RATE_LIMIT,
   priorityRank,
+  escalationOutcome,
 } from "./delivery-policy";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import type { NotificationStore } from "./store";
@@ -477,11 +478,23 @@ export function createPostgresNotificationStore(
     },
     async listEscalationAttempts(organizationId, notificationId) {
       const res = await query(
-        `SELECT outcome, at FROM tc_escalation_attempts WHERE organization_id = $1 AND notification_id = $2`,
+        `SELECT outcome, at, NULL::text AS delivery_status FROM tc_escalation_attempts
+         WHERE organization_id = $1 AND notification_id = $2
+           AND outcome NOT IN ('backup_notified', 'backup_queued')
+         UNION ALL
+         SELECT NULL::text AS outcome, created_at AS at, status AS delivery_status
+         FROM tc_notification_deliveries
+         WHERE organization_id = $1 AND notification_id = $2
+           AND position(':escalation:' in idempotency_key) > 0
+         ORDER BY at`,
         [organizationId, notificationId],
       );
       return res.rows.map((row) => ({
-        outcome: String(row.outcome),
+        outcome: row.delivery_status
+          ? escalationOutcome(
+              row.delivery_status as NotificationDelivery["status"],
+            )
+          : String(row.outcome),
         at: new Date(String(row.at)).toISOString(),
       }));
     },
