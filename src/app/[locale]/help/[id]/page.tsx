@@ -4,14 +4,18 @@ import { Container } from "@/components/Container";
 import { HelpArticleBody } from "@/components/support/HelpArticleBody";
 import { getHelpArticle } from "@/product/support/help";
 
-export default async function PublicHelpArticlePage({ params }: { params: Promise<{ locale: string; id: string }> }) {
+export default async function PublicHelpArticlePage({
+  params,
+}: {
+  params: Promise<{ locale: string; id: string }>;
+}) {
   const { locale, id } = await params;
   setRequestLocale(locale);
   const article = getHelpArticle(id, locale === "fr" ? "fr" : "en");
   if (!article) notFound();
   return (
     <Container className="py-12">
-      <HelpArticleBody title={article.title} body={article.body} large />
+      <HelpArticleBody {...article} large />
     </Container>
   );
 }
