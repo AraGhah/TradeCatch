@@ -2,7 +2,10 @@
 // The OpenNext worker is generated before Wrangler bundles this entrypoint.
 // @ts-ignore -- .open-next/worker.js is generated after a clean type-check.
 import openNextWorker from "./.open-next/worker.js";
-import { runCloudflareCron } from "./src/lib/cloudflare-scheduler";
+import {
+  runCloudflareCron,
+  cloudflareSchedulerSecret,
+} from "./src/lib/cloudflare-scheduler";
 import { withPostgresRequestScope } from "./src/lib/postgres-pool";
 import { recordScheduledJob } from "./src/product/reliability/job-health";
 import { workerLoginPreview } from "./src/product/saas/auth/login-preview";
@@ -30,29 +33,6 @@ export { DOQueueHandler } from "./.open-next/worker.js";
 export { DOShardedTagCache } from "./.open-next/worker.js";
 // @ts-ignore -- generated during `opennextjs-cloudflare build`.
 export { BucketCachePurge } from "./.open-next/worker.js";
-
-function schedulerSecret(env: TradeCatchWorkerEnv, path: string): string {
-  const secret =
-    (path === "/api/monitoring/tick"
-      ? env.MONITORING_SECRET?.trim()
-      : path === "/api/book-audit/notifications/tick"
-        ? env.BOOK_AUDIT_RETRY_SECRET?.trim()
-        : path === "/api/notifications/tick" ||
-            path === "/api/notifications/daily-summary/tick"
-          ? env.NOTIFICATION_RETRY_SECRET?.trim()
-          : path === "/api/gmail/sync/tick"
-            ? env.GMAIL_SYNC_SECRET?.trim()
-            : "") ||
-    env.MISSED_CALL_OPS_SECRET?.trim() ||
-    env.CRON_SECRET?.trim() ||
-    "";
-  if (!secret) {
-    throw new Error(
-      "Cloudflare scheduler requires MISSED_CALL_OPS_SECRET or CRON_SECRET",
-    );
-  }
-  return secret;
-}
 
 function schedulerOrigin(env: TradeCatchWorkerEnv): string {
   const configured = env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -88,7 +68,7 @@ export default {
               new Request(new URL(path, origin), {
                 method: "POST",
                 headers: {
-                  authorization: `Bearer ${schedulerSecret(env, path)}`,
+                  authorization: `Bearer ${cloudflareSchedulerSecret(env, path)}`,
                   "user-agent": "TradeCatch-Cloudflare-Scheduler/1.0",
                   // Existing routes use this authenticated marker to distinguish a
                   // scheduler from manual ops requests that require X-Ops-Actor.
