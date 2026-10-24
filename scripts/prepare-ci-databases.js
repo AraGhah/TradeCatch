@@ -1,5 +1,6 @@
 "use strict";
 const { Client } = require("pg");
+const { readFileSync } = require("node:fs");
 
 async function main() {
   if (process.env.GITHUB_ACTIONS !== "true")
@@ -25,6 +26,21 @@ async function main() {
     }
   } finally {
     await client.end();
+  }
+  url.pathname = "/tc004_staging";
+  const gmail = new Client({ connectionString: url.href });
+  await gmail.connect();
+  try {
+    for (const file of [
+      "src/product/missed-call/schema.sql",
+      "src/product/notifications/schema.sql",
+      "src/product/notifications/delivery-reliability.sql",
+      "src/product/notifications/localized-content.sql",
+      "src/product/gmail/schema.sql",
+    ])
+      await gmail.query(readFileSync(file, "utf8"));
+  } finally {
+    await gmail.end();
   }
 }
 main().catch((error) => {
