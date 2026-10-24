@@ -4,6 +4,19 @@ import { useState } from "react";
 import { BillingPortalButton } from "./BillingPortalButton";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { z } from "zod";
+import type { AccountRequest } from "@/product/support/types";
+
+const requestSchema = z.object({
+  id: z.string(),
+  kind: z.enum(["suspension", "reactivation", "deletion"]),
+  status: z.enum(["requested", "in_review", "completed"]),
+  createdAt: z.string(),
+});
+type RequestSummary = Pick<
+  AccountRequest,
+  "id" | "kind" | "status" | "createdAt"
+>;
 
 type MemberRole = "owner" | "admin" | "member" | "viewer";
 
@@ -26,6 +39,9 @@ export function AccountManagement({
   initialIndustry,
   members,
   canManageBilling,
+  canRequestAccountChange,
+  initialRequests,
+  requestHistoryError,
 }: {
   organizationId: string;
   initialName: string;
@@ -35,6 +51,9 @@ export function AccountManagement({
   initialIndustry: string;
   members: { name: string; email: string; role: MemberRole }[];
   canManageBilling: boolean;
+  canRequestAccountChange: boolean;
+  initialRequests: RequestSummary[];
+  requestHistoryError: boolean;
 }) {
   const t = useTranslations("app.account");
   const [name, setName] = useState(initialName);
@@ -45,6 +64,9 @@ export function AccountManagement({
   const [message, setMessage] = useState("");
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState(false);
+  const [requests, setRequests] = useState(initialRequests);
+  const [requesting, setRequesting] = useState(false);
+  const [requestError, setRequestError] = useState(false);
 
   const roleLabel: Record<MemberRole, string> = {
     owner: t("roleOwner"),
@@ -72,14 +94,42 @@ export function AccountManagement({
     setMessage(response.ok ? t("saved") : t("error"));
   }
 
-  async function request(path: string, body?: object) {
-    const response = await fetch(path, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body ?? {}),
-    });
-    const payload = await response.json();
-    setMessage(response.ok ? JSON.stringify(payload) : t("error"));
+  async function request(kind: AccountRequest["kind"]) {
+    if (requesting || !canRequestAccountChange) return;
+    if (
+      !window.confirm(t("requestConfirm", { kind: t(`requestKinds.${kind}`) }))
+    )
+      return;
+    setRequesting(true);
+    setRequestError(false);
+    setExportError(false);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `/api/businesses/${organizationId}/account/${kind === "deletion" ? "deletion-request" : "lifecycle"}`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ kind }),
+        },
+      );
+      if (!response.ok) throw new Error("Account request failed");
+      const payload = z
+        .object({ request: requestSchema })
+        .parse(await response.json());
+      if (payload.request.kind !== kind)
+        throw new Error("Unexpected request kind");
+      setRequests((previous) => [
+        payload.request,
+        ...previous.filter((row) => row.id !== payload.request.id),
+      ]);
+      setMessage(t("requestReceived"));
+    } catch {
+      setRequestError(true);
+      setMessage(t("requestError"));
+    } finally {
+      setRequesting(false);
+    }
   }
 
   async function downloadExport() {
@@ -242,24 +292,16 @@ export function AccountManagement({
         <button
           type="button"
           className="rounded-md border border-navy/15 px-3 py-2 text-sm"
-          onClick={() =>
-            void request(
-              `/api/businesses/${organizationId}/account/lifecycle`,
-              { kind: "suspension" },
-            )
-          }
+          disabled={requesting || !canRequestAccountChange}
+          onClick={() => void request("suspension")}
         >
           {t("suspend")}
         </button>
         <button
           type="button"
           className="rounded-md border border-navy/15 px-3 py-2 text-sm"
-          onClick={() =>
-            void request(
-              `/api/businesses/${organizationId}/account/lifecycle`,
-              { kind: "reactivation" },
-            )
-          }
+          disabled={requesting || !canRequestAccountChange}
+          onClick={() => void request("reactivation")}
         >
           {t("reactivate")}
         </button>
@@ -275,15 +317,52 @@ export function AccountManagement({
         <button
           type="button"
           className="rounded-md border border-navy/15 px-3 py-2 text-sm"
-          onClick={() =>
-            void request(
-              `/api/businesses/${organizationId}/account/deletion-request`,
-            )
-          }
+          disabled={requesting || !canRequestAccountChange}
+          onClick={() => void request("deletion")}
         >
           {t("deletion")}
         </button>
       </div>
+      <section
+        aria-label={t("requestHistory")}
+        className="rounded-md border border-navy/10 bg-white p-4 text-sm text-navy"
+      >
+        <h2 className="font-semibold">{t("requestHistory")}</h2>
+        <p className="mt-2">{t("requestTiming")}</p>
+        {!canRequestAccountChange ? (
+          <p className="mt-2">{t("requestPermission")}</p>
+        ) : null}
+        {requesting ? <p role="status">{t("requestSending")}</p> : null}
+        {requestHistoryError ? (
+          <p role="alert">{t("requestHistoryError")}</p>
+        ) : null}
+        {requests.length ? (
+          <ul className="mt-3 space-y-3">
+            {requests.map((row) => (
+              <li key={row.id}>
+                <p className="font-semibold">
+                  {t(`requestKinds.${row.kind}`)} —{" "}
+                  {t(`requestStatuses.${row.status}`)}
+                </p>
+                <p>{t("requestReference", { id: row.id })}</p>
+                <p>
+                  {t("requestSubmitted")}{" "}
+                  <time dateTime={row.createdAt}>
+                    {row.createdAt.slice(0, 10)}
+                  </time>
+                </p>
+                <p>
+                  {row.status === "completed"
+                    ? t("requestCompletedTiming")
+                    : t("requestPendingTiming")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        ) : canRequestAccountChange && !requestHistoryError ? (
+          <p className="mt-2">{t("requestNone")}</p>
+        ) : null}
+      </section>
       <p className="text-sm text-navy/70">{t("deletionNote")}</p>
       {canManageBilling ? <BillingPortalButton /> : null}
       <Link
@@ -300,7 +379,7 @@ export function AccountManagement({
       </Link>
       {message ? (
         <p
-          role={exportError ? "alert" : "status"}
+          role={exportError || requestError ? "alert" : "status"}
           aria-live="polite"
           className="text-sm text-navy"
         >
