@@ -8,6 +8,7 @@ const GROUPS = [
     items: [
       { href: "/admin", key: "navOverview" },
       { href: "/admin/sales", key: "navSales" },
+      { href: "/admin/installations", key: "navInstallations" },
       { href: "/admin/businesses", key: "navBusinesses" },
       { href: "/admin/billing", key: "navBilling" },
       { href: "/admin/analytics", key: "navAnalytics" },

@@ -55,6 +55,10 @@ export const routing = defineRouting({
       fr: "/admin",
     },
     "/admin/sales": { en: "/admin/sales", fr: "/admin/sales" },
+    "/admin/installations": {
+      en: "/admin/installations",
+      fr: "/admin/installations",
+    },
     "/admin/monitoring": {
       en: "/admin/monitoring",
       fr: "/admin/monitoring",

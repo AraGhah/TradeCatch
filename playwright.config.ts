@@ -65,7 +65,11 @@ export default defineConfig({
       AUTH_SECRET: "tradecatch-e2e-session-secret-not-for-production",
       SAAS_DEV_LOGIN: "1",
       // Synthetic platform identity for exercising real admin MFA/session gates.
-      TRADECATCH_ADMIN_EMAILS: "sales-admin@example.test",
+      TRADECATCH_ADMIN_EMAILS:
+        "sales-admin@example.test,installation-admin-en@example.test,installation-admin-fr@example.test",
+      // Never inherit a future production enforcement rollout into this harness.
+      INSTALLATION_ENFORCEMENT: "off",
+      INSTALLATION_CREDENTIAL: "",
       MISSED_CALL_OPS_SECRET: "tradecatch-e2e-ops-secret-not-for-production",
       // Gmail: the app talks to tests/support/fake-google instead of Google.
       GOOGLE_GMAIL_CLIENT_ID: "e2e-gmail-client-id",
