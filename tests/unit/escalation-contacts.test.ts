@@ -71,6 +71,49 @@ function harness() {
 }
 
 describe("employee escalation contacts", () => {
+  it("routes every recipient to their verified phone without a configured primary", async () => {
+    const h = harness();
+    h.members[1].role = "admin";
+    h.members[2].role = "admin";
+    await h.service.enqueue({
+      organizationId: "org",
+      type: "urgent_request",
+      idempotencyKey: "all-personal-phones",
+      payload: { live: true },
+    });
+    await h.service.processDue();
+    assert.deepEqual(h.texts.sort(), ["+15145550101", "+15145550102"]);
+    assert.ok(
+      !(await h.service.history("org")).some(
+        (row) => row.channel === "sms" && row.destination === "+15145550999",
+      ),
+    );
+  });
+
+  it("cancels legacy business-number SMS jobs instead of sending them", async () => {
+    const h = harness();
+    await h.service.enqueue({
+      organizationId: "org",
+      type: "urgent_request",
+      idempotencyKey: "legacy-routing",
+      payload: { live: true },
+    });
+    await h.service.processDue();
+    const sms = (await h.service.history("org")).find(
+      (row) => row.channel === "sms",
+    )!;
+    sms.status = "pending";
+    sms.destination = "+15145550999";
+    sms.idempotencyKey = sms.idempotencyKey.replace(":personal", "");
+    await h.store.saveDelivery(sms);
+    await h.service.processDue();
+    assert.equal(h.texts.length, 1);
+    assert.equal(
+      (await h.service.history("org")).find((row) => row.id === sms.id)?.status,
+      "canceled",
+    );
+  });
+
   it("returns names/roles and only verified phone numbers, scoped to the organization", async () => {
     const h = harness(),
       contacts = await h.service.listEscalationContacts("org");

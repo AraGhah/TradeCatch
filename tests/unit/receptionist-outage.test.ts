@@ -53,12 +53,16 @@ function serviceHarness(store: NotificationStore, startAt = DAYTIME) {
   const members: NoticeMember[] = [
     {
       userId: "owner",
+      phoneE164: "+15145550121",
+      phoneVerifiedAt: "2026-01-01T00:00:00Z",
       role: "owner",
       email: "owner@example.test",
       locale: "en",
     },
     {
       userId: "admin_fr",
+      phoneE164: "+15145550122",
+      phoneVerifiedAt: "2026-01-01T00:00:00Z",
       role: "admin",
       email: "admin@example.test",
       locale: "fr",
@@ -153,7 +157,7 @@ function outageChecks(factory: () => NotificationStore) {
       "owner@example.test",
     ]);
     assert.equal(h.texts.length, 2);
-    assert.ok(h.texts.every((text) => text.to === "+15005550006"));
+    assert.deepEqual(h.texts.map((text) => text.to).sort(), ["+15145550121", "+15145550122"]);
     for (const external of [
       ...h.emails.map((m) => m.message),
       ...h.texts.map((t) => t.body),
@@ -578,15 +582,15 @@ describe("a receptionist failure on a live call alerts the business", () => {
     const deliveries = (await service.history(organization.id)).filter(
       (delivery) => delivery.notificationId === alerts[0].note.id,
     );
-    // Providers are unconfigured here, so SMS also queues its backup email.
+    // The owner has no verified personal number: email/in-app remain available.
     assert.deepEqual(
       [...new Set(deliveries.map((delivery) => delivery.channel))].sort(),
-      ["email", "in_app", "sms"],
+      ["email", "in_app"],
     );
     assert.equal(
       deliveries.filter((delivery) => delivery.idempotencyKey.endsWith(":sms"))
         .length,
-      1,
+      0,
     );
   });
 });

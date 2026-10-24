@@ -32,6 +32,8 @@ function serviceFor(store: NotificationStore) {
     },
     {
       userId: owner.userId,
+      phoneE164: "+15145550121",
+      phoneVerifiedAt: "2026-01-01T00:00:00Z",
       role: "member",
       email: "owner@example.test",
       locale: "fr",

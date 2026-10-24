@@ -30,6 +30,8 @@ function harness(store: NotificationStore) {
   const members: NoticeMember[] = [
     {
       userId: "owner",
+      phoneE164: "+15005550007",
+      phoneVerifiedAt: new Date(T0).toISOString(),
       role: "owner",
       email: "owner@example.test",
       locale: "en",

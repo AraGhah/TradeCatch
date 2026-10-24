@@ -316,10 +316,7 @@ export function createNotificationService(deps: NotificationDeps) {
     notification: ContractorNotification,
     org: NoticeOrg,
   ) {
-    const personalSms =
-      delivery.channel === "sms" &&
-      (delivery.idempotencyKey.includes(":escalation:") ||
-        delivery.idempotencyKey.endsWith(":personal"));
+    const personalSms = delivery.channel === "sms";
     // Re-check membership and ownership before sending delayed notifications.
     const member = (await deps.listMembers(org.id)).find(
       (m) => m.userId === delivery.recipientUserId,
@@ -550,9 +547,7 @@ export function createNotificationService(deps: NotificationDeps) {
           channel === "email"
             ? member.email
             : channel === "sms"
-              ? rule.primaryUserId && notification.priority !== "normal"
-                ? verifiedPhone(member, deps.now())
-                : org.phoneE164 || undefined
+              ? verifiedPhone(member, deps.now())
               : undefined;
         if (channel !== "in_app" && !destination) continue;
         const when = allowedNow(notification.priority, prefs, rule, org)

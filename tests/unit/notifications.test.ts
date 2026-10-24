@@ -20,7 +20,7 @@ function harness(options?: { now?: Date; org?: Partial<NoticeOrg>; failEmail?: b
     ...options?.org,
   };
   const members: NoticeMember[] = [
-    { userId: "owner", role: "owner", email: "owner@example.com", locale: "en" },
+    { userId: "owner", role: "owner", email: "owner@example.com", locale: "en", phoneE164: "+15145550121", phoneVerifiedAt: "2026-01-01T00:00:00Z" },
     { userId: "tech", role: "member", email: "tech@example.com", locale: "fr" },
   ];
   const service = createNotificationService({
