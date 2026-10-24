@@ -16,7 +16,7 @@ async function main() {
   const client = new Client({ connectionString: url.href });
   await client.connect();
   try {
-    for (const name of ["tc002_staging", "tc006_staging"]) {
+    for (const name of ["tc002_staging", "tc004_staging", "tc006_staging"]) {
       const found = await client.query(
         "SELECT 1 FROM pg_database WHERE datname=$1",
         [name],

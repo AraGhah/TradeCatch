@@ -2902,7 +2902,7 @@
         "system": "System updates"
       },
       "outagesHint": "Sent to owners and admins when the receptionist cannot answer a call. Email goes to your account email; SMS goes to your verified personal number. Your enabled channels and after-hours settings apply.",
-      "gmailRepliesHint": "Important, unread customer emails alert only the mailbox owner. Email goes to your account email; SMS goes to your configured business number. External alerts hide message contents. Email and SMS require configured delivery providers.",
+      "gmailRepliesHint": "Important, unread customer emails alert only the mailbox owner. Email goes to your account email; SMS goes to your verified personal number. External alerts hide message contents. Email and SMS require configured delivery providers.",
       "quietStart": "Quiet hours start",
       "personalTimezone": "Your notification timezone",
       "businessTimezone": "Use business timezone",
