@@ -3,6 +3,8 @@ import { requireTenantContext } from "@/product/saas/tenant";
 import { getSaasStore } from "@/product/saas/runtime";
 import { canManageBilling } from "@/product/saas/billing-access";
 import { AccountManagement } from "@/components/app/AccountManagement";
+import { canCloseAccount } from "@/product/support/access";
+import { getSupportService } from "@/product/support/runtime";
 
 export default async function AccountPage({
   params,
@@ -29,6 +31,19 @@ export default async function AccountPage({
     };
   });
   const org = auth.ctx.organization;
+  const canRequestAccountChange = canCloseAccount(
+    auth.ctx.membership.role,
+    auth.ctx.isPlatformAdmin,
+  );
+  let requestHistoryError = false;
+  const initialRequests = canRequestAccountChange
+    ? await getSupportService()
+        .accountRequests(org.id, 20)
+        .catch(() => {
+          requestHistoryError = true;
+          return [];
+        })
+    : [];
   return (
     <div className="flex flex-col gap-4">
       <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
@@ -44,6 +59,16 @@ export default async function AccountPage({
         initialIndustry={org.industry ?? ""}
         members={people}
         canManageBilling={canManageBilling(auth.ctx.membership.role)}
+        canRequestAccountChange={canRequestAccountChange}
+        initialRequests={initialRequests.map(
+          ({ id, kind, status, createdAt }) => ({
+            id,
+            kind,
+            status,
+            createdAt,
+          }),
+        )}
+        requestHistoryError={requestHistoryError}
       />
     </div>
   );
