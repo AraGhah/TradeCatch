@@ -125,3 +125,13 @@ CREATE TABLE IF NOT EXISTS tc_calendar_sync_state (
 INSERT INTO mc_schema_migrations (id)
 VALUES ('012_scheduling')
 ON CONFLICT (id) DO NOTHING;
+
+ALTER TABLE tc_schedule_appointments
+  ADD COLUMN IF NOT EXISTS confirmation_notices_pending BOOLEAN NOT NULL DEFAULT false;
+CREATE INDEX IF NOT EXISTS tc_schedule_pending_confirmations
+  ON tc_schedule_appointments (updated_at, id)
+  WHERE status = 'confirmed' AND confirmation_notices_pending;
+
+INSERT INTO mc_schema_migrations (id)
+VALUES ('060_scheduling_confirmation_recovery')
+ON CONFLICT (id) DO NOTHING;

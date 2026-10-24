@@ -7,6 +7,7 @@ import {
 } from "@/lib/ops-auth";
 import {
   getSchedulingStore,
+  getSchedulingService,
   reconcileGoogleBusy,
 } from "@/product/scheduling/runtime";
 
@@ -17,8 +18,11 @@ async function tick(request: NextRequest) {
   const audit = logOpsAccess(request, "scheduling.reconcile");
   const isCron = Boolean(request.headers.get("x-vercel-cron"));
   if (audit.missingActor && !isCron) return missingOpsActorResponse();
+  const confirmations =
+    await getSchedulingService().retryPendingConfirmations();
   return NextResponse.json({
     ok: true,
+    confirmations,
     note: "Per-business reconcile runs when a calendar is connected.",
     ready: Boolean(getSchedulingStore()),
   });
