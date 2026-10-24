@@ -3,6 +3,7 @@ import { Link } from "@/i18n/navigation";
 import { Container } from "@/components/Container";
 import { ManageCookiesButton } from "@/components/ManageCookiesButton";
 import { BrandLockup } from "@/components/BrandLockup";
+import { EmailContactLink } from "@/components/EmailContactLink";
 
 export function Footer() {
   const t = useTranslations("footer");
@@ -39,7 +40,7 @@ export function Footer() {
             <p className="mt-5 font-mono text-[12px] tracking-[0.05em] text-[rgba(255,255,255,0.64)]">
               {site("serviceArea")}
             </p>
-            <p className="mt-3 flex flex-wrap items-center gap-x-[14px] gap-y-2 text-[14px]">
+            <div className="mt-3 flex flex-wrap items-center gap-x-[14px] gap-y-2 text-[14px]">
               <a
                 href={`tel:${site("phoneHref")}`}
                 className="text-[rgba(255,255,255,0.8)] transition-colors hover:text-orange"
@@ -49,13 +50,13 @@ export function Footer() {
               <span aria-hidden className="text-[rgba(255,255,255,0.25)]">
                 ·
               </span>
-              <a
-                href={`mailto:${site("email")}`}
+              <EmailContactLink
+                email={site("email")}
                 className="text-[rgba(255,255,255,0.8)] transition-colors hover:text-orange"
               >
                 {site("email")}
-              </a>
-            </p>
+              </EmailContactLink>
+            </div>
           </div>
 
           <div className="min-w-0">

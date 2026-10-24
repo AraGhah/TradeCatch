@@ -8,6 +8,17 @@
     "serviceArea": "Montréal · Laval · Mirabel · Vaudreuil-Dorion",
     "founderEmail": "contact@tradecatch.ca"
   },
+  "emailContact": {
+    "title": "Contact TradeCatch",
+    "description": "Choose how to write to us. If your email app does not open, use Gmail or copy the address. Gmail may ask you to sign in.",
+    "address": "Email address",
+    "gmail": "Open Gmail (new tab)",
+    "emailApp": "Open email app",
+    "copy": "Copy email address",
+    "copied": "Email address copied.",
+    "copyFallback": "Automatic copying is unavailable. The address is selected; copy it manually.",
+    "close": "Close"
+  },
   "nav": {
     "home": "Home",
     "services": "Services",
