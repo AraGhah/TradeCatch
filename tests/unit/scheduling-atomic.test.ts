@@ -128,6 +128,75 @@ test("a calendar result after the phone deadline is canceled without confirming 
 });
 
 const database = process.env.NOTIFICATION_TEST_DATABASE_URL;
+test("confirmed bookings survive notice failures and recover after a worker restart", async () => {
+  const store = createMemorySchedulingStore();
+  let fail = true;
+  let events = 0;
+  const delivered = new Set<string>();
+  const deps = {
+    store,
+    now: () => new Date("2026-10-16T12:00:00Z"),
+    calendar: async () => ({
+      ...createSimulatedCalendar(),
+      async createEvent() {
+        events++;
+        return { id: "event" };
+      },
+    }),
+    scheduleNotices: async (input: { appointmentId: string }) => {
+      if (fail) throw new Error("queue unavailable");
+      delivered.add(input.appointmentId);
+    },
+  };
+  const input = {
+    organizationId: "org_retry",
+    startAt: "2026-10-19T14:00:00Z",
+    source: "ai_receptionist" as const,
+    customerPhoneE164: "+15145550121",
+    idempotencyKey: "call-slot",
+  };
+  const result = await createSchedulingService(deps).book(input);
+  assert.equal(result.confirmed, true);
+  assert.equal((await store.listPendingConfirmations(10)).length, 1);
+  fail = false;
+  const restarted = createSchedulingService(deps);
+  assert.deepEqual(await restarted.retryPendingConfirmations(), {
+    attempted: 1,
+    queued: 1,
+  });
+  assert.equal((await store.listPendingConfirmations(10)).length, 0);
+  assert.equal(
+    (await restarted.book(input)).appointment?.id,
+    result.appointment?.id,
+  );
+  assert.equal(events, 1);
+  assert.equal(delivered.size, 1);
+});
+
+test("failed owner alerts stay pending and canceled appointments are not retried", async () => {
+  const store = createMemorySchedulingStore();
+  const service = createSchedulingService({
+    store,
+    now: () => new Date("2026-10-16T12:00:00Z"),
+    calendar: async () => createSimulatedCalendar(),
+    notify: async () => {
+      throw new Error("owner queue unavailable");
+    },
+  });
+  const result = await service.book({
+    organizationId: "org_cancel_retry",
+    startAt: "2026-10-19T14:00:00Z",
+    source: "ai_receptionist",
+  });
+  assert.equal(result.confirmed, true);
+  assert.equal((await store.listPendingConfirmations(10)).length, 1);
+  await store.saveAppointment({ ...result.appointment!, status: "canceled" });
+  assert.deepEqual(await service.retryPendingConfirmations(), {
+    attempted: 0,
+    queued: 0,
+  });
+});
+
 test(
   "PostgreSQL atomically reserves one slot across concurrent workers and replays",
   { skip: !database },
@@ -192,6 +261,32 @@ test(
         (await stores[0].listAppointments("booking_test")).length,
         1,
       );
+      await stores[0].saveAppointment({
+        ...winner,
+        status: "confirmed",
+        confirmationNoticesPending: true,
+      });
+      assert.equal(
+        (await stores[1].listPendingConfirmations(10))[0]?.id,
+        winner.id,
+      );
+      await stores[1].completeConfirmation(
+        "wrong_org",
+        winner.id,
+        winner.startAt,
+      );
+      await stores[1].completeConfirmation(
+        "booking_test",
+        winner.id,
+        "2099-01-06T14:00:00Z",
+      );
+      assert.equal((await stores[2].listPendingConfirmations(10)).length, 1);
+      await stores[2].completeConfirmation(
+        "booking_test",
+        winner.id,
+        winner.startAt,
+      );
+      assert.equal((await stores[3].listPendingConfirmations(10)).length, 0);
     } finally {
       await sql.end();
       await closePgPool();

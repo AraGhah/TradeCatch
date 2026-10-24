@@ -1,24 +1,13 @@
 export type BookingMode =
-  | "automatic"
-  | "consultation"
-  | "manual_approval"
-  | "escalate";
+  "automatic" | "consultation" | "manual_approval" | "escalate";
 
 export type AppointmentStatus =
-  | "hold"
-  | "pending"
-  | "confirmed"
-  | "completed"
-  | "canceled";
+  "hold" | "pending" | "confirmed" | "completed" | "canceled";
 
 export type CalendarMode = "simulated" | "google" | "internal";
 
 export type CalendarStatus =
-  | "connected"
-  | "disconnected"
-  | "expired"
-  | "error"
-  | "simulated";
+  "connected" | "disconnected" | "expired" | "error" | "simulated";
 
 export type DayHours = { open: string; close: string } | null;
 
@@ -81,6 +70,7 @@ export type ScheduleAppointment = {
   cancelReason?: string;
   simulated: boolean;
   holdExpiresAt?: string;
+  confirmationNoticesPending?: boolean;
   createdAt: string;
   updatedAt: string;
 };

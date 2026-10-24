@@ -194,6 +194,46 @@ export function createSimulatedCalendar(fail = false): CalendarPort {
 }
 
 export function createSchedulingService(deps: SchedulingDeps) {
+  // The pending flag is persisted with the confirmed appointment. Downstream
+  // queues deduplicate by appointment ID; a failed enqueue must not undo booking.
+  async function deliverConfirmation(
+    row: ScheduleAppointment,
+  ): Promise<boolean> {
+    if (row.status !== "confirmed" || !row.confirmationNoticesPending)
+      return true;
+    try {
+      const when = localParts(row.startAt, row.timezone);
+      if (row.customerPhoneE164)
+        await deps.scheduleNotices?.({
+          organizationId: row.organizationId,
+          appointmentId: row.id,
+          phoneE164: row.customerPhoneE164,
+          customerName: row.customerName,
+          serviceName: row.serviceName,
+          appointmentDate: when.slice(0, 10),
+          appointmentTime: when,
+          startAt: row.startAt,
+          simulated: row.simulated,
+          leadId: row.leadId,
+        });
+      await deps.notify?.({
+        organizationId: row.organizationId,
+        title: row.customerName || row.serviceName,
+        reason: "New appointment confirmed",
+        refId: row.id,
+      });
+      await deps.store.completeConfirmation(
+        row.organizationId,
+        row.id,
+        row.startAt,
+      );
+      row.confirmationNoticesPending = false;
+      return true;
+    } catch {
+      console.warn("[scheduling] Confirmation enqueue deferred");
+      return false;
+    }
+  }
   async function ensure(organizationId: string): Promise<AvailabilityRules> {
     const existing = await deps.store.getRules(organizationId);
     if (existing) return existing;
@@ -298,6 +338,28 @@ export function createSchedulingService(deps: SchedulingDeps) {
   return {
     ensure,
 
+    async retryPendingConfirmations(limit = 50) {
+      const rows = await deps.store.listPendingConfirmations(
+        Math.max(1, Math.min(100, limit)),
+      );
+      let queued = 0;
+      for (const row of rows) {
+        await withOrgLock(row.organizationId, async () => {
+          const current = await deps.store.getAppointment(
+            row.organizationId,
+            row.id,
+          );
+          if (
+            current?.status === "confirmed" &&
+            current.confirmationNoticesPending &&
+            (await deliverConfirmation(current))
+          )
+            queued++;
+        });
+      }
+      return { attempted: rows.length, queued };
+    },
+
     async getRules(organizationId: string) {
       return ensure(organizationId);
     },
@@ -393,6 +455,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
             input.idempotencyKey,
           );
           if (existing) {
+            await deliverConfirmation(existing);
             return {
               ok: true,
               confirmed: existing.status === "confirmed",
@@ -622,6 +685,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
         }
         reserved.calendarEventId = created.id;
         reserved.status = "confirmed";
+        reserved.confirmationNoticesPending = true;
         reserved.holdExpiresAt = undefined;
         reserved.updatedAt = deps.now().toISOString();
         const linked = await deps.linkLead?.({
@@ -636,28 +700,14 @@ export function createSchedulingService(deps: SchedulingDeps) {
         if (linked && "leadId" in linked && linked.leadId)
           reserved.leadId = linked.leadId;
         await deps.store.saveAppointment(reserved);
-        await record(reserved, "confirmed", created.id);
-        const when = localParts(reserved.startAt, rules.timezone);
-        if (input.customerPhoneE164) {
-          await deps.scheduleNotices?.({
-            organizationId: input.organizationId,
-            appointmentId: reserved.id,
-            phoneE164: input.customerPhoneE164,
-            customerName: input.customerName,
-            serviceName: reserved.serviceName,
-            appointmentDate: when.slice(0, 10),
-            appointmentTime: when,
-            startAt: reserved.startAt,
-            simulated: reserved.simulated,
-            leadId: reserved.leadId,
-          });
+        await deliverConfirmation(reserved);
+        try {
+          await record(reserved, "confirmed", created.id);
+        } catch {
+          console.warn(
+            "[scheduling] Confirmed appointment history write failed",
+          );
         }
-        await deps.notify?.({
-          organizationId: input.organizationId,
-          title: reserved.customerName || reserved.serviceName,
-          reason: "New appointment confirmed",
-          refId: reserved.id,
-        });
         return {
           ok: true,
           confirmed: true,
