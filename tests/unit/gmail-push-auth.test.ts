@@ -21,6 +21,7 @@ test("Gmail push requires a signed Google identity and rejects URL credentials",
     request(undefined, "?token=old-secret"),
     request(valid, "?token=old-secret"),
     request("garbage"),
+    request("a".repeat(8193)),
   ]) {
     assert.equal(await authorizeGmailPush(req, env, keys), false);
   }
@@ -32,9 +33,14 @@ test("Gmail push requires a signed Google identity and rejects URL credentials",
     { aud: "https://another.example" },
     { exp: 1 },
     { iat: Math.floor(Date.now() / 1000) + 3600 },
+    { iat: Math.floor(Date.now() / 1000) - 10800 },
+    { nbf: Math.floor(Date.now() / 1000) + 3600 },
     { exp: undefined },
     { iat: undefined },
     { sub: "" },
+    { sub: undefined },
+    { email: undefined },
+    { email_verified: undefined },
   ]) {
     assert.equal(
       await authorizeGmailPush(request(await testPushToken(claims)), env, keys),
@@ -63,4 +69,29 @@ test("Gmail push requires a signed Google identity and rejects URL credentials",
     .setExpirationTime("1h")
     .sign(privateKey);
   assert.equal(await authorizeGmailPush(request(forged), env, keys), false);
+});
+
+test("Gmail push fails closed when signing keys cannot be resolved", async () => {
+  const valid = await testPushToken();
+  assert.equal(
+    await authorizeGmailPush(request(valid), env, async () => {
+      throw new Error("Signing keys unavailable");
+    }),
+    false,
+  );
+});
+
+test("Gmail push rejects symmetric signatures even with valid identity claims", async () => {
+  const token = await new SignJWT({
+    email: env.pushServiceAccount,
+    email_verified: true,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuer("https://accounts.google.com")
+    .setAudience(env.pushAudience)
+    .setSubject("123")
+    .setIssuedAt()
+    .setExpirationTime("1h")
+    .sign(new TextEncoder().encode("attacker-controlled-symmetric-key"));
+  assert.equal(await authorizeGmailPush(request(token), env, keys), false);
 });
