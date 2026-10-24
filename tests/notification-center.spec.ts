@@ -2,6 +2,38 @@ import { expect, test } from "@playwright/test";
 import { workspaceSession } from "./support/workspace-session";
 
 for (const locale of ["en", "fr"] as const) {
+  test(`personal notification timezone persists and validates (${locale})`, async ({
+    page,
+  }) => {
+    await workspaceSession(page, locale);
+    const fr = locale === "fr";
+    await page.goto(`${fr ? "/fr" : ""}/app/settings/notifications`);
+    const zone = page.getByRole("combobox", {
+      name: fr
+        ? "Votre fuseau horaire pour les alertes"
+        : "Your notification timezone",
+    });
+    await expect(zone).toBeVisible();
+    await zone.fill("Invalid/Zone");
+    const save = page.getByRole("button", {
+      name: fr ? "Enregistrer" : "Save",
+      exact: true,
+    });
+    await save.click();
+    await expect(page.getByRole("status")).toContainText(
+      fr ? "Choisissez un fuseau valide" : "Choose a valid timezone",
+    );
+    await zone.fill("America/Vancouver");
+    const saved = page.waitForResponse(
+      (response) =>
+        response.url().includes("notification-preferences") &&
+        response.request().method() === "PUT",
+    );
+    await save.click();
+    expect((await saved).status()).toBe(200);
+    await page.reload();
+    await expect(zone).toHaveValue("America/Vancouver");
+  });
   test(`notification loading, retry, stale data and failed actions (${locale})`, async ({
     page,
   }) => {
@@ -85,11 +117,9 @@ for (const locale of ["en", "fr"] as const) {
       : ["Mark as read", "Acknowledge", "Mark all as read"]) {
       await page.getByRole("button", { name, exact: true }).click();
       await expect(
-        page
-          .getByRole("alert")
-          .filter({
-            hasText: fr ? "Impossible d’enregistrer." : "Could not save.",
-          }),
+        page.getByRole("alert").filter({
+          hasText: fr ? "Impossible d’enregistrer." : "Could not save.",
+        }),
       ).toBeVisible();
       expect(reads).toBe(before);
     }

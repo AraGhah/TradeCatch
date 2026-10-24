@@ -158,6 +158,91 @@ function summaryChecks(factory: () => NotificationStore) {
     assert.equal((await h.service.generateDailySummaries()).queued, 2);
   });
 
+  it("uses each user's persisted timezone for the same business", async () => {
+    const prefs = await h.service.getPreferences(
+      h.organizationId,
+      "admin_fr",
+      "fr",
+    );
+    await h.service.savePreferences({
+      ...prefs,
+      timezone: "America/Vancouver",
+    });
+    assert.equal(
+      (await h.store.getPreferences(h.organizationId, "admin_fr"))?.timezone,
+      "America/Vancouver",
+    );
+    h.at(EVENING);
+    assert.equal((await h.service.generateDailySummaries()).queued, 1);
+    await h.drain();
+    assert.equal((await h.summariesFor("owner")).length, 1);
+    assert.equal((await h.summariesFor("admin_fr")).length, 0);
+    h.at("2026-10-22T01:30:00Z"); // 18:30 Vancouver, 21:30 Toronto
+    assert.equal((await h.service.generateDailySummaries()).queued, 1);
+    await h.drain();
+    assert.equal((await h.summariesFor("admin_fr")).length, 1);
+    assert.ok(
+      h.emails.some(
+        (mail) =>
+          mail.to === "admin@example.test" &&
+          mail.subject === "Résumé quotidien",
+      ),
+    );
+    assert.equal((await h.service.generateDailySummaries()).queued, 0);
+  });
+  it("counts activity inside the recipient's own local day", async () => {
+    const prefs = await h.service.getPreferences(
+      h.organizationId,
+      "admin_fr",
+      "fr",
+    );
+    await h.service.savePreferences({
+      ...prefs,
+      timezone: "America/Vancouver",
+    });
+    h.at("2026-10-21T05:30:00Z"); // Today Toronto, yesterday Vancouver
+    await h.event("lead_created", "early-lead");
+    h.at("2026-10-22T01:30:00Z");
+    await h.service.generateDailySummaries();
+    await h.drain();
+    assert.match(
+      (await h.summariesFor("admin_fr"))[0].note.message,
+      /2 nouveaux prospects/,
+    );
+    assert.match(
+      (await h.summariesFor("owner"))[0].note.message,
+      /3 new leads/,
+    );
+  });
+  it("rejects invalid timezone settings and allows the business default", async () => {
+    const prefs = await h.service.getPreferences(
+      h.organizationId,
+      "owner",
+      "en",
+    );
+    await assert.rejects(
+      h.service.savePreferences({ ...prefs, timezone: "Invalid/Zone" }),
+      /timezone/,
+    );
+    await h.service.savePreferences({ ...prefs, timezone: "" });
+    assert.equal(
+      (await h.store.getPreferences(h.organizationId, "owner"))?.timezone,
+      undefined,
+    );
+  });
+  it("honors summary opt-out after the daily job queues it", async () => {
+    h.at(EVENING);
+    await h.service.generateDailySummaries();
+    await h.optOut("owner");
+    await h.drain();
+    assert.equal((await h.summariesFor("owner")).length, 0);
+    assert.equal(
+      h.emails.filter(
+        (m) => m.to === "owner@example.test" && m.subject === "Daily summary",
+      ).length,
+      0,
+    );
+  });
   it("writes each opted-in member one summary in their language, from the day's counts", async () => {
     h.at(EVENING);
     await h.service.generateDailySummaries();

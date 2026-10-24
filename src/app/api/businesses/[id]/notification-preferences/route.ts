@@ -3,7 +3,10 @@ import { z } from "zod";
 import { requireNotificationAccess } from "@/product/notifications/access";
 import { getNotificationService } from "@/product/notifications/runtime";
 import { DEFAULT_CHANNELS } from "@/product/notifications/templates";
-import { quietHours } from "@/product/notifications/preferences";
+import {
+  notificationTimezone,
+  quietHours,
+} from "@/product/notifications/preferences";
 import type {
   NotificationPreferences,
   PreferenceCategory,
@@ -21,6 +24,7 @@ const schema = z
   .object({
     categories: z.record(z.string(), channel),
     language: z.enum(["en", "fr"]),
+    timezone: notificationTimezone,
     dailySummary: z.boolean(),
     scope: z.enum(["all", "assigned"]),
   })
@@ -69,6 +73,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     quietEnd: parsed.data.quietEnd,
     quietEnabled: parsed.data.quietEnabled,
     language: parsed.data.language,
+    timezone: parsed.data.timezone,
     dailySummary: parsed.data.dailySummary,
     scope: ["member", "viewer"].includes(access.ctx.membership.role)
       ? "assigned"
