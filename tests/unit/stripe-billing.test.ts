@@ -267,6 +267,65 @@ describe("Stripe billing in isolated PostgreSQL", { skip: !url }, () => {
     await deliver(event("invoice.paid"));
     assert.equal((await state()).growthAccess, true);
   });
+  for (const [type, stripeStatus, expectedStatus] of [
+    ["customer.subscription.paused", "paused", "suspended"],
+    ["customer.subscription.resumed", "active", "active"],
+    ["invoice.payment_succeeded", "active", "active"],
+    ["invoice.payment_action_required", "incomplete", "suspended"],
+  ]) {
+    it(`reconciles plan and access for ${type}`, async () => {
+      subscriptions = [subscription(stripeStatus)];
+      assert.equal((await deliver(event(type))).status, 200);
+      assert.deepEqual(await state(), {
+        plan: expectedStatus === "active" ? "growth" : "starter",
+        status: expectedStatus,
+        growthAccess: expectedStatus === "active",
+      });
+    });
+  }
+  it("finds an active replacement on a later subscription page", async () => {
+    const originalFetch = globalThis.fetch;
+    const cursors: (string | null)[] = [];
+    mock.method(
+      globalThis,
+      "fetch",
+      async (input: string | URL | Request, init?: RequestInit) => {
+        const parsed = new URL(String(input));
+        if (parsed.pathname !== "/v1/subscriptions")
+          return originalFetch(input, init);
+        const cursor = parsed.searchParams.get("starting_after");
+        cursors.push(cursor);
+        return Response.json(
+          cursor === null
+            ? { data: [subscription("canceled")], has_more: true }
+            : {
+                data: [
+                  subscription("active", "price_growth", "sub_replacement"),
+                ],
+                has_more: false,
+              },
+        );
+      },
+    );
+    assert.equal(
+      (await deliver(event("customer.subscription.deleted"))).status,
+      200,
+    );
+    assert.deepEqual(cursors, [null, "sub_test"]);
+    assert.deepEqual(await state(), {
+      plan: "growth",
+      status: "active",
+      growthAccess: true,
+    });
+    assert.equal(
+      (
+        await pool.query(
+          "SELECT count(*)::int AS n FROM tc_stripe_subscriptions",
+        )
+      ).rows[0].n,
+      2,
+    );
+  });
   it("keeps access until a scheduled cancellation actually ends", async () => {
     subscriptions[0].cancel_at_period_end = true;
     await deliver(event());
