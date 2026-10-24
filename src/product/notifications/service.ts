@@ -832,17 +832,12 @@ export function createNotificationService(deps: NotificationDeps) {
             destination: channel === "sms" ? phone : backup.email,
             simulated: note.simulated,
             idempotencyKey: `${note.id}:${backup.userId}:escalation:${prior.length + 1}`,
-            createdAt: deps.now().toISOString(),
+            createdAt: asOf.toISOString(),
             updatedAt: deps.now().toISOString(),
           };
           if (!(await deps.store.saveDelivery(delivery, true))) continue;
-          await deps.store.addEscalationAttempt({
-            organizationId,
-            notificationId: note.id,
-            recipientUserId: backup.userId,
-            outcome: "backup_notified",
-            at: asOf.toISOString(),
-          });
+          // The durable delivery is the attempt record. Deriving history from it
+          // also closes the crash window between queuing and recording an attempt.
           escalated += 1;
         }
       }
