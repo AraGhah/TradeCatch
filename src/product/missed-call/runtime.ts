@@ -74,6 +74,17 @@ export function getMissedCallReadStore(): MissedCallStore {
     createStore().store);
 }
 
+/** Timer/retry work uses each workflow's persisted client. It must not create or
+ * overwrite an environment client merely because a cron event ran. Missing
+ * provider credentials still fail real sends through the production SMS port. */
+export function getMissedCallMaintenanceRuntime() {
+  const store = getMissedCallReadStore();
+  return {
+    store,
+    engine: createMissedCallEngine({ store, sms: createTwilioSmsPort() }),
+  };
+}
+
 export function getMissedCallRuntime() {
   if (!globalForMissedCall.__tradecatchMissedCall) {
     globalForMissedCall.__tradecatchMissedCall = bootstrap();

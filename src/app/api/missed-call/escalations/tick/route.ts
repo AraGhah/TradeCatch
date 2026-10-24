@@ -6,7 +6,7 @@ import {
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
 import { isDurableMissedCallStoreConfigured } from "@/lib/config";
-import { ensureMissedCallReady } from "@/product/missed-call/runtime";
+import { getMissedCallMaintenanceRuntime } from "@/product/missed-call/runtime";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ async function tick(request: NextRequest) {
     return missingOpsActorResponse();
   }
 
-  const { engine, store } = await ensureMissedCallReady();
+  const { engine, store } = getMissedCallMaintenanceRuntime();
   const result = await engine.processEscalations();
 
   if (isDurableMissedCallStoreConfigured()) {
@@ -49,7 +49,7 @@ async function tick(request: NextRequest) {
     queue = undefined;
   }
 
-  return NextResponse.json({ ok: true, ...result, queue });
+  return NextResponse.json({ ok: result.outboxFailed === 0, ...result, queue });
 }
 
 // Vercel Cron invokes routes with GET; POST remains available for manual ops.
