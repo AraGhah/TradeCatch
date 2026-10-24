@@ -275,7 +275,10 @@ export function createNotificationService(deps: NotificationDeps) {
               member.userId === delivery.recipientUserId &&
               ["owner", "admin"].includes(member.role),
           ));
-      if (backup?.email) {
+      if (
+        backup?.email &&
+        (await prefsFor(org, backup)).categories[TYPE_CATEGORY[note.type]].email
+      ) {
         const people = await deps.store.listRecipients(org.id, note.id);
         if (!people.some((person) => person.userId === backup.userId))
           await deps.store.saveRecipient({
@@ -348,6 +351,20 @@ export function createNotificationService(deps: NotificationDeps) {
     const rule =
       (await deps.store.getEscalation(org.id)) ??
       defaultRule(org.id, deps.now().toISOString());
+    if (
+      delivery.idempotencyKey.endsWith(":backup_email") &&
+      (!rule.enabled ||
+        !rule.emailEnabled ||
+        !prefs.categories[TYPE_CATEGORY[notification.type]].email ||
+        (!rule.secondaryUserId && !["owner", "admin"].includes(member.role)) ||
+        (rule.secondaryUserId && rule.secondaryUserId !== member.userId))
+    ) {
+      delivery.status = "canceled";
+      delivery.lastError = "recovery_permission_changed";
+      delivery.updatedAt = deps.now().toISOString();
+      await deps.store.saveDelivery(delivery);
+      return;
+    }
     if (!allowedNow(notification.priority, prefs, rule, org)) {
       delivery.status = "pending";
       delivery.nextAttemptAt = nextWindowStart(

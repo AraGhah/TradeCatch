@@ -289,6 +289,70 @@ function recoveryChecks(factory: () => NotificationStore, durable: boolean) {
     await h.service.processDue();
     assert.equal(h.emails.length, 0);
   });
+  it("does not queue fallback email when the recipient disabled that category", async () => {
+    const prefs = await h.service.getPreferences(
+      h.organizationId,
+      "backup",
+      "fr",
+    );
+    prefs.categories.urgent.email = false;
+    await h.service.savePreferences(prefs);
+    const first = await h.urgent();
+    await h.service.applyProviderStatus(first.providerSid!, "failed", "21610");
+    await h.service.processDue();
+    assert.equal(h.emails.length, 0);
+    assert.ok(
+      !(await h.store.listDeliveries(h.organizationId)).some((r) =>
+        r.id.endsWith(":backup_email"),
+      ),
+    );
+    assert.equal(
+      (await h.service.listAlerts()).filter((r) => r.correlationId === first.id)
+        .length,
+      1,
+    );
+  });
+  for (const revoke of [
+    "preference",
+    "rule",
+    "recipient",
+    "cleared recipient",
+  ]) {
+    it(`cancels queued fallback after ${revoke} permission changes`, async () => {
+      const first = await h.urgent();
+      await h.service.applyProviderStatus(
+        first.providerSid!,
+        "failed",
+        "21610",
+      );
+      if (revoke === "preference") {
+        const prefs = await h.service.getPreferences(
+          h.organizationId,
+          "backup",
+          "fr",
+        );
+        prefs.categories.urgent.email = false;
+        await h.service.savePreferences(prefs);
+      } else {
+        await h.service.saveEscalation({
+          ...(await h.service.getEscalation(h.organizationId)),
+          ...(revoke === "rule"
+            ? { enabled: false }
+            : {
+                secondaryUserId: revoke === "recipient" ? "owner" : undefined,
+              }),
+        });
+      }
+      await h.service.processDue();
+      assert.equal(h.emails.length, 0);
+      assert.equal(
+        (await h.store.listDeliveries(h.organizationId)).find((r) =>
+          r.id.endsWith(":backup_email"),
+        )?.status,
+        "canceled",
+      );
+    });
+  }
   it("persists overflow, prioritizes critical alerts, and shares a 40-attempt quota across concurrent workers", async () => {
     for (let i = 0; i < 46; i++)
       await h.service.enqueue({
