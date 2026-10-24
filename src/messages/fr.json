@@ -3026,7 +3026,10 @@
       "entitlement": "La prise en charge humaine n'est pas dans votre forfait.",
       "claim": "Prendre",
       "takeover": "Reprendre",
-      "resolve": "Résoudre"
+      "resolve": "Résoudre",
+      "claimError": "Impossible de prendre ce dossier. Veuillez réessayer.",
+      "resolveError": "Impossible de résoudre ce dossier. Veuillez réessayer.",
+      "takeoverError": "Impossible de reprendre ce dossier. Veuillez réessayer."
     },
     "upsell": {
       "title": "Besoin des modules pilotes Growth admissibles?",

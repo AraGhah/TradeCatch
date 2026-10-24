@@ -3026,7 +3026,10 @@
       "entitlement": "Human takeover is not on your plan.",
       "claim": "Claim",
       "takeover": "Take over",
-      "resolve": "Resolve"
+      "resolve": "Resolve",
+      "claimError": "Could not claim this item. Please try again.",
+      "resolveError": "Could not resolve this item. Please try again.",
+      "takeoverError": "Could not take over this item. Please try again."
     },
     "upsell": {
       "title": "Need the entitled Growth pilot modules?",
