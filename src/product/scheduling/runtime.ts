@@ -3,6 +3,7 @@ import {
   isProductionRuntime,
 } from "@/lib/config";
 import { getCrmService } from "@/product/crm/runtime";
+import { hasGoogleCalendarPilot } from "./availability";
 import { emitBusinessEvent } from "@/product/notifications/hooks";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 import {
@@ -13,7 +14,11 @@ import {
   sealTokens,
 } from "./google";
 import { createPostgresSchedulingStore } from "./postgres-store";
-import { createSchedulingService, createSimulatedCalendar, type CalendarPort } from "./service";
+import {
+  createSchedulingService,
+  createSimulatedCalendar,
+  type CalendarPort,
+} from "./service";
 import { createMemorySchedulingStore, type SchedulingStore } from "./store";
 
 const globalForScheduling = globalThis as unknown as {
@@ -23,7 +28,8 @@ const globalForScheduling = globalThis as unknown as {
 function createStore(): { store: SchedulingStore; durable: boolean } {
   const url = process.env.DATABASE_URL?.trim();
   const wantDurable =
-    isDurableMissedCallStoreConfigured() || process.env.SAAS_DURABLE_STORE === "1";
+    isDurableMissedCallStoreConfigured() ||
+    process.env.SAAS_DURABLE_STORE === "1";
   if (wantDurable && url) {
     return { store: createPostgresSchedulingStore(url), durable: true };
   }
@@ -31,7 +37,9 @@ function createStore(): { store: SchedulingStore; durable: boolean } {
     throw new Error("[scheduling] Durable store requires DATABASE_URL");
   }
   if (isProductionRuntime() && process.env.SAAS_REQUIRE_DURABLE === "1") {
-    throw new Error("[scheduling] Refusing memory store when SAAS_REQUIRE_DURABLE=1");
+    throw new Error(
+      "[scheduling] Refusing memory store when SAAS_REQUIRE_DURABLE=1",
+    );
   }
   return { store: createMemorySchedulingStore(), durable: false };
 }
@@ -68,16 +76,29 @@ const disconnected: CalendarPort = {
 async function calendarFor(organizationId: string): Promise<CalendarPort> {
   const store = getSchedulingStore();
   const rules = await store.getRules(organizationId);
-  if (!rules || rules.calendarMode !== "google") return createSimulatedCalendar();
+  if (!rules || rules.calendarMode !== "google")
+    return createSimulatedCalendar();
+  if (!(await hasGoogleCalendarPilot(organizationId))) return disconnected;
   const connection = await store.getConnection(organizationId);
-  if (!connection?.tokenCiphertext || !connection.calendarId || !googleCalendarConfigured()) {
+  if (
+    !connection?.tokenCiphertext ||
+    !connection.calendarId ||
+    !googleCalendarConfigured()
+  ) {
     return disconnected;
   }
-  if (connection.status === "expired" || connection.status === "disconnected" || connection.status === "error") {
+  if (
+    connection.status === "expired" ||
+    connection.status === "disconnected" ||
+    connection.status === "error"
+  ) {
     return disconnected;
   }
   let tokens = openTokens(connection.tokenCiphertext);
-  if (Date.parse(tokens.expiresAt) < Date.now() + 30_000 && tokens.refreshToken) {
+  if (
+    Date.parse(tokens.expiresAt) < Date.now() + 30_000 &&
+    tokens.refreshToken
+  ) {
     try {
       tokens = await refreshGoogleTokens(tokens);
       connection.tokenCiphertext = sealTokens(tokens);
@@ -111,7 +132,11 @@ export function getSchedulingService() {
       await getAutomationServices().scheduleAppointmentNotices(input);
     },
     async cancelNotices(organizationId, appointmentId, reason) {
-      await getAutomationServices().cancelAppointmentNotices(organizationId, appointmentId, reason);
+      await getAutomationServices().cancelAppointmentNotices(
+        organizationId,
+        appointmentId,
+        reason,
+      );
     },
     async notify(input) {
       const reason = input.reason.toLowerCase();
@@ -171,7 +196,9 @@ export async function reconcileGoogleBusy(organizationId: string) {
     return { synced: false as const };
   }
   const from = new Date();
-  const until = new Date(from.getTime() + rules.maxAdvanceDays * 24 * 60 * 60 * 1000);
+  const until = new Date(
+    from.getTime() + rules.maxAdvanceDays * 24 * 60 * 60 * 1000,
+  );
   const blocks = await port.freeBusy(from.toISOString(), until.toISOString());
   await service.syncBusy(organizationId, blocks);
   return { synced: true as const, blocks: blocks.length };

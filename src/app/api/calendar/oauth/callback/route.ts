@@ -8,6 +8,7 @@ import {
 import { getSchedulingStore } from "@/product/scheduling/runtime";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { allows } from "@/product/security/permissions";
+import { hasGoogleCalendarPilot } from "@/product/scheduling/availability";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${back}?calendar=forbidden`);
   }
   try {
+    if (!(await hasGoogleCalendarPilot(parsed.organizationId)))
+      return NextResponse.redirect(`${back}?calendar=pilot_required`);
     const tokens = await exchangeGoogleCode(code);
     const calendars = await listGoogleCalendars(tokens);
     await getSchedulingStore().saveConnection({

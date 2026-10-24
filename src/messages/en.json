@@ -711,7 +711,7 @@
   "services": {
     "eyebrow": "Services",
     "headline": "One system. The jobs it does while you work.",
-    "intro": "TradeCatch starts with a controlled missed-call pilot. Quote follow-up is a linked Starter pilot; booking, pipeline, attribution, reviews, and advanced analytics require an entitled Growth organization. Native Google/Outlook and two-way CRM sync remain planned.",
+    "intro": "TradeCatch starts with a controlled missed-call pilot. Quote follow-up is a linked Starter pilot; booking, pipeline, attribution, reviews, and advanced analytics require an entitled Growth organization. Google Calendar is a separately enrolled Growth technical pilot, not general release. Outlook and native two-way CRM sync remain planned.",
     "groups": [
       {
         "title": "Lead capture · Controlled pilot",
@@ -820,7 +820,7 @@
     "eyebrow": "How it works",
     "headline": "From missed call to tracked outcome.",
     "intro": "Six stages combine the controlled missed-call pilot with linked Starter quote follow-up. Booking, pipeline, and revenue attribution are shown only as entitled Growth pilot outcomes.",
-    "metaDescription": "See the controlled missed-call pilot and linked Starter quote follow-up. Booking scenes represent an entitled Growth pilot only; native Google/Outlook sync is not included.",
+    "metaDescription": "See the controlled missed-call pilot and linked Starter quote follow-up. Booking scenes represent an entitled Growth pilot only; Google Calendar needs separate technical-pilot enrollment; Outlook is planned.",
     "stages": [
       {
         "title": "Customer makes contact",
@@ -1143,7 +1143,7 @@
     "details": [
       {
         "title": "How pilot access and entitlements work",
-        "body": "All listed capabilities are founder-configured pilot modules, not self-serve SaaS. Missed-call recovery is the controlled core; website capture and quote follow-up are linked Starter pilots; booking, reminders, pipeline, attribution, reviews, and advanced analytics require an entitled, linked Growth organization. Native Google/Outlook and two-way CRM sync remain planned."
+        "body": "All listed capabilities are founder-configured pilot modules, not self-serve SaaS. Missed-call recovery is the controlled core; website capture and quote follow-up are linked Starter pilots; booking, reminders, pipeline, attribution, reviews, and advanced analytics require an entitled, linked Growth organization. Google Calendar is a separately enrolled Growth technical pilot, not general release. Outlook and native two-way CRM sync remain planned."
       },
       {
         "title": "What the Receptionist setup covers",
@@ -1353,7 +1353,7 @@
           ]
         },
         {
-          "feature": "Native Google / Outlook calendar sync",
+          "feature": "Native Outlook calendar sync",
           "values": [
             "p",
             "p",
@@ -1862,7 +1862,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch designs, installs, and manages automated communication workflows for contractor businesses. Capabilities are offered only in a founder-led controlled pilot and when explicitly included in a written proposal. Missed-call recovery is the core pilot path; website capture and quote follow-up are linked Starter pilot modules; booking, reminders, pipeline, attribution, reviews, and the activity timeline require an entitled, linked Growth organization. Call answering, qualification and booking by phone, human call transfer, emergency call routing, and call summaries are part of the Receptionist plan and are configured per business during onboarding; Calling usage is subject to the allowance and limits set out in the written proposal. Native Google/Outlook calendar sync and native two-way CRM sync are not included and remain planned. Nothing in these terms represents a self-serve SaaS launch or a production-readiness guarantee."
+          "body": "TradeCatch designs, installs, and manages automated communication workflows for contractor businesses. Capabilities are offered only in a founder-led controlled pilot and when explicitly included in a written proposal. Missed-call recovery is the core pilot path; website capture and quote follow-up are linked Starter pilot modules; booking, reminders, pipeline, attribution, reviews, and the activity timeline require an entitled, linked Growth organization. Call answering, qualification and booking by phone, human call transfer, emergency call routing, and call summaries are part of the Receptionist plan and are configured per business during onboarding; Calling usage is subject to the allowance and limits set out in the written proposal. Google Calendar requires separate Growth technical-pilot enrollment and is not included by default. Outlook and native two-way CRM sync remain planned. Nothing in these terms represents a self-serve SaaS launch or a production-readiness guarantee."
         },
         {
           "heading": "Client responsibilities",
@@ -1952,7 +1952,7 @@
         },
         {
           "heading": "Known limitations",
-          "body": "This site is under active development. Some third-party embeds, such as the Cloudflare Turnstile widget or any separately added external calendar-provider embed, are provided by external vendors and may not fully match our own accessibility standard. No native Google/Outlook calendar sync is included in the current pilot. Automated and manual testing cannot catch every barrier — we review and address issues as they're identified rather than treating any point-in-time audit as a guarantee of full conformance."
+          "body": "This site is under active development. Some third-party embeds, such as the Cloudflare Turnstile widget or any separately added external calendar-provider embed, are provided by external vendors and may not fully match our own accessibility standard. Google Calendar is restricted to separately enrolled technical pilots; Outlook is not released. Automated and manual testing cannot catch every barrier — we review and address issues as they're identified rather than treating any point-in-time audit as a guarantee of full conformance."
         },
         {
           "heading": "Standards and legal compliance",
@@ -2036,7 +2036,7 @@
       "Give emergency instructions you did not approve",
       "Guarantee revenue or that every caller will respond",
       "Replace licensed technicians",
-      "Provide native Google/Outlook calendar sync",
+      "Provide generally available Google Calendar or Outlook sync",
       "Provide native two-way CRM sync",
       "Operate as self-serve SaaS"
     ],
@@ -2783,7 +2783,7 @@
     },
     "bookings": {
       "headline": "Appointments",
-      "intro": "Entitled Growth pilot: book jobs in the workspace and send confirmation SMS when customer and Twilio numbers are linked. This is not native Google/Outlook sync.",
+      "intro": "Entitled Growth pilot: book jobs in the workspace and send confirmation SMS when customer and Twilio numbers are linked. In-app booking does not enable Google Calendar without separate technical-pilot enrollment. Outlook is planned.",
       "empty": "No appointments yet. Book one below.",
       "entitlement": "Appointment booking is not on your plan.",
       "add": "Book an appointment",
@@ -2851,7 +2851,11 @@
       "manual": "Manual approval",
       "escalate": "Escalate to contractor",
       "active": "Active",
-      "calendarIntro": "Connect a Google Calendar used for this business. Tokens stay on the server.",
+      "calendarIntro": "Google Calendar is a separately enrolled Growth technical pilot, not general release. Outlook is planned. Tokens stay on the server.",
+      "calendarPilotTitle": "Google Calendar — technical pilot only",
+      "calendarPilotNotice": "Live Google Calendar is restricted to founder-approved, explicitly enrolled Growth pilot businesses. It is not included automatically with a plan. Outlook is not available yet.",
+      "calendarSimulationNotice": "In-app scheduling and simulations are separate from Google Calendar. A simulation does not read or write a live Google calendar. Contact support to discuss pilot eligibility.",
+      "calendarLoading": "Checking calendar availability…",
       "status": "Status",
       "simulated": "Simulated",
       "connected": "Connected",
@@ -3038,7 +3042,7 @@
     },
     "upsell": {
       "title": "Need the entitled Growth pilot modules?",
-      "body": "For linked organizations, Growth pilot access adds in-app booking, pipeline, attribution, and review requests. The founder enables each entitlement; native Google/Outlook sync is not included.",
+      "body": "For linked organizations, Growth pilot access adds in-app booking, pipeline, attribution, and review requests. The founder enables each entitlement; Google Calendar needs separate technical-pilot enrollment; Outlook is planned.",
       "cta": "See Growth on pricing"
     },
     "monitoring": {

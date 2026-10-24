@@ -58,8 +58,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       fr: "Comment connecter Google Agenda",
     },
     body: {
-      en: "Open Settings, then Calendar. Connect the business calendar, not a personal one. If the connection drops, TradeCatch must not confirm an appointment.",
-      fr: "Ouvrez Paramètres, puis Calendrier. Connectez le calendrier de l’entreprise. Si la connexion tombe, TradeCatch ne confirme pas de rendez-vous.",
+      en: "Google Calendar is a separately enrolled Growth technical pilot, not general release or an automatic plan inclusion. Outlook is planned. Open Calendar settings to check your business’s availability.",
+      fr: "Google Calendar est un pilote technique Growth sur inscription distincte, pas une fonction généralement disponible ni incluse automatiquement. Outlook reste prévu. Ouvrez Calendrier pour vérifier l’accès de votre entreprise.",
     },
   },
   {

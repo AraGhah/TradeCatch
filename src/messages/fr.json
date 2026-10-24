@@ -711,7 +711,7 @@
   "services": {
     "eyebrow": "Services",
     "headline": "Un système. Les jobs qu'il fait pendant que vous travaillez.",
-    "intro": "TradeCatch commence par un pilote contrôlé d’appels manqués. La relance est un module pilote Starter lié; la réservation, le pipeline, l’attribution, les avis et l’analytique avancée exigent une organisation Growth admissible. Les synchronisations natives Google/Outlook et CRM bidirectionnelle restent prévues.",
+    "intro": "TradeCatch commence par un pilote contrôlé d’appels manqués. La relance est un module pilote Starter lié; la réservation, le pipeline, l’attribution, les avis et l’analytique avancée exigent une organisation Growth admissible. Google Calendar est un pilote technique Growth sur inscription distincte, pas une fonction généralement disponible. Outlook et le CRM bidirectionnel natif restent prévus.",
     "groups": [
       {
         "title": "Capture de prospects · Pilote contrôlé",
@@ -820,7 +820,7 @@
     "eyebrow": "Fonctionnement",
     "headline": "De l’appel manqué au résultat suivi.",
     "intro": "Six étapes combinent le pilote contrôlé d’appels manqués et la relance Starter liée. La réservation, le pipeline et l’attribution de revenus représentent seulement les résultats d’un pilote Growth admissible.",
-    "metaDescription": "Découvrez le pilote contrôlé d’appels manqués et la relance Starter liée. Les scènes de réservation représentent seulement un pilote Growth admissible; aucune synchronisation native Google/Outlook n’est incluse.",
+    "metaDescription": "Découvrez le pilote contrôlé d’appels manqués et la relance Starter liée. Les scènes de réservation représentent seulement un pilote Growth admissible; Google Calendar exige une inscription distincte au pilote technique; Outlook reste prévu.",
     "stages": [
       {
         "title": "Le client contacte l'entreprise",
@@ -1143,7 +1143,7 @@
     "details": [
       {
         "title": "Fonctionnement des accès pilotes et des droits",
-        "body": "Toutes les capacités présentées sont des modules pilotes configurés avec le fondateur, et non un SaaS libre-service. La récupération d’appels manqués est le cœur contrôlé; la capture web et la relance sont des pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’analytique avancée exigent une organisation Growth admissible et liée. Les synchronisations natives Google/Outlook et CRM bidirectionnelle restent prévues."
+        "body": "Toutes les capacités présentées sont des modules pilotes configurés avec le fondateur, et non un SaaS libre-service. La récupération d’appels manqués est le cœur contrôlé; la capture web et la relance sont des pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’analytique avancée exigent une organisation Growth admissible et liée. Google Calendar est un pilote technique Growth sur inscription distincte, pas une fonction généralement disponible. Outlook et le CRM bidirectionnel natif restent prévus."
       },
       {
         "title": "Ce que couvre l’installation du Réceptionniste",
@@ -1353,7 +1353,7 @@
           ]
         },
         {
-          "feature": "Synchronisation native Google / Outlook",
+          "feature": "Synchronisation native Outlook",
           "values": [
             "p",
             "p",
@@ -1862,7 +1862,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Les capacités sont offertes seulement dans un pilote contrôlé encadré par le fondateur et lorsqu’elles figurent explicitement dans une proposition écrite. La récupération d’appels manqués est le parcours pilote principal; la capture web et la relance de soumissions sont des modules pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’historique d’activité exigent une organisation Growth admissible et liée. La réponse téléphonique automatisée, la qualification et la prise de rendez-vous par téléphone, le transfert d’appel à un humain, l’acheminement des appels d’urgence et les résumés d’appel font partie du forfait Réceptionniste et sont configurés par entreprise au démarrage; l’utilisation des appels est soumise à l’allocation et aux limites prévues dans la proposition écrite. Les synchronisations natives Google/Outlook et CRM bidirectionnelle ne sont pas incluses et restent prévues. Les présentes conditions ne décrivent ni un lancement SaaS libre-service ni une garantie que le produit est prêt pour la production."
+          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Les capacités sont offertes seulement dans un pilote contrôlé encadré par le fondateur et lorsqu’elles figurent explicitement dans une proposition écrite. La récupération d’appels manqués est le parcours pilote principal; la capture web et la relance de soumissions sont des modules pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’historique d’activité exigent une organisation Growth admissible et liée. La réponse téléphonique automatisée, la qualification et la prise de rendez-vous par téléphone, le transfert d’appel à un humain, l’acheminement des appels d’urgence et les résumés d’appel font partie du forfait Réceptionniste et sont configurés par entreprise au démarrage; l’utilisation des appels est soumise à l’allocation et aux limites prévues dans la proposition écrite. Google Calendar exige une inscription distincte au pilote technique Growth et n’est pas inclus par défaut. Outlook et le CRM bidirectionnel natif restent prévus. Les présentes conditions ne décrivent ni un lancement SaaS libre-service ni une garantie que le produit est prêt pour la production."
         },
         {
           "heading": "Responsabilités du client",
@@ -1952,7 +1952,7 @@
         },
         {
           "heading": "Limites connues",
-          "body": "Ce site est en développement actif. Certains éléments intégrés de tiers, comme le module Cloudflare Turnstile ou tout module externe de fournisseur de calendrier ajouté séparément, peuvent ne pas correspondre entièrement à notre propre norme d’accessibilité. Aucune synchronisation native Google/Outlook n’est incluse dans le pilote actuel. Les tests automatisés et manuels ne peuvent pas détecter tous les obstacles — nous examinons et corrigeons les problèmes au fur et à mesure qu’ils sont signalés, sans considérer un audit ponctuel comme une garantie de conformité totale."
+          "body": "Ce site est en développement actif. Certains éléments intégrés de tiers, comme le module Cloudflare Turnstile ou tout module externe de fournisseur de calendrier ajouté séparément, peuvent ne pas correspondre entièrement à notre propre norme d’accessibilité. Google Calendar est réservé aux pilotes techniques inscrits séparément; Outlook n’est pas publié. Les tests automatisés et manuels ne peuvent pas détecter tous les obstacles — nous examinons et corrigeons les problèmes au fur et à mesure qu’ils sont signalés, sans considérer un audit ponctuel comme une garantie de conformité totale."
         },
         {
           "heading": "Normes et conformité légale",
@@ -2036,7 +2036,7 @@
       "Donner des consignes d'urgence non approuvées",
       "Garantir des revenus ou que chaque appelant répondra",
       "Remplacer les techniciens qualifiés",
-      "Fournir une synchronisation native Google/Outlook",
+      "Fournir Google Calendar ou Outlook en disponibilité générale",
       "Fournir une synchronisation CRM bidirectionnelle native",
       "Fonctionner comme un SaaS libre-service"
     ],
@@ -2783,7 +2783,7 @@
     },
     "bookings": {
       "headline": "Rendez-vous",
-      "intro": "Pilote Growth admissible : réservez les interventions dans l’espace et envoyez un SMS de confirmation lorsque les numéros du client et de Twilio sont liés. Il ne s’agit pas d’une synchronisation native Google/Outlook.",
+      "intro": "Pilote Growth admissible : réservez les interventions dans l’espace et envoyez un SMS de confirmation lorsque les numéros du client et de Twilio sont liés. La réservation interne n’active pas Google Calendar sans inscription distincte au pilote technique. Outlook reste prévu.",
       "empty": "Aucun rendez-vous pour l'instant. Réservez-en un ci-dessous.",
       "entitlement": "La prise de rendez-vous n'est pas dans votre forfait.",
       "add": "Réserver un rendez-vous",
@@ -2851,7 +2851,11 @@
       "manual": "Approbation manuelle",
       "escalate": "Transmettre à l’entrepreneur",
       "active": "Actif",
-      "calendarIntro": "Connectez un calendrier Google réservé à cette entreprise. Les jetons restent sur le serveur.",
+      "calendarIntro": "Google Calendar est un pilote technique Growth sur inscription distincte, pas une fonction généralement disponible. Outlook reste prévu. Les jetons restent sur le serveur.",
+      "calendarPilotTitle": "Google Calendar — pilote technique seulement",
+      "calendarPilotNotice": "Google Calendar réel est réservé aux entreprises Growth pilotes approuvées par le fondateur et explicitement inscrites. Aucun forfait ne l’inclut automatiquement. Outlook n’est pas encore offert.",
+      "calendarSimulationNotice": "La planification interne et les simulations sont distinctes de Google Calendar. Une simulation ne lit ni ne modifie un calendrier Google réel. Contactez le soutien pour discuter de l’admissibilité au pilote.",
+      "calendarLoading": "Vérification de la disponibilité du calendrier…",
       "status": "État",
       "simulated": "Simulé",
       "connected": "Connecté",
@@ -3038,7 +3042,7 @@
     },
     "upsell": {
       "title": "Besoin des modules pilotes Growth admissibles?",
-      "body": "Pour les organisations liées, le pilote Growth ajoute la réservation dans l’espace, le pipeline, l’attribution et les demandes d’avis. Le fondateur active chaque droit; aucune synchronisation native Google/Outlook n’est incluse.",
+      "body": "Pour les organisations liées, le pilote Growth ajoute la réservation dans l’espace, le pipeline, l’attribution et les demandes d’avis. Le fondateur active chaque droit; Google Calendar exige une inscription distincte au pilote technique; Outlook reste prévu.",
       "cta": "Voir Growth sur la page tarifs"
     },
     "monitoring": {

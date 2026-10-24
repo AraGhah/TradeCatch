@@ -89,20 +89,17 @@ for (const locale of ["en", "fr"] as const) {
       troubleshooting: "/app/support/diagnostics",
     };
     for (const [id, path] of Object.entries(pages)) {
+      if (
+        process.env.HELP_SCREENSHOT_IDS &&
+        !process.env.HELP_SCREENSHOT_IDS.split(",").includes(id)
+      )
+        continue;
       await page.goto(`${prefix}${path}`);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
       // Wait for client-rendered settings and fonts, never access production data.
       await page.evaluate(() => document.fonts.ready);
       if (id === "calendar")
-        await expect(
-          page.getByRole("button", {
-            name:
-              locale === "fr"
-                ? "Connecter Google Calendar"
-                : "Connect Google Calendar",
-            exact: true,
-          }),
-        ).toBeVisible();
+        await expect(page.getByTestId("calendar-availability")).toBeVisible();
       if (id === "account") {
         page.once("dialog", (dialog) => dialog.accept());
         await page
@@ -136,15 +133,7 @@ for (const locale of ["en", "fr"] as const) {
             : id === "transfers"
               ? page.locator("fieldset").nth(2)
               : id === "calendar"
-                ? page
-                    .getByRole("button", {
-                      name:
-                        locale === "fr"
-                          ? "Connecter Google Calendar"
-                          : "Connect Google Calendar",
-                      exact: true,
-                    })
-                    .locator("../..")
+                ? page.getByTestId("calendar-availability")
                 : id === "leads"
                   ? page.locator("form").last()
                   : id === "automations"
