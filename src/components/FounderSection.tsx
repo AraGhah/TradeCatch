@@ -1,4 +1,5 @@
 import { CTAButton } from "@/components/CTAButton";
+import { EmailContactLink } from "@/components/EmailContactLink";
 
 export function FounderSection({
   eyebrow,
@@ -101,12 +102,12 @@ export function FounderSection({
           <CTAButton href="/book-audit" variant="ink" size="md">
             {talkCta}
           </CTAButton>
-          <a
-            href={`mailto:${email}`}
+          <EmailContactLink
+            email={email}
             className="text-[15px] font-semibold text-ember-text underline decoration-ember-text/40 underline-offset-4 transition-colors hover:text-heading"
           >
             {emailLabel}
-          </a>
+          </EmailContactLink>
         </div>
       </div>
     </div>

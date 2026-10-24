@@ -4,6 +4,7 @@ import { Container } from "@/components/Container";
 import { InternalHero } from "@/components/InternalHero";
 import { CTAButton } from "@/components/CTAButton";
 import { buildMetadata } from "@/lib/seo";
+import { EmailContactLink } from "@/components/EmailContactLink";
 
 export async function generateMetadata({
   params,
@@ -122,12 +123,12 @@ export default async function AboutPage({
                 <CTAButton href="/book-audit" variant="ink" size="md">
                   {t("cta")}
                 </CTAButton>
-                <a
-                  href={`mailto:${email}`}
+                <EmailContactLink
+                  email={email}
                   className="inline-flex items-center border-[1.5px] border-[rgb(var(--ink-rgb)/0.14)] px-[22px] py-3.5 text-[15px] font-semibold text-heading transition-colors hover:border-navy"
                 >
                   {t("emailCta")}
-                </a>
+                </EmailContactLink>
               </div>
             </div>
           </div>
