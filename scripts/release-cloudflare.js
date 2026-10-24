@@ -2,6 +2,7 @@
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const { check } = require("./require-green-ci");
+const { checkWorkerDatabase } = require("./check-worker-database");
 
 const args = process.argv.slice(2);
 const mode = args.shift();
@@ -19,6 +20,7 @@ const cli = path.resolve(
 const run = (file, values) =>
   execFileSync(process.execPath, [file, ...values], { stdio: "inherit" });
 const approved = check({ staging });
+checkWorkerDatabase({ staging });
 run(path.resolve("scripts/clear-open-next.js"), []);
 run(cli, ["build"]);
 const final = check({ staging });
@@ -26,6 +28,7 @@ if (approved.head_sha !== final.head_sha)
   throw new Error(
     "Revision changed during the build; rebuild the tested revision.",
   );
+checkWorkerDatabase({ staging });
 // The immutable Cloudflare version annotation binds the uploaded code to its reviewed GitHub revision.
 run(cli, [
   mode,
