@@ -53,6 +53,8 @@ export type NotificationPreferences = {
   quietEnd: string;
   quietEnabled: boolean;
   language: "en" | "fr";
+  /** Personal schedule zone; absent preferences inherit the business zone. */
+  timezone?: string;
   dailySummary: boolean;
   scope: "all" | "assigned";
   updatedAt: string;

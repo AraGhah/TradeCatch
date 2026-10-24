@@ -16,7 +16,7 @@ import {
   withDefaultCategories,
 } from "./templates";
 import type { NotificationStore } from "./store";
-import { quietHours } from "./preferences";
+import { notificationTimezone, quietHours } from "./preferences";
 import {
   TYPE_CATEGORY,
   TYPE_PRIORITY,
@@ -226,7 +226,7 @@ export function createNotificationService(deps: NotificationDeps) {
     const config = windowConfig(prefs);
     return isInsideSendingWindow(
       deps.now(),
-      usableTimeZone(org.timezone),
+      usableTimeZone(prefs.timezone || org.timezone),
       config,
     );
   }
@@ -338,6 +338,19 @@ export function createNotificationService(deps: NotificationDeps) {
     }
     const prefs = await prefsFor(org, member);
     if (
+      notification.type === "daily_summary" &&
+      (!prefs.dailySummary ||
+        !prefs.categories.daily_summary[
+          delivery.channel === "in_app" ? "inApp" : delivery.channel
+        ])
+    ) {
+      delivery.status = "canceled";
+      delivery.lastError = "summary_preferences_changed";
+      delivery.updatedAt = deps.now().toISOString();
+      await deps.store.saveDelivery(delivery);
+      return;
+    }
+    if (
       notification.type === "gmail_reply" &&
       delivery.channel !== "in_app" &&
       !prefs.categories.replies[delivery.channel]
@@ -369,7 +382,7 @@ export function createNotificationService(deps: NotificationDeps) {
       delivery.status = "pending";
       delivery.nextAttemptAt = nextWindowStart(
         deps.now(),
-        usableTimeZone(org.timezone),
+        usableTimeZone(prefs.timezone || org.timezone),
         windowConfig(prefs),
       ).toISOString();
       delivery.updatedAt = deps.now().toISOString();
@@ -525,6 +538,8 @@ export function createNotificationService(deps: NotificationDeps) {
         continue;
       }
       const category = TYPE_CATEGORY[notification.type];
+      if (notification.type === "daily_summary" && !prefs.dailySummary)
+        continue;
       const channels = prefs.categories[category];
       const recipient: NotificationRecipient = {
         id: createId("nrcp"),
@@ -571,7 +586,7 @@ export function createNotificationService(deps: NotificationDeps) {
           ? deps.now().toISOString()
           : nextWindowStart(
               deps.now(),
-              usableTimeZone(org.timezone),
+              usableTimeZone(prefs.timezone || org.timezone),
               windowConfig(prefs),
             ).toISOString();
         const delivery: NotificationDelivery = {
@@ -625,7 +640,7 @@ export function createNotificationService(deps: NotificationDeps) {
 
     /**
      * Queues one summary per opted-in member for the local day that is ending.
-     * A business becomes due at DAILY_SUMMARY_HOUR in its own time zone; the
+     * A member becomes due at DAILY_SUMMARY_HOUR in their preferred time zone; the
      * outbox's unique key per member and local date makes any number of
      * overlapping or repeated runs produce exactly one summary.
      */
@@ -638,14 +653,14 @@ export function createNotificationService(deps: NotificationDeps) {
       )) {
         const org = await deps.loadOrg(organizationId);
         if (!org || org.status !== "active") continue;
-        const zone = usableTimeZone(org.timezone);
-        if (!isSummaryDue(asOf, zone)) continue;
-        const day = localDateKey(asOf, zone);
-        const sinceIso = startOfLocalDay(asOf, zone).toISOString();
         const untilIso = asOf.toISOString();
         for (const member of await deps.listMembers(org.id)) {
           const prefs = await prefsFor(org, member);
           if (!prefs.dailySummary) continue;
+          const zone = usableTimeZone(prefs.timezone || org.timezone);
+          if (!isSummaryDue(asOf, zone)) continue;
+          const day = localDateKey(asOf, zone);
+          const sinceIso = startOfLocalDay(asOf, zone).toISOString();
           const message = renderDailySummary(
             prefs.language,
             org.name,
@@ -1026,6 +1041,9 @@ export function createNotificationService(deps: NotificationDeps) {
     async savePreferences(row: NotificationPreferences) {
       if (!quietHours.safeParse(row).success)
         throw new NotificationError("Invalid quiet hours.");
+      const zone = notificationTimezone.safeParse(row.timezone);
+      if (!zone.success) throw new NotificationError("Invalid timezone.");
+      row.timezone = zone.data;
       row.updatedAt = deps.now().toISOString();
       await deps.store.savePreferences(row);
       return row;

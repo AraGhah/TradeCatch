@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { DEFAULT_CHANNELS } from "@/product/notifications/templates";
 import type { PreferenceCategory } from "@/product/notifications/types";
-import { quietHours } from "@/product/notifications/preferences";
+import {
+  notificationTimezone,
+  quietHours,
+} from "@/product/notifications/preferences";
 
 const KEYS = Object.keys(DEFAULT_CHANNELS) as PreferenceCategory[];
 
@@ -17,6 +20,7 @@ type Prefs = {
   quietEnd: string;
   quietEnabled: boolean;
   language: "en" | "fr";
+  timezone?: string;
   dailySummary: boolean;
   scope: "all" | "assigned";
 };
@@ -47,6 +51,10 @@ export function NotificationPreferencesForm({
         event.preventDefault();
         if (!quietHours.safeParse(prefs).success) {
           setMessage(t("invalidQuietHours"));
+          return;
+        }
+        if (!notificationTimezone.safeParse(prefs.timezone).success) {
+          setMessage(t("invalidTimezone"));
           return;
         }
         void fetch(
@@ -131,6 +139,37 @@ export function NotificationPreferencesForm({
             }
             className="rounded-md border border-navy/15 px-2 py-1"
           />
+        </span>
+      </label>
+      <label className="text-sm">
+        {t("personalTimezone")}
+        <input
+          type="text"
+          list="notification-timezones"
+          value={prefs.timezone || ""}
+          placeholder={t("businessTimezone")}
+          onChange={(event) =>
+            setPrefs({ ...prefs, timezone: event.target.value })
+          }
+          className="mt-1 block rounded-md border border-navy/15 px-2 py-1"
+        />
+        <datalist id="notification-timezones">
+          {[
+            "America/St_Johns",
+            "America/Halifax",
+            "America/Toronto",
+            "America/Winnipeg",
+            "America/Regina",
+            "America/Edmonton",
+            "America/Vancouver",
+            "UTC",
+            "Europe/Paris",
+          ].map((zone) => (
+            <option key={zone} value={zone} />
+          ))}
+        </datalist>
+        <span className="mt-1 block text-xs text-navy/70">
+          {t("timezoneHint")}
         </span>
       </label>
       <label className="text-sm">

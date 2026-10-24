@@ -1,6 +1,6 @@
 import { zonedParts } from "@/product/sms-automation/window";
 
-/** Local hour (in the business's time zone) from which that day's summary is due. */
+/** Local hour (in the recipient's chosen time zone) from which the summary is due. */
 export const DAILY_SUMMARY_HOUR = 18;
 
 /** Fallback when a stored time zone is not a valid IANA name. */

@@ -1,5 +1,21 @@
 import { z } from "zod";
 
+export const notificationTimezone = z
+  .string()
+  .trim()
+  .max(100)
+  .refine((value) => {
+    if (!value) return true;
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: value });
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Choose a valid timezone.")
+  .transform((value) => value || undefined)
+  .optional();
+
 export const quietTime = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/);
 export const quietHours = z
   .object({
