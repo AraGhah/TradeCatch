@@ -7,19 +7,26 @@ activation. Unset/`off` `INSTALLATION_ENFORCEMENT` performs zero approval DB or
 network lookups at Worker ingress or cron. No live domains, customers, providers,
 staging settings or preview permissions were changed or automatically granted.
 
-| Owner-confirmed inventory                           | Required action before enforcement                 |
-| --------------------------------------------------- | -------------------------------------------------- |
-| `https://tradecatch.ca`                             | Register and approve after ownership review        |
-| `https://tradecatch.ara-ghahramanyan07.workers.dev` | Register as exact alias of the same installation   |
-| `http://localhost:3000`                             | Separate local installation, exact port            |
-| `*-tradecatch.ara-ghahramanyan07.workers.dev`       | Discovery pattern only; **never an approval**      |
-| Staging `tradecatch-staging`                        | Active origin/install unconfirmed; rollout blocker |
+| Owner-confirmed inventory                           | Required action before enforcement                                |
+| --------------------------------------------------- | ----------------------------------------------------------------- |
+| `https://tradecatch.ca`                             | Approve this exact production origin after migration              |
+| `https://tradecatch.ara-ghahramanyan07.workers.dev` | Approve this exact alias of the same production installation      |
+| `http://localhost:3000`                             | Keep local enforcement off; **no production grant or credential** |
+| `*-tradecatch.ara-ghahramanyan07.workers.dev`       | Discovery pattern only; **never an approval**                     |
+| Staging `tradecatch-staging`                        | Owner confirms not deployed; **no staging grant**                 |
 
-Enumerate every existing authorized preview's exact origin in Cloudflare, capture
-a dated snapshot and identify its installation and owner. Do not grant future
+The owner has identified no preview origins requiring authorization. This is not
+proof that provider-side callbacks never reference a preview. See the
+[production integration audit](INSTALLATION_PRODUCTION_INVENTORY.md) for verified
+configuration, remaining checks, and the current activation decision.
+
+Check active provider-side callbacks before concluding that no preview needs
+preserving. If a dependency is found, identify its exact origin and owner, then
+obtain a specific decision before activation. Do not grant future
 previews based on the wildcard or use a broad workers.dev exemption. Leave the
-feature off until existing production, development, staging and preview inventory
-has been identified, reviewed and migrated safely.
+feature off until existing integrations have been reviewed and the two approved
+production origins have been migrated safely. Local development remains separate
+and must not inherit the production installation credential or enforcement flags.
 
 ## Administrator workflow
 
@@ -92,11 +99,14 @@ to approve itself, but can run independent services using its own resources.
    with **no approved rows or production/customer backfill**. Reapplying it
    preserves records. Do not run production migrations to exercise tests.
 2. Deploy with enforcement unset/`off`. Check unchanged booking, login, billing,
-   Stripe/Twilio callbacks, cron, staging controls and every authorized preview.
+   Stripe/Twilio callbacks and cron. Staging is not currently deployed. Do not
+   provision it or approve it as a side effect of this production rollout.
 3. Register/review exact existing origins, preserving installation identity across
    aliases/updates; store scoped credentials securely. Pending rows are not grants.
-4. Resolve staging and preview inventory. Obtain the owner's sign-off on the exact
-   snapshot, callback routes, scheduled jobs and rollback access.
+4. Resolve any unidentified preview callback dependencies. The owner's confirmed
+   production inventory contains exactly two origins, no preview grants and no
+   staging grants. Obtain sign-off on the callback audit, scheduled jobs, backup,
+   migration review and rollback access.
 5. Only in a **later separately approved rollout** set
    `INSTALLATION_INVENTORY_CONFIRMED=1`, `INSTALLATION_ENFORCEMENT=enforce`,
    `INSTALLATION_ID`, `INSTALLATION_CREDENTIAL` and authority mode. Missing inventory
