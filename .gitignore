@@ -77,3 +77,4 @@ next-env.d.ts
 /backups/
 *.dump
 *.dump.sha256
+*.dump.manifest.json
