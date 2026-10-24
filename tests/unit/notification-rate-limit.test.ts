@@ -47,6 +47,8 @@ function harness(store: NotificationStore, admins = 0) {
   const members: NoticeMember[] = [
     {
       userId: "owner",
+      phoneE164: "+15005550007",
+      phoneVerifiedAt: "2026-01-01T00:00:00Z",
       role: "owner",
       email: "owner@example.test",
       locale: "en",
@@ -55,6 +57,8 @@ function harness(store: NotificationStore, admins = 0) {
   for (let i = 1; i <= admins; i++)
     members.push({
       userId: `admin_${i}`,
+      phoneE164: `+1514555${String(i).padStart(4, "0")}`,
+      phoneVerifiedAt: "2026-01-01T00:00:00Z",
       role: "admin",
       email: `admin${i}@example.test`,
       locale: "en",
