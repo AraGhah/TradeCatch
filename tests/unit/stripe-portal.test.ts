@@ -198,6 +198,40 @@ describe("customer-specific billing portal", () => {
       "bpc_test_fixture",
     );
   });
+  it("creates fresh sessions scoped to each authenticated organization", async () => {
+    const first = await fixture();
+    const second = await fixture("admin");
+    const visits = [first, second, first];
+    const customers = ["cus_first", "cus_second", "cus_first"];
+    for (let index = 0; index < visits.length; index++) {
+      binding = { customer_id: customers[index], livemode: false };
+      providerBody = {
+        customer: customers[index],
+        livemode: false,
+        url: `https://billing.stripe.com/p/session/test_fresh_${index}`,
+      };
+      const response = await call(request(visits[index].cookie));
+      assert.equal(response.status, 200);
+      assert.equal(
+        ((await response.json()) as { url: string }).url,
+        providerBody.url,
+      );
+      assert.match(response.headers.get("cache-control")!, /no-store/);
+    }
+    assert.deepEqual(
+      sqlCalls
+        .filter((c) => c.sql.includes("SELECT customer_id,livemode"))
+        .map((c) => c.values),
+      visits.map((visit) => [visit.organization.id]),
+    );
+    assert.deepEqual(
+      requests.map((r) =>
+        new URLSearchParams(String(r.init?.body)).get("customer"),
+      ),
+      customers,
+    );
+    assert.ok(requests.every((r) => r.init?.method === "POST"));
+  });
   it("redirects ordinary form submissions with 303, and creates a French return URL", async () => {
     const f = await fixture("admin");
     const response = await call(
