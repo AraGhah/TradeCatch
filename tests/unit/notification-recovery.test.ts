@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, it } from "node:test";
-import { Pool } from "pg";
+import { createNotificationTestSchema } from "../support/notification-pg-schema";
 import { createHmac } from "node:crypto";
 import {
   getNotificationStore,
@@ -117,6 +116,30 @@ function recoveryChecks(factory: () => NotificationStore, durable: boolean) {
   beforeEach(async () => {
     h = harness(factory());
     await h.configure();
+  });
+  it("deduplicates simultaneous stable delivery IDs without resetting sent work", async () => {
+    const original = await h.urgent();
+    const row: NotificationDelivery = {
+      ...original,
+      id: original.id + ":concurrent_backup",
+      idempotencyKey: original.id + ":concurrent_backup",
+      channel: "email",
+      destination: "backup@example.test",
+      providerSid: undefined,
+      status: "pending",
+      attempts: 0,
+    };
+    const inserted = await Promise.all(
+      Array.from({ length: 20 }, () => h.store.saveDelivery({ ...row }, true)),
+    );
+    assert.equal(inserted.filter(Boolean).length, 1);
+    await h.store.saveDelivery({ ...row, status: "delivered", attempts: 1 });
+    assert.equal(await h.store.saveDelivery(row, true), null);
+    const saved = (await h.store.listDeliveries(h.organizationId)).find(
+      (delivery) => delivery.id === row.id,
+    )!;
+    assert.equal(saved.status, "delivered");
+    assert.equal(saved.attempts, 1);
   });
   it("retries transient failed callbacks at one and five minutes, then emails the backup exactly once", async () => {
     const first = await h.urgent();
@@ -423,32 +446,18 @@ describe(
   "notification queue and recovery in isolated PostgreSQL",
   { skip: !databaseUrl },
   () => {
-    let pool: Pool;
+    let schema: Awaited<ReturnType<typeof createNotificationTestSchema>>;
     before(async () => {
-      const url = new URL(databaseUrl!);
-      assert.equal(url.hostname, "127.0.0.1");
-      assert.ok(
-        ["/tc003_staging", "/notifications_staging"].includes(url.pathname),
-      );
-      pool = new Pool({ connectionString: databaseUrl });
-      await pool.query(
-        "CREATE TABLE IF NOT EXISTS mc_schema_migrations (id TEXT PRIMARY KEY, applied_at TIMESTAMPTZ DEFAULT now())",
-      );
-      for (const file of [
-        "schema.sql",
-        "delivery-reliability.sql",
-        "localized-content.sql",
-      ]) {
-        await pool.query(
-          readFileSync("src/product/notifications/" + file, "utf8"),
-        );
-      }
+      schema = await createNotificationTestSchema(databaseUrl!);
     });
     after(async () => {
-      await pool?.end();
       await closePgPool();
+      await schema?.drop();
     });
-    recoveryChecks(() => createPostgresNotificationStore(databaseUrl!), true);
+    recoveryChecks(
+      () => createPostgresNotificationStore(schema.connectionString),
+      true,
+    );
   },
 );
 
