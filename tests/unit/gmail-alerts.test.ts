@@ -122,6 +122,11 @@ describe("important Gmail reply alerts", () => {
       /Confidential|Private Sender|secret body/,
     );
     assert.equal(h.texts.length, 1);
+    assert.equal(
+      h.texts[0].to,
+      "+15145550121",
+      "only the mailbox owner's verified personal phone",
+    );
     assert.doesNotMatch(
       h.texts[0].body,
       /Confidential|Private Sender|secret body/,
