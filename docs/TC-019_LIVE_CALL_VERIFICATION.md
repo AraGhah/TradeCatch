@@ -5,6 +5,16 @@ token, staging calling number or controlled transfer destination was available
 in the configured environment on October 21, 2026. Simulated tests are not proof
 of real speech recognition, carrier routing or call audio quality.
 
+October 24 update: Twilio credential variables are now present locally (values
+not disclosed or committed). A designated staging receptionist, consenting caller
+and controlled transfer destination have not been supplied. The owner explicitly
+requested leaving real calls pending and completing automated checks.
+
+The receptionist core, webhook and Twilio signature suites passed all 38 tests
+with no skips. These cover bilingual handling, transfers, emergency routing,
+voicemail, model failure, silence, replay and signature validation using synthetic
+fixtures. Every live result below remains **Not run**.
+
 Use an isolated staging organization and Twilio number, dry-run downstream
 notifications, synthetic customer data and consenting test callers. Do not use
 real emergency services as a transfer destination. Keep credentials in secure
