@@ -6,17 +6,22 @@ import { runCloudflareCron } from "./src/lib/cloudflare-scheduler";
 import { withPostgresRequestScope } from "./src/lib/postgres-pool";
 import { recordScheduledJob } from "./src/product/reliability/job-health";
 import { workerLoginPreview } from "./src/product/saas/auth/login-preview";
+import {
+  enforceInstallationRequest,
+  type InstallationEnvironment,
+} from "./src/product/installations/gate";
 
-type TradeCatchWorkerEnv = CloudflareEnv & {
-  CRON_SECRET?: string;
-  MISSED_CALL_OPS_SECRET?: string;
-  NEXT_PUBLIC_SITE_URL?: string;
-  BOOK_AUDIT_RETRY_SECRET?: string;
-  GMAIL_SYNC_SECRET?: string;
-  NOTIFICATION_RETRY_SECRET?: string;
-  MONITORING_SECRET?: string;
-  TRADECATCH_ENV?: string;
-};
+type TradeCatchWorkerEnv = CloudflareEnv &
+  InstallationEnvironment & {
+    CRON_SECRET?: string;
+    MISSED_CALL_OPS_SECRET?: string;
+    NEXT_PUBLIC_SITE_URL?: string;
+    BOOK_AUDIT_RETRY_SECRET?: string;
+    GMAIL_SYNC_SECRET?: string;
+    NOTIFICATION_RETRY_SECRET?: string;
+    MONITORING_SECRET?: string;
+    TRADECATCH_ENV?: string;
+  };
 
 // Preserve any cache Durable Object exports produced by OpenNext.
 // @ts-ignore -- generated during `opennextjs-cloudflare build`.
@@ -56,19 +61,27 @@ function schedulerOrigin(env: TradeCatchWorkerEnv): string {
 
 export default {
   fetch(request, env, ctx) {
-    const preview = workerLoginPreview(request, env);
-    if (preview) return preview;
-    return withPostgresRequestScope(() =>
-      openNextWorker.fetch(request, env, ctx),
-    );
+    return withPostgresRequestScope(async () => {
+      const denied = await enforceInstallationRequest(request, env);
+      if (denied) return denied;
+      const preview = workerLoginPreview(request, env);
+      if (preview) return preview;
+      return openNextWorker.fetch(request, env, ctx);
+    });
   },
 
   async scheduled(controller, env, ctx) {
     const origin = schedulerOrigin(env);
 
     try {
-      const result = await withPostgresRequestScope(() =>
-        runCloudflareCron(
+      const result = await withPostgresRequestScope(async () => {
+        const denied = await enforceInstallationRequest(
+          new Request(origin),
+          env,
+        );
+        if (denied)
+          throw new Error("Installation approval blocked scheduled work");
+        return runCloudflareCron(
           controller.cron,
           (path) =>
             openNextWorker.fetch(
@@ -86,8 +99,8 @@ export default {
               ctx,
             ),
           (path, ok) => recordScheduledJob(path, ok),
-        ),
-      );
+        );
+      });
       console.log(
         JSON.stringify({
           event: "tradecatch.cron.completed",
