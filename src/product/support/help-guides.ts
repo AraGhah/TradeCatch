@@ -149,14 +149,14 @@ export const HELP_GUIDES: Record<string, HelpGuide> = {
   calendar: {
     steps: {
       en: [
-        "Open Settings → Calendar and check the connection status. A simulated connection is not a live Google Calendar connection.",
+        "Open Settings → Calendar and check eligibility. Google Calendar is a founder-approved Growth technical pilot with explicit business enrollment; Outlook is planned. If you see the pilot notice, contact support rather than trying to connect.",
         "Select Connect Google Calendar. If connection is not configured or not included in your access, ask support; do not enter Google credentials into a support ticket.",
         "When redirected to Google, select the authorized business account and review the requested permissions. Return to TradeCatch after granting access.",
         "Choose the business calendar using its calendar ID and summary, then save the selection. Review Hours and availability separately.",
         "Check that the status is Connected and run an authorized appointment test. Verify the resulting event in the selected business calendar.",
       ],
       fr: [
-        "Ouvrez Paramètres → Calendrier et vérifiez l’état. Une connexion simulée n’est pas une connexion réelle à Google Agenda.",
+        "Ouvrez Paramètres → Calendrier et vérifiez l’admissibilité. Google Calendar est un pilote technique Growth approuvé par le fondateur avec inscription explicite; Outlook reste prévu. Si l’avis de pilote apparaît, contactez le soutien avant toute connexion.",
         "Sélectionnez Connecter Google Calendar (Google Agenda). Si la connexion n’est pas configurée ou permise, contactez le soutien; ne mettez pas vos identifiants Google dans un billet.",
         "Après redirection vers Google, choisissez le compte professionnel autorisé et vérifiez les autorisations demandées. Revenez à TradeCatch après avoir accordé l’accès.",
         "Choisissez le calendrier professionnel avec son identifiant et son nom, puis enregistrez. Vérifiez séparément Heures et disponibilités.",
@@ -178,8 +178,8 @@ export const HELP_GUIDES: Record<string, HelpGuide> = {
       ],
     },
     screenshot: {
-      en: "Simulated Calendar settings in a synthetic business, not a live Google connection. Connection and calendar selection are separate steps.",
-      fr: "Paramètres Calendrier simulés d’une entreprise fictive, sans connexion Google réelle. La connexion et le choix du calendrier sont deux étapes distinctes.",
+      en: "Calendar eligibility notice in an unenrolled synthetic business. Connection controls are unavailable; this is not a live Google connection.",
+      fr: "Avis d’admissibilité au calendrier d’une entreprise fictive non inscrite. Les commandes de connexion sont indisponibles; aucune connexion Google réelle n’est établie.",
     },
   },
   leads: {

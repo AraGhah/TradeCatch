@@ -621,9 +621,9 @@ test.describe("Gmail receiving", () => {
   });
 
   test("calendar OAuth callback: a state only works for the person and business it was issued to", async () => {
-    // Google Calendar is not configured in this environment, so a state that clears
-    // every identity check ends in ?calendar=error (the token exchange), never in
-    // ?calendar=forbidden. Nothing here reaches Google.
+    // This business is not enrolled in the Google Calendar pilot. A valid state
+    // clears identity checks, then stops at pilot_required without reaching Google.
+    // Wrong-user and wrong-business states must still be forbidden first.
     const secret = "tradecatch-e2e-session-secret-not-for-production";
     const mint = (organizationId: string, userId: string, exp = Date.now() + 60_000) => {
       const body = Buffer.from(JSON.stringify({ organizationId, userId, exp, nonce: "e2e" })).toString("base64url");
@@ -646,7 +646,7 @@ test.describe("Gmail receiving", () => {
     const a = await who(alice);
     const b = await who(bob);
 
-    expect(await outcome(alice, mint(a.orgId, a.userId))).toBe("error");
+    expect(await outcome(alice, mint(a.orgId, a.userId))).toBe("pilot_required");
     // Another person's state, handed to Alice: right business, wrong user.
     expect(await outcome(alice, mint(a.orgId, b.userId))).toBe("forbidden");
     // Alice's own user id against Bob's business.

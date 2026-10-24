@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
 import {
+  hasGoogleCalendarPilot,
+  calendarPilotDenied,
+} from "@/product/scheduling/availability";
+import {
   buildGoogleAuthUrl,
   googleCalendarConfigured,
 } from "@/product/scheduling/google";
@@ -16,6 +20,7 @@ export async function POST(_request: NextRequest, { params }: Params) {
       { error: access.error },
       { status: access.status },
     );
+  if (!(await hasGoogleCalendarPilot(id))) return calendarPilotDenied();
   if (!googleCalendarConfigured()) {
     return NextResponse.json(
       { error: "Google Calendar is not configured on this server." },

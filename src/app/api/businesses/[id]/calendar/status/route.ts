@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
 import { getSchedulingService } from "@/product/scheduling/runtime";
+import { hasGoogleCalendarPilot } from "@/product/scheduling/availability";
+import { googleCalendarConfigured } from "@/product/scheduling/google";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
@@ -14,5 +16,13 @@ export async function GET(_request: Request, { params }: Params) {
       { status: access.status },
     );
   const calendar = await getSchedulingService().connectionStatus(id);
-  return NextResponse.json({ ok: true, calendar });
+  return NextResponse.json({
+    ok: true,
+    calendar,
+    availability: {
+      googlePilot: await hasGoogleCalendarPilot(id),
+      configured: googleCalendarConfigured(),
+      outlook: "planned",
+    },
+  });
 }

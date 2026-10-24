@@ -21,15 +21,25 @@ export function CalendarIntegrationPanel({
   const [calendarId, setCalendarId] = useState("");
   const [summary, setSummary] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<{
+    googlePilot: boolean;
+    configured: boolean;
+  } | null>(null);
 
   const load = useCallback(
     () =>
       fetch(`/api/businesses/${organizationId}/calendar/status`)
         .then(async (response) => ({
           response,
-          data: (await response.json()) as { calendar?: Status },
+          data: (await response.json()) as {
+            calendar?: Status;
+            availability?: { googlePilot: boolean; configured: boolean };
+          },
         }))
-        .then(({ data }) => {
+        .then(({ response, data }) => {
+          if (!response.ok || !data.availability)
+            throw new Error("Calendar unavailable");
+          setAvailability(data.availability);
           setCalendar(data.calendar ?? null);
           setCalendarId(data.calendar?.calendarId ?? "");
           setSummary(data.calendar?.calendarSummary ?? "");
@@ -38,8 +48,8 @@ export function CalendarIntegrationPanel({
   );
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void load().catch(() => setMessage(t("error")));
+  }, [load, t]);
 
   async function connect() {
     const res = await fetch(
@@ -62,8 +72,33 @@ export function CalendarIntegrationPanel({
       ? calendar.status
       : "disconnected";
 
+  if (!availability)
+    return (
+      <p role={message ? "alert" : "status"}>
+        {message ?? t("calendarLoading")}
+      </p>
+    );
+  if (!availability.googlePilot || !availability.configured)
+    return (
+      <section
+        data-testid="calendar-availability"
+        className="flex max-w-xl flex-col gap-4 rounded-md border border-navy/10 bg-white p-4"
+      >
+        <h2 className="font-semibold">{t("calendarPilotTitle")}</h2>
+        <p>{t("calendarPilotNotice")}</p>
+        <p className="text-sm">{t("calendarSimulationNotice")}</p>
+        {availability.googlePilot && !availability.configured ? (
+          <p>{t("notConfigured")}</p>
+        ) : null}
+      </section>
+    );
+
   return (
-    <div className="flex max-w-xl flex-col gap-4 rounded-md border border-navy/10 bg-white p-4">
+    <div
+      data-testid="calendar-availability"
+      className="flex max-w-xl flex-col gap-4 rounded-md border border-navy/10 bg-white p-4"
+    >
+      <p className="text-sm font-semibold">{t("calendarPilotTitle")}</p>
       <p className="text-sm text-navy/70">{t("calendarIntro")}</p>
       <p className="text-sm text-navy">
         {t("status")}: <strong>{t(statusKey)}</strong>

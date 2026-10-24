@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
+import {
+  hasGoogleCalendarPilot,
+  calendarPilotDenied,
+} from "@/product/scheduling/availability";
 import { listGoogleCalendars, openTokens } from "@/product/scheduling/google";
 import {
   getSchedulingService,
@@ -19,6 +23,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
       { error: access.error },
       { status: access.status },
     );
+  if (!(await hasGoogleCalendarPilot(id))) return calendarPilotDenied();
   const connection = await getSchedulingStore().getConnection(id);
   if (!connection?.tokenCiphertext)
     return NextResponse.json({ ok: true, calendars: [] });
@@ -43,6 +48,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       { error: access.error },
       { status: access.status },
     );
+  if (!(await hasGoogleCalendarPilot(id))) return calendarPilotDenied();
   const parsed = z
     .object({
       calendarId: z.string().min(1),
