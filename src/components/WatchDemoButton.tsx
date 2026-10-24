@@ -9,8 +9,13 @@ import {
   type ReactNode,
 } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
-import { CUT_MEDIA, type DemoCut, type DemoLocale } from "@/components/demo-video/cuts";
+import {
+  CUT_MEDIA,
+  type DemoCut,
+  type DemoLocale,
+} from "@/components/demo-video/cuts";
 
 /** i18n namespace under demoVideo for each cut. */
 const COPY_KEY: Record<DemoCut, "platform" | "missedCall"> = {
@@ -138,7 +143,7 @@ export function WatchDemoButton({
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={transcriptId}
-            className="relative z-[1] w-full max-w-[1100px] overflow-hidden rounded-[14px] border border-white/12 bg-[#0a1018] shadow-[0_32px_80px_-24px_rgba(0,0,0,0.75)]"
+            className="relative z-[1] max-h-[calc(100dvh-2rem)] w-full max-w-[1100px] overflow-y-auto rounded-[14px] border border-white/12 bg-[#0a1018] shadow-[0_32px_80px_-24px_rgba(0,0,0,0.75)]"
           >
             <div className="flex items-center justify-between gap-4 border-b border-white/10 px-4 py-3 sm:px-5">
               <h2
@@ -166,6 +171,12 @@ export function WatchDemoButton({
                 playsInline
                 preload="metadata"
                 src={media.video[locale]}
+                onPlay={() =>
+                  trackEvent("demo_video_started", { locale, video })
+                }
+                onEnded={() =>
+                  trackEvent("demo_video_completed", { locale, video })
+                }
               >
                 <track
                   kind="captions"
@@ -187,6 +198,18 @@ export function WatchDemoButton({
                 {t(`${copyKey}.transcript`)}
               </p>
             </details>
+            <div className="border-t border-white/10 px-4 py-3 sm:px-5">
+              <Link
+                href="/book-audit"
+                onClick={() =>
+                  trackEvent("demo_video_audit_click", { locale, video })
+                }
+                className="inline-flex rounded-md bg-orange px-4 py-3 font-semibold text-navy"
+              >
+                {t("auditCta")}
+              </Link>
+              <p className="mt-2 text-sm text-white/75">{t("auditHint")}</p>
+            </div>
           </div>
         </div>
       ) : null}

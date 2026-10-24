@@ -71,9 +71,9 @@
   "home": {
     "hero": {
       "eyebrow": "Récupération de revenus pour les métiers au Québec",
-      "headline": "Récupérez les jobs que vous payez déjà pour générer.",
-      "accentWord": "Récupérez",
-      "subheadline": "Les appels manqués reçoivent un texto. Les soumissions sans réponse sont relancées. Le forfait Réceptionniste répond au téléphone 24/7, en français et en anglais.",
+      "headline": "Récupérez les appels manqués. Réservez plus de chantiers.",
+      "accentWord": "Réservez plus de chantiers.",
+      "subheadline": "Restez concentré sur le chantier. TradeCatch aide les appelants manqués à obtenir une réponse et votre équipe à relancer les soumissions, en français ou en anglais. Commencez avec un pilote configuré par le fondateur.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la démo vidéo",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
@@ -1586,6 +1586,7 @@
       "turnstileLabel": "Vérification de sécurité",
       "reviewNote": "Vérifiez vos réponses ci-dessous, puis soumettez votre demande.",
       "questions": {
+        "contact": { "id": "contact", "label": "Coordonnées", "title": "Comment pouvons-nous vous joindre?", "help": "Votre courriel professionnel et le meilleur numéro pour votre audit. Aucune donnée de paiement requise." },
         "name": {
           "id": "name",
           "label": "Nom",
@@ -2057,6 +2058,8 @@
     "footerNote": "Les exemples du site sont illustratifs. Les vrais résultats clients ne sont publiés qu'avec permission."
   },
   "demoVideo": {
+    "auditCta": "Découvrez les clients à récupérer",
+    "auditHint": "Audit gratuit de 20 minutes. Une courte demande, sans données de paiement ni engagement.",
     "title": "Démos du produit",
     "description": "Démonstrations animées de la réceptionniste TradeCatch, de la récupération des appels manqués et de la relance des soumissions, avec une entreprise fictive. Les conversations et les chiffres sont illustratifs.",
     "close": "Fermer",

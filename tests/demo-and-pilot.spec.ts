@@ -138,7 +138,6 @@ test.describe("first-demo journeys", () => {
     await page.getByRole("button", { name: "Continue" }).click();
 
     await page.locator("#audit-field-email").fill("audit-wizard@example.test");
-    await page.getByRole("button", { name: "Continue" }).click();
 
     await page.locator("#audit-field-phone").fill("514-555-0123");
     await page.getByRole("button", { name: "Continue" }).click();
@@ -220,12 +219,16 @@ test.describe("first-demo journeys", () => {
     const scan = await page.request.get(callbackUrl!);
     expect(scan.status()).toBe(200);
     expect(scan.headers()["referrer-policy"]).toBe("no-referrer");
-    expect(scan.headers()["content-security-policy"]).toContain("default-src 'none'");
+    expect(scan.headers()["content-security-policy"]).toContain(
+      "default-src 'none'",
+    );
     expect(await scan.text()).toContain("Confirm your sign-in");
     expect((await page.request.get("/api/app/me")).status()).toBe(401);
     await page.request.head(callbackUrl!);
     await devLink.click();
-    await expect(page.getByRole("heading", { name: "Confirm your sign-in" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Confirm your sign-in" }),
+    ).toBeVisible();
     await page.reload();
     expect((await page.request.get("/api/app/me")).status()).toBe(401);
     await page.getByRole("button", { name: "Confirm and sign in" }).click();

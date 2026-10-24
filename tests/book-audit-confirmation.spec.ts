@@ -15,7 +15,6 @@ async function reviewRequest(page: Page) {
   await page.getByRole("radio", { name: /Plumbing/ }).click();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.locator("#audit-field-email").fill("tc002@example.com");
-  await page.getByRole("button", { name: "Continue" }).click();
   await page.locator("#audit-field-phone").fill("514-555-0100");
   await page.getByRole("button", { name: "Continue" }).click();
   await page.locator("#audit-field-city").fill("Laval");

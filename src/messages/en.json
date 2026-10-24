@@ -71,9 +71,9 @@
   "home": {
     "hero": {
       "eyebrow": "Revenue recovery for Québec trades",
-      "headline": "Recover the jobs you're already paying to generate.",
-      "accentWord": "Recover",
-      "subheadline": "Missed calls get a text back. Quiet quotes get followed up. On Receptionist, the phone is answered 24/7 in French and English.",
+      "headline": "Win back missed callers. Book more jobs.",
+      "accentWord": "Book more jobs.",
+      "subheadline": "You stay focused on the job. TradeCatch helps missed callers get a reply and your team follow up on quotes—in French or English. Start with a founder-configured pilot.",
       "ctaPrimary": "Book a free 20-minute audit",
       "ctaSecondary": "Watch the 90-second demo",
       "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
@@ -1586,6 +1586,7 @@
       "turnstileLabel": "Security check",
       "reviewNote": "Check your answers below, then submit your request.",
       "questions": {
+        "contact": { "id": "contact", "label": "Contact details", "title": "Where can we reach you?", "help": "Your work email and the best phone number for your audit. No payment details needed." },
         "name": {
           "id": "name",
           "label": "Name",
@@ -2057,6 +2058,8 @@
     "footerNote": "Examples on the website are illustrative. Real client results are published only with permission."
   },
   "demoVideo": {
+    "auditCta": "Find the jobs you could recover",
+    "auditHint": "Free 20-minute audit. A short request, no payment details and no commitment.",
     "title": "Product demos",
     "description": "Animated walkthroughs of the TradeCatch Receptionist, missed-call recovery and quote follow-up, using a fictional business. All conversations and figures are illustrative.",
     "close": "Close",

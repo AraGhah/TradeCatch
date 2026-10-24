@@ -9,7 +9,8 @@ import {
 } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, hasAnalyticsConsent } from "@/lib/analytics";
+import { createAuditFunnel } from "@/lib/audit-funnel";
 import {
   TurnstileWidget,
   type TurnstileWidgetHandle,
@@ -91,12 +92,14 @@ function emptyAnswers(): Answers {
 type Phase = "wizard" | "confirmed";
 type SubmitStatus = "idle" | "submitting" | "error";
 
-type StepKind = "name" | "text" | "choice" | "consent" | "review";
+type StepKind = "name" | "contact" | "text" | "choice" | "consent" | "review";
 
 function stepKind(step: BookAuditStep): StepKind {
   switch (step) {
     case "name":
       return "name";
+    case "contact":
+      return "contact";
     case "trade":
       return "choice";
     case "consent":
@@ -132,6 +135,7 @@ export function BookAuditForm() {
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const focusErrorSummary = useRef(false);
   const hydrated = useRef(false);
+  const funnel = useRef<ReturnType<typeof createAuditFunnel> | null>(null);
   const [submitError, setSubmitError] = useState<"generic" | "network" | null>(
     null,
   );
@@ -148,6 +152,30 @@ export function BookAuditForm() {
     ((onReview ? TOTAL_QUESTIONS : stepIndex) / TOTAL_QUESTIONS) * 100,
   );
   const isOptional = OPTIONAL_STEPS.includes(step);
+
+  useEffect(() => {
+    const current = createAuditFunnel({
+      locale,
+      allowed: hasAnalyticsConsent,
+      track: trackEvent,
+    });
+    funnel.current = current;
+    const hidden = () => {
+      if (document.visibilityState === "hidden")
+        funnel.current?.abandon("hidden");
+    };
+    const leave = () => funnel.current?.abandon("pagehide");
+    document.addEventListener("visibilitychange", hidden);
+    window.addEventListener("pagehide", leave);
+    return () => {
+      funnel.current?.abandon("navigation");
+      document.removeEventListener("visibilitychange", hidden);
+      window.removeEventListener("pagehide", leave);
+    };
+  }, [locale]);
+  useEffect(() => {
+    funnel.current?.view(step);
+  }, [step]);
 
   // Restore an in-progress draft within this browser tab only (sessionStorage,
   // not localStorage) so back/forward preserves answers but nothing survives
@@ -247,6 +275,8 @@ export function BookAuditForm() {
     if (current === "review")
       return answers.serviceConsent && Boolean(turnstileToken);
     if (current === "name") return Boolean(answers.firstName.trim());
+    if (current === "contact")
+      return Boolean(answers.email.trim() && answers.phone.trim());
     if (current === "consent") return answers.serviceConsent;
     const field = primaryField(current);
     if (!field) return true;
@@ -295,7 +325,7 @@ export function BookAuditForm() {
     }
 
     // email / phone — zod format via STEP_FIELDS pick
-    if (current === "email" || current === "phone") {
+    if (current === "contact") {
       const fields = STEP_FIELDS[current];
       const shape = Object.fromEntries(fields.map((f) => [f, true]));
       const result = bookAuditSchema
@@ -409,6 +439,7 @@ export function BookAuditForm() {
         value: 0,
         lead_source: "book_audit",
       });
+      funnel.current?.complete();
       try {
         window.sessionStorage.removeItem(DRAFT_STORAGE_KEY);
       } catch {
@@ -449,6 +480,11 @@ export function BookAuditForm() {
   }
 
   function resetForm() {
+    funnel.current = createAuditFunnel({
+      locale,
+      allowed: hasAnalyticsConsent,
+      track: trackEvent,
+    });
     idempotencyKey.current = randomUUID();
     setAnswers(emptyAnswers());
     setErrors({});
@@ -541,6 +577,8 @@ export function BookAuditForm() {
 
       <div className="flex flex-1 justify-center px-[clamp(20px,4vw,40px)] pt-[clamp(40px,7vw,88px)] pb-[clamp(56px,7vw,96px)]">
         <form
+          onInputCapture={() => funnel.current?.touch()}
+          onClickCapture={() => funnel.current?.touch()}
           onSubmit={handleContinue}
           noValidate
           className="w-full max-w-(--container-wizard)"
@@ -822,20 +860,44 @@ function StepBody({
     );
   }
 
+  if (kind === "contact") {
+    return (
+      <div className="grid gap-7 sm:grid-cols-2">
+        <UnderlineField
+          name="email"
+          label={t("fields.email")}
+          autoComplete="email"
+          type="email"
+          value={answers.email}
+          error={errors.email}
+          onChange={(value) => update("email", value)}
+          onKeyDown={onTextKeyDown}
+          size="name"
+          autoFocus
+        />
+        <UnderlineField
+          name="phone"
+          label={t("fields.phone")}
+          autoComplete="tel"
+          type="tel"
+          value={answers.phone}
+          error={errors.phone}
+          onChange={(value) => update("phone", value)}
+          onKeyDown={onTextKeyDown}
+          size="name"
+        />
+      </div>
+    );
+  }
   if (kind === "text") {
     const field = primaryField(step)!;
-    const inputType =
-      step === "email" ? "email" : step === "phone" ? "tel" : "text";
+    const inputType = "text";
     const autoComplete =
-      step === "email"
-        ? "email"
-        : step === "phone"
-          ? "tel"
-          : step === "company"
-            ? "organization"
-            : step === "city"
-              ? "address-level2"
-              : "on";
+      step === "company"
+        ? "organization"
+        : step === "city"
+          ? "address-level2"
+          : "on";
     return (
       <div>
         <UnderlineField
@@ -950,6 +1012,12 @@ function formatReviewValue(
     }
     case "consent":
       return answers.serviceConsent ? t("wizard.agreed") : t("wizard.notYet");
+    case "contact":
+      return (
+        [answers.email.trim(), answers.phone.trim()]
+          .filter(Boolean)
+          .join(" · ") || empty
+      );
     default: {
       const field = primaryField(step);
       if (!field) return empty;
