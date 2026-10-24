@@ -10,6 +10,37 @@ const globalForPostgres = globalThis as unknown as {
 const requestPools = (globalForPostgres.__tradecatchPostgresRequestPools ??=
   new AsyncLocalStorage<RequestPools>());
 
+function managedPool(options: PoolConfig): Pool {
+  const pool = new Pool(options);
+  // pg forwards disconnected idle-client errors to the pool, after removing
+  // that client. Without a listener EventEmitter throws outside query catches,
+  // which can surface as an unhandled CloudflareSocket rejection. Do not retry
+  // writes here or persist diagnostics through the failed database itself.
+  pool.on("error", (error: Error & { code?: string }) => {
+    const code = error.code;
+    const safeCode =
+      typeof code === "string" &&
+      (/^[0-9A-Z]{5}$/.test(code) ||
+        [
+          "ECONNRESET",
+          "ECONNREFUSED",
+          "ETIMEDOUT",
+          "EPIPE",
+          "ENOTFOUND",
+          "EHOSTUNREACH",
+        ].includes(code))
+        ? code
+        : "UNKNOWN";
+    console.error(
+      JSON.stringify({
+        event: "tradecatch.postgres.idle_error",
+        code: safeCode,
+      }),
+    );
+  });
+  return pool;
+}
+
 /** Share connections only inside the current Worker invocation. Reopening a
  * socket for every SQL statement exhausts the platform's subrequest budget. */
 export async function withPostgresRequestScope<T>(
@@ -39,7 +70,7 @@ export async function withPostgresRequestScope<T>(
  * Node servers retain their ordinary connection pooling.
  */
 export function createPostgresPool(options: PoolConfig): Pool {
-  const target = new Pool(options);
+  const target = managedPool(options);
   if (!("WebSocketPair" in globalThis)) return target;
 
   function currentPool(): Pool | undefined {
@@ -47,7 +78,7 @@ export function createPostgresPool(options: PoolConfig): Pool {
     if (!scope || scope.closed) return undefined;
     let scoped = scope.pools.get(target);
     if (!scoped) {
-      scoped = new Pool(options);
+      scoped = managedPool(options);
       scope.pools.set(target, scoped);
     }
     return scoped;
@@ -59,7 +90,7 @@ export function createPostgresPool(options: PoolConfig): Pool {
         return async (...args: unknown[]) => {
           const current = currentPool();
           if (current) return Reflect.apply(current.query, current, args);
-          const scoped = new Pool(options);
+          const scoped = managedPool(options);
           try {
             return await Reflect.apply(scoped.query, scoped, args);
           } finally {
@@ -71,7 +102,7 @@ export function createPostgresPool(options: PoolConfig): Pool {
         return async () => {
           const current = currentPool();
           if (current) return current.connect();
-          const scoped = new Pool(options);
+          const scoped = managedPool(options);
           try {
             const client = await scoped.connect();
             const release = client.release.bind(client);
