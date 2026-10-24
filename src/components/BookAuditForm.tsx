@@ -1094,11 +1094,11 @@ function ChoiceGrid({
     } else if (event.key === "End") {
       next = options.length - 1;
     }
+    const group = event.currentTarget.parentElement;
     options[next]?.onPick();
     // Focus moves via re-render tabIndex; requestAnimationFrame for reliability.
     requestAnimationFrame(() => {
-      const radios =
-        event.currentTarget.parentElement?.querySelectorAll('[role="radio"]');
+      const radios = group?.querySelectorAll('[role="radio"]');
       (radios?.[next] as HTMLElement | undefined)?.focus();
     });
   }

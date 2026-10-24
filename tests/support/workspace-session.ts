@@ -1,9 +1,12 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 
 /** Synthetic, isolated organization in the localhost-only E2E harness. */
 export async function workspaceSession(page: Page, locale: "en" | "fr" = "en") {
   const email = `workspace-${randomUUID()}@example.invalid`;
+  // Independent documentation-range identity per session, not per worker:
+  // repeated logins in a large suite must not exhaust one worker's quota.
+  const clientIp = `2001:db8:${randomUUID().replaceAll("-", "").match(/.{4}/g)!.slice(0, 6).join(":")}`;
   const provision = await page.request.post(
     "/api/missed-call/ops/provision-organization",
     {
@@ -24,7 +27,7 @@ export async function workspaceSession(page: Page, locale: "en" | "fr" = "en") {
   const login = await page.request.post("/api/auth/magic-link", {
     data: { email, locale },
     headers: {
-      "x-forwarded-for": `192.0.2.${10 + (test.info().workerIndex % 200)}`,
+      "x-forwarded-for": clientIp,
     },
   });
   const { devToken } = await login.json();
