@@ -28,6 +28,20 @@ a backup, at least monthly, and after any change to the schema.
 
 ## Take a backup
 
+Retention policy confirmed October 24, 2026: keep portable backups indefinitely.
+There is no automatic expiry or pruning. Keep the dump, checksum, and snapshot
+manifest together. This local policy does not change Supabase-managed retention
+or establish off-host protection; those require a configured storage destination
+and the project's backup settings.
+
+New backups export a repeatable-read PostgreSQL snapshot. Both `pg_dump` and the
+verification fingerprint use that snapshot. The `.dump.manifest.json` binds its
+schema/content fingerprints to the dump's SHA-256. Restore drills prefer this
+manifest, so normal writes after a backup do not create false comparison failures.
+Older dumps without a manifest retain the live-source comparison, which can
+legitimately differ as production changes. Tables above 200,000 rows are checked
+by count only. The fingerprint is integrity evidence, not a digital signature.
+
 ```bash
 BACKUP_DATABASE_URL='postgresql://…' npm run db:backup -- --out backups
 ```

@@ -12,10 +12,12 @@
  * credentials, so it is written with owner-only permissions and must be stored
  * encrypted and off the host. See docs/BACKUP_AND_RECOVERY.md.
  */
-const { createHash } = require("crypto");
+const { createHash, randomUUID } = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { runPg, identity } = require("./lib/pg-cli");
+const { Client } = require("pg");
+const { fingerprint } = require("./lib/backup-fingerprint");
 
 function argValue(name) {
   const index = process.argv.indexOf(name);
@@ -25,28 +27,66 @@ function argValue(name) {
 async function main() {
   const url = process.env.BACKUP_DATABASE_URL?.trim();
   if (!url) {
-    console.error("BACKUP_DATABASE_URL is required (a session-mode or direct Postgres URL).");
+    console.error(
+      "BACKUP_DATABASE_URL is required (a session-mode or direct Postgres URL).",
+    );
     process.exit(1);
   }
   const outDir = path.resolve(argValue("--out") || "backups");
   fs.mkdirSync(outDir, { recursive: true, mode: 0o700 });
-  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..*/, "Z");
-  const file = path.join(outDir, `tradecatch-${stamp}.dump`);
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\..*/, "Z");
+  const file = path.join(
+    outDir,
+    `tradecatch-${stamp}-${randomUUID().slice(0, 8)}.dump`,
+  );
 
   console.log(`Backing up ${identity(url)} -> ${file}`);
-  const stream = fs.createWriteStream(file, { mode: 0o600 });
-  const result = await runPg(
-    "pg_dump",
-    // Custom format is compressed and lets pg_restore verify and select parts.
-    // Owners and grants are dropped so it restores into any project; the
-    // Data API lockdown is re-applied afterwards (npm run db:lockdown).
-    ["--format=custom", "--no-owner", "--no-acl", "--schema=public"],
-    { url, stdout: stream },
-  );
-  await new Promise((resolve) => stream.end(resolve));
+  const origin = new Client({ connectionString: url });
+  await origin.connect();
+  let snapshotFingerprint;
+  let result;
+  try {
+    await origin.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
+    await origin.query("SET TIME ZONE 'UTC'");
+    const snapshot = (await origin.query("SELECT pg_export_snapshot() AS id"))
+      .rows[0].id;
+    const stream = fs.createWriteStream(file, { mode: 0o600, flags: "wx" });
+    let writeError;
+    stream.on("error", (error) => {
+      writeError = error;
+    });
+    result = await runPg(
+      "pg_dump",
+      // Custom format is compressed and lets pg_restore verify and select parts.
+      // Owners and grants are dropped so it restores into any project; the
+      // Data API lockdown is re-applied afterwards (npm run db:lockdown).
+      [
+        "--format=custom",
+        "--no-owner",
+        "--no-acl",
+        "--schema=public",
+        `--snapshot=${snapshot}`,
+      ],
+      { url, stdout: stream },
+    );
+    if (writeError) throw writeError;
+    await new Promise((resolve, reject) => {
+      stream.on("error", reject);
+      stream.end(resolve);
+    });
+    if (result.code === 0) snapshotFingerprint = await fingerprint(origin);
+  } finally {
+    await origin.query("ROLLBACK").catch(() => {});
+    await origin.end();
+  }
   if (result.code !== 0) {
     fs.rmSync(file, { force: true });
-    console.error(`pg_dump failed (exit ${result.code}). ${result.stderr.split("\n").slice(-3).join(" | ")}`);
+    console.error(
+      `pg_dump failed (exit ${result.code}). ${result.stderr.split("\n").slice(-3).join(" | ")}`,
+    );
     process.exit(1);
   }
 
@@ -56,10 +96,31 @@ async function main() {
     console.error("The backup is implausibly small; refusing to keep it.");
     process.exit(1);
   }
-  const digest = createHash("sha256").update(fs.readFileSync(file)).digest("hex");
-  fs.writeFileSync(`${file}.sha256`, `${digest}  ${path.basename(file)}\n`, { mode: 0o600 });
+  const digest = createHash("sha256")
+    .update(fs.readFileSync(file))
+    .digest("hex");
+  fs.writeFileSync(`${file}.sha256`, `${digest}  ${path.basename(file)}\n`, {
+    mode: 0o600,
+  });
+  fs.writeFileSync(
+    `${file}.manifest.json`,
+    JSON.stringify(
+      {
+        version: 1,
+        dumpSha256: digest,
+        createdAt: new Date().toISOString(),
+        retention: "indefinite",
+        fingerprint: snapshotFingerprint,
+      },
+      null,
+      2,
+    ),
+    { mode: 0o600, flag: "wx" },
+  );
   console.log(`OK ${bytes} bytes, sha256 ${digest}`);
-  console.log("Next: restore it into a scratch database with `npm run db:restore-drill`. A backup that was never restored is not a backup.");
+  console.log(
+    "Next: restore it into a scratch database with `npm run db:restore-drill`. A backup that was never restored is not a backup.",
+  );
 }
 
 main().catch((error) => {
