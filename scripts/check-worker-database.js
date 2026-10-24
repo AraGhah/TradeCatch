@@ -17,6 +17,22 @@ function requireDatabaseSecret(bindings) {
   }
 }
 
+/** The generic cron routes have no route-specific credential. A notification
+ * secret alone cannot authorize escalations, automations or growth jobs. */
+function requireSchedulerSecret(bindings) {
+  if (
+    !Array.isArray(bindings) ||
+    !bindings.some(
+      (binding) =>
+        ["MISSED_CALL_OPS_SECRET", "CRON_SECRET"].includes(binding?.name) &&
+        binding.type === "secret_text",
+    )
+  )
+    throw new Error(
+      "Release blocked: configure an encrypted MISSED_CALL_OPS_SECRET or CRON_SECRET on the target Worker so every scheduled route can authenticate.",
+    );
+}
+
 function checkWorkerDatabase({ staging = false, run = execFileSync } = {}) {
   const worker = staging ? "tradecatch-staging" : "tradecatch";
   let bindings;
@@ -51,7 +67,10 @@ function checkWorkerDatabase({ staging = false, run = execFileSync } = {}) {
     );
   }
   requireDatabaseSecret(bindings);
-  console.log(`Runtime database secret is configured on ${worker}.`);
+  requireSchedulerSecret(bindings);
+  console.log(
+    `Runtime database and scheduler secrets are configured on ${worker}.`,
+  );
 }
 
 if (require.main === module) {
@@ -68,4 +87,8 @@ if (require.main === module) {
   }
 }
 
-module.exports = { requireDatabaseSecret, checkWorkerDatabase };
+module.exports = {
+  requireDatabaseSecret,
+  requireSchedulerSecret,
+  checkWorkerDatabase,
+};

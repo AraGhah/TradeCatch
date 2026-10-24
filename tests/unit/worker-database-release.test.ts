@@ -5,9 +5,39 @@ import test from "node:test";
 const require = createRequire(import.meta.url);
 const {
   requireDatabaseSecret,
+  requireSchedulerSecret,
   checkWorkerDatabase,
 } = require("../../scripts/check-worker-database.js");
-const bindings = [{ name: "DATABASE_URL", type: "secret_text" }];
+const bindings = [
+  { name: "DATABASE_URL", type: "secret_text" },
+  { name: "MISSED_CALL_OPS_SECRET", type: "secret_text" },
+];
+
+test("release requires a shared scheduler credential, not merely notification credentials", () => {
+  for (const name of ["MISSED_CALL_OPS_SECRET", "CRON_SECRET"]) {
+    assert.doesNotThrow(() =>
+      requireSchedulerSecret([{ name, type: "secret_text" }]),
+    );
+    assert.throws(
+      () => requireSchedulerSecret([{ name, type: "plain_text" }]),
+      /Release blocked/,
+    );
+  }
+  for (const invalid of [
+    undefined,
+    {},
+    [],
+    [null],
+    [{ name: "DATABASE_URL", type: "secret_text" }],
+    [
+      "BOOK_AUDIT_RETRY_SECRET",
+      "NOTIFICATION_RETRY_SECRET",
+      "GMAIL_SYNC_SECRET",
+      "MONITORING_SECRET",
+    ].map((name) => ({ name, type: "secret_text" })),
+  ])
+    assert.throws(() => requireSchedulerSecret(invalid), /Release blocked/);
+});
 
 test("database release guard requires exactly one encrypted runtime database secret", () => {
   assert.doesNotThrow(() => requireDatabaseSecret(bindings));
