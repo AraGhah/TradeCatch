@@ -790,6 +790,11 @@ export function createNotificationService(deps: NotificationDeps) {
             note.id,
           );
           if (prior.length >= rule.maxAttempts) continue;
+          const lastAttempt = Math.max(
+            ...prior.map((row) => Date.parse(row.at)),
+          );
+          if (lastAttempt + rule.delayMinutes * 60_000 > asOf.getTime())
+            continue;
           if (
             Date.parse(note.createdAt) + rule.delayMinutes * 60_000 >
             asOf.getTime()
@@ -808,14 +813,13 @@ export function createNotificationService(deps: NotificationDeps) {
                 ? "email"
                 : null;
           if (!channel) continue;
-          if (people.some((person) => person.userId === backup.userId))
-            continue;
-          await deps.store.saveRecipient({
-            id: createId("nrcp"),
-            notificationId: note.id,
-            organizationId,
-            userId: backup.userId,
-          });
+          if (!people.some((person) => person.userId === backup.userId))
+            await deps.store.saveRecipient({
+              id: createId("nrcp"),
+              notificationId: note.id,
+              organizationId,
+              userId: backup.userId,
+            });
           const delivery: NotificationDelivery = {
             id: createId("ndlv"),
             notificationId: note.id,
@@ -831,13 +835,13 @@ export function createNotificationService(deps: NotificationDeps) {
             createdAt: deps.now().toISOString(),
             updatedAt: deps.now().toISOString(),
           };
-          await deps.store.saveDelivery(delivery);
+          if (!(await deps.store.saveDelivery(delivery, true))) continue;
           await deps.store.addEscalationAttempt({
             organizationId,
             notificationId: note.id,
             recipientUserId: backup.userId,
             outcome: "backup_notified",
-            at: deps.now().toISOString(),
+            at: asOf.toISOString(),
           });
           escalated += 1;
         }
