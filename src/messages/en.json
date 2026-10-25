@@ -2923,6 +2923,8 @@
       "search": "Search",
       "empty": "No notifications match these filters.",
       "loading": "Loading notifications…",
+      "preferencesLoading": "Loading notification preferences…",
+      "preferencesLoadError": "Could not load notification preferences. Please try again.",
       "loadError": "Could not load notifications. Please try again.",
       "stale": "Showing previously loaded notifications; they may not match the current filters.",
       "retry": "Retry",

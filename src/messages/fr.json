@@ -2923,6 +2923,8 @@
       "search": "Chercher",
       "empty": "Aucune alerte pour ces filtres.",
       "loading": "Chargement des alertes…",
+      "preferencesLoading": "Chargement des préférences de notification…",
+      "preferencesLoadError": "Impossible de charger les préférences de notification. Réessayez.",
       "loadError": "Impossible de charger les alertes. Veuillez réessayer.",
       "stale": "Les alertes précédemment chargées sont affichées; elles peuvent ne pas correspondre aux filtres actuels.",
       "retry": "Réessayer",
