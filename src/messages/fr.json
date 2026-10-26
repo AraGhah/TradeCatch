@@ -558,7 +558,7 @@
     },
     "pilot": {
       "badge": "Programme pilote",
-      "headline": "Places pilotes fondatrices. Limitées par zone de service.",
+      "headline": "Nous acceptons maintenant des entrepreneurs pilotes fondateurs.",
       "body": "Joignez-vous comme entrepreneur fondateur pendant que TradeCatch accepte un petit nombre de pilotes. Le tarif affiché, l’accès direct au fondateur, une mise en place selon votre façon de travailler, la priorité sur les fonctions pertinentes, et ce tarif verrouillé 12 mois. Pas de promesses de case study inventées. Les résultats se suivent avec vous après le lancement.",
       "pointsLabel": "Ce que le pilote inclut",
       "points": [
@@ -566,8 +566,7 @@
         "Accès direct au fondateur pendant l'installation et le peaufinage",
         "Mise en place sur mesure selon votre volume réel d'appels et de soumissions",
         "Priorité sur les demandes de fonctions adaptées à votre métier",
-        "Prix verrouillé pour 12 mois",
-        "Places limitées par zone de service"
+        "Prix verrouillé pour 12 mois"
       ],
       "guarantee": "Garantie de lancement : si le système convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité.",
       "cta": "Réserver un audit gratuit de 20 minutes",
@@ -2062,7 +2061,7 @@
     "pricingTitle": "Prix affichés",
     "pricing": "Starter : 799,99 $ d’installation, puis 349,99 $/mois. Growth : 1 499,99 $ d’installation, puis 749,99 $/mois, et inclut Starter. Réceptionniste : 1 999,99 $ d’installation, puis 999,99 $/mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
     "pilotTitle": "Programme pilote",
-    "pilot": "Places fondatrices limitées par zone : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
+    "pilot": "Nous acceptons maintenant des entrepreneurs fondateurs : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
     "cta": "Réservez un audit gratuit de 20 minutes. Aucun accès système requis.",
     "contact": "438·993·6997 · tradecatch.ca",
