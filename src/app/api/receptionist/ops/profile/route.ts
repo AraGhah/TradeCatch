@@ -6,7 +6,7 @@ import {
   missingOpsActorResponse,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
-import { ensureMissedCallReady } from "@/product/missed-call/runtime";
+import { getMissedCallReadStore } from "@/product/missed-call/runtime";
 import { activateProfile } from "@/product/receptionist/profile-service";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { getSaasStore } from "@/product/saas/runtime";
@@ -53,10 +53,9 @@ export async function POST(request: NextRequest) {
     {
       profiles: runtime.profileStore,
       getOrganization: (id) => saas.getOrganization(id),
-      getClient: async (id) => {
-        const { store } = await ensureMissedCallReady();
-        return store.getClient(id);
-      },
+      // Read-only: activation must not require an env-provisioned missed-call
+      // client — production legitimately has none in the multi-tenant path.
+      getClient: async (id) => getMissedCallReadStore().getClient(id),
       refresh: (force) => runtime.refresh(force),
       isAnswering: (organizationId) =>
         runtime.configs.some((c) => c.id === `rc_org_${organizationId}`),
