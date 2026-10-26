@@ -24,7 +24,7 @@ type FormState = {
   serviceArea: string;
   language: "en" | "fr";
   timezone: string;
-  subscriptionPlan: "starter" | "growth";
+  subscriptionPlan: "starter" | "growth" | "receptionist";
   accountStatus: "active" | "suspended";
 };
 
@@ -253,11 +253,15 @@ export function AdminDemoBusinesses() {
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  subscriptionPlan: e.target.value as "starter" | "growth",
+                  subscriptionPlan: e.target.value as
+                    | "starter"
+                    | "growth"
+                    | "receptionist",
                 }))
               }
               className="rounded-md border border-navy/20 px-3 py-2"
             >
+              <option value="receptionist">Receptionist</option>
               <option value="growth">Growth</option>
               <option value="starter">Starter</option>
             </select>
