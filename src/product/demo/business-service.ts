@@ -34,7 +34,7 @@ export const createDemoBusinessSchema = z
     timezone: z.string().trim().min(3).max(64).optional(),
     accountType: z.literal("demo").optional().default("demo"),
     subscriptionPlan: z
-      .enum(["starter", "growth"])
+      .enum(["starter", "growth", "receptionist"])
       .optional()
       .default("growth"),
     accountStatus: z
