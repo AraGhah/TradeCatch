@@ -2619,6 +2619,7 @@
       "events": "History",
       "conversation": "Messages",
       "control": "Who handles replies",
+      "controlError": "Could not change who handles replies. Try again.",
       "noMessages": "No messages yet.",
       "inbound": "Customer",
       "outbound": "You",
@@ -2809,7 +2810,7 @@
       "notes": "Notes",
       "submit": "Book",
       "saving": "Saving…",
-      "error": "Could not book appointment."
+      "error": "Could not book appointment. Check your connection and try again."
     },
     "schedule": {
       "headline": "Appointments",
@@ -2845,7 +2846,10 @@
       "close": "Close",
       "complete": "Mark completed",
       "saved": "Saved.",
+      "saving": "Saving…",
       "error": "The scheduling service could not complete that request.",
+      "connectionError": "Could not reach the scheduling service. Check your connection and try again.",
+      "retry": "Retry",
       "notConfirmed": "That time was not confirmed. Choose another opening.",
       "hoursIntro": "Customers can only be offered times inside these hours.",
       "timezone": "Timezone",
@@ -3027,7 +3031,7 @@
       "skip": "Skip for now",
       "complete": "Complete onboarding",
       "saving": "Saving…",
-      "error": "Could not save onboarding."
+      "error": "Could not save onboarding. Check your connection and try again."
     },
     "websiteLeads": {
       "headline": "Website leads",
@@ -3067,7 +3071,21 @@
     },
     "monitoring": {
       "fallbackTitle": "Fallback settings",
-      "fallbackIntro": "Choose what happens when the Receptionist cannot continue a call. A calendar failure still collects the request and does not confirm an appointment."
+      "fallbackIntro": "Choose what happens when the Receptionist cannot continue a call. A calendar failure still collects the request and does not confirm an appointment.",
+      "fallbackLoading": "Loading fallback settings…",
+      "fallbackLoadError": "Could not load fallback settings. Check your connection and try again.",
+      "fallbackRetry": "Retry",
+      "fallbackAiUnavailable": "If the Receptionist cannot connect",
+      "fallbackTransfer": "Transfer to the contractor number",
+      "fallbackVoicemail": "Take a voicemail",
+      "fallbackCalendarNote": "If the calendar is unavailable, TradeCatch collects the preferred time and does not confirm an appointment.",
+      "fallbackDatabaseNote": "If the database is unavailable, TradeCatch does not tell the caller that their information was saved.",
+      "fallbackTransferFailed": "If a transfer fails",
+      "fallbackBackupNumber": "Backup number",
+      "fallbackSave": "Save",
+      "fallbackSaving": "Saving…",
+      "fallbackSaved": "Fallback settings saved.",
+      "fallbackSaveError": "Could not save fallback settings. Check your connection and try again."
     },
     "security": {
       "headline": "Security",
@@ -3075,7 +3093,12 @@
       "sessions": "Active sessions",
       "revoke": "Revoke",
       "mfa": "Turn on administrator verification",
-      "mfaHint": "Platform administrators can add a second code after the sign-in link."
+      "mfaHint": "Platform administrators can add a second code after the sign-in link.",
+      "revoked": "Session revoked.",
+      "revokeError": "Could not revoke that session. Check your connection and try again.",
+      "loadError": "Could not load active sessions. Check your connection and try again.",
+      "retry": "Retry",
+      "adminVerification": "Administrator verification"
     },
     "privacy": {
       "headline": "Privacy settings",
@@ -3122,7 +3145,8 @@
       "name": "Business name",
       "save": "Save",
       "saved": "Saved.",
-      "error": "Could not save that change.",
+      "saving": "Saving…",
+      "error": "Could not save that change. Check your connection and try again.",
       "employees": "Employees",
       "password": "Sign-in uses a one-time link. Active sessions can be revoked from Security.",
       "phoneStays": "A suspension or deletion request leaves telephone routing in place until a transition is confirmed.",
