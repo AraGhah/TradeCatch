@@ -1006,7 +1006,8 @@
             "title": "Capture",
             "items": [
               "Text-back on missed calls",
-              "Reply to website inquiries"
+              "Reply to website inquiries",
+              "Bilingual SMS, in French or English"
             ]
           },
           {
@@ -1074,6 +1075,7 @@
           {
             "title": "Grow",
             "items": [
+              "Advanced follow-up sequences",
               "Google review-request texts"
             ]
           }
