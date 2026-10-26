@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS tc_organizations (
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
   plan TEXT NOT NULL DEFAULT 'starter'
-    CHECK (plan IN ('starter', 'growth')),
+    CHECK (plan IN ('starter', 'growth', 'receptionist')),
   status TEXT NOT NULL DEFAULT 'active'
     CHECK (status IN ('active', 'suspended', 'churned')),
   missed_call_client_id TEXT UNIQUE REFERENCES mc_clients (id),
