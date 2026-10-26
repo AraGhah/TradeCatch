@@ -1097,7 +1097,7 @@
         "reassuranceLine": "La mise en place couvre la base de connaissances, l’accueil, les règles de demande de rendez-vous, les cibles de transfert et l’acheminement des urgences. L’intégration est obligatoire avant la mise en ligne de la ligne.",
         "usageNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables, convenues par écrit lors de la démo.",
         "includesPrevious": "Tout Starter et tout Growth, plus :",
-        "ctaLabel": "Réserver une démo",
+        "ctaLabel": "Réserver un audit gratuit de 20 minutes",
         "secondaryCtaLabel": "Parlez-lui vous-même",
         "groups": [
           {
@@ -3560,8 +3560,8 @@
       },
       "afterCall": {
         "title": "C’était la démo. Imaginez-la maintenant sur votre propre numéro.",
-        "body": "Chaque appel de ce genre arrive dans votre espace sous forme de résumé prêt à l’action. Pendant une démo de 20 minutes, nous parcourons le déroulement d’appel pour votre métier : ce qu’elle dit, ce qu’elle recueille et quand elle passe la main à une personne.",
-        "cta": "Réserver une démo"
+        "body": "Chaque appel de ce genre arrive dans votre espace sous forme de résumé prêt à l’action. Pendant un audit gratuit de 20 minutes, nous parcourons le déroulement d’appel pour votre métier : ce qu’elle dit, ce qu’elle recueille et quand elle passe la main à une personne.",
+        "cta": "Réserver un audit gratuit de 20 minutes"
       }
     },
     "eyebrow": "Réceptionniste · 1 999,99 $ d’installation, puis 999,99 $/mois",
@@ -3579,7 +3579,7 @@
     "planSetup": "1 999,99 $ installation",
     "planCadence": "999,99 $ / mois",
     "planNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables.",
-    "ctaPrimary": "Réserver une démo",
+    "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
     "ctaDemo": "Voir la démo de la réceptionniste",
     "ctaSecondary": "Voir tous les tarifs",
     "flow": {
@@ -3995,8 +3995,8 @@
     },
     "finalCta": {
       "title": "Écoutez-le répondre à un appel avant de décider.",
-      "body": "La démo suit un vrai déroulement d’appel pour votre métier : ce qu’il dit, ce qu’il recueille, quand il transfère et ce qui atterrit dans votre espace de travail.",
-      "primary": "Réserver une démo",
+      "body": "Un audit gratuit de 20 minutes suit un vrai déroulement d’appel pour votre métier : ce qu’il dit, ce qu’il recueille, quand il transfère et ce qui atterrit dans votre espace de travail.",
+      "primary": "Réserver un audit gratuit de 20 minutes",
       "secondary": "Voir tous les tarifs",
       "note": "20 minutes. Aucun accès à vos systèmes requis. La configuration et le démarrage ont lieu avant la mise en service."
     },
