@@ -2619,6 +2619,7 @@
       "events": "Historique",
       "conversation": "Messages",
       "control": "Qui répond",
+      "controlError": "Impossible de changer qui répond. Réessayez.",
       "noMessages": "Aucun message pour l'instant.",
       "inbound": "Client",
       "outbound": "Vous",
@@ -2809,7 +2810,7 @@
       "notes": "Notes",
       "submit": "Réserver",
       "saving": "Enregistrement…",
-      "error": "Impossible de réserver le rendez-vous."
+      "error": "Impossible de réserver le rendez-vous. Vérifiez votre connexion et réessayez."
     },
     "schedule": {
       "headline": "Rendez-vous",
@@ -2845,7 +2846,10 @@
       "close": "Fermer",
       "complete": "Marquer terminé",
       "saved": "Enregistré.",
+      "saving": "Enregistrement…",
       "error": "Le service de planification n’a pas pu terminer cette demande.",
+      "connectionError": "Impossible de joindre le service de planification. Vérifiez votre connexion et réessayez.",
+      "retry": "Réessayer",
       "notConfirmed": "Cette heure n’a pas été confirmée. Choisissez une autre disponibilité.",
       "hoursIntro": "Les clients ne reçoivent que des heures à l’intérieur de cet horaire.",
       "timezone": "Fuseau horaire",
@@ -3027,7 +3031,7 @@
       "skip": "Passer pour l'instant",
       "complete": "Terminer le démarrage",
       "saving": "Enregistrement…",
-      "error": "Impossible d'enregistrer le démarrage."
+      "error": "Impossible d'enregistrer le démarrage. Vérifiez votre connexion et réessayez."
     },
     "websiteLeads": {
       "headline": "Leads site web",
@@ -3067,7 +3071,21 @@
     },
     "monitoring": {
       "fallbackTitle": "Paramètres de repli",
-      "fallbackIntro": "Choisissez ce qui se passe lorsque la réceptionniste ne peut pas poursuivre l’appel. Si le calendrier est indisponible, la demande est enregistrée sans confirmer de rendez-vous."
+      "fallbackIntro": "Choisissez ce qui se passe lorsque la réceptionniste ne peut pas poursuivre l’appel. Si le calendrier est indisponible, la demande est enregistrée sans confirmer de rendez-vous.",
+      "fallbackLoading": "Chargement des paramètres de repli…",
+      "fallbackLoadError": "Impossible de charger les paramètres de repli. Vérifiez votre connexion et réessayez.",
+      "fallbackRetry": "Réessayer",
+      "fallbackAiUnavailable": "Si la réceptionniste ne peut pas se connecter",
+      "fallbackTransfer": "Transférer au numéro de l’entrepreneur",
+      "fallbackVoicemail": "Prendre un message vocal",
+      "fallbackCalendarNote": "Si le calendrier est indisponible, TradeCatch enregistre l’heure préférée sans confirmer de rendez-vous.",
+      "fallbackDatabaseNote": "Si la base de données est indisponible, TradeCatch n’indique pas à l’appelant que ses informations ont été enregistrées.",
+      "fallbackTransferFailed": "Si un transfert échoue",
+      "fallbackBackupNumber": "Numéro de secours",
+      "fallbackSave": "Enregistrer",
+      "fallbackSaving": "Enregistrement…",
+      "fallbackSaved": "Paramètres de repli enregistrés.",
+      "fallbackSaveError": "Impossible d’enregistrer les paramètres de repli. Vérifiez votre connexion et réessayez."
     },
     "security": {
       "headline": "Sécurité",
@@ -3075,7 +3093,12 @@
       "sessions": "Sessions actives",
       "revoke": "Révoquer",
       "mfa": "Activer la vérification administrateur",
-      "mfaHint": "Les administrateurs de la plateforme peuvent ajouter un second code après le lien de connexion."
+      "mfaHint": "Les administrateurs de la plateforme peuvent ajouter un second code après le lien de connexion.",
+      "revoked": "Session révoquée.",
+      "revokeError": "Impossible de révoquer cette session. Vérifiez votre connexion et réessayez.",
+      "loadError": "Impossible de charger les sessions actives. Vérifiez votre connexion et réessayez.",
+      "retry": "Réessayer",
+      "adminVerification": "Vérification administrateur"
     },
     "privacy": {
       "headline": "Paramètres de confidentialité",
@@ -3122,7 +3145,8 @@
       "name": "Nom de l’entreprise",
       "save": "Enregistrer",
       "saved": "Enregistré.",
-      "error": "Impossible d’enregistrer ce changement.",
+      "saving": "Enregistrement…",
+      "error": "Impossible d’enregistrer ce changement. Vérifiez votre connexion et réessayez.",
       "employees": "Employés",
       "password": "La connexion utilise un lien à usage unique. Les sessions actives se révoquent dans Sécurité.",
       "phoneStays": "Une demande de suspension ou de suppression laisse le routage téléphonique en place jusqu’à une transition confirmée.",
