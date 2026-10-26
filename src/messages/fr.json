@@ -1086,7 +1086,7 @@
       },
       {
         "name": "Réceptionniste",
-        "badge": "Le plus complet",
+        "badge": "Ne manque jamais un appel",
         "emphasis": "premium",
         "tagline": "On répond au téléphone",
         "outcome": "Une réception qui décroche 24/7 en français et en anglais, qualifie le travail, prend la demande de rendez-vous et transfère les appels qui ont besoin d’une personne. Starter et Growth restent en dessous.",
@@ -3093,13 +3093,13 @@
       "intro": "Les sessions, la vérification des administrateurs et les droits sont contrôlés par le serveur.",
       "sessions": "Sessions actives",
       "revoke": "Révoquer",
-      "mfa": "Activer la vérification administrateur",
-      "mfaHint": "Les administrateurs de la plateforme peuvent ajouter un second code après le lien de connexion.",
       "revoked": "Session révoquée.",
       "revokeError": "Impossible de révoquer cette session. Vérifiez votre connexion et réessayez.",
       "loadError": "Impossible de charger les sessions actives. Vérifiez votre connexion et réessayez.",
       "retry": "Réessayer",
-      "adminVerification": "Vérification administrateur"
+      "adminVerification": "Vérification administrateur",
+      "mfa": "Activer la vérification administrateur",
+      "mfaHint": "Les administrateurs de la plateforme peuvent ajouter un second code après le lien de connexion."
     },
     "privacy": {
       "headline": "Paramètres de confidentialité",
@@ -3145,8 +3145,8 @@
       "intro": "Mettez à jour l’entreprise, exportez les dossiers permis, ou demandez un changement. Fermer un compte ne débranche pas le numéro tout de suite.",
       "name": "Nom de l’entreprise",
       "save": "Enregistrer",
-      "saved": "Enregistré.",
       "saving": "Enregistrement…",
+      "saved": "Enregistré.",
       "error": "Impossible d’enregistrer ce changement. Vérifiez votre connexion et réessayez.",
       "employees": "Employés",
       "password": "La connexion utilise un lien à usage unique. Les sessions actives se révoquent dans Sécurité.",

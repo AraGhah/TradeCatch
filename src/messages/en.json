@@ -1086,7 +1086,7 @@
       },
       {
         "name": "Receptionist",
-        "badge": "Most advanced",
+        "badge": "Never misses a call",
         "emphasis": "premium",
         "tagline": "The line gets answered",
         "outcome": "A front desk that picks up 24/7 in French and English, qualifies the job, takes the appointment request and transfers the calls that need a person. Starter and Growth stay on underneath.",
@@ -3093,13 +3093,13 @@
       "intro": "Sessions, administrator verification, and access checks are enforced on the server.",
       "sessions": "Active sessions",
       "revoke": "Revoke",
-      "mfa": "Turn on administrator verification",
-      "mfaHint": "Platform administrators can add a second code after the sign-in link.",
       "revoked": "Session revoked.",
       "revokeError": "Could not revoke that session. Check your connection and try again.",
       "loadError": "Could not load active sessions. Check your connection and try again.",
       "retry": "Retry",
-      "adminVerification": "Administrator verification"
+      "adminVerification": "Administrator verification",
+      "mfa": "Turn on administrator verification",
+      "mfaHint": "Platform administrators can add a second code after the sign-in link."
     },
     "privacy": {
       "headline": "Privacy settings",
@@ -3145,8 +3145,8 @@
       "intro": "Update the business, export permitted records, or request a change. Closing an account does not disconnect the phone number immediately.",
       "name": "Business name",
       "save": "Save",
-      "saved": "Saved.",
       "saving": "Saving…",
+      "saved": "Saved.",
       "error": "Could not save that change. Check your connection and try again.",
       "employees": "Employees",
       "password": "Sign-in uses a one-time link. Active sessions can be revoked from Security.",
