@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { CTAButton, type AnchorHref } from "@/components/CTAButton";
 
 export type PricingOutcomeGroup = {
@@ -485,24 +485,23 @@ function DetailAccordion({ title, body }: { title: string; body: string }) {
           <span className="absolute top-0 left-1/2 h-full w-px -translate-x-1/2 bg-navy" />
         </span>
       </button>
-      <AnimatePresence initial={false}>
-        {open ? (
-          <motion.div
-            id={panelId}
-            role="region"
-            aria-labelledby={buttonId}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.28, ease }}
-            className="overflow-hidden"
-          >
-            <p className="max-w-[42em] pb-5 text-[15.5px] leading-[1.65] text-muted">
-              {body}
-            </p>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {/* Always mounted (never conditionally rendered) so the answer text is
+          present in the server-rendered HTML for crawlers and no-JS clients,
+          not only after a visitor clicks to expand it. Visibility is purely
+          a CSS/motion height animation on top of that. */}
+      <motion.div
+        id={panelId}
+        role="region"
+        aria-labelledby={buttonId}
+        initial={false}
+        animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+        transition={{ duration: 0.28, ease }}
+        className="overflow-hidden"
+      >
+        <p className="max-w-[42em] pb-5 text-[15.5px] leading-[1.65] text-muted">
+          {body}
+        </p>
+      </motion.div>
     </div>
   );
 }
