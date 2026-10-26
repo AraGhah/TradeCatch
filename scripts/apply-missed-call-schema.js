@@ -161,6 +161,11 @@ async function main() {
       ["src", "product", "gmail", "schema.sql"],
       "022_gmail_sync_columns",
     );
+    await applyFile(
+      client,
+      ["src", "product", "saas", "plan-tiers.sql"],
+      "029_plan_tier_receptionist",
+    );
   } finally {
     await client.end();
   }
