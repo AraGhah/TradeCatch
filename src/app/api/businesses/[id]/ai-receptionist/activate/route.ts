@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ownerToggleActivation } from "@/product/receptionist/profile-service";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { getSaasStore } from "@/product/saas/runtime";
-import { ensureMissedCallReady } from "@/product/missed-call/runtime";
+import { getMissedCallReadStore } from "@/product/missed-call/runtime";
 import {
   authorizeBusinessMemberOrAdmin,
   loadClientForOrg,
@@ -31,10 +31,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     {
       profiles: runtime.profileStore,
       getOrganization: (orgId) => saas.getOrganization(orgId),
-      getClient: async (clientId) => {
-        const { store } = await ensureMissedCallReady();
-        return store.getClient(clientId);
-      },
+      getClient: (clientId) => getMissedCallReadStore().getClient(clientId),
       getOrgPhone: async (orgId) => {
         const org = await saas.getOrganization(orgId);
         return org?.phoneE164;
