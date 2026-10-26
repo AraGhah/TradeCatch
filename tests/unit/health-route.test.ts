@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { Pool } from "pg";
 import { GET } from "../../src/app/api/health/route";
 import { closePgPool } from "../../src/product/missed-call/postgres-store";
+import { resetReceptionistRuntimeForTests } from "../../src/product/receptionist/runtime";
 
 const MANAGED_ENV_KEYS = [
   "NODE_ENV",
@@ -130,11 +131,13 @@ function healthRequest(token?: string): NextRequest {
 beforeEach(() => {
   clearManagedEnvironment();
   configureValidProductionEnvironment();
+  resetReceptionistRuntimeForTests();
 });
 
 afterEach(async () => {
   Reflect.set(Pool.prototype, "query", originalPoolQuery);
   console.error = originalConsoleError;
+  resetReceptionistRuntimeForTests();
   await closePgPool();
 });
 
@@ -143,6 +146,7 @@ after(() => {
   for (const [key, value] of originalEnv) {
     if (value !== undefined) Reflect.set(process.env, key, value);
   }
+  resetReceptionistRuntimeForTests();
 });
 
 describe("health route", () => {
@@ -265,5 +269,44 @@ describe("health route", () => {
     assert.equal(body.checks.database, true);
     assert.equal(body.checks.nativeSalesCrm, false);
     assert.equal(body.checks.externalCrmWebhook.required, false);
+  });
+});
+
+describe("health route AI receptionist visibility", () => {
+  // Multi-tenant deployments never set RECEPTIONIST_ENABLED or
+  // RECEPTIONIST_CONFIG_JSON (those are only for a single founder-managed
+  // env config) — tenant businesses are configured as dashboard profiles.
+  // Readiness must still surface for ops on exactly this shape of deployment.
+  it("surfaces receptionist readiness for ops without a founder env config", async () => {
+    const queryCalls = installSuccessfulProbeStub();
+
+    const response = await GET(healthRequest("health-ops-secret"));
+    const body = (await response.json()) as DetailedHealthBody & {
+      receptionist?: { profiles: number; brain: string; durable: boolean; error?: string };
+    };
+
+    assert.equal(queryCalls() > 0, true);
+    assert.ok(body.receptionist, "receptionist readiness is present for authorized ops requests");
+    assert.equal(body.receptionist!.durable, true);
+    assert.equal(body.receptionist!.error, undefined);
+  });
+
+  it("reports the exact boot failure when the receptionist runtime cannot start in production", async () => {
+    installSuccessfulProbeStub();
+    delete process.env.MISSED_CALL_DURABLE_STORE;
+
+    const response = await GET(healthRequest("health-ops-secret"));
+    const body = (await response.json()) as DetailedHealthBody & {
+      receptionist?: { profiles: number; brain: string; durable: boolean; error?: string };
+    };
+
+    assert.ok(body.receptionist?.error, "readiness reports why the runtime failed to boot");
+    assert.match(body.receptionist!.error!, /Refusing in-memory call sessions in production/);
+  });
+
+  it("never includes receptionist details on the unauthenticated liveness response", async () => {
+    const response = await GET(healthRequest());
+    const body = (await response.json()) as Record<string, unknown>;
+    assert.equal("receptionist" in body, false);
   });
 });
