@@ -67,6 +67,8 @@ export function AccountManagement({
   const [requests, setRequests] = useState(initialRequests);
   const [requesting, setRequesting] = useState(false);
   const [requestError, setRequestError] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   const roleLabel: Record<MemberRole, string> = {
     owner: t("roleOwner"),
@@ -77,21 +79,33 @@ export function AccountManagement({
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    const response = await fetch(
-      `/api/businesses/${organizationId}/account/profile`,
-      {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          name,
-          phoneE164: phone.trim(),
-          city,
-          serviceArea,
-          industry,
-        }),
-      },
-    );
-    setMessage(response.ok ? t("saved") : t("error"));
+    if (saving) return;
+    setSaving(true);
+    setSaveError(false);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `/api/businesses/${organizationId}/account/profile`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            name,
+            phoneE164: phone.trim(),
+            city,
+            serviceArea,
+            industry,
+          }),
+        },
+      );
+      setSaveError(!response.ok);
+      setMessage(response.ok ? t("saved") : t("error"));
+    } catch {
+      setSaveError(true);
+      setMessage(t("error"));
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function request(kind: AccountRequest["kind"]) {
@@ -257,9 +271,11 @@ export function AccountManagement({
         </label>
         <button
           type="submit"
-          className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white"
+          disabled={saving}
+          aria-busy={saving}
+          className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
         >
-          {t("save")}
+          {saving ? t("saving") : t("save")}
         </button>
       </form>
 
@@ -379,7 +395,7 @@ export function AccountManagement({
       </Link>
       {message ? (
         <p
-          role={exportError || requestError ? "alert" : "status"}
+          role={exportError || requestError || saveError ? "alert" : "status"}
           aria-live="polite"
           className="text-sm text-navy"
         >

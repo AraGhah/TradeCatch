@@ -27,6 +27,7 @@ export function OnboardingWizard({
   const [busy, setBusy] = useState(false);
 
   async function saveNotify() {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -45,12 +46,15 @@ export function OnboardingWizard({
         return;
       }
       setStep(isGrowth ? 1 : 2);
+    } catch {
+      setError(t("onboarding.error"));
     } finally {
       setBusy(false);
     }
   }
 
   async function saveReviewUrl() {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -73,12 +77,15 @@ export function OnboardingWizard({
         return;
       }
       setStep(2);
+    } catch {
+      setError(t("onboarding.error"));
     } finally {
       setBusy(false);
     }
   }
 
   async function complete() {
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -98,6 +105,8 @@ export function OnboardingWizard({
       }
       setStep(3);
       router.refresh();
+    } catch {
+      setError(t("onboarding.error"));
     } finally {
       setBusy(false);
     }
