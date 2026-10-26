@@ -43,22 +43,30 @@ export function AppointmentDesk({
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [message, setMessage] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState(false);
   const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const load = useCallback(
     () =>
       fetch(`/api/businesses/${organizationId}/appointments`)
-        .then(async (response) => ({
-          response,
-          data: (await response.json()) as {
-            appointments?: Appointment[];
-            technicians?: Technician[];
-          },
-        }))
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Appointments unavailable");
+          return {
+            response,
+            data: (await response.json()) as {
+              appointments?: Appointment[];
+              technicians?: Technician[];
+            },
+          };
+        })
         .then(({ data }) => {
           setRows(data.appointments ?? []);
           setTechnicians(data.technicians ?? []);
-        }),
+          setLoadError(false);
+        })
+        .catch(() => setLoadError(true)),
     [organizationId],
   );
 
@@ -68,7 +76,8 @@ export function AppointmentDesk({
       .then((res) => res.json())
       .then((data) =>
         setServices((data as { services?: Service[] }).services ?? []),
-      );
+      )
+      .catch(() => setServices([]));
   }, [load, organizationId]);
 
   useEffect(() => {
@@ -76,7 +85,8 @@ export function AppointmentDesk({
     if (serviceId) params.set("serviceId", serviceId);
     void fetch(`/api/businesses/${organizationId}/availability?${params}`)
       .then((res) => res.json())
-      .then((data) => setSlots((data as { slots?: Slot[] }).slots ?? []));
+      .then((data) => setSlots((data as { slots?: Slot[] }).slots ?? []))
+      .catch(() => setSlots([]));
   }, [organizationId, serviceId]);
 
   const [now, setNow] = useState(() => Date.now());
@@ -132,49 +142,98 @@ export function AppointmentDesk({
   };
 
   async function book() {
+    if (busy) return;
+    setBusy(true);
     setMessage(null);
-    const res = await fetch(`/api/businesses/${organizationId}/appointments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        serviceId: serviceId || undefined,
-        startAt: slot,
-        customerName: name,
-        customerPhoneE164: phone || undefined,
-        serviceAddress: address || undefined,
-      }),
-    });
-    const data = (await res.json()) as { confirmed?: boolean; error?: string };
-    setMessage(data.confirmed ? t("saved") : data.error || t("notConfirmed"));
-    await load();
+    setMessageError(false);
+    try {
+      const res = await fetch(
+        `/api/businesses/${organizationId}/appointments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            serviceId: serviceId || undefined,
+            startAt: slot,
+            customerName: name,
+            customerPhoneE164: phone || undefined,
+            serviceAddress: address || undefined,
+          }),
+        },
+      );
+      const data = (await res.json()) as {
+        confirmed?: boolean;
+        error?: string;
+      };
+      setMessageError(!data.confirmed);
+      setMessage(data.confirmed ? t("saved") : data.error || t("notConfirmed"));
+      if (data.confirmed) {
+        setServiceId("");
+        setSlot("");
+        setName("");
+        setPhone("");
+        setAddress("");
+      }
+      await load();
+    } catch {
+      setMessageError(true);
+      setMessage(t("error"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function act(path: "reschedule" | "cancel" | "complete") {
-    if (!selected) return;
+    if (!selected || busy) return;
+    setBusy(true);
     setMessage(null);
-    const url =
-      path === "complete"
-        ? `/api/businesses/${organizationId}/appointments/${selected.id}`
-        : `/api/businesses/${organizationId}/appointments/${selected.id}/${path}`;
-    const res = await fetch(url, {
-      method: path === "complete" ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(
+    setMessageError(false);
+    try {
+      const url =
         path === "complete"
-          ? { status: "completed" }
-          : path === "cancel"
-            ? { reason }
-            : { startAt: slot },
-      ),
-    });
-    const data = (await res.json()) as { ok?: boolean; error?: string };
-    setMessage(data.ok ? t("saved") : data.error || t("error"));
-    setSelected(null);
-    await load();
+          ? `/api/businesses/${organizationId}/appointments/${selected.id}`
+          : `/api/businesses/${organizationId}/appointments/${selected.id}/${path}`;
+      const res = await fetch(url, {
+        method: path === "complete" ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          path === "complete"
+            ? { status: "completed" }
+            : path === "cancel"
+              ? { reason }
+              : { startAt: slot },
+        ),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      setMessageError(!data.ok);
+      setMessage(data.ok ? t("saved") : data.error || t("error"));
+      setSelected(null);
+      await load();
+    } catch {
+      setMessageError(true);
+      setMessage(t("error"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <div className="flex flex-col gap-6">
+      {loadError ? (
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <p>{t("connectionError")}</p>
+          <button
+            type="button"
+            className="mt-1 font-semibold underline"
+            onClick={() => void load()}
+          >
+            {t("retry")}
+          </button>
+        </div>
+      ) : null}
       <div className="grid gap-3 sm:grid-cols-3">
         {[
           [t("today"), counts.today],
@@ -329,7 +388,8 @@ export function AppointmentDesk({
         />
         <button
           type="submit"
-          className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white sm:col-span-2"
+          disabled={busy}
+          className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white sm:col-span-2 disabled:opacity-50"
         >
           {t("book")}
         </button>
@@ -345,15 +405,17 @@ export function AppointmentDesk({
           <div className="mt-3 flex flex-wrap gap-2">
             <button
               type="button"
+              disabled={busy}
               onClick={() => void act("reschedule")}
-              className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold"
+              className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
             >
               {t("reschedule")}
             </button>
             <button
               type="button"
+              disabled={busy}
               onClick={() => void act("complete")}
-              className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold"
+              className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
             >
               {t("complete")}
             </button>
@@ -365,22 +427,31 @@ export function AppointmentDesk({
             />
             <button
               type="button"
+              disabled={busy}
               onClick={() => void act("cancel")}
-              className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-semibold text-white"
+              className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
             >
               {t("cancel")}
             </button>
             <button
               type="button"
+              disabled={busy}
               onClick={() => setSelected(null)}
-              className="text-sm text-navy/60"
+              className="text-sm text-navy/60 disabled:opacity-50"
             >
               {t("close")}
             </button>
           </div>
         </section>
       ) : null}
-      {message ? <p className="text-sm text-navy">{message}</p> : null}
+      {message ? (
+        <p
+          role={messageError ? "alert" : "status"}
+          className="text-sm text-navy"
+        >
+          {message}
+        </p>
+      ) : null}
     </div>
   );
 }

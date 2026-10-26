@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS tc_stripe_subscriptions (
   subscription_id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL REFERENCES tc_stripe_customers(organization_id) ON DELETE CASCADE,
   status TEXT NOT NULL,
-  plan TEXT NOT NULL CHECK (plan IN ('starter', 'growth')),
+  plan TEXT NOT NULL CHECK (plan IN ('starter', 'growth', 'receptionist')),
   cancel_at_period_end BOOLEAN NOT NULL,
   current_period_end TIMESTAMPTZ,
   latest_invoice_id TEXT,

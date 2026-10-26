@@ -1,6 +1,7 @@
 "use strict";
 const { Client } = require("pg");
 const { readFileSync } = require("node:fs");
+const { execFileSync } = require("node:child_process");
 
 async function main() {
   if (process.env.GITHUB_ACTIONS !== "true")
@@ -17,7 +18,12 @@ async function main() {
   const client = new Client({ connectionString: url.href });
   await client.connect();
   try {
-    for (const name of ["tc002_staging", "tc004_staging", "tc006_staging"]) {
+    for (const name of [
+      "tc002_staging",
+      "tc004_staging",
+      "tc006_staging",
+      "account_export_staging",
+    ]) {
       const found = await client.query(
         "SELECT 1 FROM pg_database WHERE datname=$1",
         [name],
@@ -42,6 +48,11 @@ async function main() {
   } finally {
     await gmail.end();
   }
+  url.pathname = "/account_export_staging";
+  execFileSync(process.execPath, ["scripts/apply-missed-call-schema.js"], {
+    env: { ...process.env, DATABASE_URL: url.href },
+    stdio: "inherit",
+  });
 }
 main().catch((error) => {
   console.error(error.message);

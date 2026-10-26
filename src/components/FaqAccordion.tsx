@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -52,24 +52,21 @@ export function FaqAccordion({
                 +
               </motion.span>
             </button>
-            <AnimatePresence initial={false}>
-              {isOpen ? (
-                <motion.div
-                  id={panelId}
-                  role="region"
-                  aria-labelledby={buttonId}
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease }}
-                  className="overflow-hidden"
-                >
-                  <p className="pb-6 text-[15px] leading-[1.65] text-muted">
-                    {item.a}
-                  </p>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+            {/* Always mounted so crawlers and no-JS clients get the answer
+                text from the server-rendered HTML, not only after a click. */}
+            <motion.div
+              id={panelId}
+              role="region"
+              aria-labelledby={buttonId}
+              initial={false}
+              animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
+              transition={{ duration: 0.3, ease }}
+              className="overflow-hidden"
+            >
+              <p className="pb-6 text-[15px] leading-[1.65] text-muted">
+                {item.a}
+              </p>
+            </motion.div>
           </div>
         );
       })}

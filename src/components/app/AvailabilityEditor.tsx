@@ -22,23 +22,75 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
   const t = useTranslations("app.schedule");
   const [rules, setRules] = useState<Rules | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  function fetchRules() {
+    return fetch(`/api/businesses/${organizationId}/availability`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Availability unavailable");
+        return res.json();
+      })
+      .then((data) => {
+        setRules((data as { rules?: Rules }).rules ?? null);
+        setLoadError(false);
+      })
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false));
+  }
+
+  function retry() {
+    setLoading(true);
+    setLoadError(false);
+    void fetchRules();
+  }
 
   useEffect(() => {
-    void fetch(`/api/businesses/${organizationId}/availability`)
-      .then((res) => res.json())
-      .then((data) => setRules((data as { rules?: Rules }).rules ?? null));
+    void fetchRules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
-  if (!rules) return null;
+  if (loadError) {
+    return (
+      <div role="alert" className="max-w-xl text-sm text-red-700">
+        <p>{t("connectionError")}</p>
+        <button
+          type="button"
+          className="mt-1 font-semibold underline"
+          onClick={retry}
+        >
+          {t("retry")}
+        </button>
+      </div>
+    );
+  }
+
+  if (loading || !rules) return <p role="status">{t("calendarLoading")}</p>;
 
   async function save() {
-    if (!rules) return;
-    const res = await fetch(`/api/businesses/${organizationId}/availability`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rules),
-    });
-    setMessage(res.ok ? t("saved") : t("error"));
+    if (!rules || busy) return;
+    setBusy(true);
+    setMessage(null);
+    setMessageError(false);
+    try {
+      const res = await fetch(
+        `/api/businesses/${organizationId}/availability`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rules),
+        },
+      );
+      setMessageError(!res.ok);
+      setMessage(res.ok ? t("saved") : t("error"));
+    } catch {
+      setMessageError(true);
+      setMessage(t("error"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -118,8 +170,18 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
           className="mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5"
         />
       </label>
-      <button type="submit" className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white">{t("save")}</button>
-      {message ? <p className="text-sm">{message}</p> : null}
+      <button
+        type="submit"
+        disabled={busy}
+        className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+      >
+        {busy ? t("saving") : t("save")}
+      </button>
+      {message ? (
+        <p role={messageError ? "alert" : "status"} className="text-sm">
+          {message}
+        </p>
+      ) : null}
     </form>
   );
 }

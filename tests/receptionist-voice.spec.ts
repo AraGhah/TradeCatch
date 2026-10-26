@@ -236,7 +236,7 @@ test.describe("receptionist demo: speak with your voice", () => {
     await expect(section.getByText("The call has ended.")).toBeVisible();
     // The finished call ends with a clear next step.
     await expect(
-      section.getByRole("link", { name: "Book a demo" }),
+      section.getByRole("link", { name: "Book a free 20-minute audit" }),
     ).toHaveAttribute("href", /\/book-audit\?plan=receptionist$/);
     await expect.poll(() => spoken(page)).toContain("9-1-1");
     await expect(section.locator("dl")).toContainText("Emergency");

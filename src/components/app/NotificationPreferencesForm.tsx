@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { z } from "zod";
 import { DEFAULT_CHANNELS } from "@/product/notifications/templates";
 import type { PreferenceCategory } from "@/product/notifications/types";
 import {
@@ -25,6 +26,20 @@ type Prefs = {
   scope: "all" | "assigned";
 };
 
+const preferencesSchema = z.object({
+  categories: z.record(
+    z.enum(KEYS as [PreferenceCategory, ...PreferenceCategory[]]),
+    z.object({ inApp: z.boolean(), email: z.boolean(), sms: z.boolean() }),
+  ),
+  quietStart: z.string(),
+  quietEnd: z.string(),
+  quietEnabled: z.boolean(),
+  language: z.enum(["en", "fr"]),
+  timezone: z.string().optional(),
+  dailySummary: z.boolean(),
+  scope: z.enum(["all", "assigned"]),
+});
+
 export function NotificationPreferencesForm({
   organizationId,
 }: {
@@ -33,22 +48,57 @@ export function NotificationPreferencesForm({
   const t = useTranslations("app.alerts");
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [load, setLoad] = useState({ organizationId, status: "loading" });
+  const [retry, setRetry] = useState(0);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    void fetch(`/api/businesses/${organizationId}/notification-preferences`)
-      .then((res) => res.json())
-      .then((data) =>
-        setPrefs((data as { preferences?: Prefs }).preferences ?? null),
-      );
-  }, [organizationId]);
+    const controller = new AbortController();
+    void fetch(`/api/businesses/${organizationId}/notification-preferences`, {
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Preferences unavailable");
+        const data = await res.json();
+        const { preferences } = z
+          .object({ preferences: preferencesSchema })
+          .parse(data);
+        if (!controller.signal.aborted) {
+          setPrefs(preferences);
+          setLoad({ organizationId, status: "ready" });
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setLoad({ organizationId, status: "error" });
+      });
+    return () => controller.abort();
+  }, [organizationId, retry]);
 
-  if (!prefs) return null;
+  if (load.organizationId !== organizationId || load.status === "loading")
+    return <p role="status">{t("preferencesLoading")}</p>;
+  if (load.status === "error" || !prefs)
+    return (
+      <div role="alert">
+        <p>{t("preferencesLoadError")}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setLoad({ organizationId, status: "loading" });
+            setRetry((value) => value + 1);
+          }}
+        >
+          {t("retry")}
+        </button>
+      </div>
+    );
 
   return (
     <form
       className="flex max-w-2xl flex-col gap-3"
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
+        if (saving) return;
         if (!quietHours.safeParse(prefs).success) {
           setMessage(t("invalidQuietHours"));
           return;
@@ -57,14 +107,23 @@ export function NotificationPreferencesForm({
           setMessage(t("invalidTimezone"));
           return;
         }
-        void fetch(
-          `/api/businesses/${organizationId}/notification-preferences`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(prefs),
-          },
-        ).then((res) => setMessage(res.ok ? t("saved") : t("error")));
+        setSaving(true);
+        setMessage(null);
+        try {
+          const res = await fetch(
+            `/api/businesses/${organizationId}/notification-preferences`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(prefs),
+            },
+          );
+          setMessage(res.ok ? t("saved") : t("error"));
+        } catch {
+          setMessage(t("error"));
+        } finally {
+          setSaving(false);
+        }
       }}
     >
       {KEYS.map((key) => (
@@ -210,6 +269,7 @@ export function NotificationPreferencesForm({
       </label>
       <button
         type="submit"
+        disabled={saving}
         className="w-fit rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white"
       >
         {t("save")}

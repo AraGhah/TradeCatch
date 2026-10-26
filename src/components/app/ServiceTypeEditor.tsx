@@ -28,17 +28,23 @@ export function ServiceTypeEditor({
     eligibleTechnicianIds: [],
   });
   const [message, setMessage] = useState<string | null>(null);
+  const [messageError, setMessageError] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const load = useCallback(
     () =>
       fetch(`/api/businesses/${organizationId}/service-types`)
-        .then(async (response) => ({
-          response,
-          data: (await response.json()) as { services?: Service[] },
-        }))
+        .then(async (response) => {
+          if (!response.ok) throw new Error("Service types unavailable");
+          return {
+            response,
+            data: (await response.json()) as { services?: Service[] },
+          };
+        })
         .then(({ data }) => {
           setServices(data.services ?? []);
-        }),
+        })
+        .catch(() => setServices([])),
     [organizationId],
   );
 
@@ -47,13 +53,28 @@ export function ServiceTypeEditor({
   }, [load]);
 
   async function save(service: Service) {
-    const res = await fetch(`/api/businesses/${organizationId}/service-types`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(service),
-    });
-    setMessage(res.ok ? t("saved") : t("error"));
-    await load();
+    if (busy) return;
+    setBusy(true);
+    setMessage(null);
+    setMessageError(false);
+    try {
+      const res = await fetch(
+        `/api/businesses/${organizationId}/service-types`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(service),
+        },
+      );
+      setMessageError(!res.ok);
+      setMessage(res.ok ? t("saved") : t("error"));
+      await load();
+    } catch {
+      setMessageError(true);
+      setMessage(t("error"));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -81,7 +102,8 @@ export function ServiceTypeEditor({
             </span>
             <button
               type="button"
-              className="text-navy/70"
+              disabled={busy}
+              className="text-navy/70 disabled:opacity-50"
               onClick={() => void save({ ...service, active: !service.active })}
             >
               {service.active ? t("active") : t("canceled")}
@@ -136,12 +158,17 @@ export function ServiceTypeEditor({
         </select>
         <button
           type="submit"
-          className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white"
+          disabled={busy}
+          className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {t("save")}
+          {busy ? t("saving") : t("save")}
         </button>
       </form>
-      {message ? <p className="text-sm">{message}</p> : null}
+      {message ? (
+        <p role={messageError ? "alert" : "status"} className="text-sm">
+          {message}
+        </p>
+      ) : null}
     </div>
   );
 }

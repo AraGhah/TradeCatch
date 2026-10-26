@@ -557,8 +557,8 @@
       ]
     },
     "pilot": {
-      "badge": "Pilot programme",
-      "headline": "Founding pilot openings. Limited seats per service area.",
+      "badge": "Pilot program",
+      "headline": "Now accepting founding pilot contractors.",
       "body": "Join as a founding contractor while TradeCatch is taking a small number of pilots. You get the published rate, direct founder access, implementation around how your crew already works, priority on fitting features, and that rate locked for 12 months. No fabricated case-study promises. Results are tracked with you after launch.",
       "pointsLabel": "What the pilot includes",
       "points": [
@@ -566,8 +566,7 @@
         "Direct access to the founder during setup and tuning",
         "Custom implementation around your real call and quote volume",
         "Priority on feature requests that fit your trade",
-        "Pricing locked for 12 months",
-        "Limited spots per service area"
+        "Pricing locked for 12 months"
       ],
       "guarantee": "Launch guarantee: if the agreed system isn't live because of a delay on our side, your first management month is credited.",
       "cta": "Book a free 20-minute audit",
@@ -1007,7 +1006,8 @@
             "title": "Capture",
             "items": [
               "Text-back on missed calls",
-              "Reply to website inquiries"
+              "Reply to website inquiries",
+              "Bilingual SMS, in French or English"
             ]
           },
           {
@@ -1075,6 +1075,7 @@
           {
             "title": "Grow",
             "items": [
+              "Advanced follow-up sequences",
               "Google review-request texts"
             ]
           }
@@ -1085,7 +1086,7 @@
       },
       {
         "name": "Receptionist",
-        "badge": "Most advanced",
+        "badge": "Never misses a call",
         "emphasis": "premium",
         "tagline": "The line gets answered",
         "outcome": "A front desk that picks up 24/7 in French and English, qualifies the job, takes the appointment request and transfers the calls that need a person. Starter and Growth stay on underneath.",
@@ -1097,7 +1098,7 @@
         "reassuranceLine": "Setup covers the knowledge base, greeting, appointment-request rules, transfer targets and emergency routing. Onboarding is required before the line goes live.",
         "usageNote": "Calling usage is subject to plan allowance and applicable usage limits, agreed in writing at the demo.",
         "includesPrevious": "Everything in Starter and everything in Growth, plus:",
-        "ctaLabel": "Book a demo",
+        "ctaLabel": "Book a free 20-minute audit",
         "secondaryCtaLabel": "Talk to it yourself",
         "groups": [
           {
@@ -2060,9 +2061,9 @@
       "Founder-monitored launch and monthly management"
     ],
     "pricingTitle": "Published prices",
-    "pricing": "Starter: $799.99 setup, then $349.99/month. Growth: $1,499.99 setup, then $749.99/month, and it includes Starter. Receptionist: $1,999.99 setup, then $999.99/month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
-    "pilotTitle": "Pilot programme",
-    "pilot": "Limited founding seats per area: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
+    "pricing": "Starter: $799.99 setup, then $349.99 / month. Growth: $1,499.99 setup, then $749.99 / month, and it includes Starter. Receptionist: $1,999.99 setup, then $999.99 / month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
+    "pilotTitle": "Pilot program",
+    "pilot": "Now accepting founding contractors: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
     "ctaTitle": "Next step",
     "cta": "Book a free 20-minute audit. No system access required.",
     "contact": "438·993·6997 · tradecatch.ca",
@@ -2619,6 +2620,7 @@
       "events": "History",
       "conversation": "Messages",
       "control": "Who handles replies",
+      "controlError": "Could not change who handles replies. Try again.",
       "noMessages": "No messages yet.",
       "inbound": "Customer",
       "outbound": "You",
@@ -2809,7 +2811,7 @@
       "notes": "Notes",
       "submit": "Book",
       "saving": "Saving…",
-      "error": "Could not book appointment."
+      "error": "Could not book appointment. Check your connection and try again."
     },
     "schedule": {
       "headline": "Appointments",
@@ -2845,7 +2847,10 @@
       "close": "Close",
       "complete": "Mark completed",
       "saved": "Saved.",
+      "saving": "Saving…",
       "error": "The scheduling service could not complete that request.",
+      "connectionError": "Could not reach the scheduling service. Check your connection and try again.",
+      "retry": "Retry",
       "notConfirmed": "That time was not confirmed. Choose another opening.",
       "hoursIntro": "Customers can only be offered times inside these hours.",
       "timezone": "Timezone",
@@ -2923,6 +2928,8 @@
       "search": "Search",
       "empty": "No notifications match these filters.",
       "loading": "Loading notifications…",
+      "preferencesLoading": "Loading notification preferences…",
+      "preferencesLoadError": "Could not load notification preferences. Please try again.",
       "loadError": "Could not load notifications. Please try again.",
       "stale": "Showing previously loaded notifications; they may not match the current filters.",
       "retry": "Retry",
@@ -3025,7 +3032,7 @@
       "skip": "Skip for now",
       "complete": "Complete onboarding",
       "saving": "Saving…",
-      "error": "Could not save onboarding."
+      "error": "Could not save onboarding. Check your connection and try again."
     },
     "websiteLeads": {
       "headline": "Website leads",
@@ -3065,13 +3072,32 @@
     },
     "monitoring": {
       "fallbackTitle": "Fallback settings",
-      "fallbackIntro": "Choose what happens when the Receptionist cannot continue a call. A calendar failure still collects the request and does not confirm an appointment."
+      "fallbackIntro": "Choose what happens when the Receptionist cannot continue a call. A calendar failure still collects the request and does not confirm an appointment.",
+      "fallbackLoading": "Loading fallback settings…",
+      "fallbackLoadError": "Could not load fallback settings. Check your connection and try again.",
+      "fallbackRetry": "Retry",
+      "fallbackAiUnavailable": "If the Receptionist cannot connect",
+      "fallbackTransfer": "Transfer to the contractor number",
+      "fallbackVoicemail": "Take a voicemail",
+      "fallbackCalendarNote": "If the calendar is unavailable, TradeCatch collects the preferred time and does not confirm an appointment.",
+      "fallbackDatabaseNote": "If the database is unavailable, TradeCatch does not tell the caller that their information was saved.",
+      "fallbackTransferFailed": "If a transfer fails",
+      "fallbackBackupNumber": "Backup number",
+      "fallbackSave": "Save",
+      "fallbackSaving": "Saving…",
+      "fallbackSaved": "Fallback settings saved.",
+      "fallbackSaveError": "Could not save fallback settings. Check your connection and try again."
     },
     "security": {
       "headline": "Security",
       "intro": "Sessions, administrator verification, and access checks are enforced on the server.",
       "sessions": "Active sessions",
       "revoke": "Revoke",
+      "revoked": "Session revoked.",
+      "revokeError": "Could not revoke that session. Check your connection and try again.",
+      "loadError": "Could not load active sessions. Check your connection and try again.",
+      "retry": "Retry",
+      "adminVerification": "Administrator verification",
       "mfa": "Turn on administrator verification",
       "mfaHint": "Platform administrators can add a second code after the sign-in link."
     },
@@ -3119,8 +3145,9 @@
       "intro": "Update the business, export permitted records, or request a change. Closing an account does not disconnect the phone number immediately.",
       "name": "Business name",
       "save": "Save",
+      "saving": "Saving…",
       "saved": "Saved.",
-      "error": "Could not save that change.",
+      "error": "Could not save that change. Check your connection and try again.",
       "employees": "Employees",
       "password": "Sign-in uses a one-time link. Active sessions can be revoked from Security.",
       "phoneStays": "A suspension or deletion request leaves telephone routing in place until a transition is confirmed.",
@@ -3534,8 +3561,8 @@
       },
       "afterCall": {
         "title": "That was the demo. Now picture it on your own number.",
-        "body": "Every call like this reaches your workspace as a summary you can act on. In a 20-minute demo we walk through the call flow for your trade: what it says, what it collects, and when it hands off to a person.",
-        "cta": "Book a demo"
+        "body": "Every call like this reaches your workspace as a summary you can act on. In a free 20-minute audit we walk through the call flow for your trade: what it says, what it collects, and when it hands off to a person.",
+        "cta": "Book a free 20-minute audit"
       }
     },
     "eyebrow": "Receptionist · $1,999.99 setup, then $999.99/month",
@@ -3553,7 +3580,7 @@
     "planSetup": "$1,999.99 setup",
     "planCadence": "$999.99 / month",
     "planNote": "Calling usage is subject to plan allowance and applicable usage limits.",
-    "ctaPrimary": "Book a demo",
+    "ctaPrimary": "Book a free 20-minute audit",
     "ctaDemo": "Watch the receptionist demo",
     "ctaSecondary": "See full pricing",
     "flow": {
@@ -3969,8 +3996,8 @@
     },
     "finalCta": {
       "title": "See it answer a call before you decide.",
-      "body": "A demo walks through a real call flow for your trade: what it says, what it collects, when it transfers, and what lands in your workspace.",
-      "primary": "Book a demo",
+      "body": "A free 20-minute audit walks through a real call flow for your trade: what it says, what it collects, when it transfers, and what lands in your workspace.",
+      "primary": "Book a free 20-minute audit",
       "secondary": "See full pricing",
       "note": "20 minutes. No system access required. Configuration and onboarding happen before the line goes live."
     },

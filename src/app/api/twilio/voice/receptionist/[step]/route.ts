@@ -107,8 +107,11 @@ export async function POST(
     runtime = getReceptionistRuntime();
     // Pick up tenant profile edits / activations (cached ~30 s per instance).
     await runtime.refresh();
-  } catch (err) {
-    console.error("[receptionist] runtime unavailable", err);
+  } catch (bootErr) {
+    // Never return this text to the caller — it is internal ops telemetry only.
+    const bootErrorDetail =
+      bootErr instanceof Error ? bootErr.message : String(bootErr);
+    console.error("[receptionist] runtime unavailable", bootErrorDetail);
     // No runtime means no business can be identified, so owners cannot be told
     // individually; this opens a platform incident and alerts the operators.
     void deferTask(async () => {
@@ -119,6 +122,7 @@ export async function POST(
         errorCode: "RECEPTIONIST_RUNTIME_UNAVAILABLE",
         severity: "critical",
         retryable: true,
+        detail: bootErrorDetail,
       });
     });
     if (step === "status") return emptyTwiml();

@@ -320,12 +320,13 @@ export async function GET(request: NextRequest) {
             ready: moduleAReady,
             status: moduleAReady ? "ready" : "not_ready",
           },
-          // Informational only — never affects `ok`. Omitted unless the AI
-          // receptionist is configured, so it never boots for other deployments.
-          ...(process.env.RECEPTIONIST_CONFIG_JSON?.trim() ||
-          process.env.RECEPTIONIST_ENABLED === "1"
-            ? { receptionist: receptionistReadiness() }
-            : {}),
+          // Informational only — never affects `ok`. Always included when
+          // details are authorized: tenant profiles (the multi-tenant path)
+          // boot the receptionist without ever setting RECEPTIONIST_ENABLED
+          // or RECEPTIONIST_CONFIG_JSON, so gating on those env vars hid
+          // runtime-boot failures (e.g. a missing durable-store flag) from
+          // ops on exactly the deployments that need to see them.
+          receptionist: receptionistReadiness(),
         }
       : {}),
   };
