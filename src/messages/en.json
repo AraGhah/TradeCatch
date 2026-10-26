@@ -1097,7 +1097,7 @@
         "reassuranceLine": "Setup covers the knowledge base, greeting, appointment-request rules, transfer targets and emergency routing. Onboarding is required before the line goes live.",
         "usageNote": "Calling usage is subject to plan allowance and applicable usage limits, agreed in writing at the demo.",
         "includesPrevious": "Everything in Starter and everything in Growth, plus:",
-        "ctaLabel": "Book a demo",
+        "ctaLabel": "Book a free 20-minute audit",
         "secondaryCtaLabel": "Talk to it yourself",
         "groups": [
           {
@@ -3560,8 +3560,8 @@
       },
       "afterCall": {
         "title": "That was the demo. Now picture it on your own number.",
-        "body": "Every call like this reaches your workspace as a summary you can act on. In a 20-minute demo we walk through the call flow for your trade: what it says, what it collects, and when it hands off to a person.",
-        "cta": "Book a demo"
+        "body": "Every call like this reaches your workspace as a summary you can act on. In a free 20-minute audit we walk through the call flow for your trade: what it says, what it collects, and when it hands off to a person.",
+        "cta": "Book a free 20-minute audit"
       }
     },
     "eyebrow": "Receptionist · $1,999.99 setup, then $999.99/month",
@@ -3579,7 +3579,7 @@
     "planSetup": "$1,999.99 setup",
     "planCadence": "$999.99 / month",
     "planNote": "Calling usage is subject to plan allowance and applicable usage limits.",
-    "ctaPrimary": "Book a demo",
+    "ctaPrimary": "Book a free 20-minute audit",
     "ctaDemo": "Watch the receptionist demo",
     "ctaSecondary": "See full pricing",
     "flow": {
@@ -3995,8 +3995,8 @@
     },
     "finalCta": {
       "title": "See it answer a call before you decide.",
-      "body": "A demo walks through a real call flow for your trade: what it says, what it collects, when it transfers, and what lands in your workspace.",
-      "primary": "Book a demo",
+      "body": "A free 20-minute audit walks through a real call flow for your trade: what it says, what it collects, when it transfers, and what lands in your workspace.",
+      "primary": "Book a free 20-minute audit",
       "secondary": "See full pricing",
       "note": "20 minutes. No system access required. Configuration and onboarding happen before the line goes live."
     },
