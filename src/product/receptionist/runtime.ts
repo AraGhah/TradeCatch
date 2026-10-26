@@ -135,12 +135,14 @@ async function leadSyncDeps(store: ReceptionistStore): Promise<LeadSyncDeps> {
 
 async function reloadProfiles(state: RuntimeState): Promise<void> {
   try {
-    const [{ getSaasStore }, { ensureMissedCallReady }] = await Promise.all([
+    const [{ getSaasStore }, { getMissedCallReadStore }] = await Promise.all([
       import("@/product/saas/runtime"),
       import("@/product/missed-call/runtime"),
     ]);
     const saas = getSaasStore();
-    const { store: missedCall } = await ensureMissedCallReady();
+    // Read-only: tenant profiles are DB-backed and must not require an
+    // env-provisioned missed-call client (production legitimately has none).
+    const missedCall = getMissedCallReadStore();
     state.profileConfigs = await loadProfileConfigs({
       profiles: state.profileStore,
       getOrganization: (id) => saas.getOrganization(id),
