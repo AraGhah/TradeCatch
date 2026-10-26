@@ -21,8 +21,14 @@ test.describe("accessibility smoke", () => {
   }) => {
     await page.goto("/book-audit");
 
+    // The first field autofocuses once React hydrates and attaches its
+    // onChange listener; waiting for focus avoids filling the input before
+    // hydration completes, which would leave Continue stuck disabled.
+    const firstName = page.locator("#audit-field-firstName");
+    await expect(firstName).toBeFocused();
+
     // Wizard starts on name + company text steps; trade is the first choice.
-    await page.locator("#audit-field-firstName").fill("Jean");
+    await firstName.fill("Jean");
     await page.locator("#audit-field-lastName").fill("Dupont");
     await page.getByRole("button", { name: /continue/i }).click();
 
