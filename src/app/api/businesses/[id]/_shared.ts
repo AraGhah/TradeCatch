@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
-import { ensureMissedCallReady } from "@/product/missed-call/runtime";
+import { getMissedCallReadStore } from "@/product/missed-call/runtime";
 import type { ClientAccount } from "@/product/missed-call/types";
 import { getSaasStore } from "@/product/saas/runtime";
 import { requireTenantContext } from "@/product/saas/tenant";
@@ -90,9 +90,10 @@ export async function loadClientForOrg(
   org: Organization,
 ): Promise<ClientAccount | null> {
   if (!org.missedCallClientId) return null;
+  // Read-only: activation must not require an env-provisioned missed-call
+  // client — production legitimately has none in the multi-tenant path.
   try {
-    const { store } = await ensureMissedCallReady();
-    return await store.getClient(org.missedCallClientId);
+    return await getMissedCallReadStore().getClient(org.missedCallClientId);
   } catch {
     return null;
   }
