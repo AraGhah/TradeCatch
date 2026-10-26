@@ -1006,7 +1006,8 @@
             "title": "Capturer",
             "items": [
               "Texto de retour sur les appels manqués",
-              "Réponse aux demandes du site"
+              "Réponse aux demandes du site",
+              "Textos bilingues, en français ou en anglais"
             ]
           },
           {
@@ -1074,6 +1075,7 @@
           {
             "title": "Grandir",
             "items": [
+              "Relances de suivi avancées",
               "Textos de demande d’avis Google"
             ]
           }
