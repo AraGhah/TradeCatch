@@ -77,7 +77,7 @@ function idOf(value: z.infer<typeof reference>) {
 function configuration(livemode: boolean) {
   const key = stripeSecretKey(livemode);
   const prices = new Map<string, PlanId>();
-  for (const plan of ["starter", "growth"] as const) {
+  for (const plan of ["starter", "growth", "receptionist"] as const) {
     const name = `STRIPE_${livemode ? "" : "TEST_"}PRICE_${plan.toUpperCase()}`;
     for (const price of (process.env[name] || "")
       .split(",")
@@ -277,9 +277,11 @@ export async function synchronizeStripeBilling(event: BillingEvent) {
     const entitled = mapped.filter(
       (s) => s.status === "active" || s.status === "trialing",
     );
-    const plan = entitled.some((s) => s.plan === "growth")
-      ? "growth"
-      : "starter";
+    const plan = entitled.some((s) => s.plan === "receptionist")
+      ? "receptionist"
+      : entitled.some((s) => s.plan === "growth")
+        ? "growth"
+        : "starter";
     const status = entitled.length
       ? "active"
       : mapped.some(

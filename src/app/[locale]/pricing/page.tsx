@@ -52,9 +52,24 @@ export default async function PricingPage({
       : tier,
   );
   const principles = t.raw("principles") as string[];
+  const details = t.raw("details") as { title: string; body: string }[];
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: details.map((detail) => ({
+      "@type": "Question",
+      name: detail.title,
+      acceptedAnswer: { "@type": "Answer", text: detail.body },
+    })),
+  };
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       <section className="relative overflow-hidden bg-navy pt-[clamp(80px,9vw,110px)] pb-[clamp(88px,10vw,120px)]">
         <div
           aria-hidden
@@ -128,7 +143,7 @@ export default async function PricingPage({
               customCta: t("customCta"),
               includesTitle: t("includesTitle"),
               includesItems: t.raw("includesItems") as string[],
-              details: t.raw("details") as { title: string; body: string }[],
+              details,
             }}
           />
         </Container>

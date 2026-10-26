@@ -52,6 +52,8 @@ export function BusinessFeaturesForm({
         return;
       }
       setMessage(t("featuresSaved"));
+    } catch {
+      setError(t("featuresSaveFailed"));
     } finally {
       setSaving(false);
     }

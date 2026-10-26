@@ -18,6 +18,7 @@ export function BookingForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
@@ -55,6 +56,8 @@ export function BookingForm() {
       setCustomerPhone("");
       setNotes("");
       router.refresh();
+    } catch {
+      setError(t("bookings.error"));
     } finally {
       setBusy(false);
     }

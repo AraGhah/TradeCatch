@@ -3,7 +3,7 @@
  * Do not scatter `if (plan === "growth")` through random components.
  */
 
-export const PLAN_IDS = ["starter", "growth"] as const;
+export const PLAN_IDS = ["starter", "growth", "receptionist"] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 
 export const FEATURE_IDS = [
@@ -19,6 +19,7 @@ export const FEATURE_IDS = [
   "REVIEW_AUTOMATION",
   "ADVANCED_ANALYTICS",
   "EMAIL_AUTOMATION",
+  "AI_RECEPTIONIST_VOICE",
 ] as const;
 
 export type FeatureId = (typeof FEATURE_IDS)[number];
@@ -41,9 +42,16 @@ const GROWTH_EXTRA = [
   "EMAIL_AUTOMATION",
 ] as const satisfies readonly FeatureId[];
 
+// Receptionist is a superset of Growth: bilingual 24/7 AI call answering,
+// phone appointment requests, human transfer and emergency routing.
+const RECEPTIONIST_EXTRA = [
+  "AI_RECEPTIONIST_VOICE",
+] as const satisfies readonly FeatureId[];
+
 export const PLAN_FEATURES: Record<PlanId, readonly FeatureId[]> = {
   starter: STARTER_FEATURES,
   growth: [...STARTER_FEATURES, ...GROWTH_EXTRA],
+  receptionist: [...STARTER_FEATURES, ...GROWTH_EXTRA, ...RECEPTIONIST_EXTRA],
 };
 
 export function isPlanId(value: string): value is PlanId {
@@ -126,5 +134,9 @@ export const FEATURE_LABELS: Record<FeatureId, { en: string; fr: string }> = {
   EMAIL_AUTOMATION: {
     en: "Email follow-up automation",
     fr: "Relances automatiques par courriel",
+  },
+  AI_RECEPTIONIST_VOICE: {
+    en: "Bilingual 24/7 AI call answering",
+    fr: "Réception d'appels IA bilingue 24/7",
   },
 };

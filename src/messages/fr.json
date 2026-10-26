@@ -558,7 +558,7 @@
     },
     "pilot": {
       "badge": "Programme pilote",
-      "headline": "Places pilotes fondatrices. Limitées par zone de service.",
+      "headline": "Nous acceptons maintenant des entrepreneurs pilotes fondateurs.",
       "body": "Joignez-vous comme entrepreneur fondateur pendant que TradeCatch accepte un petit nombre de pilotes. Le tarif affiché, l’accès direct au fondateur, une mise en place selon votre façon de travailler, la priorité sur les fonctions pertinentes, et ce tarif verrouillé 12 mois. Pas de promesses de case study inventées. Les résultats se suivent avec vous après le lancement.",
       "pointsLabel": "Ce que le pilote inclut",
       "points": [
@@ -566,8 +566,7 @@
         "Accès direct au fondateur pendant l'installation et le peaufinage",
         "Mise en place sur mesure selon votre volume réel d'appels et de soumissions",
         "Priorité sur les demandes de fonctions adaptées à votre métier",
-        "Prix verrouillé pour 12 mois",
-        "Places limitées par zone de service"
+        "Prix verrouillé pour 12 mois"
       ],
       "guarantee": "Garantie de lancement : si le système convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité.",
       "cta": "Réserver un audit gratuit de 20 minutes",
@@ -1007,7 +1006,8 @@
             "title": "Capturer",
             "items": [
               "Texto de retour sur les appels manqués",
-              "Réponse aux demandes du site"
+              "Réponse aux demandes du site",
+              "Textos bilingues, en français ou en anglais"
             ]
           },
           {
@@ -1075,6 +1075,7 @@
           {
             "title": "Grandir",
             "items": [
+              "Relances de suivi avancées",
               "Textos de demande d’avis Google"
             ]
           }
@@ -1085,7 +1086,7 @@
       },
       {
         "name": "Réceptionniste",
-        "badge": "Le plus complet",
+        "badge": "Ne manque jamais un appel",
         "emphasis": "premium",
         "tagline": "On répond au téléphone",
         "outcome": "Une réception qui décroche 24/7 en français et en anglais, qualifie le travail, prend la demande de rendez-vous et transfère les appels qui ont besoin d’une personne. Starter et Growth restent en dessous.",
@@ -1097,7 +1098,7 @@
         "reassuranceLine": "La mise en place couvre la base de connaissances, l’accueil, les règles de demande de rendez-vous, les cibles de transfert et l’acheminement des urgences. L’intégration est obligatoire avant la mise en ligne de la ligne.",
         "usageNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables, convenues par écrit lors de la démo.",
         "includesPrevious": "Tout Starter et tout Growth, plus :",
-        "ctaLabel": "Réserver une démo",
+        "ctaLabel": "Réserver un audit gratuit de 20 minutes",
         "secondaryCtaLabel": "Parlez-lui vous-même",
         "groups": [
           {
@@ -2060,9 +2061,9 @@
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
     "pricingTitle": "Prix affichés",
-    "pricing": "Starter : 799,99 $ d’installation, puis 349,99 $/mois. Growth : 1 499,99 $ d’installation, puis 749,99 $/mois, et inclut Starter. Réceptionniste : 1 999,99 $ d’installation, puis 999,99 $/mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
+    "pricing": "Starter : 799,99 $ d’installation, puis 349,99 $ / mois. Growth : 1 499,99 $ d’installation, puis 749,99 $ / mois, et inclut Starter. Réceptionniste : 1 999,99 $ d’installation, puis 999,99 $ / mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
     "pilotTitle": "Programme pilote",
-    "pilot": "Places fondatrices limitées par zone : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
+    "pilot": "Nous acceptons maintenant des entrepreneurs fondateurs : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
     "cta": "Réservez un audit gratuit de 20 minutes. Aucun accès système requis.",
     "contact": "438·993·6997 · tradecatch.ca",
@@ -2619,6 +2620,7 @@
       "events": "Historique",
       "conversation": "Messages",
       "control": "Qui répond",
+      "controlError": "Impossible de changer qui répond. Réessayez.",
       "noMessages": "Aucun message pour l'instant.",
       "inbound": "Client",
       "outbound": "Vous",
@@ -2809,7 +2811,7 @@
       "notes": "Notes",
       "submit": "Réserver",
       "saving": "Enregistrement…",
-      "error": "Impossible de réserver le rendez-vous."
+      "error": "Impossible de réserver le rendez-vous. Vérifiez votre connexion et réessayez."
     },
     "schedule": {
       "headline": "Rendez-vous",
@@ -2845,7 +2847,10 @@
       "close": "Fermer",
       "complete": "Marquer terminé",
       "saved": "Enregistré.",
+      "saving": "Enregistrement…",
       "error": "Le service de planification n’a pas pu terminer cette demande.",
+      "connectionError": "Impossible de joindre le service de planification. Vérifiez votre connexion et réessayez.",
+      "retry": "Réessayer",
       "notConfirmed": "Cette heure n’a pas été confirmée. Choisissez une autre disponibilité.",
       "hoursIntro": "Les clients ne reçoivent que des heures à l’intérieur de cet horaire.",
       "timezone": "Fuseau horaire",
@@ -2923,6 +2928,8 @@
       "search": "Chercher",
       "empty": "Aucune alerte pour ces filtres.",
       "loading": "Chargement des alertes…",
+      "preferencesLoading": "Chargement des préférences de notification…",
+      "preferencesLoadError": "Impossible de charger les préférences de notification. Réessayez.",
       "loadError": "Impossible de charger les alertes. Veuillez réessayer.",
       "stale": "Les alertes précédemment chargées sont affichées; elles peuvent ne pas correspondre aux filtres actuels.",
       "retry": "Réessayer",
@@ -3025,7 +3032,7 @@
       "skip": "Passer pour l'instant",
       "complete": "Terminer le démarrage",
       "saving": "Enregistrement…",
-      "error": "Impossible d'enregistrer le démarrage."
+      "error": "Impossible d'enregistrer le démarrage. Vérifiez votre connexion et réessayez."
     },
     "websiteLeads": {
       "headline": "Leads site web",
@@ -3065,13 +3072,32 @@
     },
     "monitoring": {
       "fallbackTitle": "Paramètres de repli",
-      "fallbackIntro": "Choisissez ce qui se passe lorsque la réceptionniste ne peut pas poursuivre l’appel. Si le calendrier est indisponible, la demande est enregistrée sans confirmer de rendez-vous."
+      "fallbackIntro": "Choisissez ce qui se passe lorsque la réceptionniste ne peut pas poursuivre l’appel. Si le calendrier est indisponible, la demande est enregistrée sans confirmer de rendez-vous.",
+      "fallbackLoading": "Chargement des paramètres de repli…",
+      "fallbackLoadError": "Impossible de charger les paramètres de repli. Vérifiez votre connexion et réessayez.",
+      "fallbackRetry": "Réessayer",
+      "fallbackAiUnavailable": "Si la réceptionniste ne peut pas se connecter",
+      "fallbackTransfer": "Transférer au numéro de l’entrepreneur",
+      "fallbackVoicemail": "Prendre un message vocal",
+      "fallbackCalendarNote": "Si le calendrier est indisponible, TradeCatch enregistre l’heure préférée sans confirmer de rendez-vous.",
+      "fallbackDatabaseNote": "Si la base de données est indisponible, TradeCatch n’indique pas à l’appelant que ses informations ont été enregistrées.",
+      "fallbackTransferFailed": "Si un transfert échoue",
+      "fallbackBackupNumber": "Numéro de secours",
+      "fallbackSave": "Enregistrer",
+      "fallbackSaving": "Enregistrement…",
+      "fallbackSaved": "Paramètres de repli enregistrés.",
+      "fallbackSaveError": "Impossible d’enregistrer les paramètres de repli. Vérifiez votre connexion et réessayez."
     },
     "security": {
       "headline": "Sécurité",
       "intro": "Les sessions, la vérification des administrateurs et les droits sont contrôlés par le serveur.",
       "sessions": "Sessions actives",
       "revoke": "Révoquer",
+      "revoked": "Session révoquée.",
+      "revokeError": "Impossible de révoquer cette session. Vérifiez votre connexion et réessayez.",
+      "loadError": "Impossible de charger les sessions actives. Vérifiez votre connexion et réessayez.",
+      "retry": "Réessayer",
+      "adminVerification": "Vérification administrateur",
       "mfa": "Activer la vérification administrateur",
       "mfaHint": "Les administrateurs de la plateforme peuvent ajouter un second code après le lien de connexion."
     },
@@ -3119,8 +3145,9 @@
       "intro": "Mettez à jour l’entreprise, exportez les dossiers permis, ou demandez un changement. Fermer un compte ne débranche pas le numéro tout de suite.",
       "name": "Nom de l’entreprise",
       "save": "Enregistrer",
+      "saving": "Enregistrement…",
       "saved": "Enregistré.",
-      "error": "Impossible d’enregistrer ce changement.",
+      "error": "Impossible d’enregistrer ce changement. Vérifiez votre connexion et réessayez.",
       "employees": "Employés",
       "password": "La connexion utilise un lien à usage unique. Les sessions actives se révoquent dans Sécurité.",
       "phoneStays": "Une demande de suspension ou de suppression laisse le routage téléphonique en place jusqu’à une transition confirmée.",
@@ -3534,11 +3561,11 @@
       },
       "afterCall": {
         "title": "C’était la démo. Imaginez-la maintenant sur votre propre numéro.",
-        "body": "Chaque appel de ce genre arrive dans votre espace sous forme de résumé prêt à l’action. Pendant une démo de 20 minutes, nous parcourons le déroulement d’appel pour votre métier : ce qu’elle dit, ce qu’elle recueille et quand elle passe la main à une personne.",
-        "cta": "Réserver une démo"
+        "body": "Chaque appel de ce genre arrive dans votre espace sous forme de résumé prêt à l’action. Pendant un audit gratuit de 20 minutes, nous parcourons le déroulement d’appel pour votre métier : ce qu’elle dit, ce qu’elle recueille et quand elle passe la main à une personne.",
+        "cta": "Réserver un audit gratuit de 20 minutes"
       }
     },
-    "eyebrow": "Réceptionniste · 1 999,99 $ d’installation, puis 999,99 $/mois",
+    "eyebrow": "Réceptionniste · 1 999,99 $ d’installation, puis 999,99 $ / mois",
     "headline": "Une réception bilingue qui répond à chaque appel, jour et nuit.",
     "intro": "Réceptionniste répond aux appels entrants en français ou en anglais, comprend ce que l’appelant veut, prend la demande de rendez-vous et transfère les appels qui ont besoin d’une personne. La récupération des appels manqués, la relance des soumissions et l’espace Growth restent en dessous.",
     "metaDescription": "Réceptionniste pour entrepreneurs du Québec : réponse téléphonique bilingue 24/7, qualification des appels, demandes de rendez-vous par téléphone, transfert d’appel et acheminement des urgences, en plus de la récupération des appels manqués et de la relance des soumissions TradeCatch.",
@@ -3553,7 +3580,7 @@
     "planSetup": "1 999,99 $ installation",
     "planCadence": "999,99 $ / mois",
     "planNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables.",
-    "ctaPrimary": "Réserver une démo",
+    "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
     "ctaDemo": "Voir la démo de la réceptionniste",
     "ctaSecondary": "Voir tous les tarifs",
     "flow": {
@@ -3969,8 +3996,8 @@
     },
     "finalCta": {
       "title": "Écoutez-le répondre à un appel avant de décider.",
-      "body": "La démo suit un vrai déroulement d’appel pour votre métier : ce qu’il dit, ce qu’il recueille, quand il transfère et ce qui atterrit dans votre espace de travail.",
-      "primary": "Réserver une démo",
+      "body": "Un audit gratuit de 20 minutes suit un vrai déroulement d’appel pour votre métier : ce qu’il dit, ce qu’il recueille, quand il transfère et ce qui atterrit dans votre espace de travail.",
+      "primary": "Réserver un audit gratuit de 20 minutes",
       "secondary": "Voir tous les tarifs",
       "note": "20 minutes. Aucun accès à vos systèmes requis. La configuration et le démarrage ont lieu avant la mise en service."
     },
