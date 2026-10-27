@@ -269,6 +269,7 @@ export type LeadRecord = {
   serviceAddress?: string;
   issueDescription?: string;
   photoUrls: string[];
+  preferredContactTime?: string;
   serviceArea?: ServiceAreaVerdict;
   serviceAreaFlagged: boolean;
   urgency?: UrgencyClassification;
