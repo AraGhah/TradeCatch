@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { NextRequest } from "next/server";
-import middleware from "../../src/middleware";
+import proxy from "../../src/proxy";
 import { AUTH_COOKIE_NAMES, carriesAuthCookie, isCrossSiteMutation } from "../../src/lib/csrf";
 import { ADMIN_JWT_COOKIE } from "../../src/product/saas/auth/admin-jwt";
 import { SESSION_COOKIE } from "../../src/product/saas/auth/session-token";
@@ -64,9 +64,9 @@ describe("csrf guard decisions", () => {
   });
 });
 
-describe("csrf guard in the middleware", () => {
+describe("csrf guard in the proxy", () => {
   const api = (method: string, headers: Record<string, string>, path = "/api/app/api-keys") =>
-    middleware(new NextRequest(`https://app.tradecatch.test${path}`, { method, headers }));
+    proxy(new NextRequest(`https://app.tradecatch.test${path}`, { method, headers }));
 
   it("answers 403 to a cross-site mutation and says why", async () => {
     const res = await api("POST", { cookie: SESSION, "sec-fetch-site": "cross-site" });

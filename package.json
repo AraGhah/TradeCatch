@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "next build",
-    "dev": "next dev",
+    "dev": "next dev --port 3001",
     "start": "next start",
     "lint": "eslint --max-warnings=0",
     "postinstall": "node scripts/patch-opennext-windows.js && node scripts/patch-opennext-preview-props.js",

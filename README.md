@@ -10,7 +10,9 @@ cp .env.example .env.local   # fill in values as needed for local email/Turnstil
 npm run dev
 ```
 
-Open <http://localhost:3000> (or whatever port is printed — it auto-picks the next free one).
+Open <http://localhost:3001>. TradeCatch uses a dedicated development port so
+other local apps can keep using port 3000. Run `npm run dev` once; if TradeCatch
+is already running, use that server or stop it with Ctrl+C before starting another.
 
 ## Before every deploy
 
