@@ -153,3 +153,40 @@ export async function verifyLiveDemo(input: {
         return result;
       }
 
+      const smsSent = workflow.events.find(
+        (e) => e.type === "sms_sent" && e.detail === "opening_fr",
+      );
+      if (!smsSent) {
+        const result: LiveDemoVerification = {
+          ok: false,
+          reason: "sms_not_sent_yet",
+        };
+        log({
+          tool: "find_recent_workflow_by_caller",
+          input,
+          output: result,
+          durationMs: Date.now() - started,
+        });
+        return result;
+      }
+
+      const latencyMs = Math.max(
+        0,
+        new Date(smsSent.at).getTime() - new Date(workflow.createdAt).getTime(),
+      );
+      const result: LiveDemoVerification = {
+        ok: true,
+        workflowId: workflow.id,
+        smsSentAt: smsSent.at,
+        latencyMs,
+      };
+      log({
+        tool: "find_recent_workflow_by_caller",
+        input,
+        output: result,
+        durationMs: Date.now() - started,
+      });
+      return result;
+    },
+  );
+}
