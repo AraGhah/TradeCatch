@@ -64,3 +64,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (parsed.data.action === "prepare") {
+    const result = await prepareLiveDemo({
+      organizationId: parsed.data.organizationId ?? null,
+      demoClientId: parsed.data.demoClientId,
+      consent: parsed.data.consent,
+    });
+    return NextResponse.json(result, { status: result.ok ? 200 : 403 });
+  }
+
+  const result = await verifyLiveDemo({
+    organizationId: parsed.data.organizationId ?? null,
+    demoClientId: parsed.data.demoClientId,
+    callerE164: parsed.data.callerE164,
+    withinMs: parsed.data.withinMs,
+  });
+  return NextResponse.json(result, { status: result.ok ? 200 : 404 });
+}
