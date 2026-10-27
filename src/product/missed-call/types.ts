@@ -171,6 +171,9 @@ export type CollectedLead = {
   serviceAddress?: string;
   issueDescription?: string;
   photoUrls: string[];
+  /** Free-text best time to be reached back, e.g. "after 5pm". Collected
+   * only when the client enables the `preferred_time` approved question. */
+  preferredContactTime?: string;
 };
 
 export type WorkflowEvent = {
