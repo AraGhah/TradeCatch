@@ -22,9 +22,8 @@ function acceptedHosts(request: NextRequest): Array<string | null> {
 /**
  * Staging HTTP Basic gate (when configured) + locale routing.
  *
- * Next.js 16 deprecates this filename in favour of `proxy.ts`, but Proxy is
- * Node-runtime only. OpenNext Cloudflare 1.20 does not support Node middleware,
- * so the documented Edge-runtime compatibility path is intentionally retained.
+ * Next.js Proxy uses the default Node.js runtime. The installed OpenNext
+ * adapter bundles this entry point for Cloudflare Workers.
  *
  * Do NOT set a per-request CSP nonce here. On OpenNext Cloudflare, HTML/assets
  * can be served with a different nonce than the middleware CSP header; with
@@ -36,7 +35,7 @@ function acceptedHosts(request: NextRequest): Array<string | null> {
  * rewrites as 307 self-redirects (vercel/next.js#94745). Prefer the default
  * hostname (`localhost`) or omit `--hostname`.
  */
-export default function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
   const stagingGate = enforceStagingAccess(request);
   if (stagingGate) return stagingGate;
 
@@ -55,10 +54,6 @@ export default function middleware(request: NextRequest) {
 
   return handleI18n(request);
 }
-
-// Legacy middleware requires this value in Next 16; `edge` is rejected during
-// build even though both names refer to the Edge runtime.
-export const runtime = "experimental-edge";
 
 export const config = {
   // Include API paths so the staging Basic gate can protect them. Locale
