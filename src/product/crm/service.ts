@@ -344,6 +344,10 @@ export function createCrmService(store: CrmStore) {
       return store.getLead(organizationId, id);
     },
 
+    findCustomerByPhone(organizationId: string, phoneE164: string) {
+      return store.findCustomerByPhone(organizationId, phoneE164);
+    },
+
     async updateLead(
       organizationId: string,
       id: string,

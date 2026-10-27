@@ -1,0 +1,179 @@
+name: Bug triage to PR
+
+# Triggered by labeling a GitHub issue "bug", or manually for testing.
+# The agent runs in an isolated environment with no production credentials —
+# only the seeded CI test database below — and never has permission to push
+# to main, edit this workflow, or edit migrations/schema. Mechanical
+# guardrails in scripts/bug-triage-guardrails.js enforce that even if the
+# agent's own instructions are ignored or misread.
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to triage"
+        required: true
+
+concurrency:
+  group: bug-triage-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  triage:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.label.name == 'bug'
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: bug_triage_seed
+          POSTGRES_PASSWORD: bug-triage-ci-not-for-production
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue_number }}
+      BRANCH_NAME: bug-triage/issue-${{ github.event.issue.number || inputs.issue_number }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Count prior attempts
+        id: attempts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comments = await github.paginate(
+              github.rest.issues.listComments,
+              { owner: context.repo.owner, repo: context.repo.repo, issue_number: Number(process.env.ISSUE_NUMBER) },
+            );
+            const attempts = comments.filter((c) => c.body?.startsWith("[bug-triage]")).length;
+            core.setOutput("count", String(attempts));
+
+      - name: Stop after 3 failed attempts
+        if: fromJSON(steps.attempts.outputs.count) >= 3
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.ISSUE_NUMBER),
+              body: "[bug-triage] Stopping after 3 attempts. This needs a human — the agent could not produce a passing fix with a new regression test. See prior [bug-triage] comments on this issue for what it tried.",
+            });
+            core.setFailed("Reached the 3-attempt limit.");
+
+      - name: Create isolated branch
+        if: fromJSON(steps.attempts.outputs.count) < 3
+        run: |
+          git checkout -b "$BRANCH_NAME"
+
+      # Reproduce-fix-verify runs as a Claude Code session, never with
+      # production credentials: DATABASE_URL below points only at the
+      # ephemeral, seeded CI Postgres service above.
+      #
+      # NOTE: confirm `anthropics/claude-code-action`'s current input names
+      # (anthropic_api_key / prompt / allowed_tools, etc. as of the pinned
+      # version below) before the first real run — action APIs change.
+      - name: Reproduce, fix, and verify (Claude Code)
+        if: fromJSON(steps.attempts.outputs.count) < 3
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          allowed_tools: "Bash,Edit,Read,Write,Grep,Glob"
+          disallowed_tools: "WebFetch,WebSearch"
+          max_turns: 60
+          prompt: |
+            You are triaging GitHub issue #${{ env.ISSUE_NUMBER }} in this repository.
+
+            Rules, in order:
+            1. Read the issue, the stack trace/error if present, and recent commits
+               touching the files it points to.
+            2. Write a FAILING test that reproduces the bug BEFORE touching any
+               fix. Run it and confirm it fails for the reason described in the
+               issue, not for an unrelated reason.
+            3. Fix the bug with the smallest change that makes the test pass.
+            4. Run the full test suite (`npm run test:unit`), linter
+               (`npm run lint`), and typechecker (`npx tsc --noEmit`). All must pass.
+            5. Never touch `.github/workflows/**`, any `migrations/` folder, any
+               `schema.sql`, `package.json`, or `package-lock.json` — those need a
+               human. If the fix seems to require one of those, stop and explain
+               why in your summary instead of editing it.
+            6. Never push to `main` — you are already on an isolated branch
+               ($BRANCH_NAME). Commit your work there.
+            7. End with a short summary: root cause, what changed, what you could
+               not verify.
+        env:
+          DATABASE_URL: postgresql://postgres:bug-triage-ci-not-for-production@127.0.0.1:5432/bug_triage_seed
+
+      - name: Check guardrails
+        if: fromJSON(steps.attempts.outputs.count) < 3
+        id: guardrails
+        run: node scripts/bug-triage-guardrails.js origin/main "$BRANCH_NAME"
+
+      - name: Record failed attempt
+        if: failure() && fromJSON(steps.attempts.outputs.count) < 3
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.ISSUE_NUMBER),
+              body: "[bug-triage] Attempt failed a guardrail or verification step (see the workflow run for detail). Will retry up to 3 total attempts before asking for a human.",
+            });
+
+      - name: Push branch
+        if: success() && fromJSON(steps.attempts.outputs.count) < 3
+        run: git push origin "$BRANCH_NAME"
+
+      - name: Open pull request
+        if: success() && fromJSON(steps.attempts.outputs.count) < 3
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const needsReview = "${{ steps.guardrails.outputs.needs_human_review }}" === "true";
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Fix #${process.env.ISSUE_NUMBER}`,
+              head: process.env.BRANCH_NAME,
+              base: "main",
+              draft: needsReview,
+              body: [
+                `Closes #${process.env.ISSUE_NUMBER}.`,
+                "",
+                needsReview
+                  ? "**Needs human review** — this diff is larger than the agent's normal threshold; left as a draft."
+                  : "Includes a failing-test-first regression test; full suite, lint, and typecheck passed in CI.",
+              ].join("\n"),
+            });
+            if (needsReview) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.data.number,
+                labels: ["needs-human-review"],
+              });
+            }
