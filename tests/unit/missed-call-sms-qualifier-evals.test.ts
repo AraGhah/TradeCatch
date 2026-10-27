@@ -47,6 +47,117 @@ async function startWorkflow() {
   };
 }
 
+/** Same as startWorkflow(), but with the opt-in `preferred_time` question
+ * enabled — the per-client toggle a contractor flips to collect it. */
+async function startWorkflowWithPreferredTime() {
+  const store = createMemoryStore();
+  const sms = createMemorySmsPort();
+  const base = demoClientAccount();
+  const client: ClientAccount = {
+    ...base,
+    approvedQuestions: base.approvedQuestions.map((q) =>
+      q.id === "preferred_time" ? { ...q, enabled: true } : q,
+    ),
+  };
+  await store.saveClient(client);
+  const fixed = wednesdayBusinessHours();
+  const engine = createMissedCallEngine({
+    store,
+    sms,
+    clock: { now: () => fixed },
+  });
+  const callerE164 = "+15145551234";
+  const start = await engine.handleCallEvent({
+    clientAccountId: client.id,
+    callerE164,
+    answered: false,
+    abandoned: false,
+    calledAt: fixed,
+  });
+  return {
+    store,
+    sms,
+    client,
+    engine,
+    workflowId: start.workflow!.id,
+    toE164: client.smsFromNumber,
+    fromE164: callerE164,
+  };
+}
+
+describe("SMS qualifier — opt-in preferred contact time", () => {
+  it("asks for, collects, and forwards the best time to call back", async () => {
+    const { store, sms, engine, workflowId, toE164, fromE164 } =
+      await startWorkflowWithPreferredTime();
+
+    await engine.handleInboundSms({ fromE164, toE164, body: "EN" });
+    await engine.handleInboundSms({
+      fromE164,
+      toE164,
+      body: "Marie Tremblay",
+    });
+    await engine.handleInboundSms({
+      fromE164,
+      toE164,
+      body: "123 Main St, Laval",
+    });
+    await engine.handleInboundSms({
+      fromE164,
+      toE164,
+      body: "Leaking kitchen sink",
+    });
+    const beforePhoto = await engine.handleInboundSms({
+      fromE164,
+      toE164,
+      body: "NON",
+    });
+    assert.match(beforePhoto.replies[0] ?? "", /best time to call you back/i);
+
+    await engine.handleInboundSms({
+      fromE164,
+      toE164,
+      body: "After 5pm",
+    });
+
+    const wf = await store.getWorkflow(workflowId);
+    assert.ok(wf);
+    assert.equal(wf.status, "awaiting_technician");
+    assert.equal(wf.collected.preferredContactTime, "After 5pm");
+
+    const techAlert = sms.sent.find((m) => m.toE164 === "+15145550199");
+    assert.ok(techAlert);
+    assert.match(techAlert.body, /Meilleur moment: After 5pm/);
+
+    const lead = await store.getLeadByWorkflowId(workflowId);
+    assert.equal(lead?.preferredContactTime, "After 5pm");
+  });
+
+  it("can be skipped like the photo question", async () => {
+    const { store, workflowId, engine, toE164, fromE164 } =
+      await startWorkflowWithPreferredTime();
+
+    await engine.handleInboundSms({ fromE164, toE164, body: "EN" });
+    await engine.handleInboundSms({ fromE164, toE164, body: "Marie Tremblay" });
+    await engine.handleInboundSms({
+      fromE164,
+      toE164,
+      body: "123 Main St, Laval",
+    });
+    await engine.handleInboundSms({
+      fromE164,
+      toE164,
+      body: "Leaking kitchen sink",
+    });
+    await engine.handleInboundSms({ fromE164, toE164, body: "NON" });
+    await engine.handleInboundSms({ fromE164, toE164, body: "SKIP" });
+
+    const wf = await store.getWorkflow(workflowId);
+    assert.ok(wf);
+    assert.equal(wf.status, "awaiting_technician");
+    assert.equal(wf.collected.preferredContactTime, undefined);
+  });
+});
+
 describe("SMS qualifier — angry customer", () => {
   it("hands off to a human instead of recording the rant as the customer's name", async () => {
     const { store, sms, client, engine, workflowId, toE164, fromE164 } =
