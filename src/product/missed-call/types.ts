@@ -90,6 +90,10 @@ export type EscalationPolicy = {
 /** Max time waiting for customer SMS answers before abandoning collection. */
 export type ClientTimeouts = {
   customerCollectionMs: number;
+  /** Hard cap on inbound customer messages per workflow so a confused or
+   * abusive caller can't loop the automated SMS conversation forever
+   * within the collection window. Defaults to 20 when unset. */
+  maxCustomerMessages?: number;
 };
 
 export type EscalationStage = "primary" | "backup" | "owner" | "exhausted";
@@ -182,6 +186,9 @@ export type MissedCallWorkflow = {
   serviceAreaFlagged?: boolean;
   urgency?: UrgencyClassification;
   humanReviewRequired?: boolean;
+  /** Inbound customer SMS count while awaiting_customer — see
+   * ClientTimeouts.maxCustomerMessages. */
+  inboundMessageCount?: number;
   assignedTechnicianId?: string;
   /** Index into escalationChainIds (or live getEscalationChain); -1 before first alert. */
   escalationIndex: number;

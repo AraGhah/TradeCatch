@@ -46,3 +46,7 @@ export function getCrmRuntime(): State {
 export function getCrmService(): CrmService {
   return getCrmRuntime().service;
 }
+
+export function resetCrmRuntimeForTests() {
+  delete globalForCrm.__tradecatchCrm;
+}

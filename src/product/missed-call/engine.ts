@@ -19,6 +19,7 @@ import {
   applyAnswer,
   customerNotifyAccepted,
   enabledQuestions,
+  isDistressSignal,
   isEnglishRequest,
   isFrenchRequest,
   isOptOut,
@@ -1206,6 +1207,39 @@ export function createMissedCallEngine(deps: {
           mediaUrls: input.mediaUrls,
           actor: "customer",
         });
+
+        // Hard cap on inbound messages so a confused or abusive caller can't
+        // loop the automated conversation forever inside the collection
+        // window (that window is time-bounded, not message-count-bounded).
+        workflow.inboundMessageCount = (workflow.inboundMessageCount ?? 0) + 1;
+        const maxMessages = client.timeouts?.maxCustomerMessages ?? 20;
+        if (workflow.inboundMessageCount > maxMessages) {
+          workflow.humanReviewRequired = true;
+          await notifyHumanReview(workflow, client, "message_cap_exceeded");
+          await deps.store.saveWorkflow(workflow);
+          return { handled: true, replies };
+        }
+
+        // An angry customer gets handed to a human instead of having the
+        // rant silently stored as the answer to whatever step they're on.
+        if (isDistressSignal(input.body)) {
+          workflow.humanReviewRequired = true;
+          await notifyHumanReview(workflow, client, "customer_distress");
+          const handoff =
+            workflow.collected.language === "en"
+              ? "I'm sorry about that — connecting you with our team right away."
+              : "Désolé pour ça — je vous mets en contact avec notre équipe tout de suite.";
+          await sendOutboundSms({
+            workflow,
+            client,
+            toE164: input.fromE164,
+            body: handoff,
+            detail: "distress_handoff",
+          });
+          replies.push(handoff);
+          await deps.store.saveWorkflow(workflow);
+          return { handled: true, replies };
+        }
 
         if (workflow.currentStep === "language") {
           if (isEnglishRequest(input.body)) {
