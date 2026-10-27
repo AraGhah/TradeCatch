@@ -41,3 +41,26 @@ const bodySchema = z.discriminatedUnion("action", [
  * record. `verify` confirms, right after the call, that the recovery SMS
  * actually went out and how fast. Never places a call itself.
  */
+export async function POST(request: NextRequest) {
+  if (!authorizeOpsRequest(request)) {
+    return unauthorizedOpsResponse();
+  }
+  const audit = logOpsAccess(request, "growth.live-demo");
+  if (audit.missingActor) {
+    return missingOpsActorResponse();
+  }
+
+  let json: unknown;
+  try {
+    json = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+  }
+  const parsed = bodySchema.safeParse(json);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid body.", issues: parsed.error.issues },
+      { status: 400 },
+    );
+  }
+
