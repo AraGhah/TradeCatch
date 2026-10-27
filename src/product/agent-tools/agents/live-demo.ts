@@ -111,3 +111,45 @@ export async function prepareLiveDemo(input: {
   );
 }
 
+export type LiveDemoVerification =
+  | { ok: true; workflowId: string; smsSentAt: string; latencyMs: number }
+  | { ok: false; reason: "no_recent_call" | "sms_not_sent_yet" };
+
+/**
+ * Step 2 — run right after the demo call. Confirms the opening recovery SMS
+ * actually went out for that caller and how long it took: the thing a
+ * presenter cannot reliably eyeball live, and exactly what the pre-shoot
+ * checklist asks to verify repeatedly before filming.
+ */
+export async function verifyLiveDemo(input: {
+  organizationId: string | null;
+  demoClientId: string;
+  callerE164: string;
+  /** Rolling lookup window; defaults to 10 minutes. */
+  withinMs?: number;
+}): Promise<LiveDemoVerification> {
+  return withAgentRun(
+    {
+      agentName: "live-demo",
+      trigger: "sales_demo_verify",
+      organizationId: input.organizationId,
+      input,
+    },
+    async (log) => {
+      const started = Date.now();
+      const workflow = await getMissedCallReadStore().findRecentWorkflowByCaller(
+        input.demoClientId,
+        input.callerE164,
+        input.withinMs ?? 10 * 60 * 1000,
+      );
+      if (!workflow) {
+        const result: LiveDemoVerification = { ok: false, reason: "no_recent_call" };
+        log({
+          tool: "find_recent_workflow_by_caller",
+          input,
+          output: result,
+          durationMs: Date.now() - started,
+        });
+        return result;
+      }
+
