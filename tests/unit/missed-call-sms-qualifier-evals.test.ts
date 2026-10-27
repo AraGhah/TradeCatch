@@ -11,6 +11,7 @@ import { createMissedCallEngine } from "../../src/product/missed-call/engine";
 import { demoClientAccount } from "../../src/product/missed-call/fixtures";
 import { createMemoryStore } from "../../src/product/missed-call/store";
 import { createMemorySmsPort } from "../../src/product/missed-call/twilio";
+import type { ClientAccount } from "../../src/product/missed-call/types";
 
 function wednesdayBusinessHours(): Date {
   return new Date("2026-07-22T18:00:00.000Z");
