@@ -283,5 +283,16 @@ export function defaultApprovedQuestions(): ApprovedQuestion[] {
         "Pouvez-vous envoyer une photo du problème? (ou répondez NON pour passer)",
       promptEn: "Can you send a photo of the issue? (or reply NO to skip)",
     },
+    {
+      // Disabled by default so existing clients' collection flow (and every
+      // test built against it) is unaffected — a contractor opts in by
+      // enabling this question in their `approvedQuestions` config.
+      id: "preferred_time",
+      enabled: false,
+      required: false,
+      promptFr:
+        "Quel est le meilleur moment pour vous rappeler? (ou répondez NON pour passer)",
+      promptEn: "What's the best time to call you back? (or reply NO to skip)",
+    },
   ];
 }
