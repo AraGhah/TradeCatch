@@ -107,6 +107,7 @@ export const clientAccountConfigSchema = z.object({
   timeouts: z
     .object({
       customerCollectionMs: z.number().positive(),
+      maxCustomerMessages: z.number().int().positive().optional(),
     })
     .optional(),
   onCallTechnicians: z.array(
