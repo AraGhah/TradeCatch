@@ -89,6 +89,7 @@ const LEAD_PATCH_FIELDS = new Set([
   "customerName",
   "serviceAddress",
   "issueDescription",
+  "preferredContactTime",
   "serviceAreaFlagged",
   "jobAccepted",
   "becameBooking",
