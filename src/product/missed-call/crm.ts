@@ -28,6 +28,7 @@ export function createLeadFromWorkflow(
     serviceAddress: workflow.collected.serviceAddress,
     issueDescription: workflow.collected.issueDescription,
     photoUrls: [...workflow.collected.photoUrls],
+    preferredContactTime: workflow.collected.preferredContactTime,
     serviceArea: workflow.serviceArea,
     serviceAreaFlagged: workflow.serviceAreaFlagged ?? false,
     urgency: workflow.urgency,
