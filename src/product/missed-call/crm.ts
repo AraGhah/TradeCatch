@@ -60,6 +60,8 @@ export function syncLeadFromWorkflow(
   lead.issueDescription =
     workflow.collected.issueDescription ?? lead.issueDescription;
   lead.photoUrls = [...workflow.collected.photoUrls];
+  lead.preferredContactTime =
+    workflow.collected.preferredContactTime ?? lead.preferredContactTime;
   lead.serviceArea = workflow.serviceArea;
   lead.serviceAreaFlagged =
     workflow.serviceAreaFlagged ?? lead.serviceAreaFlagged;
