@@ -85,6 +85,9 @@ jobs:
       - name: Quality assurance suite
         run: npm run test:qa
 
+      - name: Agent evals
+        run: npm run evals:agents
+
       - name: Audit production deps (high+)
         run: npm audit --omit=dev --audit-level=high
 
