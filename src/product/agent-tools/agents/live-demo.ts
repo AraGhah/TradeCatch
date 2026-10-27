@@ -42,3 +42,72 @@ function hasValidConsent(consent: LiveDemoConsent | null): boolean {
 }
 
 /**
+ * Step 1 — run before the demo call. Returns the number to dial and how to
+ * run it, but only once consent is on record for this prospect.
+ */
+export async function prepareLiveDemo(input: {
+  organizationId: string | null;
+  demoClientId: string;
+  consent: LiveDemoConsent | null;
+}): Promise<LiveDemoPrep> {
+  return withAgentRun(
+    {
+      agentName: "live-demo",
+      trigger: "sales_demo_prep",
+      organizationId: input.organizationId,
+      input: {
+        demoClientId: input.demoClientId,
+        hasConsent: hasValidConsent(input.consent),
+      },
+    },
+    async (log) => {
+      const started = Date.now();
+
+      if (!hasValidConsent(input.consent)) {
+        const result: LiveDemoPrep = { ok: false, reason: "consent_required" };
+        log({
+          tool: "consent_gate",
+          input: { hasConsent: false },
+          output: result,
+          durationMs: Date.now() - started,
+        });
+        return result;
+      }
+
+      const client = await getMissedCallReadStore().getClient(
+        input.demoClientId,
+      );
+      if (!client) {
+        const result: LiveDemoPrep = {
+          ok: false,
+          reason: "demo_client_not_found",
+        };
+        log({
+          tool: "get_client",
+          input: { demoClientId: input.demoClientId },
+          output: result,
+          durationMs: Date.now() - started,
+        });
+        return result;
+      }
+
+      const result: LiveDemoPrep = {
+        ok: true,
+        dialNumber: client.smsFromNumber,
+        instructions: [
+          `Call ${client.smsFromNumber} from the prospect's own phone (or hand them yours) and let it ring out — do not answer.`,
+          "The recovery text arrives on that same phone within seconds.",
+          `Consent on record: ${input.consent!.prospectName} via ${input.consent!.method} at ${input.consent!.at}.`,
+        ],
+      };
+      log({
+        tool: "get_client",
+        input: { demoClientId: input.demoClientId },
+        output: { dialNumber: result.dialNumber },
+        durationMs: Date.now() - started,
+      });
+      return result;
+    },
+  );
+}
+
