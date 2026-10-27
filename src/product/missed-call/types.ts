@@ -28,7 +28,13 @@ export type WorkflowStopReason =
   | "completed";
 
 export type CollectionStep =
-  "language" | "name" | "address" | "description" | "photo" | "done";
+  | "language"
+  | "name"
+  | "address"
+  | "description"
+  | "photo"
+  | "preferred_time"
+  | "done";
 
 export type OutcomeStatus =
   | "open"
