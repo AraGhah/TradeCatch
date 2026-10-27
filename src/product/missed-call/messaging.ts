@@ -182,6 +182,36 @@ export function validateCollectionAnswer(input: {
   return { ok: true };
 }
 
+const DISTRESS_SIGNALS = [
+  /\bridiculous\b/i,
+  /\bgarbage\b/i,
+  /\bterrible service\b/i,
+  /\bfurious\b/i,
+  /\bscam\b/i,
+  /\blawsuit\b/i,
+  /\bsue you\b/i,
+  /\bworst (service|company)\b/i,
+  /\bunacceptable\b/i,
+  /\barnaque\b/i,
+  /\bpourri\b/i,
+  /\bpoursuivre\b/i,
+  /\bhonteux\b/i,
+  /\binacceptable\b/i,
+  /\bscandaleux\b/i,
+];
+
+/**
+ * A customer who sounds angry gets handed off to a human instead of having
+ * their message silently stored as the answer to whatever question the
+ * conversation happened to be on — the rule-based FSM has no sentiment
+ * understanding otherwise, so this is a deliberate, narrow keyword list
+ * rather than a broad "sounds upset" classifier that would misfire on
+ * ordinary descriptions of a bad leak or broken furnace.
+ */
+export function isDistressSignal(body: string): boolean {
+  return DISTRESS_SIGNALS.some((pattern) => pattern.test(body));
+}
+
 export function isPhotoSkip(body: string): boolean {
   return /^(pass|skip|non|no|plus tard|later|aucune|none)$/i.test(body.trim());
 }
