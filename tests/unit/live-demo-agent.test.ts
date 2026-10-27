@@ -87,3 +87,75 @@ describe("live-demo agent — prepareLiveDemo", () => {
   });
 });
 
+describe("live-demo agent — verifyLiveDemo", () => {
+  it("reports no_recent_call when no workflow exists for that caller", async () => {
+    const result = await verifyLiveDemo({
+      organizationId: null,
+      demoClientId: "client_demo_verify_none",
+      callerE164: "+15145559999",
+    });
+    assert.deepEqual(result, { ok: false, reason: "no_recent_call" });
+  });
+
+  it("reports sms_not_sent_yet when the workflow started but the opening SMS has not gone out", async () => {
+    const store = getMissedCallReadStore();
+    const clientAccountId = "client_demo_verify_pending";
+    const callerE164 = "+15145558001";
+    await store.saveWorkflow(
+      baseWorkflow({
+        id: "wf_pending",
+        clientAccountId,
+        callerE164,
+        dedupeKey: "dedupe_pending",
+        events: [{ at: new Date().toISOString(), type: "workflow_started" }],
+      }),
+    );
+
+    const result = await verifyLiveDemo({
+      organizationId: null,
+      demoClientId: clientAccountId,
+      callerE164,
+    });
+    assert.deepEqual(result, { ok: false, reason: "sms_not_sent_yet" });
+  });
+
+  it("confirms the recovery SMS went out and reports latency", async () => {
+    const store = getMissedCallReadStore();
+    const clientAccountId = "client_demo_verify_ok";
+    const callerE164 = "+15145558002";
+    const createdAt = new Date(Date.now() - 5_000);
+    const smsSentAt = new Date(createdAt.getTime() + 2_500);
+
+    await store.saveWorkflow(
+      baseWorkflow({
+        id: "wf_ok",
+        clientAccountId,
+        callerE164,
+        dedupeKey: "dedupe_ok",
+        createdAt: createdAt.toISOString(),
+        updatedAt: smsSentAt.toISOString(),
+        events: [
+          { at: createdAt.toISOString(), type: "workflow_started" },
+          {
+            at: smsSentAt.toISOString(),
+            type: "sms_sent",
+            detail: "opening_fr",
+          },
+        ],
+      }),
+    );
+
+    const result = await verifyLiveDemo({
+      organizationId: null,
+      demoClientId: clientAccountId,
+      callerE164,
+    });
+
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.workflowId, "wf_ok");
+      assert.equal(result.smsSentAt, smsSentAt.toISOString());
+      assert.equal(result.latencyMs, 2_500);
+    }
+  });
+});
