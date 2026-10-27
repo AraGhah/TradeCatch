@@ -120,6 +120,9 @@ export function applyAnswer(
     case "photo":
       if (mediaUrls.length) next.photoUrls.push(...mediaUrls);
       break;
+    case "preferred_time":
+      next.preferredContactTime = text;
+      break;
     default:
       break;
   }
