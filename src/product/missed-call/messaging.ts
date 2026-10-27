@@ -71,6 +71,7 @@ export function nextCollectionStep(
     if (step === "address" && collected.serviceAddress) continue;
     if (step === "description" && collected.issueDescription) continue;
     if (step === "photo" && collected.photoUrls.length > 0) continue;
+    if (step === "preferred_time" && collected.preferredContactTime) continue;
     return step;
   }
   return "done";
