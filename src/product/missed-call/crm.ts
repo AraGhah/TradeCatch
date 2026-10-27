@@ -113,6 +113,7 @@ function isValidCorrectionValue(field: string, value: unknown): boolean {
     case "customerName":
     case "serviceAddress":
     case "issueDescription":
+    case "preferredContactTime":
       return typeof value === "string" && value.length <= 500;
     case "serviceAreaFlagged":
     case "jobAccepted":
