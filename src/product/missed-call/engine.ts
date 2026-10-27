@@ -1305,6 +1305,27 @@ export function createMissedCallEngine(deps: {
           return { handled: true, replies };
         }
 
+        // Any other optional step (e.g. preferred_time) can also be skipped
+        // with the same NON/NO/SKIP reply photo already accepts.
+        if (
+          step !== "photo" &&
+          question &&
+          !question.required &&
+          isPhotoSkip(input.body)
+        ) {
+          const next = nextCollectionStep(client, workflow.collected, step);
+          workflow.currentStep = next;
+          pushEvent(workflow, `${step}_skipped`, undefined, clock);
+          if (next === "done") {
+            await finalizeAndDispatch(workflow);
+            return { handled: true, replies };
+          }
+          const prompt = await sendPrompt(workflow, client.id, next);
+          if (prompt) replies.push(prompt);
+          await deps.store.saveWorkflow(workflow);
+          return { handled: true, replies };
+        }
+
         const validation = validateCollectionAnswer({
           step,
           body: input.body,

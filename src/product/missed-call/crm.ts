@@ -28,6 +28,7 @@ export function createLeadFromWorkflow(
     serviceAddress: workflow.collected.serviceAddress,
     issueDescription: workflow.collected.issueDescription,
     photoUrls: [...workflow.collected.photoUrls],
+    preferredContactTime: workflow.collected.preferredContactTime,
     serviceArea: workflow.serviceArea,
     serviceAreaFlagged: workflow.serviceAreaFlagged ?? false,
     urgency: workflow.urgency,
@@ -59,6 +60,8 @@ export function syncLeadFromWorkflow(
   lead.issueDescription =
     workflow.collected.issueDescription ?? lead.issueDescription;
   lead.photoUrls = [...workflow.collected.photoUrls];
+  lead.preferredContactTime =
+    workflow.collected.preferredContactTime ?? lead.preferredContactTime;
   lead.serviceArea = workflow.serviceArea;
   lead.serviceAreaFlagged =
     workflow.serviceAreaFlagged ?? lead.serviceAreaFlagged;
@@ -86,6 +89,7 @@ const LEAD_PATCH_FIELDS = new Set([
   "customerName",
   "serviceAddress",
   "issueDescription",
+  "preferredContactTime",
   "serviceAreaFlagged",
   "jobAccepted",
   "becameBooking",
@@ -109,6 +113,7 @@ function isValidCorrectionValue(field: string, value: unknown): boolean {
     case "customerName":
     case "serviceAddress":
     case "issueDescription":
+    case "preferredContactTime":
       return typeof value === "string" && value.length <= 500;
     case "serviceAreaFlagged":
     case "jobAccepted":

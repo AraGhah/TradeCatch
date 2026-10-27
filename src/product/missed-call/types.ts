@@ -28,7 +28,13 @@ export type WorkflowStopReason =
   | "completed";
 
 export type CollectionStep =
-  "language" | "name" | "address" | "description" | "photo" | "done";
+  | "language"
+  | "name"
+  | "address"
+  | "description"
+  | "photo"
+  | "preferred_time"
+  | "done";
 
 export type OutcomeStatus =
   | "open"
@@ -165,6 +171,9 @@ export type CollectedLead = {
   serviceAddress?: string;
   issueDescription?: string;
   photoUrls: string[];
+  /** Free-text best time to be reached back, e.g. "after 5pm". Collected
+   * only when the client enables the `preferred_time` approved question. */
+  preferredContactTime?: string;
 };
 
 export type WorkflowEvent = {
@@ -260,6 +269,7 @@ export type LeadRecord = {
   serviceAddress?: string;
   issueDescription?: string;
   photoUrls: string[];
+  preferredContactTime?: string;
   serviceArea?: ServiceAreaVerdict;
   serviceAreaFlagged: boolean;
   urgency?: UrgencyClassification;

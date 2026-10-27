@@ -71,6 +71,7 @@ export function nextCollectionStep(
     if (step === "address" && collected.serviceAddress) continue;
     if (step === "description" && collected.issueDescription) continue;
     if (step === "photo" && collected.photoUrls.length > 0) continue;
+    if (step === "preferred_time" && collected.preferredContactTime) continue;
     return step;
   }
   return "done";
@@ -118,6 +119,9 @@ export function applyAnswer(
       break;
     case "photo":
       if (mediaUrls.length) next.photoUrls.push(...mediaUrls);
+      break;
+    case "preferred_time":
+      next.preferredContactTime = text;
       break;
     default:
       break;
@@ -278,6 +282,17 @@ export function defaultApprovedQuestions(): ApprovedQuestion[] {
       promptFr:
         "Pouvez-vous envoyer une photo du problème? (ou répondez NON pour passer)",
       promptEn: "Can you send a photo of the issue? (or reply NO to skip)",
+    },
+    {
+      // Disabled by default so existing clients' collection flow (and every
+      // test built against it) is unaffected — a contractor opts in by
+      // enabling this question in their `approvedQuestions` config.
+      id: "preferred_time",
+      enabled: false,
+      required: false,
+      promptFr:
+        "Quel est le meilleur moment pour vous rappeler? (ou répondez NON pour passer)",
+      promptEn: "What's the best time to call you back? (or reply NO to skip)",
     },
   ];
 }

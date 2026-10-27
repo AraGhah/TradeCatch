@@ -214,6 +214,10 @@ export function buildJobCardSms(input: {
     `Urgence: ${urgencyLabel(urgency, "fr")}`,
   ];
 
+  if (collected.preferredContactTime) {
+    lines.push(`Meilleur moment: ${collected.preferredContactTime}`);
+  }
+
   if (input.serviceAreaFlagged) {
     lines.push("Zone: À VÉRIFIER (humain requis si incertain/hors zone)");
   }
@@ -281,6 +285,9 @@ export function humanReviewAlertBody(
     `Raison: ${reason}`,
     `Client: ${collected.customerName ?? "—"} / ${collected.serviceAddress ?? "—"}`,
     `Problème: ${collected.issueDescription ?? "—"}`,
+    ...(collected.preferredContactTime
+      ? [`Meilleur moment: ${collected.preferredContactTime}`]
+      : []),
     "Assignez manuellement — ne pas auto-refuser.",
   ].join("\n");
 }

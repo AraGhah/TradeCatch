@@ -50,7 +50,15 @@ const technicianRosterEntrySchema = z.object({
 });
 
 const approvedQuestionSchema = z.object({
-  id: z.enum(["language", "name", "address", "description", "photo", "done"]),
+  id: z.enum([
+    "language",
+    "name",
+    "address",
+    "description",
+    "photo",
+    "preferred_time",
+    "done",
+  ]),
   enabled: z.boolean(),
   promptFr: z.string(),
   promptEn: z.string(),
