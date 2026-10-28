@@ -1,7 +1,12 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { contentLengthExceeds } from "@/lib/request-body";
+import { withPostgresRequestScope } from "@/lib/postgres-pool";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
 import { greetingFor } from "@/product/receptionist/prompts";
+import {
+  logReceptionistDiagnostic,
+  receptionistErrorCode,
+} from "@/product/receptionist/diagnostics";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import type { VoicePlan } from "@/product/receptionist/types";
 import {
@@ -80,6 +85,17 @@ function num(value: string | undefined): number | undefined {
 
 export async function POST(
   request: NextRequest,
+  context: { params: Promise<{ step: string }> },
+) {
+  // Keep every DB query this request makes on one invocation-scoped
+  // connection; without this scope each query opens and tears down its own
+  // socket (see src/lib/postgres-pool.ts), burning the Worker subrequest
+  // budget on multi-query steps like "incoming".
+  return withPostgresRequestScope(() => handlePost(request, context));
+}
+
+async function handlePost(
+  request: NextRequest,
   { params }: { params: Promise<{ step: string }> },
 ) {
   const { step } = await params;
@@ -109,9 +125,13 @@ export async function POST(
     await runtime.refresh();
   } catch (bootErr) {
     // Never return this text to the caller — it is internal ops telemetry only.
-    const bootErrorDetail =
-      bootErr instanceof Error ? bootErr.message : String(bootErr);
-    console.error("[receptionist] runtime unavailable", bootErrorDetail);
+    const bootErrorDetail = receptionistErrorCode(bootErr);
+    logReceptionistDiagnostic({
+      event: "runtime_unavailable",
+      step,
+      callSid: form.CallSid,
+      error: bootErr,
+    });
     // No runtime means no business can be identified, so owners cannot be told
     // individually; this opens a platform incident and alerts the operators.
     void deferTask(async () => {
@@ -188,7 +208,12 @@ export async function POST(
             });
           }
         } catch (err) {
-          console.warn("[receptionist] call event write failed", err);
+          logReceptionistDiagnostic({
+            event: "call_event_write_failed",
+            step,
+            callSid,
+            error: err,
+          });
         }
 
         // ConversationRelay path when configured and the plan is AI (not dial).
@@ -244,10 +269,10 @@ export async function POST(
       case "voicemail":
         if (!sessionId) {
           // Fail-safe voicemail with no session: keep the recording visible to ops.
-          console.error("[receptionist] orphan voicemail", {
+          logReceptionistDiagnostic({
+            event: "orphan_voicemail",
+            code: "MISSING_SESSION_ID",
             callSid: form.CallSid,
-            from: form.From,
-            recordingUrl: form.RecordingUrl,
           });
           return render({ sessionId: null, verbs: [{ verb: "hangup" }] });
         }
@@ -273,7 +298,12 @@ export async function POST(
                 durationSeconds,
               });
             } catch (err) {
-              console.error("[receptionist] status finalize failed", err);
+              logReceptionistDiagnostic({
+                event: "status_finalize_failed",
+                step,
+                callSid,
+                error: err,
+              });
             }
           });
         }
@@ -281,7 +311,12 @@ export async function POST(
       }
     }
   } catch (err) {
-    console.error(`[receptionist] ${step} failed`, err);
+    logReceptionistDiagnostic({
+      event: "webhook_failed",
+      step,
+      callSid: form.CallSid,
+      error: err,
+    });
     if (step === "status") return emptyTwiml();
     let config = null;
     let language: "fr" | "en" | undefined;
