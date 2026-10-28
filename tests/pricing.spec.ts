@@ -87,7 +87,7 @@ test.describe("pricing page", () => {
     const rows = section.getByRole("listitem");
     // Example figure: $1,500 / each monthly fee.
     await expect(rows.filter({ hasText: "Starter" })).toContainText("4.3 months");
-    await expect(rows.filter({ hasText: "Growth" })).toContainText("2 months");
+    await expect(rows.filter({ hasText: "Growth" })).toContainText("2.3 months");
     await expect(rows.filter({ hasText: "Receptionist" })).toContainText("1.5 months");
 
     await input.fill("3,000");
