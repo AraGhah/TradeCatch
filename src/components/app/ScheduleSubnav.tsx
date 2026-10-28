@@ -8,11 +8,14 @@ const LINKS = [
   ["/app/settings/calendar", "navCalendar"],
 ] as const;
 
-export async function ScheduleSubnav() {
+export async function ScheduleSubnav({ showTeam = false }: { showTeam?: boolean } = {}) {
   const t = await getTranslations("app.schedule");
+  const links = showTeam
+    ? ([...LINKS, ["/app/settings/team", "navTeam"]] as const)
+    : LINKS;
   return (
     <nav className="flex flex-wrap gap-2">
-      {LINKS.map(([href, key]) => (
+      {links.map(([href, key]) => (
         <Link
           key={href}
           href={href}
