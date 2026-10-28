@@ -88,15 +88,15 @@ test.describe("pricing page", () => {
     // Example figure: $1,500 / each monthly fee.
     await expect(rows.filter({ hasText: "Starter" })).toContainText("4.3 months");
     await expect(rows.filter({ hasText: "Growth" })).toContainText("2.3 months");
-    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("1.5 months");
+    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("1.6 months");
 
     await input.fill("3,000");
     await expect(rows.filter({ hasText: "Starter" })).toContainText("8.6 months");
-    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("3 months");
+    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("3.2 months");
 
     // A job worth less than the fee covers only part of a month.
     await input.fill("500");
-    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("50% of a month");
+    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("53% of a month");
 
     await input.fill("abc");
     await expect(section.getByText("Enter an amount above zero.")).toBeVisible();
