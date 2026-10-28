@@ -106,6 +106,20 @@ export async function POST(request: NextRequest) {
     console.warn("[crm] pause check skipped", err);
   }
 
+  if (!crmOrgId) {
+    // No organization or legacy Module A client claims this receiving
+    // number. Fail safe (accept the webhook, do not route or reply) and log
+    // only the "To" number — TradeCatch's own provisioned number, not
+    // customer data — so ops can spot an unprovisioned/misconfigured
+    // number without any customer phone number or message content in logs.
+    console.warn(
+      JSON.stringify({
+        event: "tradecatch.sms.unrouted_to_number",
+        to,
+      }),
+    );
+  }
+
   const technicianCommand = /^(accepter|refuser|appeler)\b/i.test(body.trim());
   try {
     if (automationPaused && !technicianCommand) {
