@@ -167,6 +167,13 @@ export default async function AppSettingsPage({
           </Link>
           {" · "}
           <Link
+            href="/app/settings/sms-receptionist"
+            className="text-sm font-semibold text-navy underline"
+          >
+            {t("smsReceptionist.headline")}
+          </Link>
+          {" · "}
+          <Link
             href="/app/settings/notifications"
             className="text-sm font-semibold text-navy underline"
           >
