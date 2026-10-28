@@ -64,7 +64,7 @@ const GROUPS = [
 const ALL_HREFS = GROUPS.flatMap((group) => group.items.map((item) => item.href));
 
 const FOCUS_RING =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2";
 
 function itemIsActive(pathname: string, href: string): boolean {
   if (href === "/app") return pathname === "/app";
@@ -117,27 +117,27 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-[70vh] border-b border-navy/10 bg-paper">
+    <div className="min-h-[70vh] border-b border-[rgb(var(--ink-rgb)/0.1)] bg-paper">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 md:grid-cols-[16rem_minmax(0,1fr)] md:px-6 md:py-10">
         <aside className="flex flex-col gap-6 md:sticky md:top-6 md:self-start">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-navy/70">
+            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
               TradeCatch
               {isDemo ? (
-                <span className="ml-2 font-mono text-[10px] tracking-[0.1em] text-[rgb(120_60_0)]">
+                <span className="ml-2 font-mono text-[10px] tracking-[0.1em] text-ember-text">
                   {t("demoAccountBadge")}
                 </span>
               ) : null}
             </p>
-            <p className="mt-1 text-lg font-semibold text-navy">{orgName}</p>
-            <p className="text-sm text-navy/70">
+            <p className="mt-1 text-lg font-semibold text-heading">{orgName}</p>
+            <p className="text-sm text-muted">
               {userName} ·{" "}
               {plan === "growth" ? t("plan.growth") : t("plan.starter")}
             </p>
           </div>
           <button
             type="button"
-            className={`w-fit rounded-md border border-navy/15 px-3 py-1.5 text-sm font-semibold text-navy md:hidden ${FOCUS_RING}`}
+            className={`w-fit rounded-md border border-[rgb(var(--ink-rgb)/0.15)] px-3 py-1.5 text-sm font-semibold text-heading md:hidden ${FOCUS_RING}`}
             aria-expanded={navOpen}
             onClick={() => setNavOpen((open) => !open)}
           >
@@ -148,14 +148,14 @@ export function AppShell({
             {isPlatformAdmin ? (
               <Link
                 href="/admin"
-                className={`w-fit rounded-md px-2 py-1 text-sm text-navy/70 hover:bg-navy/5 ${FOCUS_RING}`}
+                className={`w-fit rounded-md px-2 py-1 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
               >
                 {t("nav.admin")}
               </Link>
             ) : null}
             {GROUPS.map((group) => (
               <div key={group.label}>
-                <p className="px-2 font-mono text-[10px] tracking-[0.12em] text-navy/70 uppercase">
+                <p className="px-2 font-mono text-[10px] tracking-[0.12em] text-muted uppercase">
                   {t(`nav.${group.label}`)}
                 </p>
                 <ul className="mt-1 flex flex-col">
@@ -171,7 +171,7 @@ export function AppShell({
                           className={`block rounded-md px-2 py-1.5 text-sm ${FOCUS_RING} ${
                             active
                               ? "bg-navy text-white"
-                              : "text-navy hover:bg-navy/5"
+                              : "text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
                           }`}
                         >
                           {t(`nav.${item.key}`)}
@@ -187,7 +187,7 @@ export function AppShell({
           <button
             type="button"
             onClick={() => void logout()}
-            className={`w-fit rounded-md px-2 py-1.5 text-sm text-navy/70 hover:bg-navy/5 ${FOCUS_RING}`}
+            className={`w-fit rounded-md px-2 py-1.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
           >
             {t("nav.logout")}
           </button>
