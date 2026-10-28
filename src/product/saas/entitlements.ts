@@ -6,6 +6,28 @@
 export const PLAN_IDS = ["starter", "growth", "receptionist"] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
 
+/**
+ * Public-facing tier names. The internal id stays `receptionist` for
+ * backward compatibility with existing Stripe price mappings and database
+ * rows (see plan-tiers.sql).
+ *
+ * NOTE: the original pricing brief asked for this tier to be shown
+ * publicly as "AI Receptionist Pro". This codebase already has an
+ * actively enforced convention — see
+ * tests/unit/receptionist-naming.test.ts — that the public name is
+ * exactly "Receptionist" (no "AI" prefix) everywhere: nav, pricing tiers,
+ * the admin panel, settings. Changing the display name without also
+ * updating that test and every surface it checks would make the app
+ * self-inconsistent (most pages say "Receptionist", one page says "AI
+ * Receptionist Pro"). Kept as "Receptionist" until that's a deliberate,
+ * confirmed rebrand rather than a side effect of a billing change.
+ */
+export const PLAN_DISPLAY_NAMES: Record<PlanId, string> = {
+  starter: "Starter",
+  growth: "Growth",
+  receptionist: "Receptionist",
+};
+
 export const FEATURE_IDS = [
   "MISSED_CALL_RECOVERY",
   "WEBSITE_LEAD_CAPTURE",
@@ -20,6 +42,14 @@ export const FEATURE_IDS = [
   "ADVANCED_ANALYTICS",
   "EMAIL_AUTOMATION",
   "AI_RECEPTIONIST_VOICE",
+  "CRM_INTEGRATION_LIMITED",
+  "CRM_INTEGRATION_ADVANCED",
+  "ADVANCED_CALL_ROUTING",
+  "MULTI_CREW_CALENDARS",
+  "CUSTOMER_REACTIVATION",
+  "CONTRACT_RENEWAL_AUTOMATION",
+  "ADVANCED_REVENUE_ANALYTICS",
+  "ADVANCED_AUTOMATION_WORKFLOWS",
 ] as const;
 
 export type FeatureId = (typeof FEATURE_IDS)[number];
@@ -40,12 +70,23 @@ const GROWTH_EXTRA = [
   "REVIEW_AUTOMATION",
   "ADVANCED_ANALYTICS",
   "EMAIL_AUTOMATION",
+  "CRM_INTEGRATION_LIMITED",
 ] as const satisfies readonly FeatureId[];
 
-// Receptionist is a superset of Growth: bilingual 24/7 AI call answering,
-// phone appointment requests, human transfer and emergency routing.
+// Receptionist (public name "AI Receptionist Pro") is a superset of Growth:
+// bilingual 24/7 AI call answering, phone appointment requests, human
+// transfer and emergency routing, plus the advanced business-automation
+// tier described in the pricing matrix (routing, multi-crew calendars,
+// advanced CRM sync, reactivation/renewal campaigns, revenue analytics).
 const RECEPTIONIST_EXTRA = [
   "AI_RECEPTIONIST_VOICE",
+  "CRM_INTEGRATION_ADVANCED",
+  "ADVANCED_CALL_ROUTING",
+  "MULTI_CREW_CALENDARS",
+  "CUSTOMER_REACTIVATION",
+  "CONTRACT_RENEWAL_AUTOMATION",
+  "ADVANCED_REVENUE_ANALYTICS",
+  "ADVANCED_AUTOMATION_WORKFLOWS",
 ] as const satisfies readonly FeatureId[];
 
 export const PLAN_FEATURES: Record<PlanId, readonly FeatureId[]> = {
@@ -138,5 +179,37 @@ export const FEATURE_LABELS: Record<FeatureId, { en: string; fr: string }> = {
   AI_RECEPTIONIST_VOICE: {
     en: "Bilingual 24/7 AI call answering",
     fr: "Réception d'appels IA bilingue 24/7",
+  },
+  CRM_INTEGRATION_LIMITED: {
+    en: "Basic CRM integrations",
+    fr: "Intégrations CRM de base",
+  },
+  CRM_INTEGRATION_ADVANCED: {
+    en: "Advanced CRM integrations",
+    fr: "Intégrations CRM avancées",
+  },
+  ADVANCED_CALL_ROUTING: {
+    en: "Advanced call routing",
+    fr: "Acheminement d'appels avancé",
+  },
+  MULTI_CREW_CALENDARS: {
+    en: "Multiple crew calendars",
+    fr: "Calendriers d'équipes multiples",
+  },
+  CUSTOMER_REACTIVATION: {
+    en: "Customer reactivation campaigns",
+    fr: "Campagnes de réactivation client",
+  },
+  CONTRACT_RENEWAL_AUTOMATION: {
+    en: "Automated contract renewal campaigns",
+    fr: "Campagnes automatisées de renouvellement de contrat",
+  },
+  ADVANCED_REVENUE_ANALYTICS: {
+    en: "Advanced revenue analytics",
+    fr: "Analytique avancée des revenus",
+  },
+  ADVANCED_AUTOMATION_WORKFLOWS: {
+    en: "Advanced automation workflows",
+    fr: "Flux d'automatisation avancés",
   },
 };
