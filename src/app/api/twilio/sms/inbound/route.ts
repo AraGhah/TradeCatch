@@ -8,8 +8,11 @@ import {
   getStarterServices,
   resolveOrganizationFromSmsTo,
 } from "@/product/starter/org-context";
+import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
 
 export const dynamic = "force-dynamic";
+
+const MAX_FORM_BODY_BYTES = 32_768;
 
 function escapeXml(s: string) {
   return s
@@ -30,12 +33,7 @@ function twimlMessages(bodies: string[]) {
 async function parseForm(
   request: NextRequest,
 ): Promise<Record<string, string>> {
-  const form = await request.formData();
-  const params: Record<string, string> = {};
-  for (const [k, v] of form.entries()) {
-    if (typeof v === "string") params[k] = v;
-  }
-  return params;
+  return readFormParamsBounded(request, MAX_FORM_BODY_BYTES);
 }
 
 /**
@@ -47,7 +45,10 @@ export async function POST(request: NextRequest) {
   let params: Record<string, string>;
   try {
     params = await parseForm(request);
-  } catch {
+  } catch (err) {
+    if (err instanceof BodyTooLargeError) {
+      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+    }
     return NextResponse.json({ error: "Invalid form" }, { status: 400 });
   }
 
