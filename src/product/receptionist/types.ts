@@ -52,11 +52,7 @@ export type AfterHoursMode =
  * wiring lands in Task 4 (telephony). Until then overflow behaves like always.
  */
 export type CallHandlingMode =
-  | "always"
-  | "business_hours"
-  | "after_hours"
-  | "overflow"
-  | "disabled";
+  "always" | "business_hours" | "after_hours" | "overflow" | "disabled";
 
 export type ReceptionistConfig = {
   id: string;
@@ -101,6 +97,8 @@ export type ReceptionistConfig = {
   emergencyTransferE164?: string;
   /** Human fallback when the agent fails or the caller asks for a person. */
   fallbackTransferE164?: string;
+  /** Explicit opt-in to voicemail + email while no live transfer line exists. */
+  allowVoicemailOnly?: boolean;
   faqs: FaqEntry[];
   urgencyRubric: UrgencyRubricEntry[];
   /** Ask the caller for a preferred appointment window. */
