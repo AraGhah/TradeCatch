@@ -38,14 +38,21 @@ type Diagnostic = {
     | "webhook_failed"
     | "orphan_voicemail"
     | "call_event_write_failed"
-    | "status_finalize_failed";
+    | "status_finalize_failed"
+    | "webhook_phase_entered"
+    | "webhook_completed"
+    | "refresh_skipped_in_flight";
   code?: string;
   callSid?: string;
   step?: string;
+  phase?: string;
   organizationId?: string;
   dialedNumber?: string;
   profiles?: number;
   enabledProfiles?: number;
+  /** Wall-clock time this phase/request took, for pinpointing a hang's
+   * last-reached phase without logging anything that could itself hang. */
+  durationMs?: number;
   error?: unknown;
 };
 
@@ -62,6 +69,36 @@ export function logReceptionistDiagnostic(input: Diagnostic): void {
     ...(error === undefined ? {} : { errorCode: receptionistErrorCode(error) }),
   };
   const line = JSON.stringify(entry);
-  if (input.event === "profiles_loaded") console.info(line);
+  const infoLevel: Diagnostic["event"][] = [
+    "profiles_loaded",
+    "webhook_completed",
+    "webhook_phase_entered",
+    "refresh_skipped_in_flight",
+  ];
+  if (infoLevel.includes(input.event)) console.info(line);
   else console.error(line);
+}
+
+/**
+ * Opt-in, per-phase "entered this await" markers for diagnosing a hang:
+ * when a request never completes, the last phase logged here (and nothing
+ * after it) names exactly which awaited operation never returned — a plain
+ * try/catch around the operation cannot do this, since a genuine runtime
+ * hang never reaches the catch or finally block either.
+ * Off by default (RECEPTIONIST_TIMING_DIAGNOSTICS=1 to enable) since it
+ * logs once per phase per webhook call.
+ */
+export function timingDiagnosticsEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return env.RECEPTIONIST_TIMING_DIAGNOSTICS === "1";
+}
+
+export function logWebhookPhaseEntered(input: {
+  step: string;
+  phase: string;
+  callSid?: string;
+}): void {
+  if (!timingDiagnosticsEnabled()) return;
+  logReceptionistDiagnostic({ event: "webhook_phase_entered", ...input });
 }
