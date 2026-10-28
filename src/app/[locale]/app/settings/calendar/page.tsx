@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { requireTenantContext } from "@/product/saas/tenant";
+import { requireTenantContext, tenantHasFeature } from "@/product/saas/tenant";
 import { CalendarIntegrationPanel } from "@/components/app/CalendarIntegrationPanel";
 import { ScheduleSubnav } from "@/components/app/ScheduleSubnav";
 
@@ -19,7 +19,7 @@ export default async function CalendarSettingsPage({
         <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t("navCalendar")}</h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("calendarIntro")}</p>
       </header>
-      <ScheduleSubnav />
+      <ScheduleSubnav showTeam={tenantHasFeature(auth.ctx, "MULTI_CREW_CALENDARS")} />
       <CalendarIntegrationPanel organizationId={auth.ctx.organization.id} />
     </div>
   );
