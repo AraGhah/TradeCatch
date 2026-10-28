@@ -50,3 +50,35 @@ test("caps outbound SMS to a single recipient and lets a different recipient thr
   });
   assert.equal(fetchMock.mock.callCount(), 21);
 });
+
+test("internal owner/staff alerts are never rate-limited even past the per-pair cap", async () => {
+  const port = createTwilioSmsPort({
+    NODE_ENV: "test",
+    TWILIO_ACCOUNT_SID: "ACfixture",
+    TWILIO_AUTH_TOKEN: "tokenfixture",
+    MISSED_CALL_SMS_MODE: "live",
+  });
+  const from = "+15145550000";
+  const to = "+15145559998tc-rate-limit-internal-fixture";
+
+  for (let i = 0; i < 25; i++) {
+    await port.send({
+      toE164: to,
+      fromE164: from,
+      body: `alert ${i}`,
+      internal: true,
+    });
+  }
+  assert.equal(fetchMock.mock.callCount(), 25);
+
+  // The same recipient's customer-facing (non-internal) bucket is unaffected
+  // by — and does not share state with — the internal alert traffic above.
+  for (let i = 0; i < 20; i++) {
+    await port.send({ toE164: to, fromE164: from, body: `msg ${i}` });
+  }
+  assert.equal(fetchMock.mock.callCount(), 45);
+  await assert.rejects(
+    () => port.send({ toE164: to, fromE164: from, body: "one too many" }),
+    /rate limit/i,
+  );
+});
