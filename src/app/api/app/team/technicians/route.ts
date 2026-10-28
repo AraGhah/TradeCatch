@@ -94,7 +94,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, technician });
   } catch (error) {
     if (error instanceof SchedulingError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.status },
+      );
     }
     throw error;
   }
