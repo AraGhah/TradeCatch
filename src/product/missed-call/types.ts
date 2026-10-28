@@ -308,6 +308,13 @@ export type OutboundSms = {
   fromE164: string;
   body: string;
   mediaUrl?: string;
+  /**
+   * An owner/staff alert rather than a message to an external caller.
+   * Exempts the send from the per-recipient billing-abuse rate limit, since
+   * every alert for a business shares one fixed recipient regardless of
+   * which caller triggered it — see src/product/missed-call/twilio.ts.
+   */
+  internal?: boolean;
 };
 
 export type OutboundMessageStatus =
