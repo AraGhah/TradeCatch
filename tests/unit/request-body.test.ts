@@ -5,11 +5,13 @@ import {
   BodyTooLargeError,
   contentLengthExceeds,
   readBodyText,
+  readFormParamsBounded,
   readJsonBody,
 } from "../../src/lib/request-body";
 import { POST as clientError } from "../../src/app/api/client-error/route";
 import { POST as magicLink } from "../../src/app/api/auth/magic-link/route";
 import { POST as stripeWebhook } from "../../src/app/api/webhooks/stripe/route";
+import { POST as twilioSmsStatus } from "../../src/app/api/twilio/sms/status/route";
 
 const URL = "http://localhost/api/x";
 
@@ -60,6 +62,38 @@ describe("readBodyText", () => {
   it("accepts a chunked upload that stays within the limit and keeps multi-byte text intact", async () => {
     const request = new Request(URL, chunked(["caf", "é ", "日本"]));
     assert.equal(await readBodyText(request, 64), "café 日本");
+  });
+});
+
+describe("readFormParamsBounded", () => {
+  it("parses application/x-www-form-urlencoded into a flat record", async () => {
+    const request = new Request(URL, {
+      method: "POST",
+      body: "From=%2B15145550000&To=%2B15145551111&Body=hi+there",
+    });
+    assert.deepEqual(await readFormParamsBounded(request, 1024), {
+      From: "+15145550000",
+      To: "+15145551111",
+      Body: "hi there",
+    });
+  });
+
+  it("rejects an oversized declared body without buffering request.formData()", async () => {
+    const request = new Request(URL, {
+      method: "POST",
+      body: "Body=" + "x".repeat(200),
+      headers: { "content-length": "205" },
+    });
+    await assert.rejects(() => readFormParamsBounded(request, 50), BodyTooLargeError);
+  });
+
+  it("bounds a chunked form body with no declared Content-Length", async () => {
+    const request = new Request(
+      URL,
+      chunked(["Body=", "x".repeat(60), "x".repeat(60)]),
+    );
+    assert.equal(request.headers.get("content-length"), null);
+    await assert.rejects(() => readFormParamsBounded(request, 100), BodyTooLargeError);
   });
 });
 
@@ -137,6 +171,16 @@ describe("public endpoints refuse oversized bodies", () => {
       new NextRequest("http://localhost/api/auth/magic-link", {
         ...init,
         headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.52" },
+      } as ConstructorParameters<typeof NextRequest>[1]),
+    );
+    assert.equal(res.status, 413);
+  });
+
+  it("Twilio SMS status webhook refuses a chunked body with no declared Content-Length", async () => {
+    const init = chunked(Array.from({ length: 40 }, () => "Body=" + "x".repeat(1_000)));
+    const res = await twilioSmsStatus(
+      new NextRequest("http://localhost/api/twilio/sms/status", {
+        ...init,
       } as ConstructorParameters<typeof NextRequest>[1]),
     );
     assert.equal(res.status, 413);
