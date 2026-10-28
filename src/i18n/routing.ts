@@ -243,6 +243,10 @@ export const routing = defineRouting({
       en: "/app/settings/account",
       fr: "/app/parametres/compte",
     },
+    "/app/settings/team": {
+      en: "/app/settings/team",
+      fr: "/app/parametres/equipe",
+    },
     "/app/support": {
       en: "/app/support",
       fr: "/app/soutien",
