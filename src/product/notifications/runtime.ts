@@ -111,10 +111,15 @@ export function getNotificationService() {
       if (!from)
         return { sent: false, temporary: false, reason: "missing_from" };
       try {
+        // Platform notification delivery: destination is always the
+        // business's own org/personal phone, never a customer — exempt from
+        // the customer-facing abuse rate limit (see deliverOne's
+        // unauthorized_destination check above).
         const sent = await sms.send({
           toE164: input.to,
           fromE164: from,
           body: input.body,
+          internal: true,
         });
         return { sent: true, sid: sent.sid };
       } catch (error) {
