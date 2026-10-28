@@ -219,17 +219,34 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     return deps.store.saveSession({ ...session, updatedAt: nowIso() });
   }
 
-  /** Re-run a mutation once on an optimistic-lock conflict. */
+  /**
+   * Re-run a mutation once on an optimistic-lock conflict.
+   *
+   * `expectedCallSid`, when given, must match the session's own CallSid.
+   * sessionId alone is an unguessable UUID, but this closes the gap where a
+   * stale/replayed Twilio callback (or a bug on Twilio's side re-sending an
+   * action URL for an ended leg) could otherwise touch a session that has
+   * since moved on to a different call.
+   */
   async function withSession<T>(
     sessionId: string,
     fn: (
       session: CallSession,
     ) => Promise<{ session: CallSession | null; result: T }>,
+    expectedCallSid?: string,
   ): Promise<T | null> {
     const attempts = 4;
     for (let attempt = 0; attempt < attempts; attempt += 1) {
       const session = await deps.store.getSession(sessionId);
       if (!session) return null;
+      if (expectedCallSid && session.callSid !== expectedCallSid) {
+        logReceptionistDiagnostic({
+          event: "webhook_failed",
+          code: "SESSION_CALL_SID_MISMATCH",
+          callSid: expectedCallSid,
+        });
+        return null;
+      }
       const { session: next, result } = await fn(session);
       if (!next) return result;
       try {
@@ -1213,6 +1230,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       digits?: string;
       confidence?: number;
       defer?: DeferFn;
+      callSid?: string;
     }): Promise<VoicePlan> {
       // withSession may re-run the mutation on a conflict; alerts must not double-send.
       let deferred = false;
@@ -1434,6 +1452,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           const applied = applyDecision(config, next, decision);
           return { session: applied.session, result: applied.plan };
         },
+        input.callSid,
       );
       return plan ?? hangupPlan(null);
     },
@@ -1443,6 +1462,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       sessionId: string;
       dialStatus: string;
       durationSeconds?: number;
+      callSid?: string;
     }): Promise<VoicePlan> {
       const plan = await withSession<VoicePlan>(
         input.sessionId,
@@ -1558,6 +1578,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             },
           };
         },
+        input.callSid,
       );
       return plan ?? hangupPlan(null);
     },
@@ -1567,6 +1588,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       sessionId: string;
       recordingUrl?: string;
       durationSeconds?: number;
+      callSid?: string;
     }): Promise<VoicePlan> {
       const plan = await withSession<VoicePlan>(
         input.sessionId,
@@ -1591,6 +1613,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             : [{ verb: "hangup" }];
           return { session: next, result: { sessionId: session.id, verbs } };
         },
+        input.callSid,
       );
       return plan ?? hangupPlan(null);
     },
