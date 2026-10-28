@@ -5,11 +5,44 @@
  */
 export const PLAN_PRICES = {
   starter: { setup: 799.99, monthly: 349.99 },
-  growth: { setup: 1499.99, monthly: 749.99 },
-  receptionist: { setup: 1999.99, monthly: 999.99 },
+  growth: { setup: 1499.99, monthly: 649.99 },
+  receptionist: { setup: 1999.99, monthly: 949.99 },
 } as const;
 
 export type PlanId = keyof typeof PLAN_PRICES;
+
+/**
+ * Provisional usage allowances for evaluation only — not finalized
+ * commercial limits. Before enforcing or advertising these, Twilio/AI cost
+ * projections must be reviewed against real usage. `voiceMinutes: 0` on
+ * Starter reflects that Starter has no voice entitlement at all (see
+ * entitlements.ts); it is not a billed allowance.
+ */
+export const USAGE_ALLOWANCES = {
+  starter: {
+    smsSegmentsPerMonth: 500,
+    voiceMinutesPerMonth: 0,
+    calendars: 1,
+    teamMembers: 1,
+    businessLocations: 1,
+  },
+  growth: {
+    smsSegmentsPerMonth: 1500,
+    voiceMinutesPerMonth: 300,
+    calendars: 1,
+    teamMembers: 3,
+    businessLocations: 1,
+  },
+  receptionist: {
+    smsSegmentsPerMonth: 4000,
+    voiceMinutesPerMonth: 900,
+    calendars: 3,
+    teamMembers: 10,
+    businessLocations: 3,
+  },
+} as const satisfies Record<PlanId, Record<string, number>>;
+
+export type UsageMetric = keyof typeof USAGE_ALLOWANCES.starter;
 
 export function priceLocale(locale: string): "fr-CA" | "en-CA" {
   return locale.startsWith("fr") ? "fr-CA" : "en-CA";
