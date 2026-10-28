@@ -28,14 +28,14 @@ test.describe("pricing page", () => {
 
     const receptionist = main.locator("article", { hasText: "Receptionist" }).first();
     await expect(receptionist).toContainText("$1,999.99");
-    await expect(receptionist).toContainText("$999.99");
-    await expect(receptionist).toContainText("$250.00 a month");
+    await expect(receptionist).toContainText("$949.99");
+    await expect(receptionist).toContainText("$300.00 a month");
     await expect(receptionist).toContainText("$500.00 more at setup");
 
     const growth = main.locator("article", { hasText: "Growth" }).first();
     await expect(growth).toContainText("$1,499.99");
-    await expect(growth).toContainText("$749.99");
-    await expect(growth).toContainText("$400.00 a month");
+    await expect(growth).toContainText("$649.99");
+    await expect(growth).toContainText("$300.00 a month");
 
     const starter = main.locator("article", { hasText: "Starter" }).first();
     await expect(starter).toContainText("$799.99");
@@ -53,8 +53,8 @@ test.describe("pricing page", () => {
     const text = (await main.innerText()).replace(/ /g, " ");
 
     expect(text).toContain("1 999,99 $");
-    expect(text).toContain("999,99 $");
-    expect(text).toContain("749,99 $");
+    expect(text).toContain("949,99 $");
+    expect(text).toContain("649,99 $");
     expect(text).toContain("349,99 $");
     expect(text).not.toMatch(/\b350 \$|\b750 \$/);
   });
