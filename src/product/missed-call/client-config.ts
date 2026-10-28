@@ -247,9 +247,9 @@ function tech(
 function canBuildEnvClient(env: NodeJS.ProcessEnv): boolean {
   return Boolean(
     env.MISSED_CALL_CLIENT_CONFIG_JSON?.trim() ||
-      (env.MISSED_CALL_CLIENT_ID?.trim() &&
-        env.MISSED_CALL_SMS_FROM?.trim() &&
-        env.MISSED_CALL_TECH_PHONE?.trim()),
+    (env.MISSED_CALL_CLIENT_ID?.trim() &&
+      env.MISSED_CALL_SMS_FROM?.trim() &&
+      env.MISSED_CALL_TECH_PHONE?.trim()),
   );
 }
 
