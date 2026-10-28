@@ -244,6 +244,40 @@ function tech(
   return { id, name, phone, role, active: true };
 }
 
+function canBuildEnvClient(env: NodeJS.ProcessEnv): boolean {
+  return Boolean(
+    env.MISSED_CALL_CLIENT_CONFIG_JSON?.trim() ||
+      (env.MISSED_CALL_CLIENT_ID?.trim() &&
+        env.MISSED_CALL_SMS_FROM?.trim() &&
+        env.MISSED_CALL_TECH_PHONE?.trim()),
+  );
+}
+
+/**
+ * Like {@link loadClientAccountFromEnv}, but tolerant of a genuinely
+ * multi-tenant production deployment that never configures the single
+ * legacy MISSED_CALL_* client at all — each organization brings its own
+ * client record instead (see saas store's `linkMissedCallClient`, resolved
+ * per-message via `MissedCallStore.findClientBySmsFromNumber`). Returns
+ * `null` in that one case rather than throwing, so runtime boot does not
+ * fail just because no single global client is configured.
+ *
+ * Any other failure (explicit config present but invalid JSON, or failing
+ * schema/business validation) still throws exactly as before — a
+ * misconfigured legacy client must stay loud, not silently skipped.
+ */
+export function loadClientAccountFromEnvOrSkip(
+  env: NodeJS.ProcessEnv = process.env,
+): { client: ClientAccount; source: "env" | "demo" } | null {
+  const isProd = env.NODE_ENV === "production";
+  const staging = isStagingRuntime(env);
+  const allowDemo = env.MISSED_CALL_ALLOW_DEMO === "1" || staging;
+  if (isProd && !allowDemo && !canBuildEnvClient(env)) {
+    return null;
+  }
+  return loadClientAccountFromEnv(env);
+}
+
 /**
  * Build a production client from environment variables.
  * Never returns the demo fixture on live production unless MISSED_CALL_ALLOW_DEMO=1.
