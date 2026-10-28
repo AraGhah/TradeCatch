@@ -2909,6 +2909,40 @@
       "deactivate": "Deactivate",
       "error": "Could not save that change. Check your connection and try again."
     },
+    "smsReceptionist": {
+      "headline": "SMS Receptionist",
+      "intro": "Manage the business details and on-call technician roster your AI SMS receptionist uses when answering missed calls.",
+      "entitlement": "SMS receptionist settings are included with every plan — contact support if you can't see them.",
+      "notLinked": "Your SMS receptionist number is still being set up by our team. We'll notify you once it's ready to configure.",
+      "number": "Receiving number",
+      "numberNote": "Assigned by TradeCatch — contact support to change it.",
+      "businessName": "Business name",
+      "timezone": "Timezone",
+      "businessHours": "Business hours",
+      "to": "to",
+      "day": {
+        "0": "Sun",
+        "1": "Mon",
+        "2": "Tue",
+        "3": "Wed",
+        "4": "Thu",
+        "5": "Fri",
+        "6": "Sat"
+      },
+      "humanReviewPhone": "Human review phone (optional)",
+      "roster": "Technician roster",
+      "namePlaceholder": "Name",
+      "addTechnician": "Add technician",
+      "rolePrimary": "Primary",
+      "roleBackup": "Backup",
+      "roleOwner": "Owner",
+      "active": "Active",
+      "remove": "Remove",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "error": "Could not save that change. Check your connection and try again."
+    },
     "alerts": {
       "categories": {
         "new_leads": "New leads",
