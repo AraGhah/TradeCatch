@@ -627,13 +627,13 @@
         },
         {
           "name": "Growth",
-          "price": "$749.99 / month",
+          "price": "$649.99 / month",
           "cadence": "$1,499.99 setup, paid once",
           "idealFor": "Everything in Starter, plus booking, a pipeline and review requests."
         },
         {
           "name": "Receptionist",
-          "price": "$999.99 / month",
+          "price": "$949.99 / month",
           "cadence": "$1,999.99 setup, paid once",
           "idealFor": "Everything in Growth, plus a bilingual front desk that answers 24/7."
         }
@@ -1046,8 +1046,8 @@
         "outcome": "Everything in Starter, then booking in the workspace, reminders, a pipeline, the won-job values you record, and review requests.",
         "price": "$1,499.99 setup",
         "setupAmount": "$1,499.99",
-        "cadence": "$749.99 / month",
-        "monthlyAmount": "$749.99",
+        "cadence": "$649.99 / month",
+        "monthlyAmount": "$649.99",
         "idealFor": "Crews that already catch leads and now need them on the calendar.",
         "reassuranceLine": "The monthly figure on this card is the rate. Usage past the written allowance is confirmed with you before it is billed. Growth includes Starter.",
         "groups": [
@@ -1082,7 +1082,7 @@
         ],
         "includesPrevious": "Everything in Starter, plus:",
         "planInterest": "growth",
-        "stepUp": "Adds booking, pipeline, attribution and reviews: $400.00 a month and $700.00 more at setup than Starter."
+        "stepUp": "Adds booking, pipeline, attribution and reviews: $300.00 a month and $700.00 more at setup than Starter."
       },
       {
         "name": "Receptionist",
@@ -1092,8 +1092,8 @@
         "outcome": "A front desk that picks up 24/7 in French and English, qualifies the job, takes the appointment request and transfers the calls that need a person. Starter and Growth stay on underneath.",
         "price": "$1,999.99 setup",
         "setupAmount": "$1,999.99",
-        "cadence": "$999.99 / month",
-        "monthlyAmount": "$999.99",
+        "cadence": "$949.99 / month",
+        "monthlyAmount": "$949.99",
         "idealFor": "Companies whose phone rings after hours, or while the crew is on a job.",
         "reassuranceLine": "Setup covers the knowledge base, greeting, appointment-request rules, transfer targets and emergency routing. Onboarding is required before the line goes live.",
         "usageNote": "Calling usage is subject to plan allowance and applicable usage limits, agreed in writing at the demo.",
@@ -1137,7 +1137,7 @@
         "ctaHref": "/book-audit",
         "secondaryCtaHref": "/receptionist#try-it",
         "planInterest": "receptionist",
-        "stepUp": "Adds the 24/7 bilingual phone line: $250.00 a month and $500.00 more at setup than Growth."
+        "stepUp": "Adds the 24/7 bilingual phone line: $300.00 a month and $500.00 more at setup than Growth."
       }
     ],
     "customTitle": "Operating across locations or high volume?",
@@ -2061,7 +2061,7 @@
       "Founder-monitored launch and monthly management"
     ],
     "pricingTitle": "Published prices",
-    "pricing": "Starter: $799.99 setup, then $349.99 / month. Growth: $1,499.99 setup, then $749.99 / month, and it includes Starter. Receptionist: $1,999.99 setup, then $999.99 / month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
+    "pricing": "Starter: $799.99 setup, then $349.99 / month. Growth: $1,499.99 setup, then $649.99 / month, and it includes Starter. Receptionist: $1,999.99 setup, then $949.99 / month, and it includes Starter and Growth plus bilingual 24/7 call answering, phone appointment requests, human transfer and emergency routing. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
     "pilotTitle": "Pilot program",
     "pilot": "Now accepting founding contractors: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
     "ctaTitle": "Next step",
@@ -2820,6 +2820,7 @@
       "navHours": "Availability",
       "navServices": "Service types",
       "navCalendar": "Calendar",
+      "navTeam": "Team",
       "today": "Today",
       "upcoming": "Upcoming",
       "pending": "Pending",
@@ -2892,6 +2893,21 @@
       "simulate": "Simulate booking",
       "double": "Try the same time twice",
       "fail": "Simulate calendar failure"
+    },
+    "team": {
+      "headline": "Team",
+      "intro": "Crew members each get their own calendar. Appointments can be assigned to a specific technician.",
+      "upsell": "Multiple crew calendars are included with Receptionist. Upgrade to assign appointments across your team.",
+      "empty": "No crew members yet.",
+      "addIntro": "Add a crew member to assign them appointments.",
+      "limitReached": "This plan supports up to {limit} crew calendars. Deactivate one to add another.",
+      "namePlaceholder": "Name",
+      "areaPlaceholder": "Service area (optional)",
+      "add": "Add",
+      "saving": "Saving…",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "error": "Could not save that change. Check your connection and try again."
     },
     "alerts": {
       "categories": {
@@ -3205,7 +3221,18 @@
       "billingBack": "Back to workspace",
       "billingNoPermission": "Only an owner or administrator can manage billing.",
       "billingHeadline": "Billing",
-      "billingSupport": "Contact support"
+      "billingSupport": "Contact support",
+      "billingPlanLine": "{plan} — {amount} / month",
+      "billingFirstChargeOn": "First monthly charge: {date}.",
+      "checkoutIntro": "Pay the one-time installation fee to start service. Your first month is included with installation; the monthly subscription begins one calendar month after payment.",
+      "checkoutStart": "Pay installation fee",
+      "checkoutOpening": "Opening checkout…",
+      "checkoutPending": "A checkout is already in progress. Finish it or try again in a few minutes.",
+      "checkoutPendingNote": "Your installation payment is in progress. If you closed the checkout page, try again below.",
+      "checkoutError": "Checkout could not be started. Please try again or contact support.",
+      "usageHeadline": "Usage this month",
+      "usageSms": "SMS: {used} of {allowance} segments used",
+      "usageVoice": "AI voice: {used} of {allowance} minutes used"
     },
     "receptionist": {
       "headline": "Receptionist",
@@ -3565,7 +3592,7 @@
         "cta": "Book a free 20-minute audit"
       }
     },
-    "eyebrow": "Receptionist · $1,999.99 setup, then $999.99/month",
+    "eyebrow": "Receptionist · $1,999.99 setup, then $949.99/month",
     "headline": "A bilingual front desk that answers every call, day or night.",
     "intro": "Receptionist answers incoming calls in French or English, works out what the caller needs, takes the appointment request and transfers the calls that need a person. Missed-call recovery, quote follow-up and the Growth workspace stay on underneath.",
     "metaDescription": "Receptionist for Québec contractors: bilingual call answering 24/7, call qualification, appointment requests by phone, human transfer and emergency routing, on top of TradeCatch missed-call recovery and quote follow-up.",
@@ -3578,7 +3605,7 @@
     "planLabel": "The plan",
     "planName": "Receptionist",
     "planSetup": "$1,999.99 setup",
-    "planCadence": "$999.99 / month",
+    "planCadence": "$949.99 / month",
     "planNote": "Calling usage is subject to plan allowance and applicable usage limits.",
     "ctaPrimary": "Book a free 20-minute audit",
     "ctaDemo": "Watch the receptionist demo",
