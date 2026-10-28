@@ -143,7 +143,14 @@ export function createReceptionistNotifier(
   async function sendSms(config: ReceptionistConfig, to: string, body: string) {
     const from = config.smsFromE164 ?? config.phoneNumberE164;
     try {
-      const { sid } = await deps.sms.send({ toE164: to, fromE164: from, body });
+      // Always an owner/staff notification channel (config.notifications),
+      // never the caller — exempt from the customer-facing abuse rate limit.
+      const { sid } = await deps.sms.send({
+        toE164: to,
+        fromE164: from,
+        body,
+        internal: true,
+      });
       return { at: now(), channel: "sms" as const, ok: true, detail: sid };
     } catch (err) {
       return {
