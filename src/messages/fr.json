@@ -627,13 +627,13 @@
         },
         {
           "name": "Growth",
-          "price": "749,99 $ / mois",
+          "price": "649,99 $ / mois",
           "cadence": "1 499,99 $ d’installation, payé une fois",
           "idealFor": "Tout Starter, plus la prise de rendez-vous, le pipeline et les demandes d’avis."
         },
         {
           "name": "Réceptionniste",
-          "price": "999,99 $ / mois",
+          "price": "949,99 $ / mois",
           "cadence": "1 999,99 $ d’installation, payé une fois",
           "idealFor": "Tout Growth, plus une réception bilingue qui répond 24/7."
         }
@@ -1046,8 +1046,8 @@
         "outcome": "Tout Starter, puis la réservation dans l’espace, les rappels, un pipeline, les valeurs gagnées que vous enregistrez et les demandes d’avis.",
         "price": "1 499,99 $ d'installation",
         "setupAmount": "1 499,99 $",
-        "cadence": "749,99 $ / mois",
-        "monthlyAmount": "749,99 $",
+        "cadence": "649,99 $ / mois",
+        "monthlyAmount": "649,99 $",
         "idealFor": "Équipes qui rattrapent déjà des demandes et veulent maintenant les voir au calendrier.",
         "reassuranceLine": "Le montant mensuel sur cette carte est le tarif. Tout dépassement de l’allocation écrite est confirmé avec vous avant d’être facturé. Growth inclut Starter.",
         "groups": [
@@ -1082,7 +1082,7 @@
         ],
         "includesPrevious": "Tout ce qui est dans Starter, plus :",
         "planInterest": "growth",
-        "stepUp": "Ajoute la prise de rendez-vous, le pipeline, l’attribution et les avis : 400,00 $ par mois et 700,00 $ d’installation de plus que Starter."
+        "stepUp": "Ajoute la prise de rendez-vous, le pipeline, l’attribution et les avis : 300,00 $ par mois et 700,00 $ d’installation de plus que Starter."
       },
       {
         "name": "Réceptionniste",
@@ -1092,8 +1092,8 @@
         "outcome": "Une réception qui décroche 24/7 en français et en anglais, qualifie le travail, prend la demande de rendez-vous et transfère les appels qui ont besoin d’une personne. Starter et Growth restent en dessous.",
         "price": "1 999,99 $ d'installation",
         "setupAmount": "1 999,99 $",
-        "cadence": "999,99 $ / mois",
-        "monthlyAmount": "999,99 $",
+        "cadence": "949,99 $ / mois",
+        "monthlyAmount": "949,99 $",
         "idealFor": "Entreprises dont le téléphone sonne le soir, ou pendant que l’équipe est sur un chantier.",
         "reassuranceLine": "La mise en place couvre la base de connaissances, l’accueil, les règles de demande de rendez-vous, les cibles de transfert et l’acheminement des urgences. L’intégration est obligatoire avant la mise en ligne de la ligne.",
         "usageNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables, convenues par écrit lors de la démo.",
@@ -1137,7 +1137,7 @@
         "ctaHref": "/book-audit",
         "secondaryCtaHref": "/receptionist#try-it",
         "planInterest": "receptionist",
-        "stepUp": "Ajoute la ligne téléphonique bilingue 24/7 : 250,00 $ par mois et 500,00 $ d’installation de plus que Growth."
+        "stepUp": "Ajoute la ligne téléphonique bilingue 24/7 : 300,00 $ par mois et 500,00 $ d’installation de plus que Growth."
       }
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
@@ -2061,7 +2061,7 @@
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
     "pricingTitle": "Prix affichés",
-    "pricing": "Starter : 799,99 $ d’installation, puis 349,99 $ / mois. Growth : 1 499,99 $ d’installation, puis 749,99 $ / mois, et inclut Starter. Réceptionniste : 1 999,99 $ d’installation, puis 999,99 $ / mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
+    "pricing": "Starter : 799,99 $ d’installation, puis 349,99 $ / mois. Growth : 1 499,99 $ d’installation, puis 649,99 $ / mois, et inclut Starter. Réceptionniste : 1 999,99 $ d’installation, puis 949,99 $ / mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
     "pilotTitle": "Programme pilote",
     "pilot": "Nous acceptons maintenant des entrepreneurs fondateurs : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
@@ -2820,6 +2820,7 @@
       "navHours": "Disponibilité",
       "navServices": "Types de service",
       "navCalendar": "Calendrier",
+      "navTeam": "Équipe",
       "today": "Aujourd’hui",
       "upcoming": "À venir",
       "pending": "En attente",
@@ -2892,6 +2893,21 @@
       "simulate": "Simuler une réservation",
       "double": "Essayer la même heure deux fois",
       "fail": "Simuler une panne de calendrier"
+    },
+    "team": {
+      "headline": "Équipe",
+      "intro": "Chaque membre de l’équipe a son propre calendrier. Les rendez-vous peuvent être assignés à un technicien précis.",
+      "upsell": "Les calendriers d’équipe multiples sont inclus avec Réceptionniste. Mettez à niveau pour assigner des rendez-vous à votre équipe.",
+      "empty": "Aucun membre d’équipe pour le moment.",
+      "addIntro": "Ajoutez un membre de l’équipe pour lui assigner des rendez-vous.",
+      "limitReached": "Ce forfait permet jusqu’à {limit} calendriers d’équipe. Désactivez-en un pour en ajouter un autre.",
+      "namePlaceholder": "Nom",
+      "areaPlaceholder": "Secteur desservi (facultatif)",
+      "add": "Ajouter",
+      "saving": "Enregistrement…",
+      "activate": "Activer",
+      "deactivate": "Désactiver",
+      "error": "Impossible d’enregistrer ce changement. Vérifiez votre connexion et réessayez."
     },
     "alerts": {
       "categories": {
@@ -3205,7 +3221,18 @@
       "billingBack": "Retour à l’espace de travail",
       "billingNoPermission": "Seuls les propriétaires et administrateurs peuvent gérer la facturation.",
       "billingHeadline": "Facturation",
-      "billingSupport": "Contacter le soutien"
+      "billingSupport": "Contacter le soutien",
+      "billingPlanLine": "{plan} — {amount} / mois",
+      "billingFirstChargeOn": "Premier prélèvement mensuel : {date}.",
+      "checkoutIntro": "Payez les frais d’installation uniques pour démarrer le service. Votre premier mois est inclus avec l’installation; l’abonnement mensuel débute un mois civil après le paiement.",
+      "checkoutStart": "Payer les frais d’installation",
+      "checkoutOpening": "Ouverture du paiement…",
+      "checkoutPending": "Un paiement est déjà en cours. Terminez-le ou réessayez dans quelques minutes.",
+      "checkoutPendingNote": "Votre paiement d’installation est en cours. Si vous avez fermé la page de paiement, réessayez ci-dessous.",
+      "checkoutError": "Le paiement n’a pas pu démarrer. Réessayez ou contactez le soutien.",
+      "usageHeadline": "Utilisation ce mois-ci",
+      "usageSms": "SMS : {used} segments utilisés sur {allowance}",
+      "usageVoice": "Voix IA : {used} minutes utilisées sur {allowance}"
     },
     "receptionist": {
       "headline": "Réceptionniste",
@@ -3565,7 +3592,7 @@
         "cta": "Réserver un audit gratuit de 20 minutes"
       }
     },
-    "eyebrow": "Réceptionniste · 1 999,99 $ d’installation, puis 999,99 $ / mois",
+    "eyebrow": "Réceptionniste · 1 999,99 $ d’installation, puis 949,99 $ / mois",
     "headline": "Une réception bilingue qui répond à chaque appel, jour et nuit.",
     "intro": "Réceptionniste répond aux appels entrants en français ou en anglais, comprend ce que l’appelant veut, prend la demande de rendez-vous et transfère les appels qui ont besoin d’une personne. La récupération des appels manqués, la relance des soumissions et l’espace Growth restent en dessous.",
     "metaDescription": "Réceptionniste pour entrepreneurs du Québec : réponse téléphonique bilingue 24/7, qualification des appels, demandes de rendez-vous par téléphone, transfert d’appel et acheminement des urgences, en plus de la récupération des appels manqués et de la relance des soumissions TradeCatch.",
@@ -3578,7 +3605,7 @@
     "planLabel": "Le forfait",
     "planName": "Réceptionniste",
     "planSetup": "1 999,99 $ installation",
-    "planCadence": "999,99 $ / mois",
+    "planCadence": "949,99 $ / mois",
     "planNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables.",
     "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
     "ctaDemo": "Voir la démo de la réceptionniste",
