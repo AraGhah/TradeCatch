@@ -104,6 +104,25 @@ describe("Twilio receptionist webhooks", () => {
     assert.equal(await text(status), `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`);
   });
 
+  it("rejects a gather/dial/voicemail callback whose CallSid does not match the session's own call", async () => {
+    const incoming = await twilioStep(...hook("incoming", { CallSid: "CAreal", From: "+15145559876", To: "+14385597001" }));
+    const session = (await text(incoming)).match(/session=(rcs_[0-9a-f-]+)/)![1]!;
+
+    // A callback for the right session but the wrong CallSid (forged/replayed/
+    // stale) must be treated like an unknown session: hang up, not continue
+    // the real call.
+    const spoofed = await twilioStep(
+      ...hook("gather", { CallSid: "CAspoofed", Digits: "1" }, { query: `?session=${session}` }),
+    );
+    assert.match(await text(spoofed), /<Hangup\/>/);
+
+    // The real CallSid for that session still works normally afterwards.
+    const real = await twilioStep(
+      ...hook("gather", { CallSid: "CAreal", Digits: "1" }, { query: `?session=${session}` }),
+    );
+    assert.match(await text(real), /Comment puis-je vous aider/);
+  });
+
   it("bridges emergencies with <Dial> and texts the owner", async () => {
     const incoming = await twilioStep(...hook("incoming", { CallSid: "CAw2", From: "+15145559876", To: "+14385597001" }));
     const session = (await text(incoming)).match(/session=(rcs_[0-9a-f-]+)/)![1]!;
