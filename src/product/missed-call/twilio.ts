@@ -1,5 +1,27 @@
 import { isStagingRuntime, shouldUseDryRunSms } from "@/lib/environment";
+import { rateLimitAsync } from "@/lib/rate-limit";
 import type { OutboundSms, SmsPort } from "./types";
+
+/**
+ * Billing/spam backstop shared by every outbound SMS path (missed-call
+ * recovery, receptionist, automations, notifications) since they all funnel
+ * through this one Twilio REST adapter. Per sending-number→recipient pair so
+ * one abusive caller cannot drive unbounded Twilio spend on a business's
+ * account, without capping normal multi-message conversations.
+ */
+const SMS_SEND_LIMIT = 20;
+const SMS_SEND_WINDOW_MS = 60 * 60 * 1000;
+
+async function assertSmsSendAllowed(toE164: string, fromE164: string) {
+  const { allowed } = await rateLimitAsync({
+    key: `sms-send:${fromE164}:${toE164}`,
+    limit: SMS_SEND_LIMIT,
+    windowMs: SMS_SEND_WINDOW_MS,
+  });
+  if (!allowed) {
+    throw new Error("Twilio SMS send rate limit exceeded for this recipient.");
+  }
+}
 
 /** In-memory SMS port for tests and explicitly selected local dry-runs. */
 export function createMemorySmsPort(): SmsPort & {
@@ -83,6 +105,7 @@ export function createTwilioSmsPort(
 
   return {
     async send(message) {
+      await assertSmsSendAllowed(message.toE164, message.fromE164);
       const auth = Buffer.from(`${sid}:${token}`).toString("base64");
       const body = new URLSearchParams({
         To: message.toE164,
