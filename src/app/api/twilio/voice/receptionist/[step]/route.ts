@@ -252,6 +252,7 @@ async function handlePost(
             digits: form.Digits,
             confidence: num(form.Confidence),
             defer: (task) => void deferTask(task),
+            callSid: form.CallSid,
           }),
         );
 
@@ -263,6 +264,7 @@ async function handlePost(
             sessionId,
             dialStatus: form.DialCallStatus ?? "failed",
             durationSeconds: num(form.DialCallDuration),
+            callSid: form.CallSid,
           }),
         );
 
@@ -281,6 +283,7 @@ async function handlePost(
             sessionId,
             recordingUrl: form.RecordingUrl,
             durationSeconds: num(form.RecordingDuration),
+            callSid: form.CallSid,
           }),
         );
 
