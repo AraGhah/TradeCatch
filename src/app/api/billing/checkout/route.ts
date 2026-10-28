@@ -39,7 +39,9 @@ export async function POST(request: NextRequest) {
   });
   if (limited) return limited;
   try {
-    const url = await createInstallationCheckoutSession(access.ctx.organization);
+    const url = await createInstallationCheckoutSession(
+      access.ctx.organization,
+    );
     await recordSecurityEvent({
       organizationId: access.ctx.organization.id,
       actorUserId: access.ctx.user.id,
