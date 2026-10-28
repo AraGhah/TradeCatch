@@ -7,6 +7,8 @@ const eslintConfig = defineConfig([
   ...nextTs,
   // Override default ignores of eslint-config-next.
   globalIgnores([
+    // Agent checkouts are linted in their own workspace, not recursively here.
+    ".claude/worktrees/**",
     // Default ignores of eslint-config-next:
     ".artifacts/**",
     "test-results/**",
