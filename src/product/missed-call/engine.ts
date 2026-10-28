@@ -30,6 +30,7 @@ import {
   validateCollectionAnswer,
 } from "./messaging";
 import { checkServiceArea } from "./service-area";
+import { SmsRateLimitError } from "./twilio";
 import type { MissedCallStore } from "./store";
 import { DuplicateActiveWorkflowError } from "./store";
 import {
@@ -244,6 +245,7 @@ export function createMissedCallEngine(deps: {
         toE164: input.toE164,
         fromE164: input.client.smsFromNumber,
         body: input.body,
+        internal: sendingToStaff,
       });
       await deps.store.markOutboundSent(outbox.id, result.sid);
     } catch (err) {
@@ -300,8 +302,14 @@ export function createMissedCallEngine(deps: {
         sent += 1;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
+        // A rate-limit denial means the message was never attempted with
+        // Twilio — it will go through once the window resets, so it must
+        // never burn through MAX_OUTBOUND_ATTEMPTS and die permanently.
         const next =
-          msg.attempts + 1 >= MAX_OUTBOUND_ATTEMPTS ? "dead" : "retry";
+          err instanceof SmsRateLimitError ||
+          msg.attempts + 1 < MAX_OUTBOUND_ATTEMPTS
+            ? "retry"
+            : "dead";
         await deps.store.markOutboundFailed(msg.id, message, next);
         failed += 1;
       }
