@@ -166,6 +166,11 @@ async function main() {
       ["src", "product", "saas", "plan-tiers.sql"],
       "029_plan_tier_receptionist",
     );
+    await applyFile(
+      client,
+      ["src", "product", "saas", "billing-v2.sql"],
+      "030_billing_v2",
+    );
   } finally {
     await client.end();
   }
