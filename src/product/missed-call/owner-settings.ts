@@ -20,10 +20,7 @@ const technicianInputSchema = z
   .object({
     id: z.string().trim().min(1).max(100).optional(),
     name: z.string().trim().min(1).max(120),
-    phone: z
-      .string()
-      .trim()
-      .regex(E164_PHONE, "must be an E.164 phone number"),
+    phone: z.string().trim().regex(E164_PHONE, "must be an E.164 phone number"),
     role: z.enum(["primary", "backup", "owner"]),
     active: z.boolean(),
   })
