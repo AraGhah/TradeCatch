@@ -10,6 +10,7 @@
  */
 
 import { randomUUID } from "@/lib/id";
+import { logReceptionistDiagnostic } from "./diagnostics";
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import { shouldAnswerCall } from "./call-handling";
 import { decideInboundRouting } from "@/product/telephony/call-routing";
@@ -1036,17 +1037,25 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     }): Promise<VoicePlan> {
       const config = resolveConfig(input.toE164);
       if (!config) {
-        console.error("[receptionist] no enabled config for number", {
-          to: input.toE164,
+        const configs = deps.configs();
+        logReceptionistDiagnostic({
+          event: "incoming_declined",
+          code: "NO_ENABLED_CONFIG_FOR_NUMBER",
+          callSid: input.callSid,
+          dialedNumber: input.toE164,
+          profiles: configs.length,
+          enabledProfiles: configs.filter((c) => c.enabled).length,
         });
         return failSafePlan(null, null, undefined, { cause: "declined" });
       }
 
       const at = clock.now();
       if (!shouldAnswerCall(config, at)) {
-        console.info("[receptionist] callHandlingMode declined call", {
-          to: input.toE164,
-          mode: config.callHandlingMode,
+        logReceptionistDiagnostic({
+          event: "incoming_declined",
+          code: "CALL_HANDLING_MODE_DECLINED",
+          callSid: input.callSid,
+          dialedNumber: input.toE164,
         });
         return failSafePlan(null, null, undefined, { cause: "declined" });
       }
@@ -1064,7 +1073,12 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         : decideInboundRouting({ config, phone, now: at });
 
       if (routing.action === "reject") {
-        console.info("[receptionist] routing rejected call", routing.reason);
+        logReceptionistDiagnostic({
+          event: "incoming_declined",
+          code: "ROUTING_REJECTED",
+          callSid: input.callSid,
+          dialedNumber: input.toE164,
+        });
         return failSafePlan(config, null, undefined, { cause: "declined" });
       }
 

@@ -1,4 +1,5 @@
-import { Pool } from "pg";
+import type { Pool } from "pg";
+import { createPostgresPool } from "@/lib/postgres-pool";
 import {
   defaultProfileSettings,
   profileSettingsSchema,
@@ -111,7 +112,7 @@ const pools = new Map<string, Pool>();
 function getPool(url: string) {
   let pool = pools.get(url);
   if (!pool) {
-    pool = new Pool({ connectionString: url, max: 5 });
+    pool = createPostgresPool({ connectionString: url, max: 5 });
     pools.set(url, pool);
   }
   return pool;

@@ -3,12 +3,15 @@
  * webhook protection (by callSid + kind + detail fingerprint).
  */
 
-import { Pool } from "pg";
+import type { Pool } from "pg";
+import { createPostgresPool } from "@/lib/postgres-pool";
 import { randomUUID } from "@/lib/id";
 import type { CallEvent, CallEventKind } from "./types";
 
 export type CallEventStore = {
-  append(event: Omit<CallEvent, "id" | "at"> & { at?: string; id?: string }): Promise<CallEvent>;
+  append(
+    event: Omit<CallEvent, "id" | "at"> & { at?: string; id?: string },
+  ): Promise<CallEvent>;
   listForCall(input: {
     organizationId: string;
     callSid: string;
@@ -52,8 +55,7 @@ export function createMemoryCallEventStore(): CallEventStore {
     async listForCall({ organizationId, callSid, limit = 100 }) {
       return rows
         .filter(
-          (r) =>
-            r.organizationId === organizationId && r.callSid === callSid,
+          (r) => r.organizationId === organizationId && r.callSid === callSid,
         )
         .sort((a, b) => a.at.localeCompare(b.at))
         .slice(-limit)
@@ -84,7 +86,7 @@ const pools = new Map<string, Pool>();
 function getPool(url: string) {
   let pool = pools.get(url);
   if (!pool) {
-    pool = new Pool({ connectionString: url, max: 5 });
+    pool = createPostgresPool({ connectionString: url, max: 5 });
     pools.set(url, pool);
   }
   return pool;

@@ -9,6 +9,10 @@ import { loadClientAccountFromEnv } from "@/product/missed-call/client-config";
 import { createTwilioSmsPort } from "@/product/missed-call/twilio";
 import type { ClientAccount } from "@/product/missed-call/types";
 import { createLlmBrain } from "./brain-llm";
+import {
+  logReceptionistDiagnostic,
+  receptionistErrorCode,
+} from "./diagnostics";
 import { createRuleBrain } from "./brain-rules";
 import { loadReceptionistConfigsFromEnv } from "./config";
 import { createReceptionistEngine, type ReceptionistEngine } from "./engine";
@@ -41,6 +45,7 @@ type RuntimeState = {
   envConfigs: ReceptionistConfig[];
   profileConfigs: ReceptionistConfig[];
   profilesLoadedAt: number;
+  profileLoadError?: string;
   refreshing?: Promise<void>;
   llm: LlmClient | null;
   durable: boolean;
@@ -148,15 +153,25 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
       getOrganization: (id) => saas.getOrganization(id),
       getClient: (id) => missedCall.getClient(id),
       onSkip: (organizationId, reason) =>
-        console.warn("[receptionist] profile skipped", {
+        logReceptionistDiagnostic({
+          event: "profile_skipped",
           organizationId,
-          reason,
+          code: reason.startsWith("invalid:") ? "INVALID_PROFILE" : reason,
         }),
     });
     state.profilesLoadedAt = Date.now();
+    state.profileLoadError = undefined;
+    logReceptionistDiagnostic({
+      event: "profiles_loaded",
+      profiles: state.envConfigs.length + state.profileConfigs.length,
+      enabledProfiles: [...state.envConfigs, ...state.profileConfigs].filter(
+        (c) => c.enabled,
+      ).length,
+    });
   } catch (err) {
     // Keep serving the last good set; retry on the next request.
-    console.error("[receptionist] profile reload failed", err);
+    state.profileLoadError = receptionistErrorCode(err);
+    logReceptionistDiagnostic({ event: "profile_reload_failed", error: err });
   }
 }
 
@@ -270,6 +285,9 @@ export function getReceptionistRuntime() {
     engine: s.engine,
     llm: s.llm,
     durable: s.durable,
+    get profileLoadError(): string | undefined {
+      return s.profileLoadError;
+    },
     /** Founder env configs + activated tenant profiles (as of the last refresh). */
     get configs(): ReceptionistConfig[] {
       return [...s.envConfigs, ...s.profileConfigs];
@@ -308,13 +326,16 @@ export function receptionistReadiness(): {
       profiles: rt.configs.length,
       brain: rt.llm ? `${rt.llm.provider}:${rt.llm.model}` : "rules",
       durable: rt.durable,
+      ...(rt.profileLoadError
+        ? { error: `PROFILE_RELOAD_FAILED:${rt.profileLoadError}` }
+        : {}),
     };
   } catch (err) {
     return {
       profiles: 0,
       brain: "unavailable",
       durable: false,
-      error: err instanceof Error ? err.message : String(err),
+      error: receptionistErrorCode(err),
     };
   }
 }

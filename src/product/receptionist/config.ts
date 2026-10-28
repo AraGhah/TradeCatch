@@ -95,6 +95,7 @@ export const receptionistConfigSchema = z.object({
     .default([]),
   emergencyTransferE164: e164.optional(),
   fallbackTransferE164: e164.optional(),
+  allowVoicemailOnly: z.boolean().default(false),
   faqs: z
     .array(
       z.object({
@@ -184,7 +185,7 @@ export function parseReceptionistConfigJson(raw: string): ReceptionistConfig[] {
   return list.map((entry) => parseReceptionistConfig(entry));
 }
 
-/** Production checks beyond structure: real numbers, a human escape hatch. */
+/** Production checks: real numbers and an explicit, reachable fallback. */
 export function validateReceptionistConfig(config: ReceptionistConfig): {
   ok: boolean;
   errors: string[];
@@ -207,9 +208,16 @@ export function validateReceptionistConfig(config: ReceptionistConfig): {
       errors.push(`${label} is a reserved demo number`);
     }
   }
-  if (!config.emergencyTransferE164 && !config.fallbackTransferE164) {
+  const emailVoicemail =
+    config.allowVoicemailOnly === true &&
+    config.notifications.some((channel) => channel.type === "email");
+  if (
+    !config.emergencyTransferE164 &&
+    !config.fallbackTransferE164 &&
+    !emailVoicemail
+  ) {
     errors.push(
-      "emergencyTransferE164 or fallbackTransferE164 required (critical calls need a live human)",
+      "A live human transfer number is required, or explicitly enable allowVoicemailOnly with an email notification channel",
     );
   }
   if (config.notifications.length === 0) {

@@ -301,7 +301,7 @@ describe("health route AI receptionist visibility", () => {
     };
 
     assert.ok(body.receptionist?.error, "readiness reports why the runtime failed to boot");
-    assert.match(body.receptionist!.error!, /Refusing in-memory call sessions in production/);
+    assert.match(body.receptionist!.error!, /DURABLE_STORE_REQUIRED/);
   });
 
   it("never includes receptionist details on the unauthenticated liveness response", async () => {
