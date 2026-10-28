@@ -18,7 +18,11 @@ export const dynamic = "force-dynamic";
 
 const bodySchema = z.object({
   organizationId: z.string().min(1),
-  areaCode: z.string().trim().regex(/^\d{3}$/).optional(),
+  areaCode: z
+    .string()
+    .trim()
+    .regex(/^\d{3}$/)
+    .optional(),
 });
 
 /**
