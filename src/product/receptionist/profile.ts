@@ -71,10 +71,7 @@ const optionalPhone = z
 const keyword = z.string().trim().min(2).max(40);
 
 const stringList = (maxItems: number, maxLen: number) =>
-  z
-    .array(z.string().trim().min(1).max(maxLen))
-    .max(maxItems)
-    .default([]);
+  z.array(z.string().trim().min(1).max(maxLen)).max(maxItems).default([]);
 
 export const knowledgeSchema = z.object({
   companyName: optionalText(120),
@@ -119,9 +116,7 @@ export const appointmentSettingsSchema = z.object({
   bufferMinutes: z.number().int().min(0).max(120).default(15),
   maxDailyBookings: z.number().int().min(1).max(50).optional(),
   bookingNoticeHours: z.number().int().min(0).max(168).default(2),
-  confirmationMethod: z
-    .enum(["sms", "email", "both", "none"])
-    .default("sms"),
+  confirmationMethod: z.enum(["sms", "email", "both", "none"]).default("sms"),
   bookableServices: stringList(20, 80),
   /**
    * Owner opt-in: the receptionist reads out open times from the schedule and
@@ -337,10 +332,7 @@ export function composeBusinessFacts(
   return text || undefined;
 }
 
-function faqKeywords(f: {
-  question?: string;
-  keywords: string[];
-}): string[] {
+function faqKeywords(f: { question?: string; keywords: string[] }): string[] {
   if (f.keywords.length > 0) return f.keywords;
   if (!f.question) return [];
   return f.question
@@ -409,7 +401,8 @@ export function buildProfileConfig(
   const languages = s.languages as ReceptionistLanguage[];
   const mode: CallHandlingMode = s.callHandlingMode ?? "always";
   const knowledge = s.knowledge ?? defaultProfileSettings().knowledge;
-  const transfer = s.transferSettings ?? defaultProfileSettings().transferSettings;
+  const transfer =
+    s.transferSettings ?? defaultProfileSettings().transferSettings;
   const collect = s.collectFields ?? defaultProfileSettings().collectFields;
   const phone = s.phoneSettings ?? defaultPhoneSettings();
   const businessName =
@@ -419,9 +412,7 @@ export function buildProfileConfig(
     transfer.primaryTransferE164 ||
     s.fallbackTransferE164;
   const emergency =
-    s.emergencyTransferE164 ??
-    primaryPhone(client) ??
-    client.humanReviewPhone;
+    s.emergencyTransferE164 ?? primaryPhone(client) ?? client.humanReviewPhone;
   const tradecatchNumber =
     phone.tradecatchNumberE164 ||
     profile.phoneNumberE164 ||
@@ -478,6 +469,7 @@ export function buildProfileConfig(
       transfer.secondaryTransferE164 ??
       client.humanReviewPhone ??
       ownerPhone(client),
+    allowVoicemailOnly: transfer.failedAction === "voicemail",
     collectPreferredTime:
       s.collectPreferredTime !== false && collect.preferredDate !== false,
     phoneBooking: s.appointmentSettings?.phoneBooking === true,
