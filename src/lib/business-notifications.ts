@@ -93,6 +93,7 @@ export async function sendBusinessNotifySms(input: {
       toE164: string;
       fromE164: string;
       body: string;
+      internal?: boolean;
     }) => Promise<unknown>;
   };
   toE164: string;
@@ -104,6 +105,7 @@ export async function sendBusinessNotifySms(input: {
       toE164: input.toE164,
       fromE164: input.fromE164,
       body: input.body,
+      internal: true,
     });
     return { sent: true };
   } catch (err) {
