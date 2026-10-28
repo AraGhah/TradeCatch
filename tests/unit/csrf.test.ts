@@ -94,3 +94,21 @@ describe("csrf guard in the proxy", () => {
     }
   });
 });
+
+describe("request body size cap in the proxy", () => {
+  const api = (method: string, headers: Record<string, string>, path = "/api/app/api-keys") =>
+    proxy(new NextRequest(`https://app.tradecatch.test${path}`, { method, headers }));
+
+  it("rejects a declared oversized body on a mutating method before any route runs", async () => {
+    const res = await api("POST", { "content-length": String(3 * 1024 * 1024) });
+    assert.equal(res.status, 413);
+    assert.deepEqual(await res.json(), { error: "Payload too large." });
+  });
+
+  it("lets a normally sized body and GET requests through regardless of declared size", async () => {
+    const small = await api("POST", { "content-length": "1024" });
+    assert.equal(small.headers.get("x-middleware-next"), "1");
+    const read = await api("GET", { "content-length": String(10 * 1024 * 1024) });
+    assert.equal(read.headers.get("x-middleware-next"), "1");
+  });
+});
