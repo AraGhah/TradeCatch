@@ -139,6 +139,7 @@ async function leadSyncDeps(store: ReceptionistStore): Promise<LeadSyncDeps> {
 }
 
 async function reloadProfiles(state: RuntimeState): Promise<void> {
+  const startedAt = Date.now();
   try {
     const [{ getSaasStore }, { getMissedCallReadStore }] = await Promise.all([
       import("@/product/saas/runtime"),
@@ -167,11 +168,16 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
       enabledProfiles: [...state.envConfigs, ...state.profileConfigs].filter(
         (c) => c.enabled,
       ).length,
+      durationMs: Date.now() - startedAt,
     });
   } catch (err) {
     // Keep serving the last good set; retry on the next request.
     state.profileLoadError = receptionistErrorCode(err);
-    logReceptionistDiagnostic({ event: "profile_reload_failed", error: err });
+    logReceptionistDiagnostic({
+      event: "profile_reload_failed",
+      error: err,
+      durationMs: Date.now() - startedAt,
+    });
   }
 }
 
@@ -295,16 +301,37 @@ export function getReceptionistRuntime() {
     /**
      * Re-read tenant profiles (cached for PROFILE_CACHE_TTL_MS per instance).
      * Call before handling a webhook; `force` after a settings / activation change.
+     *
+     * Each Worker invocation gets its own isolated I/O context, but all
+     * invocations in the same isolate share this module's `globalThis`
+     * state — including `s`. A Promise created by one invocation's I/O
+     * (the Postgres reads inside reloadProfiles) is tied to that
+     * invocation's context; Cloudflare Workers forbids a *different*
+     * invocation from awaiting it, and the failure mode is not a thrown
+     * error but the awaiting invocation hanging forever once the
+     * originating context is gone — exactly the reported symptom. A
+     * passive, TTL-driven refresh must therefore never attach to another
+     * invocation's in-flight reload. If one is already running, this
+     * invocation serves the last good profile set (the design already
+     * tolerates up to PROFILE_CACHE_TTL_MS of staleness) instead of
+     * waiting on it; a `force` refresh always runs — and awaits — its
+     * own independent reload, since only the invocation that creates a
+     * Promise may safely await it.
      */
     async refresh(force = false): Promise<void> {
       if (!force && Date.now() - s.profilesLoadedAt < PROFILE_CACHE_TTL_MS)
         return;
-      if (!s.refreshing) {
-        s.refreshing = reloadProfiles(s).finally(() => {
-          s.refreshing = undefined;
-        });
+      if (!force && s.refreshing) {
+        logReceptionistDiagnostic({ event: "refresh_skipped_in_flight" });
+        return;
       }
-      await s.refreshing;
+      const run = reloadProfiles(s);
+      if (!force) s.refreshing = run;
+      try {
+        await run;
+      } finally {
+        if (s.refreshing === run) s.refreshing = undefined;
+      }
     },
   };
 }
