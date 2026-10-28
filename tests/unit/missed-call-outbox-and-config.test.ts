@@ -15,6 +15,7 @@ import {
 } from "../../src/product/missed-call/technicians";
 import { assertTwilioWebhook } from "../../src/product/missed-call/twilio-webhook-auth";
 import type { OutboundMessageRecord, SmsPort } from "../../src/product/missed-call/types";
+import { SmsRateLimitError } from "../../src/product/missed-call/twilio";
 
 function sign(authToken: string, url: string, params: Record<string, string>) {
   const data =
@@ -131,6 +132,83 @@ describe("durable readiness helpers", () => {
       MISSED_CALL_PUBLIC_WEBHOOK_BASE: base,
     });
     assert.equal(ok, true);
+  });
+
+  it("a rate-limit denial is always retried, never marked dead, past MAX_OUTBOUND_ATTEMPTS", async () => {
+    const sms: SmsPort = {
+      async send() {
+        throw new SmsRateLimitError(Date.now() + 60_000);
+      },
+    };
+    const store = createMemoryStore();
+    const client = demoClientAccount();
+    await store.saveClient(client);
+    const now = new Date("2026-07-22T18:00:00.000Z");
+    const engine = createMissedCallEngine({
+      store,
+      sms,
+      clock: { now: () => now },
+    });
+
+    const msg: OutboundMessageRecord = {
+      id: "sms_rl_1",
+      clientAccountId: client.id,
+      toE164: "+15145550002",
+      fromE164: client.smsFromNumber,
+      body: "hi",
+      status: "queued",
+      attempts: 0,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    await store.enqueueOutbound(msg);
+
+    // Flush repeatedly, well past MAX_OUTBOUND_ATTEMPTS (5) — a rate-limit
+    // denial never consumed a real Twilio attempt, so it must keep retrying.
+    for (let i = 0; i < 8; i++) {
+      await engine.processEscalations();
+    }
+
+    const stats = await store.getOutboundQueueStats();
+    assert.equal(stats.retry, 1, "message must remain retryable, never dead");
+  });
+
+  it("a genuine Twilio failure still dies at MAX_OUTBOUND_ATTEMPTS", async () => {
+    const sms: SmsPort = {
+      async send() {
+        throw new Error("Twilio SMS failed: 500 boom");
+      },
+    };
+    const store = createMemoryStore();
+    const client = demoClientAccount();
+    await store.saveClient(client);
+    const now = new Date("2026-07-22T18:00:00.000Z");
+    const engine = createMissedCallEngine({
+      store,
+      sms,
+      clock: { now: () => now },
+    });
+
+    const msg: OutboundMessageRecord = {
+      id: "sms_fail_1",
+      clientAccountId: client.id,
+      toE164: "+15145550003",
+      fromE164: client.smsFromNumber,
+      body: "hi",
+      status: "queued",
+      attempts: 0,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+    };
+    await store.enqueueOutbound(msg);
+
+    for (let i = 0; i < 6; i++) {
+      await engine.processEscalations();
+    }
+
+    const stats = await store.getOutboundQueueStats();
+    assert.equal(stats.retry, 0);
+    assert.equal(stats.queued, 0);
   });
 
   it("memory outbox claim marks messages sending", async () => {
