@@ -1,5 +1,48 @@
 import { isStagingRuntime, shouldUseDryRunSms } from "@/lib/environment";
+import { rateLimitAsync } from "@/lib/rate-limit";
 import type { OutboundSms, SmsPort } from "./types";
+
+/**
+ * Billing/spam backstop for the customer-facing conversational SMS path
+ * (missed-call recovery replies, receptionist opener/confirmations): one
+ * abusive caller should not be able to drive unbounded Twilio spend by
+ * repeatedly calling/texting. Per sending-number→recipient pair, without
+ * capping normal multi-message conversations.
+ *
+ * Internal alerts (owner/staff notifications) are exempt — see
+ * `OutboundSms.internal` — because they all share one fixed
+ * business-number→owner-number pair regardless of which caller triggered
+ * them, so capping that pair would silently drop real alerts on a busy day
+ * instead of stopping any abuse (the recipient is the business, not the
+ * attacker-influenced party).
+ */
+const SMS_SEND_LIMIT = 20;
+const SMS_SEND_WINDOW_MS = 60 * 60 * 1000;
+
+/** Thrown by assertSmsSendAllowed so callers can tell this apart from a
+ * real provider failure and avoid burning retry attempts on it. */
+export class SmsRateLimitError extends Error {
+  constructor(readonly resetAt: number) {
+    super("Twilio SMS send rate limit exceeded for this recipient.");
+    this.name = "SmsRateLimitError";
+  }
+}
+
+async function assertSmsSendAllowed(
+  toE164: string,
+  fromE164: string,
+  env: NodeJS.ProcessEnv,
+) {
+  const { allowed, resetAt } = await rateLimitAsync({
+    key: `sms-send:${fromE164}:${toE164}`,
+    limit: SMS_SEND_LIMIT,
+    windowMs: SMS_SEND_WINDOW_MS,
+    env,
+  });
+  if (!allowed) {
+    throw new SmsRateLimitError(resetAt);
+  }
+}
 
 /** In-memory SMS port for tests and explicitly selected local dry-runs. */
 export function createMemorySmsPort(): SmsPort & {
@@ -83,6 +126,9 @@ export function createTwilioSmsPort(
 
   return {
     async send(message) {
+      if (!message.internal) {
+        await assertSmsSendAllowed(message.toE164, message.fromE164, env);
+      }
       const auth = Buffer.from(`${sid}:${token}`).toString("base64");
       const body = new URLSearchParams({
         To: message.toE164,

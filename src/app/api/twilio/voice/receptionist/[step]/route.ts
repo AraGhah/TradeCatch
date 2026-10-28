@@ -1,10 +1,11 @@
 import { after, NextRequest, NextResponse } from "next/server";
-import { contentLengthExceeds } from "@/lib/request-body";
+import { readFormParamsBounded } from "@/lib/request-body";
 import { withPostgresRequestScope } from "@/lib/postgres-pool";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
 import { greetingFor } from "@/product/receptionist/prompts";
 import {
   logReceptionistDiagnostic,
+  logWebhookPhaseEntered,
   receptionistErrorCode,
 } from "@/product/receptionist/diagnostics";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
@@ -43,14 +44,14 @@ async function parseForm(
   request: NextRequest,
 ): Promise<Record<string, string>> {
   // Twilio form posts are a few KB. An empty parameter set can never match the
-  // request signature, so an oversized post is rejected by the check that follows.
-  if (contentLengthExceeds(request, 256 * 1024)) return {};
-  const form = await request.formData();
-  const params: Record<string, string> = {};
-  for (const [k, v] of form.entries()) {
-    if (typeof v === "string") params[k] = v;
+  // request signature, so an oversized/unparsable post is rejected by the
+  // check that follows. Bounded (not request.formData()) so a chunked body
+  // with no declared Content-Length can't force an unbounded buffer either.
+  try {
+    return await readFormParamsBounded(request, 256 * 1024);
+  } catch {
+    return {};
   }
-  return params;
 }
 
 function callbackUrlFor(request: NextRequest): TwimlCallbackUrl {
@@ -87,11 +88,27 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ step: string }> },
 ) {
+  const requestStartedAt = Date.now();
   // Keep every DB query this request makes on one invocation-scoped
   // connection; without this scope each query opens and tears down its own
   // socket (see src/lib/postgres-pool.ts), burning the Worker subrequest
   // budget on multi-query steps like "incoming".
-  return withPostgresRequestScope(() => handlePost(request, context));
+  return withPostgresRequestScope(async () => {
+    try {
+      return await handlePost(request, context);
+    } finally {
+      // A genuine runtime hang (the symptom this diagnostic targets) never
+      // reaches this finally block either — its absence in production logs,
+      // alongside the last "webhook_phase_entered" marker that did log, is
+      // itself the signal for which awaited operation never returned.
+      const { step } = await context.params;
+      logReceptionistDiagnostic({
+        event: "webhook_completed",
+        step,
+        durationMs: Date.now() - requestStartedAt,
+      });
+    }
+  });
 }
 
 async function handlePost(
@@ -103,6 +120,7 @@ async function handlePost(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  logWebhookPhaseEntered({ step, phase: "parse_form" });
   let form: Record<string, string>;
   try {
     form = await parseForm(request);
@@ -110,6 +128,11 @@ async function handlePost(
     return NextResponse.json({ error: "Invalid form" }, { status: 400 });
   }
 
+  logWebhookPhaseEntered({
+    step,
+    phase: "verify_signature",
+    callSid: form.CallSid,
+  });
   if (!(await assertTwilioWebhook(request, form))) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
   }
@@ -118,6 +141,11 @@ async function handlePost(
   const render = (plan: VoicePlan) => xml(renderTwiml(plan, callbackUrl));
   const sessionId = request.nextUrl.searchParams.get("session")?.trim() || null;
 
+  logWebhookPhaseEntered({
+    step,
+    phase: "runtime_refresh",
+    callSid: form.CallSid,
+  });
   let runtime: ReturnType<typeof getReceptionistRuntime>;
   try {
     runtime = getReceptionistRuntime();
@@ -153,6 +181,7 @@ async function handlePost(
   }
   const { engine, store } = runtime;
 
+  logWebhookPhaseEntered({ step, phase: "engine_call", callSid: form.CallSid });
   try {
     switch (step) {
       case "incoming": {
@@ -252,6 +281,7 @@ async function handlePost(
             digits: form.Digits,
             confidence: num(form.Confidence),
             defer: (task) => void deferTask(task),
+            callSid: form.CallSid,
           }),
         );
 
@@ -263,6 +293,7 @@ async function handlePost(
             sessionId,
             dialStatus: form.DialCallStatus ?? "failed",
             durationSeconds: num(form.DialCallDuration),
+            callSid: form.CallSid,
           }),
         );
 
@@ -281,6 +312,7 @@ async function handlePost(
             sessionId,
             recordingUrl: form.RecordingUrl,
             durationSeconds: num(form.RecordingDuration),
+            callSid: form.CallSid,
           }),
         );
 

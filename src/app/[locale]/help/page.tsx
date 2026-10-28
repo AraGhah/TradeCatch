@@ -15,8 +15,8 @@ export default async function PublicHelpPage({
   const t = await getTranslations("app.help");
   return (
     <Container className="py-12">
-      <h1 className="font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">{t("headline")}</h1>
-      <p className="mt-2 max-w-2xl text-sm text-navy/70">{t("publicIntro")}</p>
+      <h1 className="font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-heading">{t("headline")}</h1>
+      <p className="mt-2 max-w-2xl text-sm text-muted">{t("publicIntro")}</p>
       <div className="mt-6">
         <HelpCatalog locale={locale === "fr" ? "fr" : "en"} query={q ?? ""} base="public" />
       </div>

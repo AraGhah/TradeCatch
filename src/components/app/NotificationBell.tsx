@@ -43,7 +43,7 @@ export function NotificationBell({ organizationId }: { organizationId: string })
   return (
     <Link
       href="/app/notifications"
-      className="relative rounded-md px-3 py-2 text-navy hover:bg-navy/5"
+      className="relative rounded-md px-3 py-2 text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
       aria-label={t("headline")}
     >
       {t("headline")}

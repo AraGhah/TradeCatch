@@ -54,11 +54,30 @@ export async function withPostgresRequestScope<T>(
       return await run();
     } finally {
       state.closed = true;
+      const poolCount = state.pools.size;
+      const cleanupStartedAt = Date.now();
       const closed = await Promise.allSettled(
         [...state.pools.values()].map((pool) => pool.end()),
       );
+      const cleanupDurationMs = Date.now() - cleanupStartedAt;
       if (closed.some((result) => result.status === "rejected"))
-        console.error("[postgres] Invocation connection cleanup failed");
+        console.error(
+          JSON.stringify({
+            event: "tradecatch.postgres.cleanup_failed",
+            poolCount,
+            cleanupDurationMs,
+          }),
+        );
+      else if (cleanupDurationMs > 1000)
+        // pool.end() should be near-instant once queries drain; a slow
+        // cleanup here is itself evidence of a stuck socket, not just noise.
+        console.warn(
+          JSON.stringify({
+            event: "tradecatch.postgres.cleanup_slow",
+            poolCount,
+            cleanupDurationMs,
+          }),
+        );
     }
   });
 }
