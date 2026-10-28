@@ -2909,6 +2909,40 @@
       "deactivate": "Désactiver",
       "error": "Impossible d’enregistrer ce changement. Vérifiez votre connexion et réessayez."
     },
+    "smsReceptionist": {
+      "headline": "Réceptionniste SMS",
+      "intro": "Gérez les détails de l’entreprise et la liste des techniciens de garde utilisés par votre réceptionniste SMS pour répondre aux appels manqués.",
+      "entitlement": "Les paramètres du réceptionniste SMS sont inclus avec tous les forfaits — contactez le soutien si vous ne les voyez pas.",
+      "notLinked": "Votre numéro de réceptionniste SMS est encore en cours de configuration par notre équipe. Nous vous aviserons dès qu’il sera prêt à configurer.",
+      "number": "Numéro de réception",
+      "numberNote": "Attribué par TradeCatch — contactez le soutien pour le changer.",
+      "businessName": "Nom de l’entreprise",
+      "timezone": "Fuseau horaire",
+      "businessHours": "Heures d’ouverture",
+      "to": "à",
+      "day": {
+        "0": "Dim",
+        "1": "Lun",
+        "2": "Mar",
+        "3": "Mer",
+        "4": "Jeu",
+        "5": "Ven",
+        "6": "Sam"
+      },
+      "humanReviewPhone": "Téléphone de révision humaine (facultatif)",
+      "roster": "Liste des techniciens",
+      "namePlaceholder": "Nom",
+      "addTechnician": "Ajouter un technicien",
+      "rolePrimary": "Principal",
+      "roleBackup": "Remplaçant",
+      "roleOwner": "Propriétaire",
+      "active": "Actif",
+      "remove": "Retirer",
+      "save": "Enregistrer les modifications",
+      "saving": "Enregistrement…",
+      "saved": "Enregistré.",
+      "error": "Impossible d’enregistrer ce changement. Vérifiez votre connexion et réessayez."
+    },
     "alerts": {
       "categories": {
         "new_leads": "Nouveaux prospects",
