@@ -1063,3 +1063,37 @@ describe(
     });
   },
 );
+
+describe("transient Postgres connection error classification", () => {
+  it("retries connection-reset and server-shutdown style errors, not ordinary failures", async () => {
+    const { isTransientConnectionError } = await import(
+      "../../src/lib/book-audit-notifications"
+    );
+    const transient = [
+      Object.assign(new Error("socket hang up"), { code: "ECONNRESET" }),
+      Object.assign(new Error("timed out"), { code: "ETIMEDOUT" }),
+      Object.assign(new Error("admin shutdown"), { code: "57P01" }),
+      Object.assign(new Error("connection failure"), { code: "08006" }),
+      new Error("Connection terminated unexpectedly"),
+      new Error("terminating connection due to administrator command"),
+    ];
+    for (const err of transient) {
+      assert.equal(isTransientConnectionError(err), true, err.message);
+    }
+
+    const notTransient = [
+      new Error("Booking notification retries require PostgreSQL"),
+      Object.assign(new Error("unique violation"), { code: "23505" }),
+      new Error("Notification queue is unavailable"),
+      "not an error object",
+      undefined,
+    ];
+    for (const err of notTransient) {
+      assert.equal(
+        isTransientConnectionError(err),
+        false,
+        String((err as { message?: string })?.message ?? err),
+      );
+    }
+  });
+});
