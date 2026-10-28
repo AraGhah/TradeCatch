@@ -2,10 +2,20 @@ import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { isCrossSiteMutation } from "./lib/csrf";
+import { contentLengthExceeds } from "./lib/request-body";
 import { routing } from "./i18n/routing";
 import { enforceStagingAccess } from "./lib/staging-middleware";
 
 const handleI18n = createMiddleware(routing);
+
+// Most /api/* routes read the body directly with request.json()/formData(),
+// which buffers the whole payload before any validation runs. A handful of
+// routes already bound their own read (see src/lib/request-body.ts); this is
+// the backstop for the rest, rejecting a declared oversized body before it
+// reaches any handler. No route under /api/* legitimately needs a request
+// body (as opposed to a response) over this size.
+const DEFAULT_MAX_API_BODY_BYTES = 2 * 1024 * 1024;
+const BODY_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /** Hostnames this deployment answers to: what the request was sent to, and the configured public site. */
 function acceptedHosts(request: NextRequest): Array<string | null> {
@@ -45,6 +55,12 @@ export default function proxy(request: NextRequest) {
     // Second layer behind SameSite cookies; see src/lib/csrf.ts.
     if (isCrossSiteMutation({ method: request.method, headers: request.headers, hosts: acceptedHosts(request) })) {
       return NextResponse.json({ error: "Cross-site request blocked." }, { status: 403 });
+    }
+    if (
+      BODY_METHODS.has(request.method) &&
+      contentLengthExceeds(request, DEFAULT_MAX_API_BODY_BYTES)
+    ) {
+      return NextResponse.json({ error: "Payload too large." }, { status: 413 });
     }
     return NextResponse.next();
   }
