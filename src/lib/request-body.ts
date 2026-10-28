@@ -53,6 +53,27 @@ export async function readBodyText(
   return new TextDecoder().decode(joined);
 }
 
+/**
+ * Bounded replacement for `await request.formData()` for Twilio webhooks,
+ * which always POST `application/x-www-form-urlencoded` (never multipart).
+ * `request.formData()` buffers the whole body with no size limit — exactly
+ * the same unbounded-read risk `readBodyText` exists to close, and one the
+ * proxy's declared-Content-Length check can't catch on a chunked request.
+ * Parsing bounded text as URLSearchParams gets the same `Record<string,
+ * string>` shape without ever going through the unbounded API.
+ */
+export async function readFormParamsBounded(
+  request: Request,
+  maxBytes: number,
+): Promise<Record<string, string>> {
+  const text = await readBodyText(request, maxBytes);
+  const params: Record<string, string> = {};
+  for (const [k, v] of new URLSearchParams(text)) {
+    params[k] = v;
+  }
+  return params;
+}
+
 export type JsonBody =
   { ok: true; data: unknown } | { ok: false; status: 400 | 413; error: string };
 
