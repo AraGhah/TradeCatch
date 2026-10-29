@@ -19,3 +19,20 @@ export function isStripePortalUrl(value: unknown): value is string {
     return false;
   }
 }
+
+export function isStripeCheckoutUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === "https:" &&
+      url.hostname === "checkout.stripe.com" &&
+      !url.port &&
+      !url.username &&
+      !url.password &&
+      url.pathname.startsWith("/c/pay/")
+    );
+  } catch {
+    return false;
+  }
+}

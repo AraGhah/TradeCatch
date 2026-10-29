@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { requireTenantContext } from "@/product/saas/tenant";
+import { requireTenantContext, tenantHasFeature } from "@/product/saas/tenant";
 import { ScheduleSubnav } from "@/components/app/ScheduleSubnav";
 import { ServiceTypeEditor } from "@/components/app/ServiceTypeEditor";
 
@@ -19,7 +19,7 @@ export default async function ServiceTypesPage({
         <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t("navServices")}</h1>
         <p className="mt-2 text-navy/70">{t("servicesIntro")}</p>
       </header>
-      <ScheduleSubnav />
+      <ScheduleSubnav showTeam={tenantHasFeature(auth.ctx, "MULTI_CREW_CALENDARS")} />
       <ServiceTypeEditor organizationId={auth.ctx.organization.id} />
     </div>
   );

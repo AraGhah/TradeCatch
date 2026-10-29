@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { requireTenantContext } from "@/product/saas/tenant";
+import { requireTenantContext, tenantHasFeature } from "@/product/saas/tenant";
 import { AvailabilityEditor } from "@/components/app/AvailabilityEditor";
 import { ScheduleSubnav } from "@/components/app/ScheduleSubnav";
 
@@ -19,7 +19,7 @@ export default async function AvailabilityPage({
         <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t("navHours")}</h1>
         <p className="mt-2 text-navy/70">{t("hoursIntro")}</p>
       </header>
-      <ScheduleSubnav />
+      <ScheduleSubnav showTeam={tenantHasFeature(auth.ctx, "MULTI_CREW_CALENDARS")} />
       <AvailabilityEditor organizationId={auth.ctx.organization.id} />
     </div>
   );

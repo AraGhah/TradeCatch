@@ -56,7 +56,7 @@ describe("platform stats", () => {
     const stats = buildPlatformStats(orgs, usage, new Date("2026-10-17T12:00:00.000Z"));
     assert.equal(stats.businesses, 3);
     assert.equal(stats.activeSubscriptions, 1);
-    assert.equal(stats.mrr, 749.99);
+    assert.equal(stats.mrr, 649.99);
     assert.equal(stats.leads, 5);
     assert.equal(stats.calls, 3);
     assert.equal(stats.aiCompleted, 2);

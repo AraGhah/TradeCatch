@@ -84,4 +84,54 @@ describe("missed-call runtime fail-closed", () => {
     assert.equal(isRuntimeUsingDurableStore(), false);
     assert.ok(runtime.store);
   });
+
+  it("boots in real production with a durable store and no legacy MISSED_CALL_* client configured", async () => {
+    // Regression for the production SMS webhook crash: a genuinely
+    // multi-tenant deployment never sets MISSED_CALL_CLIENT_ID /
+    // MISSED_CALL_SMS_FROM / MISSED_CALL_TECH_PHONE because each
+    // organization routes through its own linked client record instead.
+    // Runtime boot must not throw just because that single legacy client
+    // is absent.
+    setNodeEnv("production");
+    process.env.TRADECATCH_ENV = "production";
+    process.env.MISSED_CALL_DURABLE_STORE = "1";
+    process.env.DATABASE_URL = "postgres://user:pass@localhost:5432/test";
+    delete process.env.MISSED_CALL_CLIENT_ID;
+    delete process.env.MISSED_CALL_SMS_FROM;
+    delete process.env.MISSED_CALL_TECH_PHONE;
+    delete process.env.MISSED_CALL_CLIENT_CONFIG_JSON;
+    delete process.env.MISSED_CALL_ALLOW_DEMO;
+
+    const { getMissedCallRuntime, isRuntimeUsingDurableStore } = await import(
+      "../../src/product/missed-call/runtime"
+    );
+    assert.doesNotThrow(() => getMissedCallRuntime());
+    const runtime = getMissedCallRuntime();
+    assert.equal(isRuntimeUsingDurableStore(), true);
+    assert.ok(runtime.store);
+    assert.ok(runtime.engine);
+  });
+
+  it("still fails loudly when an explicit legacy client config is invalid in production", async () => {
+    setNodeEnv("production");
+    process.env.TRADECATCH_ENV = "production";
+    process.env.MISSED_CALL_DURABLE_STORE = "1";
+    process.env.DATABASE_URL = "postgres://user:pass@localhost:5432/test";
+    delete process.env.MISSED_CALL_ALLOW_DEMO;
+    process.env.MISSED_CALL_CLIENT_ID = "client_demo";
+    process.env.MISSED_CALL_SMS_FROM = "+15145550100";
+    process.env.MISSED_CALL_TECH_PHONE = "+14165551234";
+
+    const { getMissedCallRuntime } = await import(
+      "../../src/product/missed-call/runtime"
+    );
+    assert.throws(
+      () => getMissedCallRuntime(),
+      /Invalid production client config/,
+    );
+
+    delete process.env.MISSED_CALL_CLIENT_ID;
+    delete process.env.MISSED_CALL_SMS_FROM;
+    delete process.env.MISSED_CALL_TECH_PHONE;
+  });
 });

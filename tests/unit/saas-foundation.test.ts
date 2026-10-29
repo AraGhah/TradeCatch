@@ -4,6 +4,7 @@ import {
   assertFeature,
   featuresForPlan,
   orgHasFeature,
+  PLAN_DISPLAY_NAMES,
 } from "../../src/product/saas/entitlements";
 import { computeStarterDashboardMetrics } from "../../src/product/saas/analytics";
 import { createMemorySaasStore } from "../../src/product/saas/memory-store";
@@ -25,6 +26,33 @@ describe("entitlements", () => {
     assert.ok(starter.every((f) => orgHasFeature("growth", f)));
     assert.equal(assertFeature("starter", "REVENUE_ATTRIBUTION").ok, false);
     assert.equal(assertFeature("growth", "REVENUE_ATTRIBUTION").ok, true);
+  });
+
+  it("reserves advanced routing, multi-crew calendars, reactivation and renewal automation for AI Receptionist Pro", () => {
+    const growth = featuresForPlan("growth");
+    for (const feature of [
+      "ADVANCED_CALL_ROUTING",
+      "MULTI_CREW_CALENDARS",
+      "CUSTOMER_REACTIVATION",
+      "CONTRACT_RENEWAL_AUTOMATION",
+      "ADVANCED_REVENUE_ANALYTICS",
+      "ADVANCED_AUTOMATION_WORKFLOWS",
+      "CRM_INTEGRATION_ADVANCED",
+    ] as const) {
+      assert.equal(orgHasFeature("starter", feature), false, feature);
+      assert.equal(orgHasFeature("growth", feature), false, feature);
+      assert.equal(orgHasFeature("receptionist", feature), true, feature);
+    }
+    assert.equal(orgHasFeature("growth", "CRM_INTEGRATION_LIMITED"), true);
+    assert.ok(growth.every((f) => orgHasFeature("receptionist", f)));
+  });
+
+  it("keeps the internal plan id `receptionist` mapped to the public name \"Receptionist\"", () => {
+    assert.deepEqual(PLAN_DISPLAY_NAMES, {
+      starter: "Starter",
+      growth: "Growth",
+      receptionist: "Receptionist",
+    });
   });
 });
 

@@ -103,12 +103,55 @@ async function deliver(job: BookAuditNotificationJob): Promise<boolean> {
   }
 }
 
+export function isTransientConnectionError(err: unknown): boolean {
+  const code = (err as { code?: string } | undefined)?.code;
+  const message = err instanceof Error ? err.message : "";
+  return (
+    code === "ECONNRESET" ||
+    code === "ETIMEDOUT" ||
+    code === "EPIPE" ||
+    code === "57P01" || // admin_shutdown
+    code === "08006" || // connection_failure
+    code === "08003" || // connection_does_not_exist
+    code === "08000" || // connection_exception
+    /connection terminated unexpectedly/i.test(message) ||
+    /terminating connection/i.test(message)
+  );
+}
+
 /** Durable, leased work. Successful channels are never deliberately resent. */
 export async function processBookAuditNotifications(
   input: {
     leadId?: string;
     limit?: number;
     // Dependency injection for isolated tests; the HTTP endpoint never accepts it.
+    send?: (job: BookAuditNotificationJob) => Promise<boolean>;
+  } = {},
+) {
+  // A pooled connection that goes idle-dead between cron ticks (server-side
+  // or an intermediary closing it) only surfaces as a thrown error on the
+  // next query that happens to pick it up — one retry absorbs that single
+  // transient blip instead of failing the whole tick (and alerting as a
+  // 503) for a connection problem that heals itself immediately. The claim
+  // query's FOR UPDATE SKIP LOCKED leasing makes a full retry idempotent:
+  // already-delivered jobs are excluded, and anything left half-leased from
+  // the failed attempt simply becomes claimable again once its lease
+  // expires.
+  try {
+    return await processBookAuditNotificationsOnce(input);
+  } catch (err) {
+    if (!isTransientConnectionError(err)) throw err;
+    console.warn(
+      "[book-audit] transient Postgres connection error, retrying tick once",
+    );
+    return processBookAuditNotificationsOnce(input);
+  }
+}
+
+async function processBookAuditNotificationsOnce(
+  input: {
+    leadId?: string;
+    limit?: number;
     send?: (job: BookAuditNotificationJob) => Promise<boolean>;
   } = {},
 ) {
