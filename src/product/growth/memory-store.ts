@@ -101,6 +101,40 @@ export type CrmDlqItem = {
   createdAt: string;
   updatedAt: string;
   resolved?: boolean;
+  /** When set, retry targets this specific advanced webhook endpoint
+   * instead of the legacy single org-level crmWebhookUrl. */
+  endpointId?: string;
+};
+
+export type ContractStatus = "active" | "cancelled" | "lapsed";
+
+export type ServiceContract = {
+  id: string;
+  organizationId: string;
+  customerId: string;
+  customerPhoneE164: string;
+  customerName?: string;
+  title: string;
+  intervalDays: number;
+  nextRenewalAt: string;
+  reminderDaysBefore: number;
+  reminderSentForCycle: boolean;
+  status: ContractStatus;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CrmWebhookEndpoint = {
+  id: string;
+  organizationId: string;
+  url: string;
+  label: string;
+  /** Empty = receives every event type. */
+  eventTypes: string[];
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type GrowthStore = {
@@ -191,6 +225,57 @@ export type GrowthStore = {
     organizationId: string,
     patch: Partial<Pick<CrmDlqItem, "lastError" | "attempts" | "resolved">>,
   ): Promise<CrmDlqItem | null>;
+
+  createServiceContract(
+    input: Omit<
+      ServiceContract,
+      "id" | "createdAt" | "updatedAt" | "reminderSentForCycle" | "status"
+    > & { id?: string },
+  ): Promise<ServiceContract>;
+  listServiceContracts(organizationId: string): Promise<ServiceContract[]>;
+  getServiceContract(
+    id: string,
+    organizationId: string,
+  ): Promise<ServiceContract | null>;
+  updateServiceContract(
+    id: string,
+    organizationId: string,
+    patch: Partial<
+      Pick<
+        ServiceContract,
+        | "title"
+        | "intervalDays"
+        | "nextRenewalAt"
+        | "reminderDaysBefore"
+        | "reminderSentForCycle"
+        | "status"
+        | "notes"
+      >
+    >,
+  ): Promise<ServiceContract | null>;
+  listDueContractReminders(nowIso: string): Promise<ServiceContract[]>;
+
+  createCrmWebhookEndpoint(
+    input: Omit<CrmWebhookEndpoint, "id" | "createdAt" | "updatedAt" | "active"> & {
+      id?: string;
+    },
+  ): Promise<CrmWebhookEndpoint>;
+  listCrmWebhookEndpoints(
+    organizationId: string,
+  ): Promise<CrmWebhookEndpoint[]>;
+  getCrmWebhookEndpoint(
+    id: string,
+    organizationId: string,
+  ): Promise<CrmWebhookEndpoint | null>;
+  updateCrmWebhookEndpoint(
+    id: string,
+    organizationId: string,
+    patch: Partial<Pick<CrmWebhookEndpoint, "url" | "label" | "eventTypes" | "active">>,
+  ): Promise<CrmWebhookEndpoint | null>;
+  deleteCrmWebhookEndpoint(
+    id: string,
+    organizationId: string,
+  ): Promise<boolean>;
 };
 
 function nowIso() {
@@ -209,6 +294,8 @@ export function createMemoryGrowthStore(): GrowthStore {
   const reviews = new Map<string, ReviewRequest>();
   const timeline = new Map<string, TimelineEvent>();
   const crmDlq = new Map<string, CrmDlqItem>();
+  const contracts = new Map<string, ServiceContract>();
+  const crmWebhookEndpoints = new Map<string, CrmWebhookEndpoint>();
 
   return {
     async getOrgSettings(organizationId) {
@@ -438,6 +525,7 @@ export function createMemoryGrowthStore(): GrowthStore {
         payload: input.payload,
         lastError: input.lastError,
         attempts: input.attempts ?? 1,
+        endpointId: input.endpointId,
         createdAt,
         updatedAt: createdAt,
       };
@@ -469,6 +557,101 @@ export function createMemoryGrowthStore(): GrowthStore {
       const next = { ...item, ...patch, updatedAt: nowIso() };
       crmDlq.set(id, next);
       return next;
+    },
+
+    async createServiceContract(input) {
+      const createdAt = nowIso();
+      const row: ServiceContract = {
+        id: input.id ?? createId("contract"),
+        organizationId: input.organizationId,
+        customerId: input.customerId,
+        customerPhoneE164: input.customerPhoneE164,
+        customerName: input.customerName,
+        title: input.title,
+        intervalDays: input.intervalDays,
+        nextRenewalAt: input.nextRenewalAt,
+        reminderDaysBefore: input.reminderDaysBefore,
+        reminderSentForCycle: false,
+        status: "active",
+        notes: input.notes,
+        createdAt,
+        updatedAt: createdAt,
+      };
+      contracts.set(row.id, row);
+      return row;
+    },
+
+    async listServiceContracts(organizationId) {
+      return [...contracts.values()]
+        .filter((c) => c.organizationId === organizationId)
+        .sort((a, b) => a.nextRenewalAt.localeCompare(b.nextRenewalAt));
+    },
+
+    async getServiceContract(id, organizationId) {
+      const c = contracts.get(id);
+      if (!c || c.organizationId !== organizationId) return null;
+      return c;
+    },
+
+    async updateServiceContract(id, organizationId, patch) {
+      const c = contracts.get(id);
+      if (!c || c.organizationId !== organizationId) return null;
+      const next = { ...c, ...patch, updatedAt: nowIso() };
+      contracts.set(id, next);
+      return next;
+    },
+
+    async listDueContractReminders(nowIso) {
+      const t = Date.parse(nowIso);
+      return [...contracts.values()].filter((c) => {
+        if (c.status !== "active" || c.reminderSentForCycle) return false;
+        const dueAt =
+          Date.parse(c.nextRenewalAt) - c.reminderDaysBefore * 86_400_000;
+        return t >= dueAt;
+      });
+    },
+
+    async createCrmWebhookEndpoint(input) {
+      const createdAt = nowIso();
+      const row: CrmWebhookEndpoint = {
+        id: input.id ?? createId("webhook"),
+        organizationId: input.organizationId,
+        url: input.url,
+        label: input.label,
+        eventTypes: input.eventTypes,
+        active: true,
+        createdAt,
+        updatedAt: createdAt,
+      };
+      crmWebhookEndpoints.set(row.id, row);
+      return row;
+    },
+
+    async listCrmWebhookEndpoints(organizationId) {
+      return [...crmWebhookEndpoints.values()]
+        .filter((e) => e.organizationId === organizationId)
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    },
+
+    async getCrmWebhookEndpoint(id, organizationId) {
+      const e = crmWebhookEndpoints.get(id);
+      if (!e || e.organizationId !== organizationId) return null;
+      return e;
+    },
+
+    async updateCrmWebhookEndpoint(id, organizationId, patch) {
+      const e = crmWebhookEndpoints.get(id);
+      if (!e || e.organizationId !== organizationId) return null;
+      const next = { ...e, ...patch, updatedAt: nowIso() };
+      crmWebhookEndpoints.set(id, next);
+      return next;
+    },
+
+    async deleteCrmWebhookEndpoint(id, organizationId) {
+      const e = crmWebhookEndpoints.get(id);
+      if (!e || e.organizationId !== organizationId) return false;
+      crmWebhookEndpoints.delete(id);
+      return true;
     },
   };
 }
