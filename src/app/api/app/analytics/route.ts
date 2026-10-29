@@ -6,6 +6,7 @@ import {
   unauthorizedTenantResponse,
 } from "@/product/saas/tenant";
 import { getGrowthServices, getGrowthStore } from "@/product/growth";
+import { computeAdvancedRevenueAnalytics } from "@/product/missed-call/revenue-analytics";
 
 export const dynamic = "force-dynamic";
 
@@ -49,6 +50,16 @@ export async function GET(request: NextRequest) {
     reviews,
   });
 
+  const includeAdvancedRevenue = tenantHasFeature(
+    auth.ctx,
+    "ADVANCED_REVENUE_ANALYTICS",
+  );
+  const advancedRevenue = includeAdvancedRevenue
+    ? await loadAdvancedRevenueAnalytics(
+        auth.ctx.organization.missedCallClientId,
+      )
+    : null;
+
   if (format === "csv") {
     const rows = [
       ...pipeline.map((c) => ({
@@ -87,6 +98,27 @@ export async function GET(request: NextRequest) {
     ok: true,
     analytics,
     ...(includeRevenue ? { revenue } : {}),
+    ...(advancedRevenue ? { advancedRevenue } : {}),
     exportUrl: "/api/app/analytics?format=csv",
   });
+}
+
+async function loadAdvancedRevenueAnalytics(clientId: string | null) {
+  if (!clientId) return null;
+  try {
+    const { ensureMissedCallReady } =
+      await import("@/product/missed-call/runtime");
+    const { store } = await ensureMissedCallReady();
+    const [client, leads] = await Promise.all([
+      store.getClient(clientId),
+      store.listLeads(clientId),
+    ]);
+    if (!client) return null;
+    return computeAdvancedRevenueAnalytics(
+      client,
+      leads.filter((lead) => lead.clientAccountId === clientId),
+    );
+  } catch {
+    return null;
+  }
 }

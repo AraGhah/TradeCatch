@@ -8,11 +8,13 @@ import {
 import {
   createId,
   type Appointment,
+  type CrmWebhookEndpoint,
   type GrowthStore,
   type PipelineCard,
   type PipelineStage,
   type RevenueEvent,
   type ReviewRequest,
+  type ServiceContract,
   type TimelineEvent,
 } from "./memory-store";
 
@@ -137,6 +139,53 @@ function mapTimeline(row: Record<string, unknown>): TimelineEvent {
     detail: (row.detail as string) || undefined,
     actor: String(row.actor || "system"),
     at: new Date(row.at as string | Date).toISOString(),
+  };
+}
+
+function mapContract(row: Record<string, unknown>): ServiceContract {
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    customerId: String(row.customer_id),
+    customerPhoneE164: String(row.customer_phone_e164),
+    customerName: (row.customer_name as string) || undefined,
+    title: String(row.title),
+    intervalDays: Number(row.interval_days),
+    nextRenewalAt: new Date(
+      row.next_renewal_at as string | Date,
+    ).toISOString(),
+    reminderDaysBefore: Number(row.reminder_days_before),
+    reminderSentForCycle: Boolean(row.reminder_sent_for_cycle),
+    status: row.status as ServiceContract["status"],
+    notes: (row.notes as string) || undefined,
+    createdAt: new Date(row.created_at as string | Date).toISOString(),
+    updatedAt: new Date(row.updated_at as string | Date).toISOString(),
+  };
+}
+
+function mapCrmWebhookEndpoint(
+  row: Record<string, unknown>,
+): CrmWebhookEndpoint {
+  const rawTypes = row.event_types;
+  let eventTypes: string[] = [];
+  if (Array.isArray(rawTypes)) {
+    eventTypes = rawTypes as string[];
+  } else if (typeof rawTypes === "string") {
+    try {
+      eventTypes = JSON.parse(rawTypes) as string[];
+    } catch {
+      eventTypes = [];
+    }
+  }
+  return {
+    id: String(row.id),
+    organizationId: String(row.organization_id),
+    url: String(row.url),
+    label: String(row.label),
+    eventTypes,
+    active: Boolean(row.active),
+    createdAt: new Date(row.created_at as string | Date).toISOString(),
+    updatedAt: new Date(row.updated_at as string | Date).toISOString(),
   };
 }
 
@@ -461,10 +510,10 @@ export function createPostgresGrowthStore(
       const id = input.id ?? createId("crmdlq");
       const { rows } = await pool.query(
         `INSERT INTO tc_crm_dlq (
-           id, organization_id, event_type, payload, last_error, attempts
-         ) VALUES ($1,$2,$3,$4::jsonb,$5,$6)
+           id, organization_id, event_type, payload, last_error, attempts, endpoint_id
+         ) VALUES ($1,$2,$3,$4::jsonb,$5,$6,$7)
          RETURNING id, organization_id, event_type, payload, last_error, attempts,
-                   created_at, updated_at`,
+                   endpoint_id, created_at, updated_at`,
         [
           id,
           input.organizationId,
@@ -472,6 +521,7 @@ export function createPostgresGrowthStore(
           JSON.stringify(input.payload),
           input.lastError ?? null,
           input.attempts ?? 1,
+          input.endpointId ?? null,
         ],
       );
       const row = rows[0];
@@ -482,6 +532,7 @@ export function createPostgresGrowthStore(
         payload: row.payload as Record<string, unknown>,
         lastError: (row.last_error as string) || undefined,
         attempts: Number(row.attempts ?? 1),
+        endpointId: (row.endpoint_id as string) || undefined,
         createdAt: new Date(row.created_at).toISOString(),
         updatedAt: new Date(row.updated_at).toISOString(),
       };
@@ -490,7 +541,7 @@ export function createPostgresGrowthStore(
     async listCrmDlq(organizationId, limit = 50) {
       const { rows } = await pool.query(
         `SELECT id, organization_id, event_type, payload, last_error, attempts,
-                created_at, updated_at
+                endpoint_id, created_at, updated_at
          FROM tc_crm_dlq
          WHERE organization_id = $1
          ORDER BY created_at DESC LIMIT $2`,
@@ -503,6 +554,7 @@ export function createPostgresGrowthStore(
         payload: row.payload as Record<string, unknown>,
         lastError: (row.last_error as string) || undefined,
         attempts: Number(row.attempts ?? 1),
+        endpointId: (row.endpoint_id as string) || undefined,
         createdAt: new Date(row.created_at).toISOString(),
         updatedAt: new Date(row.updated_at).toISOString(),
       }));
@@ -511,7 +563,7 @@ export function createPostgresGrowthStore(
     async listDueCrmDlq(limit) {
       const { rows } = await pool.query(
         `SELECT id, organization_id, event_type, payload, last_error, attempts,
-                created_at, updated_at
+                endpoint_id, created_at, updated_at
          FROM tc_crm_dlq
          WHERE attempts < 8
          ORDER BY updated_at ASC LIMIT $1`,
@@ -524,6 +576,7 @@ export function createPostgresGrowthStore(
         payload: row.payload as Record<string, unknown>,
         lastError: (row.last_error as string) || undefined,
         attempts: Number(row.attempts ?? 1),
+        endpointId: (row.endpoint_id as string) || undefined,
         createdAt: new Date(row.created_at).toISOString(),
         updatedAt: new Date(row.updated_at).toISOString(),
       }));
@@ -552,6 +605,148 @@ export function createPostgresGrowthStore(
         [id, organizationId, next.lastError ?? null, next.attempts],
       );
       return next;
+    },
+
+    async createServiceContract(input) {
+      const id = input.id ?? createId("contract");
+      const { rows } = await pool.query(
+        `INSERT INTO tc_service_contracts (
+           id, organization_id, customer_id, customer_phone_e164, customer_name,
+           title, interval_days, next_renewal_at, reminder_days_before, notes
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+         RETURNING *`,
+        [
+          id,
+          input.organizationId,
+          input.customerId,
+          input.customerPhoneE164,
+          input.customerName ?? null,
+          input.title,
+          input.intervalDays,
+          input.nextRenewalAt,
+          input.reminderDaysBefore,
+          input.notes ?? null,
+        ],
+      );
+      return mapContract(rows[0]);
+    },
+
+    async listServiceContracts(organizationId) {
+      const { rows } = await pool.query(
+        `SELECT * FROM tc_service_contracts
+         WHERE organization_id = $1 ORDER BY next_renewal_at ASC`,
+        [organizationId],
+      );
+      return rows.map(mapContract);
+    },
+
+    async getServiceContract(id, organizationId) {
+      const { rows } = await pool.query(
+        `SELECT * FROM tc_service_contracts WHERE id = $1 AND organization_id = $2`,
+        [id, organizationId],
+      );
+      return rows[0] ? mapContract(rows[0]) : null;
+    },
+
+    async updateServiceContract(id, organizationId, patch) {
+      const current = await this.getServiceContract(id, organizationId);
+      if (!current) return null;
+      const next = { ...current, ...patch };
+      const { rows } = await pool.query(
+        `UPDATE tc_service_contracts SET
+           title = $3, interval_days = $4, next_renewal_at = $5,
+           reminder_days_before = $6, reminder_sent_for_cycle = $7,
+           status = $8, notes = $9, updated_at = now()
+         WHERE id = $1 AND organization_id = $2
+         RETURNING *`,
+        [
+          id,
+          organizationId,
+          next.title,
+          next.intervalDays,
+          next.nextRenewalAt,
+          next.reminderDaysBefore,
+          next.reminderSentForCycle,
+          next.status,
+          next.notes ?? null,
+        ],
+      );
+      return rows[0] ? mapContract(rows[0]) : null;
+    },
+
+    async listDueContractReminders(nowIso) {
+      const { rows } = await pool.query(
+        `SELECT * FROM tc_service_contracts
+         WHERE status = 'active' AND reminder_sent_for_cycle = false
+           AND next_renewal_at - (reminder_days_before || ' days')::interval <= $1::timestamptz
+         ORDER BY next_renewal_at ASC`,
+        [nowIso],
+      );
+      return rows.map(mapContract);
+    },
+
+    async createCrmWebhookEndpoint(input) {
+      const id = input.id ?? createId("webhook");
+      const { rows } = await pool.query(
+        `INSERT INTO tc_crm_webhook_endpoints (
+           id, organization_id, url, label, event_types
+         ) VALUES ($1,$2,$3,$4,$5::jsonb)
+         RETURNING *`,
+        [
+          id,
+          input.organizationId,
+          input.url,
+          input.label,
+          JSON.stringify(input.eventTypes),
+        ],
+      );
+      return mapCrmWebhookEndpoint(rows[0]);
+    },
+
+    async listCrmWebhookEndpoints(organizationId) {
+      const { rows } = await pool.query(
+        `SELECT * FROM tc_crm_webhook_endpoints
+         WHERE organization_id = $1 ORDER BY created_at ASC`,
+        [organizationId],
+      );
+      return rows.map(mapCrmWebhookEndpoint);
+    },
+
+    async getCrmWebhookEndpoint(id, organizationId) {
+      const { rows } = await pool.query(
+        `SELECT * FROM tc_crm_webhook_endpoints WHERE id = $1 AND organization_id = $2`,
+        [id, organizationId],
+      );
+      return rows[0] ? mapCrmWebhookEndpoint(rows[0]) : null;
+    },
+
+    async updateCrmWebhookEndpoint(id, organizationId, patch) {
+      const current = await this.getCrmWebhookEndpoint(id, organizationId);
+      if (!current) return null;
+      const next = { ...current, ...patch };
+      const { rows } = await pool.query(
+        `UPDATE tc_crm_webhook_endpoints SET
+           url = $3, label = $4, event_types = $5::jsonb, active = $6, updated_at = now()
+         WHERE id = $1 AND organization_id = $2
+         RETURNING *`,
+        [
+          id,
+          organizationId,
+          next.url,
+          next.label,
+          JSON.stringify(next.eventTypes),
+          next.active,
+        ],
+      );
+      return rows[0] ? mapCrmWebhookEndpoint(rows[0]) : null;
+    },
+
+    async deleteCrmWebhookEndpoint(id, organizationId) {
+      const { rowCount } = await pool.query(
+        `DELETE FROM tc_crm_webhook_endpoints WHERE id = $1 AND organization_id = $2`,
+        [id, organizationId],
+      );
+      return (rowCount ?? 0) > 0;
     },
   };
 }

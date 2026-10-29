@@ -171,6 +171,16 @@ async function main() {
       ["src", "product", "saas", "billing-v2.sql"],
       "030_billing_v2",
     );
+    await applyFile(
+      client,
+      ["src", "product", "growth", "schema-contract-renewals.sql"],
+      "031_contract_renewals",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "growth", "schema-advanced-crm.sql"],
+      "032_advanced_crm_integrations",
+    );
   } finally {
     await client.end();
   }

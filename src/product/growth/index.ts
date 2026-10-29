@@ -24,6 +24,9 @@ export {
   type TimelineEvent,
   type PipelineStage,
   type CrmDlqItem,
+  type ServiceContract,
+  type ContractStatus,
+  type CrmWebhookEndpoint,
 } from "./memory-store";
 export { createPostgresGrowthStore } from "./postgres-store";
 export { createGrowthServices } from "./services";

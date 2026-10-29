@@ -15,38 +15,75 @@ export function createGrowthServices(deps: {
     data: Record<string, unknown>;
   }) {
     const settings = await store.getOrgSettings(input.organizationId);
-    if (!settings.crmWebhookUrl) return { forwarded: false as const };
-    const result = await forwardProductEventToCrm(settings.crmWebhookUrl, {
-      eventType: input.eventType,
-      organizationId: input.organizationId,
-      data: input.data,
-    }, process.env.LEADS_WEBHOOK_SECRET);
-    if (!result.ok) {
-      await store.enqueueCrmDlq({
-        organizationId: input.organizationId,
-        eventType: input.eventType,
-        payload: input.data,
-        lastError: result.error,
-        attempts: 1,
-      });
+    const targets: { url: string; endpointId?: string }[] = [];
+    if (settings.crmWebhookUrl) targets.push({ url: settings.crmWebhookUrl });
+
+    // CRM_INTEGRATION_ADVANCED (Receptionist tier): fan out to additional
+    // named webhooks, each optionally filtered to a subset of event types.
+    // Gated at creation time (the owner-facing API requires the feature to
+    // add an endpoint) rather than here, so this just honors whatever rows
+    // exist for the organization.
+    const endpoints = await store.listCrmWebhookEndpoints(
+      input.organizationId,
+    );
+    for (const endpoint of endpoints) {
+      if (!endpoint.active) continue;
+      if (
+        endpoint.eventTypes.length > 0 &&
+        !endpoint.eventTypes.includes(input.eventType)
+      ) {
+        continue;
+      }
+      targets.push({ url: endpoint.url, endpointId: endpoint.id });
+    }
+
+    if (targets.length === 0) return { forwarded: false as const };
+
+    let anyFailed = false;
+    let anySucceeded = false;
+    for (const target of targets) {
+      const result = await forwardProductEventToCrm(
+        target.url,
+        {
+          eventType: input.eventType,
+          organizationId: input.organizationId,
+          data: input.data,
+        },
+        process.env.LEADS_WEBHOOK_SECRET,
+      );
+      if (!result.ok) {
+        anyFailed = true;
+        await store.enqueueCrmDlq({
+          organizationId: input.organizationId,
+          eventType: input.eventType,
+          payload: input.data,
+          lastError: result.error,
+          attempts: 1,
+          endpointId: target.endpointId,
+        });
+        await store.addTimelineEvent({
+          organizationId: input.organizationId,
+          kind: "crm_failed",
+          title: `CRM sync failed: ${input.eventType}`,
+          detail: result.error,
+          actor: "system",
+          at: new Date().toISOString(),
+        });
+      } else {
+        anySucceeded = true;
+      }
+    }
+
+    if (anySucceeded) {
       await store.addTimelineEvent({
         organizationId: input.organizationId,
-        kind: "crm_failed",
-        title: `CRM sync failed: ${input.eventType}`,
-        detail: result.error,
+        kind: "crm_synced",
+        title: `CRM sync: ${input.eventType}`,
         actor: "system",
         at: new Date().toISOString(),
       });
-      return { forwarded: false as const, error: result.error };
     }
-    await store.addTimelineEvent({
-      organizationId: input.organizationId,
-      kind: "crm_synced",
-      title: `CRM sync: ${input.eventType}`,
-      actor: "system",
-      at: new Date().toISOString(),
-    });
-    return { forwarded: true as const };
+    return { forwarded: anySucceeded && !anyFailed };
   }
 
   return {
@@ -307,8 +344,18 @@ export function createGrowthServices(deps: {
       let resolved = 0;
       let failed = 0;
       for (const item of due) {
-        const settings = await store.getOrgSettings(item.organizationId);
-        if (!settings.crmWebhookUrl) {
+        let url: string | null;
+        if (item.endpointId) {
+          const endpoint = await store.getCrmWebhookEndpoint(
+            item.endpointId,
+            item.organizationId,
+          );
+          url = endpoint?.active ? endpoint.url : null;
+        } else {
+          const settings = await store.getOrgSettings(item.organizationId);
+          url = settings.crmWebhookUrl ?? null;
+        }
+        if (!url) {
           await store.updateCrmDlq(item.id, item.organizationId, {
             attempts: item.attempts + 1,
             lastError: "missing_crm_webhook",
@@ -317,7 +364,7 @@ export function createGrowthServices(deps: {
           continue;
         }
         const result = await forwardProductEventToCrm(
-          settings.crmWebhookUrl,
+          url,
           {
             eventType: item.eventType,
             organizationId: item.organizationId,
@@ -358,6 +405,72 @@ export function createGrowthServices(deps: {
         lines: input.lines,
         ctaUrl: input.siteUrl ? `${input.siteUrl}/app/inbox` : undefined,
         ctaLabel: "Open inbox",
+      });
+    },
+
+    async processContractRenewalReminders(input: {
+      businessNameForOrg: (id: string) => Promise<string>;
+      smsFromForOrg: (id: string) => Promise<string | null>;
+      now?: Date;
+    }) {
+      const now = input.now ?? new Date();
+      const due = await store.listDueContractReminders(now.toISOString());
+      let sent = 0;
+      let skipped = 0;
+      for (const contract of due) {
+        const from = await input.smsFromForOrg(contract.organizationId);
+        if (!from) {
+          skipped += 1;
+          continue;
+        }
+        const businessName = await input.businessNameForOrg(
+          contract.organizationId,
+        );
+        const hi = contract.customerName
+          ? `Hi ${contract.customerName}`
+          : "Hi";
+        const renewalDate = new Date(
+          contract.nextRenewalAt,
+        ).toLocaleDateString("en-CA");
+        try {
+          await sms.send({
+            toE164: contract.customerPhoneE164,
+            fromE164: from,
+            body: `${hi}, this is ${businessName}. Your ${contract.title} is due for renewal on ${renewalDate}. Reply to book or call us to renew.`,
+          });
+          await store.updateServiceContract(
+            contract.id,
+            contract.organizationId,
+            { reminderSentForCycle: true },
+          );
+          sent += 1;
+        } catch {
+          skipped += 1;
+        }
+      }
+      return { sent, skipped };
+    },
+
+    /** Owner/ops action after a contract is renewed: advances to the next
+     * cycle and re-arms the reminder for that cycle. */
+    async recordContractRenewal(input: {
+      organizationId: string;
+      contractId: string;
+      renewedAt?: Date;
+    }) {
+      const contract = await store.getServiceContract(
+        input.contractId,
+        input.organizationId,
+      );
+      if (!contract) return null;
+      const renewedAt = input.renewedAt ?? new Date();
+      const nextRenewalAt = new Date(
+        renewedAt.getTime() + contract.intervalDays * 86_400_000,
+      ).toISOString();
+      return store.updateServiceContract(input.contractId, input.organizationId, {
+        nextRenewalAt,
+        reminderSentForCycle: false,
+        status: "active",
       });
     },
 
