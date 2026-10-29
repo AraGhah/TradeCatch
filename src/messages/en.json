@@ -2772,6 +2772,7 @@
       "googleReviewUrlIntro": "Used when sending post-job review request SMS.",
       "crmWebhookUrl": "CRM / automation webhook URL",
       "crmWebhookIntro": "POST JSON events (website leads, bookings, pipeline stages). Retries on failure.",
+      "crmWebhookUpgrade": "CRM webhooks are included with the Growth plan and above. You can still clear an existing URL.",
       "save": "Save integrations",
       "saving": "Saving…",
       "saved": "Saved.",

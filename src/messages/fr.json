@@ -2772,6 +2772,7 @@
       "googleReviewUrlIntro": "Utilisée pour les SMS de demande d'avis après un job.",
       "crmWebhookUrl": "URL webhook CRM / automatisation",
       "crmWebhookIntro": "POST d'événements JSON (leads web, RDV, stages pipeline). Relances en cas d'échec.",
+      "crmWebhookUpgrade": "Les webhooks CRM sont inclus avec le forfait Growth et supérieur. Vous pouvez tout de même effacer une URL existante.",
       "save": "Enregistrer les intégrations",
       "saving": "Enregistrement…",
       "saved": "Enregistré.",

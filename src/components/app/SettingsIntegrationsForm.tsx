@@ -9,11 +9,13 @@ export function SettingsIntegrationsForm({
   initialGoogleReviewUrl,
   initialCrmWebhookUrl,
   isGrowth,
+  crmEnabled,
 }: {
   initialNotifyEmail?: string;
   initialGoogleReviewUrl?: string;
   initialCrmWebhookUrl?: string;
   isGrowth: boolean;
+  crmEnabled: boolean;
 }) {
   const t = useTranslations("app");
   const router = useRouter();
@@ -41,7 +43,12 @@ export function SettingsIntegrationsForm({
           googleReviewUrl: isGrowth
             ? googleReviewUrl.trim() || null
             : undefined,
-          crmWebhookUrl: crmWebhookUrl.trim() || null,
+          crmWebhookUrl: crmEnabled
+            ? crmWebhookUrl.trim() || null
+            : // Plans without the integration may only clear an old URL.
+              !crmWebhookUrl.trim() && initialCrmWebhookUrl
+              ? null
+              : undefined,
         }),
       });
       if (!res.ok) {
@@ -88,11 +95,14 @@ export function SettingsIntegrationsForm({
           type="url"
           value={crmWebhookUrl}
           onChange={(e) => setCrmWebhookUrl(e.target.value)}
+          disabled={!crmEnabled && !initialCrmWebhookUrl}
           placeholder="https://hooks.zapier.com/…"
           className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
         />
         <span className="mt-1 block text-[11px] text-navy/50">
-          {t("settings.crmWebhookIntro")}
+          {crmEnabled
+            ? t("settings.crmWebhookIntro")
+            : t("settings.crmWebhookUpgrade")}
         </span>
       </label>
       {error ? (
