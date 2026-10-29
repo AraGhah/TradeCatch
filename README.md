@@ -1,197 +1,144 @@
 # TradeCatch
 
-Marketing site — Next.js 16 (App Router), next-intl (en/fr), Tailwind v4.
+Bilingual English/French software for contractor businesses: missed-call SMS recovery, voice reception, lead and quote management, scheduling, CRM automation, notifications, and billing. Includes the public website, customer workspace, and admin tools.
 
-## Local development
+**Stack:** Next.js 16, React 19, TypeScript, next-intl, Tailwind CSS 4, PostgreSQL, and OpenNext on Cloudflare Workers. Integrations include Twilio, Resend, Stripe, and optional Google and AI services.
 
-```bash
-npm install
-cp .env.example .env.local   # fill in values as needed for local email/Turnstile
+## What does it do?
+
+TradeCatch helps contractors capture customer requests while their team is busy, organize the work, and follow up. For example, a missed call can start an SMS conversation that collects the customer's needs and alerts a technician. The business can then track the lead, follow up on a quote, and manage the appointment from its workspace.
+
+## Features
+
+| Feature                     | What it does                                                                                                                                                                          |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missed-call SMS recovery    | Texts eligible missed callers, collects their request in English or French, and respects opt-outs.                                                                                    |
+| Voice receptionist          | Greets callers, asks about their needs, captures contact details, and uses configured transfer or voicemail fallbacks. Supports a rule-based conversation or an optional AI provider. |
+| Technician routing          | Sends requests to configured technicians and escalates unanswered alerts. Entitled advanced routing can ring multiple contacts.                                                       |
+| Lead management             | Collects website and phone inquiries and organizes them in a business workspace with an activity history and human takeover inbox.                                                    |
+| Quote follow-up             | Tracks quotes and schedules follow-ups that stop when the customer replies or the quote is closed.                                                                                    |
+| Appointments                | Manages availability, reservations, and reminders. Optional phone booking confirms a reservation only when the scheduling service successfully books it.                              |
+| CRM and pipeline            | Tracks opportunities through sales stages and supports configured CRM webhooks with delivery retries.                                                                                 |
+| Customer follow-up          | Supports review requests, email automation, customer reactivation, and contract-renewal workflows.                                                                                    |
+| Revenue analytics           | Reports recorded revenue and attribution so businesses can assess their pipeline and outcomes.                                                                                        |
+| Notifications and Gmail     | Sends configured email/SMS alerts and summaries, and provides a connected, read-only Gmail inbox.                                                                                     |
+| Billing and access          | Supports Stripe checkout, subscription synchronization, usage tracking, and plan-based feature access.                                                                                |
+| Public site and admin tools | Provides bilingual marketing, audit booking, Help content, demos, and administration of businesses and operational health.                                                            |
+
+Features depend on the business's plan, configuration, and connected providers. Renewal and reactivation jobs require scheduler wiring, and live calendar integration has pilot limits; see the deployment notes and linked guides below.
+
+## Quick start
+
+Use Node.js 22 (the CI version) and npm.
+
+```powershell
+npm ci
+Copy-Item .env.example .env.local
 npm run dev
 ```
 
-Open <http://localhost:3001>. TradeCatch uses a dedicated development port so
-other local apps can keep using port 3000. Run `npm run dev` once; if TradeCatch
-is already running, use that server or stop it with Ctrl+C before starting another.
+On macOS/Linux, use `cp .env.example .env.local`. Open **http://localhost:3001**. Stop an existing development server before starting another.
 
-## Before every deploy
+Configure only the integrations you need in `.env.local`. Keep secrets out of Git and `NEXT_PUBLIC_*` variables. See [.env.example](.env.example) for available settings; example phone numbers are for development only.
 
-```bash
-npm run check:i18n             # en/fr message key parity
-npm run check:legal            # no draft/TODO notices on public legal pages
-npm run check:media            # tracked demo-media budget and asset policy
-npm run format:check
-npm run cf-typecheck           # generated Cloudflare runtime types are current
-npx tsc --noEmit -p tsconfig.json
-npm run lint
-npm run test:unit
-npm run build
-npm run build:cloudflare      # generate the real OpenNext Worker artifact
-npm run check:cloudflare-bundle # bundle worker.ts without deploying
-npm run test:e2e               # needs Playwright browsers installed once
-```
+## Configuration
 
-CI (`.github/workflows/ci.yml`) runs the same checks on push/PR to `main` and `Ara`.
+| Area            | Main settings                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------- |
+| Database        | `DATABASE_URL`, `MISSED_CALL_DURABLE_STORE=1`, `SAAS_DURABLE_STORE=1`                             |
+| Authentication  | `AUTH_SECRET`, `TRADECATCH_ADMIN_EMAILS`                                                          |
+| Email           | `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_NOTIFY_EMAIL`                                      |
+| Form protection | `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`                                          |
+| Twilio          | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `MISSED_CALL_PUBLIC_WEBHOOK_BASE`                      |
+| Receptionist    | Activated tenant profile or `RECEPTIONIST_CONFIG_JSON`; optional AI provider credentials          |
+| Billing         | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_*`; separate `STRIPE_TEST_*` settings |
+| Scheduled jobs  | `MISSED_CALL_OPS_SECRET` or `CRON_SECRET`; route-specific secrets where configured                |
 
-`npm run build` alone is not sufficient — CSP and hydration bugs only show up when you
-load the built output in a real browser:
+Apply database migrations before enabling durable features:
 
 ```bash
-rm -rf .next && npm run build
-npx next start -p 3000
-# then open http://localhost:3000 and check the console
+npm run db:schema
+npm run check:module-a
 ```
 
-## Environment variables
+Features also require the correct tenant role, plan, linked client, and provider configuration. A Git merge does not apply migrations or activate a receptionist profile. Production must not enable development login, sandbox, demo-routing, signature-bypass, or dry-run SMS flags.
 
-Copy `.env.example` to `.env.local` and fill in real values. Nothing in `.env.example`
-is a secret — it's committed on purpose as the template. `.env.local` itself is
-gitignored and must never be committed.
+## Project structure
 
-| Variable                                                     | Dev if unset                                        | Production (`NODE_ENV=production`)                                                                                                                         |
-| ------------------------------------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL`                                       | falls back to `https://tradecatch.ca`               | same                                                                                                                                                       |
-| `NEXT_PUBLIC_GA_MEASUREMENT_ID`                              | analytics doesn't load                              | same — enable for conversion events                                                                                                                        |
-| `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_NOTIFY_EMAIL` | submissions accepted; emails skipped with a warning | strongly recommended — submissions remain accepted, but no confirmation or internal notification email is sent                                             |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`     | verification skipped with a warning                 | strongly recommended before public traffic; missing keys do not reject the request. Never commit real keys; rotate them if exposed                         |
-| `AUTH_SECRET`                                                | required for `/app` session cookies                 | **required** for SaaS portal — falls back to `MISSED_CALL_OPS_SECRET` if unset                                                                             |
-| `SAAS_DEV_LOGIN`                                             | unset                                               | set `1` locally to return a clickable magic-link token when Resend is unavailable                                                                          |
-| `LEADS_WEBHOOK_URL` (+ optional `LEADS_WEBHOOK_SECRET`)      | CRM forward skipped                                 | recommended — Zapier/Make/n8n/HubSpot webhook                                                                                                              |
-| `NEXT_PUBLIC_CALENDAR_URL`                                   | no calendar CTA after submit                        | recommended — Cal.com / Calendly link                                                                                                                      |
-| `ERROR_WEBHOOK_URL`                                          | client/server errors only logged                    | recommended — Slack/Discord/Better Stack/Sentry webhook                                                                                                    |
-| `CF_TRUSTED`                                                 | Cloudflare IP header ignored                        | **required on Cloudflare** — set `1` only when the origin is reachable exclusively through Cloudflare                                                      |
-| `TWILIO_*` / `MISSED_CALL_*`                                 | Module A dry-run SMS + in-memory sandbox            | see `src/product/missed-call/README.md` — set `DATABASE_URL`, `MISSED_CALL_DURABLE_STORE=1`, and `MISSED_CALL_OPS_SECRET` (or `CRON_SECRET`) in production |
+| Path                          | Contents                                                                |
+| ----------------------------- | ----------------------------------------------------------------------- |
+| `src/app/`                    | Localized pages and API handlers                                        |
+| `src/components/`             | Public, workspace, and admin UI                                         |
+| `src/product/`                | Domain services, stores, and SQL schemas                                |
+| `src/lib/`                    | Shared authentication, configuration, database, and scheduler utilities |
+| `src/i18n/`, `src/messages/`  | English/French routing and translations                                 |
+| `scripts/`                    | Migrations, release checks, backups, and maintenance                    |
+| `tests/`                      | Unit, integration, QA, and browser tests                                |
+| `docs/`                       | Detailed setup, operations, and verification guides                     |
+| `worker.ts`, `wrangler.jsonc` | Cloudflare entry point and deployment configuration                     |
 
-## Module A — Missed-call recovery
+## Twilio webhooks
 
-Core product path (call → SMS → collect → tech accept → notify). Domain code: `src/product/missed-call/`. Docs and Twilio setup: that folder’s README. Local dry-run without Twilio: `POST /api/missed-call/sandbox`.
+Use HTTP **POST** with your public HTTPS origin and the appropriate path:
 
-### Production go-live checklist
+| Flow                                 | Incoming call                | Status callback               |
+| ------------------------------------ | ---------------------------- | ----------------------------- |
+| Voice receptionist                   | `/api/webhooks/twilio/voice` | `/api/webhooks/twilio/status` |
+| SMS recovery / technician forwarding | `/api/twilio/voice/inbound`  | `/api/twilio/voice/status`    |
 
-**Site**
+Incoming SMS: `/api/twilio/sms/inbound`. SMS delivery status: `/api/twilio/sms/status`.
 
-- [ ] All Resend + Turnstile vars set in the host's production environment
-- [ ] Set `MISSED_CALL_OPS_SECRET` (or `CRON_SECRET`) for Module A leads / escalations APIs
-- [ ] Submit a real book-audit form on the live URL and confirm both the visitor confirmation and the internal notify email arrive
-- [ ] Point `LEADS_WEBHOOK_URL` at your CRM/automation and confirm a test lead lands
-- [ ] Set `NEXT_PUBLIC_CALENDAR_URL` and confirm the post-submit booking CTA appears
-- [ ] Set `NEXT_PUBLIC_GA_MEASUREMENT_ID` and mark `generate_lead` as a GA4 conversion
-- [ ] Point an uptime monitor at `https://tradecatch.ca/api/health`; require
-      `x-tradecatch-live: 1` (the public production response is liveness-only
-      and does not query the database)
-- [ ] Set `ERROR_WEBHOOK_URL` (or a Sentry/Better Stack ingest URL)
-- [ ] Set `CF_TRUSTED=1` on Cloudflare so real visitors do not share one rate-limit bucket
-- [ ] Confirm pricing on `/pricing` matches the current offer
-- [ ] Confirm favicon / brand mark looks correct (not a Next.js default)
-- [ ] `npm run check:legal` passes (no TODO / draft notices on public legal pages)
-
-**Module A (missed-call) — required before real customer traffic**
-
-- [ ] Durable store enabled (`DATABASE_URL` + `MISSED_CALL_DURABLE_STORE=1`), all migrations through `005_crm_webhook_dlq` applied, and the ops-authenticated `/api/health` response has `moduleA.ready=true`, `checks.clientRouting=true`, `checks.diagnosticsComplete=true`, `checks.schemaOk=true`, `checks.escalationsFresh=true`, and a sane queue
-- [ ] Full client config from env/JSON (`MISSED_CALL_CLIENT_CONFIG_JSON` or complete `MISSED_CALL_*` vars) — demo fixtures rejected in production
-- [ ] Every escalation contact validated (primary, all backups, owner, human-review) — no reserved/555 demo numbers
-- [ ] Twilio credentials live; `MISSED_CALL_SMS_MODE` is **not** dry-run in production
-- [ ] Twilio Advanced Opt-Out enabled in Console on the number / Messaging Service; STOP/ARRET writes durable local suppression (`provider_status=local_only` until a real provider sync API exists) and blocks new workflows
-- [ ] Cloudflare deployed all three `wrangler.jsonc` cron triggers; verify escalation, quote/Growth jobs, and retention ticks in Worker logs
-- [ ] Opt-out, duplicate CallSid, overnight schedule, and inactive-tech cases verified in staging
-- [ ] Québec legal review of privacy / contracts before claiming compliance (engineering checklist ≠ legal advice)
-- [ ] (Recommended multi-instance) `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` set so book-audit rate-limit and idempotency are shared across serverless instances
-
-### SaaS portal (founder-gated pilot — Voie A sales motion)
-
-- Primary acquisition remains **Book a free audit** (founder-led).
-- Magic-link login: `/login` (FR `/connexion`) for contractors already in a pilot.
-- Workspace: `/app` after the founder links `missedCallClientId` (`POST /api/missed-call/ops/link-organization`).
-- Entitlements: `src/product/saas/entitlements.ts` — enforced on `/api/app/*`.
-- Apply schemas: `npm run db:schema` · readiness: `npm run check:module-a`
-- Native booking sales CRM: [migration, deployment and rollback](docs/NATIVE_SALES_CRM.md).
-  Existing deployments use the targeted `npm run db:migrate-native-sales-crm` migration.
-- Set `AUTH_SECRET` (and optionally `SAAS_DEV_LOGIN=1` for local sign-in without email)
-
-## Monitoring & backups
-
-- **Liveness:** monitor unauthenticated `GET /api/health`; in production, require
-  `status=live` and `x-tradecatch-live: 1`. This only proves that the Worker can
-  serve the route and intentionally skips database probes.
-- **Readiness:** call `GET /api/health` with the ops bearer token and require HTTP 200 plus `moduleA.ready=true`; this authenticated view validates client routing, database/schema access, queue state, and cron freshness.
-  A supplied invalid bearer returns HTTP 401; it is never downgraded to the
-  public liveness response.
-- **Errors:** page error boundaries POST to `/api/client-error`, which forwards to `ERROR_WEBHOOK_URL`.
-- **Leads/workflows:** when the durable flag is enabled, PostgreSQL is the system of record and must be backed up; email and the optional CRM webhook remain delivery channels. The in-memory fallback is for local development only.
-- **Site:** rely on git history + your host's deployment rollback. Keep `.env` values in the host secret store (never in git).
-
-## Deployment
-
-The production target is OpenNext on Cloudflare Workers. `worker.ts` delegates web
-requests to OpenNext and runs the internal pilot jobs from the cron triggers declared
-in `wrangler.jsonc`.
-
-1. Set all production variables and secrets in Cloudflare; at minimum the scheduler
-   needs `MISSED_CALL_OPS_SECRET` (or `CRON_SECRET`), and request-aware rate limiting
-   needs `CF_TRUSTED=1`. `wrangler.jsonc` uses `keep_vars: true` so a deploy does not
-   erase dashboard-managed plaintext values during the founder-led pilot.
-2. Apply the database schema with `npm run db:schema`, then run
-   `npm run check:module-a` in an environment containing the production values.
-3. Run `npm run cf-typegen` whenever Worker bindings change and commit the generated
-   `worker-configuration.d.ts`.
-4. Push the development branch and require both CI jobs to pass before merging.
-   After pushing main, wait for its CI run, then use `npm run deploy`.
-   Deploy/upload scripts reject dirty checkouts, stale revisions and unsuccessful CI.
-   See [the release gate](docs/TC-009_VERIFICATION.md) for requirements.
-5. Confirm `/api/health`, all three cron triggers, Twilio webhooks, and the real
-   missed-call flow in staging before routing client traffic.
-
-### Staging / demo environment
-
-TradeCatch supports an isolated staging Worker (`tradecatch-staging`) with its own
-Postgres database, dry-run SMS, sandbox APIs, Demo Mode banner, and optional HTTP
-Basic / Cloudflare Access gate. Full setup:
-
-[`docs/STAGING_ENVIRONMENT.md`](docs/STAGING_ENVIRONMENT.md)
-
-### Demo contractor accounts
-
-Administrators can create fictional contractor businesses at `/admin`, open their
-dashboards, generate simulated leads/calls/appointments, and reset or delete them
-without affecting other tenants. See
-[`docs/DEMO_BUSINESSES.md`](docs/DEMO_BUSINESSES.md).
-
-```bash
-npm run deploy:staging          # deploy Worker env.staging only
-npm run db:seed:staging         # seed fictional demo client (staging DB only)
-```
-
-The demo-day sequence and fallback plan are in
-[`docs/FIRST_DEMO_RUNBOOK.md`](docs/FIRST_DEMO_RUNBOOK.md).
-
-## Known production limits
-
-- Rate limiting and short-window idempotency keys use in-memory state by default
-  (`src/lib/rate-limit.ts`, `src/lib/store.ts`). Behind multiple instances /
-  serverless functions the effective limit is roughly `limit × instance count`.
-  Set `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` to share counters
-  and idempotency claims across instances (see `src/lib/upstash.ts`).
-- CSP still allows `script-src 'unsafe-inline'` for static rendering. Revisit a
-  nonce-based CSP if more third-party scripts are added.
-- Automated checks cannot prove WCAG 2.1 AA by themselves. Keep keyboard, screen
-  reader, zoom/reflow, contrast, and reduced-motion checks in the manual demo gate.
-
-## Rollback
-
-- **Cloudflare:** roll back to a previously known-good Worker version in the
-  dashboard, then verify health and cron logs.
-- **Manual:** `git revert <bad-commit>` and push, or redeploy a known-good SHA.
-  Avoid `git reset --hard` on a shared branch.
+Keep signature verification enabled. The voice receptionist needs a matching activated profile; HTTP 200 alone does not prove an AI session started. Without AI credentials, the rule brain can still collect requests. See [Twilio setup and troubleshooting](docs/TWILIO_RECEPTIONIST_SETUP.md).
 
 ## Testing
 
 ```bash
+npm run format:check
+npx tsc --noEmit
+npm run lint
+npm run check:secrets
 npm run check:i18n
 npm run test:unit
+npm run test:qa
+npx playwright install chromium
 npm run test:e2e
 ```
 
-- **Unit:** Zod book-audit schema + rate-limit (`tests/unit/`).
-- **E2E:** book-audit API and full wizard, security headers, automated WCAG A/AA
-  scans, route matrix, cookie persistence, locale switching, demo assets/modal,
-  and founder-gated pilot sign-in (`tests/`).
+Playwright builds its own production server on port **3100**. Some integration tests need isolated PostgreSQL test databases; never point them at production. The [CI workflow](.github/workflows/ci.yml) also checks security, accessibility-related behavior, agent evaluations, and Cloudflare packaging.
+
+## Deployment and operations
+
+```bash
+npm run build:cloudflare
+npm run check:cloudflare-bundle
+npm run check:release
+npm run deploy
+```
+
+Deploy from a clean checkout matching remote `main`, after CI succeeds for that exact revision. `check:cloudflare-bundle` is a dry run. Use `npm run deploy:staging` for the isolated staging Worker. Do not bypass release checks.
+
+- **Health:** public `/api/health` checks liveness; ops-authenticated requests provide detailed readiness.
+- **Jobs:** the Worker runs minute, 15-minute, and daily schedules defined in `src/lib/cloudflare-scheduler.ts`.
+- **Scheduling gap:** renewal and reactivation tick endpoints exist but are not yet included in that cron map.
+- **Backups:** use `npm run db:backup` and verify recovery with `npm run db:restore-drill`; follow the backup guide first.
+- **Recovery:** Worker rollback does not undo database migrations or external provider actions.
+
+## Documentation
+
+| Topic              | Guide                                                                                                                              |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| SMS recovery       | [Module A](src/product/missed-call/README.md)                                                                                      |
+| Voice receptionist | [Module guide](src/product/receptionist/README.md), [profile configuration](docs/AI_RECEPTIONIST_CONFIG.md)                        |
+| Phone routing      | [Call management](docs/PHONE_CALL_MANAGEMENT.md)                                                                                   |
+| Billing            | [Stripe setup](docs/STRIPE_BILLING.md)                                                                                             |
+| CRM                | [Native sales CRM](docs/NATIVE_SALES_CRM.md)                                                                                       |
+| Calendar           | [Availability and scheduling](docs/CALENDAR_AVAILABILITY.md)                                                                       |
+| Email and inbox    | [Notifications](docs/NOTIFICATION_DELIVERY.md), [Gmail](docs/GMAIL_SETUP.md)                                                       |
+| Staging and demos  | [Staging](docs/STAGING_ENVIRONMENT.md), [demo businesses](docs/DEMO_BUSINESSES.md)                                                 |
+| Operations         | [Backups](docs/BACKUP_AND_RECOVERY.md), [provider health](docs/PROVIDER_HEALTH.md), [maintenance](docs/MISSED_CALL_MAINTENANCE.md) |
+| Security and data  | [Installation approval](docs/INSTALLATION_APPROVAL.md), [account export](docs/ACCOUNT_EXPORT.md)                                   |
+| Verification       | [Browser checks](docs/BROWSER_VERIFICATION.md), [live delivery](docs/LIVE_DELIVERY_VERIFICATION.md)                                |
+
+All other runbooks and historical verification records are in [docs/](docs/). Current implementations and tests take precedence over older reports.
+
+Read [AGENTS.md](AGENTS.md) before contributing. Consult the installed Next.js guides in `node_modules/next/dist/docs/` when changing framework behavior.
