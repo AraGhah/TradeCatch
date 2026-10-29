@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
-import { resolveOnCallTechnicianId } from "@/product/missed-call/technicians";
+import {
+  getEscalationChain,
+  resolveOnCallTechnicianId,
+} from "@/product/missed-call/technicians";
 import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
+import { getSaasStore } from "@/product/saas/runtime";
+import { orgHasFeature } from "@/product/saas/entitlements";
+import type { ClientAccount } from "@/product/missed-call/types";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +41,31 @@ function twimlDial(technicianPhoneE164: string) {
     `<?xml version="1.0" encoding="UTF-8"?><Response><Dial timeout="20" callerId="${escapeXml(technicianPhoneE164)}"><Number>${escapeXml(technicianPhoneE164)}</Number></Dial></Response>`,
     { status: 200, headers: { "Content-Type": "text/xml; charset=utf-8" } },
   );
+}
+
+/**
+ * ADVANCED_CALL_ROUTING (Receptionist tier): ring the whole escalation chain
+ * (on-call primary + backups + owner) simultaneously instead of one number
+ * at a time — Twilio connects the call to whichever one answers first.
+ */
+function twimlDialSimultaneous(phonesE164: string[], callerId: string) {
+  const numbers = phonesE164
+    .map((p) => `<Number>${escapeXml(p)}</Number>`)
+    .join("");
+  return new NextResponse(
+    `<?xml version="1.0" encoding="UTF-8"?><Response><Dial timeout="20" callerId="${escapeXml(callerId)}">${numbers}</Dial></Response>`,
+    { status: 200, headers: { "Content-Type": "text/xml; charset=utf-8" } },
+  );
+}
+
+async function resolveOrgPlanForClient(
+  client: ClientAccount,
+): Promise<boolean> {
+  const org = await getSaasStore().findOrganizationByMissedCallClientId(
+    client.id,
+  );
+  if (!org) return false;
+  return orgHasFeature(org.plan, "ADVANCED_CALL_ROUTING");
 }
 
 async function parseForm(
@@ -78,7 +109,8 @@ export async function POST(request: NextRequest) {
     return twimlReject();
   }
 
-  const technicianId = resolveOnCallTechnicianId(client, new Date());
+  const now = new Date();
+  const technicianId = resolveOnCallTechnicianId(client, now);
   const technician = client.technicianRoster.find(
     (t) => t.id === technicianId && t.active,
   );
@@ -90,6 +122,15 @@ export async function POST(request: NextRequest) {
       }),
     );
     return twimlReject();
+  }
+
+  const advancedRouting = await resolveOrgPlanForClient(client);
+  if (advancedRouting) {
+    const chain = getEscalationChain(client, now);
+    const phones = [...new Set(chain.map((t) => t.phone))];
+    if (phones.length > 1) {
+      return twimlDialSimultaneous(phones, technician.phone);
+    }
   }
 
   return twimlDial(technician.phone);
