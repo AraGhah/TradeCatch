@@ -213,6 +213,10 @@ export default async function AppSettingsPage({
           initialGoogleReviewUrl={settings.googleReviewUrl}
           initialCrmWebhookUrl={settings.crmWebhookUrl}
           isGrowth={auth.ctx.organization.plan === "growth"}
+          crmEnabled={orgHasFeature(
+            auth.ctx.organization.plan,
+            "CRM_INTEGRATION_LIMITED",
+          )}
         />
       </section>
 

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { orgSettingsSchema } from "@/product/starter/qualification";
 import {
+  forbiddenFeatureResponse,
   requireTenantContext,
+  tenantHasFeature,
   unauthorizedTenantResponse,
 } from "@/product/saas/tenant";
 import { getGrowthStore } from "@/product/growth";
@@ -55,6 +57,15 @@ export async function PATCH(request: NextRequest) {
       { error: "Invalid settings body.", details: parsed.error.flatten() },
       { status: 400 },
     );
+  }
+
+  // Setting a webhook is a Growth+ feature; clearing one stays allowed so a
+  // downgraded organization can still remove its URL.
+  if (
+    typeof parsed.data.crmWebhookUrl === "string" &&
+    !tenantHasFeature(auth.ctx, "CRM_INTEGRATION_LIMITED")
+  ) {
+    return forbiddenFeatureResponse("CRM_INTEGRATION_LIMITED");
   }
 
   const patch = {
