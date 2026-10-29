@@ -1,4 +1,4 @@
-import { loadClientAccountFromEnv } from "./client-config";
+import { loadClientAccountFromEnvOrSkip } from "./client-config";
 import { createMissedCallEngine, type MissedCallEngine } from "./engine";
 import { createMemoryStore, type MissedCallStore } from "./store";
 import { createPostgresStore } from "./postgres-store";
@@ -50,14 +50,28 @@ function createStore(): { store: MissedCallStore; durable: boolean } {
 
 function bootstrap() {
   const { store, durable } = createStore();
-  const { client, source } = loadClientAccountFromEnv();
-  if (source === "demo") {
-    console.warn(
-      "[missed-call] Loaded demo client fixture — set MISSED_CALL_* env vars for real routing.",
+  const seeded = loadClientAccountFromEnvOrSkip();
+
+  let ready: Promise<void>;
+  if (!seeded) {
+    // Multi-tenant deployment: no single legacy MISSED_CALL_* client is
+    // configured, and none is required — every organization's inbound SMS
+    // is routed to its own client record via
+    // MissedCallStore.findClientBySmsFromNumber, keyed by the Twilio number
+    // it was provisioned with. Nothing to seed here.
+    console.info(
+      "[missed-call] No legacy MISSED_CALL_* client configured — routing relies entirely on per-organization client records.",
     );
+    ready = Promise.resolve();
+  } else {
+    if (seeded.source === "demo") {
+      console.warn(
+        "[missed-call] Loaded demo client fixture — set MISSED_CALL_* env vars for real routing.",
+      );
+    }
+    ready = store.saveClient(seeded.client);
   }
 
-  const ready = store.saveClient(client);
   const engine = createMissedCallEngine({
     store,
     sms: createTwilioSmsPort(),

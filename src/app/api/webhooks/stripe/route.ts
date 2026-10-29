@@ -6,6 +6,11 @@ import {
   stripeEventSchema,
   synchronizeStripeBilling,
 } from "@/product/saas/stripe-billing";
+import {
+  CHECKOUT_COMPLETED_EVENT,
+  checkoutSessionEventSchema,
+  synchronizeInstallationCheckout,
+} from "@/product/saas/stripe-checkout";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +49,40 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+
+  if (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    (parsed as { type?: unknown }).type === CHECKOUT_COMPLETED_EVENT
+  ) {
+    const result = checkoutSessionEventSchema.safeParse(parsed);
+    if (!result.success)
+      return NextResponse.json(
+        { error: "Invalid webhook payload." },
+        { status: 400 },
+      );
+    const event = result.data;
+    if ((event.livemode && !liveSigned) || (!event.livemode && !testSigned)) {
+      return NextResponse.json(
+        { error: "Webhook mode mismatch." },
+        { status: 401 },
+      );
+    }
+    try {
+      const outcome = await synchronizeInstallationCheckout(event);
+      return NextResponse.json({ ok: true, ...outcome, type: event.type });
+    } catch {
+      console.error("[stripe] Installation checkout synchronization failed", {
+        eventId: event.id,
+        type: event.type,
+      });
+      return NextResponse.json(
+        { error: "Billing synchronization unavailable. Retry later." },
+        { status: 503 },
+      );
+    }
+  }
+
   const result = stripeEventSchema.safeParse(parsed);
   if (!result.success)
     return NextResponse.json(

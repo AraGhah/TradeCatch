@@ -386,6 +386,39 @@ export function createSchedulingService(deps: SchedulingDeps) {
       return deps.store.listTechnicians(organizationId);
     },
 
+    /**
+     * Creates or updates a crew member. Callers enforce the plan's calendar
+     * allowance (see USAGE_ALLOWANCES.calendars) before calling this with a
+     * new id — this layer only validates the record itself.
+     */
+    async upsertTechnician(input: {
+      id?: string;
+      organizationId: string;
+      name: string;
+      serviceArea?: string;
+      active?: boolean;
+    }): Promise<Technician> {
+      const name = input.name.trim();
+      if (!name) throw new SchedulingError("A name is required.");
+      if (input.id) {
+        // saveTechnician's ON CONFLICT targets id alone — verify this id is
+        // already this organization's own technician before overwriting it,
+        // so a crafted id cannot edit another tenant's crew member.
+        const existing = await deps.store.listTechnicians(input.organizationId);
+        if (!existing.some((tech) => tech.id === input.id)) {
+          throw new SchedulingError("Technician not found.", 404);
+        }
+      }
+      const technician: Technician = {
+        id: input.id ?? createId("tech"),
+        organizationId: input.organizationId,
+        name,
+        serviceArea: input.serviceArea?.trim() || undefined,
+        active: input.active ?? true,
+      };
+      return deps.store.saveTechnician(technician);
+    },
+
     async availability(input: {
       organizationId: string;
       serviceId?: string;

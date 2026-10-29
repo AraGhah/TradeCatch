@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { requireTenantContext } from "@/product/saas/tenant";
+import { requireTenantContext, tenantHasFeature } from "@/product/saas/tenant";
 import { AppointmentDesk } from "@/components/app/AppointmentDesk";
 import { ScheduleSubnav } from "@/components/app/ScheduleSubnav";
 
@@ -22,7 +22,7 @@ export default async function AppBookingsPage({
         </h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("intro")}</p>
       </header>
-      <ScheduleSubnav />
+      <ScheduleSubnav showTeam={tenantHasFeature(auth.ctx, "MULTI_CREW_CALENDARS")} />
       <AppointmentDesk organizationId={auth.ctx.organization.id} />
     </div>
   );

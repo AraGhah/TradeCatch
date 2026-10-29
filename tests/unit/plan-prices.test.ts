@@ -27,8 +27,8 @@ describe("plan prices", () => {
   it("uses the agreed prices", () => {
     assert.deepEqual(PLAN_PRICES, {
       starter: { setup: 799.99, monthly: 349.99 },
-      growth: { setup: 1499.99, monthly: 749.99 },
-      receptionist: { setup: 1999.99, monthly: 999.99 },
+      growth: { setup: 1499.99, monthly: 649.99 },
+      receptionist: { setup: 1999.99, monthly: 949.99 },
     });
   });
 
@@ -129,7 +129,7 @@ describe("plan prices", () => {
     );
     assert.equal(
       Math.round(monthsCovered(1500, PLAN_PRICES.receptionist.monthly) * 10) / 10,
-      1.5,
+      1.6,
     );
   });
 

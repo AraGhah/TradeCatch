@@ -28,14 +28,14 @@ test.describe("pricing page", () => {
 
     const receptionist = main.locator("article", { hasText: "Receptionist" }).first();
     await expect(receptionist).toContainText("$1,999.99");
-    await expect(receptionist).toContainText("$999.99");
-    await expect(receptionist).toContainText("$250.00 a month");
+    await expect(receptionist).toContainText("$949.99");
+    await expect(receptionist).toContainText("$300.00 a month");
     await expect(receptionist).toContainText("$500.00 more at setup");
 
     const growth = main.locator("article", { hasText: "Growth" }).first();
     await expect(growth).toContainText("$1,499.99");
-    await expect(growth).toContainText("$749.99");
-    await expect(growth).toContainText("$400.00 a month");
+    await expect(growth).toContainText("$649.99");
+    await expect(growth).toContainText("$300.00 a month");
 
     const starter = main.locator("article", { hasText: "Starter" }).first();
     await expect(starter).toContainText("$799.99");
@@ -53,8 +53,8 @@ test.describe("pricing page", () => {
     const text = (await main.innerText()).replace(/ /g, " ");
 
     expect(text).toContain("1 999,99 $");
-    expect(text).toContain("999,99 $");
-    expect(text).toContain("749,99 $");
+    expect(text).toContain("949,99 $");
+    expect(text).toContain("649,99 $");
     expect(text).toContain("349,99 $");
     expect(text).not.toMatch(/\b350 \$|\b750 \$/);
   });
@@ -87,16 +87,16 @@ test.describe("pricing page", () => {
     const rows = section.getByRole("listitem");
     // Example figure: $1,500 / each monthly fee.
     await expect(rows.filter({ hasText: "Starter" })).toContainText("4.3 months");
-    await expect(rows.filter({ hasText: "Growth" })).toContainText("2 months");
-    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("1.5 months");
+    await expect(rows.filter({ hasText: "Growth" })).toContainText("2.3 months");
+    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("1.6 months");
 
     await input.fill("3,000");
     await expect(rows.filter({ hasText: "Starter" })).toContainText("8.6 months");
-    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("3 months");
+    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("3.2 months");
 
     // A job worth less than the fee covers only part of a month.
     await input.fill("500");
-    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("50% of a month");
+    await expect(rows.filter({ hasText: "Receptionist" })).toContainText("53% of a month");
 
     await input.fill("abc");
     await expect(section.getByText("Enter an amount above zero.")).toBeVisible();

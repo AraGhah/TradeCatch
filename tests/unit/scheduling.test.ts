@@ -433,3 +433,50 @@ describe("appointment scheduling", () => {
     assert.equal(result.appointment?.appointmentKind, "request");
   });
 });
+
+describe("crew calendars (technicians)", () => {
+  it("creates a new technician and later updates it by id", async () => {
+    const { service } = setup();
+    const created = await service.upsertTechnician({
+      organizationId: "org-a",
+      name: "  Alex Tran  ",
+      serviceArea: "Laval",
+    });
+    assert.equal(created.name, "Alex Tran");
+    assert.equal(created.active, true);
+    const updated = await service.upsertTechnician({
+      id: created.id,
+      organizationId: "org-a",
+      name: "Alex Tran",
+      active: false,
+    });
+    assert.equal(updated.id, created.id);
+    assert.equal(updated.active, false);
+    const all = await service.listTechnicians("org-a");
+    assert.equal(all.filter((t) => t.id === created.id).length, 1);
+  });
+
+  it("refuses an empty name", async () => {
+    const { service } = setup();
+    await assert.rejects(() =>
+      service.upsertTechnician({ organizationId: "org-a", name: "   " }),
+    );
+  });
+
+  it("refuses to edit another organization's technician by id", async () => {
+    const { service } = setup();
+    const theirs = await service.upsertTechnician({
+      organizationId: "org-b",
+      name: "Their tech",
+    });
+    await assert.rejects(() =>
+      service.upsertTechnician({
+        id: theirs.id,
+        organizationId: "org-a",
+        name: "Renamed by someone else",
+      }),
+    );
+    const stillTheirs = await service.listTechnicians("org-b");
+    assert.equal(stillTheirs[0].name, "Their tech");
+  });
+});
