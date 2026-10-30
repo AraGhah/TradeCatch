@@ -11,7 +11,8 @@ import {
 import { createReceptionistEngine } from "../../src/product/receptionist/engine";
 import type { LlmClient } from "../../src/product/receptionist/llm";
 import {
-  detectLanguage,
+  asksIfAi,
+  asksPrice,
   detectYesNo,
   extractName,
   extractPhoneE164,
@@ -115,13 +116,19 @@ function texts(plan: VoicePlan): string {
 }
 
 describe("receptionist NLU", () => {
-  it("detects language from the menu, digits and function words", () => {
-    assert.equal(detectLanguage("", "1"), "fr");
-    assert.equal(detectLanguage("", "2"), "en");
-    assert.equal(detectLanguage("English please"), "en");
-    assert.equal(detectLanguage("j'ai besoin d'un plombier"), "fr");
-    assert.equal(detectLanguage("I have a leak in my kitchen"), "en");
-    assert.equal(detectLanguage("hmm"), null);
+  it("recognizes questions about whether the caller is talking to an AI", () => {
+    assert.equal(asksIfAi("Are you a robot?"), true);
+    assert.equal(asksIfAi("est-ce que je parle à une vraie personne"), true);
+    // A request to be connected is a transfer request, not a question about the line.
+    assert.equal(asksIfAi("je veux parler à un humain"), false);
+    assert.equal(asksIfAi("my robot vacuum is broken"), false);
+  });
+
+  it("recognizes price questions without mistaking a budget for one", () => {
+    assert.equal(asksPrice("How much does it cost to paint a kitchen?"), true);
+    assert.equal(asksPrice("c'est combien pour une soumission"), true);
+    assert.equal(asksPrice("Quel est votre tarif horaire?"), true);
+    assert.equal(asksPrice("je peins ma cuisine"), false);
   });
 
   it("handles yes/no in both languages", () => {
@@ -205,10 +212,11 @@ describe("receptionist call flow (rule brain)", () => {
     let plan = await engine.startCall({ callSid: "CA1", fromE164: CALLER, toE164: OFFICE });
     assert.ok(plan.verbs[0]!.verb === "gather");
     assert.match(texts(plan), /Nord Plomberie/);
-    assert.match(texts(plan), /appuyez sur 1/);
-    assert.match(texts(plan), /press 2/);
+    // French first: nothing to press for French, one key for English.
+    assert.match(texts(plan), /restez en ligne/);
+    assert.match(texts(plan), /For English, press 1/);
 
-    plan = await say(engine, plan, "", "1"); // French
+    plan = await say(engine, plan, "", "2"); // French, chosen explicitly
     assert.match(texts(plan), /Comment puis-je vous aider/);
 
     plan = await say(engine, plan, "j'ai un évier qui coule depuis hier");
@@ -223,7 +231,14 @@ describe("receptionist call flow (rule brain)", () => {
     plan = await say(engine, plan, "oui");
     assert.match(texts(plan), /moment/);
 
+    // The request is read back before the call closes.
     plan = await say(engine, plan, "demain matin");
+    assert.equal(plan.verbs.at(-1)!.verb, "gather");
+    assert.match(texts(plan), /si je comprends bien/);
+    assert.match(texts(plan), /123 rue Saint-Denis/);
+    assert.match(texts(plan), /demain matin/);
+
+    plan = await say(engine, plan, "oui, c'est ça");
     assert.equal(plan.verbs.at(-1)!.verb, "hangup");
     assert.match(texts(plan), /Marie Tremblay/);
 
@@ -246,7 +261,7 @@ describe("receptionist call flow (rule brain)", () => {
   it("answers an FAQ, then closes on 'no'", async () => {
     const { engine, store } = setup();
     let plan = await engine.startCall({ callSid: "CA2", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "2"); // English
+    plan = await say(engine, plan, "", "1"); // English
     plan = await say(engine, plan, "what are your opening hours?");
     assert.match(texts(plan), /Monday to Friday/);
     plan = await say(engine, plan, "no thanks");
@@ -259,7 +274,7 @@ describe("receptionist call flow (rule brain)", () => {
   it("does not finalize twice and does not double-notify", async () => {
     const { engine, sms } = setup();
     let plan = await engine.startCall({ callSid: "CA3", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     await say(engine, plan, "besoin d'un plombier");
     await Promise.all([
       engine.handleCallStatus({ callSid: "CA3", callStatus: "completed" }),
@@ -280,27 +295,44 @@ describe("receptionist call flow (rule brain)", () => {
   it("asks for a callback number when the caller id is unusable", async () => {
     const { engine } = setup();
     let plan = await engine.startCall({ callSid: "CA5", fromE164: "anonymous", toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
-    plan = await say(engine, plan, "fuite au sous-sol");
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "une fuite d'eau au sous-sol depuis ce matin");
     plan = await say(engine, plan, "Luc Roy");
     plan = await say(engine, plan, "55 rue Principale");
     assert.match(texts(plan), /10 chiffres/);
     plan = await say(engine, plan, "", "4505551122");
     assert.match(texts(plan), /moment/);
+    plan = await say(engine, plan, "cet après-midi");
+    assert.match(texts(plan), /si je comprends bien/);
+    assert.match(texts(plan), /4 5 0, 5 5 5, 1 1 2 2/, "the number is read back digit by digit");
   });
 
-  it("reprompts once on silence, then falls back to voicemail", async () => {
-    const { engine } = setup();
+  it("checks in once on silence, then ends the call politely", async () => {
+    const { engine, store } = setup();
     let plan = await engine.startCall({ callSid: "CA6", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     plan = await say(engine, plan, "");
-    assert.match(texts(plan), /n'ai pas bien entendu/);
+    assert.match(texts(plan), /toujours là/);
+    assert.match(texts(plan), /Comment puis-je vous aider/, "the question is asked again");
     plan = await say(engine, plan, "");
-    assert.equal(plan.verbs.some((v) => v.verb === "record"), true);
-
-    plan = await engine.handleVoicemail({ sessionId: plan.sessionId!, recordingUrl: "https://api.twilio.com/rec/RE1" });
     assert.equal(plan.verbs.at(-1)!.verb, "hangup");
+    assert.match(texts(plan), /Au revoir/);
+    assert.equal(plan.verbs.some((v) => v.verb === "record"), false);
+
     const done = await engine.handleCallStatus({ callSid: "CA6", callStatus: "completed" });
+    assert.equal(done.session!.outcome, "caller_hung_up");
+    assert.equal((await store.getSessionByCallSid("CA6"))!.step, "done");
+  });
+
+  it("still records a voicemail when the fail-safe path asks for one", async () => {
+    const { engine } = setup();
+    const started = await engine.startCall({ callSid: "CA7", fromE164: CALLER, toE164: OFFICE });
+    const plan = await engine.handleVoicemail({
+      sessionId: started.sessionId!,
+      recordingUrl: "https://api.twilio.com/rec/RE1",
+    });
+    assert.equal(plan.verbs.at(-1)!.verb, "hangup");
+    const done = await engine.handleCallStatus({ callSid: "CA7", callStatus: "completed" });
     assert.equal(done.session!.outcome, "voicemail");
     assert.equal(done.session!.recordingUrl, "https://api.twilio.com/rec/RE1");
   });
@@ -310,7 +342,7 @@ describe("receptionist transfers, hours and emergencies", () => {
   it("transfers to a named department during business hours and records the result", async () => {
     const { engine, store } = setup();
     let plan = await engine.startCall({ callSid: "CB1", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     plan = await say(engine, plan, "je voudrais parler à la facturation");
     const dial = plan.verbs.find((v) => v.verb === "dial");
     assert.ok(dial && dial.verb === "dial" && dial.phoneE164 === "+15145550301");
@@ -325,7 +357,7 @@ describe("receptionist transfers, hours and emergencies", () => {
   it("falls back to taking a message when the transfer target does not answer", async () => {
     const { engine } = setup();
     let plan = await engine.startCall({ callSid: "CB2", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     plan = await say(engine, plan, "billing please");
     plan = await engine.handleDialResult({ sessionId: plan.sessionId!, dialStatus: "no-answer" });
     assert.equal(plan.verbs[0]!.verb, "gather");
@@ -337,7 +369,7 @@ describe("receptionist transfers, hours and emergencies", () => {
     const { engine, store } = setup({ at: AFTER_HOURS });
     let plan = await engine.startCall({ callSid: "CB3", fromE164: CALLER, toE164: OFFICE });
     assert.equal((await store.getSessionByCallSid("CB3"))!.afterHours, true);
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     assert.match(texts(plan), /fermés/);
     plan = await say(engine, plan, "je veux parler à la facturation");
     assert.equal(plan.verbs.some((v) => v.verb === "dial"), false);
@@ -352,7 +384,7 @@ describe("receptionist transfers, hours and emergencies", () => {
     const deferred: (() => Promise<void>)[] = [];
     const { engine, store, sms } = setup({ at: AFTER_HOURS });
     let plan = await engine.startCall({ callSid: "CB4", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     plan = await engine.handleGather({
       sessionId: plan.sessionId!,
       speech: "je sens une odeur de gaz dans la maison",
@@ -381,7 +413,7 @@ describe("receptionist transfers, hours and emergencies", () => {
     const config = makeConfig({ emergencyTransferE164: undefined });
     const { engine, sms } = setup({ config });
     let plan = await engine.startCall({ callSid: "CB5", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "", "1");
     plan = await say(engine, plan, "there is a fire in the basement");
     assert.equal(plan.verbs.some((v) => v.verb === "dial"), false);
     assert.match(texts(plan), /9-1-1/);
@@ -402,7 +434,7 @@ describe("receptionist transfers, hours and emergencies", () => {
     const config = makeConfig({ transcriptRetentionDays: 1 });
     const { engine, store, at } = setup({ config });
     let plan = await engine.startCall({ callSid: "CB7", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     await say(engine, plan, "besoin d'un plombier");
 
     at.current = new Date(OPEN_HOURS.getTime() + 60 * 60 * 1000);
@@ -443,7 +475,7 @@ describe("receptionist LLM brain guardrails", () => {
     });
     const { engine, store } = setup({ brain: createLlmBrain(llm) });
     let plan = await engine.startCall({ callSid: "CC1", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     plan = await say(engine, plan, "Bonjour, c'est Marie, mon évier coule");
     assert.match(texts(plan), /adresse/);
     const s = (await store.getSessionByCallSid("CC1"))!;
@@ -456,7 +488,7 @@ describe("receptionist LLM brain guardrails", () => {
     const llm = fakeLlm({ reply: "Je vous transfère.", action: "transfer", transferTargetId: "ceo" });
     const { engine } = setup({ brain: createLlmBrain(llm) });
     let plan = await engine.startCall({ callSid: "CC2", fromE164: CALLER, toE164: OFFICE });
-    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "", "2");
     plan = await say(engine, plan, "je veux parler au grand patron");
     assert.equal(plan.verbs.some((v) => v.verb === "dial"), false);
     assert.match(texts(plan), /nom|aider/);
@@ -466,7 +498,7 @@ describe("receptionist LLM brain guardrails", () => {
     for (const bad of [() => { throw new Error("timeout"); }, { reply: "", action: "explode" }]) {
       const { engine, store } = setup({ brain: createLlmBrain(fakeLlm(bad as never)) });
       let plan = await engine.startCall({ callSid: `CC3_${Math.random()}`, fromE164: CALLER, toE164: OFFICE });
-      plan = await say(engine, plan, "", "1");
+      plan = await say(engine, plan, "", "2");
       plan = await say(engine, plan, "fuite d'eau dans la cuisine");
       assert.match(texts(plan), /nom/);
       const [s] = await store.listSessions({});
@@ -488,7 +520,7 @@ describe("receptionist LLM brain guardrails", () => {
       clock: { now: () => OPEN_HOURS },
     });
     let plan = await engine.startCall({ callSid: "CC4", fromE164: CALLER, toE164: OFFICE });
-    plan = await engine.handleGather({ sessionId: plan.sessionId!, speech: "", digits: "1" });
+    plan = await engine.handleGather({ sessionId: plan.sessionId!, speech: "", digits: "2" });
     await engine.handleGather({ sessionId: plan.sessionId!, speech: "un problème de chauffe-eau" });
     const done = await engine.handleCallStatus({ callSid: "CC4", callStatus: "completed" });
     assert.equal(done.session!.summary!.aiSummary, "Résumé IA de test.");
@@ -530,7 +562,15 @@ describe("voice rendering", () => {
   it("drives a whole call through an imperative (Fonoster-style) channel", async () => {
     const { engine, store } = setup();
     const heard: string[] = [];
-    const script = ["1", "fuite d'eau", "Luc Roy", "9 rue Sainte-Anne", "oui", "cet après-midi"];
+    const script = [
+      "2",
+      "une fuite d'eau au sous-sol depuis hier",
+      "Luc Roy",
+      "9 rue Sainte-Anne",
+      "oui",
+      "cet après-midi",
+      "oui, c'est ça",
+    ];
     let i = 0;
     let hungUp = false;
     const channel: ImperativeVoiceChannel = {
@@ -540,7 +580,7 @@ describe("voice rendering", () => {
       async gather(opts) {
         heard.push(...opts.prompts.map((p) => p.text));
         const next = script[i++] ?? "";
-        return next === "1" ? { digits: "1" } : { speech: next };
+        return next === "2" ? { digits: "2" } : { speech: next };
       },
       async dial() {
         return { status: "completed" };
