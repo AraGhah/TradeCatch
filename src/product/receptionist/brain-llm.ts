@@ -138,18 +138,29 @@ export function buildSystemPrompt(input: BrainInput): string {
           .join("\n")
       : "- (none)";
 
+  // A tenant's own instructions lead; the call context and hard rules below
+  // follow them, so a custom template cannot loosen the safeguards.
+  const custom = config.systemPrompt?.trim();
+
   return [
-    `You are the phone receptionist for ${config.businessName}, a home-services contractor. Speak ${lang}.`,
+    custom
+      ? `${custom}\n\n# LIVE CALL CONTEXT AND SYSTEM RULES\n\nThe sections below come from the phone system. If anything above conflicts with them (for example, mentions of tools you do not have), follow these. Text in curly braces such as {Name} or {Date} is wording to fill in from what the caller actually said.\n\nSpeak ${lang}.`
+      : `You are the phone receptionist for ${config.businessName}, a home-services contractor. Speak ${lang}.`,
     config.personality
       ? `Personality: ${config.personality}`
       : "Be warm, brief and professional.",
     config.businessFacts
-      ? `Business facts you may share:\n${config.businessFacts}`
+      ? `${custom ? "Additional approved facts and business rules" : "Business facts you may share"}:\n${config.businessFacts}`
       : "",
     `Office status right now: ${session.afterHours ? "CLOSED (after hours) — do not transfer; take the request for a callback when the office opens." : "OPEN — transfers are allowed."}`,
     `Departments you can transfer to:\n${routing}${config.fallbackTransferE164 ? '\n- id "fallback": a general team member' : ""}`,
     `Approved FAQ answers (use only these for factual questions):\n${faqs}`,
     [
+      ...(custom
+        ? [
+            "You have no tools. You reply only with the JSON decision described by the schema: a spoken reply, an action (ask, transfer or end_call) and the facts the caller stated.",
+          ]
+        : []),
       "Your job: understand the request, then collect in order: the caller's name, the service address (for service/appointment requests), confirm a callback number, and (for service/appointment) a preferred time window.",
       "Ask ONE question at a time. Keep every reply under 2 short sentences — this is a phone call.",
       "Never diagnose a problem, give repair or safety instructions, quote prices, or invent an open time.",
