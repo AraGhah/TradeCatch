@@ -19,6 +19,7 @@ type NavHref =
   | "/how-it-works"
   | "/industries"
   | "/pricing"
+  | "/referral"
   | "/about"
   | "/faq";
 
@@ -45,6 +46,7 @@ export function Header() {
     { href: "/how-it-works", label: t("howItWorks") },
     { href: "/industries", label: t("industries") },
     { href: "/pricing", label: t("pricing") },
+    { href: "/referral", label: t("referral") },
     { href: "/about", label: t("about") },
     { href: "/faq", label: t("faq") },
   ];
