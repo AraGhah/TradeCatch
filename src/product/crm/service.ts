@@ -86,7 +86,10 @@ export function createCrmService(store: CrmStore) {
   ): Promise<Conversation> {
     const linked = await store.findConversationForLead(organizationId, lead.id);
     if (linked) return linked;
-    const latest = await store.findLatestConversation(organizationId, customerId);
+    const latest = await store.findLatestConversation(
+      organizationId,
+      customerId,
+    );
     if (latest && (!latest.leadId || latest.leadId === lead.id)) {
       return (
         (await store.updateConversation(organizationId, latest.id, {
@@ -117,8 +120,8 @@ export function createCrmService(store: CrmStore) {
       const names = splitName(input.displayName);
       const automatedOutbound = Boolean(
         input.message &&
-          input.message.direction === "outbound" &&
-          input.message.automated,
+        input.message.direction === "outbound" &&
+        input.message.automated,
       );
 
       const existingCustomer = await store.findCustomerByPhone(
@@ -279,7 +282,9 @@ export function createCrmService(store: CrmStore) {
           conversationId: conversation.id,
           direction: input.message.direction,
           body: input.message.body.trim(),
-          fromE164: input.message.fromE164 ?? (input.message.direction === "inbound" ? phone : undefined),
+          fromE164:
+            input.message.fromE164 ??
+            (input.message.direction === "inbound" ? phone : undefined),
           toE164: input.message.toE164,
           automated: Boolean(input.message.automated),
           deliveryStatus: input.message.deliveryStatus ?? "queued",
@@ -289,9 +294,13 @@ export function createCrmService(store: CrmStore) {
         });
         if (saved) {
           message = saved;
-          await store.updateConversation(input.organizationId, conversation.id, {
-            lastMessageAt: saved.at,
-          });
+          await store.updateConversation(
+            input.organizationId,
+            conversation.id,
+            {
+              lastMessageAt: saved.at,
+            },
+          );
           if (
             input.message.direction === "outbound" &&
             !input.message.automated &&
@@ -327,13 +336,60 @@ export function createCrmService(store: CrmStore) {
     },
 
     async isAutomationPaused(organizationId: string, phoneE164: string) {
-      const customer = await store.findCustomerByPhone(organizationId, phoneE164);
+      const customer = await store.findCustomerByPhone(
+        organizationId,
+        phoneE164,
+      );
       if (!customer) return false;
       const conversation = await store.findLatestConversation(
         organizationId,
         customer.id,
       );
       return Boolean(conversation && conversation.control !== "ai_managed");
+    },
+
+    /**
+     * The latest messages of this customer's conversation, oldest first.
+     * Context for the SMS receptionist; empty when the customer is unknown.
+     */
+    async recentMessagesByPhone(
+      organizationId: string,
+      phoneE164: string,
+      limit = 12,
+    ): Promise<CrmMessage[]> {
+      const customer = await store.findCustomerByPhone(
+        organizationId,
+        phoneE164,
+      );
+      if (!customer) return [];
+      const conversation = await store.findLatestConversation(
+        organizationId,
+        customer.id,
+      );
+      if (!conversation) return [];
+      const all = await store.listMessages(
+        organizationId,
+        conversation.id,
+        200,
+      );
+      return all.slice(-limit);
+    },
+
+    /** The newest conversation of the customer with this phone, if any. */
+    async latestConversationIdByPhone(
+      organizationId: string,
+      phoneE164: string,
+    ): Promise<string | null> {
+      const customer = await store.findCustomerByPhone(
+        organizationId,
+        phoneE164,
+      );
+      if (!customer) return null;
+      const conversation = await store.findLatestConversation(
+        organizationId,
+        customer.id,
+      );
+      return conversation?.id ?? null;
     },
 
     listLeads(organizationId: string, filters?: LeadListFilters) {
@@ -379,7 +435,8 @@ export function createCrmService(store: CrmStore) {
         }
       }
       if (patch.service !== undefined) nextPatch.service = patch.service;
-      if (patch.description !== undefined) nextPatch.description = patch.description;
+      if (patch.description !== undefined)
+        nextPatch.description = patch.description;
       if (patch.location !== undefined) nextPatch.location = patch.location;
       if (patch.assignedToUserId !== undefined) {
         nextPatch.assignedToUserId = patch.assignedToUserId || undefined;
@@ -422,7 +479,9 @@ export function createCrmService(store: CrmStore) {
       return store.listEvents(organizationId, leadId);
     },
 
-    async listConversations(organizationId: string): Promise<ConversationView[]> {
+    async listConversations(
+      organizationId: string,
+    ): Promise<ConversationView[]> {
       const conversations = await store.listConversations(organizationId);
       const views: ConversationView[] = [];
       for (const conversation of conversations) {
@@ -448,7 +507,10 @@ export function createCrmService(store: CrmStore) {
       return views;
     },
 
-    async getConversationBundle(organizationId: string, conversationId: string) {
+    async getConversationBundle(
+      organizationId: string,
+      conversationId: string,
+    ) {
       const conversation = await store.getConversation(
         organizationId,
         conversationId,
@@ -525,11 +587,17 @@ export function createCrmService(store: CrmStore) {
         simulated: Boolean(input.simulated),
         at: now,
       });
-      await store.updateConversation(input.organizationId, input.conversationId, {
-        lastMessageAt: now,
-        channel:
-          bundle.conversation.channel === "call" ? "mixed" : bundle.conversation.channel,
-      });
+      await store.updateConversation(
+        input.organizationId,
+        input.conversationId,
+        {
+          lastMessageAt: now,
+          channel:
+            bundle.conversation.channel === "call"
+              ? "mixed"
+              : bundle.conversation.channel,
+        },
+      );
       if (bundle.lead && bundle.lead.status === "new") {
         await store.updateLead(input.organizationId, bundle.lead.id, {
           status: "contacted",
