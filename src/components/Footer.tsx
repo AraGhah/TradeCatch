@@ -90,6 +90,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/referral" className={linkClass}>
+                  {nav("referral")}
+                </Link>
+              </li>
+              <li>
                 <Link href="/about" className={linkClass}>
                   {nav("about")}
                 </Link>
