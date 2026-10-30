@@ -137,6 +137,11 @@ export type ClientAccount = {
   optOutKeywords: string[];
   duplicateWindowMs: number;
   humanReviewPhone?: string;
+  /**
+   * Owner switch for AI replies to customers who text first (see
+   * product/sms-receptionist). Unset means on; `false` turns it off.
+   */
+  aiSmsReplies?: boolean;
 };
 
 export type ApprovedQuestion = {
