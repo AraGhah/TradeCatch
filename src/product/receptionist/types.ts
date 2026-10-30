@@ -92,6 +92,12 @@ export type ReceptionistConfig = {
   personality?: string;
   /** Short business facts the LLM may use (services, service area…). */
   businessFacts?: string;
+  /**
+   * The business's rendered system prompt (template + its own details). Set
+   * for tenant profiles; unset for founder env configs, which keep the
+   * built-in prompt.
+   */
+  systemPrompt?: string;
   routing: RoutingTarget[];
   /** Live bridge for critical emergencies (gas, fire, flood…). */
   emergencyTransferE164?: string;
