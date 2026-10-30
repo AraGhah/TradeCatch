@@ -73,6 +73,7 @@ export const receptionistConfigSchema = z.object({
   voices: z
     .object({ fr: z.string().min(1), en: z.string().min(1) })
     .default({ ...DEFAULT_VOICES }),
+  speakingSpeed: z.enum(["slow", "normal", "fast"]).default("normal"),
   greetingFr: z.string().min(1).optional(),
   greetingEn: z.string().min(1).optional(),
   afterHoursMessageFr: z.string().min(1).optional(),
@@ -82,6 +83,9 @@ export const receptionistConfigSchema = z.object({
     .default("take_message_emergency_transfer"),
   personality: z.string().max(2000).optional(),
   businessFacts: z.string().max(4000).optional(),
+  services: z.array(z.string().trim().min(1).max(80)).max(40).default([]),
+  serviceAreas: z.array(z.string().trim().min(1).max(80)).max(40).default([]),
+  pricingInfo: z.string().trim().max(500).optional(),
   systemPrompt: z.string().max(40_000).optional(),
   routing: z
     .array(
@@ -129,19 +133,24 @@ export const receptionistConfigSchema = z.object({
 
 export type ReceptionistConfigInput = z.input<typeof receptionistConfigSchema>;
 
+/**
+ * Default greetings. They only introduce the business: the engine asks the
+ * opening question itself (after the language window), so a greeting that
+ * already ended in "How can I help you?" would be followed by a second one.
+ * The receptionist presents itself as the business's receptionist and does not
+ * open with an announcement about being automated; it answers honestly if asked.
+ */
 export function defaultGreetings(
   businessName: string,
   receptionistName?: string,
 ) {
-  const identityFr = receptionistName
-    ? `Je suis ${receptionistName}, la réceptionniste virtuelle`
-    : "Je suis l'assistante virtuelle";
+  const identityFr = receptionistName ? ` Ici ${receptionistName}, à la réception.` : "";
   const identityEn = receptionistName
-    ? `I'm ${receptionistName}, the virtual receptionist`
-    : "I'm the virtual assistant";
+    ? ` This is ${receptionistName} at the front desk.`
+    : "";
   return {
-    greetingFr: `Bonjour, vous êtes bien chez ${businessName}. ${identityFr}. Comment puis-je vous aider?`,
-    greetingEn: `Hi, you've reached ${businessName}. ${identityEn}. How can I help you?`,
+    greetingFr: `Bonjour! Merci d'avoir appelé ${businessName}.${identityFr}`,
+    greetingEn: `Thanks for calling ${businessName}!${identityEn}`,
     afterHoursMessageFr: `Nos bureaux sont présentement fermés, mais je peux prendre votre demande et l'équipe vous rappellera dès l'ouverture.`,
     afterHoursMessageEn: `Our office is currently closed, but I can take your request and the team will call you back when we open.`,
   };
