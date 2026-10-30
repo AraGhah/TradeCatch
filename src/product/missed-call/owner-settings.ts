@@ -41,6 +41,8 @@ export const smsReceptionistSettingsSchema = z
       .trim()
       .regex(E164_PHONE, "must be an E.164 phone number")
       .optional(),
+    /** Omitted keeps the saved value. */
+    aiSmsReplies: z.boolean().optional(),
   })
   .strict();
 
@@ -157,6 +159,7 @@ export async function saveSmsReceptionistSettings(
     backupTechnicianIds,
     ownerTechnicianId,
     humanReviewPhone: parsed.data.humanReviewPhone ?? client.humanReviewPhone,
+    aiSmsReplies: parsed.data.aiSmsReplies ?? client.aiSmsReplies,
     // Re-point any schedule slot whose technician was removed, rather than
     // leaving a dangling reference that would fail validation obscurely.
     onCallSchedule: client.onCallSchedule.map((slot) =>
@@ -184,6 +187,7 @@ export async function saveSmsReceptionistSettings(
       businessHours: updated.businessHours,
       technicianRoster: updated.technicianRoster,
       humanReviewPhone: updated.humanReviewPhone ?? null,
+      aiSmsReplies: updated.aiSmsReplies !== false,
     },
   };
 }

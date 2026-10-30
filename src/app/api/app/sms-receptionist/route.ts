@@ -44,6 +44,7 @@ export async function GET() {
     businessHours: client.businessHours,
     technicianRoster: client.technicianRoster,
     humanReviewPhone: client.humanReviewPhone ?? null,
+    aiSmsReplies: client.aiSmsReplies !== false,
   });
 }
 
