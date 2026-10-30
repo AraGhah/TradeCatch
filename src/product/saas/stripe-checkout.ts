@@ -2,6 +2,7 @@ import { z } from "zod";
 import { stripeSecretKey } from "./stripe-key";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import { newId } from "./ids";
+import { referralInstallationPaid } from "@/product/referrals/billing-hooks";
 import type { PlanId } from "./entitlements";
 import { PLAN_IDS } from "./entitlements";
 import type { Organization } from "./types";
@@ -257,6 +258,8 @@ export async function synchronizeInstallationCheckout(
   const url = requireDurableStore();
   const pool = getPgPool(url);
   const client = await pool.connect();
+  // Set only after COMMIT; read in `finally` once the connection is released.
+  let paidInstallation: Parameters<typeof referralInstallationPaid>[0] | null = null;
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL statement_timeout = '25000'");
@@ -285,6 +288,7 @@ export async function synchronizeInstallationCheckout(
     }
     if (checkout.status === "subscribed") {
       await client.query("COMMIT");
+      paidInstallation = referralPayment(checkout, session.id, session.payment_intent, event);
       return { handled: true };
     }
     if (session.payment_status !== "paid") {
@@ -382,13 +386,32 @@ export async function synchronizeInstallationCheckout(
     }
 
     await client.query("COMMIT");
+    paidInstallation = referralPayment(checkout, session.id, session.payment_intent, event);
     return { handled: true };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
+    // Referral bookkeeping: best effort, never throws, never delays billing's answer
+    // beyond one lookup. See src/product/referrals/billing-hooks.ts.
+    if (paidInstallation) await referralInstallationPaid(paidInstallation);
   }
+}
+
+function referralPayment(
+  checkout: { organization_id: string; plan: PlanId },
+  sessionId: string,
+  paymentIntent: string | { id: string } | null | undefined,
+  event: { livemode: boolean },
+): Parameters<typeof referralInstallationPaid>[0] {
+  return {
+    organizationId: checkout.organization_id,
+    plan: checkout.plan,
+    checkoutSessionId: sessionId,
+    paymentIntentId: idOf(paymentIntent) ?? undefined,
+    livemode: event.livemode,
+  };
 }
 
 export type InstallationStatus = {
