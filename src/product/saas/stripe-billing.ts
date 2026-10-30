@@ -2,6 +2,7 @@ import { z } from "zod";
 import { stripeSecretKey } from "./stripe-key";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import type { PlanId } from "./entitlements";
+import { referralBillingStateChanged } from "@/product/referrals/billing-hooks";
 
 const reference = z.union([
   z.string().min(1),
@@ -125,6 +126,9 @@ export async function synchronizeStripeBilling(event: BillingEvent) {
     throw new Error("Billing event is missing its customer.");
   }
   const client = await getPgPool(url).connect();
+  // Set only after COMMIT; read in `finally` once the connection is released.
+  let settled: { organizationId: string; status: "active" | "suspended" | "churned" } | null =
+    null;
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL statement_timeout = '25000'");
@@ -194,6 +198,7 @@ export async function synchronizeStripeBilling(event: BillingEvent) {
         [organizationId],
       );
       await client.query("COMMIT");
+      settled = { organizationId, status: "churned" };
       return { duplicate: false, synchronized: true };
     }
     await client
@@ -294,11 +299,14 @@ export async function synchronizeStripeBilling(event: BillingEvent) {
       [organizationId, plan, status],
     );
     await client.query("COMMIT");
+    settled = { organizationId, status };
     return { duplicate: false, synchronized: true };
   } catch (error) {
     await client.query("ROLLBACK");
     throw error;
   } finally {
     client.release();
+    // Referral bookkeeping: best effort, never throws. See referrals/billing-hooks.ts.
+    if (settled) await referralBillingStateChanged(settled.organizationId, settled.status);
   }
 }
