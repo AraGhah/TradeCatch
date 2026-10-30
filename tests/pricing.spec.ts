@@ -30,7 +30,7 @@ test.describe("pricing page", () => {
     await expect(receptionist).toContainText("$1,999.99");
     await expect(receptionist).toContainText("$949.99");
     await expect(receptionist).toContainText("$300.00 a month");
-    await expect(receptionist).toContainText("$500.00 more at setup");
+    await expect(receptionist).toContainText("$500.00 more at installation");
 
     const growth = main.locator("article", { hasText: "Growth" }).first();
     await expect(growth).toContainText("$1,499.99");
