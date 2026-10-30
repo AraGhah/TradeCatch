@@ -82,6 +82,7 @@ export const receptionistConfigSchema = z.object({
     .default("take_message_emergency_transfer"),
   personality: z.string().max(2000).optional(),
   businessFacts: z.string().max(4000).optional(),
+  systemPrompt: z.string().max(40_000).optional(),
   routing: z
     .array(
       z.object({
