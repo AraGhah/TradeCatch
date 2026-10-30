@@ -35,14 +35,22 @@ import {
   type ReceptionistScheduler,
   type ReserveResult,
 } from "./booking";
+import {
+  detectLanguageSwitch,
+  firstLanguage,
+  isGreetingOnly,
+  languageForDigits,
+  languageSelectTimeoutSeconds,
+  looksEnglish,
+} from "./language-select";
 import type { LlmClient } from "./llm";
-import { detectLanguage } from "./nlu";
 import type { ReceptionistNotifier } from "./notifications";
 import {
   afterHoursFor,
-  greetingFor,
+  greetingStatement,
   hintsFor,
   languageMenuPrompts,
+  openingQuestion,
   phrase,
 } from "./prompts";
 import { isConflictError, type ReceptionistStore } from "./store";
@@ -51,8 +59,10 @@ import type {
   AgentDecision,
   CallBooking,
   CallContext,
+  CallFlags,
   CallSession,
   CallSlots,
+  CallStep,
   CallTurn,
   ReceptionistBrain,
   ReceptionistConfig,
@@ -61,6 +71,7 @@ import type {
   VoicePlan,
   VoiceVerb,
 } from "./types";
+import { gatherTuning } from "./voice";
 
 export type ReceptionistEngineDeps = {
   store: ReceptionistStore;
@@ -110,6 +121,33 @@ const SCHEDULER_TIMEOUT_MS = 7000;
 const MAX_OFFER_ROUNDS = 2;
 /** Answers that matched no offered time before falling back to a request. */
 const MAX_OFFER_MISSES = 2;
+/** Quiet turns in a row before the call ends politely ("still there?" comes first). */
+const MAX_SILENT_TURNS = 2;
+/** Times in a row the recognizer may be asked to repeat before the engine goes on with what it has. */
+const MAX_UNCLEAR_TURNS = 2;
+
+/**
+ * Below this recognizer confidence a free-form answer is asked again rather than
+ * trusted. 0 turns the check off. Twilio reports 0–1 for speech; clear speech is
+ * usually above 0.8.
+ */
+export function minAsrConfidence(env: Record<string, string | undefined> = process.env): number {
+  const raw = env.RECEPTIONIST_MIN_ASR_CONFIDENCE;
+  if (raw === undefined || raw.trim() === "") return 0.5;
+  const value = Number(raw);
+  return Number.isFinite(value) && value >= 0 && value <= 0.9 ? value : 0.5;
+}
+
+/** Steps whose answer is a free-form sentence the recognizer can get wrong. */
+const CLARIFY_STEPS = new Set<CallStep>([
+  "reason",
+  "scope",
+  "name",
+  "address",
+  "callback_number",
+  "preferred_time",
+  "correction",
+]);
 
 const TERMINAL_CALL_STATUSES = new Set([
   "completed",
@@ -124,6 +162,8 @@ const TERMINAL_CALL_STATUSES = new Set([
 const EMERGENCY_SCREEN_STEPS = new Set([
   "language",
   "reason",
+  "scope",
+  "correction",
   "offer_slot",
   "anything_else",
 ]);
@@ -169,12 +209,16 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     prompts: { text: string; lang?: ReceptionistLanguage }[],
     opts: { dtmfDigits?: number } = {},
   ): VoiceVerb {
+    const inLanguageMenu = session.step === "language";
+    // After "For English, press 1" was repeated, a lone key is still listened for.
+    const englishHint = Boolean(session.flags?.englishHinted);
     const allowDtmf =
       Boolean(opts.dtmfDigits) ||
+      englishHint ||
       session.step === "callback_number" ||
       session.step === "callback" ||
       session.step === "offer_slot" ||
-      session.step === "language";
+      inLanguageMenu;
     return {
       verb: "gather",
       next: "gather",
@@ -185,14 +229,18 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           text: p.text,
           voice: voiceOf(config, p.lang ?? session.language),
           language: p.lang ?? session.language,
+          speed: config.speakingSpeed,
         })),
       input: allowDtmf ? ["speech", "dtmf"] : ["speech"],
-      timeoutSeconds: 6,
+      // The language menu waits only briefly: no key means "stay in French".
+      timeoutSeconds: inLanguageMenu
+        ? languageSelectTimeoutSeconds()
+        : gatherTuning().timeoutSeconds,
       numDigits:
         opts.dtmfDigits ??
         (session.step === "callback_number"
           ? 10
-          : session.step === "language" || session.step === "offer_slot"
+          : inLanguageMenu || session.step === "offer_slot"
             ? 1
             : undefined),
       hints: hintsFor(config),
@@ -204,7 +252,195 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     lang: ReceptionistLanguage,
     text: string,
   ): VoiceVerb {
-    return { verb: "say", text, language: lang, voice: voiceOf(config, lang) };
+    return {
+      verb: "say",
+      text,
+      language: lang,
+      voice: voiceOf(config, lang),
+      speed: config.speakingSpeed,
+    };
+  }
+
+  /**
+   * What starts a call: the greeting, then (bilingual line) the language menu in
+   * French first, or (one language) the after-hours notice and the opening question.
+   */
+  function openingFor(
+    config: ReceptionistConfig,
+    afterHours: boolean,
+  ): {
+    language: ReceptionistLanguage;
+    step: CallStep;
+    prompts: { text: string; lang?: ReceptionistLanguage }[];
+  } {
+    const language = firstLanguage(config.languages, config.defaultLanguage);
+    if (config.languages.length > 1) {
+      return {
+        language,
+        step: "language",
+        prompts: [
+          { text: greetingStatement(config, language), lang: language },
+          ...languageMenuPrompts(),
+        ],
+      };
+    }
+    return {
+      language,
+      step: "reason",
+      prompts: [
+        { text: greetingStatement(config, language) },
+        ...(afterHours ? [{ text: afterHoursFor(config, language) }] : []),
+        { text: openingQuestion(config, language) },
+      ],
+    };
+  }
+
+  /** The words that go with the notice owed to an after-hours caller, once. */
+  function afterHoursNotice(
+    config: ReceptionistConfig,
+    session: CallSession,
+  ): string {
+    return session.afterHours ? afterHoursFor(config, session.language) : "";
+  }
+
+  function mergeFlags(
+    session: CallSession,
+    flags: Partial<CallFlags> | undefined,
+  ): CallFlags | undefined {
+    return flags ? { ...session.flags, ...flags } : session.flags;
+  }
+
+  /** Ask a question (one or two short prompts) and record what was said. */
+  function askPlan(
+    config: ReceptionistConfig,
+    session: CallSession,
+    prompts: { text: string; lang?: ReceptionistLanguage }[],
+  ): { session: CallSession; plan: VoicePlan } {
+    const spoken = prompts.filter((p) => p.text.trim());
+    const next: CallSession = {
+      ...session,
+      turns: [
+        ...session.turns,
+        ...spoken.map((p) =>
+          turn("agent", p.text, { action: "ask", brain: "rules" }),
+        ),
+      ],
+    };
+    return {
+      session: next,
+      plan: { sessionId: next.id, verbs: [listen(config, next, spoken)] },
+    };
+  }
+
+  /**
+   * The language menu is over: the call goes on in `language` and the caller is
+   * asked what they need. The greeting is not repeated. `chosen` is true when the
+   * caller pressed a key or asked for the language, so it is acknowledged.
+   */
+  function continueInLanguage(
+    config: ReceptionistConfig,
+    session: CallSession,
+    language: ReceptionistLanguage,
+    opts: { chosen: boolean },
+  ): { session: CallSession; plan: VoicePlan } {
+    const next: CallSession = {
+      ...session,
+      language,
+      step: "reason",
+      silenceCount: 0,
+      unclearCount: 0,
+      flags: { ...session.flags, languageLocked: true },
+    };
+    const prompts: { text: string }[] = [];
+    if (opts.chosen) {
+      prompts.push({
+        text: phrase(
+          language === "en" ? "languageChosenEn" : "languageChosenFr",
+          language,
+        ),
+      });
+    }
+    const notice = afterHoursNotice(config, next);
+    if (notice) prompts.push({ text: notice });
+    prompts.push({ text: openingQuestion(config, language) });
+    return askPlan(config, next, prompts);
+  }
+
+  /**
+   * The recognizer was unsure of a French turn. Ask again, and remind an
+   * English speaker that a key is waiting for them.
+   */
+  function askAgainWithEnglishHint(
+    config: ReceptionistConfig,
+    session: CallSession,
+  ): { session: CallSession; plan: VoicePlan } {
+    const next: CallSession = {
+      ...session,
+      unclearCount: (session.unclearCount ?? 0) + 1,
+      flags: { ...session.flags, englishHinted: true },
+    };
+    return askPlan(config, next, [
+      { text: phrase("unclear", "fr"), lang: "fr" },
+      { text: phrase("pressForEnglish", "en"), lang: "en" },
+    ]);
+  }
+
+  /** Add "For English, press 1." (in the English voice) after the question being asked. */
+  function appendEnglishHint(config: ReceptionistConfig, plan: VoicePlan): void {
+    const gather = plan.verbs.findLast((v) => v.verb === "gather");
+    if (gather?.verb !== "gather") return;
+    gather.prompts.push({
+      text: phrase("pressForEnglish", "en"),
+      voice: voiceOf(config, "en"),
+      language: "en",
+      speed: config.speakingSpeed,
+    });
+  }
+
+  /** The caller asked, out loud, to continue in another language. */
+  function switchLanguageMidCall(
+    config: ReceptionistConfig,
+    session: CallSession,
+    language: ReceptionistLanguage,
+  ): { session: CallSession; plan: VoicePlan } {
+    let booking = session.booking;
+    let question: string;
+    if (session.step === "offer_slot" && booking) {
+      // The times are re-worded in the new language; the times themselves do not change.
+      booking = {
+        ...booking,
+        offered: booking.offered.map((slot) => ({
+          ...slot,
+          label: spokenSlotLabel(slot.startAt, booking!.timezone, language),
+        })),
+      };
+      question = phrase("offerSlots", language, {
+        options: readOptions(booking.offered),
+      });
+    } else {
+      const step: CallStep =
+        session.step === "language" || session.step === "done"
+          ? "reason"
+          : session.step;
+      question = questionForStep(step, language, session, session.slots);
+    }
+    const next: CallSession = {
+      ...session,
+      language,
+      booking,
+      silenceCount: 0,
+      unclearCount: 0,
+      flags: { ...session.flags, languageLocked: true },
+    };
+    return askPlan(config, next, [
+      {
+        text: phrase(
+          language === "en" ? "languageSwitchedEn" : "languageSwitchedFr",
+          language,
+        ),
+      },
+      { text: question },
+    ]);
   }
 
   function turn(
@@ -374,6 +610,8 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       intent: decision.intent ?? session.intent,
       outcome: decision.outcome ?? session.outcome,
       step: decision.nextStep,
+      flags: mergeFlags(session, decision.flags),
+      unclearCount: 0,
       turns: [
         ...session.turns,
         turn("agent", decision.reply, {
@@ -453,23 +691,6 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         sessionId: next.id,
         verbs: [listen(config, next, [{ text: decision.reply }])],
       },
-    };
-  }
-
-  function voicemailPlan(
-    config: ReceptionistConfig,
-    session: CallSession,
-  ): VoicePlan {
-    return {
-      sessionId: session.id,
-      verbs: [
-        say(
-          config,
-          session.language,
-          phrase("voicemailIntro", session.language),
-        ),
-        { verb: "record", next: "voicemail", maxLengthSeconds: 120 },
-      ],
     };
   }
 
@@ -1043,6 +1264,8 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
   return {
     resolveConfig,
     failSafePlan,
+    /** The scheduling backend, for callers (the voice-agent API) that book outside a Twilio call. */
+    scheduler: deps.scheduler,
 
     /** Inbound call webhook: create the session and greet (or ring human first). */
     async startCall(input: {
@@ -1099,7 +1322,8 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         return failSafePlan(config, null, undefined, { cause: "declined" });
       }
 
-      const bilingual = config.languages.length > 1;
+      const afterHours = isAfterHours(config, at);
+      const opening = openingFor(config, afterHours);
       const draft: CallSession = {
         id: `rcs_${randomUUID()}`,
         callSid: input.callSid,
@@ -1107,11 +1331,12 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         clientAccountId: config.clientAccountId,
         fromE164: input.fromE164,
         toE164: input.toE164,
-        language: config.defaultLanguage,
+        // Every call starts in French when French is enabled; see language-select.ts.
+        language: opening.language,
         status:
           routing.action === "ring_human" ? "transferring" : "in_progress",
-        step: bilingual ? "language" : "reason",
-        afterHours: isAfterHours(config, at),
+        step: opening.step,
+        afterHours,
         slots: {},
         turns: [],
         silenceCount: 0,
@@ -1162,15 +1387,29 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             };
           }
         }
-        const q = questionForStep(
-          session.step,
-          session.language,
-          session,
-          session.slots,
-        );
+        // At the language menu a retry plays the menu again, not a question.
+        const retryPrompts =
+          session.step === "language"
+            ? [
+                {
+                  text: greetingStatement(config, session.language),
+                  lang: session.language,
+                },
+                ...languageMenuPrompts(),
+              ]
+            : [
+                {
+                  text: questionForStep(
+                    session.step,
+                    session.language,
+                    session,
+                    session.slots,
+                  ),
+                },
+              ];
         return {
           sessionId: session.id,
-          verbs: [listen(config, session, [{ text: q }])],
+          verbs: [listen(config, session, retryPrompts)],
         };
       }
 
@@ -1189,28 +1428,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         };
       }
 
-      let prompts: { text: string; lang?: ReceptionistLanguage }[];
-      if (bilingual) {
-        const other: ReceptionistLanguage =
-          config.defaultLanguage === "fr" ? "en" : "fr";
-        prompts = [
-          {
-            text: greetingFor(config, config.defaultLanguage),
-            lang: config.defaultLanguage,
-          },
-          { text: greetingFor(config, other), lang: other },
-          ...languageMenuPrompts(),
-        ];
-      } else {
-        prompts = [
-          { text: greetingFor(config, session.language) },
-          ...(session.afterHours
-            ? [{ text: afterHoursFor(config, session.language) }]
-            : []),
-          { text: phrase("askReason", session.language) },
-        ];
-      }
-
+      const prompts = opening.prompts;
       const greeted = await save({
         ...session,
         turns: prompts.map((p) =>
@@ -1261,38 +1479,67 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           const digits = input.digits?.replace(/[^\d*#]/g, "") || undefined;
           const heard = speech || digits || "";
 
+          // Language menu: the caller pressed nothing. Stay in French and ask
+          // what they need — a quiet line here is the normal French path.
+          if (!heard && session.step === "language") {
+            const r = continueInLanguage(config, session, session.language, {
+              chosen: false,
+            });
+            return { session: r.session, result: r.plan };
+          }
+
           if (!heard) {
             const silenceCount = session.silenceCount + 1;
-            if (silenceCount >= 2) {
+            if (silenceCount >= MAX_SILENT_TURNS) {
+              // Nobody is answering. During a booking the details are already
+              // in, so hand them to the team; otherwise end politely.
+              if (session.step === "offer_slot" && session.booking) {
+                const r = fallBackToRequest(
+                  config,
+                  { ...session, silenceCount },
+                  "no_answer",
+                );
+                return { session: r.session, result: r.plan };
+              }
+              const lang = session.language;
+              const reply = phrase("silenceGoodbye", lang);
               const next: CallSession = {
                 ...session,
                 silenceCount,
-                step: "voicemail",
+                step: "done",
                 turns: [
                   ...session.turns,
-                  turn("system", "silence → voicemail"),
+                  turn("system", "silence → goodbye"),
+                  turn("agent", reply, { action: "end_call", brain: "guardrail" }),
                 ],
               };
-              return { session: next, result: voicemailPlan(config, next) };
+              return {
+                session: next,
+                result: {
+                  sessionId: next.id,
+                  verbs: [say(config, lang, reply), { verb: "hangup" }],
+                },
+              };
             }
-            const next = { ...session, silenceCount };
+            const next: CallSession = { ...session, silenceCount };
+            const lang = session.language;
             const prompts =
               session.step === "language"
                 ? languageMenuPrompts()
                 : session.step === "offer_slot" && session.booking
                   ? [
                       {
-                        text: phrase("offerRepeat", session.language, {
+                        text: phrase("offerRepeat", lang, {
                           options: readOptions(session.booking.offered),
                         }),
                       },
                     ]
                   : [
-                      { text: phrase("reprompt", session.language) },
+                      { text: phrase("stillThere", lang) },
                       {
                         text: questionForStep(
                           session.step,
-                          session.language,
+                          lang,
                           session,
                           session.slots,
                         ),
@@ -1319,46 +1566,74 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             ],
           };
 
-          // Language menu.
+          // Language menu. Only the keypad chooses here; speech that is a plain
+          // request for a language is honoured, any other speech is the reason.
+          let reasonPrefix = "";
+          // The caller talked English instead of pressing 1: keep their words as the
+          // reason, stay in French, and tell them once that a key is waiting.
+          let offerEnglish = false;
           if (next.step === "language") {
-            const lang =
-              detectLanguage(speech, digits) ?? config.defaultLanguage;
+            const pressed = languageForDigits(digits);
+            const spoken = digits ? null : detectLanguageSwitch(speech);
+            const picked = pressed ?? spoken;
+            const lockedLanguage =
+              picked && config.languages.includes(picked) ? picked : null;
+            if (lockedLanguage) {
+              const r = continueInLanguage(config, next, lockedLanguage, {
+                chosen: true,
+              });
+              return { session: r.session, result: r.plan };
+            }
+            const confident =
+              input.confidence === undefined ||
+              input.confidence >= minAsrConfidence();
+            if (digits || isGreetingOnly(speech)) {
+              // A stray key or just "Bonjour": carry on in French.
+              const r = continueInLanguage(config, next, next.language, {
+                chosen: false,
+              });
+              return { session: r.session, result: r.plan };
+            }
+            if (!confident && !next.flags?.englishHinted) {
+              // Possibly an English speaker the French recognizer cannot follow.
+              const r = askAgainWithEnglishHint(config, next);
+              return { session: r.session, result: r.plan };
+            }
+            // The caller skipped the menu and started explaining: that is the reason.
+            reasonPrefix = afterHoursNotice(config, next);
+            offerEnglish =
+              next.language === "fr" &&
+              config.languages.includes("en") &&
+              !next.flags?.englishHinted &&
+              looksEnglish(speech);
             next = {
               ...next,
-              language: config.languages.includes(lang)
-                ? lang
-                : config.defaultLanguage,
               step: "reason",
+              flags: offerEnglish
+                ? { ...next.flags, englishHinted: true }
+                : next.flags,
             };
-            const words = speech.split(/\s+/).filter(Boolean).length;
-            if (words < 4) {
-              const prompts = [
-                ...(next.afterHours
-                  ? [{ text: afterHoursFor(config, next.language) }]
-                  : []),
-                { text: phrase("askReason", next.language) },
-              ];
-              next = {
-                ...next,
-                turns: [
-                  ...next.turns,
-                  ...prompts.map((p) =>
-                    turn("agent", p.text, {
-                      action: "ask",
-                      brain: "rules" as const,
-                    }),
-                  ),
-                ],
-              };
-              return {
-                session: next,
-                result: {
-                  sessionId: next.id,
-                  verbs: [listen(config, next, prompts)],
-                },
-              };
+          }
+
+          // Out loud, any time: "in English please" / "en français".
+          if (next.step !== "language" && !digits && speech) {
+            const wanted = detectLanguageSwitch(speech);
+            if (wanted && config.languages.includes(wanted)) {
+              const r = switchLanguageMidCall(config, next, wanted);
+              return { session: r.session, result: r.plan };
             }
-            // The caller skipped the menu and started explaining: treat as the reason.
+          }
+          // The keypad hint "For English, press 1" given after an unclear French turn.
+          if (
+            digits === "1" &&
+            next.language === "fr" &&
+            next.flags?.englishHinted &&
+            next.step !== "offer_slot" &&
+            next.step !== "callback_number" &&
+            config.languages.includes("en")
+          ) {
+            const r = switchLanguageMidCall(config, next, "en");
+            return { session: r.session, result: r.plan };
           }
 
           // Emergency guardrail — deterministic, before any brain.
@@ -1384,6 +1659,33 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
               const r = await runEmergencyPath(config, next, speech, deferOnce);
               return { session: r.session, result: r.plan };
             }
+          }
+
+          // The recognizer was not sure what it heard: ask again rather than
+          // guess a name, an address or a phone number. Bounded, so a noisy
+          // line cannot trap the caller in a loop.
+          if (
+            speech &&
+            !digits &&
+            CLARIFY_STEPS.has(next.step) &&
+            input.confidence !== undefined &&
+            input.confidence < minAsrConfidence() &&
+            (next.unclearCount ?? 0) < MAX_UNCLEAR_TURNS
+          ) {
+            if (
+              next.language === "fr" &&
+              config.languages.includes("en") &&
+              !next.flags?.englishHinted
+            ) {
+              const r = askAgainWithEnglishHint(config, next);
+              return { session: r.session, result: r.plan };
+            }
+            const r = askPlan(
+              config,
+              { ...next, unclearCount: (next.unclearCount ?? 0) + 1 },
+              [{ text: phrase("unclear", next.language) }],
+            );
+            return { session: r.session, result: r.plan };
           }
 
           // Phone booking runs before the turn cap: it bounds itself (a few
@@ -1449,7 +1751,13 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             return { session: r.session, result: r.plan };
           }
 
-          const applied = applyDecision(config, next, decision);
+          // A caller who skipped the menu still hears the after-hours notice once.
+          const spoken =
+            reasonPrefix && decision.action.type !== "transfer"
+              ? { ...decision, reply: `${reasonPrefix} ${decision.reply}` }
+              : decision;
+          const applied = applyDecision(config, next, spoken);
+          if (offerEnglish) appendEnglishHint(config, applied.plan);
           return { session: applied.session, result: applied.plan };
         },
         input.callSid,
@@ -1505,33 +1813,15 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
             last?.reason === "overflow_ring" ||
             last?.reason === "human_first"
           ) {
-            const lang = session.language;
-            const bilingual = config.languages.length > 1;
-            const prompts: { text: string; lang?: ReceptionistLanguage }[] =
-              bilingual
-                ? [
-                    {
-                      text: greetingFor(config, config.defaultLanguage),
-                      lang: config.defaultLanguage,
-                    },
-                    {
-                      text: greetingFor(
-                        config,
-                        config.defaultLanguage === "fr" ? "en" : "fr",
-                      ),
-                      lang: config.defaultLanguage === "fr" ? "en" : "fr",
-                    },
-                    ...languageMenuPrompts(),
-                  ]
-                : [
-                    { text: greetingFor(config, lang) },
-                    { text: phrase("askReason", lang) },
-                  ];
+            // Nobody picked up: the AI answers, French first, like any other call.
+            const opening = openingFor(config, session.afterHours);
+            const prompts = opening.prompts;
             const next: CallSession = {
               ...session,
               transfers,
               status: "in_progress",
-              step: bilingual ? "language" : "reason",
+              language: opening.language,
+              step: opening.step,
               turns: [
                 ...session.turns,
                 turn("system", `ring_${mapped}`, { action: "missed" }),
