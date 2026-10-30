@@ -2931,6 +2931,8 @@
         "6": "Sat"
       },
       "humanReviewPhone": "Human review phone (optional)",
+      "aiSmsReplies": "Reply to customers who text first",
+      "aiSmsRepliesNote": "When on, the AI answers new text messages from your business info, collects the job details, and alerts you for anything urgent or that it can't handle. It never replies to numbers that opted out.",
       "roster": "Technician roster",
       "namePlaceholder": "Name",
       "addTechnician": "Add technician",
