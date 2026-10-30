@@ -62,6 +62,10 @@ describe("website demo engine", () => {
     r = await call.say("oui");
     assert.equal(r.step, "preferred_time");
     r = await call.say("demain matin");
+    // The request is read back before the call closes.
+    assert.equal(r.step, "confirm");
+    assert.equal(r.ended, false);
+    r = await call.say("oui, c'est bien ça");
 
     assert.equal(r.ended, true);
     assert.equal(r.summary!.outcome, "message_taken");
@@ -75,7 +79,8 @@ describe("website demo engine", () => {
     const call = new Call("fr", "open");
     await call.start();
     let r = await call.say("je suis malade");
-    assert.match(agent(r), /malade/);
+    // Acknowledged with a short word, not an echo of the raw sentence.
+    assert.doesNotMatch(agent(r), /J'ai noté/);
     assert.equal(r.step, "name");
     assert.doesNotMatch(agent(r), /adresse/);
 
@@ -226,7 +231,7 @@ describe("website demo route", () => {
         language: "fr",
         scenario: "open",
         history: [],
-        speech: "fuite d'eau",
+        speech: "une fuite d'eau dans la cuisine",
       })
     ).json()) as DemoResponse;
     assert.equal(next.step, "name");
