@@ -11,6 +11,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { randomUUID } from "@/lib/id";
 import { createRuleBrain } from "./brain-rules";
 import { createReceptionistEngine } from "./engine";
+import type { VoiceCapabilities } from "./plan-limits";
 import {
   buildProfileConfig,
   type ReceptionistProfile,
@@ -274,6 +275,8 @@ export type BusinessTestRequest =
 export type BusinessTestDeps = {
   organizationId: string;
   profile: ReceptionistProfile;
+  /** The owner's plan limits, so the test call behaves like a live one. */
+  capabilities?: VoiceCapabilities;
   client: ClientAccount;
   secret: string;
   /** Persist finalized (or in-progress) sim sessions for call history. */
@@ -286,7 +289,10 @@ export async function runBusinessTestTurn(
 ): Promise<BusinessTestResponse> {
   let config: ReceptionistConfig;
   try {
-    config = buildProfileConfig(deps.profile, { client: deps.client });
+    config = buildProfileConfig(deps.profile, {
+      client: deps.client,
+      capabilities: deps.capabilities,
+    });
   } catch (err) {
     throw new BusinessTestError(
       err instanceof Error ? err.message : "Invalid profile",
