@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { ProfileSettings } from "@/product/receptionist/profile";
+import type { VoiceCapabilities } from "@/product/receptionist/plan-limits";
 import {
   buildPromptValues,
   DEFAULT_SYSTEM_PROMPT,
@@ -47,14 +48,20 @@ export function ReceptionistSettingsForm({
   readOnly,
   initial,
   defaultHours,
+  voiceCapabilities,
 }: {
   organizationId?: string;
   readOnly: boolean;
   initial: ProfileSettings;
   defaultHours: Hours;
+  /** When omitted (ops tooling), every setting stays editable. */
+  voiceCapabilities?: VoiceCapabilities;
 }) {
   const t = useTranslations("app.receptionist");
   const router = useRouter();
+  const canPhoneBook = voiceCapabilities?.phoneBooking !== false;
+  const canTransfer = voiceCapabilities?.transfer !== false;
+  const canEmergencyRoute = voiceCapabilities?.emergencyRouting !== false;
 
   const [receptionistName, setReceptionistName] = useState(
     initial.receptionistName ?? "",
@@ -805,11 +812,16 @@ export function ReceptionistSettingsForm({
         </button>
       </fieldset>
 
-      <fieldset className={CARD} disabled={dis}>
+      <fieldset className={CARD} disabled={dis || !canTransfer}>
         <legend className="px-1 text-sm font-semibold text-navy">
           {t("routingTitle")}
         </legend>
         <p className="mt-1 text-xs text-navy/60">{t("routingIntro")}</p>
+        {!canTransfer ? (
+          <p className="mt-2 rounded-md border border-navy/15 bg-navy/5 px-3 py-2 text-xs text-navy/80">
+            {t("plusOnlyTransfer")}
+          </p>
+        ) : null}
         {routing.map((row, i) => (
           <div
             key={i}
@@ -880,11 +892,16 @@ export function ReceptionistSettingsForm({
         </button>
       </fieldset>
 
-      <fieldset className={CARD} disabled={dis}>
+      <fieldset className={CARD} disabled={dis || (!canTransfer && !canEmergencyRoute)}>
         <legend className="px-1 text-sm font-semibold text-navy">
           {t("transferTitle")}
         </legend>
         <p className="mt-1 text-xs text-navy/60">{t("transferIntro")}</p>
+        {!canTransfer || !canEmergencyRoute ? (
+          <p className="mt-2 rounded-md border border-navy/15 bg-navy/5 px-3 py-2 text-xs text-navy/80">
+            {t("plusOnlyTransfer")}
+          </p>
+        ) : null}
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="text-xs text-navy/70">
             {t("primaryTransfer")}
@@ -893,6 +910,7 @@ export function ReceptionistSettingsForm({
               placeholder="+14385551234"
               onChange={(e) => setPrimaryTransfer(e.target.value)}
               className={INPUT}
+              disabled={!canTransfer}
             />
           </label>
           <label className="text-xs text-navy/70">
@@ -902,6 +920,7 @@ export function ReceptionistSettingsForm({
               placeholder="+14385551234"
               onChange={(e) => setSecondaryTransfer(e.target.value)}
               className={INPUT}
+              disabled={!canTransfer}
             />
           </label>
           <label className="text-xs text-navy/70">
@@ -911,6 +930,7 @@ export function ReceptionistSettingsForm({
               placeholder="+14385551234"
               onChange={(e) => setEmergency(e.target.value)}
               className={INPUT}
+              disabled={!canEmergencyRoute}
             />
           </label>
           <label className="text-xs text-navy/70">
@@ -950,12 +970,18 @@ export function ReceptionistSettingsForm({
           {t("appointmentTitle")}
         </legend>
         <p className="mt-1 text-xs text-navy/60">{t("appointmentIntro")}</p>
+        {!canPhoneBook ? (
+          <p className="mt-2 rounded-md border border-navy/15 bg-navy/5 px-3 py-2 text-xs text-navy/80">
+            {t("plusOnlyBooking")}
+          </p>
+        ) : null}
         <label className="mt-3 flex items-center gap-2 text-sm text-navy">
           <input
             type="checkbox"
-            checked={phoneBooking}
+            checked={phoneBooking && canPhoneBook}
             onChange={(e) => setPhoneBooking(e.target.checked)}
             aria-describedby="phone-booking-help"
+            disabled={!canPhoneBook}
           />
           {t("phoneBooking")}
         </label>
