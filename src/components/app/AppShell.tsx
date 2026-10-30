@@ -54,6 +54,7 @@ const GROUPS = [
     items: [
       { href: "/app/settings/account", key: "account" },
       { href: "/app/settings", key: "settings" },
+      { href: "/app/referrals", key: "referrals" },
       { href: "/app/onboarding", key: "onboarding" },
       { href: "/app/help", key: "help" },
       { href: "/app/support", key: "support" },
@@ -132,7 +133,11 @@ export function AppShell({
             <p className="mt-1 text-lg font-semibold text-heading">{orgName}</p>
             <p className="text-sm text-muted">
               {userName} ·{" "}
-              {plan === "growth" ? t("plan.growth") : t("plan.starter")}
+              {plan === "receptionist"
+                ? t("plan.receptionist")
+                : plan === "growth"
+                  ? t("plan.growth")
+                  : t("plan.starter")}
             </p>
           </div>
           <button
