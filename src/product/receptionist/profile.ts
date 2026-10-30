@@ -24,6 +24,12 @@ import {
   defaultPhoneSettings,
   phoneSettingsSchema,
 } from "@/product/telephony/phone-settings";
+import {
+  buildPromptValues,
+  DEFAULT_SYSTEM_PROMPT,
+  MAX_SYSTEM_PROMPT_CHARS,
+  renderPromptTemplate,
+} from "./system-prompt";
 import type {
   CallHandlingMode,
   ReceptionistConfig,
@@ -83,6 +89,10 @@ export const knowledgeSchema = z.object({
   /** Only prices the contractor explicitly provided — never invent. */
   startingPrices: optionalText(500),
   businessAddress: optionalText(200),
+  /** The business's own public phone number, as callers should hear it. */
+  businessPhone: optionalText(40),
+  /** Free text, e.g. "Mon–Fri, next-day visits". Blank = derived from booking settings. */
+  appointmentAvailability: optionalText(300),
   additionalInstructions: optionalText(2000),
 });
 
@@ -166,6 +176,16 @@ export const profileSettingsSchema = z.object({
     .optional(),
   personality: optionalText(600),
   businessFacts: optionalText(2000),
+  /**
+   * This business's own rewrite of the AI instructions (see system-prompt.ts).
+   * Blank = the TradeCatch default, which keeps improving without a re-save.
+   */
+  systemPrompt: z
+    .string()
+    .trim()
+    .max(MAX_SYSTEM_PROMPT_CHARS)
+    .transform((v) => (v === "" ? undefined : v))
+    .optional(),
   // Zod object `.default({})` returns the raw object without nested defaults —
   // always seed concrete defaults (or preprocess through the child schema).
   knowledge: knowledgeSchema.default({
@@ -418,6 +438,25 @@ export function buildProfileConfig(
     profile.phoneNumberE164 ||
     client.smsFromNumber;
 
+  const businessHours = s.businessHours ?? client.businessHours;
+  const systemPrompt = renderPromptTemplate(
+    s.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
+    buildPromptValues({
+      businessName,
+      services: knowledge.services,
+      serviceAreas: knowledge.serviceAreas,
+      businessAddress: knowledge.businessAddress,
+      businessPhone: knowledge.businessPhone ?? tradecatchNumber,
+      emergencyServices: knowledge.emergencyServices,
+      emergencyHours: knowledge.emergencyHours,
+      hasEmergencyLine: Boolean(emergency),
+      appointmentAvailability: knowledge.appointmentAvailability,
+      phoneBooking: s.appointmentSettings?.phoneBooking === true,
+      businessHours,
+      timezone: client.timezone,
+    }),
+  );
+
   const raw: Record<string, unknown> = {
     id: `rc_org_${profile.organizationId}`,
     enabled: mode !== "disabled" && phone.aiEnabled !== false,
@@ -431,7 +470,7 @@ export function buildProfileConfig(
     humanRingTimeoutSeconds: phone.humanRingTimeoutSeconds ?? 25,
     voiceEngine: phone.voiceEngine ?? "gather",
     timezone: client.timezone,
-    businessHours: s.businessHours ?? client.businessHours,
+    businessHours,
     languages,
     defaultLanguage: languages.includes(s.defaultLanguage)
       ? s.defaultLanguage
@@ -449,6 +488,7 @@ export function buildProfileConfig(
       s.personality,
     ),
     businessFacts: composeBusinessFacts(knowledge, s.businessFacts),
+    systemPrompt,
     routing: (s.routing ?? []).map((r, i) => ({
       id: slug(r.name, i),
       name: r.name,
