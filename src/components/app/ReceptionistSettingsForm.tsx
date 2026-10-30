@@ -4,6 +4,13 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { ProfileSettings } from "@/product/receptionist/profile";
+import {
+  buildPromptValues,
+  DEFAULT_SYSTEM_PROMPT,
+  MAX_SYSTEM_PROMPT_CHARS,
+  PROMPT_PLACEHOLDERS,
+  renderPromptTemplate,
+} from "@/product/receptionist/system-prompt";
 
 type Hours = { start: string; end: string; days: number[] };
 
@@ -52,8 +59,12 @@ export function ReceptionistSettingsForm({
   const [receptionistName, setReceptionistName] = useState(
     initial.receptionistName ?? "",
   );
-  const [languages, setLanguages] = useState<("fr" | "en")[]>(initial.languages);
-  const [defaultLanguage, setDefaultLanguage] = useState(initial.defaultLanguage);
+  const [languages, setLanguages] = useState<("fr" | "en")[]>(
+    initial.languages,
+  );
+  const [defaultLanguage, setDefaultLanguage] = useState(
+    initial.defaultLanguage,
+  );
   const [style, setStyle] = useState(initial.communicationStyle);
   const [speed, setSpeed] = useState(initial.speakingSpeed);
   const [callMode, setCallMode] = useState(initial.callHandlingMode);
@@ -61,8 +72,12 @@ export function ReceptionistSettingsForm({
   const [greetingEn, setGreetingEn] = useState(initial.greetingEn ?? "");
   const [afterFr, setAfterFr] = useState(initial.afterHoursMessageFr ?? "");
   const [afterEn, setAfterEn] = useState(initial.afterHoursMessageEn ?? "");
-  const [customHours, setCustomHours] = useState(Boolean(initial.businessHours));
-  const [hours, setHours] = useState<Hours>(initial.businessHours ?? defaultHours);
+  const [customHours, setCustomHours] = useState(
+    Boolean(initial.businessHours),
+  );
+  const [hours, setHours] = useState<Hours>(
+    initial.businessHours ?? defaultHours,
+  );
   const [personality, setPersonality] = useState(initial.personality ?? "");
   const [companyName, setCompanyName] = useState(
     initial.knowledge.companyName ?? "",
@@ -82,9 +97,20 @@ export function ReceptionistSettingsForm({
   const [address, setAddress] = useState(
     initial.knowledge.businessAddress ?? "",
   );
+  const [businessPhone, setBusinessPhone] = useState(
+    initial.knowledge.businessPhone ?? "",
+  );
+  const [apptAvailability, setApptAvailability] = useState(
+    initial.knowledge.appointmentAvailability ?? "",
+  );
   const [extraRules, setExtraRules] = useState(
     initial.knowledge.additionalInstructions ?? "",
   );
+  // Blank in storage means "TradeCatch default", so the editor starts from it.
+  const [systemPrompt, setSystemPrompt] = useState(
+    initial.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
+  );
+  const [showPreview, setShowPreview] = useState(false);
   const [facts, setFacts] = useState(initial.businessFacts ?? "");
   const [routing, setRouting] = useState<DeptRow[]>(
     initial.routing.map((r) => ({
@@ -121,7 +147,9 @@ export function ReceptionistSettingsForm({
   const [duration, setDuration] = useState(
     initial.appointmentSettings.durationMinutes,
   );
-  const [buffer, setBuffer] = useState(initial.appointmentSettings.bufferMinutes);
+  const [buffer, setBuffer] = useState(
+    initial.appointmentSettings.bufferMinutes,
+  );
   const [notice, setNotice] = useState(
     initial.appointmentSettings.bookingNoticeHours,
   );
@@ -181,7 +209,14 @@ export function ReceptionistSettingsForm({
       ...(customHours ? { businessHours: hours } : {}),
       personality,
       businessFacts: facts,
+      // Unchanged default is stored as blank so it keeps following TradeCatch's.
+      systemPrompt:
+        systemPrompt.trim() === DEFAULT_SYSTEM_PROMPT.trim()
+          ? ""
+          : systemPrompt,
       knowledge: {
+        businessPhone,
+        appointmentAvailability: apptAvailability,
         companyName,
         industry,
         services: listLines(services),
@@ -265,6 +300,26 @@ export function ReceptionistSettingsForm({
   }
 
   const dis = readOnly || busy;
+
+  const promptPreview = showPreview
+    ? renderPromptTemplate(
+        systemPrompt,
+        buildPromptValues({
+          businessName: companyName.trim() || t("promptPreviewCompany"),
+          services: listLines(services),
+          serviceAreas: listLines(areas),
+          businessAddress: address,
+          businessPhone,
+          emergencyServices: emergencySvc,
+          emergencyHours,
+          hasEmergencyLine: emergency.trim() !== "",
+          appointmentAvailability: apptAvailability,
+          phoneBooking,
+          businessHours: customHours ? hours : defaultHours,
+          timezone: t("promptPreviewTimezone"),
+        }),
+      )
+    : "";
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-5">
@@ -542,6 +597,28 @@ export function ReceptionistSettingsForm({
               className={INPUT}
             />
           </label>
+          <label className="text-xs text-navy/70">
+            {t("businessPhone")}
+            <input
+              maxLength={40}
+              value={businessPhone}
+              onChange={(e) => setBusinessPhone(e.target.value)}
+              className={INPUT}
+              placeholder="+1 514 555 0123"
+            />
+          </label>
+          <label className="text-xs text-navy/70">
+            {t("appointmentAvailability")}
+            <input
+              maxLength={300}
+              value={apptAvailability}
+              onChange={(e) => setApptAvailability(e.target.value)}
+              className={INPUT}
+            />
+            <span className="mt-1 block text-navy/60">
+              {t("appointmentAvailabilityHelp")}
+            </span>
+          </label>
           <label className="text-xs text-navy/70 sm:col-span-2">
             {t("additionalInstructions")}
             <textarea
@@ -585,11 +662,65 @@ export function ReceptionistSettingsForm({
 
       <fieldset className={CARD} disabled={dis}>
         <legend className="px-1 text-sm font-semibold text-navy">
+          {t("promptTitle")}
+        </legend>
+        <p className="mt-1 text-xs text-navy/60">{t("promptHelp")}</p>
+        <p className="mt-2 flex flex-wrap gap-1 text-xs text-navy/70">
+          {PROMPT_PLACEHOLDERS.map((p) => (
+            <code key={p} className="rounded bg-navy/5 px-1.5 py-0.5">
+              {`{${p}}`}
+            </code>
+          ))}
+        </p>
+        <textarea
+          rows={18}
+          maxLength={MAX_SYSTEM_PROMPT_CHARS}
+          value={systemPrompt}
+          onChange={(e) => setSystemPrompt(e.target.value)}
+          className={`${INPUT} font-mono text-xs leading-relaxed`}
+          aria-label={t("promptTitle")}
+        />
+        <p className="mt-1 text-xs text-navy/60">
+          {systemPrompt.length} / {MAX_SYSTEM_PROMPT_CHARS}
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            className={BUTTON_GHOST}
+            onClick={() => setSystemPrompt(DEFAULT_SYSTEM_PROMPT)}
+          >
+            {t("promptReset")}
+          </button>
+          <button
+            type="button"
+            className={BUTTON_GHOST}
+            onClick={() => setShowPreview((v) => !v)}
+            aria-expanded={showPreview}
+          >
+            {showPreview ? t("promptHidePreview") : t("promptShowPreview")}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-navy/60">{t("promptSafety")}</p>
+        {showPreview ? (
+          <pre
+            className="mt-3 max-h-96 overflow-auto whitespace-pre-wrap rounded-md border border-navy/10 bg-navy/5 p-3 text-xs text-navy"
+            aria-label={t("promptPreviewLabel")}
+          >
+            {promptPreview}
+          </pre>
+        ) : null}
+      </fieldset>
+
+      <fieldset className={CARD} disabled={dis}>
+        <legend className="px-1 text-sm font-semibold text-navy">
           {t("faqTitle")}
         </legend>
         <p className="mt-1 text-xs text-navy/60">{t("faqIntro")}</p>
         {faqs.map((row, i) => (
-          <div key={i} className="mt-3 grid gap-3 border-t border-navy/10 pt-3 sm:grid-cols-2">
+          <div
+            key={i}
+            className="mt-3 grid gap-3 border-t border-navy/10 pt-3 sm:grid-cols-2"
+          >
             <label className="text-xs text-navy/70 sm:col-span-2">
               {t("faqQuestion")}
               <input
@@ -800,7 +931,8 @@ export function ReceptionistSettingsForm({
               value={failedTransfer}
               onChange={(e) =>
                 setFailedTransfer(
-                  e.target.value as ProfileSettings["transferSettings"]["failedAction"],
+                  e.target
+                    .value as ProfileSettings["transferSettings"]["failedAction"],
                 )
               }
             >
@@ -884,7 +1016,8 @@ export function ReceptionistSettingsForm({
               value={confirmMethod}
               onChange={(e) =>
                 setConfirmMethod(
-                  e.target.value as ProfileSettings["appointmentSettings"]["confirmationMethod"],
+                  e.target
+                    .value as ProfileSettings["appointmentSettings"]["confirmationMethod"],
                 )
               }
             >
