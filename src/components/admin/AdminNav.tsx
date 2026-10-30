@@ -11,6 +11,7 @@ const GROUPS = [
       { href: "/admin/installations", key: "navInstallations" },
       { href: "/admin/businesses", key: "navBusinesses" },
       { href: "/admin/billing", key: "navBilling" },
+      { href: "/admin/referrals", key: "navReferrals" },
       { href: "/admin/analytics", key: "navAnalytics" },
     ],
   },
