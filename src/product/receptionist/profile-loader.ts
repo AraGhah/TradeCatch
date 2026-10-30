@@ -1,4 +1,6 @@
 import type { ClientAccount } from "@/product/missed-call/types";
+import type { PlanId } from "@/product/saas/entitlements";
+import { voiceCapabilitiesForPlan } from "./plan-limits";
 import { validateProfile } from "./profile";
 import type { ProfileStore } from "./profile-store";
 import type { ReceptionistConfig } from "./types";
@@ -8,6 +10,7 @@ export type ProfileLoaderDeps = {
   getOrganization(id: string): Promise<{
     id: string;
     status: string;
+    plan: PlanId;
     missedCallClientId: string | null;
   } | null>;
   getClient(clientAccountId: string): Promise<ClientAccount | null>;
@@ -38,12 +41,23 @@ export async function loadProfileConfigs(
       skip("organization_not_linked_to_client");
       continue;
     }
+    // The plan decides whether the line answers at all, and how much of the
+    // receptionist it gets (Growth: limited; Receptionist Plus: complete).
+    const capabilities = voiceCapabilitiesForPlan(org.plan);
+    if (!capabilities.voice) {
+      skip("plan_without_voice_receptionist");
+      continue;
+    }
     const client = await deps.getClient(org.missedCallClientId);
     if (!client) {
       skip("client_missing");
       continue;
     }
-    const result = validateProfile(profile, { client, env: deps.env });
+    const result = validateProfile(profile, {
+      client,
+      env: deps.env,
+      capabilities,
+    });
     if (!result.ok) {
       skip(`invalid:${result.issues.map((i) => i.message).join("; ")}`);
       continue;
