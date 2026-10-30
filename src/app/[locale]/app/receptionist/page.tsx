@@ -4,6 +4,7 @@ import { requireTenantContext } from "@/product/saas/tenant";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { buildOverview } from "@/product/receptionist/ai-receptionist-service";
+import { voiceCapabilitiesForPlan } from "@/product/receptionist/plan-limits";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { Link } from "@/i18n/navigation";
@@ -98,6 +99,7 @@ export default async function AppReceptionistPage({
             initialSettings={profile?.settings ?? defaultProfileSettings()}
             defaultHours={client.businessHours}
             readOnly={membership.role === "member"}
+            voiceCapabilities={voiceCapabilitiesForPlan(organization.plan)}
           />
         </>
       )}
