@@ -93,10 +93,15 @@ describe("Twilio receptionist webhooks", () => {
     const xml = await text(incoming);
     assert.match(xml, /<Gather /);
     assert.match(xml, /Nord Plomberie/);
+    // French-first menu: one key, a short wait, and Twilio reports both keys and speech.
+    assert.match(xml, /For English, press 1/);
+    assert.match(xml, /input="speech dtmf"/);
+    assert.match(xml, /numDigits="1"/);
+    assert.match(xml, /timeout="3"/);
     const session = xml.match(/receptionist\/gather\?session=(rcs_[0-9a-f-]+)/)?.[1];
     assert.ok(session, "gather action carries the session id");
 
-    const menu = await twilioStep(...hook("gather", { CallSid: "CAw1", Digits: "1" }, { query: `?session=${session}` }));
+    const menu = await twilioStep(...hook("gather", { CallSid: "CAw1", Digits: "2" }, { query: `?session=${session}` }));
     assert.match(await text(menu), /Comment puis-je vous aider/);
 
     const status = await twilioStep(...hook("status", { CallSid: "CAw1", CallStatus: "completed", CallDuration: "12" }));
@@ -112,13 +117,13 @@ describe("Twilio receptionist webhooks", () => {
     // stale) must be treated like an unknown session: hang up, not continue
     // the real call.
     const spoofed = await twilioStep(
-      ...hook("gather", { CallSid: "CAspoofed", Digits: "1" }, { query: `?session=${session}` }),
+      ...hook("gather", { CallSid: "CAspoofed", Digits: "2" }, { query: `?session=${session}` }),
     );
     assert.match(await text(spoofed), /<Hangup\/>/);
 
     // The real CallSid for that session still works normally afterwards.
     const real = await twilioStep(
-      ...hook("gather", { CallSid: "CAreal", Digits: "1" }, { query: `?session=${session}` }),
+      ...hook("gather", { CallSid: "CAreal", Digits: "2" }, { query: `?session=${session}` }),
     );
     assert.match(await text(real), /Comment puis-je vous aider/);
   });
@@ -126,7 +131,7 @@ describe("Twilio receptionist webhooks", () => {
   it("bridges emergencies with <Dial> and texts the owner", async () => {
     const incoming = await twilioStep(...hook("incoming", { CallSid: "CAw2", From: "+15145559876", To: "+14385597001" }));
     const session = (await text(incoming)).match(/session=(rcs_[0-9a-f-]+)/)![1]!;
-    await twilioStep(...hook("gather", { CallSid: "CAw2", Digits: "2" }, { query: `?session=${session}` }));
+    await twilioStep(...hook("gather", { CallSid: "CAw2", Digits: "1" }, { query: `?session=${session}` }));
     const res = await twilioStep(
       ...hook("gather", { CallSid: "CAw2", SpeechResult: "there is a gas leak in my house" }, { query: `?session=${session}` }),
     );
@@ -183,7 +188,7 @@ describe("receptionist ops routes", () => {
     };
     assert.match(started.twiml, /<Gather /);
 
-    await post({ action: "say", sessionId: started.sessionId, speech: "", digits: "1" });
+    await post({ action: "say", sessionId: started.sessionId, speech: "", digits: "2" });
     await post({ action: "say", sessionId: started.sessionId, speech: "besoin d'un plombier" });
     const ended = (await (await post({ action: "end", callSid: "CAs1", status: "completed", duration: 20 })).json()) as {
       finalized: boolean;
