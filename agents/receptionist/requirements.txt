@@ -1,0 +1,4 @@
+livekit-agents>=1.2
+livekit-plugins-ai-coustics
+aiohttp
+python-dotenv
