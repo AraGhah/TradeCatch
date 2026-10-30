@@ -13,7 +13,9 @@ export const REFERRAL_CAPTURE_DAYS = 60;
 
 type Saved = { code: string; savedAt: number };
 
-export function rememberReferralCode(raw: string | null | undefined): string | null {
+export function rememberReferralCode(
+  raw: string | null | undefined,
+): string | null {
   const code = normalizeReferralCode(raw);
   if (!code) return null;
   try {
