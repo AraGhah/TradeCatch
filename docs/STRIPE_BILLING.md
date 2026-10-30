@@ -29,6 +29,10 @@ Register a **snapshot** webhook endpoint at
   `customer.subscription.resumed`
 - `invoice.paid`, `invoice.payment_succeeded`, `invoice.payment_failed`,
   `invoice.payment_action_required`
+- `charge.refunded`, `charge.dispute.created` — **referral program only**
+  ([docs/REFERRAL_PROGRAM.md](./REFERRAL_PROGRAM.md)). They reject or flag the
+  referral reward a payment earned and never change subscription or access
+  state. Optional: a reward is also re-verified against Stripe at approval.
 
 The server reads Stripe using API version `2025-02-24.acacia`. Event snapshots are
 only routing hints; each delivery retrieves current customer/subscription state.
