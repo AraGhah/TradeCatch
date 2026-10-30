@@ -64,3 +64,26 @@ def digits(value: str) -> str:
 def dialed_number(attributes: Mapping[str, str]) -> str | None:
     """The business number the caller dialed, from LiveKit's SIP participant attributes."""
     return attributes.get("sip.trunkPhoneNumber") or None
+
+
+def caller_number(attributes: Mapping[str, str]) -> str | None:
+    """The caller's number as E.164, or None for withheld/unparseable caller IDs."""
+    raw = (attributes.get("sip.phoneNumber") or "").strip()
+    value = "+" + digits(raw) if raw.startswith("+") else digits(raw)
+    if len(value) == 10:
+        value = "+1" + value
+    elif len(value) == 11 and value.startswith("1"):
+        value = "+" + value
+    return value if len(value) >= 11 and value.startswith("+") and len(value) <= 16 else None
+
+
+def call_id_from_room(room_name: str, fallback: str) -> str:
+    """A stable id for TradeCatch, from the room name (LiveKit puts '+' in SIP room names).
+
+    The id must match the server's /^[A-Za-z0-9_.:-]{6,128}$/ and be the same if the
+    job is retried, so a repeated report or booking can never be recorded twice.
+    """
+    cleaned = "".join(ch for ch in room_name if ch.isalnum() or ch in "_.:-")[:128]
+    if len(cleaned) >= 6:
+        return cleaned
+    return "".join(ch for ch in fallback if ch.isalnum() or ch in "_.:-")[:128] or "call-unknown"
