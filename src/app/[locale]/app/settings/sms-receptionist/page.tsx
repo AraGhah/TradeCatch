@@ -56,6 +56,7 @@ export default async function SmsReceptionistSettingsPage({
             businessHours: client.businessHours,
             technicianRoster: client.technicianRoster,
             humanReviewPhone: client.humanReviewPhone ?? null,
+            aiSmsReplies: client.aiSmsReplies !== false,
           }}
         />
       ) : (

@@ -2931,6 +2931,8 @@
         "6": "Sam"
       },
       "humanReviewPhone": "Téléphone de révision humaine (facultatif)",
+      "aiSmsReplies": "Répondre aux clients qui écrivent en premier",
+      "aiSmsRepliesNote": "Lorsque cette option est activée, l’IA répond aux nouveaux textos à partir des informations de votre entreprise, recueille les détails du travail et vous alerte pour tout ce qui est urgent ou qu’elle ne peut pas traiter. Elle ne répond jamais aux numéros qui se sont désabonnés.",
       "roster": "Liste des techniciens",
       "namePlaceholder": "Nom",
       "addTechnician": "Ajouter un technicien",

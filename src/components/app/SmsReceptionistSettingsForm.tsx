@@ -19,6 +19,7 @@ export type SmsReceptionistSettingsValue = {
   businessHours: BusinessHours;
   technicianRoster: TechnicianRosterEntry[];
   humanReviewPhone: string | null;
+  aiSmsReplies: boolean;
 };
 
 const WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -99,6 +100,7 @@ export function SmsReceptionistSettingsForm({
             active: tech.active,
           })),
           humanReviewPhone: value.humanReviewPhone || undefined,
+          aiSmsReplies: value.aiSmsReplies,
         }),
       });
       const payload = (await response.json()) as
@@ -116,6 +118,7 @@ export function SmsReceptionistSettingsForm({
         businessHours: payload.businessHours,
         technicianRoster: payload.technicianRoster,
         humanReviewPhone: payload.humanReviewPhone,
+        aiSmsReplies: payload.aiSmsReplies,
       });
       setSaved(true);
     } catch {
@@ -224,6 +227,24 @@ export function SmsReceptionistSettingsForm({
           placeholder="+15145550100"
           className="rounded-md border border-navy/20 px-2 py-1.5 disabled:opacity-60"
         />
+      </label>
+
+      <label className="flex items-start gap-2 text-sm text-navy">
+        <input
+          type="checkbox"
+          className="mt-1"
+          disabled={!canEdit}
+          checked={value.aiSmsReplies}
+          onChange={(e) =>
+            setValue((prev) => ({ ...prev, aiSmsReplies: e.target.checked }))
+          }
+        />
+        <span>
+          {t("aiSmsReplies")}
+          <span className="mt-0.5 block text-xs text-navy/50">
+            {t("aiSmsRepliesNote")}
+          </span>
+        </span>
       </label>
 
       <div>
