@@ -19,6 +19,7 @@ import { createReceptionistEngine, type ReceptionistEngine } from "./engine";
 import { createLlmClientFromEnv, type LlmClient } from "./llm";
 import { createReceptionistNotifier } from "./notifications";
 import { handleReceptionistFailure } from "./outage";
+import { createAgentCallService, type AgentCallService } from "./agent-calls";
 import { createPhoneScheduler } from "./phone-booking";
 import { createPostgresReceptionistStore } from "./postgres-store";
 import { loadProfileConfigs } from "./profile-loader";
@@ -42,6 +43,7 @@ type RuntimeState = {
   store: ReceptionistStore;
   profileStore: ProfileStore;
   engine: ReceptionistEngine;
+  agentCalls: AgentCallService;
   envConfigs: ReceptionistConfig[];
   profileConfigs: ReceptionistConfig[];
   profilesLoadedAt: number;
@@ -258,6 +260,12 @@ function bootstrap(): RuntimeState {
     },
   });
 
+  state.agentCalls = createAgentCallService({
+    store,
+    scheduler: state.engine.scheduler,
+    finalize: state.engine.finalizeSession,
+  });
+
   if (envConfigs.length > 0) {
     console.info("[receptionist] ready", {
       profiles: envConfigs.map((c) => c.id),
@@ -289,6 +297,8 @@ export function getReceptionistRuntime() {
     store: s.store,
     profileStore: s.profileStore,
     engine: s.engine,
+    /** Server side of the LiveKit agent's tools: availability, booking and the call report. */
+    agentCalls: s.agentCalls,
     llm: s.llm,
     durable: s.durable,
     get profileLoadError(): string | undefined {
