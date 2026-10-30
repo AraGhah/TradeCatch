@@ -1,0 +1,221 @@
+# TradeCatch — Realistic Live-Action AI Receptionist Commercial
+
+Create a **60–75-second ultra-realistic, cinematic commercial** for TradeCatch, a Canadian SaaS platform that helps contractors answer customer calls, qualify leads, and book appointments automatically using an AI receptionist.
+
+## CRITICAL REQUIREMENT: REAL HUMAN BEINGS
+
+**The video MUST look like it was filmed with real human actors, not animated characters or digital avatars.**
+
+Every person shown must look, move, speak, and behave like a real human being.
+
+- Use photorealistic, live-action footage.
+- Show a realistic male contractor, approximately 30–45 years old, working inside a customer's home.
+- Show a real-looking customer calling the contractor from another location.
+- Use natural facial expressions, realistic body movements, and believable human reactions.
+- The people must have realistic skin textures, natural clothing, and authentic environments.
+- Use cinematic camera work, natural lighting, and professional commercial production quality.
+- Avoid exaggerated acting, robotic movements, artificial facial expressions, or anything resembling an animated advertisement.
+
+**Most importantly, the contractor MUST NOT answer his phone. He is physically occupied with work, ignores the incoming call, and continues working. TradeCatch handles the call automatically without his involvement.**
+
+The AI receptionist should only be heard as a natural, human-sounding voice over the phone. Do not show a robot, virtual assistant avatar, hologram, or artificial human representing the AI.
+
+## Scene 1 — A Contractor Too Busy to Answer (0–12 seconds)
+
+Show a realistic Canadian plumber working underneath a kitchen sink inside a residential home.
+
+He is wearing professional work clothes and using tools to repair a plumbing problem.
+
+His smartphone is resting on the kitchen counter.
+
+Suddenly, his phone starts ringing.
+
+Use a close-up camera shot showing the incoming call.
+
+The contractor briefly looks toward his phone but cannot answer because his hands are occupied with tools.
+
+He returns to his work, allowing the phone to ring unanswered.
+
+**Voiceover (natural, confident male voice):**
+
+"You're busy doing the work. But while you're working, your next customer could be calling."
+
+Show the phone stopping its ringing as the call is automatically handled by TradeCatch.
+
+## Scene 2 — The Customer Calls (12–27 seconds)
+
+Cut to a realistic homeowner sitting in their kitchen, holding their smartphone.
+
+The homeowner has a leaking faucet and is calling the plumbing company for help.
+
+The caller reaches the TradeCatch AI receptionist.
+
+**AI Receptionist (extremely realistic, warm Canadian French female voice):**
+
+"Bonjour! Merci d'avoir appelé Plomberie Martin. For English, press 1."
+
+The homeowner presses 1.
+
+The AI receptionist seamlessly switches to natural English.
+
+**AI Receptionist:**
+
+"Thanks for calling Plomberie Martin! How can I help you today?"
+
+**Customer (natural human voice):**
+
+"Hi! I've got a leaking kitchen faucet. Is there any chance someone could come take a look?"
+
+**AI Receptionist:**
+
+"Of course! Is it leaking constantly, or only when you're using it?"
+
+**Customer:**
+
+"It's been dripping all day."
+
+Make the dialogue sound like an authentic telephone conversation, with natural pacing, realistic pauses, and subtle emotional reactions.
+
+## Scene 3 — TradeCatch Books the Appointment (27–45 seconds)
+
+Show the customer continuing the conversation.
+
+**AI Receptionist:**
+
+"Got it. Let me check our availability. Would tomorrow afternoon work for you?"
+
+**Customer:**
+
+"Yeah, that would be perfect."
+
+**AI Receptionist:**
+
+"We have an opening at 2:30. Does that work?"
+
+**Customer:**
+
+"Absolutely."
+
+**AI Receptionist:**
+
+"Perfect! I'll just need your name and service address."
+
+Show a brief montage of the customer providing their information while the TradeCatch system collects the details.
+
+Transition to an elegant, realistic TradeCatch dashboard interface showing:
+
+- Customer information recorded.
+- Plumbing service request created.
+- Appointment availability checked.
+- Appointment successfully booked.
+- Confirmation SMS sent.
+
+**AI Receptionist:**
+
+"You're all booked for tomorrow at 2:30. You'll receive a confirmation text shortly. Have a great day!"
+
+The receptionist must sound genuinely conversational, not like a robotic text-to-speech system.
+
+## Scene 4 — The Contractor Gets a New Job (45–60 seconds)
+
+Cut back to the original contractor.
+
+He is finishing his plumbing repair.
+
+He stands up, washes his hands, and picks up his smartphone.
+
+A TradeCatch notification appears:
+
+"New Appointment Booked"
+
+"Kitchen Faucet Repair"
+
+"Tomorrow — 2:30 PM"
+
+He opens the notification and sees that TradeCatch has automatically handled the customer call and booked the appointment.
+
+Show a natural, subtle smile of satisfaction.
+
+He did not answer the phone, interrupt his work, or manually schedule anything.
+
+**Voiceover:**
+
+"While you were focused on your job, TradeCatch was already booking your next one."
+
+## Scene 5 — Closing Commercial Shot (60–75 seconds)
+
+Show the contractor walking toward his work truck outside the customer's home.
+
+Use a cinematic wide shot with natural afternoon lighting.
+
+Transition smoothly to the TradeCatch logo on a clean background.
+
+**Voiceover:**
+
+"Stop missing calls. Start booking more jobs. Let TradeCatch handle your calls while you handle your business."
+
+**On-screen text:**
+
+TradeCatch
+
+**Your business. Always answering.**
+
+**Book Your Free Demo**
+
+Website: tradecatch.ca
+
+## Production and Visual Requirements
+
+**Visual style:** Premium live-action SaaS commercial, realistic documentary-style cinematography, professional advertising quality.
+
+**People:** Photorealistic human actors. Absolutely no cartoons, animated humans, 3D characters, AI avatars, or robotic figures.
+
+**Camera:** Realistic handheld and stabilized cinematic shots, natural depth of field, close-ups of the phone, tools, customer expressions, and contractor reactions.
+
+**Environment:** Authentic Canadian residential home, believable plumbing equipment, realistic work clothing and smartphones.
+
+**Audio:** Authentic phone ringing, subtle plumbing sounds, realistic telephone audio, natural conversational dialogue, and soft professional background music.
+
+**AI receptionist voice:** Natural Canadian French and North American English, professional and warm, appropriate pauses, subtle intonation, and no mechanical speech patterns.
+
+**Editing:** Smooth scene transitions, modern commercial pacing, natural color grading, and subtle product UI overlays.
+
+**Aspect ratio:** 16:9 for desktop website integration. Keep important visual elements centered so the video can also be adapted to 9:16 for social media.
+
+**Subtitles:** Clean, professionally synchronized subtitles with minimal text overlays.
+
+## Strict Negative Instructions
+
+DO NOT create animated people.
+
+DO NOT use cartoon-style visuals.
+
+DO NOT show a robot or humanoid AI receptionist.
+
+DO NOT show the contractor answering the phone.
+
+DO NOT make the characters look artificial or computer-generated.
+
+DO NOT use exaggerated facial expressions or unnatural body movements.
+
+DO NOT make the video look like a PowerPoint presentation or a generic animated explainer.
+
+DO NOT fill the screen with unnecessary text.
+
+DO NOT use an artificial-sounding narrator.
+
+DO NOT show impossible or unrealistic software interactions.
+
+The finished video should look like a real commercial filmed with professional actors for a serious Canadian technology company.
+
+## Final Goal
+
+The viewer should understand one simple message without requiring any additional explanation:
+
+**A real contractor is too busy working to answer his phone. A real customer calls. TradeCatch's AI receptionist answers, handles the conversation, and books an appointment. The contractor discovers the new booking after finishing his work.**
+
+Make the commercial realistic, emotionally relatable, professional, and persuasive.
+
+The result should make contractors immediately think:
+
+"I miss calls like this all the time. I need this for my business."
