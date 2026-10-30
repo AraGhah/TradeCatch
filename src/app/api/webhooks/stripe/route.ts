@@ -7,6 +7,10 @@ import {
   synchronizeStripeBilling,
 } from "@/product/saas/stripe-billing";
 import {
+  REFERRAL_REVERSAL_EVENTS,
+  referralPaymentReversed,
+} from "@/product/referrals/billing-hooks";
+import {
   CHECKOUT_COMPLETED_EVENT,
   checkoutSessionEventSchema,
   synchronizeInstallationCheckout,
@@ -81,6 +85,30 @@ export async function POST(request: NextRequest) {
         { status: 503 },
       );
     }
+  }
+
+  // Refunds and disputes only update referral rewards; billing state is untouched.
+  // Handled before the billing schema on purpose: a charge with no customer (any
+  // non-subscription charge) must be acknowledged, not rejected into Stripe retries.
+  // Subscribe the endpoint to these two events in Stripe; see docs/REFERRAL_PROGRAM.md.
+  if (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    REFERRAL_REVERSAL_EVENTS.has((parsed as { type?: string }).type ?? "")
+  ) {
+    const livemode = (parsed as { livemode?: unknown }).livemode;
+    if (
+      typeof livemode !== "boolean" ||
+      (livemode && !liveSigned) ||
+      (!livemode && !testSigned)
+    ) {
+      return NextResponse.json(
+        { error: "Webhook mode mismatch." },
+        { status: 401 },
+      );
+    }
+    await referralPaymentReversed(parsed);
+    return NextResponse.json({ ok: true, referral: true });
   }
 
   const result = stripeEventSchema.safeParse(parsed);
