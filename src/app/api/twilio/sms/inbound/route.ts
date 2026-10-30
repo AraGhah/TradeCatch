@@ -140,6 +140,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Processing failed" }, { status: 500 });
   }
 
+  // Read before the quote dispatcher below: a customer reply stops the active
+  // quote thread, and the SMS receptionist must not answer a quote reply.
+  let quoteThreadActive = false;
+  if (crmOrgId && !moduleAHandled) {
+    try {
+      const { getStarterStore } = await import("@/product/starter/runtime");
+      quoteThreadActive = Boolean(
+        await getStarterStore().findActiveQuoteByPhone(crmOrgId, from),
+      );
+    } catch (err) {
+      console.warn("[starter/sms] quote thread lookup skipped", err);
+    }
+  }
+
   // Quote follow-up: stop on reply / opt-out when Module A did not claim the SMS,
   // or always on STOP keywords so dual workflows still honour opt-out.
   try {
@@ -225,6 +239,65 @@ export async function POST(request: NextRequest) {
       });
     } catch (err) {
       console.warn("[sms-automation] inbound skipped", err);
+    }
+  }
+
+  // Routing priority: Module A (STOP, technician commands, an active
+  // missed-call workflow) and the pause check have already had their turn.
+  // Only a message nobody else claimed reaches the SMS receptionist, which
+  // delivers through the durable outbox — so the TwiML below stays empty on
+  // purpose and the customer gets exactly one reply.
+  if (crmOrgId && !moduleAHandled && body.trim()) {
+    try {
+      const { store } = await ensureMissedCallReady();
+      const client = await store.findClientBySmsFromNumber(to);
+      if (client) {
+        const { handleCustomerSms } =
+          await import("@/product/sms-receptionist/runtime");
+        const outcome = await handleCustomerSms({
+          organizationId: crmOrgId,
+          client,
+          fromE164: from,
+          toE164: to,
+          body,
+          messageSid: params.MessageSid ?? "",
+          paused: automationPaused,
+          quoteThreadActive,
+        });
+        console.info(
+          JSON.stringify({
+            event: "tradecatch.sms_receptionist.webhook_outcome",
+            organizationId: crmOrgId,
+            messageSid: params.MessageSid,
+            status: outcome.status,
+            reason: outcome.status === "skipped" ? outcome.reason : undefined,
+            twiml:
+              outcome.status === "replied"
+                ? "empty_outbox_owns_delivery"
+                : "empty_no_reply",
+          }),
+        );
+      } else {
+        console.warn(
+          JSON.stringify({
+            event: "tradecatch.sms_receptionist.skipped",
+            organizationId: crmOrgId,
+            messageSid: params.MessageSid,
+            reason: "no_client_for_number",
+          }),
+        );
+      }
+    } catch (err) {
+      // Name only: provider/DB error text can carry customer numbers.
+      console.warn(
+        JSON.stringify({
+          event: "tradecatch.sms_receptionist.failed",
+          organizationId: crmOrgId,
+          messageSid: params.MessageSid,
+          reason: err instanceof Error ? err.name : "Error",
+          stage: "route",
+        }),
+      );
     }
   }
 
