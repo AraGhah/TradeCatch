@@ -177,11 +177,19 @@ describe("profile store", () => {
 });
 
 describe("profile loader + multi-tenant call routing", () => {
-  const orgs: Record<string, { id: string; status: string; missedCallClientId: string | null }> = {
-    org_a: { id: "org_a", status: "active", missedCallClientId: "client_a" },
-    org_b: { id: "org_b", status: "active", missedCallClientId: "client_b" },
-    org_off: { id: "org_off", status: "suspended", missedCallClientId: "client_a" },
-    org_unlinked: { id: "org_unlinked", status: "active", missedCallClientId: null },
+  const orgs: Record<
+    string,
+    {
+      id: string;
+      status: string;
+      plan: "receptionist";
+      missedCallClientId: string | null;
+    }
+  > = {
+    org_a: { id: "org_a", status: "active", plan: "receptionist", missedCallClientId: "client_a" },
+    org_b: { id: "org_b", status: "active", plan: "receptionist", missedCallClientId: "client_b" },
+    org_off: { id: "org_off", status: "suspended", plan: "receptionist", missedCallClientId: "client_a" },
+    org_unlinked: { id: "org_unlinked", status: "active", plan: "receptionist", missedCallClientId: null },
   };
   const clients: Record<string, typeof client> = {
     client_a: client,
@@ -292,10 +300,18 @@ describe("owner + ops profile service (end to end)", () => {
     let configs: Awaited<ReturnType<typeof loadProfileConfigs>> = [];
     const refreshes: boolean[] = [];
     const timeline: string[] = [];
-    const orgs: Record<string, { id: string; status: string; missedCallClientId: string | null }> = {
-      org_a: { id: "org_a", status: "active", missedCallClientId: "client_a" },
-      org_b: { id: "org_b", status: "active", missedCallClientId: "client_a" },
-      org_unlinked: { id: "org_unlinked", status: "active", missedCallClientId: null },
+    const orgs: Record<
+    string,
+    {
+      id: string;
+      status: string;
+      plan: "receptionist";
+      missedCallClientId: string | null;
+    }
+  > = {
+      org_a: { id: "org_a", status: "active", plan: "receptionist", missedCallClientId: "client_a" },
+      org_b: { id: "org_b", status: "active", plan: "receptionist", missedCallClientId: "client_a" },
+      org_unlinked: { id: "org_unlinked", status: "active", plan: "receptionist", missedCallClientId: null },
     };
     const getClient = async (id: string) => (id === "client_a" ? client : null);
     const refresh = async (force: boolean) => {
