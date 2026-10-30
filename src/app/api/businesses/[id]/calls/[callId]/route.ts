@@ -36,7 +36,9 @@ export async function GET(request: NextRequest, { params }: Params) {
   });
 
   // Growth keeps the summary; the full transcript is a Receptionist Plus feature.
-  const transcripts = voiceCapabilitiesForPlan(access.organization.plan).transcripts;
+  const transcripts = voiceCapabilitiesForPlan(
+    access.organization.plan,
+  ).transcripts;
 
   return NextResponse.json({
     ok: true,

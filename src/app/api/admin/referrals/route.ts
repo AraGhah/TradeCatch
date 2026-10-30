@@ -26,7 +26,10 @@ async function access(request: Request) {
   // secret or a customer organization's owner.
   if (auth.via !== "session" || !auth.ctx) {
     return {
-      response: reply({ error: "An MFA-verified administrator session is required." }, 403),
+      response: reply(
+        { error: "An MFA-verified administrator session is required." },
+        403,
+      ),
     };
   }
   return { actor: auth.ctx.user.email };
@@ -42,9 +45,19 @@ const commandSchema = z.discriminatedUnion("action", [
       note: z.string().trim().max(500).optional(),
     })
     .strict(),
-  z.object({ action: z.literal("reject"), rewardId: id, note: z.string().max(500) }).strict(),
   z
-    .object({ action: z.literal("issue"), rewardId: id, giftCardReference: z.string().max(200) })
+    .object({
+      action: z.literal("reject"),
+      rewardId: id,
+      note: z.string().max(500),
+    })
+    .strict(),
+  z
+    .object({
+      action: z.literal("issue"),
+      rewardId: id,
+      giftCardReference: z.string().max(200),
+    })
     .strict(),
   z.object({ action: z.literal("settings"), settings: z.unknown() }).strict(),
   z.object({ action: z.literal("reconcile") }).strict(),
@@ -82,7 +95,10 @@ export async function GET(request: Request) {
     const service = getReferralService();
     const rewardId = new URL(request.url).searchParams.get("rewardId");
     if (rewardId) {
-      return reply({ ok: true, events: await service.listEvents({ rewardId, limit: 100 }) });
+      return reply({
+        ok: true,
+        events: await service.listEvents({ rewardId, limit: 100 }),
+      });
     }
     return reply({ ok: true, ...(await service.adminOverview()) });
   } catch {
@@ -113,7 +129,8 @@ export async function POST(request: Request) {
   const body = await readJsonBody(request, 8192);
   if (!body.ok) return reply({ error: body.error }, body.status);
   const parsed = commandSchema.safeParse(body.data);
-  if (!parsed.success) return reply({ error: "Invalid referral request." }, 400);
+  if (!parsed.success)
+    return reply({ error: "Invalid referral request." }, 400);
 
   const command = parsed.data;
   const actor = auth.actor!;
@@ -133,7 +150,11 @@ export async function POST(request: Request) {
             );
       }
       case "reject": {
-        const result = await service.rejectReward(command.rewardId, actor, command.note);
+        const result = await service.rejectReward(
+          command.rewardId,
+          actor,
+          command.note,
+        );
         return result.ok
           ? reply({ ok: true, reward: result.reward })
           : reply({ error: result.error }, STATUS_FOR_ERROR[result.error]);
@@ -167,6 +188,9 @@ export async function POST(request: Request) {
     }
   } catch (error) {
     logReferralFailure("admin action", error, { action: command.action });
-    return reply({ error: "The change could not be saved. Nothing was recorded." }, 503);
+    return reply(
+      { error: "The change could not be saved. Nothing was recorded." },
+      503,
+    );
   }
 }

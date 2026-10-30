@@ -32,8 +32,8 @@ export function comparisonRowsFromCatalog(): {
 }[] {
   return CAPABILITIES.map((capability) => ({
     capabilityId: capability.id as CapabilityId,
-    values: PLAN_ORDER.map((plan) =>
-      AVAILABILITY_TO_MARK[capabilityAvailability(plan, capability)],
+    values: PLAN_ORDER.map(
+      (plan) => AVAILABILITY_TO_MARK[capabilityAvailability(plan, capability)],
     ),
   }));
 }
