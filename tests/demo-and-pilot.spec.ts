@@ -47,7 +47,7 @@ test.describe("first-demo journeys", () => {
     ).toBeFocused();
   });
 
-  test("the missed-call demo opens its own video from the proof section", async ({
+  test("the missed-call demo opens its own video from the how-it-works section", async ({
     page,
   }) => {
     await page.goto("/");

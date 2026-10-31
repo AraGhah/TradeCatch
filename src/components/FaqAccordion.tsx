@@ -1,10 +1,8 @@
-"use client";
-
-import { useId, useState } from "react";
-import { motion } from "framer-motion";
-
-const ease = [0.22, 1, 0.36, 1] as const;
-
+/**
+ * Native <details> accordion: no client JavaScript, answers stay in the
+ * server-rendered HTML for crawlers, and closed answers are hidden from
+ * assistive technology until opened.
+ */
 export function FaqAccordion({
   items,
   bordered = false,
@@ -12,9 +10,6 @@ export function FaqAccordion({
   items: { q: string; a: string }[];
   bordered?: boolean;
 }) {
-  const [open, setOpen] = useState<number>(-1);
-  const baseId = useId();
-
   return (
     <div
       className={
@@ -23,53 +18,25 @@ export function FaqAccordion({
           : ""
       }
     >
-      {items.map((item, i) => {
-        const isOpen = open === i;
-        const panelId = `${baseId}-panel-${i}`;
-        const buttonId = `${baseId}-button-${i}`;
-        return (
-          <div
-            key={item.q}
-            className="border-b border-[rgb(var(--ink-rgb)/0.12)] last:border-b-0"
-          >
-            <button
-              type="button"
-              id={buttonId}
-              onClick={() => setOpen(isOpen ? -1 : i)}
-              aria-expanded={isOpen}
-              aria-controls={panelId}
-              className="group flex w-full items-center justify-between gap-4 py-[22px] text-left"
+      {items.map((item) => (
+        <details
+          key={item.q}
+          className="group border-b border-[rgb(var(--ink-rgb)/0.12)] last:border-b-0"
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-[22px] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange [&::-webkit-details-marker]:hidden">
+            <span className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-heading transition-colors duration-200 group-hover:text-ember-text sm:text-[18.5px]">
+              {item.q}
+            </span>
+            <span
+              aria-hidden
+              className="shrink-0 font-mono text-[18px] font-medium text-ember-text transition-transform duration-200 group-open:rotate-45"
             >
-              <span className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-heading transition-colors duration-200 group-hover:text-ember-text sm:text-[18.5px]">
-                {item.q}
-              </span>
-              <motion.span
-                className="shrink-0 font-mono text-[18px] font-medium text-ember-text"
-                aria-hidden
-                animate={{ rotate: isOpen ? 45 : 0 }}
-                transition={{ type: "spring", stiffness: 400, damping: 26 }}
-              >
-                +
-              </motion.span>
-            </button>
-            {/* Always mounted so crawlers and no-JS clients get the answer
-                text from the server-rendered HTML, not only after a click. */}
-            <motion.div
-              id={panelId}
-              role="region"
-              aria-labelledby={buttonId}
-              initial={false}
-              animate={{ height: isOpen ? "auto" : 0, opacity: isOpen ? 1 : 0 }}
-              transition={{ duration: 0.3, ease }}
-              className="overflow-hidden"
-            >
-              <p className="pb-6 text-[15px] leading-[1.65] text-muted">
-                {item.a}
-              </p>
-            </motion.div>
-          </div>
-        );
-      })}
+              +
+            </span>
+          </summary>
+          <p className="pb-6 text-[15px] leading-[1.65] text-muted">{item.a}</p>
+        </details>
+      ))}
     </div>
   );
 }
