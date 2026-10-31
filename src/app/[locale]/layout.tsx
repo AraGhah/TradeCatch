@@ -1,10 +1,18 @@
 import type { Metadata } from "next";
 import { MotionConfig } from "framer-motion";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from "next-intl/server";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import {
+  PUBLIC_CLIENT_NAMESPACES,
+  pickMessages,
+} from "@/i18n/client-messages";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -55,6 +63,10 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const nonce = (await headers()).get("x-nonce") ?? undefined;
+  const clientMessages = pickMessages(
+    await getMessages(),
+    PUBLIC_CLIENT_NAMESPACES,
+  );
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://tradecatch.ca";
   const organizationSchema = {
@@ -89,7 +101,7 @@ export default async function LocaleLayout({
           organizationJsonLd={JSON.stringify(organizationSchema)}
         />
         <MotionConfig reducedMotion="user">
-          <NextIntlClientProvider>
+          <NextIntlClientProvider messages={clientMessages}>
             {/* Must sit inside the intl provider — usePathname/useLocale need it. */}
             <DemoModeBanner />
             <Analytics nonce={nonce} />
