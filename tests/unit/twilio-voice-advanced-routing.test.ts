@@ -5,6 +5,12 @@ import { demoClientAccount } from "../../src/product/missed-call/fixtures";
 
 const managed = ["NODE_ENV", "TRADECATCH_ENV"];
 const original = new Map(managed.map((key) => [key, process.env[key]]));
+const mainTechnicianOnCallAllWeek = Array.from({ length: 7 }, (_, day) => ({
+  day,
+  start: "00:00",
+  end: "23:59",
+  technicianId: "tech_marc",
+}));
 
 function setNodeEnv(value: string) {
   (process.env as { NODE_ENV?: string }).NODE_ENV = value;
@@ -93,6 +99,7 @@ describe("POST /api/twilio/voice/inbound — advanced call routing", () => {
     const client = demoClientAccount({
       id: "client_pro_org",
       smsFromNumber: "+14162010299",
+      onCallSchedule: mainTechnicianOnCallAllWeek,
     });
     const runtime = getMissedCallRuntime();
     await runtime.ready;
