@@ -40,8 +40,8 @@ export type TurnstileWidgetHandle = {
 
 export const TurnstileWidget = forwardRef<
   TurnstileWidgetHandle,
-  { onToken: (token: string) => void }
->(function TurnstileWidget({ onToken }, ref) {
+  { onToken: (token: string) => void; action?: string }
+>(function TurnstileWidget({ onToken, action = "book-audit" }, ref) {
   const containerId = useId();
   const widgetIdRef = useRef<string | null>(null);
   const onTokenRef = useRef(onToken);
@@ -79,7 +79,7 @@ export const TurnstileWidget = forwardRef<
 
       widgetIdRef.current = turnstile.render(container, {
         sitekey: SITE_KEY,
-        action: "book-audit",
+        action,
         callback: (token) => onTokenRef.current(token),
         "expired-callback": () => onTokenRef.current(""),
         "error-callback": () => onTokenRef.current(""),
@@ -96,7 +96,7 @@ export const TurnstileWidget = forwardRef<
         widgetIdRef.current = null;
       }
     };
-  }, [scriptReady, containerId]);
+  }, [scriptReady, containerId, action]);
 
   if (!SITE_KEY) return null;
 
