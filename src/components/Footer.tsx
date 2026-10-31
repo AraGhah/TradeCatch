@@ -23,7 +23,9 @@ export function Footer() {
         {/*
           4-track mental model: brand spans 2, Company + Legal take 1 each.
           auto-fit collapses cleanly; brand keeps min-width so it doesn't
-          squeeze beside the link columns on mid widths.
+          squeeze beside the link columns on mid widths. The header already
+          links Services, How it works, Industries, Pricing and Referral, so
+          they are not repeated here.
         */}
         <div
           className="grid items-start"
@@ -65,33 +67,8 @@ export function Footer() {
             </p>
             <ul className="mt-[18px] flex list-none flex-col items-start gap-0.5 p-0">
               <li>
-                <Link href="/services" className={linkClass}>
-                  {nav("services")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/how-it-works" className={linkClass}>
-                  {nav("howItWorks")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/industries" className={linkClass}>
-                  {nav("industries")}
-                </Link>
-              </li>
-              <li>
                 <Link href="/receptionist" className={linkClass}>
                   {nav("aiReceptionist")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className={linkClass}>
-                  {nav("pricing")}
-                </Link>
-              </li>
-              <li>
-                <Link href="/referral" className={linkClass}>
-                  {nav("referral")}
                 </Link>
               </li>
               <li>
