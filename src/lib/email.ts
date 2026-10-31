@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
+import type { ReferralSubmissionDetails } from "@/lib/validation/referral-submission";
 
 let client: Resend | null = null;
 
@@ -109,6 +110,75 @@ export async function sendBookAuditNotifyEmail(
     return { sent: true };
   } catch (error) {
     console.error("[email] failed to send notify email", error);
+    return { sent: false };
+  }
+}
+
+/** Subject lines carry visitor text: collapse any line breaks. */
+function oneLine(value: string): string {
+  return value.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Tells the team about a referral submitted on the public form. Nothing is
+ * stored: the email is the record, so a failed send is reported to the caller
+ * and the visitor is asked to retry instead of being told it went through.
+ * The referred person is never emailed from here.
+ */
+export async function sendReferralSubmissionEmail(
+  details: ReferralSubmissionDetails,
+  idempotencyKey?: string,
+): Promise<{ sent: boolean }> {
+  const resend = getClient();
+  const fromEmail = process.env.RESEND_FROM_EMAIL;
+  const notifyEmail =
+    process.env.RESEND_NOTIFY_EMAIL?.trim() ||
+    process.env.ADMIN_ALERT_EMAIL?.trim();
+
+  if (!resend || !fromEmail || !notifyEmail) {
+    console.warn(
+      "[email] Resend is not fully configured — referral email not sent.",
+    );
+    return { sent: false };
+  }
+
+  const html = brandedShell(
+    `New referral: ${details.businessName}`,
+    `<p style="margin:0 0 12px;">${escapeHtml(details.referrerName)} referred a contractor and confirmed they have permission to share these details.</p>
+    <table style="border-collapse:collapse;width:100%;font-size:14px;">
+      ${row("Referred by", details.referrerName)}
+      ${row("Referrer email", details.referrerEmail)}
+      ${row("Referrer code", details.referralCode)}
+      ${row("Contact", details.contactName)}
+      ${row("Business", details.businessName)}
+      ${row("Contact email", details.contactEmail)}
+      ${row("Contact phone", details.contactPhone)}
+      ${row("Language", details.language)}
+      ${row("Note", details.note)}
+    </table>
+    <p style="margin:16px 0 0;">When you get in touch, say that ${escapeHtml(details.referrerName)} suggested it.</p>`,
+  );
+
+  try {
+    const result = await resend.emails.send(
+      {
+        from: fromEmail,
+        to: notifyEmail,
+        replyTo: details.referrerEmail,
+        subject: oneLine(
+          `New referral: ${details.businessName} (from ${details.referrerName})`,
+        ),
+        html,
+      },
+      { idempotencyKey, signal: AbortSignal.timeout(8_000) },
+    );
+    if (result.error || !result.data?.id) {
+      console.error("[email] referral email rejected by Resend", result.error);
+      return { sent: false };
+    }
+    return { sent: true };
+  } catch (error) {
+    console.error("[email] failed to send referral email", error);
     return { sent: false };
   }
 }
