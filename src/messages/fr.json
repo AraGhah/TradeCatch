@@ -88,110 +88,8 @@
       "subheadline": "Starter répond aux appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée. Réceptionniste Plus fait tourner la réception bilingue complète. Français ou anglais. Pilotes configurés avec le fondateur.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la démo vidéo",
-      "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
-      "demoStripLabel": "Parcours de simulation produit",
-      "demoStripSteps": [
-        "Appel manqué",
-        "SMS de retour (souvent ~30 s)",
-        "Détails captés",
-        "Tech alerté",
-        "Parcours pilote"
-      ],
-      "trustChips": [
-        "Basé au Québec",
-        "Français et anglais",
-        "Messages approuvés par un humain",
-        "Souvent compatible avec votre numéro existant"
-      ],
-      "reassurance": "Sans engagement. Aucun accès système requis. Vous parlez avec le fondateur.",
-      "mockup": {
-        "businessName": "Nord Plomberie",
-        "avatar": "NP",
-        "autoReply": "SMS DE RETOUR ACTIF",
-        "statusTime": "19 h 44",
-        "statusNetwork": "LTE ●●●",
-        "disclaimer": "Données illustratives · Exemple de conversation. Pas un vrai client.",
-        "floatCard": {
-          "label": "Espace pilote",
-          "title": "Lead d'urgence assigné"
-        },
-        "messages": [
-          {
-            "type": "event",
-            "text": "APPEL MANQUÉ · (514) 555-0182",
-            "time": "19:42"
-          },
-          {
-            "type": "out",
-            "text": "Bonjour, nous venons de manquer votre appel chez Nord Plomberie. S’agit-il d’une urgence?"
-          },
-          {
-            "type": "in",
-            "text": "Oui, mon sous-sol commence à inonder."
-          },
-          {
-            "type": "out",
-            "text": "Pouvez-vous envoyer une photo et votre adresse?"
-          },
-          {
-            "type": "photo",
-            "text": "Photo · sous-sol.jpg"
-          },
-          {
-            "type": "in",
-            "text": "12 rue des Érables, Laval"
-          },
-          {
-            "type": "event",
-            "text": "TECHNICIEN ALERTÉ · MARC D.",
-            "time": "19:44"
-          },
-          {
-            "type": "win",
-            "text": "LEAD D’URGENCE ASSIGNÉ",
-            "time": "19:45"
-          }
-        ],
-        "illustrativeLabel": "Exemple de conversation. Pas un vrai client.",
-        "missedCallLabel": "APPEL MANQUÉ · (514) 555-0182",
-        "missedCallTime": "19:42",
-        "chatTime": "19:42–19:45",
-        "systemMessage": "Bonjour, nous venons de manquer votre appel chez Nord Plomberie. S’agit-il d’une urgence?",
-        "customerReply": "Oui, mon sous-sol commence à inonder.",
-        "technicianAlert": "TECHNICIEN ALERTÉ · MARC D.",
-        "technicianAlertTime": "19:44",
-        "technicianAcceptedLabel": "Accepté",
-        "dashboardResult": "Lead d'urgence assigné",
-        "dashboardResultTime": "19:45",
-        "dashboardMetricValue": "1",
-        "dashboardMetricLabel": "nouveau lead d'urgence suivi dans l'espace pilote"
-      },
-      "headlineLines": [
-        "Arrêtez de perdre des jobs",
-        "à cause d'appels manqués."
-      ],
-      "qualificationLine": "Conçu pour les entreprises de plomberie, CVC et électricité au Québec. Français et anglais. Installé et suivi pour vous.",
-      "ctaTry": "Ou parlez vous-même à la démo Réceptionniste Plus"
-    },
-    "stats": {
-      "items": [
-        {
-          "value": "~30 s",
-          "label": "cible typique pour la première réponse à un appel manqué"
-        },
-        {
-          "value": "4",
-          "label": "étapes planifiées de la séquence pilote Starter"
-        },
-        {
-          "value": "2",
-          "label": "langues, choisies par le client"
-        },
-        {
-          "value": "0",
-          "label": "message envoyé que vous n'avez pas approuvé"
-        }
-      ]
+      "ctaTry": "Ou parlez vous-même à la démo Réceptionniste Plus",
+      "reassurance": "Sans engagement. Aucun accès système requis. Vous parlez avec le fondateur."
     },
     "leaks": {
       "eyebrow": "Le problème",
@@ -218,15 +116,6 @@
       "headline": "De l’appel manqué au résultat suivi : parcours pilote.",
       "intro": "Les premières étapes montrent le pilote contrôlé d’appels manqués. La relance Starter et les résultats Growth s’exécutent seulement pour les organisations admissibles liées à l’espace.",
       "cta": "Voir comment ça marche",
-      "previewLabel": "Exemple de parcours (illustratif, pas un flux client en direct)",
-      "previewSteps": [
-        "Appel manqué",
-        "SMS envoyé",
-        "Lead capté",
-        "Alerte envoyée",
-        "Parcours pilote",
-        "Résultat suivi (exemple)"
-      ],
       "steps": [
         {
           "title": "Appel capté",
@@ -254,270 +143,36 @@
         }
       ]
     },
-    "missedCall": {
-      "headline": "Chaque appel manqué reçoit une réponse immédiate",
-      "badge": "Supervision humaine",
-      "items": [
-        "Détecte les appels manqués et hors des heures d'ouverture",
-        "Envoie des réponses SMS en français ou en anglais",
-        "Recueille noms, adresses, descriptions et photos",
-        "Vérifie la zone de service",
-        "Identifie les demandes potentiellement urgentes",
-        "Alerte le technicien de garde",
-        "Escalade vers un contact de remplacement",
-        "Crée un enregistrement de lead ops (pilote)",
-        "Suit l'acceptation / le résultat technicien (pilote)"
-      ],
-      "note": "Le système recueille et achemine la demande. Vos techniciens licenciés continuent de diagnostiquer le problème, confirmer les prix et effectuer les travaux."
+    "proofExamples": {
+      "demoCta": "Voir la démo des appels manqués"
     },
-    "quoteFollowUp": {
-      "headline": "Relance pilote Starter qui s’arrête dès la réponse",
-      "items": [
-        "Injecter une soumission dans l'espace Starter",
-        "Enchaîner les relances J+1 / 3 / 7 / 14",
-        "Stop sur réponse, STOP, gagné/perdu ou prise en charge humaine",
-        "Ouvrir un item inbox quand le client répond",
-        "Pipeline et valeur gagnée réelle en option pour un pilote Growth admissible et lié",
-        "Pilote Starter encadré — webhook sortant seulement, sans synchronisation CRM bidirectionnelle native"
-      ],
-      "sequence": [
+    "pricingPreview": {
+      "eyebrow": "Tarifs",
+      "headline": "Texto de rappel, réponse téléphonique, ou réception complète.",
+      "intro": "Trois forfaits. Chacun conserve tout ce qu'il y a dans le précédent. L'installation est payée une fois. Le grand chiffre est les frais de gestion mensuels.",
+      "tiers": [
         {
-          "day": "Jour 1",
-          "action": "Confirmer qu'ils ont reçu l'estimation"
+          "name": "Starter",
+          "price": "349,99 $ / mois",
+          "cadence": "799,99 $ d’installation, payé une fois",
+          "idealFor": "Texto sur appel manqué, réponses web et relance de soumissions. Ne répond pas au téléphone."
         },
         {
-          "day": "Jour 3",
-          "action": "Proposer de passer la soumission ensemble"
+          "name": "Growth",
+          "price": "649,99 $ / mois",
+          "cadence": "1 499,99 $ d’installation, payé une fois",
+          "idealFor": "Réponse téléphonique limitée, plus réservation, pipeline et avis par-dessus Starter."
         },
         {
-          "day": "Jour 7",
-          "action": "Vérifier l'intérêt et le timing"
-        },
-        {
-          "day": "Jour 14",
-          "action": "Dernière relance — closer ou archiver"
-        }
-      ]
-    },
-    "comparison": {
-      "eyebrow": "Avant / après",
-      "headline": "Ce qui change vraiment une fois que c'est en place.",
-      "manualLabel": "Gestion manuelle",
-      "systemLabel": "Dans un pilote TradeCatch configuré",
-      "rows": [
-        {
-          "manual": "Un appel manqué reçoit un rappel quand quelqu'un y pense, parfois des heures plus tard.",
-          "system": "Un appel manqué reçoit un texto bilingue en quelques secondes, jour et nuit."
-        },
-        {
-          "manual": "Les soumissions sont relancées quand quelqu'un a une minute libre, ce qui veut souvent dire jamais.",
-          "system": "Les pilotes Starter liés exécutent des relances planifiées et arrêtent la séquence dès que le client répond."
-        },
-        {
-          "manual": "Le technicien apprend les détails de la demande de seconde main, si jamais il les apprend.",
-          "system": "Le technicien de garde reçoit un résumé complet dès qu'une demande arrive."
-        },
-        {
-          "manual": "Personne ne peut dire combien d'appels ou de soumissions sont réellement devenus des jobs.",
-          "system": "Les pilotes fondateurs admissibles obtiennent un espace cloisonné après l’installation; les tableaux de bord marketing restent illustratifs."
-        },
-        {
-          "manual": "Une urgence hors des heures d'ouverture attend l'ouverture.",
-          "system": "Les demandes hors des heures d'ouverture sont triées immédiatement et escaladées vers un contact de remplacement."
-        }
-      ]
-    },
-    "dashboard": {
-      "eyebrow": "Rapports",
-      "headline": "Vous voyez enfin ce qui vous échappait.",
-      "intro": "Tous les chiffres ci-dessous sont illustratifs, et non des résultats clients. Les espaces pilotes liés montrent des données cloisonnées par organisation; l’attribution de revenus exige une organisation Growth admissible et des valeurs réelles.",
-      "cta": "Réserver un audit gratuit de 20 minutes",
-      "badge": "Tableau de bord illustratif",
-      "live": "Illustratif",
-      "period": "Semaine du 14 avr.",
-      "metrics": [
-        {
-          "value": "18",
-          "label": "Appels manqués captés"
-        },
-        {
-          "value": "13",
-          "label": "Clients ayant répondu"
-        },
-        {
-          "value": "9",
-          "label": "Nouvelles demandes enregistrées"
-        },
-        {
-          "value": "5",
-          "label": "Rendez-vous pris"
-        },
-        {
-          "value": "22",
-          "label": "Soumissions relancées"
-        },
-        {
-          "value": "3",
-          "label": "Contrats signés"
-        },
-        {
-          "value": "14 800 $",
-          "label": "Valeur des occasions suivies"
-        },
-        {
-          "value": "4",
-          "label": "Cas qui vous attendent"
+          "name": "Réceptionniste Plus",
+          "price": "949,99 $ / mois",
+          "cadence": "1 999,99 $ d’installation, payé une fois",
+          "idealFor": "Réceptionniste bilingue complète : réservation pendant l'appel, transfert, urgences — et tout ce qui est en dessous."
         }
       ],
-      "note": "Ce tableau de bord marketing est illustratif. Les espaces pilotes liés montrent uniquement les données configurées de leur organisation.",
-      "sampleDataLabel": "Données illustratives : semaine d'exemple, pas un flux client en direct. Pas une promesse de résultats."
-    },
-    "industries": {
-      "eyebrow": "Industries",
-      "headline": "Ajusté à la façon dont votre métier perd des jobs.",
-      "leadIn": "Les pilotes contrôlés d’appels manqués ciblent d’abord la plomberie, le CVC et l’électricité. Les exemples de relance concernent les pilotes Starter liés.",
-      "cta": "Toutes les industries",
-      "priorityLabel": "Principal",
-      "priority": [
-        {
-          "name": "Plomberie",
-          "pain": "Répondez par texto à l’appel d’inondation de 21 h, recueillez une photo avant tout déplacement et acheminez le résumé au plombier de garde."
-        },
-        {
-          "name": "CVC",
-          "pain": "Répondez par texto aux appels manqués sans chauffage dans le pilote contrôlé; la relance des soumissions de thermopompe est offerte aux pilotes Starter liés."
-        },
-        {
-          "name": "Électricité",
-          "pain": "Acheminez les demandes urgentes au bon technicien; la relance planifiée des soumissions de panneaux ou de recâblage est offerte aux pilotes Starter liés."
-        }
-      ],
-      "supportingLabel": "Aussi conçu pour",
-      "supporting": [
-        "Toiture",
-        "Rénovation",
-        "Aménagement paysager",
-        "Pavage",
-        "Excavation",
-        "Clôture",
-        "Travaux extérieurs"
-      ]
-    },
-    "implementation": {
-      "headline": "Installé sans remplacer tout votre système d'affaires",
-      "steps": [
-        {
-          "title": "Audit des revenus",
-          "body": "Vous passez en revue les appels, soumissions, outils, employés et processus."
-        },
-        {
-          "title": "Conception du système",
-          "body": "Vous créez les messages, les règles d’escalade, la structure de garde et toute séquence Starter incluse dans la portée."
-        },
-        {
-          "title": "Installation et tests",
-          "body": "Vous connectez les parcours téléphoniques et courriel convenus, l’espace pilote et tout webhook d’automatisation sortant inclus dans la portée."
-        },
-        {
-          "title": "Lancement et optimisation",
-          "body": "Le pilote configuré est lancé, les résultats sont suivis et les processus approuvés sont améliorés."
-        }
-      ]
-    },
-    "trust": {
-      "headline": "Chaque scénario est testé avec votre équipe avant le lancement",
-      "intro": "Rien n'est mis en service sans avoir été vérifié. Avant le lancement, nous confirmons ensemble :",
-      "verifiedItems": [
-        "Les messages destinés aux clients",
-        "Les numéros de téléphone des techniciens",
-        "L'horaire de garde",
-        "Les contacts de remplacement",
-        "Le moment des escalades",
-        "Les limites de la zone de service",
-        "La cadence et les conditions d’arrêt des relances Starter, lorsque ce module est inclus",
-        "Les conditions d'arrêt",
-        "Les règles d'approbation humaine"
-      ],
-      "controlHeadline": "Vous gardez le contrôle sur chaque décision",
-      "points": [
-        "Les décisions importantes restent entre les mains de l'entrepreneur",
-        "Les demandes urgentes sont escaladées de façon prudente",
-        "Le système ne diagnostique pas les problèmes techniques",
-        "Les rabais nécessitent l'approbation de l'entrepreneur",
-        "Les messages s'arrêtent dès que le client répond",
-        "Les scénarios en français et en anglais sont révisés avant le lancement",
-        "L'activité des clients est journalisée"
-      ],
-      "guaranteeNote": "Garantie de lancement : si le système convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité."
-    },
-    "faqTeaser": {
-      "eyebrow": "Réponses directes",
-      "headline": "Ce que les propriétaires demandent avant de réserver.",
-      "viewAll": "Toutes les questions",
-      "items": [
-        {
-          "q": "Est-ce que TradeCatch répond au téléphone comme une réceptionniste?",
-          "a": "Avec Starter, non : un appel manqué reçoit tout de suite un texto bilingue, les détails du job sont recueillis et votre technicien est alerté. Avec Growth, une réceptionniste limitée répond au téléphone, qualifie l'appelant et envoie un résumé à votre équipe — sans réservation pendant l'appel, transfert en direct ni pont d'urgence. Avec Réceptionniste Plus, elle répond complètement : qualifier, réserver pendant l'appel si activé, transférer ou escalader."
-        },
-        {
-          "q": "Est-ce que ça remplace notre réceptionniste?",
-          "a": "Non. Starter absorbe le travail répétitif d'appels manqués et de relances. Growth couvre les appels que votre équipe ne peut pas prendre avec des fonctions de réception limitées. Réceptionniste Plus est la réception complète et remet toujours à une personne ce qui est délicat, complexe ou urgent. Il couvre les appels qui resteraient sans réponse, pas pour remplacer votre monde."
-        },
-        {
-          "q": "Que se passe-t-il en cas d'urgence?",
-          "a": "La demande est escaladée selon des règles que votre entreprise a approuvées à l'avance. Le système ne diagnostique jamais un problème et ne donne pas de consignes de sécurité que vous n'avez pas validées."
-        },
-        {
-          "q": "Peut-il fonctionner avec notre numéro de téléphone actuel?",
-          "a": "En général oui. Ça dépend de votre fournisseur et de la configuration. L'audit détermine la façon la plus sûre de connecter sans déranger votre ligne existante."
-        }
-      ]
-    },
-    "finalCta": {
-      "headline": "Combien de jobs perdez-vous avant même de parler au client?",
-      "body": "Réservez un audit gratuit de fuites de revenus de 20 minutes. On examine comment votre équipe gère les appels manqués et les estimations sans réponse, puis on vous laisse une carte de processus et trois recommandations concrètes. Aucun accès système requis. Vous parlez avec le fondateur.",
-      "cta": "Réserver un audit gratuit de 20 minutes",
-      "underCta": "Nous examinons comment votre équipe gère les appels manqués et les estimations. Vous repartez avec une carte de processus et trois recommandations concrètes. Aucun accès système requis.",
-      "whatToExpect": [
-        "Audit de fuites de revenus de 20 minutes",
-        "Revue de la gestion des appels manqués et des estimations",
-        "Carte de processus + 3 recommandations concrètes",
-        "Aucun accès système requis · Gratuit · Avec le fondateur"
-      ]
-    },
-    "scenario": {
-      "headline": "Voici ce qui se passe lorsque vous manquez un appel",
-      "intro": "Ce parcours combine le pilote contrôlé d’appels manqués avec un exemple de relance Starter liée. La réservation et les résultats du pipeline exigent une organisation pilote Growth admissible.",
-      "exampleLabel": "Exemple de fonctionnement",
-      "timelineLabel": "Séquence d'appel manqué",
-      "steps": [
-        {
-          "time": "19 h 42",
-          "text": "Un propriétaire appelle. Votre équipe est déjà sur un chantier."
-        },
-        {
-          "time": "19 h 42",
-          "text": "TradeCatch lui envoie immédiatement un texto, en français ou en anglais."
-        },
-        {
-          "time": "19 h 44",
-          "text": "Le client fournit son adresse, décrit le problème et joint une photo."
-        },
-        {
-          "time": "19 h 44",
-          "text": "Le technicien de garde reçoit le résumé complet."
-        },
-        {
-          "time": "19 h 48",
-          "text": "Le technicien accepte la demande et rappelle le client."
-        },
-        {
-          "time": "Le lendemain",
-          "text": "Dans un pilote Growth admissible, la réservation dans l’espace et la valeur réelle enregistrée apparaissent dans l’espace lié."
-        }
-      ],
-      "secondFlowLabel": "Séquence pilote Starter de relance de soumission",
-      "secondFlowCaption": "Soumission envoyée → Aucun retour → Relance personnalisée → Réponse du client → Entrepreneur alerté → Statut mis à jour"
+      "cta": "Voir tous les tarifs",
+      "receptionistCta": "Comment fonctionne Réceptionniste Plus",
+      "note": "Le multi-sites et le fort volume se définissent avec vous. Les minutes au-delà de l’allocation écrite ne sont jamais facturées en silence."
     },
     "founder": {
       "eyebrow": "Qui vous embauchez vraiment",
@@ -557,6 +212,29 @@
         }
       ]
     },
+    "faqTeaser": {
+      "eyebrow": "Réponses directes",
+      "headline": "Ce que les propriétaires demandent avant de réserver.",
+      "viewAll": "Toutes les questions",
+      "items": [
+        {
+          "q": "Est-ce que TradeCatch répond au téléphone comme une réceptionniste?",
+          "a": "Avec Starter, non : un appel manqué reçoit tout de suite un texto bilingue, les détails du job sont recueillis et votre technicien est alerté. Avec Growth, une réceptionniste limitée répond au téléphone, qualifie l'appelant et envoie un résumé à votre équipe — sans réservation pendant l'appel, transfert en direct ni pont d'urgence. Avec Réceptionniste Plus, elle répond complètement : qualifier, réserver pendant l'appel si activé, transférer ou escalader."
+        },
+        {
+          "q": "Est-ce que ça remplace notre réceptionniste?",
+          "a": "Non. Starter absorbe le travail répétitif d'appels manqués et de relances. Growth couvre les appels que votre équipe ne peut pas prendre avec des fonctions de réception limitées. Réceptionniste Plus est la réception complète et remet toujours à une personne ce qui est délicat, complexe ou urgent. Il couvre les appels qui resteraient sans réponse, pas pour remplacer votre monde."
+        },
+        {
+          "q": "Que se passe-t-il en cas d'urgence?",
+          "a": "La demande est escaladée selon des règles que votre entreprise a approuvées à l'avance. Le système ne diagnostique jamais un problème et ne donne pas de consignes de sécurité que vous n'avez pas validées."
+        },
+        {
+          "q": "Peut-il fonctionner avec notre numéro de téléphone actuel?",
+          "a": "En général oui. Ça dépend de votre fournisseur et de la configuration. L'audit détermine la façon la plus sûre de connecter sans déranger votre ligne existante."
+        }
+      ]
+    },
     "pilot": {
       "badge": "Programme pilote",
       "headline": "Nous acceptons maintenant des entrepreneurs pilotes fondateurs.",
@@ -572,151 +250,6 @@
       "guarantee": "Garantie de lancement : si le système convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité.",
       "cta": "Réserver un audit gratuit de 20 minutes",
       "landingNote": "Les pilotes sont de vrais mandats avec une portée signée. Les résultats publics n'apparaissent qu'avec une autorisation écrite du client."
-    },
-    "trustStrip": {
-      "eyebrow": "Comment on fonctionne",
-      "items": [
-        {
-          "title": "Rien ne part sans être testé",
-          "body": "Messages, règles d'escalade et conditions d'arrêt sont tous vérifiés avec vous avant le lancement."
-        },
-        {
-          "title": "Vous gardez le contrôle",
-          "body": "Diagnostic, rabais et appels d'urgence restent avec votre équipe, jamais avec le système."
-        },
-        {
-          "title": "Vos données restent les vôtres",
-          "body": "On ne vend jamais les données clients, et vous les gardez si vous partez."
-        },
-        {
-          "title": "Garantie de lancement",
-          "body": "Si on retarde la date de lancement convenue, votre premier mois de gestion est crédité."
-        },
-        {
-          "title": "Installé et suivi pour vous",
-          "body": "On installe, on teste, et on continue de surveiller après le lancement."
-        },
-        {
-          "title": "Sans contrat à long terme",
-          "body": "Gestion mois par mois. Résiliation avec préavis."
-        }
-      ]
-    },
-    "caseStudy": {
-      "eyebrow": "Exemples illustratifs seulement",
-      "headline": "Pas de témoignages ni de résultats inventés.",
-      "client": "Tant qu'il n'y a pas de résultats de pilote autorisés, le site montre uniquement des exemples de produit étiquetés.",
-      "problemLabel": "Ce que vous ne verrez pas ici",
-      "systemLabel": "Ce que vous verrez plutôt",
-      "problem": "Faux logos d'entrepreneurs, fausses notes étoiles ou garanties de revenus inventées.",
-      "system": "Fils SMS d'exemple, alertes technicien, chronologies de soumission et tableaux de bord, chacun marqué Données illustratives.",
-      "quote": "Nous préférons montrer un exemple de produit clair plutôt qu'inventer une citation client.",
-      "disclaimer": "Rien dans les exemples produit n'est une garantie de jobs, de revenus ou de taux de réponse pour votre entreprise.",
-      "metrics": [],
-      "cta": "Réserver un audit gratuit de 20 minutes"
-    },
-    "pricingPreview": {
-      "eyebrow": "Tarifs",
-      "headline": "Texto de rappel, réponse téléphonique, ou réception complète.",
-      "intro": "Trois forfaits. Chacun conserve tout ce qu'il y a dans le précédent. L'installation est payée une fois. Le grand chiffre est les frais de gestion mensuels.",
-      "tiers": [
-        {
-          "name": "Starter",
-          "price": "349,99 $ / mois",
-          "cadence": "799,99 $ d’installation, payé une fois",
-          "idealFor": "Texto sur appel manqué, réponses web et relance de soumissions. Ne répond pas au téléphone."
-        },
-        {
-          "name": "Growth",
-          "price": "649,99 $ / mois",
-          "cadence": "1 499,99 $ d’installation, payé une fois",
-          "idealFor": "Réponse téléphonique limitée, plus réservation, pipeline et avis par-dessus Starter."
-        },
-        {
-          "name": "Réceptionniste Plus",
-          "price": "949,99 $ / mois",
-          "cadence": "1 999,99 $ d’installation, payé une fois",
-          "idealFor": "Réceptionniste bilingue complète : réservation pendant l'appel, transfert, urgences — et tout ce qui est en dessous."
-        }
-      ],
-      "cta": "Voir tous les tarifs",
-      "receptionistCta": "Comment fonctionne Réceptionniste Plus",
-      "note": "Le multi-sites et le fort volume se définissent avec vous. Les minutes au-delà de l’allocation écrite ne sont jamais facturées en silence."
-    },
-    "proofExamples": {
-      "eyebrow": "Exemples produit",
-      "headline": "Voyez le système avant de parler à qui que ce soit.",
-      "intro": "Ce sont des exemples de produit étiquetés, construits avec des noms fictifs et des parcours types, pour comprendre le produit. Ce ne sont pas des témoignages clients, des logos, ni des résultats promis.",
-      "illustrativeLabel": "Données illustratives",
-      "demoCta": "Voir la démo des appels manqués",
-      "onePagerCta": "Ouvrir la page résumé",
-      "sms": {
-        "badge": "Illustratif · Exemple SMS",
-        "title": "Texto de retour après appel manqué",
-        "lines": [
-          {
-            "who": "event",
-            "text": "APPEL MANQUÉ · (514) 555-0182 · 19 h 42"
-          },
-          {
-            "who": "system",
-            "text": "Bonjour, nous venons de manquer votre appel chez Nord Plomberie. S'agit-il d'une urgence?"
-          },
-          {
-            "who": "customer",
-            "text": "Oui, mon sous-sol commence à inonder."
-          },
-          {
-            "who": "system",
-            "text": "Pouvez-vous envoyer une photo et votre adresse?"
-          },
-          {
-            "who": "customer",
-            "text": "12 rue des Érables, Laval · photo jointe"
-          },
-          {
-            "who": "event",
-            "text": "TECHNICIEN ALERTÉ · MARC D. · 19 h 44"
-          }
-        ]
-      },
-      "alert": {
-        "badge": "Illustratif · Exemple d'alerte",
-        "title": "Alerte technicien",
-        "fromLabel": "De",
-        "jobLabel": "Résumé du job",
-        "addressLabel": "Adresse",
-        "urgencyLabel": "Urgence",
-        "from": "TradeCatch → Garde (Marc D.)",
-        "job": "Inondation sous-sol · photo reçue · client en attente de rappel",
-        "address": "12 rue des Érables, Laval",
-        "urgency": "Urgence · règle approuvée par le client",
-        "ctaLabel": "Répondre OUI pour accepter · APPEL pour joindre le client"
-      },
-      "quoteBadge": "Illustratif · Exemple pilote Starter",
-      "quoteHeadline": "Séquence de relance de soumission",
-      "quoteSteps": [
-        {
-          "day": "Jour 0",
-          "title": "Soumission envoyée",
-          "body": "Vous envoyez une estimation de thermopompe à 9 000 $. Pas encore de réponse."
-        },
-        {
-          "day": "Jour 1",
-          "title": "Première relance",
-          "body": "SMS approuvé : suivi poli pour vérifier si le client a consulté la soumission."
-        },
-        {
-          "day": "Jour 3",
-          "title": "Deuxième relance",
-          "body": "Rappel court. Toute réponse met fin à la séquence."
-        },
-        {
-          "day": "Jour 3+",
-          "title": "Vous êtes alerté",
-          "body": "La réponse met fin à la séquence et ouvre un élément dans la boîte de réception humaine de l'espace lié."
-        }
-      ]
     }
   },
   "services": {
@@ -4575,6 +4108,46 @@
         "excluded": "Les récompenses sont réservées aux nouveaux clients.",
         "delivery": "Les Interac sont envoyés par TradeCatch après approbation de la récompense. TradeCatch peut modifier ou suspendre le programme.",
         "storage": "Quand vous ouvrez un lien de parrainage, un code est conservé dans ce navigateur jusqu’à 60 jours afin de créditer le bon client si vous réservez. Il ne sert à rien d’autre, et vous pouvez le supprimer en effaçant les données de ce site."
+      }
+    },
+    "form": {
+      "title": "Parrainer un entrepreneur",
+      "intro": "Vous connaissez une entreprise de plomberie, de CVC ou d'électricité qui manque des appels? Dites-nous qui contacter. Nous préciserons que c'est vous qui l'avez suggérée.",
+      "optional": "(facultatif)",
+      "you": {
+        "legend": "Vos coordonnées",
+        "name": "Votre nom",
+        "email": "Votre courriel",
+        "code": "Votre code de parrainage",
+        "codeHint": "Si vous êtes client, entrez votre code pour que le parrainage vous soit attribué."
+      },
+      "them": {
+        "legend": "Qui parrainez-vous?",
+        "name": "Son nom",
+        "business": "Son entreprise",
+        "phone": "Son téléphone",
+        "email": "Son courriel",
+        "contactHint": "Indiquez un numéro de téléphone ou un courriel (au moins un)."
+      },
+      "note": "Quelque chose à nous dire?",
+      "permission": "Je connais cette personne et elle est d'accord pour que je transmette ses coordonnées à TradeCatch afin que nous la contactions.",
+      "submit": "Envoyer le parrainage",
+      "submitting": "Envoi en cours…",
+      "errors": {
+        "required": "Ce champ est obligatoire.",
+        "email": "Entrez une adresse courriel valide.",
+        "phone": "Entrez un numéro de téléphone valide.",
+        "contactRequired": "Ajoutez un numéro de téléphone ou un courriel.",
+        "code": "Ce code ne semble pas valide. Vérifiez-le ou laissez le champ vide.",
+        "permission": "Confirmez que vous avez l'accord de cette personne.",
+        "verification": "Terminez la vérification avant d'envoyer.",
+        "generic": "Nous n'avons pas pu envoyer votre parrainage. Réessayez ou écrivez-nous.",
+        "network": "Problème de réseau. Vérifiez votre connexion et réessayez."
+      },
+      "success": {
+        "title": "Parrainage reçu",
+        "body": "Merci! Nous l'avons bien reçu et nous prenons le relais.",
+        "another": "Parrainer quelqu'un d'autre"
       }
     }
   }
