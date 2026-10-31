@@ -3,19 +3,10 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Container } from "@/components/Container";
 import { SectionHeading } from "@/components/SectionHeading";
 import { CTAButton } from "@/components/CTAButton";
-import { HeroMockup } from "@/components/HeroMockup";
-import { HeroBackground } from "@/components/HeroBackground";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
-import { ProofExamplesSection } from "@/components/ProofExamplesSection";
 import { PricingPreview } from "@/components/PricingPreview";
-import {
-  ReferralProgramTeaser,
-  type ReferralProgramTeaserCopy,
-} from "@/components/ReferralProgramTeaser";
-import { WorkflowPreview } from "@/components/WorkflowPreview";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
-import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 import { localizedAnchor } from "@/lib/anchors";
 import { buildMetadata } from "@/lib/seo";
 
@@ -56,41 +47,13 @@ export default async function HomePage({
   const t = await getTranslations("home");
   const cta = await getTranslations("cta");
   const site = await getTranslations("site");
-  const plans = await getTranslations("plans");
-  const referralT = await getTranslations("referrals.public");
 
   const tryHref = localizedAnchor(locale, "/receptionist#try-it");
   const headline = t("hero.headline");
   const accentWord = t("hero.accentWord");
-  const trustChips = t.raw("hero.trustChips") as string[];
-  const demoStripSteps = t.raw("hero.demoStripSteps") as string[];
-  const trustStrip = t.raw("trustStrip.items") as {
-    title: string;
-    body: string;
-  }[];
   const leakCards = t.raw("leaks.cards") as { title: string; body: string }[];
   const systemSteps = t.raw("system.steps") as { title: string; body: string }[];
-  const systemPreview = t.raw("system.previewSteps") as string[];
   const pilotPoints = t.raw("pilot.points") as string[];
-  const expect = t.raw("finalCta.whatToExpect") as string[];
-  const mockMessages = t.raw("hero.mockup.messages") as {
-    type: "event" | "out" | "in" | "photo" | "win";
-    text: string;
-    time?: string;
-  }[];
-  const referralCopy: ReferralProgramTeaserCopy = {
-    eyebrow: referralT("eyebrow"),
-    title: referralT("headline"),
-    intro: referralT("intro"),
-    youEarn: referralT("youEarn"),
-    giftCard: referralT("giftCard"),
-    cta: plans("referralTeaser.cta"),
-    planNames: {
-      starter: plans("names.starter"),
-      growth: plans("names.growth"),
-      receptionist: plans("names.receptionist"),
-    },
-  };
 
   return (
     <>
@@ -98,224 +61,63 @@ export default async function HomePage({
       <section
         className="relative overflow-hidden bg-navy text-white"
         style={{
-          padding: "clamp(56px, 7vw, 96px) 0 clamp(72px, 8vw, 120px)",
+          padding: "clamp(64px, 8vw, 112px) 0 clamp(72px, 9vw, 128px)",
         }}
       >
-        <HeroBackground />
-        <Container className="relative">
-          <div
-            className="grid items-center"
-            style={{
-              gap: "clamp(40px, 5vw, 72px)",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 400px), 1fr))",
-            }}
-          >
-            <StaggerGroup stagger={0.09}>
-              <StaggerItem>
-                <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
-                  <span className="animate-tc-pulse block h-[7px] w-[7px] rounded-full bg-green" />
-                  {t("hero.eyebrow")}
-                </span>
-              </StaggerItem>
+        <div
+          aria-hidden
+          className="bg-grid-ink pointer-events-none absolute inset-0"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute top-[-160px] right-[-120px] h-[520px] w-[520px] rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle, rgba(228,118,43,0.16), transparent 66%)",
+          }}
+        />
+        <Container className="relative text-center">
+          <div className="mx-auto max-w-[46rem]">
+            <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
+              <span className="animate-tc-pulse block h-[7px] w-[7px] rounded-full bg-green" />
+              {t("hero.eyebrow")}
+            </span>
 
-              <StaggerItem>
-                <h1 className="text-hero mt-[26px] text-white">
-                  {accentHeadline(headline, accentWord)}
-                </h1>
-              </StaggerItem>
+            <h1 className="text-hero mt-[26px] text-white">
+              {accentHeadline(headline, accentWord)}
+            </h1>
 
-              <StaggerItem>
-                <p className="text-lede mt-[26px] max-w-[36em] text-white/68">
-                  {t("hero.subheadline")}
-                </p>
+            <p className="text-lede mx-auto mt-[26px] max-w-[36em] text-white/68">
+              {t("hero.subheadline")}
+            </p>
 
-                <p className="mt-4 max-w-[34em] text-[15px] leading-[1.55] text-white/52">
-                  {t("hero.qualificationLine")}
-                </p>
-              </StaggerItem>
-
-              <StaggerItem className="mt-[34px] flex flex-wrap gap-3">
-                <CTAButton href="/book-audit" variant="ember" size="lg">
-                  {t("hero.ctaPrimary")}
-                </CTAButton>
-                <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
-                  {t("hero.ctaSecondary")}
-                </WatchDemoButton>
-              </StaggerItem>
-
-              <StaggerItem>
-                <CTAButton
-                  href={tryHref}
-                  variant="link-ink"
-                  className="mt-6 text-[15.5px]"
-                >
-                  {t("hero.ctaTry")} <span aria-hidden>→</span>
-                </CTAButton>
-              </StaggerItem>
-
-              <StaggerItem>
-                <p className="mt-[18px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
-                  {t("hero.reassurance")}
-                </p>
-              </StaggerItem>
-
-              <StaggerItem className="mt-9 border-t border-white/10 pt-[26px]">
-                <p className="font-mono text-[10.5px] tracking-[0.12em] text-white/45 uppercase">
-                  {t("hero.demoStripLabel")}
-                </p>
-                <StaggerGroup
-                  as="ol"
-                  stagger={0.07}
-                  delay={0.35}
-                  className="mt-3.5 flex flex-wrap items-center gap-x-1.5 gap-y-2"
-                >
-                  {demoStripSteps.map((step, i) => (
-                    <StaggerItem
-                      as="li"
-                      from="pop"
-                      key={step}
-                      className="flex items-center gap-1.5"
-                    >
-                      <span className="rounded-md border border-white/12 bg-white/[0.06] px-2.5 py-1.5 text-[12.5px] font-medium text-white/85">
-                        {step}
-                      </span>
-                      {i < demoStripSteps.length - 1 ? (
-                        <span className="text-orange/80" aria-hidden>
-                          →
-                        </span>
-                      ) : null}
-                    </StaggerItem>
-                  ))}
-                </StaggerGroup>
-                <ul className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
-                  {trustChips.map((chip) => (
-                    <li
-                      key={chip}
-                      className="text-[13px] leading-none text-white/55"
-                    >
-                      {chip}
-                    </li>
-                  ))}
-                </ul>
-              </StaggerItem>
-            </StaggerGroup>
-
-            <HeroMockup
-              businessName={t("hero.mockup.businessName")}
-              avatar={t("hero.mockup.avatar")}
-              autoReply={t("hero.mockup.autoReply")}
-              statusTime={t("hero.mockup.statusTime")}
-              statusNetwork={t("hero.mockup.statusNetwork")}
-              disclaimer={t("hero.mockup.disclaimer")}
-              floatLabel={t("hero.mockup.floatCard.label")}
-              floatTitle={t("hero.mockup.floatCard.title")}
-              messages={mockMessages}
-            />
-          </div>
-        </Container>
-      </section>
-
-      {/* 2. Trust strip */}
-      <section
-        className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
-        style={{ padding: "clamp(28px, 4vw, 40px) 0" }}
-      >
-        <Container>
-          <StaggerGroup
-            stagger={0.06}
-            className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6"
-          >
-            {trustStrip.map((item) => (
-              <StaggerItem
-                key={item.title}
-                className="border border-[rgb(var(--ink-rgb)/0.08)] bg-paper px-4 py-4 transition-[translate,border-color] duration-200 hover:-translate-y-0.5 hover:border-orange/40"
-              >
-                <p className="text-[14px] font-semibold tracking-[-0.01em] text-heading">
-                  {item.title}
-                </p>
-                <p className="mt-1.5 text-[12.5px] leading-snug text-muted">
-                  {item.body}
-                </p>
-              </StaggerItem>
-            ))}
-          </StaggerGroup>
-        </Container>
-      </section>
-
-      {/* 3. Live workflow (system) */}
-      <section
-        className="bg-paper"
-        style={{ padding: "clamp(72px, 8vw, 96px) 0 clamp(56px, 6vw, 72px)" }}
-      >
-        <Container>
-          <div
-            data-reveal
-            className="grid items-center"
-            style={{
-              gap: "clamp(40px, 6vw, 80px)",
-              gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 320px), 1fr))",
-            }}
-          >
-            <div className="max-w-[520px]">
-              <p className="text-[13px] font-medium text-ember-text">
-                {t("system.eyebrow")}
-              </p>
-              <h2
-                className="mt-4 font-heading font-extrabold text-heading"
-                style={{
-                  fontSize: "clamp(40px, 5vw, 68px)",
-                  lineHeight: 0.95,
-                  letterSpacing: "-0.05em",
-                  maxWidth: "520px",
-                }}
-              >
-                {t("system.headline")}
-              </h2>
-              <p className="mt-6 max-w-[460px] text-[17px] leading-[1.6] text-muted">
-                {t("system.intro")}
-              </p>
-              <CTAButton
-                href="/how-it-works"
-                variant="link"
-                className="mt-7"
-              >
-                {t("system.cta")} →
+            <div className="mt-[34px] flex flex-wrap justify-center gap-3">
+              <CTAButton href="/book-audit" variant="ember" size="lg">
+                {t("hero.ctaPrimary")}
               </CTAButton>
+              <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
+                {t("hero.ctaSecondary")}
+              </WatchDemoButton>
             </div>
 
-            <WorkflowPreview
-              steps={systemPreview}
-              label={t("system.previewLabel")}
-            />
-          </div>
+            <CTAButton
+              href={tryHref}
+              variant="link-ink"
+              className="mt-6 text-[15.5px]"
+            >
+              {t("hero.ctaTry")} <span aria-hidden>→</span>
+            </CTAButton>
 
-          <div
-            className="mt-[clamp(48px,5vw,64px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {systemSteps.map((step, i) => (
-              <div
-                key={step.title}
-                data-reveal
-                className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)] transition-[border-color,translate] duration-200 hover:-translate-y-0.5 hover:border-[rgb(var(--ink-rgb)/0.2)]"
-              >
-                <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <h3 className="mt-4 font-heading text-[19.5px] font-bold tracking-[-0.028em] text-heading">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-[15px] leading-[1.6] text-muted">
-                  {step.body}
-                </p>
-              </div>
-            ))}
+            <p className="mt-[22px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
+              {t("hero.reassurance")}
+            </p>
           </div>
         </Container>
       </section>
 
-      {/* 4. Revenue leaks */}
+      {/* 2. The problem: where revenue leaks */}
       <section
-        className="border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+        className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
         data-reveal
       >
@@ -347,8 +149,7 @@ export default async function HomePage({
               {leakCards.map((card, i) => (
                 <div
                   key={card.title}
-                  data-reveal
-                  className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] transition-colors duration-200 hover:bg-paper/80 ${
+                  className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] ${
                     i === leakCards.length - 1
                       ? "border-y border-[rgb(var(--ink-rgb)/0.12)]"
                       : "border-t border-[rgb(var(--ink-rgb)/0.12)]"
@@ -373,61 +174,55 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 5. Proof examples (illustrative only — no fabricated results) */}
-      <section
-        id="proof-examples"
-        className="bg-paper scroll-mt-28"
-        style={{ padding: "var(--section-y) 0" }}
-      >
+      {/* 3. The system: how a missed call becomes a tracked outcome */}
+      <section className="bg-paper" style={{ padding: "var(--section-y) 0" }}>
         <Container>
-          <ProofExamplesSection
-            eyebrow={t("proofExamples.eyebrow")}
-            headline={t("proofExamples.headline")}
-            intro={t("proofExamples.intro")}
-            illustrativeLabel={t("proofExamples.illustrativeLabel")}
-            sms={t.raw("proofExamples.sms")}
-            alert={t.raw("proofExamples.alert")}
-            quoteHeadline={t("proofExamples.quoteHeadline")}
-            quoteBadge={t("proofExamples.quoteBadge")}
-            quoteSteps={t.raw("proofExamples.quoteSteps")}
-            demoCta={t("proofExamples.demoCta")}
-            onePagerCta={t("proofExamples.onePagerCta")}
-          />
-        </Container>
-      </section>
+          <div data-reveal>
+            <SectionHeading
+              eyebrow={t("system.eyebrow")}
+              title={t("system.headline")}
+              intro={t("system.intro")}
+            />
+          </div>
 
-      {/* 6. Industries (slim — detail lives on /industries) */}
-      <section
-        className="border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
-        style={{ padding: "clamp(40px, 5vw, 56px) 0" }}
-      >
-        <Container>
-          <div
-            data-reveal
-            className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div className="max-w-[36rem]">
-              <p className="text-[13px] font-medium text-ember-text">
-                {t("industries.eyebrow")}
-              </p>
-              <h2 className="mt-2 font-heading text-[clamp(24px,3vw,32px)] font-bold tracking-[-0.03em] text-heading">
-                {t("industries.headline")}
-              </h2>
-              <p className="mt-2 text-[15px] leading-[1.55] text-muted">
-                {t("industries.leadIn")}
-              </p>
-            </div>
-            <CTAButton href="/industries" variant="secondary">
-              {t("industries.cta")} →
+          <div className="mt-[clamp(40px,5vw,56px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {systemSteps.map((step, i) => (
+              <div
+                key={step.title}
+                data-reveal
+                className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)]"
+              >
+                <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="mt-4 font-heading text-[19.5px] font-bold tracking-[-0.028em] text-heading">
+                  {step.title}
+                </h3>
+                <p className="mt-2 text-[15px] leading-[1.6] text-muted">
+                  {step.body}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <WatchDemoButton
+              video="missed-call"
+              className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[translate,scale,background] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
+            >
+              {t("proofExamples.demoCta")}
+            </WatchDemoButton>
+            <CTAButton href="/how-it-works" variant="secondary">
+              {t("system.cta")} →
             </CTAButton>
           </div>
         </Container>
       </section>
 
-      {/* 7. Plan ladder */}
+      {/* 4. Plan ladder (full detail lives on /pricing) */}
       <section
         id="plans"
-        className="scroll-mt-28 bg-paper"
+        className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
@@ -443,24 +238,9 @@ export default async function HomePage({
         </Container>
       </section>
 
+      {/* 5. Founder: the one trust signal a pilot-stage product has */}
       <section
-        id="referral"
-        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <div data-reveal>
-            <ReferralProgramTeaser
-              locale={locale === "fr" ? "fr" : "en"}
-              copy={referralCopy}
-            />
-          </div>
-        </Container>
-      </section>
-
-      {/* 8. Founder */}
-      <section
-        className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+        className="bg-paper"
         style={{ padding: "var(--section-y) 0" }}
         data-reveal
       >
@@ -482,10 +262,43 @@ export default async function HomePage({
         </Container>
       </section>
 
-      {/* 9. Pilot programme */}
+      {/* 6. Objections */}
+      <section
+        className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div
+            className="grid items-start"
+            style={{
+              gap: "clamp(28px, 4vw, 56px)",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            }}
+          >
+            <div data-reveal className="max-w-[min(100%,28rem)]">
+              <SectionHeading
+                align="left"
+                eyebrow={t("faqTeaser.eyebrow")}
+                title={t("faqTeaser.headline")}
+              />
+              <CTAButton href="/faq" variant="secondary" className="mt-7">
+                {t("faqTeaser.viewAll")}
+              </CTAButton>
+            </div>
+            <div
+              data-reveal
+              className="min-w-0 border-t border-[rgb(var(--ink-rgb)/0.12)]"
+            >
+              <FaqAccordion items={t.raw("faqTeaser.items")} />
+            </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* 7. The offer: founding pilot */}
       <section
         id="pilot"
-        className="scroll-mt-28 bg-paper"
+        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
@@ -542,97 +355,6 @@ export default async function HomePage({
               </CTAButton>
             </div>
           </div>
-        </Container>
-      </section>
-
-      {/* 10. FAQ teaser */}
-      <section
-        className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <div
-            className="grid items-start"
-            style={{
-              gap: "clamp(28px, 4vw, 56px)",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            }}
-          >
-            <div data-reveal className="max-w-[min(100%,28rem)]">
-              <SectionHeading
-                align="left"
-                eyebrow={t("faqTeaser.eyebrow")}
-                title={t("faqTeaser.headline")}
-              />
-              <CTAButton href="/faq" variant="secondary" className="mt-7">
-                {t("faqTeaser.viewAll")}
-              </CTAButton>
-            </div>
-            <div
-              data-reveal
-              className="min-w-0 border-t border-[rgb(var(--ink-rgb)/0.12)]"
-            >
-              <FaqAccordion items={t.raw("faqTeaser.items")} />
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* 11. Final CTA */}
-      <section
-        className="relative overflow-hidden bg-navy"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
-            backgroundSize: "64px 64px",
-            WebkitMaskImage:
-              "radial-gradient(90% 70% at 50% 50%, #000, transparent 75%)",
-            maskImage:
-              "radial-gradient(90% 70% at 50% 50%, #000, transparent 75%)",
-          }}
-        />
-        <Container size="cta" className="relative text-center">
-          <h2
-            data-reveal
-            className="font-heading text-[clamp(34px,4.8vw,64px)] font-extrabold leading-[1.02] tracking-[-0.042em] text-white"
-          >
-            {t("finalCta.headline")}
-          </h2>
-          <p
-            data-reveal
-            className="mx-auto mt-6 max-w-[36em] text-[clamp(16.5px,1.4vw,19px)] leading-[1.6] text-white/66"
-          >
-            {t("finalCta.body")}
-          </p>
-          <div data-reveal className="mt-9 flex flex-col items-center gap-3">
-            <CTAButton href="/book-audit" variant="ember" size="lg">
-              {t("finalCta.cta")}
-            </CTAButton>
-            <p className="max-w-[34em] text-[14px] leading-[1.55] text-white/50">
-              {t("finalCta.underCta")}
-            </p>
-          </div>
-          <ul
-            data-reveal
-            className="mt-[34px] flex flex-wrap items-center justify-center gap-x-7 gap-y-2.5"
-          >
-            {expect.map((item) => (
-              <li
-                key={item}
-                className="flex items-center gap-[9px] text-[14px] text-white/55"
-              >
-                <span className="text-green" aria-hidden>
-                  ✓
-                </span>
-                {item}
-              </li>
-            ))}
-          </ul>
         </Container>
       </section>
     </>
