@@ -152,12 +152,16 @@ test.describe("receptionist demo: speak with your voice", () => {
     await expect(log).toContainText("Nord Plumbing (demo)");
     // What the stubbed microphone "heard" becomes the caller's line.
     await expect(log).toContainText("my kitchen sink is leaking since yesterday");
-    await expect(log).toContainText("May I have your name");
-    await expect(log).toContainText("Thanks Marie Tremblay");
+    await expect(log).toContainText("Can I get your name, please?");
+    await expect(log).toContainText(
+      "What's the address where you need the service, Marie Tremblay?",
+    );
 
     // The receptionist's lines were spoken, in the caller's language.
     await expect.poll(() => spoken(page)).toContain("Nord Plumbing (demo)");
-    await expect.poll(() => spoken(page)).toContain("May I have your name");
+    await expect
+      .poll(() => spoken(page))
+      .toContain("Can I get your name, please?");
     const langs = await page.evaluate(() => [
       ...window.__spoken.map((s) => s.lang),
       ...window.__recognitionLangs,
@@ -196,7 +200,9 @@ test.describe("receptionist demo: speak with your voice", () => {
     ).toHaveAttribute("aria-pressed", "false");
 
     await section.getByRole("button", { name: /leaking since yesterday/i }).click();
-    await expect(section.getByRole("log")).toContainText("May I have your name");
+    await expect(section.getByRole("log")).toContainText(
+      "Can I get your name, please?",
+    );
   });
 
   test("Type mode stays silent until replies are switched on", async ({ page }) => {
@@ -210,15 +216,19 @@ test.describe("receptionist demo: speak with your voice", () => {
     await expect(log).toContainText("Nord Plumbing (demo)");
 
     await section.getByRole("button", { name: /leaking since yesterday/i }).click();
-    await expect(log).toContainText("May I have your name");
+    await expect(log).toContainText("Can I get your name, please?");
     expect(await spoken(page)).toBe("");
     expect(await page.evaluate(() => window.__recognitionLangs.length)).toBe(0);
 
     await section.getByLabel("Read replies aloud").check();
     await section.getByLabel("What the caller says").fill("My name is Marie Tremblay");
     await section.getByRole("button", { name: "Send" }).click();
-    await expect(log).toContainText("Thanks Marie Tremblay");
-    await expect.poll(() => spoken(page)).toContain("Thanks Marie Tremblay");
+    await expect(log).toContainText(
+      "What's the address where you need the service, Marie Tremblay?",
+    );
+    await expect
+      .poll(() => spoken(page))
+      .toContain("What's the address where you need the service, Marie Tremblay?");
     // Typing never opens the microphone.
     expect(await page.evaluate(() => window.__recognitionLangs.length)).toBe(0);
   });
@@ -280,7 +290,9 @@ test.describe("receptionist demo: speak with your voice", () => {
     await section.getByRole("button", { name: /During business hours/ }).click();
     await expect(section.getByRole("button", { name: "Start speaking" })).toHaveCount(0);
     await section.getByRole("button", { name: /leaking since yesterday/i }).click();
-    await expect(section.getByRole("log")).toContainText("May I have your name");
+    await expect(section.getByRole("log")).toContainText(
+      "Can I get your name, please?",
+    );
   });
 
   for (const path of ["/receptionist", "/fr/receptionniste"]) {

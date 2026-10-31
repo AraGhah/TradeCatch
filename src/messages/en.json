@@ -3621,6 +3621,10 @@
         "preferred_time": [
           "Tomorrow morning"
         ],
+        "confirm": [
+          "Yes",
+          "No"
+        ],
         "anything_else": [
           "No thanks",
           "Do you offer free estimates?"

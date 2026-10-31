@@ -49,15 +49,20 @@ test.describe("receptionist demo on the receptionist page", () => {
     await expect(log).toContainText("Nord Plumbing (demo)");
 
     await section.getByRole("button", { name: /leaking since yesterday/i }).click();
-    await expect(log).toContainText("May I have your name");
+    await expect(log).toContainText("Can I get your name, please?");
 
     await section.getByLabel("What the caller says").fill("My name is Marie Tremblay");
     await section.getByRole("button", { name: "Send" }).click();
-    await expect(log).toContainText("Thanks Marie Tremblay");
+    await expect(log).toContainText(
+      "What's the address where you need the service, Marie Tremblay?",
+    );
 
     await section.getByRole("button", { name: /Saint-Denis/ }).click();
     await section.getByRole("button", { name: "Yes", exact: true }).click();
     await section.getByRole("button", { name: "Tomorrow morning" }).click();
+
+    await expect(log).toContainText("Is that correct?");
+    await section.getByRole("button", { name: "Yes", exact: true }).click();
 
     await expect(section.getByText("The call has ended.")).toBeVisible();
     await expect(section.getByText("Generated from the demo call. Not a real customer.")).toBeVisible();
