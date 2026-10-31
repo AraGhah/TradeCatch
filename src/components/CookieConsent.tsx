@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
 import { Link } from "@/i18n/navigation";
 import {
   MANAGE_COOKIES_EVENT,
@@ -11,7 +10,7 @@ import {
 } from "@/lib/analytics";
 
 const BUTTON_BASE =
-  "rounded-md px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2";
+  "rounded-md px-3 py-2 text-[13px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2 sm:px-4 sm:text-sm";
 
 export function CookieConsent() {
   const t = useTranslations("cookieBanner");
@@ -103,18 +102,15 @@ export function CookieConsent() {
   if (!visible) return null;
 
   return (
-    <motion.div
+    <div
       ref={bannerRef}
-      initial={{ y: 16 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.25 }}
       role="region"
       aria-label={t("managePreferences")}
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-[rgb(var(--ink-rgb)/0.1)] bg-surface/98 p-4 shadow-[0_-4px_16px_rgb(var(--ink-rgb)/0.12)]"
+      className="animate-tc-in fixed inset-x-0 bottom-0 z-50 max-h-[85vh] overflow-y-auto border-t border-[rgb(var(--ink-rgb)/0.1)] bg-surface/98 p-3 shadow-[0_-4px_16px_rgb(var(--ink-rgb)/0.12)] sm:p-4"
     >
       <div className="mx-auto max-w-(--container-page)">
-        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-text/80">
+        <div className="flex flex-col items-stretch gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <p className="text-[13px] leading-snug text-text/80 sm:text-sm">
             {t("text")}{" "}
             <Link
               href="/cookie-policy"
@@ -122,13 +118,25 @@ export function CookieConsent() {
             >
               {t("policyLink")}
             </Link>
+            {/* Phones: a text link keeps the banner to one row of buttons. */}
+            <span className="sm:hidden">
+              {" · "}
+              <button
+                type="button"
+                onClick={() => setExpanded((v) => !v)}
+                aria-expanded={expanded}
+                className="font-semibold text-heading underline underline-offset-2"
+              >
+                {t("managePreferences")}
+              </button>
+            </span>
           </p>
-          <div className="flex shrink-0 flex-wrap gap-2">
+          <div className="grid shrink-0 grid-cols-2 gap-2 sm:flex sm:flex-wrap">
             <button
               type="button"
               onClick={() => setExpanded((v) => !v)}
               aria-expanded={expanded}
-              className={`${BUTTON_BASE} border border-[rgb(var(--ink-rgb)/0.2)] text-heading hover:border-[rgb(var(--ink-rgb)/0.4)]`}
+              className={`${BUTTON_BASE} hidden border border-[rgb(var(--ink-rgb)/0.2)] text-heading hover:border-[rgb(var(--ink-rgb)/0.4)] sm:inline-flex`}
             >
               {t("managePreferences")}
             </button>
@@ -150,12 +158,7 @@ export function CookieConsent() {
         </div>
 
         {expanded ? (
-          <motion.div
-            initial={{ height: 0 }}
-            animate={{ height: "auto" }}
-            transition={{ duration: 0.2 }}
-            className="mt-4 space-y-3 border-t border-[rgb(var(--ink-rgb)/0.1)] pt-4"
-          >
+          <div className="mt-4 space-y-3 border-t border-[rgb(var(--ink-rgb)/0.1)] pt-4">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-heading">
@@ -197,9 +200,9 @@ export function CookieConsent() {
             >
               {t("savePreferences")}
             </button>
-          </motion.div>
+          </div>
         ) : null}
       </div>
-    </motion.div>
+    </div>
   );
 }
