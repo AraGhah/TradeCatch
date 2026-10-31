@@ -3,7 +3,7 @@
  * Used by the rule brain and as guardrails around the LLM brain.
  */
 
-import type { FaqEntry, ReceptionistLanguage, RoutingTarget } from "./types";
+import type { FaqEntry, RoutingTarget } from "./types";
 
 export function normalizeSpeech(text: string): string {
   return text
@@ -79,76 +79,90 @@ export function detectYesNo(text: string): "yes" | "no" | null {
   return null;
 }
 
-const EN_MARKERS = [
-  "english",
-  "anglais",
-  "the",
-  "my",
-  "is",
-  "i",
-  "i'm",
-  "have",
-  "need",
-  "please",
-  "can",
-  "you",
-  "what",
-  "hi",
-  "hello",
-  "yes",
-  "no",
-  "water",
-  "leak",
-  "heat",
-  "furnace",
-  "call",
-];
-const FR_MARKERS = [
-  "francais",
-  "french",
-  "le",
-  "la",
-  "les",
-  "mon",
-  "ma",
-  "est",
-  "je",
-  "j'ai",
-  "besoin",
-  "bonjour",
-  "oui",
-  "non",
-  "fuite",
-  "chauffage",
-  "eau",
-  "une",
-  "des",
-  "pour",
-  "avec",
-  "rappeler",
-  "c'est",
+/* Language choice lives in language-select.ts: it is keypad-first by design,
+   and guessing a language from function words let background noise or a
+   half-heard sentence flip the call. */
+
+/** Spaces instead of apostrophes, so patterns can say "don t", "l anglais". */
+function plain(text: string): string {
+  return normalizeSpeech(text).replace(/'/g, " ").replace(/\s+/g, " ").trim();
+}
+
+const AI_KINDS =
+  "(?:robot|bot|chatbot|ai|a i|artificial intelligence|machine|computer|recording|automated|virtual|human|real person|person|live person|actual person)";
+const AI_KINDS_FR =
+  "(?:robot|ia|intelligence artificielle|machine|ordinateur|enregistrement|automatise\\w*|virtuel\\w*|humain|humaine|personne|vraie personne|vrai humain|vraie humaine)";
+
+const ASKS_IF_AI: RegExp[] = [
+  new RegExp(`\\b(?:are you|you are|you re) (?:an? )?(?:really |actually )?(?:real |actual |live )?${AI_KINDS}\\b`),
+  new RegExp(`\\bis (?:this|that|it) (?:an? )?(?:really |actually )?(?:real |actual |live )?${AI_KINDS}\\b`),
+  new RegExp(`\\bam i (?:talking|speaking|chatting) (?:to|with) (?:an? )?(?:real |actual |live )?${AI_KINDS}\\b`),
+  new RegExp(`\\b(?:etes vous|vous etes|es tu|t es) (?:vraiment )?(?:un |une |une vraie |un vrai )?${AI_KINDS_FR}\\b`),
+  new RegExp(`\\b(?:est ce que )?(?:c est|ce n est|je parle a|je parle avec) (?:un |une )?(?:vraie? )?${AI_KINDS_FR}\\b`),
 ];
 
-/** Explicit menu choice or a best-effort guess from function words. */
-export function detectLanguage(
-  text: string,
-  digits?: string,
-): ReceptionistLanguage | null {
-  if (digits === "1") return "fr";
-  if (digits === "2") return "en";
-  const n = normalizeSpeech(text);
-  if (!n) return null;
-  if (/\b(english|anglais)\b/.test(n)) return "en";
-  if (/\b(francais|french)\b/.test(n)) return "fr";
-  const tokens = n.split(" ");
-  let en = 0;
-  let fr = 0;
-  for (const t of tokens) {
-    if (EN_MARKERS.includes(t)) en += 1;
-    if (FR_MARKERS.includes(t)) fr += 1;
-  }
-  if (en === fr) return null;
-  return en > fr ? "en" : "fr";
+/**
+ * "Are you a robot?" / "Est-ce que je parle à une vraie personne?" — a question
+ * about who is on the line, not a request to be connected (that is wantsHuman).
+ */
+export function asksIfAi(text: string): boolean {
+  const n = plain(text);
+  return n.length > 0 && ASKS_IF_AI.some((re) => re.test(n));
+}
+
+const ASKS_PRICE: RegExp[] = [
+  /\bhow much\b/,
+  /\bwhat (?:do|would|will) (?:you|it|that|this) (?:charge|cost)\b/,
+  /\bwhat s (?:the|your) (?:price|cost|rate|rates|fee|fees|charge)\b/,
+  /\b(?:price|prices|pricing|cost|costs|rate|rates|fee|fees|ballpark)\b/,
+  /\bhourly (?:rate|fee)\b/,
+  /\bcombien (?:ca|cela|il|elle|vous|ca va|ca peut|je dois|on doit|pour|environ|a peu pres)\b/,
+  /\bc est combien\b/,
+  /\bcombien (?:ca |cela )?(?:coute|coutent|couterait|va couter|charg\w+|prenez|demandez|factur\w+)\b/,
+  /\b(?:prix|tarif|tarifs|taux horaire|cout|couts|frais)\b/,
+];
+
+/**
+ * A price question, at any point in the call. "Estimate" or "quote" alone is a
+ * request for a visit (appointment), not a price question.
+ */
+export function asksPrice(text: string): boolean {
+  const n = plain(text);
+  return n.length > 0 && ASKS_PRICE.some((re) => re.test(n));
+}
+
+// Questions that have nothing to do with the business. Deliberately specific:
+// a real customer's unusual request must never be turned away as "off topic".
+const OFF_TOPIC: RegExp[] = [
+  /\b(?:weather|meteo|forecast)\b/,
+  /\bcapital of\b|\bcapitale d[eu]\b/,
+  /\bdo you (?:like|love|watch|play|support)\b/,
+  /\b(?:aimez vous|est ce que vous aimez|tu aimes)\b/,
+  /\btell me (?:a )?(?:joke|story)\b/,
+  /\braconte(?:z)? moi (?:une |un )?(?:blague|histoire)\b/,
+  /\bwho (?:won|is winning)\b|\bqui a gagne\b/,
+  /\bwhat time is it\b|\bquelle heure est il\b/,
+  /\bwho (?:is|are) the (?:president|prime minister)\b|\bqui est le (?:president|premier ministre)\b/,
+  /\bmeaning of life\b|\bsens de la vie\b/,
+];
+
+/** Chit-chat or trivia with no link to a service, a price, an appointment or the team. */
+export function matchesOffTopic(text: string): boolean {
+  const n = plain(text);
+  return n.length > 0 && OFF_TOPIC.some((re) => re.test(n));
+}
+
+const SMALL_TALK: RegExp[] = [
+  /^(?:bonjour |hello |hi |salut )?(?:and )?how are you(?: doing| today)?$/,
+  /^(?:bonjour |hello |hi |salut )?how s it going$/,
+  /^(?:bonjour |salut )?(?:et )?comment (?:allez|vas|va) (?:vous|tu)(?: aujourd hui)?$/,
+  /^(?:bonjour |salut )?(?:et )?ca va$/,
+];
+
+/** "How are you?" — answered in a few words, then back to the call. */
+export function isSmallTalk(text: string): boolean {
+  const n = plain(text);
+  return n.length > 0 && SMALL_TALK.some((re) => re.test(n));
 }
 
 const HUMAN_REQUEST = [
@@ -306,13 +320,49 @@ const NAME_PREFIXES = [
   /^(?:my name is|my name's|this is|i am|i'm|it's|it is|name is)\s+/i,
 ];
 
-/** Pull a plausible name out of "je m'appelle Marie Tremblay" style answers. */
+/**
+ * Words that show an answer is a sentence, a yes/no or a filler rather than a
+ * name. Surname particles (de, la, le, du, des, van, von, di) are deliberately
+ * absent so "Jean de la Fontaine" survives.
+ */
+const NOT_NAME_WORDS = new Set([
+  // English
+  "i", "im", "ive", "id", "ill", "my", "me", "you", "your", "we", "he", "she", "it", "its",
+  "is", "are", "was", "am", "be", "do", "does", "did", "dont", "don", "know", "what", "how",
+  "why", "when", "where", "who", "which", "can", "could", "would", "should", "the", "a", "an",
+  "this", "that", "these", "those", "like", "love", "want", "need", "have", "has", "not", "no",
+  "yes", "yeah", "ok", "okay", "hello", "hi", "hey", "thanks", "thank", "please", "sorry",
+  "about", "for", "with", "from", "and", "but", "or", "if", "so", "because", "there", "here",
+  "call", "calling", "speak", "talk", "urgent", "important", "nothing", "nobody", "never",
+  "maybe", "sure", "fine", "good", "uh", "um", "hmm",
+  // French
+  "je", "j", "jai", "moi", "mon", "ma", "mes", "tu", "vous", "votre", "nous", "notre", "il",
+  "elle", "on", "est", "sont", "suis", "fait", "faire", "ne", "pas", "sais", "savoir", "quoi",
+  "comment", "pourquoi", "quand", "ou", "qui", "quel", "quelle", "un", "une", "ce", "cette",
+  "ces", "ca", "cela", "aime", "veux", "voudrais", "besoin", "avoir", "oui", "non", "bonjour",
+  "bonsoir", "salut", "allo", "merci", "desole", "desolee", "svp", "pour", "avec", "dans",
+  "sur", "mais", "et", "que", "si", "parce", "rien", "jamais", "peut", "etre", "parfait",
+  "bien", "correct", "euh", "hum",
+]);
+
+/**
+ * Pull a plausible name out of "je m'appelle Marie Tremblay" style answers.
+ * Stops at the first word that cannot be part of a name, and returns null for
+ * "yes", "my sink is leaking" or "do you like hockey" so the caller is asked
+ * again instead of being recorded under a sentence.
+ */
 export function extractName(text: string): string | null {
   let t = text.trim().replace(/[.!?,]+$/g, "");
   for (const re of NAME_PREFIXES) t = t.replace(re, "");
   t = t.replace(/\s+/g, " ").trim();
-  if (!t) return null;
-  const words = t.split(" ").slice(0, 4);
+  if (!t || /\d/.test(t)) return null;
+  const words: string[] = [];
+  for (const word of t.split(" ")) {
+    const key = normalizeSpeech(word).replace(/'/g, "");
+    if (!key || NOT_NAME_WORDS.has(key)) break;
+    words.push(word);
+    if (words.length === 4) break;
+  }
   if (words.length === 0) return null;
   const name = words
     .map((w) => (w.length > 1 ? w[0]!.toUpperCase() + w.slice(1) : w))

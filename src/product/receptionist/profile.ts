@@ -30,6 +30,7 @@ import {
   MAX_SYSTEM_PROMPT_CHARS,
   renderPromptTemplate,
 } from "./system-prompt";
+import { applyVoicePlanLimits, type VoiceCapabilities } from "./plan-limits";
 import type {
   CallHandlingMode,
   ReceptionistConfig,
@@ -294,14 +295,13 @@ function stylePersonality(
   style: ProfileSettings["communicationStyle"],
   existing?: string,
 ): string | undefined {
+  const intro =
+    "Introduce yourself as the business's receptionist and do not volunteer that you are automated. Never claim to be a person: if asked, say honestly and briefly that you are the virtual assistant.";
   const base: Record<ProfileSettings["communicationStyle"], string> = {
-    professional_friendly:
-      "Professional and friendly. Identify yourself as a virtual receptionist. Keep answers short and conversational.",
-    professional:
-      "Professional and concise. Identify yourself as a virtual receptionist. Do not invent prices or services.",
-    warm: "Warm and reassuring. Identify yourself as a virtual receptionist. Stay brief.",
-    brief:
-      "Brief and direct. Identify yourself as a virtual receptionist. Ask one question at a time.",
+    professional_friendly: `Professional and friendly. ${intro} Keep answers short and conversational.`,
+    professional: `Professional and concise. ${intro} Do not invent prices or services.`,
+    warm: `Warm and reassuring. ${intro} Stay brief.`,
+    brief: `Brief and direct. ${intro} Ask one question at a time.`,
   };
   const baked = base[style];
   if (!existing?.trim()) return baked;
@@ -377,6 +377,11 @@ export type ReceptionistProfile = {
 export type ProfileBuildContext = {
   client: ClientAccount;
   env?: NodeJS.ProcessEnv;
+  /**
+   * What the owner's plan lets the receptionist do. Unset = no plan limits
+   * (demo, ops tooling and tests that build a profile directly).
+   */
+  capabilities?: VoiceCapabilities;
 };
 
 function slug(name: string, index: number): string {
@@ -427,12 +432,23 @@ export function buildProfileConfig(
   const phone = s.phoneSettings ?? defaultPhoneSettings();
   const businessName =
     knowledge.companyName?.trim() || client.contractorDisplayName;
-  const primaryTransfer =
-    phone.humanTransferE164 ||
-    transfer.primaryTransferE164 ||
-    s.fallbackTransferE164;
-  const emergency =
-    s.emergencyTransferE164 ?? primaryPhone(client) ?? client.humanReviewPhone;
+  // Plan limits are applied here, before the prompt is rendered, so the
+  // receptionist never promises a transfer, an emergency bridge or a booking
+  // the plan does not include. `applyVoicePlanLimits` below is the backstop.
+  const caps = ctx.capabilities;
+  const canTransfer = caps ? caps.transfer : true;
+  const canBridgeEmergency = caps ? caps.emergencyRouting : true;
+  const canPhoneBook = caps ? caps.phoneBooking : true;
+  const primaryTransfer = canTransfer
+    ? phone.humanTransferE164 ||
+      transfer.primaryTransferE164 ||
+      s.fallbackTransferE164
+    : undefined;
+  const emergency = canBridgeEmergency
+    ? (s.emergencyTransferE164 ?? primaryPhone(client) ?? client.humanReviewPhone)
+    : undefined;
+  const phoneBooking =
+    canPhoneBook && s.appointmentSettings?.phoneBooking === true;
   const tradecatchNumber =
     phone.tradecatchNumberE164 ||
     profile.phoneNumberE164 ||
@@ -451,7 +467,7 @@ export function buildProfileConfig(
       emergencyHours: knowledge.emergencyHours,
       hasEmergencyLine: Boolean(emergency),
       appointmentAvailability: knowledge.appointmentAvailability,
-      phoneBooking: s.appointmentSettings?.phoneBooking === true,
+      phoneBooking,
       businessHours,
       timezone: client.timezone,
     }),
@@ -479,6 +495,10 @@ export function buildProfileConfig(
       fr: s.voiceFr ?? DEFAULT_VOICES.fr,
       en: s.voiceEn ?? DEFAULT_VOICES.en,
     },
+    speakingSpeed: s.speakingSpeed,
+    services: knowledge.services,
+    serviceAreas: knowledge.serviceAreas,
+    pricingInfo: knowledge.startingPrices?.trim() || undefined,
     greetingFr: s.greetingFr,
     greetingEn: s.greetingEn,
     afterHoursMessageFr: s.afterHoursMessageFr,
@@ -489,7 +509,7 @@ export function buildProfileConfig(
     ),
     businessFacts: composeBusinessFacts(knowledge, s.businessFacts),
     systemPrompt,
-    routing: (s.routing ?? []).map((r, i) => ({
+    routing: (canTransfer ? (s.routing ?? []) : []).map((r, i) => ({
       id: slug(r.name, i),
       name: r.name,
       phoneE164: r.phoneE164,
@@ -504,22 +524,24 @@ export function buildProfileConfig(
     })),
     urgencyRubric: client.urgencyRubric,
     emergencyTransferE164: emergency,
-    fallbackTransferE164:
-      primaryTransfer ??
-      transfer.secondaryTransferE164 ??
-      client.humanReviewPhone ??
-      ownerPhone(client),
-    allowVoicemailOnly: transfer.failedAction === "voicemail",
+    fallbackTransferE164: canTransfer
+      ? (primaryTransfer ??
+        transfer.secondaryTransferE164 ??
+        client.humanReviewPhone ??
+        ownerPhone(client))
+      : undefined,
+    allowVoicemailOnly: !canTransfer || transfer.failedAction === "voicemail",
     collectPreferredTime:
       s.collectPreferredTime !== false && collect.preferredDate !== false,
-    phoneBooking: s.appointmentSettings?.phoneBooking === true,
+    phoneBooking,
     notifications,
     smsFromE164: client.smsFromNumber,
   };
   for (const k of Object.keys(raw)) if (raw[k] === undefined) delete raw[k];
 
   const config = parseReceptionistConfig(raw);
-  return { ...config, source: "profile" };
+  const limited = caps ? applyVoicePlanLimits(config, caps) : config;
+  return { ...limited, source: "profile" };
 }
 
 export type ProfileIssue = { field: string; message: string };

@@ -2,6 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { orgHasFeature } from "@/product/saas/entitlements";
+import { voiceCapabilitiesForPlan } from "@/product/receptionist/plan-limits";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { OUTCOME_LABEL } from "@/product/receptionist/summary";
 import type { CallSession } from "@/product/receptionist/types";
@@ -23,6 +24,9 @@ export default async function AppCallsPage({
     return <p className="text-navy/70">{t("calls.entitlement")}</p>;
   }
 
+  const showTranscripts = voiceCapabilitiesForPlan(
+    auth.ctx.organization.plan,
+  ).transcripts;
   const clientId = auth.ctx.organization.missedCallClientId;
   let calls: CallSession[] = [];
   let configured = false;
@@ -164,7 +168,7 @@ export default async function AppCallsPage({
                 {s?.aiSummary ? (
                   <p className="mt-2 text-sm italic text-navy/80">{s.aiSummary}</p>
                 ) : null}
-                {call.turns.length > 0 ? (
+                {showTranscripts && call.turns.length > 0 ? (
                   <details className="mt-3">
                     <summary className="cursor-pointer text-xs font-semibold text-navy/70">
                       {t("calls.transcript")} ({call.turns.length})
@@ -182,7 +186,7 @@ export default async function AppCallsPage({
                         ))}
                     </ol>
                   </details>
-                ) : call.transcriptPurgedAt ? (
+                ) : showTranscripts && call.transcriptPurgedAt ? (
                   <p className="mt-2 text-xs text-navy/70">{t("calls.purged")}</p>
                 ) : null}
               </li>

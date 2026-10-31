@@ -6,6 +6,7 @@
 import { randomUUID } from "@/lib/id";
 import { createRuleBrain } from "@/product/receptionist/brain-rules";
 import { createReceptionistEngine } from "@/product/receptionist/engine";
+import type { VoiceCapabilities } from "@/product/receptionist/plan-limits";
 import {
   buildProfileConfig,
   type ReceptionistProfile,
@@ -53,8 +54,13 @@ export async function runSimulatedPhoneScenario(input: {
   scenario: LiveTestScenario;
   language?: "fr" | "en";
   events?: CallEventStore;
+  /** The owner's plan limits, so the simulation matches a live call. */
+  capabilities?: VoiceCapabilities;
 }): Promise<LiveTestResult> {
-  const config = buildProfileConfig(input.profile, { client: input.client });
+  const config = buildProfileConfig(input.profile, {
+    client: input.client,
+    capabilities: input.capabilities,
+  });
   const phone = parsePhoneSettings(input.profile.settings.phoneSettings);
   const store = createMemoryReceptionistStore();
   const engine = createReceptionistEngine({

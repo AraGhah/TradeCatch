@@ -4,6 +4,7 @@ import {
   BusinessTestError,
   runBusinessTestTurn,
 } from "@/product/receptionist/business-test";
+import { voiceCapabilitiesForPlan } from "@/product/receptionist/plan-limits";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { getAuthSecret } from "@/product/saas/tenant";
@@ -91,6 +92,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       profile,
       client,
       secret,
+      capabilities: voiceCapabilitiesForPlan(access.organization.plan),
       persistSession: async (session) => {
         // Simulated only — never triggers SMS/email. Persist for history/isolation checks.
         const { created } = await runtime.store.insertSessionIfAbsent(session);

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { AiReceptionistOverview } from "@/product/receptionist/ai-receptionist-service";
+import type { VoiceCapabilities } from "@/product/receptionist/plan-limits";
 import type { ProfileSettings } from "@/product/receptionist/profile";
 import { ReceptionistOverview } from "./ReceptionistOverview";
 import { ReceptionistSettingsForm } from "./ReceptionistSettingsForm";
@@ -16,12 +17,14 @@ export function ReceptionistManager({
   initialSettings,
   defaultHours,
   readOnly,
+  voiceCapabilities,
 }: {
   organizationId: string;
   overview: AiReceptionistOverview;
   initialSettings: ProfileSettings;
   defaultHours: Hours;
   readOnly: boolean;
+  voiceCapabilities?: VoiceCapabilities;
 }) {
   const [panel, setPanel] = useState<"overview" | "edit" | "test" | "history">(
     "overview",
@@ -52,6 +55,7 @@ export function ReceptionistManager({
             readOnly={readOnly}
             initial={initialSettings}
             defaultHours={defaultHours}
+            voiceCapabilities={voiceCapabilities}
           />
         </div>
       ) : null}

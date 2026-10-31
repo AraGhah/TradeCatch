@@ -78,3 +78,7 @@ next-env.d.ts
 *.dump
 *.dump.sha256
 *.dump.manifest.json
+
+# Python bytecode (LiveKit agent tests)
+__pycache__/
+*.pyc

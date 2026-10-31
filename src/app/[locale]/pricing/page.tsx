@@ -14,8 +14,21 @@ import {
   PlanBreakEven,
   type PlanBreakEvenCopy,
 } from "@/components/PlanBreakEven";
+import {
+  PlanWalkthrough,
+  type PlanWalkthroughCopy,
+} from "@/components/PlanWalkthrough";
+import {
+  WebsiteBuilderAddOn,
+  type WebsiteBuilderAddOnCopy,
+} from "@/components/WebsiteBuilderAddOn";
+import {
+  ReferralProgramTeaser,
+  type ReferralProgramTeaserCopy,
+} from "@/components/ReferralProgramTeaser";
 import { localizedAnchor } from "@/lib/anchors";
 import { buildMetadata } from "@/lib/seo";
+import type { PlanId } from "@/product/saas/plan-catalog";
 
 export async function generateMetadata({
   params,
@@ -40,6 +53,7 @@ export default async function PricingPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("pricing");
+  const plans = await getTranslations("plans");
   const cta = await getTranslations("cta");
 
   // Hash links need the visitor's localized path (see localizedAnchor).
@@ -53,6 +67,7 @@ export default async function PricingPage({
   );
   const principles = t.raw("principles") as string[];
   const details = t.raw("details") as { title: string; body: string }[];
+  const comparison = t.raw("comparison") as PlanComparisonData;
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -62,6 +77,67 @@ export default async function PricingPage({
       acceptedAnswer: { "@type": "Answer", text: detail.body },
     })),
   };
+
+  const walkthroughScenes = Object.fromEntries(
+    (
+      Object.entries(plans.raw("capabilities") as Record<
+        string,
+        { demoTitle: string; demoBody: string }
+      >) as [string, { demoTitle: string; demoBody: string }][]
+    ).map(([id, cap]) => [id, { title: cap.demoTitle, body: cap.demoBody }]),
+  );
+
+  const walkthroughCopy: PlanWalkthroughCopy = {
+    eyebrow: plans("walkthrough.eyebrow"),
+    title: plans("walkthrough.title"),
+    intro: plans("walkthrough.intro"),
+    illustrativeLabel: plans("walkthrough.illustrativeLabel"),
+    selectLabel: plans("walkthrough.selectLabel"),
+    next: plans("walkthrough.next"),
+    previous: plans("walkthrough.previous"),
+    // Plain template — PlanWalkthrough fills {current}/{total}. Do not use
+    // plans("…"): next-intl would require those values at call time.
+    stepOf: plans.raw("walkthrough.stepOf") as string,
+    planKinds: {
+      starter: plans("kind.starter"),
+      growth: plans("kind.growth"),
+      receptionist: plans("kind.receptionist"),
+    },
+    planNames: {
+      starter: plans("names.starter"),
+      growth: plans("names.growth"),
+      receptionist: plans("names.receptionist"),
+    },
+    scenes: walkthroughScenes,
+  };
+
+  const addOnCopy: WebsiteBuilderAddOnCopy = {
+    eyebrow: plans("addOns.websiteBuilder.eyebrow"),
+    title: plans("addOns.websiteBuilder.title"),
+    intro: plans("addOns.websiteBuilder.intro"),
+    priceNote: plans("addOns.websiteBuilder.priceNote"),
+    schedulePending: plans("addOns.websiteBuilder.schedulePending"),
+    availableOn: plans("addOns.websiteBuilder.availableOn"),
+    neverIncluded: plans("addOns.websiteBuilder.neverIncluded"),
+    cta: plans("addOns.websiteBuilder.cta"),
+  };
+
+  const referralT = await getTranslations("referrals.public");
+  const referralCopy: ReferralProgramTeaserCopy = {
+    eyebrow: referralT("eyebrow"),
+    title: referralT("headline"),
+    intro: referralT("intro"),
+    youEarn: referralT("youEarn"),
+    giftCard: referralT("giftCard"),
+    cta: plans("referralTeaser.cta"),
+    planNames: {
+      starter: plans("names.starter"),
+      growth: plans("names.growth"),
+      receptionist: plans("names.receptionist"),
+    },
+  };
+
+  const planIds: PlanId[] = ["starter", "growth", "receptionist"];
 
   return (
     <>
@@ -129,7 +205,7 @@ export default async function PricingPage({
         </Container>
       </section>
 
-      <section className="bg-paper pb-[clamp(72px,9vw,120px)]">
+      <section className="bg-paper pb-[clamp(40px,5vw,64px)]">
         <Container>
           <PricingExperience
             tiers={tiers}
@@ -150,6 +226,47 @@ export default async function PricingPage({
       </section>
 
       <section
+        id="website-builder"
+        className="scroll-mt-28 bg-paper pb-[clamp(72px,9vw,120px)]"
+      >
+        <Container>
+          <div data-reveal>
+            <WebsiteBuilderAddOn
+              locale={locale === "fr" ? "fr" : "en"}
+              copy={addOnCopy}
+            />
+          </div>
+        </Container>
+      </section>
+
+      <section
+        id="see-plans"
+        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div data-reveal>
+            <PlanWalkthrough copy={walkthroughCopy} initialPlan="growth" />
+          </div>
+        </Container>
+      </section>
+
+      <section
+        id="referral"
+        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div data-reveal>
+            <ReferralProgramTeaser
+              locale={locale === "fr" ? "fr" : "en"}
+              copy={referralCopy}
+            />
+          </div>
+        </Container>
+      </section>
+
+      <section
         id="worth-it"
         className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
@@ -159,11 +276,10 @@ export default async function PricingPage({
             <PlanBreakEven
               locale={locale === "fr" ? "fr" : "en"}
               copy={t.raw("breakEven") as PlanBreakEvenCopy}
-              plans={[
-                { id: "starter", name: tiers[0]!.name },
-                { id: "growth", name: tiers[1]!.name },
-                { id: "receptionist", name: tiers[2]!.name },
-              ]}
+              plans={planIds.map((id, i) => ({
+                id,
+                name: tiers[i]!.name,
+              }))}
             />
           </div>
         </Container>
@@ -176,7 +292,7 @@ export default async function PricingPage({
       >
         <Container>
           <div data-reveal>
-            <PlanComparison data={t.raw("comparison") as PlanComparisonData} />
+            <PlanComparison data={comparison} />
           </div>
         </Container>
       </section>

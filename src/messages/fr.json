@@ -35,7 +35,8 @@
     "toggleThemeToDark": "Passer au mode sombre",
     "toggleThemeToLight": "Passer au mode clair",
     "skipToContent": "Passer au contenu principal",
-    "aiReceptionist": "Réceptionniste"
+    "aiReceptionist": "Réceptionniste",
+    "referral": "Programme de parrainage"
   },
   "cta": {
     "primary": "Réserver un audit gratuit de 20 minutes",
@@ -62,7 +63,7 @@
     "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes"
   },
   "footer": {
-    "description": "Dans les pilotes contrôlés, TradeCatch renvoie un texto aux appelants manqués, recueille les détails et alerte le bon technicien. La relance Starter et les modules Growth autorisés sont configurés avec le fondateur; les chiffres des tableaux de bord marketing sont illustratifs.",
+    "description": "TradeCatch récupère les appels manqués par texto avec Starter, répond au téléphone avec une réceptionniste limitée avec Growth, et fait tourner la réceptionniste bilingue complète avec Réceptionniste Plus. Les pilotes sont configurés avec le fondateur ; les exemples marketing sont illustratifs.",
     "company": "Entreprise",
     "legal": "Légal",
     "resources": "Ressources",
@@ -84,7 +85,7 @@
       "eyebrow": "Récupération de revenus pour les métiers au Québec",
       "headline": "Récupérez les appels manqués. Réservez plus de chantiers.",
       "accentWord": "Réservez plus de chantiers.",
-      "subheadline": "Restez concentré sur le chantier. TradeCatch aide les appelants manqués à obtenir une réponse et votre équipe à relancer les soumissions, en français ou en anglais. Commencez avec un pilote configuré par le fondateur.",
+      "subheadline": "Starter répond aux appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée. Réceptionniste Plus fait tourner la réception bilingue complète. Français ou anglais. Pilotes configurés avec le fondateur.",
       "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
       "ctaSecondary": "Voir la démo vidéo",
       "proofLine": "Conçu pour les entreprises de plomberie, CVC, électricité, toiture, rénovation et travaux extérieurs.",
@@ -170,7 +171,7 @@
         "à cause d'appels manqués."
       ],
       "qualificationLine": "Conçu pour les entreprises de plomberie, CVC et électricité au Québec. Français et anglais. Installé et suivi pour vous.",
-      "ctaTry": "Ou parlez vous-même à la réceptionniste"
+      "ctaTry": "Ou parlez vous-même à la démo Réceptionniste Plus"
     },
     "stats": {
       "items": [
@@ -456,11 +457,11 @@
       "items": [
         {
           "q": "Est-ce que TradeCatch répond au téléphone comme une réceptionniste?",
-          "a": "Avec Starter et Growth, non : un appel manqué reçoit tout de suite un texto bilingue, les détails du job sont recueillis et votre technicien est alerté. Avec le forfait Réceptionniste, il répond bel et bien aux appels entrants 24/7, et peut les qualifier, prendre des demandes de rendez-vous ou les transférer."
+          "a": "Avec Starter, non : un appel manqué reçoit tout de suite un texto bilingue, les détails du job sont recueillis et votre technicien est alerté. Avec Growth, une réceptionniste limitée répond au téléphone, qualifie l'appelant et envoie un résumé à votre équipe — sans réservation pendant l'appel, transfert en direct ni pont d'urgence. Avec Réceptionniste Plus, elle répond complètement : qualifier, réserver pendant l'appel si activé, transférer ou escalader."
         },
         {
           "q": "Est-ce que ça remplace notre réceptionniste?",
-          "a": "Non. Starter et Growth absorbent le travail répétitif d’appels manqués et de relances. Le forfait Réceptionniste répond aux appels que votre équipe ne peut pas prendre et transfère à une personne tout ce qui est délicat, complexe ou urgent. Il est conçu pour couvrir les appels qui resteraient sans réponse, pas pour remplacer votre monde."
+          "a": "Non. Starter absorbe le travail répétitif d'appels manqués et de relances. Growth couvre les appels que votre équipe ne peut pas prendre avec des fonctions de réception limitées. Réceptionniste Plus est la réception complète et remet toujours à une personne ce qui est délicat, complexe ou urgent. Il couvre les appels qui resteraient sans réponse, pas pour remplacer votre monde."
         },
         {
           "q": "Que se passe-t-il en cas d'urgence?",
@@ -616,30 +617,30 @@
     },
     "pricingPreview": {
       "eyebrow": "Tarifs",
-      "headline": "Récupérez vos demandes, convertissez-les, ou laissez le téléphone répondre.",
-      "intro": "Trois forfaits. Chacun garde tout ce que contient le précédent. L’installation se paie une fois. Le gros chiffre, c’est les frais de gestion mensuels.",
+      "headline": "Texto de rappel, réponse téléphonique, ou réception complète.",
+      "intro": "Trois forfaits. Chacun conserve tout ce qu'il y a dans le précédent. L'installation est payée une fois. Le grand chiffre est les frais de gestion mensuels.",
       "tiers": [
         {
           "name": "Starter",
           "price": "349,99 $ / mois",
           "cadence": "799,99 $ d’installation, payé une fois",
-          "idealFor": "Appels manqués, demandes du site et soumissions qui restent sans réponse."
+          "idealFor": "Texto sur appel manqué, réponses web et relance de soumissions. Ne répond pas au téléphone."
         },
         {
           "name": "Growth",
           "price": "649,99 $ / mois",
           "cadence": "1 499,99 $ d’installation, payé une fois",
-          "idealFor": "Tout Starter, plus la prise de rendez-vous, le pipeline et les demandes d’avis."
+          "idealFor": "Réponse téléphonique limitée, plus réservation, pipeline et avis par-dessus Starter."
         },
         {
-          "name": "Réceptionniste",
+          "name": "Réceptionniste Plus",
           "price": "949,99 $ / mois",
           "cadence": "1 999,99 $ d’installation, payé une fois",
-          "idealFor": "Tout Growth, plus une réception bilingue qui répond 24/7."
+          "idealFor": "Réceptionniste bilingue complète : réservation pendant l'appel, transfert, urgences — et tout ce qui est en dessous."
         }
       ],
       "cta": "Voir tous les tarifs",
-      "receptionistCta": "Le fonctionnement du Réceptionniste",
+      "receptionistCta": "Comment fonctionne Réceptionniste Plus",
       "note": "Le multi-sites et le fort volume se définissent avec vous. Les minutes au-delà de l’allocation écrite ne sont jamais facturées en silence."
     },
     "proofExamples": {
@@ -791,17 +792,16 @@
         ]
       },
       {
-        "title": "Réceptionniste · Pilote premium configuré",
-        "purpose": "Répondre aux appels que votre équipe ne peut pas prendre, au lieu de les rappeler par texto après coup.",
+        "title": "Réceptionniste · Growth limitée, Plus complète",
+        "purpose": "Growth répond et résume. Réceptionniste Plus réserve pendant l'appel, transfère et achemine les urgences.",
         "items": [
-          "Réponse téléphonique bilingue, 24/7 et hors des heures d’ouverture",
-          "Base de connaissances d’entreprise configurée et approuvée par vous",
-          "Qualification des prospects pendant l’appel",
-          "Demandes de rendez-vous par téléphone, confirmées par votre équipe",
-          "Transfert à un humain : propriétaire, bureau, ventes ou technicien de garde",
-          "Acheminement d’urgence défini par entreprise",
-          "Résumés d’appel structurés et prochaines actions",
-          "Transcriptions, et messages vocaux enregistrés lorsque activés"
+          "Réponse téléphonique avec Growth (limitée) et Réceptionniste Plus (complète)",
+          "Base de connaissances configurée et approuvée par vous",
+          "Qualification du lead pendant l'appel",
+          "Demandes de rendez-vous par téléphone — confirmées par votre équipe avec Growth ; réservables pendant l'appel avec Plus si activé",
+          "Transfert humain et acheminement d'urgence avec Réceptionniste Plus",
+          "Résumés d'appel structurés et prochaines actions",
+          "Transcriptions avec Réceptionniste Plus si activées"
         ]
       }
     ],
@@ -823,14 +823,14 @@
       "Relance de soumissions (pilote Starter)",
       "Réservation dans l’espace (pilote Growth admissible)",
       "Rapports de l’espace (pilote) · Exemples marketing illustratifs",
-      "Réponse téléphonique (forfait Réceptionniste)"
+      "Réponse téléphonique (Growth limitée · Réceptionniste Plus complète)"
     ]
   },
   "howItWorks": {
     "eyebrow": "Fonctionnement",
-    "headline": "De l’appel manqué au résultat suivi.",
-    "intro": "Six étapes combinent le pilote contrôlé d’appels manqués et la relance Starter liée. La réservation, le pipeline et l’attribution de revenus représentent seulement les résultats d’un pilote Growth admissible.",
-    "metaDescription": "Découvrez le pilote contrôlé d’appels manqués et la relance Starter liée. Les scènes de réservation représentent seulement un pilote Growth admissible; Google Calendar exige une inscription distincte au pilote technique; Outlook reste prévu.",
+    "headline": "Du premier contact au travail réservé — selon le forfait.",
+    "intro": "Starter récupère les appels manqués par texto. Growth répond au téléphone avec des fonctions de réception limitées et réserve dans l'espace de travail. Réceptionniste Plus est la réception complète. Utilisez le parcours sur cette page pour ne voir que ce que chaque forfait inclut.",
+    "metaDescription": "Voyez comment TradeCatch fonctionne avec Starter (SMS), Growth (réponse téléphonique limitée) et Réceptionniste Plus (réceptionniste bilingue complète).",
     "stages": [
       {
         "title": "Le client contacte l'entreprise",
@@ -981,20 +981,20 @@
   "pricing": {
     "eyebrow": "Tarifs",
     "headline": "Trois forfaits. Un seul but : arrêter de perdre des clients que vous payez déjà pour attirer.",
-    "intro": "Starter récupère les appels manqués, les demandes du site et les soumissions sans nouvelles. Growth prend les rendez-vous et suit le travail. Réceptionniste répond au téléphone 24/7 en français et en anglais, et inclut les deux.",
-    "reassurance": "Installation fixe. Mois par mois. Résiliation avec préavis.",
-    "metaDescription": "Tarifs TradeCatch pour entrepreneurs : Starter pour la récupération des appels manqués, Growth pour la prise de rendez-vous et les relances, et le forfait Réceptionniste qui répond aux appels 24/7 en français et en anglais.",
+    "intro": "Starter récupère les appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée et réserve le travail dans l'espace de travail. Réceptionniste Plus est la réception bilingue complète, et inclut les deux.",
+    "reassurance": "Installation fixe. Mois par mois. Annulation avec préavis.",
+    "metaDescription": "Tarifs TradeCatch : récupération SMS Starter, réponse téléphonique limitée Growth, et Réceptionniste Plus — la réception bilingue complète pour les entrepreneurs du Québec.",
     "principles": [
-      "Starter rattrape les demandes qui filent",
-      "Growth les réserve et les suit, et inclut Starter",
-      "Réceptionniste répond au téléphone, et inclut les deux",
-      "Rien ne part tant que vous n’avez pas approuvé les messages"
+      "Starter rattrape les appels manqués par texto",
+      "Growth répond au téléphone avec des fonctions de réception limitées, et inclut Starter",
+      "Réceptionniste Plus est la réception complète, et inclut les deux",
+      "Rien n'est envoyé ni dit tant que vous n'avez pas approuvé le libellé"
     ],
     "tiers": [
       {
         "name": "Starter",
-        "tagline": "Rattrapez le travail qui file",
-        "outcome": "Les appels manqués reçoivent un texto. Les demandes du site reçoivent une réponse. Les soumissions sans nouvelles sont relancées, dans la langue du client, avec un texte que vous approuvez d’abord.",
+        "tagline": "Réceptionniste SMS pour les appels manqués",
+        "outcome": "Les appels manqués reçoivent un texto. Les demandes web reçoivent une réponse. Les soumissions silencieuses sont relancées, dans la langue du client, avec un libellé que vous approuvez d'abord. Starter ne répond pas au téléphone.",
         "price": "799,99 $ d'installation",
         "setupAmount": "799,99 $",
         "cadence": "349,99 $ / mois",
@@ -1042,60 +1042,70 @@
         "name": "Growth",
         "badge": "Le plus choisi",
         "emphasis": "featured",
-        "tagline": "Transformez ces demandes en visites réservées",
-        "outcome": "Tout Starter, puis la réservation dans l’espace, les rappels, un pipeline, les valeurs gagnées que vous enregistrez et les demandes d’avis.",
+        "tagline": "Réceptionniste limitée qui répond au téléphone",
+        "outcome": "Tout Starter, plus une réceptionniste qui répond aux appels en français ou en anglais, capture qui appelle et ce dont il a besoin, répond à partir de vos informations approuvées, et envoie un résumé à votre équipe — puis réservation, pipeline et avis dans l'espace de travail.",
         "price": "1 499,99 $ d'installation",
         "setupAmount": "1 499,99 $",
         "cadence": "649,99 $ / mois",
         "monthlyAmount": "649,99 $",
-        "idealFor": "Équipes qui rattrapent déjà des demandes et veulent maintenant les voir au calendrier.",
-        "reassuranceLine": "Le montant mensuel sur cette carte est le tarif. Tout dépassement de l’allocation écrite est confirmé avec vous avant d’être facturé. Growth inclut Starter.",
+        "idealFor": "Les équipes qui veulent que le téléphone soit décroché et les leads au calendrier, sans l'ensemble complet Plus (transfert et réservation pendant l'appel).",
+        "reassuranceLine": "Growth répond au téléphone avec des fonctions de réception limitées. Transfert en direct, réservation pendant l'appel, pont d'urgence et transcriptions complètes sont Réceptionniste Plus. L'usage au-delà de l'allocation écrite est confirmé avec vous avant facturation.",
         "groups": [
+          {
+            "title": "Répondre (limité)",
+            "items": [
+              "Réponse téléphonique en français ou en anglais",
+              "Coordonnées et besoins recueillis en direct",
+              "Réponses tirées de vos informations d'entreprise approuvées",
+              "Demandes de rendez-vous résumées pour confirmation par votre équipe",
+              "Résumé d'appel envoyé à votre équipe"
+            ]
+          },
           {
             "title": "Réserver",
             "items": [
-              "Prise de rendez-vous dans l’espace",
-              "Rappels de rendez-vous par texto"
+              "Prise de rendez-vous dans l'espace de travail",
+              "Rappels de rendez-vous par SMS"
             ]
           },
           {
             "title": "Gérer",
             "items": [
-              "Un pipeline du travail ouvert",
+              "Un pipeline de travail ouvert",
               "Routage et escalade entre techniciens"
             ]
           },
           {
             "title": "Mesurer",
             "items": [
-              "Revenu gagné à partir des jobs que vous fermez",
+              "Revenus gagnés sur les jobs que vous fermez",
               "Analytique et export CSV"
             ]
           },
           {
-            "title": "Grandir",
+            "title": "Croître",
             "items": [
-              "Relances de suivi avancées",
-              "Textos de demande d’avis Google"
+              "Séquences de relance avancées",
+              "Textos de demande d'avis Google"
             ]
           }
         ],
         "includesPrevious": "Tout ce qui est dans Starter, plus :",
         "planInterest": "growth",
-        "stepUp": "Ajoute la prise de rendez-vous, le pipeline, l’attribution et les avis : 300,00 $ par mois et 700,00 $ d’installation de plus que Starter."
+        "stepUp": "Ajoute la réponse téléphonique limitée, la réservation, le pipeline, l'attribution et les avis : 300,00 $ de plus par mois et 700,00 $ de plus à l'installation que Starter."
       },
       {
-        "name": "Réceptionniste",
-        "badge": "Ne manque jamais un appel",
+        "name": "Réceptionniste Plus",
+        "badge": "Réceptionniste complète",
         "emphasis": "premium",
-        "tagline": "On répond au téléphone",
-        "outcome": "Une réception qui décroche 24/7 en français et en anglais, qualifie le travail, prend la demande de rendez-vous et transfère les appels qui ont besoin d’une personne. Starter et Growth restent en dessous.",
+        "tagline": "La réception bilingue complète",
+        "outcome": "Tout Starter et Growth, plus la réservation pendant l'appel, le transfert en direct, le pont d'urgence, les transcriptions si activées, et le palier d'automatisation avancé.",
         "price": "1 999,99 $ d'installation",
         "setupAmount": "1 999,99 $",
         "cadence": "949,99 $ / mois",
         "monthlyAmount": "949,99 $",
-        "idealFor": "Entreprises dont le téléphone sonne le soir, ou pendant que l’équipe est sur un chantier.",
-        "reassuranceLine": "La mise en place couvre la base de connaissances, l’accueil, les règles de demande de rendez-vous, les cibles de transfert et l’acheminement des urgences. L’intégration est obligatoire avant la mise en ligne de la ligne.",
+        "idealFor": "Les entreprises dont le téléphone doit être entièrement pris en charge — hors heures, sur chantier, avec transfert et réservation pendant l'appel.",
+        "reassuranceLine": "L'installation couvre la base de connaissances, l'accueil, les règles de réservation pendant l'appel, les cibles de transfert et l'acheminement d'urgence. L'intégration est obligatoire avant la mise en ligne.",
         "usageNote": "L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables, convenues par écrit lors de la démo.",
         "includesPrevious": "Tout Starter et tout Growth, plus :",
         "ctaLabel": "Réserver un audit gratuit de 20 minutes",
@@ -1137,7 +1147,7 @@
         "ctaHref": "/book-audit",
         "secondaryCtaHref": "/receptionist#try-it",
         "planInterest": "receptionist",
-        "stepUp": "Ajoute la ligne téléphonique bilingue 24/7 : 300,00 $ par mois et 500,00 $ d’installation de plus que Growth."
+        "stepUp": "Ajoute l'expérience réceptionniste complète : 300,00 $ de plus par mois et 500,00 $ de plus à l'installation que Growth."
       }
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
@@ -1155,11 +1165,11 @@
     "details": [
       {
         "title": "Fonctionnement des accès pilotes et des droits",
-        "body": "Toutes les capacités présentées sont des modules pilotes configurés avec le fondateur, et non un SaaS libre-service. La récupération d’appels manqués est le cœur contrôlé; la capture web et la relance sont des pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’analytique avancée exigent une organisation Growth admissible et liée. Google Calendar est un pilote technique Growth sur inscription distincte, pas une fonction généralement disponible. Outlook et le CRM bidirectionnel natif restent prévus."
+        "body": "Toutes les capacités listées sont des modules pilotes configurés avec le fondateur, pas un SaaS en libre-service. La récupération d'appels manqués est le cœur contrôlé sur Starter. Growth ajoute la réponse téléphonique limitée plus la réservation, les rappels, le pipeline, l'attribution, les avis et l'analytique avancée dans une organisation liée. Réceptionniste Plus ajoute la réservation pendant l'appel, le transfert en direct, le pont d'urgence et les transcriptions. Google Calendar est un pilote technique Growth inscrit séparément, pas une version générale. Outlook et la sync CRM bidirectionnelle native restent prévus."
       },
       {
-        "title": "Ce que couvre l’installation du Réceptionniste",
-        "body": "Les frais d’installation couvrent la configuration : base de connaissances, accueil et déroulement des conversations, questions de qualification, règles de réservation, cibles de transfert, définitions d’urgence et tests. La ligne n’est mise en service qu’une fois que vous avez approuvé ce qu’elle dit."
+        "title": "Ce que couvre l'installation Réceptionniste Plus",
+        "body": "Les frais d'installation couvrent le travail de configuration : base de connaissances, accueil et conception de conversation, questions de qualification, règles de réservation, cibles de transfert, définitions d'urgence et tests. La ligne n'est pas mise en ligne tant que vous n'avez pas approuvé ce qu'elle dit."
       },
       {
         "title": "Utilisation des appels",
@@ -1198,7 +1208,7 @@
       "columns": [
         "Starter",
         "Growth",
-        "Réceptionniste"
+        "Réceptionniste Plus"
       ],
       "includedLabel": "Inclus",
       "notIncludedLabel": "Non inclus",
@@ -1301,47 +1311,7 @@
           ]
         },
         {
-          "feature": "Réponse téléphonique",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Réceptionniste bilingue 24/7",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
           "feature": "Qualification pendant l’appel",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Demandes de rendez-vous par téléphone",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Transfert d’appel à un humain",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Acheminement des appels d’urgence",
           "values": [
             "n",
             "n",
@@ -1357,7 +1327,71 @@
           ]
         },
         {
-          "feature": "Transcriptions et messages vocaux enregistrés lorsque activés",
+          "feature": "Réponse téléphonique",
+          "values": [
+            "n",
+            "y",
+            "y"
+          ]
+        },
+        {
+          "feature": "Réceptionniste bilingue 24/7",
+          "values": [
+            "n",
+            "l",
+            "y"
+          ]
+        },
+        {
+          "feature": "Qualification du lead pendant l'appel",
+          "values": [
+            "n",
+            "y",
+            "y"
+          ]
+        },
+        {
+          "feature": "Demandes de rendez-vous par téléphone",
+          "values": [
+            "n",
+            "l",
+            "y"
+          ]
+        },
+        {
+          "feature": "Résumé d'appel à votre équipe",
+          "values": [
+            "n",
+            "y",
+            "y"
+          ]
+        },
+        {
+          "feature": "Réservation pendant l'appel",
+          "values": [
+            "n",
+            "n",
+            "y"
+          ]
+        },
+        {
+          "feature": "Transfert d'appel à un humain",
+          "values": [
+            "n",
+            "n",
+            "y"
+          ]
+        },
+        {
+          "feature": "Acheminement des appels d'urgence",
+          "values": [
+            "n",
+            "n",
+            "y"
+          ]
+        },
+        {
+          "feature": "Transcriptions et messagerie vocale si activés",
           "values": [
             "n",
             "n",
@@ -1373,7 +1407,8 @@
           ]
         }
       ],
-      "note": "Chaque fonction ci-dessus est un module de pilote configuré par le fondateur, pas un logiciel en libre-service. Les éléments marqués « prévu » ne sont pas encore offerts et ne sont jamais sous-entendus dans une soumission."
+      "note": "Chaque capacité ci-dessus est un module pilote configuré avec le fondateur, pas un logiciel en libre-service. « Limité » signifie que Growth inclut une version plus petite que Réceptionniste Plus. Les éléments marqués prévus ne sont pas encore offerts et ne sont jamais implicites dans une soumission.",
+      "limitedLabel": "Limité"
     },
     "breakEven": {
       "eyebrow": "Faites le calcul",
@@ -1388,7 +1423,7 @@
       "monthOne": "1 mois",
       "partMonth": "{value} % d’un mois",
       "invalid": "Entrez un montant supérieur à zéro.",
-      "note": "Frais mensuels seulement. L’installation est payée une fois et l’utilisation des appels est convenue par écrit. C’est de l’arithmétique sur votre propre chiffre, pas une promesse qu’un forfait récupère un nombre donné de contrats.",
+      "note": "Frais mensuels seulement. L'installation est payée une fois et l'usage des appels est convenu par écrit. C'est de l'arithmétique sur votre chiffre, pas une promesse qu'un forfait récupère un nombre donné de jobs.",
       "cta": "Réserver un audit gratuit de 20 minutes"
     },
     "onceLabel": "payé une fois",
@@ -1598,7 +1633,12 @@
       "turnstileLabel": "Vérification de sécurité",
       "reviewNote": "Vérifiez vos réponses ci-dessous, puis soumettez votre demande.",
       "questions": {
-        "contact": { "id": "contact", "label": "Coordonnées", "title": "Comment pouvons-nous vous joindre?", "help": "Votre courriel professionnel et le meilleur numéro pour votre audit. Aucune donnée de paiement requise." },
+        "contact": {
+          "id": "contact",
+          "label": "Coordonnées",
+          "title": "Comment pouvons-nous vous joindre?",
+          "help": "Votre courriel professionnel et le meilleur numéro pour votre audit. Aucune donnée de paiement requise."
+        },
         "name": {
           "id": "name",
           "label": "Nom",
@@ -1745,15 +1785,15 @@
   "faq": {
     "eyebrow": "FAQ",
     "headline": "Des réponses directes, y compris les inconfortables.",
-    "metaDescription": "Réponses sur le fonctionnement du système d'appels manqués et de relance de soumissions, ce qui reste humain et ce qu'il ne fait pas.",
+    "metaDescription": "Réponses sur la récupération SMS Starter, la réponse téléphonique limitée Growth, Réceptionniste Plus, ce qui reste humain, et ce que TradeCatch ne fait pas.",
     "items": [
       {
         "q": "Est-ce que le système parle directement aux clients?",
-        "a": "Ça dépend du forfait. Avec Starter et Growth, le système ne répond pas au téléphone : un appel manqué déclenche un texto immédiat en français ou en anglais que vous avez approuvé, les détails du job sont recueillis et votre technicien est alerté. Avec le forfait Réceptionniste, il répond aux appels entrants et parle à l’appelant, uniquement à partir des informations d’entreprise que vous avez approuvées. Dans tous les cas, les prix, le diagnostic et la négociation restent avec votre équipe."
+        "a": "Ça dépend du forfait. Avec Starter, le système ne répond pas au téléphone : un appel manqué déclenche un texto immédiat en français ou en anglais que vous avez approuvé, les détails du job sont recueillis et votre technicien est alerté. Avec Growth, une réceptionniste limitée répond aux appels entrants, capture qui appelle et ce dont il a besoin, répond à partir de vos informations approuvées, et envoie un résumé à votre équipe — elle ne réserve pas pendant l'appel, ne transfère pas en direct et n'achemine pas les urgences. Avec Réceptionniste Plus, elle fait le travail complet, uniquement à partir des informations d'entreprise que vous avez approuvées. Dans tous les cas, les prix, le diagnostic et la négociation restent avec votre équipe."
       },
       {
         "q": "Est-ce que ça remplace notre réceptionniste?",
-        "a": "Non. Starter et Growth absorbent le travail répétitif d’appels manqués et de relances. Le forfait Réceptionniste répond aux appels que votre équipe ne peut pas prendre et transfère à une personne tout ce qui est délicat, complexe ou urgent. Il est conçu pour couvrir les appels qui resteraient sans réponse, pas pour remplacer votre monde."
+        "a": "Non. Starter absorbe le travail répétitif d'appels manqués et de relances. Growth répond aux appels que votre équipe ne peut pas prendre avec des fonctions de réception limitées. Réceptionniste Plus est la réception complète et remet à une personne tout ce qui est délicat, complexe ou urgent. Il est conçu pour couvrir les appels sans réponse, pas pour remplacer votre monde."
       },
       {
         "q": "Que se passe-t-il en cas d'urgence?",
@@ -1789,7 +1829,7 @@
       },
       {
         "q": "Est-ce que TradeCatch peut répondre au téléphone, pas seulement par texto?",
-        "a": "Oui, avec le forfait Réceptionniste. Le système répond aux appels entrants en français ou en anglais, qualifie l’appelant, prend les demandes de rendez-vous pour que votre équipe les confirme, transfère les appels qui exigent une personne et achemine les urgences vers votre ligne de garde. La récupération des appels manqués, les relances et l’espace de travail continuent en dessous. Il est configuré avec vous à l’intégration et n’est pas mis en ligne avant que vous approuviez ce qu’il dit."
+        "a": "Oui. Growth inclut une réponse téléphonique limitée (qualifier, résumer, répondre à partir de vos informations). Réceptionniste Plus ajoute la réservation pendant l'appel, le transfert en direct, le pont d'urgence et les transcriptions si activées. La récupération d'appels manqués et l'espace de travail continuent en dessous. Rien n'est mis en ligne tant que vous n'avez pas approuvé ce qu'elle dit."
       }
     ],
     "stillHave": {
@@ -1875,7 +1915,7 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Les capacités sont offertes seulement dans un pilote contrôlé encadré par le fondateur et lorsqu’elles figurent explicitement dans une proposition écrite. La récupération d’appels manqués est le parcours pilote principal; la capture web et la relance de soumissions sont des modules pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’historique d’activité exigent une organisation Growth admissible et liée. La réponse téléphonique automatisée, la qualification et la prise de rendez-vous par téléphone, le transfert d’appel à un humain, l’acheminement des appels d’urgence et les résumés d’appel font partie du forfait Réceptionniste et sont configurés par entreprise au démarrage; l’utilisation des appels est soumise à l’allocation et aux limites prévues dans la proposition écrite. Google Calendar exige une inscription distincte au pilote technique Growth et n’est pas inclus par défaut. Outlook et le CRM bidirectionnel natif restent prévus. Les présentes conditions ne décrivent ni un lancement SaaS libre-service ni une garantie que le produit est prêt pour la production."
+          "body": "TradeCatch conçoit, installe et gère des processus de communication automatisés pour les entreprises de service. Les capacités sont offertes seulement dans un pilote contrôlé encadré par le fondateur et lorsqu’elles figurent explicitement dans une proposition écrite. La récupération d’appels manqués est le parcours pilote principal; la capture web et la relance de soumissions sont des modules pilotes Starter liés; la réservation, les rappels, le pipeline, l’attribution, les avis et l’historique d’activité exigent une organisation Growth admissible et liée. La réponse téléphonique limitée et les résumés d'appel font partie de Growth. La réservation pendant l'appel, le transfert humain, l'acheminement d'urgence et les transcriptions font partie de Réceptionniste Plus. Google Calendar exige une inscription distincte au pilote technique Growth et n’est pas inclus par défaut. Outlook et le CRM bidirectionnel natif restent prévus. Les présentes conditions ne décrivent ni un lancement SaaS libre-service ni une garantie que le produit est prêt pour la production."
         },
         {
           "heading": "Responsabilités du client",
@@ -2061,7 +2101,7 @@
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
     "pricingTitle": "Prix affichés",
-    "pricing": "Starter : 799,99 $ d’installation, puis 349,99 $ / mois. Growth : 1 499,99 $ d’installation, puis 649,99 $ / mois, et inclut Starter. Réceptionniste : 1 999,99 $ d’installation, puis 949,99 $ / mois, et inclut Starter et Growth en plus de la réponse téléphonique bilingue 24/7, des demandes de rendez-vous par téléphone, du transfert à un humain et de l’acheminement d’urgence. L’utilisation des appels est soumise à l’allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
+    "pricing": "Starter : 799,99 $ d'installation, puis 349,99 $ / mois — récupération SMS des appels manqués. Growth : 1 499,99 $ d'installation, puis 649,99 $ / mois, inclut Starter plus réponse téléphonique limitée et réservation dans l'espace de travail. Réceptionniste Plus : 1 999,99 $ d'installation, puis 949,99 $ / mois, inclut Starter et Growth plus réponse téléphonique bilingue complète, réservation pendant l'appel, transfert humain et acheminement d'urgence. Option Créateur de site web : 349,99 $. L'utilisation des appels est soumise à l'allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
     "pilotTitle": "Programme pilote",
     "pilot": "Nous acceptons maintenant des entrepreneurs fondateurs : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
@@ -2160,7 +2200,8 @@
       "missedCall": "Relance des appels manqués",
       "quoteFollowUps": "Suivi des soumissions",
       "reminders": "Rappels de rendez-vous",
-      "account": "Profil de l’entreprise"
+      "account": "Profil de l’entreprise",
+      "referrals": "Parrainage"
     },
     "automations": {
       "headline": "Automatisations",
@@ -2380,8 +2421,9 @@
       "autoSaved": "Enregistré."
     },
     "plan": {
-      "starter": "Starter — Pilote de récupération de leads",
-      "growth": "Growth — Pilote de conversion admissible"
+      "starter": "Starter — Réceptionniste SMS",
+      "growth": "Growth — Réceptionniste limitée",
+      "receptionist": "Réceptionniste Plus — Réceptionniste complète"
     },
     "dashboard": {
       "headline": "Ce que TradeCatch a fait pour vous",
@@ -3219,8 +3261,16 @@
       "requestReference": "Référence : {id}",
       "requestSending": "Envoi de la demande…",
       "requestNone": "Aucune demande récente de modification du compte.",
-      "requestKinds": { "suspension": "Suspension", "reactivation": "Réactivation", "deletion": "Suppression" },
-      "requestStatuses": { "requested": "En attente d’examen", "in_review": "En cours d’examen", "completed": "Examen terminé" },
+      "requestKinds": {
+        "suspension": "Suspension",
+        "reactivation": "Réactivation",
+        "deletion": "Suppression"
+      },
+      "requestStatuses": {
+        "requested": "En attente d’examen",
+        "in_review": "En cours d’examen",
+        "completed": "Examen terminé"
+      },
       "export": "Exporter les données",
       "deletion": "Demander la suppression",
       "deletionNote": "La suppression est examinée d’abord. Cette demande n’efface pas les dossiers.",
@@ -3473,7 +3523,9 @@
         "urgency": "Urgence",
         "transfer": "Transfert",
         "yes": "Oui"
-      }
+      },
+      "plusOnlyTransfer": "Le transfert d'appel en direct et le routage par département font partie de Réceptionniste Plus. Growth répond quand même au téléphone et envoie un résumé à votre équipe.",
+      "plusOnlyBooking": "La réservation d'un créneau pendant l'appel fait partie de Réceptionniste Plus. Avec Growth, les heures préférées sont recueillies et confirmées par votre équipe."
     },
     "phoneSettings": {
       "headline": "Paramètres téléphone",
@@ -3584,6 +3636,10 @@
         ],
         "preferred_time": [
           "Demain matin"
+        ],
+        "confirm": [
+          "Oui",
+          "Non"
         ],
         "anything_else": [
           "Non merci",
@@ -4232,7 +4288,294 @@
       "suspendedStatus": "Suspendu",
       "churnedStatus": "Annulé",
       "open": "Ouvrir",
-      "supportLink": "Bureau de support"
+      "supportLink": "Bureau de support",
+      "navReferrals": "Parrainage"
+    }
+  },
+  "plans": {
+    "names": {
+      "starter": "Starter",
+      "growth": "Growth",
+      "receptionist": "Réceptionniste Plus"
+    },
+    "kind": {
+      "starter": "Réceptionniste SMS",
+      "growth": "Réceptionniste limitée",
+      "receptionist": "Réceptionniste complète"
+    },
+    "channels": {
+      "sms": "SMS automatisés sur les appels manqués, les demandes web et les soumissions sans réponse. Ne répond pas au téléphone.",
+      "voice-essentials": "Répond aux appels en français ou en anglais, qualifie le travail, répond à partir de vos informations approuvées et envoie un résumé à votre équipe. Ne réserve pas pendant l'appel, ne transfère pas en direct et n'achemine pas les urgences.",
+      "voice-complete": "Réceptionniste complète : répond, qualifie, réserve pendant l'appel, transfère à une personne, achemine les urgences et conserve les transcriptions lorsqu'elles sont activées."
+    },
+    "availability": {
+      "included": "Inclus",
+      "notIncluded": "Non inclus",
+      "planned": "Prévu",
+      "limited": "Limité"
+    },
+    "capabilities": {
+      "missedCallTextBack": {
+        "label": "Texto de rappel sur appel manqué",
+        "demoTitle": "Appel manqué, texto immédiat",
+        "demoBody": "Un propriétaire appelle pendant que votre équipe est sur un chantier. TradeCatch lui répond par texto en français ou en anglais, avec le libellé que vous avez approuvé."
+      },
+      "bilingualSms": {
+        "label": "SMS bilingue (français et anglais)",
+        "demoTitle": "Le client choisit la langue",
+        "demoBody": "La première réponse propose le français ou l'anglais. Le fil reste dans la langue choisie."
+      },
+      "websiteReply": {
+        "label": "Réponse aux demandes web",
+        "demoTitle": "Demande web traitée",
+        "demoBody": "Une soumission sur votre site suit le même parcours de réponse approuvé qu'un appel manqué."
+      },
+      "leadQualification": {
+        "label": "Qualification du lead",
+        "demoTitle": "Détails recueillis par texto",
+        "demoBody": "Adresse, type de service et urgence sont recueillis avant le rappel, pour que le bon technicien connaisse déjà le travail."
+      },
+      "quoteFollowUp": {
+        "label": "Relance de soumissions",
+        "demoTitle": "Les soumissions silencieuses sont relancées",
+        "demoBody": "Quand une estimation reste sans réponse, la séquence Starter envoie des relances approuvées et s'arrête dès que le client répond."
+      },
+      "humanTakeover": {
+        "label": "Prise en charge humaine",
+        "demoTitle": "Une personne peut reprendre",
+        "demoBody": "Tout fil peut être remis à votre équipe. L'automatisation ne prétend jamais qu'un humain écrit quand une personne a repris."
+      },
+      "leadDashboard": {
+        "label": "Tableau de bord des leads",
+        "demoTitle": "Ce qui est entré, au même endroit",
+        "demoBody": "Les leads récupérés et les résultats apparaissent dans un rapport simple."
+      },
+      "appointmentBooking": {
+        "label": "Prise de rendez-vous dans l'espace de travail",
+        "demoTitle": "Réserver depuis l'espace de travail",
+        "demoBody": "Une fois le lead prêt, Growth permet de réserver la visite dans l'espace lié et de poursuivre les rappels."
+      },
+      "pipeline": {
+        "label": "Pipeline et attribution des revenus",
+        "demoTitle": "Le travail ouvert reste visible",
+        "demoBody": "Les jobs ouverts restent dans un pipeline avec les valeurs gagnées que vous enregistrez."
+      },
+      "followUpSequences": {
+        "label": "Séquences de relance avancées",
+        "demoTitle": "Relances qui s'arrêtent à la réponse",
+        "demoBody": "Les séquences continuent de relancer le travail silencieux et s'arrêtent dès qu'un client répond ou se désabonne."
+      },
+      "reviewRequests": {
+        "label": "Demandes d'avis Google",
+        "demoTitle": "Demander l'avis après le job",
+        "demoBody": "Après un job terminé, Growth peut envoyer un texto de demande d'avis approuvé."
+      },
+      "aiAnswersCalls": {
+        "label": "Réponse téléphonique (français et anglais)",
+        "demoTitle": "La ligne est décrochée",
+        "demoBody": "Un appel entrant est répondu en français ou en anglais. La réceptionniste salue l'appelant avec le nom d'entreprise approuvé."
+      },
+      "callerDetails": {
+        "label": "Coordonnées de l'appelant en direct",
+        "demoTitle": "Qui appelle, et pour quoi",
+        "demoBody": "Nom, numéro de rappel, service et adresse sont recueillis pendant la conversation."
+      },
+      "businessAnswers": {
+        "label": "Réponses à partir de vos informations approuvées",
+        "demoTitle": "Des réponses que vous avez approuvées",
+        "demoBody": "Heures, zone de service et questions courantes sont répondues uniquement à partir des informations que vous avez revues."
+      },
+      "appointmentRequests": {
+        "label": "Demandes de rendez-vous par téléphone",
+        "demoTitle": "Heure préférée recueillie",
+        "demoBody": "L'appelant indique une heure préférée. Avec Growth, la demande est résumée pour confirmation ; avec Réceptionniste Plus, elle peut être réservée pendant l'appel si activé."
+      },
+      "callSummary": {
+        "label": "Résumé d'appel à votre équipe",
+        "demoTitle": "Résumé après l'appel",
+        "demoBody": "À la fin de l'appel, votre équipe reçoit un résumé structuré et la prochaine action."
+      },
+      "phoneBooking": {
+        "label": "Réservation pendant l'appel",
+        "demoTitle": "Réservé pendant qu'ils sont encore en ligne",
+        "demoBody": "Réceptionniste Plus peut réserver un créneau pendant l'appel lorsque la réservation téléphonique est activée."
+      },
+      "callTransfer": {
+        "label": "Transfert d'appel en direct",
+        "demoTitle": "Remise à une personne",
+        "demoBody": "Quand l'appelant a besoin d'un humain, la réceptionniste transfère l'appel en direct vers le propriétaire, le bureau, les ventes ou le technicien de garde."
+      },
+      "emergencyRouting": {
+        "label": "Acheminement des appels d'urgence",
+        "demoTitle": "Les urgences rejoignent la garde",
+        "demoBody": "Les urgences suivent vos règles : alerte immédiate et, avec Réceptionniste Plus, pont vers la ligne de garde si configuré."
+      },
+      "transcripts": {
+        "label": "Transcriptions et enregistrements si activés",
+        "demoTitle": "Transcription quand vous le voulez",
+        "demoBody": "Les transcriptions et enregistrements restent désactivés jusqu'à ce que vous les activiez."
+      },
+      "customerRecords": {
+        "label": "Fiches clients",
+        "demoTitle": "Appelant lié à une fiche",
+        "demoBody": "Les détails de l'appelant sont associés à une fiche client pour le prochain contact."
+      },
+      "crewCalendars": {
+        "label": "Calendriers multi-équipes",
+        "demoTitle": "Plus d'un calendrier",
+        "demoBody": "Réceptionniste Plus peut réserver sur les calendriers d'équipe inclus dans votre allocation."
+      },
+      "reactivation": {
+        "label": "Réactivation clients",
+        "demoTitle": "Les clients silencieux sont relancés",
+        "demoBody": "Les anciens clients devenus silencieux peuvent être relancés avec des séquences approuvées sur Réceptionniste Plus."
+      },
+      "outlookSync": {
+        "label": "Sync calendrier Outlook native",
+        "demoTitle": "Sync Outlook (prévu)",
+        "demoBody": "La sync Outlook bidirectionnelle native est prévue et n'est jamais implicite dans une soumission aujourd'hui."
+      }
+    },
+    "walkthrough": {
+      "eyebrow": "Voir chaque forfait",
+      "title": "Ce que fait vraiment chaque forfait.",
+      "intro": "Choisissez un forfait. La démonstration ne montre que ce qu'il inclut. Ces scènes sont des exemples de produit illustratifs, pas des images de vrais clients.",
+      "illustrativeLabel": "Parcours illustratif",
+      "selectLabel": "Choisir un forfait à démontrer",
+      "next": "Suivant",
+      "previous": "Précédent",
+      "stepOf": "Étape {current} sur {total}"
+    },
+    "addOns": {
+      "websiteBuilder": {
+        "eyebrow": "Optionnel",
+        "title": "Créateur de site web",
+        "intro": "Un site web d'entrepreneur conçu et géré avec TradeCatch. Offert sur chaque forfait ; jamais inclus automatiquement.",
+        "priceNote": "Option à 349,99 $ CAD.",
+        "schedulePending": "Le mode de facturation est confirmé par écrit avant tout prélèvement.",
+        "availableOn": "Disponible en ajout sur Starter, Growth et Réceptionniste Plus.",
+        "neverIncluded": "Jamais inclus gratuitement avec un abonnement.",
+        "cta": "Demandez le créateur de site à l'audit"
+      }
+    },
+    "referralTeaser": {
+      "cta": "Voir comment fonctionne le parrainage"
+    }
+  },
+  "referrals": {
+    "app": {
+      "headline": "Parrainage",
+      "intro": "Vous connaissez un entrepreneur qui utiliserait TradeCatch? Partagez votre lien. Quand il devient client payant, vous recevez un Interac : 50 $ (Starter), 75 $ (Growth) ou 125 $ (Réceptionniste Plus).",
+      "restricted": "Les récompenses de parrainage sont gérées par le propriétaire du compte ou un administrateur.",
+      "unavailable": "Les détails du parrainage sont temporairement indisponibles. Réessayez dans quelques minutes.",
+      "notEligible": {
+        "program_disabled": "Le programme de parrainage est suspendu pour le moment. Votre lien reviendra à sa reprise.",
+        "organization_inactive": "Les liens de parrainage sont offerts tant que votre compte est actif.",
+        "no_paid_access": "Votre lien de parrainage est débloqué une fois le paiement de l’installation effectué."
+      },
+      "linkTitle": "Votre lien de parrainage",
+      "linkHelp": "Toute personne qui réserve par ce lien vous est créditée. Chaque entreprise ne peut être parrainée qu’une seule fois.",
+      "linkLabel": "Lien de parrainage",
+      "copy": "Copier le lien",
+      "copied": "Copié",
+      "copyFailed": "Copie automatique impossible. Le lien est sélectionné : appuyez sur Ctrl+C (ou Cmd+C).",
+      "share": "Partager…",
+      "shareEmail": "Envoyer par courriel",
+      "shareSms": "Envoyer par texto",
+      "otherLanguage": "Même lien, version anglaise",
+      "shareSubject": "Une idée pour votre entreprise : TradeCatch",
+      "shareMessage": "{business} utilise TradeCatch pour récupérer les appels manqués et ne laisser filer aucun contrat. Jetez-y un œil : {link}",
+      "rewardsTitle": "Ce que vous gagnez",
+      "rewardsIntro": "Le montant Interac dépend du forfait acheté par la personne que vous parrainez, et non du vôtre.",
+      "whenTheyChoose": "Quand il choisit {plan}",
+      "giftCardAmount": "{amount} par Interac",
+      "noReward": "Aucune récompense",
+      "statsTitle": "Vos résultats",
+      "stats": {
+        "signedUp": "Inscrits",
+        "customers": "Devenus clients",
+        "pending": "Récompenses en attente",
+        "earned": "Récompenses gagnées"
+      },
+      "statsNote": "Les gains incluent les récompenses déjà envoyées. Interac envoyés jusqu’ici : {sent}.",
+      "listTitle": "Vos parrainages",
+      "empty": "Aucun parrainage pour le moment. Partagez votre lien pour commencer.",
+      "colBusiness": "Entreprise",
+      "colSignedUp": "Inscription",
+      "colStatus": "Statut",
+      "colReward": "Récompense",
+      "referralStatus": {
+        "signed_up": "Inscrit",
+        "customer": "Client payant",
+        "not_eligible": "Non admissible"
+      },
+      "rewardStatus": {
+        "pending": "en attente",
+        "approved": "approuvée",
+        "issued": "Interac envoyé",
+        "rejected": "non admissible"
+      },
+      "rewardCell": "{amount} · {status}",
+      "historyTitle": "Historique",
+      "history": {
+        "signed_up": "{business} s’est inscrit grâce à votre lien.",
+        "became_customer": "{business} est devenu client payant.",
+        "reward_pending": "Une récompense de {amount} est en attente pour {business}.",
+        "reward_approved": "Votre récompense de {amount} pour {business} a été approuvée.",
+        "reward_issued": "Votre Interac de {amount} pour {business} a été envoyé.",
+        "reward_not_eligible": "La récompense de {amount} pour {business} n’est pas admissible (remboursée, annulée ou invalide)."
+      },
+      "rulesTitle": "Règles du programme",
+      "rules": {
+        "payment": "Vous gagnez une récompense seulement après le paiement réussi des frais d’installation par l’entreprise parrainée.",
+        "plan": "Le montant Interac dépend du forfait qu’elle achète, comme indiqué ci-dessus.",
+        "once": "Chaque entreprise ne peut donner qu’une seule récompense, peu importe le nombre de fois qu’elle est parrainée.",
+        "review": "Les récompenses sont confirmées environ {days} jours après le paiement, une fois vérifié que le client est toujours actif et que le paiement n’a été ni remboursé ni contesté.",
+        "excluded": "Aucune récompense pour un auto-parrainage, une inscription en double, ni pour un achat remboursé, contesté ou annulé.",
+        "privacy": "Vous voyez le nom et le statut des entreprises que vous parrainez, et rien d’autre à leur sujet."
+      }
+    },
+    "public": {
+      "metaTitle": "Programme de parrainage",
+      "metaDescription": "Parrainez un entrepreneur chez TradeCatch et recevez un Interac selon le forfait qu’il choisit.",
+      "eyebrow": "Programme de parrainage",
+      "headline": "Parrainez un entrepreneur. Recevez un Interac quand il s’abonne.",
+      "intro": "Partagez votre lien. Quand l’entrepreneur que vous parrainez paie ses frais d’installation, vous recevez un Interac : 50 $ CAD pour Starter, 75 $ pour Growth, 125 $ pour Réceptionniste Plus.",
+      "referredBanner": "Un client de TradeCatch vous a envoyé ici. Réservez votre audit gratuit : si vous devenez client, cette personne est créditée automatiquement.",
+      "paused": "Le programme de parrainage est suspendu pour le moment. Revenez bientôt.",
+      "rewardsTitle": "Ce que vous gagnez",
+      "rewardsIntro": "Le montant Interac dépend du forfait acheté par la personne que vous parrainez.",
+      "youEarn": "Vous gagnez",
+      "giftCard": "par Interac",
+      "noReward": "Aucune récompense",
+      "amountsNote": "Les montants sont en dollars canadiens et valables à ce jour. Voir les règles du programme ci-dessous.",
+      "stepsTitle": "Comment ça marche",
+      "steps": {
+        "share": {
+          "title": "Partagez votre lien",
+          "body": "Les clients trouvent leur lien personnel dans le tableau de bord TradeCatch, sous Parrainage."
+        },
+        "book": {
+          "title": "Il réserve un audit gratuit",
+          "body": "Il discute avec nous, choisit un forfait et paie les frais d’installation uniques."
+        },
+        "earn": {
+          "title": "Vous recevez un Interac",
+          "body": "Une fois son paiement confirmé et la période de vérification écoulée, nous vous envoyons l’Interac."
+        }
+      },
+      "cta": "Réserver un audit gratuit",
+      "existingCustomer": "Déjà client? Obtenez votre lien",
+      "rulesTitle": "Règles du programme",
+      "rules": {
+        "payment": "Une récompense n’est gagnée qu’après le paiement réussi des frais d’installation par l’entreprise parrainée.",
+        "plan": "Le montant Interac dépend du forfait que cette entreprise achète, et non du vôtre.",
+        "once": "Une seule récompense par entreprise parrainée, peu importe le nombre de fois qu’elle est parrainée. Se parrainer soi-même ou inscrire deux fois la même entreprise ne donne pas droit à une récompense.",
+        "review": "Nous confirmons les récompenses environ {days} jours après le paiement, une fois vérifié que le client est toujours actif et que le paiement n’a été ni remboursé ni contesté. Un achat remboursé, contesté, annulé ou invalide ne donne aucune récompense.",
+        "excluded": "Les récompenses sont réservées aux nouveaux clients.",
+        "delivery": "Les Interac sont envoyés par TradeCatch après approbation de la récompense. TradeCatch peut modifier ou suspendre le programme.",
+        "storage": "Quand vous ouvrez un lien de parrainage, un code est conservé dans ce navigateur jusqu’à 60 jours afin de créditer le bon client si vous réservez. Il ne sert à rien d’autre, et vous pouvez le supprimer en effaçant les données de ce site."
+      }
     }
   }
 }

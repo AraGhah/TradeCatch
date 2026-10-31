@@ -4,7 +4,7 @@ import {
   StaggerPop,
 } from "@/components/motion/StaggerGroup";
 
-export type PlanComparisonValue = "y" | "n" | "p";
+export type PlanComparisonValue = "y" | "n" | "p" | "l";
 
 export type PlanComparisonData = {
   eyebrow: string;
@@ -15,6 +15,8 @@ export type PlanComparisonData = {
   includedLabel: string;
   notIncludedLabel: string;
   plannedLabel: string;
+  /** Shown for Growth voice essentials that are not the full Plus set. */
+  limitedLabel: string;
   rows: { feature: string; values: PlanComparisonValue[] }[];
   note: string;
 };
@@ -29,6 +31,7 @@ export function PlanComparison({ data }: { data: PlanComparisonData }) {
     y: data.includedLabel,
     n: data.notIncludedLabel,
     p: data.plannedLabel,
+    l: data.limitedLabel,
   };
 
   return (
@@ -108,7 +111,7 @@ function Mark({ value, label }: { value: PlanComparisonValue; label: string }) {
     );
   }
 
-  if (value === "p") {
+  if (value === "p" || value === "l") {
     return (
       <span className="inline-flex items-center justify-center font-mono text-[9px] leading-tight tracking-[0.04em] text-muted uppercase sm:text-[10px]">
         {label}

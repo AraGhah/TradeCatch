@@ -935,7 +935,11 @@ describe("phone booking — off unless the owner turns it on", () => {
 
   it("only captures the requested time when phoneBooking is off", async () => {
     const ctx = setup({ config: makeConfig({ phoneBooking: false }) });
-    const plan = await callToOffer(ctx, "CF1");
+    let plan = await callToOffer(ctx, "CF1");
+    // No openings are read out: the request is read back and left for the team.
+    assert.doesNotMatch(texts(plan), /openings/);
+    assert.match(texts(plan), /if I've got this right/);
+    plan = await say(ctx, plan, "yes, that's right");
     assert.match(texts(plan), wrapUp);
     assert.equal((await ctx.scheduling.list(ORG)).length, 0);
     const session = (await ctx.store.getSession(plan.sessionId!))!;

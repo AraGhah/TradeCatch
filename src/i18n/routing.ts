@@ -11,6 +11,7 @@ export const routing = defineRouting({
     "/industries": { en: "/industries", fr: "/industries" },
     "/receptionist": { en: "/receptionist", fr: "/receptionniste" },
     "/pricing": { en: "/pricing", fr: "/tarifs" },
+    "/referral": { en: "/referral", fr: "/parrainage" },
     "/about": { en: "/about", fr: "/a-propos" },
     "/book-audit": { en: "/book-audit", fr: "/reserver-audit" },
     "/faq": { en: "/faq", fr: "/faq" },
@@ -87,6 +88,10 @@ export const routing = defineRouting({
       en: "/admin/businesses/[id]",
       fr: "/admin/businesses/[id]",
     },
+    "/admin/referrals": {
+      en: "/admin/referrals",
+      fr: "/admin/referrals",
+    },
     "/admin/billing": {
       en: "/admin/billing",
       fr: "/admin/billing",
@@ -126,6 +131,10 @@ export const routing = defineRouting({
     "/app": {
       en: "/app",
       fr: "/app",
+    },
+    "/app/referrals": {
+      en: "/app/referrals",
+      fr: "/app/parrainage",
     },
     "/app/conversations": {
       en: "/app/conversations",

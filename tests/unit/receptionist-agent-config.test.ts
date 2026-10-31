@@ -81,8 +81,71 @@ describe("agent config", () => {
 
   it("forbids claiming bookings or submissions the agent cannot make", () => {
     const out = buildAgentConfig(config(), OPEN);
-    assert.match(out.instructions, /no calendar, booking system/);
-    assert.match(out.instructions, /Never say you submitted/);
+    assert.equal(out.bookingEnabled, false);
+    assert.match(out.instructions, /no calendar or booking system/);
+    assert.match(out.instructions, /Never say a time is available, booked, confirmed or scheduled/);
+    assert.match(out.instructions, /Never say you have sent, submitted or scheduled anything yourself/);
+    assert.match(out.instructions, /Never offer a confirmation text or email/);
+    assert.ok(!out.instructions.includes("book_appointment"));
+  });
+
+  it("describes the booking tools, and only a confirmed result as a booking, when phone booking is on", () => {
+    const out = buildAgentConfig(
+      config({ appointmentSettings: { phoneBooking: true } }),
+      OPEN,
+    );
+    assert.equal(out.bookingEnabled, true);
+    assert.match(out.instructions, /check_availability, book_appointment/);
+    assert.match(out.instructions, /ONLY when book_appointment returns status confirmed/);
+    assert.match(out.instructions, /Never invent or guess an opening/);
+    assert.ok(!out.instructions.includes("no calendar or booking system"));
+  });
+
+  it("starts every call in French with one key for English and a short wait", () => {
+    const out = buildAgentConfig(
+      config({ languages: ["en", "fr"], defaultLanguage: "en" }),
+      OPEN,
+    );
+    const menu = out.languageSelect;
+    assert.equal(menu.startLanguage, "fr", "French first even when English is the default");
+    assert.deepEqual(menu.keys, { "1": "en", "2": "fr" });
+    assert.equal(menu.timeoutSeconds, 3);
+    assert.match(menu.opening.statement.text, /Nord Plomberie/);
+    assert.equal(menu.opening.statement.lang, "fr");
+    assert.deepEqual(
+      menu.opening.menu.map((m) => [m.lang, m.text]),
+      [
+        ["fr", "Pour continuer en français, restez en ligne."],
+        ["en", "For English, press 1."],
+      ],
+    );
+    assert.match(menu.afterChoice.fr.question, /Comment puis-je vous aider/);
+    assert.match(menu.afterChoice.en.question, /How can I help you/);
+    assert.match(menu.afterChoice.en.chosen, /continue in English/);
+  });
+
+  it("says nothing about a menu on a single-language line, and carries the after-hours notice", () => {
+    const single = buildAgentConfig(config({ languages: ["fr"], defaultLanguage: "fr" }), CLOSED);
+    assert.deepEqual(single.languageSelect.opening.menu, []);
+    assert.match(single.languageSelect.afterChoice.fr.afterHoursNotice, /\S/);
+    const open = buildAgentConfig(config(), OPEN);
+    assert.equal(open.languageSelect.afterChoice.fr.afterHoursNotice, "");
+  });
+
+  it("passes the approved price, pace, and silence policy to the agent", () => {
+    const priced = buildAgentConfig(
+      config({ speakingSpeed: "slow", knowledge: { companyName: "Nord Plomberie", startingPrices: "Estimations gratuites." } }),
+      OPEN,
+    );
+    assert.match(priced.instructions, /Approved pricing wording .*Estimations gratuites\./);
+    assert.match(priced.instructions, /about 135 words a minute/);
+    assert.equal(priced.speakingSpeed, "slow");
+    assert.equal(priced.silence.maxCheckIns, 1);
+    assert.match(priced.silence.checkIn.fr, /toujours là/);
+    assert.match(priced.silence.goodbye.en, /Goodbye/);
+
+    const unpriced = buildAgentConfig(config(), OPEN);
+    assert.match(unpriced.instructions, /No pricing is approved/);
   });
 });
 

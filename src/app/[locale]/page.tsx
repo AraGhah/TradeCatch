@@ -9,6 +9,10 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { ProofExamplesSection } from "@/components/ProofExamplesSection";
 import { PricingPreview } from "@/components/PricingPreview";
+import {
+  ReferralProgramTeaser,
+  type ReferralProgramTeaserCopy,
+} from "@/components/ReferralProgramTeaser";
 import { WorkflowPreview } from "@/components/WorkflowPreview";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
@@ -52,6 +56,8 @@ export default async function HomePage({
   const t = await getTranslations("home");
   const cta = await getTranslations("cta");
   const site = await getTranslations("site");
+  const plans = await getTranslations("plans");
+  const referralT = await getTranslations("referrals.public");
 
   const tryHref = localizedAnchor(locale, "/receptionist#try-it");
   const headline = t("hero.headline");
@@ -72,6 +78,19 @@ export default async function HomePage({
     text: string;
     time?: string;
   }[];
+  const referralCopy: ReferralProgramTeaserCopy = {
+    eyebrow: referralT("eyebrow"),
+    title: referralT("headline"),
+    intro: referralT("intro"),
+    youEarn: referralT("youEarn"),
+    giftCard: referralT("giftCard"),
+    cta: plans("referralTeaser.cta"),
+    planNames: {
+      starter: plans("names.starter"),
+      growth: plans("names.growth"),
+      receptionist: plans("names.receptionist"),
+    },
+  };
 
   return (
     <>
@@ -421,6 +440,21 @@ export default async function HomePage({
             receptionistCta={t("pricingPreview.receptionistCta")}
             note={t("pricingPreview.note")}
           />
+        </Container>
+      </section>
+
+      <section
+        id="referral"
+        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+        style={{ padding: "var(--section-y) 0" }}
+      >
+        <Container>
+          <div data-reveal>
+            <ReferralProgramTeaser
+              locale={locale === "fr" ? "fr" : "en"}
+              copy={referralCopy}
+            />
+          </div>
         </Container>
       </section>
 
