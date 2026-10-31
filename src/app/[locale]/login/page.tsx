@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { LoginForm } from "@/components/app/LoginForm";
 import { Container } from "@/components/Container";
+import { FullMessagesProvider } from "@/components/FullMessagesProvider";
 
 export default async function LoginPage({
   params,
@@ -24,7 +25,9 @@ export default async function LoginPage({
           <p className="mt-3 text-base text-navy/70">{t("intro")}</p>
         </div>
         <div className="mt-10">
-          <LoginForm />
+          <FullMessagesProvider>
+            <LoginForm />
+          </FullMessagesProvider>
         </div>
       </Container>
     </section>
