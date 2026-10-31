@@ -3637,6 +3637,10 @@
         "preferred_time": [
           "Demain matin"
         ],
+        "confirm": [
+          "Oui",
+          "Non"
+        ],
         "anything_else": [
           "Non merci",
           "Offrez-vous des estimations gratuites?"
