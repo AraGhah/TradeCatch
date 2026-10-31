@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { voiceCapabilitiesForPlan } from "@/product/receptionist/plan-limits";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { getTelephonyRuntime } from "@/product/telephony/runtime";
 import {
@@ -34,6 +35,11 @@ export async function GET(request: NextRequest, { params }: Params) {
     callSid: session.callSid,
   });
 
+  // Growth keeps the summary; the full transcript is a Receptionist Plus feature.
+  const transcripts = voiceCapabilitiesForPlan(
+    access.organization.plan,
+  ).transcripts;
+
   return NextResponse.json({
     ok: true,
     call: {
@@ -51,7 +57,8 @@ export async function GET(request: NextRequest, { params }: Params) {
       urgency: session.urgency,
       afterHours: session.afterHours,
       slots: session.slots,
-      turns: session.turns,
+      turns: transcripts ? session.turns : [],
+      transcriptAvailable: transcripts,
       transfers: session.transfers,
       summary: session.summary,
       recordingUrl: session.recordingUrl,

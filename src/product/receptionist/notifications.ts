@@ -129,7 +129,13 @@ function emailInput(
         label: fr ? "Message vocal" : "Voicemail",
         value: session.recordingUrl,
       },
-      { label: "Transcript", value: transcript.slice(0, 6000) || undefined },
+      {
+        label: "Transcript",
+        value:
+          config.transcriptsEnabled === false
+            ? undefined
+            : transcript.slice(0, 6000) || undefined,
+      },
     ],
   };
 }

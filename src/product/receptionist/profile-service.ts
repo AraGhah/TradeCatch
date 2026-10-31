@@ -5,6 +5,8 @@
  */
 
 import type { ClientAccount } from "@/product/missed-call/types";
+import type { PlanId } from "@/product/saas/entitlements";
+import { voiceCapabilitiesForPlan } from "./plan-limits";
 import {
   defaultProfileSettings,
   profileSettingsSchema,
@@ -31,7 +33,12 @@ export type OwnerSaveDeps = {
 export async function saveOwnerSettings(
   deps: OwnerSaveDeps,
   input: {
-    organization: { id: string; missedCallClientId: string | null };
+    /** `plan` limits what can be switched on; unset (tests, tooling) = no limits. */
+    organization: {
+      id: string;
+      missedCallClientId: string | null;
+      plan?: PlanId;
+    };
     role: "owner" | "admin" | "member" | "viewer";
     userEmail: string;
     body: unknown;
@@ -58,6 +65,26 @@ export async function saveOwnerSettings(
     };
   }
 
+  const capabilities = input.organization.plan
+    ? voiceCapabilitiesForPlan(input.organization.plan)
+    : undefined;
+  // Nobody can switch on what the plan does not include. Anything already
+  // saved (transfer numbers, departments) is simply not used at runtime; see
+  // plan-limits.ts.
+  if (capabilities && !capabilities.phoneBooking) {
+    if (parsed.data.appointmentSettings?.phoneBooking === true) {
+      return {
+        status: 403,
+        body: {
+          error:
+            "Booking appointments during the call is part of Receptionist Plus.",
+          code: "plan_upgrade_required",
+          feature: "AI_PHONE_BOOKING",
+        },
+      };
+    }
+  }
+
   const client = input.organization.missedCallClientId
     ? await deps.getClient(input.organization.missedCallClientId)
     : null;
@@ -80,7 +107,7 @@ export async function saveOwnerSettings(
       settings: parsed.data,
       updatedAt: new Date().toISOString(),
     },
-    { client, env: deps.env },
+    { client, env: deps.env, capabilities },
   );
   if (!checked.ok) {
     return {
@@ -119,9 +146,12 @@ export async function saveOwnerSettings(
 
 export type ActivateDeps = {
   profiles: ProfileStore;
-  getOrganization(
-    id: string,
-  ): Promise<{ id: string; missedCallClientId: string | null } | null>;
+  getOrganization(id: string): Promise<{
+    id: string;
+    missedCallClientId: string | null;
+    /** Unset (tests, tooling) = no plan limits. */
+    plan?: PlanId;
+  } | null>;
   getClient(clientAccountId: string): Promise<ClientAccount | null>;
   refresh(force: boolean): Promise<void>;
   /** True when the profile is now answering calls (after refresh). */
@@ -212,6 +242,21 @@ export async function activateProfile(
   if (!client)
     return { status: 404, body: { error: "Missed-call client not found." } };
 
+  const capabilities = org.plan ? voiceCapabilitiesForPlan(org.plan) : undefined;
+  // Backend gate: the phone line is only switched on for a plan that includes
+  // the voice receptionist. Switching it off is always allowed.
+  if (input.activated && capabilities && !capabilities.voice) {
+    return {
+      status: 403,
+      body: {
+        error:
+          "The voice receptionist is included in Growth and Receptionist Plus.",
+        code: "plan_upgrade_required",
+        feature: "AI_RECEPTIONIST_VOICE",
+      },
+    };
+  }
+
   if (input.activated) {
     // Never go live with settings that would not pass the production checks.
     const existing = await deps.profiles.getProfile(input.organizationId);
@@ -223,7 +268,7 @@ export async function activateProfile(
         settings: existing?.settings ?? defaultProfileSettings(),
         updatedAt: new Date().toISOString(),
       },
-      { client, env: deps.env },
+      { client, env: deps.env, capabilities },
     );
     if (!checked.ok) {
       return {

@@ -16,7 +16,7 @@ Designed after three open-source projects (ideas, not code):
 ## Call flow
 
 ```
-incoming ─ greeting (FR + EN) + language menu ─ gather ─┐
+incoming ─ French-first greeting + language menu ─ gather ─┐
    ▲                                                    ├─ emergency guardrail (gas, fire, flood…)
    │                                                    │      └─ SMS alert + <Dial> on-call line
    │                                                    ├─ brain decides: ask │ transfer │ end
@@ -214,6 +214,43 @@ enrolls a website lead only when it has an email **and** a `consentAt`
 timestamp from the contractor's form (CASL express consent); never spam or
 unsubscribed contacts. It runs from `POST /api/website-leads` and never fails
 lead capture. The response reports `emailSequence: { enrolled, reason }`.
+
+## Natural, bilingual conversation
+
+Every call opens in Canadian French; `1` selects English, `2` French, no key means
+French (`language-select.ts`, see `docs/TWILIO_RECEPTIONIST_SETUP.md`). The LiveKit
+agent in `agents/receptionist` reads the same menu from the same config.
+
+The rule brain follows eight steps and skips the ones that do not apply: greeting →
+service check → project scope → preferences (when) → caller details (name, address,
+callback number) → owner introduction → wrap-up → confirm & end. A pricing question is
+answered at any step without a number (unless the owner supplied approved wording) and
+the open question resumes. Where the pieces live:
+
+| File | Job |
+| --- | --- |
+| `call-details.ts` | Pulls service, project, time, place, name and street address out of one sentence |
+| `nlu.ts` | Yes/no, names (strict: "oui" or "my sink is leaking" is not a name), off-topic and small talk |
+| `reply-guards.ts` | Blocks invented prices and "I am a human" claims in LLM replies |
+| `speech-style.ts` | Pacing markup: slower numbers/addresses, short pauses (kill switch `RECEPTIONIST_SSML=0`) |
+| `prompts.ts` | All spoken wording, French and English, varied acknowledgements |
+| `agent-api.ts`, `agent-calls.ts` | Server side of the LiveKit agent (availability, book, report) |
+
+Behaviours worth knowing:
+
+- Low recognition confidence (`RECEPTIONIST_MIN_ASR_CONFIDENCE`) on a free-form answer
+  is repeated back, at most twice, then accepted.
+- A correction ("non, c'est à Montréal") replaces the wrong detail, says so, and keeps
+  everything else.
+- Chit-chat is redirected politely twice at most; "how are you?" gets a short answer.
+- After hours the described job is kept and a callback is promised; it is not re-asked.
+- Silence: one check-in, then a polite goodbye (no voicemail).
+- Asked "are you an AI?", it answers honestly and briefly, then resumes.
+- A failed transfer is detected (`no-answer`, `busy`, `failed`) and a callback is
+  offered; a failed or unavailable booking is never confirmed — the request goes to
+  the team.
+
+`tests/unit/receptionist-scenarios.test.ts` plays 20 such calls through the real engine.
 
 ## Known limits
 

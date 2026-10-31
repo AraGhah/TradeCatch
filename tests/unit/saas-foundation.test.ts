@@ -28,7 +28,7 @@ describe("entitlements", () => {
     assert.equal(assertFeature("growth", "REVENUE_ATTRIBUTION").ok, true);
   });
 
-  it("reserves advanced routing, multi-crew calendars, reactivation and renewal automation for AI Receptionist Pro", () => {
+  it("reserves advanced routing, multi-crew calendars, reactivation and renewal automation for Receptionist Plus", () => {
     const growth = featuresForPlan("growth");
     for (const feature of [
       "ADVANCED_CALL_ROUTING",
@@ -47,11 +47,11 @@ describe("entitlements", () => {
     assert.ok(growth.every((f) => orgHasFeature("receptionist", f)));
   });
 
-  it("keeps the internal plan id `receptionist` mapped to the public name \"Receptionist\"", () => {
+  it("keeps the internal plan id `receptionist` mapped to the public name \"Receptionist Plus\"", () => {
     assert.deepEqual(PLAN_DISPLAY_NAMES, {
       starter: "Starter",
       growth: "Growth",
-      receptionist: "Receptionist",
+      receptionist: "Receptionist Plus",
     });
   });
 });

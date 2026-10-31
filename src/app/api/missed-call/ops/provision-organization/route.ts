@@ -7,6 +7,8 @@ import {
   missingOpsActorResponse,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
+import { REFERRAL_CODE_PATTERN } from "@/product/referrals/code";
+import { referralRegisterOrganization } from "@/product/referrals/billing-hooks";
 import { getSaasStore } from "@/product/saas/runtime";
 import { normalizeEmail } from "@/product/saas/store";
 
@@ -19,6 +21,8 @@ const bodySchema = z
     ownerName: z.string().trim().min(1).max(120),
     locale: z.enum(["en", "fr"]),
     plan: z.enum(["starter", "growth", "receptionist"]),
+    /** Code from the referring customer's link (it is on the audit lead). Optional. */
+    referralCode: z.string().trim().regex(REFERRAL_CODE_PATTERN).optional(),
   })
   .strict();
 
@@ -83,12 +87,21 @@ export async function POST(request: NextRequest) {
     logOpsAccess(request, "ops.provision_organization.created", {
       organizationId: created.organization.id,
     });
+    // Best effort: a referral problem never fails provisioning.
+    const referral = input.referralCode
+      ? await referralRegisterOrganization({
+          code: input.referralCode,
+          organizationId: created.organization.id,
+          actor: request.headers.get("x-ops-actor")?.trim() || "ops",
+        })
+      : undefined;
     return NextResponse.json(
       {
         ok: true,
         created: true,
         owner: created.user,
         organization: created.organization,
+        ...(referral ? { referral } : {}),
       },
       { status: 201 },
     );

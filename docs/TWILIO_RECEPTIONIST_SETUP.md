@@ -79,5 +79,58 @@ selected this fallback: the primary handler returned valid HTTP 200 TwiML.
 The supplied call also provides no evidence that a trial restriction caused
 the apology. Trial limits can still affect later live-transfer tests.
 
+## French-first language menu and voice tuning
+
+Every call opens in Canadian French: "Bonjour! Merci d'avoir appelé *Business*.
+Pour continuer en français, restez en ligne. For English, press 1." The first
+`<Gather>` accepts `speech dtmf` with `numDigits=1`.
+
+- Key `1` → English, key `2` → French, no key within
+  `RECEPTIONIST_LANGUAGE_SELECT_TIMEOUT_SECONDS` (default 3, range 2-10) → French.
+  Any other key is ignored.
+- Speech at the menu never changes the language. If the caller talks in English
+  instead of pressing a key, the call stays French, keeps what they said, and
+  repeats "For English, press 1" once.
+- After the menu the language stays fixed unless the caller asks to change it
+  ("in English please", "en français"). The greeting is not repeated on a switch.
+- The language menu runs for every bilingual profile; `defaultLanguage` no longer
+  decides the opening language when French is enabled. An English-only profile opens
+  in English with no menu.
+
+Environment settings (all optional, documented in `.env.example`):
+
+| Variable | Effect |
+| --- | --- |
+| `RECEPTIONIST_LANGUAGE_SELECT_TIMEOUT_SECONDS` | How long the menu waits for a key |
+| `RECEPTIONIST_GATHER_SPEECH_MODEL` | Twilio recognition model (`phone_call`, `deepgram_nova-3`, …) |
+| `RECEPTIONIST_GATHER_ENHANCED` | `1` to request the enhanced phone-call model |
+| `RECEPTIONIST_GATHER_SPEECH_TIMEOUT` | `auto` or 1-10 s of quiet that ends a turn |
+| `RECEPTIONIST_GATHER_TIMEOUT_SECONDS` | Silence before a turn is treated as "no input" (3-15) |
+| `RECEPTIONIST_MIN_ASR_CONFIDENCE` | Below this (0-0.9, default 0.5) a free-form answer is repeated back, at most twice |
+| `RECEPTIONIST_SSML` | `0` turns off the pacing markup if a voice rejects it |
+
+Pacing markup is limited to `<prosody rate>` and `<break>` and only sent to
+Polly/Google voices. If a voice rejects it the caller hears silence, so switch it
+off first when diagnosing a silent line.
+
+Silence: the first quiet turn asks "Are you still there?" and repeats the open
+question; the second says a polite goodbye and hangs up. It no longer drops the
+caller into voicemail.
+
+### Needs a live call to verify
+
+These depend on audio, carriers and Twilio/LiveKit behaviour that unit tests cannot
+reproduce. Check them on a real number before relying on it:
+
+- How the Polly voices sound in French (fr-CA) and whether the rate percentages in
+  `speech-style.ts` feel right at 140-160 words per minute.
+- Which `RECEPTIONIST_GATHER_SPEECH_MODEL` recognises Québec French best; the
+  default is left unchanged until compared on real calls.
+- DTMF delivery on the SIP path (LiveKit receives keys as `sip_dtmf_received`).
+- LiveKit transfers (SIP REFER) cannot report a no-answer after the hand-off; the
+  Twilio `<Gather>` path can and offers a callback.
+- The realtime voice model has no speed setting; its pacing follows instructions only.
+- Latency under load, interruption sensitivity, and recovery from model errors.
+
 References: [Twilio Record behavior](https://www.twilio.com/docs/voice/twiml/record),
 [Cloudflare Workers logs](https://developers.cloudflare.com/workers/observability/logs/workers-logs/).

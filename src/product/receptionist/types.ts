@@ -17,6 +17,9 @@ import type {
 
 export type ReceptionistLanguage = "fr" | "en";
 
+/** Owner-chosen pace of the synthesized voice (see speech-style.ts). */
+export type SpeakingSpeed = "slow" | "normal" | "fast";
+
 export type RoutingTarget = {
   id: string;
   /** Spoken name, e.g. "Facturation" / "Billing" / "Marc". */
@@ -83,6 +86,8 @@ export type ReceptionistConfig = {
   defaultLanguage: ReceptionistLanguage;
   /** Twilio <Say> voices, e.g. Polly.Gabrielle-Neural (fr-CA) / Polly.Joanna-Neural. */
   voices: { fr: string; en: string };
+  /** Pace of the synthesized voice. Unset = "normal". */
+  speakingSpeed?: SpeakingSpeed;
   greetingFr: string;
   greetingEn: string;
   afterHoursMessageFr: string;
@@ -92,6 +97,19 @@ export type ReceptionistConfig = {
   personality?: string;
   /** Short business facts the LLM may use (services, service area…). */
   businessFacts?: string;
+  /**
+   * Services the business really offers, as the owner wrote them. Used to say
+   * "we don't do that" instead of taking a request nobody can serve. Empty
+   * means unknown, never "offers nothing".
+   */
+  services?: string[];
+  /** Cities / regions served, as the owner wrote them. */
+  serviceAreas?: string[];
+  /**
+   * Prices the owner approved to be read out ("Estimates are free; service
+   * calls from $89"). Unset = no price may be stated.
+   */
+  pricingInfo?: string;
   /**
    * The business's rendered system prompt (template + its own details). Set
    * for tenant profiles; unset for founder env configs, which keep the
@@ -114,6 +132,11 @@ export type ReceptionistConfig = {
    * Off (default) = the call only captures a requested window for the team.
    */
   phoneBooking?: boolean;
+  /**
+   * Plan flag: include the full transcript in the owner's call email. Unset =
+   * included (founder/env configs); false on plans without full transcripts.
+   */
+  transcriptsEnabled?: boolean;
   /** Hard cap on caller turns before the agent wraps up with a message. */
   maxTurns: number;
   notifications: NotificationChannel[];
@@ -131,6 +154,8 @@ export type ReceptionistConfig = {
 export type CallStep =
   | "language"
   | "reason"
+  /** One question about the size/kind of job, asked once for known trades. */
+  | "scope"
   | "name"
   | "address"
   | "callback"
@@ -138,6 +163,10 @@ export type CallStep =
   | "preferred_time"
   /** Open times were read out; waiting for the caller to choose one. */
   | "offer_slot"
+  /** The request was read back; waiting for "yes" or a correction. */
+  | "confirm"
+  /** The caller said the recap was wrong; waiting for what to fix. */
+  | "correction"
   | "anything_else"
   | "voicemail"
   | "done";
@@ -170,6 +199,13 @@ export type CallOutcome =
 export type CallSlots = {
   callerName?: string;
   serviceAddress?: string;
+  /** City or area only, when the caller gave that but not a street address yet. */
+  location?: string;
+  /** The trade the caller needs, in the caller's own words ("painting", "plomberie"). */
+  service?: string;
+  /** What part of the property the job concerns ("kitchen", "la salle de bain"). */
+  project?: string;
+  email?: string;
   issue?: string;
   callbackE164?: string;
   preferredTime?: string;
@@ -285,6 +321,28 @@ export type CallSummary = {
   aiSummary?: string;
 };
 
+/** What the receptionist already did on this call, so it never does it twice. */
+export type CallFlags = {
+  /** The caller asked about price at least once (and got the approved answer). */
+  pricingAsked?: boolean;
+  /** The job-scope question was already asked. */
+  scopeAsked?: boolean;
+  /** The caller asked whether they are talking to an AI and was told. */
+  identityAnswered?: boolean;
+  /** The caller picked or asked for a language; keypad/speech no longer re-decide it. */
+  languageLocked?: boolean;
+  /** The service the caller wanted is not offered by this business. */
+  serviceNotOffered?: boolean;
+  /** The recap was read back once. */
+  recapped?: boolean;
+  /** "For English, press 1" was repeated after a French turn the recognizer could not follow. */
+  englishHinted?: boolean;
+  /** How many times the caller was politely steered back from an unrelated question. */
+  offTopic?: number;
+  /** How many times the name was asked again because the answer was not a name. */
+  nameRetries?: number;
+};
+
 export type CallSession = {
   id: string;
   callSid: string;
@@ -304,6 +362,10 @@ export type CallSession = {
   turns: CallTurn[];
   silenceCount: number;
   callerTurnCount: number;
+  /** Consecutive turns the recognizer was unsure about (reset by a clear one). */
+  unclearCount?: number;
+  /** Conversation bookkeeping that keeps the receptionist from repeating itself. */
+  flags?: CallFlags;
   transfers: TransferAttempt[];
   recordingUrl?: string;
   summary?: CallSummary;
@@ -334,6 +396,8 @@ export type VoiceVerb =
       text: string;
       language: ReceptionistLanguage;
       voice: string;
+      /** Owner-chosen pace; the TwiML renderer turns it into SSML. */
+      speed?: SpeakingSpeed;
     }
   | {
       verb: "gather";
@@ -344,6 +408,7 @@ export type VoiceVerb =
         text: string;
         voice: string;
         language: ReceptionistLanguage;
+        speed?: SpeakingSpeed;
       }[];
       input: ("speech" | "dtmf")[];
       timeoutSeconds: number;
@@ -387,6 +452,8 @@ export type AgentDecision = {
   intent?: CallIntent;
   outcome?: CallOutcome;
   brain: "rules" | "llm" | "guardrail";
+  /** Bookkeeping the brain changed on this turn (merged into session.flags). */
+  flags?: Partial<CallFlags>;
 };
 
 export type BrainInput = {

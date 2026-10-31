@@ -181,6 +181,11 @@ async function main() {
       ["src", "product", "growth", "schema-advanced-crm.sql"],
       "032_advanced_crm_integrations",
     );
+    await applyFile(
+      client,
+      ["src", "product", "referrals", "schema.sql"],
+      "033_referral_program",
+    );
   } finally {
     await client.end();
   }

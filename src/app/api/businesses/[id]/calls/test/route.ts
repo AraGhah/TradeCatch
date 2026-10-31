@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { enforceRateLimit } from "@/lib/rate-limit-response";
 import { z } from "zod";
+import { voiceCapabilitiesForPlan } from "@/product/receptionist/plan-limits";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { runSimulatedPhoneScenario } from "@/product/telephony/live-test";
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     scenario: parsed.data.scenario,
     language: parsed.data.language,
     events: getTelephonyRuntime().events,
+    capabilities: voiceCapabilitiesForPlan(access.organization.plan),
   });
 
   // Persist simulated session into the tenant call store for history.

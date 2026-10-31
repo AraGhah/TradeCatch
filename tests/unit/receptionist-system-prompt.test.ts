@@ -126,7 +126,8 @@ describe("profile → config prompt", () => {
       { client },
     );
     const prompt = config.systemPrompt ?? "";
-    assert.match(prompt, /AI receptionist for Nord Plomberie/);
+    assert.match(prompt, /receptionist for Nord Plomberie/);
+    assert.doesNotMatch(prompt, /AI receptionist|powered by TradeCatch/);
     assert.match(prompt, /Services: Plumbing, Drain cleaning/);
     assert.match(prompt, /Service area: Montréal, Laval/);
     assert.match(prompt, /Business address: 12 Rue Principale, Laval/);
@@ -136,6 +137,55 @@ describe("profile → config prompt", () => {
     for (const p of PROMPT_PLACEHOLDERS) {
       assert.ok(!prompt.includes(`{${p}}`), `{${p}} was not replaced`);
     }
+  });
+
+  it("carries the voice, services, areas and approved pricing into the config", () => {
+    const config = buildProfileConfig(
+      profile({
+        speakingSpeed: "slow",
+        knowledge: {
+          companyName: "Nord Plomberie",
+          services: ["Peinture", "Plomberie"],
+          serviceAreas: ["Laval"],
+          startingPrices: "Les estimations sont gratuites.",
+        },
+      }),
+      { client },
+    );
+    assert.equal(config.speakingSpeed, "slow");
+    assert.deepEqual(config.services, ["Peinture", "Plomberie"]);
+    assert.deepEqual(config.serviceAreas, ["Laval"]);
+    assert.equal(config.pricingInfo, "Les estimations sont gratuites.");
+
+    const unpriced = buildProfileConfig(profile({}), { client });
+    assert.equal(unpriced.pricingInfo, undefined);
+  });
+
+  it("introduces the receptionist without announcing automation or claiming to be human", () => {
+    const config = buildProfileConfig(profile({}), { client });
+    assert.doesNotMatch(config.personality ?? "", /Identify yourself as a virtual receptionist/);
+    assert.match(config.personality ?? "", /Never claim to be a person/);
+    assert.match(DEFAULT_SYSTEM_PROMPT, /Canadian French/);
+    assert.match(DEFAULT_SYSTEM_PROMPT, /press 1 for English/);
+    assert.match(DEFAULT_SYSTEM_PROMPT, /answer truthfully and briefly/);
+    assert.match(DEFAULT_SYSTEM_PROMPT, /never state, estimate or hint at a price/i);
+    assert.doesNotMatch(DEFAULT_SYSTEM_PROMPT, /Let me confirm your details/);
+    assert.ok(DEFAULT_SYSTEM_PROMPT.length < 12_000, "fits the saved-template limit");
+  });
+
+  it("tells the model what is approved to say about price, services and areas", () => {
+    const priced = buildProfileConfig(
+      profile({ knowledge: { services: ["Peinture"], serviceAreas: ["Laval"], startingPrices: "À partir de 50 $ l'heure." } }),
+      { client },
+    );
+    const withPrice = buildSystemPrompt(brainInput(priced));
+    assert.match(withPrice, /Approved pricing wording: "À partir de 50 \$ l'heure\."/);
+    assert.match(withPrice, /Services offered \(the only ones\): Peinture/);
+    assert.match(withPrice, /Service areas: Laval/);
+
+    const unpriced = buildSystemPrompt(brainInput(buildProfileConfig(profile({}), { client })));
+    assert.match(unpriced, /No approved pricing is configured/);
+    assert.match(unpriced, /virtual assistant for the business/);
   });
 
   it("uses the business's own template instead of the default", () => {

@@ -11,21 +11,16 @@ export type PlanId = (typeof PLAN_IDS)[number];
  * backward compatibility with existing Stripe price mappings and database
  * rows (see plan-tiers.sql).
  *
- * NOTE: the original pricing brief asked for this tier to be shown
- * publicly as "AI Receptionist Pro". This codebase already has an
- * actively enforced convention — see
- * tests/unit/receptionist-naming.test.ts — that the public name is
- * exactly "Receptionist" (no "AI" prefix) everywhere: nav, pricing tiers,
- * the admin panel, settings. Changing the display name without also
- * updating that test and every surface it checks would make the app
- * self-inconsistent (most pages say "Receptionist", one page says "AI
- * Receptionist Pro"). Kept as "Receptionist" until that's a deliberate,
- * confirmed rebrand rather than a side effect of a billing change.
+ * The premium tier is shown publicly as "Receptionist Plus" (confirmed
+ * rebrand; tests/unit/receptionist-naming.test.ts enforces that every surface
+ * uses this exact name). The feature itself — the voice receptionist the
+ * business owner configures under /app/receptionist — is still just "the
+ * Receptionist"; only the plan carries the "Plus".
  */
 export const PLAN_DISPLAY_NAMES: Record<PlanId, string> = {
   starter: "Starter",
   growth: "Growth",
-  receptionist: "Receptionist",
+  receptionist: "Receptionist Plus",
 };
 
 export const FEATURE_IDS = [
@@ -42,6 +37,10 @@ export const FEATURE_IDS = [
   "ADVANCED_ANALYTICS",
   "EMAIL_AUTOMATION",
   "AI_RECEPTIONIST_VOICE",
+  "AI_PHONE_BOOKING",
+  "AI_CALL_TRANSFER",
+  "AI_EMERGENCY_ROUTING",
+  "AI_CALL_TRANSCRIPTS",
   "CRM_INTEGRATION_LIMITED",
   "CRM_INTEGRATION_ADVANCED",
   "ADVANCED_CALL_ROUTING",
@@ -70,16 +69,27 @@ const GROWTH_EXTRA = [
   "REVIEW_AUTOMATION",
   "ADVANCED_ANALYTICS",
   "EMAIL_AUTOMATION",
+  // Growth's limited AI receptionist: it answers the phone in French or
+  // English, holds a natural conversation, captures who is calling and what
+  // they need, answers from the business's approved information, and sends
+  // the team a summary. It does NOT book into the calendar by phone, transfer
+  // a live call, bridge emergencies or keep full transcripts — those are the
+  // Receptionist Plus features below, and the receptionist runtime enforces
+  // the split (see src/product/receptionist/plan-limits.ts).
+  "AI_RECEPTIONIST_VOICE",
   "CRM_INTEGRATION_LIMITED",
 ] as const satisfies readonly FeatureId[];
 
-// Receptionist (public name "AI Receptionist Pro") is a superset of Growth:
-// bilingual 24/7 AI call answering, phone appointment requests, human
-// transfer and emergency routing, plus the advanced business-automation
+// Receptionist Plus is a superset of Growth: the complete voice receptionist
+// (books the appointment on the call, transfers the call to a person, bridges
+// emergencies, keeps full transcripts), plus the advanced business-automation
 // tier described in the pricing matrix (routing, multi-crew calendars,
 // advanced CRM sync, reactivation/renewal campaigns, revenue analytics).
 const RECEPTIONIST_EXTRA = [
-  "AI_RECEPTIONIST_VOICE",
+  "AI_PHONE_BOOKING",
+  "AI_CALL_TRANSFER",
+  "AI_EMERGENCY_ROUTING",
+  "AI_CALL_TRANSCRIPTS",
   "CRM_INTEGRATION_ADVANCED",
   "ADVANCED_CALL_ROUTING",
   "MULTI_CREW_CALENDARS",
@@ -179,6 +189,22 @@ export const FEATURE_LABELS: Record<FeatureId, { en: string; fr: string }> = {
   AI_RECEPTIONIST_VOICE: {
     en: "Bilingual 24/7 AI call answering",
     fr: "Réception d'appels IA bilingue 24/7",
+  },
+  AI_PHONE_BOOKING: {
+    en: "Appointment booking on the call",
+    fr: "Prise de rendez-vous pendant l'appel",
+  },
+  AI_CALL_TRANSFER: {
+    en: "Live call transfer to your team",
+    fr: "Transfert d'appel en direct vers votre équipe",
+  },
+  AI_EMERGENCY_ROUTING: {
+    en: "Emergency call routing",
+    fr: "Acheminement des appels d'urgence",
+  },
+  AI_CALL_TRANSCRIPTS: {
+    en: "Full call transcripts",
+    fr: "Transcriptions complètes des appels",
   },
   CRM_INTEGRATION_LIMITED: {
     en: "Basic CRM integrations",

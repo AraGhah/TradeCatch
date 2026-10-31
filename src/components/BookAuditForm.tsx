@@ -24,6 +24,7 @@ import {
   type BookAuditStep,
 } from "@/lib/validation/book-audit";
 import { randomUUID } from "@/lib/id";
+import { referralCodeForThisVisit } from "@/lib/referral-capture";
 
 const DRAFT_STORAGE_KEY = "tradecatch-book-audit-draft";
 const PLAN_INTEREST_VALUES = ["starter", "growth", "receptionist"] as const;
@@ -131,6 +132,7 @@ export function BookAuditForm() {
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const idempotencyKey = useRef<string>(randomUUID());
   const planInterest = useRef<PlanInterest | undefined>(undefined);
+  const referralCode = useRef<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
   const errorSummaryRef = useRef<HTMLDivElement>(null);
   const focusErrorSummary = useRef(false);
@@ -203,6 +205,8 @@ export function BookAuditForm() {
     planInterest.current = PLAN_INTEREST_VALUES.includes(plan as PlanInterest)
       ? (plan as PlanInterest)
       : undefined;
+    // A customer's referral link (?ref=) or one remembered from an earlier visit.
+    referralCode.current = referralCodeForThisVisit(window.location.search);
   }, []);
 
   useEffect(() => {
@@ -405,6 +409,7 @@ export function BookAuditForm() {
       consentWording: t("consent"),
       consentSource: "book-audit",
       ...(planInterest.current ? { planInterest: planInterest.current } : {}),
+      ...(referralCode.current ? { referralCode: referralCode.current } : {}),
     };
     const parsed = bookAuditSchema.safeParse(payload);
     if (!parsed.success) {
