@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Container } from "@/components/Container";
 import { ReferralCapture } from "@/components/ReferralCapture";
+import { ReferralForm } from "@/components/ReferralForm";
 import { Link } from "@/i18n/navigation";
 import { formatPlanMoney } from "@/lib/plans";
 import { buildMetadata } from "@/lib/seo";
@@ -44,6 +45,7 @@ export default async function ReferralPage({
   setRequestLocale(locale);
   const lang = locale === "fr" ? "fr" : "en";
   const t = await getTranslations("referrals.public");
+  const form = await getTranslations("referrals.form");
   const plans = await getTranslations("plans");
 
   const rawRef = Array.isArray(query.ref) ? query.ref[0] : query.ref;
@@ -70,7 +72,7 @@ export default async function ReferralPage({
     <>
       <ReferralCapture code={codeIsLive ? code : null} />
 
-      <section className="relative overflow-hidden bg-navy pt-[clamp(80px,9vw,110px)] pb-[clamp(72px,9vw,110px)]">
+      <section className="relative overflow-hidden bg-navy pt-[clamp(72px,8vw,104px)] pb-[clamp(64px,8vw,96px)]">
         <Container className="relative">
           <p className="text-[13px] font-medium text-orange">{t("eyebrow")}</p>
           <h1
@@ -94,25 +96,39 @@ export default async function ReferralPage({
               {t("referredBanner")}
             </p>
           ) : null}
+          {settings.programEnabled ? (
+            <a
+              href="#refer"
+              className="mt-8 inline-flex items-center justify-center rounded-[12px] bg-orange px-6 py-3.5 text-[16px] font-bold tracking-[-0.01em] text-navy shadow-cta transition-colors hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              {form("title")} ↓
+            </a>
+          ) : null}
         </Container>
       </section>
 
-      <section className="bg-paper py-[clamp(56px,7vw,96px)]">
-        <Container>
-          {!settings.programEnabled ? (
+      {!settings.programEnabled ? (
+        <section className="bg-paper py-[clamp(56px,7vw,96px)]">
+          <Container>
             <p
-              className="rounded-md border border-navy/10 bg-white px-5 py-4 text-navy"
+              className="rounded-md border border-[rgb(var(--ink-rgb)/0.12)] bg-surface px-5 py-4 text-heading"
               role="status"
             >
               {t("paused")}
             </p>
-          ) : (
-            <>
-              <h2 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-navy">
+          </Container>
+        </section>
+      ) : (
+        <>
+          <section className="bg-paper py-[clamp(56px,7vw,96px)]">
+            <Container>
+              <h2 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-heading">
                 {t("rewardsTitle")}
               </h2>
-              <p className="mt-2 max-w-[40em] text-navy/70">{t("rewardsIntro")}</p>
-              <ul className="mt-8 grid gap-4 md:grid-cols-3">
+              <p className="mt-2 max-w-[40em] text-muted">
+                {t("rewardsIntro")}
+              </p>
+              <ul className="mt-8 grid list-none gap-4 p-0 md:grid-cols-3">
                 {PLAN_ORDER.map((plan) => {
                   const cents = rewardAmountCents(settings, plan);
                   const premium = plan === PREMIUM_PLAN;
@@ -122,10 +138,14 @@ export default async function ReferralPage({
                       className={
                         premium
                           ? "rounded-lg bg-navy px-6 py-7 text-white shadow-lg ring-2 ring-orange"
-                          : "rounded-lg border border-navy/10 bg-white px-6 py-7 text-navy"
+                          : "rounded-lg border border-[rgb(var(--ink-rgb)/0.12)] bg-surface px-6 py-7 text-heading"
                       }
                     >
-                      <p className={premium ? "text-sm text-orange" : "text-sm text-navy/60"}>
+                      <p
+                        className={
+                          premium ? "text-sm text-orange" : "text-sm text-muted"
+                        }
+                      >
                         {plans(`kind.${plan}`)}
                       </p>
                       <h3 className="mt-1 font-heading text-xl font-extrabold">
@@ -133,7 +153,9 @@ export default async function ReferralPage({
                       </h3>
                       <p
                         className={
-                          premium ? "mt-5 text-sm text-white/70" : "mt-5 text-sm text-navy/70"
+                          premium
+                            ? "mt-5 text-sm text-white/70"
+                            : "mt-5 text-sm text-muted"
                         }
                       >
                         {t("youEarn")}
@@ -143,7 +165,9 @@ export default async function ReferralPage({
                       </p>
                       <p
                         className={
-                          premium ? "mt-1 text-sm text-white/70" : "mt-1 text-sm text-navy/70"
+                          premium
+                            ? "mt-1 text-sm text-white/70"
+                            : "mt-1 text-sm text-muted"
                         }
                       >
                         {cents > 0 ? t("giftCard") : ""}
@@ -152,27 +176,42 @@ export default async function ReferralPage({
                   );
                 })}
               </ul>
-              <p className="mt-4 text-sm text-navy/60">{t("amountsNote")}</p>
-            </>
-          )}
-        </Container>
-      </section>
+              <p className="mt-4 text-sm text-muted">{t("amountsNote")}</p>
+            </Container>
+          </section>
 
-      <section className="bg-white py-[clamp(56px,7vw,96px)]">
+          <section
+            id="refer"
+            className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface py-[clamp(56px,7vw,96px)]"
+          >
+            <Container>
+              <h2 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-heading">
+                {form("title")}
+              </h2>
+              <p className="mt-2 mb-8 max-w-[40em] text-muted">
+                {form("intro")}
+              </p>
+              <ReferralForm />
+            </Container>
+          </section>
+        </>
+      )}
+
+      <section className="bg-paper py-[clamp(56px,7vw,96px)]">
         <Container>
-          <h2 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-navy">
+          <h2 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-heading">
             {t("stepsTitle")}
           </h2>
-          <ol className="mt-8 grid gap-6 md:grid-cols-3">
+          <ol className="mt-8 grid list-none gap-6 p-0 md:grid-cols-3">
             {(["share", "book", "earn"] as const).map((step, index) => (
               <li key={step} className="flex flex-col gap-2">
                 <span className="font-heading text-3xl font-extrabold text-orange">
                   {index + 1}
                 </span>
-                <h3 className="font-heading text-lg font-bold text-navy">
+                <h3 className="font-heading text-lg font-bold text-heading">
                   {t(`steps.${step}.title`)}
                 </h3>
-                <p className="text-navy/70">{t(`steps.${step}.body`)}</p>
+                <p className="text-muted">{t(`steps.${step}.body`)}</p>
               </li>
             ))}
           </ol>
@@ -184,28 +223,39 @@ export default async function ReferralPage({
                   ? { pathname: "/book-audit", query: { ref: code } }
                   : "/book-audit"
               }
-              className="inline-flex items-center rounded-md bg-orange px-5 py-3 font-semibold text-white hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2"
+              className="inline-flex items-center rounded-md bg-orange px-5 py-3 font-semibold text-navy hover:bg-orange-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
             >
               {t("cta")}
             </Link>
-            <Link href="/app/referrals" className="text-sm font-medium text-navy underline">
+            <Link
+              href="/app/referrals"
+              className="text-sm font-medium text-heading underline underline-offset-2"
+            >
               {t("existingCustomer")}
             </Link>
           </div>
         </Container>
       </section>
 
-      <section className="bg-paper py-[clamp(48px,6vw,80px)]">
+      <section className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface py-[clamp(48px,6vw,80px)]">
         <Container>
-          <h2 className="font-heading text-xl font-extrabold tracking-[-0.02em] text-navy">
+          <h2 className="font-heading text-xl font-extrabold tracking-[-0.02em] text-heading">
             {t("rulesTitle")}
           </h2>
-          <ul className="mt-4 max-w-[48em] list-disc space-y-2 pl-5 text-navy/80">
-            {(["payment", "plan", "once", "review", "excluded", "delivery", "storage"] as const).map(
-              (rule) => (
-                <li key={rule}>{t(`rules.${rule}`, { days: settings.holdDays })}</li>
-              ),
-            )}
+          <ul className="mt-4 max-w-[48em] list-disc space-y-2 pl-5 text-secondary">
+            {(
+              [
+                "payment",
+                "plan",
+                "once",
+                "review",
+                "excluded",
+                "delivery",
+                "storage",
+              ] as const
+            ).map((rule) => (
+              <li key={rule}>{t(`rules.${rule}`, { days: settings.holdDays })}</li>
+            ))}
           </ul>
         </Container>
       </section>
