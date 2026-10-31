@@ -88,110 +88,8 @@
       "subheadline": "Starter texts missed callers back. Growth answers the phone with a limited receptionist. Receptionist Plus runs the complete bilingual front desk. French or English. Founder-configured pilots.",
       "ctaPrimary": "Book a free 20-minute audit",
       "ctaSecondary": "Watch the 90-second demo",
-      "proofLine": "Built for plumbing, HVAC, electrical, roofing, renovation, and exterior trade companies.",
-      "demoStripLabel": "Product simulation path",
-      "demoStripSteps": [
-        "Missed call",
-        "SMS back (typical: ~30s)",
-        "Details captured",
-        "Tech alerted",
-        "Pilot path"
-      ],
-      "trustChips": [
-        "Québec-based",
-        "French and English",
-        "Human-approved messages",
-        "Often works with your existing number"
-      ],
-      "reassurance": "No commitment. No system access needed. You talk with the founder.",
-      "mockup": {
-        "businessName": "Nord Plumbing",
-        "avatar": "NP",
-        "autoReply": "TEXT-BACK ACTIVE",
-        "statusTime": "7:44 PM",
-        "statusNetwork": "LTE ●●●",
-        "disclaimer": "Illustrative data · Example conversation. Not a real customer.",
-        "floatCard": {
-          "label": "Pilot workspace",
-          "title": "Emergency lead assigned"
-        },
-        "messages": [
-          {
-            "type": "event",
-            "text": "MISSED CALL · (514) 555-0182",
-            "time": "7:42"
-          },
-          {
-            "type": "out",
-            "text": "Hi, we just missed your call at Nord Plumbing. Is this an emergency?"
-          },
-          {
-            "type": "in",
-            "text": "Yes, my basement is starting to flood."
-          },
-          {
-            "type": "out",
-            "text": "Can you send a photo and your address?"
-          },
-          {
-            "type": "photo",
-            "text": "Photo · basement.jpg"
-          },
-          {
-            "type": "in",
-            "text": "12 rue des Érables, Laval"
-          },
-          {
-            "type": "event",
-            "text": "TECHNICIAN ALERTED · MARC D.",
-            "time": "7:44"
-          },
-          {
-            "type": "win",
-            "text": "EMERGENCY LEAD ASSIGNED",
-            "time": "7:45"
-          }
-        ],
-        "illustrativeLabel": "Example conversation. Not a real customer.",
-        "missedCallLabel": "MISSED CALL · (514) 555-0182",
-        "missedCallTime": "7:42",
-        "chatTime": "7:42–7:45",
-        "systemMessage": "Hi, we just missed your call at Nord Plumbing. Is this an emergency?",
-        "customerReply": "Yes, my basement is starting to flood.",
-        "technicianAlert": "TECHNICIAN ALERTED · MARC D.",
-        "technicianAlertTime": "7:44",
-        "technicianAcceptedLabel": "Accepted",
-        "dashboardResult": "Emergency lead assigned",
-        "dashboardResultTime": "7:45",
-        "dashboardMetricValue": "1",
-        "dashboardMetricLabel": "new emergency lead tracked in the pilot workspace"
-      },
-      "headlineLines": [
-        "Stop losing jobs",
-        "to missed calls."
-      ],
-      "qualificationLine": "Built for Québec plumbing, HVAC and electrical companies. French and English. Installed and monitored for you.",
-      "ctaTry": "Or talk to the Receptionist Plus demo yourself"
-    },
-    "stats": {
-      "items": [
-        {
-          "value": "~30s",
-          "label": "typical target for the first reply on a missed call"
-        },
-        {
-          "value": "4",
-          "label": "scheduled touches in the Starter pilot quote sequence"
-        },
-        {
-          "value": "2",
-          "label": "languages, chosen by the customer"
-        },
-        {
-          "value": "0",
-          "label": "messages sent that you haven't approved"
-        }
-      ]
+      "ctaTry": "Or talk to the Receptionist Plus demo yourself",
+      "reassurance": "No commitment. No system access needed. You talk with the founder."
     },
     "leaks": {
       "eyebrow": "The problem",
@@ -218,15 +116,6 @@
       "headline": "From missed call to tracked outcome: pilot walkthrough.",
       "intro": "The missed-call stages show the controlled pilot path. Starter quote follow-up and Growth outcomes run only for entitled organizations linked to the workspace.",
       "cta": "See how it works",
-      "previewLabel": "Example workflow (illustrative, not a live client feed)",
-      "previewSteps": [
-        "Missed call",
-        "SMS sent",
-        "Lead captured",
-        "Alert sent",
-        "Pilot path",
-        "Outcome tracked (example)"
-      ],
       "steps": [
         {
           "title": "Call captured",
@@ -254,270 +143,36 @@
         }
       ]
     },
-    "missedCall": {
-      "headline": "Every missed call gets an immediate response",
-      "badge": "Human oversight",
-      "items": [
-        "Detects missed and after-hours calls",
-        "Sends French or English SMS responses",
-        "Collects names, addresses, descriptions, and photos",
-        "Checks the service area",
-        "Identifies potentially urgent requests",
-        "Alerts the on-call technician",
-        "Escalates to a backup contact",
-        "Creates an ops lead record (pilot)",
-        "Tracks technician accept / outcome (pilot)"
-      ],
-      "note": "The system collects and routes the request. Your licensed technicians still diagnose the problem, confirm pricing, and perform the work."
+    "proofExamples": {
+      "demoCta": "Watch the missed-call demo"
     },
-    "quoteFollowUp": {
-      "headline": "Starter pilot quote follow-up that stops when they reply",
-      "items": [
-        "Ingest a quote into the Starter workspace",
-        "Run day 1 / 3 / 7 / 14 follow-ups",
-        "Stop on reply, STOP, won/lost, or human takeover",
-        "Open an inbox item when the customer answers",
-        "Optional pipeline stage + real won value for an entitled, linked Growth pilot",
-        "Founder-led Starter pilot — outbound webhook only, not native two-way CRM sync"
-      ],
-      "sequence": [
+    "pricingPreview": {
+      "eyebrow": "Pricing",
+      "headline": "Text back, answer the phone, or run a complete front desk.",
+      "intro": "Three plans. Each one keeps everything in the plan before it. Installation is paid once. The large figure is the monthly management fee.",
+      "tiers": [
         {
-          "day": "Day 1",
-          "action": "Confirm they got the estimate"
+          "name": "Starter",
+          "price": "$349.99 / month",
+          "cadence": "$799.99 installation, paid once",
+          "idealFor": "Missed-call text-back, website replies and quiet-quote follow-up. Does not answer the phone."
         },
         {
-          "day": "Day 3",
-          "action": "Offer to walk through the quote"
+          "name": "Growth",
+          "price": "$649.99 / month",
+          "cadence": "$1,499.99 installation, paid once",
+          "idealFor": "Limited phone answering, plus booking, pipeline and reviews on top of Starter."
         },
         {
-          "day": "Day 7",
-          "action": "Check interest and timing"
-        },
-        {
-          "day": "Day 14",
-          "action": "Last follow-up — close or archive"
-        }
-      ]
-    },
-    "comparison": {
-      "eyebrow": "Before / after",
-      "headline": "What actually changes once it's running.",
-      "manualLabel": "Handling it manually",
-      "systemLabel": "In a configured TradeCatch pilot",
-      "rows": [
-        {
-          "manual": "A missed call gets a callback whenever someone remembers, sometimes hours later.",
-          "system": "A missed call gets a bilingual text back within seconds, day or night."
-        },
-        {
-          "manual": "Quotes get followed up when someone has a free minute, which often means never.",
-          "system": "Linked Starter pilots run scheduled quote follow-ups and stop the sequence as soon as the customer replies."
-        },
-        {
-          "manual": "The technician learns the job details secondhand, if at all.",
-          "system": "The on-call technician gets a complete job summary the moment a lead comes in."
-        },
-        {
-          "manual": "Nobody can say how many calls or quotes actually turned into jobs.",
-          "system": "Entitled founding pilots get an organization-scoped workspace after install; public marketing dashboards remain illustrative."
-        },
-        {
-          "manual": "An after-hours emergency waits until business hours.",
-          "system": "After-hours requests are triaged immediately and escalated to a backup contact."
-        }
-      ]
-    },
-    "dashboard": {
-      "eyebrow": "Reporting",
-      "headline": "You finally see what you were missing.",
-      "intro": "Every number below is illustrative, not a client result. Linked pilot workspaces show organization-scoped counts; attributed-revenue views require an entitled Growth organization and real values.",
-      "cta": "Book a free 20-minute audit",
-      "badge": "Illustrative dashboard",
-      "live": "Illustrative",
-      "period": "Week of 14 Apr",
-      "metrics": [
-        {
-          "value": "18",
-          "label": "Missed calls caught"
-        },
-        {
-          "value": "13",
-          "label": "Customers who replied"
-        },
-        {
-          "value": "9",
-          "label": "New requests logged"
-        },
-        {
-          "value": "5",
-          "label": "Appointments booked"
-        },
-        {
-          "value": "22",
-          "label": "Quotes followed up"
-        },
-        {
-          "value": "3",
-          "label": "Contracts signed"
-        },
-        {
-          "value": "14 800 $",
-          "label": "Tracked opportunity value"
-        },
-        {
-          "value": "4",
-          "label": "Cases needing you"
+          "name": "Receptionist Plus",
+          "price": "$949.99 / month",
+          "cadence": "$1,999.99 installation, paid once",
+          "idealFor": "Complete bilingual receptionist: on-call booking, transfer, emergencies — and everything below."
         }
       ],
-      "note": "This marketing dashboard is illustrative. Linked pilot workspaces show only the organization’s own configured data.",
-      "sampleDataLabel": "Illustrative data: example week, not a live client feed. Not a promise of results."
-    },
-    "industries": {
-      "eyebrow": "Industries",
-      "headline": "Tuned to how your trade loses jobs.",
-      "leadIn": "Controlled missed-call pilots are tuned first for plumbing, HVAC, and electrical. Quote-recovery examples refer to linked Starter pilots.",
-      "cta": "All industries",
-      "priorityLabel": "Primary",
-      "priority": [
-        {
-          "name": "Plumbing",
-          "pain": "Text back the 9 p.m. flooding call, collect a photo before anyone drives out, and route the summary to the on-call plumber."
-        },
-        {
-          "name": "HVAC",
-          "pain": "Text back missed no-heat calls through the controlled pilot, with heat-pump quote follow-up available in linked Starter pilots."
-        },
-        {
-          "name": "Electrical",
-          "pain": "Route urgent requests to the right technician, with scheduled follow-up on panel or rewiring estimates in linked Starter pilots."
-        }
-      ],
-      "supportingLabel": "Also built for",
-      "supporting": [
-        "Roofing",
-        "Renovation",
-        "Landscaping",
-        "Paving",
-        "Excavation",
-        "Fencing",
-        "Exterior trades"
-      ]
-    },
-    "implementation": {
-      "headline": "Installed without replacing your entire business system",
-      "steps": [
-        {
-          "title": "Revenue audit",
-          "body": "You review calls, quotes, tools, employees, and workflows."
-        },
-        {
-          "title": "System design",
-          "body": "You create the messages, escalation rules, on-call structure, and any Starter follow-up sequence included in scope."
-        },
-        {
-          "title": "Installation and testing",
-          "body": "You connect the agreed phone and email flows, pilot workspace, and any outbound automation webhook included in scope."
-        },
-        {
-          "title": "Launch and optimization",
-          "body": "The configured pilot launches, results are monitored, and the approved workflows are improved."
-        }
-      ]
-    },
-    "trust": {
-      "headline": "Every scenario is tested with your team before launch",
-      "intro": "Nothing goes live untested. Before launch, we verify these with you directly:",
-      "verifiedItems": [
-        "Customer messages",
-        "Technician phone numbers",
-        "On-call schedule",
-        "Backup contacts",
-        "Escalation timing",
-        "Service area boundaries",
-        "Starter quote follow-up cadence and stop conditions, when included",
-        "Stop conditions",
-        "Human-approval rules"
-      ],
-      "controlHeadline": "You stay in control of every decision",
-      "points": [
-        "Important decisions stay with the contractor",
-        "Emergency requests are escalated conservatively",
-        "The system does not diagnose technical problems",
-        "Discounts require contractor approval",
-        "Messages stop when the customer responds",
-        "French and English scripts are reviewed before launch",
-        "Customer activity is logged"
-      ],
-      "guaranteeNote": "Launch guarantee: if the agreed system isn't live because of a delay on our side, your first management month is credited."
-    },
-    "faqTeaser": {
-      "eyebrow": "Straight answers",
-      "headline": "What owners ask before they book.",
-      "viewAll": "All questions",
-      "items": [
-        {
-          "q": "Does TradeCatch answer the phone like a receptionist?",
-          "a": "On Starter, no: a missed call gets an immediate bilingual text back, job details are collected, and your technician is alerted. On Growth, a limited receptionist answers the phone, qualifies the caller and sends your team a summary — without on-call booking, live transfer or emergency bridging. On Receptionist Plus it answers completely: qualify, book on the call when enabled, transfer or escalate."
-        },
-        {
-          "q": "Does it replace our receptionist?",
-          "a": "No. Starter absorbs repetitive missed-call and follow-up work. Growth covers calls your team cannot take with limited receptionist features. Receptionist Plus is the complete front desk and still hands anything sensitive, complex or urgent to a person. It covers calls that would otherwise go unanswered, not to remove your staff."
-        },
-        {
-          "q": "What happens during an emergency?",
-          "a": "The request is escalated using rules your company approved in advance. The system never diagnoses a problem or gives safety instructions you haven't signed off on."
-        },
-        {
-          "q": "Can it work with our current phone number?",
-          "a": "Usually. It depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
-        }
-      ]
-    },
-    "finalCta": {
-      "headline": "How many jobs are you losing before you ever speak to the customer?",
-      "body": "Book a free 20-minute revenue leak audit. We review how your team handles missed calls and unanswered estimates, then leave you with a workflow map and three practical recommendations. No system access required. You talk with the founder.",
-      "cta": "Book a free 20-minute audit",
-      "underCta": "We review how your team handles missed calls and estimates. You leave with a workflow map and three practical recommendations. No system access required.",
-      "whatToExpect": [
-        "20-minute revenue leak audit",
-        "Review of missed-call and estimate handling",
-        "Workflow map + 3 practical recommendations",
-        "No system access required · Free · With the founder"
-      ]
-    },
-    "scenario": {
-      "headline": "What happens when you miss a call",
-      "intro": "This walkthrough combines the controlled missed-call pilot with a linked Starter quote-follow-up example. Booking and pipeline outcomes require an entitled Growth pilot organization.",
-      "exampleLabel": "Example scenario",
-      "timelineLabel": "Missed-call sequence",
-      "steps": [
-        {
-          "time": "7:42 p.m.",
-          "text": "A homeowner calls. Your crew is already on a job site."
-        },
-        {
-          "time": "7:42 p.m.",
-          "text": "TradeCatch texts them back immediately, in French or English."
-        },
-        {
-          "time": "7:44 p.m.",
-          "text": "The customer shares their address, describes the problem, and attaches a photo."
-        },
-        {
-          "time": "7:44 p.m.",
-          "text": "The on-call technician receives the full summary."
-        },
-        {
-          "time": "7:48 p.m.",
-          "text": "The technician accepts the request and calls the customer back."
-        },
-        {
-          "time": "Next morning",
-          "text": "In an entitled Growth pilot, the in-app booking and real value on file appear in the linked workspace."
-        }
-      ],
-      "secondFlowLabel": "Starter pilot quote-follow-up sequence",
-      "secondFlowCaption": "Quote sent → No reply → Personalized follow-up → Customer responds → Contractor alerted → Status updated"
+      "cta": "See full pricing",
+      "receptionistCta": "How Receptionist Plus works",
+      "note": "Multi-location and high-volume work is scoped with you. Minutes past the written allowance are never billed in silence."
     },
     "founder": {
       "eyebrow": "Who you're actually hiring",
@@ -557,6 +212,29 @@
         }
       ]
     },
+    "faqTeaser": {
+      "eyebrow": "Straight answers",
+      "headline": "What owners ask before they book.",
+      "viewAll": "All questions",
+      "items": [
+        {
+          "q": "Does TradeCatch answer the phone like a receptionist?",
+          "a": "On Starter, no: a missed call gets an immediate bilingual text back, job details are collected, and your technician is alerted. On Growth, a limited receptionist answers the phone, qualifies the caller and sends your team a summary — without on-call booking, live transfer or emergency bridging. On Receptionist Plus it answers completely: qualify, book on the call when enabled, transfer or escalate."
+        },
+        {
+          "q": "Does it replace our receptionist?",
+          "a": "No. Starter absorbs repetitive missed-call and follow-up work. Growth covers calls your team cannot take with limited receptionist features. Receptionist Plus is the complete front desk and still hands anything sensitive, complex or urgent to a person. It covers calls that would otherwise go unanswered, not to remove your staff."
+        },
+        {
+          "q": "What happens during an emergency?",
+          "a": "The request is escalated using rules your company approved in advance. The system never diagnoses a problem or gives safety instructions you haven't signed off on."
+        },
+        {
+          "q": "Can it work with our current phone number?",
+          "a": "Usually. It depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
+        }
+      ]
+    },
     "pilot": {
       "badge": "Pilot program",
       "headline": "Now accepting founding pilot contractors.",
@@ -572,151 +250,6 @@
       "guarantee": "Launch guarantee: if the agreed system isn't live because of a delay on our side, your first management month is credited.",
       "cta": "Book a free 20-minute audit",
       "landingNote": "Pilots are real engagements with signed scope. Public result claims appear only with written client permission."
-    },
-    "trustStrip": {
-      "eyebrow": "How we operate",
-      "items": [
-        {
-          "title": "Nothing goes live untested",
-          "body": "Messages, escalation rules, and stop conditions are all verified with you before launch."
-        },
-        {
-          "title": "You stay in control",
-          "body": "Diagnosis, discounts, and emergency calls stay with your team, never the system."
-        },
-        {
-          "title": "Your data stays yours",
-          "body": "We never sell customer data, and you keep it if you ever leave."
-        },
-        {
-          "title": "Launch guarantee",
-          "body": "If we delay the agreed launch date, your first management month is credited."
-        },
-        {
-          "title": "Installed and monitored for you",
-          "body": "We set it up, test it, and keep watching after launch."
-        },
-        {
-          "title": "No long-term contract",
-          "body": "Month-to-month management. Cancel with notice."
-        }
-      ]
-    },
-    "caseStudy": {
-      "eyebrow": "Illustrative examples only",
-      "headline": "No fabricated testimonials or outcome claims.",
-      "client": "Until real, permissioned pilot results exist, the site shows labelled product examples only.",
-      "problemLabel": "What you will not see here",
-      "systemLabel": "What you will see instead",
-      "problem": "Fake contractor logos, invented star ratings, or made-up revenue guarantees.",
-      "system": "Example SMS threads, technician alerts, quote timelines, and dashboards, each marked Illustrative data.",
-      "quote": "We would rather show a clear product example than invent a customer quote.",
-      "disclaimer": "Nothing in the product examples is a guarantee of jobs, revenue, or response rates for your business.",
-      "metrics": [],
-      "cta": "Book a free 20-minute audit"
-    },
-    "pricingPreview": {
-      "eyebrow": "Pricing",
-      "headline": "Text back, answer the phone, or run a complete front desk.",
-      "intro": "Three plans. Each one keeps everything in the plan before it. Installation is paid once. The large figure is the monthly management fee.",
-      "tiers": [
-        {
-          "name": "Starter",
-          "price": "$349.99 / month",
-          "cadence": "$799.99 installation, paid once",
-          "idealFor": "Missed-call text-back, website replies and quiet-quote follow-up. Does not answer the phone."
-        },
-        {
-          "name": "Growth",
-          "price": "$649.99 / month",
-          "cadence": "$1,499.99 installation, paid once",
-          "idealFor": "Limited phone answering, plus booking, pipeline and reviews on top of Starter."
-        },
-        {
-          "name": "Receptionist Plus",
-          "price": "$949.99 / month",
-          "cadence": "$1,999.99 installation, paid once",
-          "idealFor": "Complete bilingual receptionist: on-call booking, transfer, emergencies — and everything below."
-        }
-      ],
-      "cta": "See full pricing",
-      "receptionistCta": "How Receptionist Plus works",
-      "note": "Multi-location and high-volume work is scoped with you. Minutes past the written allowance are never billed in silence."
-    },
-    "proofExamples": {
-      "eyebrow": "Product examples",
-      "headline": "See the system before you talk to anyone.",
-      "intro": "These are labelled product examples, built with fictional names and sample flows, so you can understand the product. They are not client testimonials, logos, or promised results.",
-      "illustrativeLabel": "Illustrative data",
-      "demoCta": "Watch the missed-call demo",
-      "onePagerCta": "Open the one-page overview",
-      "sms": {
-        "badge": "Illustrative · Example SMS",
-        "title": "Missed-call text-back",
-        "lines": [
-          {
-            "who": "event",
-            "text": "MISSED CALL · (514) 555-0182 · 7:42 p.m."
-          },
-          {
-            "who": "system",
-            "text": "Hi, we just missed your call at Nord Plumbing. Is this an emergency?"
-          },
-          {
-            "who": "customer",
-            "text": "Yes, basement's starting to flood."
-          },
-          {
-            "who": "system",
-            "text": "Can you send a photo and your address?"
-          },
-          {
-            "who": "customer",
-            "text": "12 rue des Érables, Laval · photo attached"
-          },
-          {
-            "who": "event",
-            "text": "TECHNICIAN ALERTED · MARC D. · 7:44 p.m."
-          }
-        ]
-      },
-      "alert": {
-        "badge": "Illustrative · Example alert",
-        "title": "Technician alert",
-        "fromLabel": "From",
-        "jobLabel": "Job summary",
-        "addressLabel": "Address",
-        "urgencyLabel": "Urgency",
-        "from": "TradeCatch → On-call (Marc D.)",
-        "job": "Basement flooding · photo received · customer awaiting callback",
-        "address": "12 rue des Érables, Laval",
-        "urgency": "Emergency · Client-approved rule",
-        "ctaLabel": "Reply YES to accept · CALL to dial customer"
-      },
-      "quoteBadge": "Illustrative · Starter pilot example",
-      "quoteHeadline": "Quote follow-up sequence",
-      "quoteSteps": [
-        {
-          "day": "Day 0",
-          "title": "Quote sent",
-          "body": "You send a $9,000 heat-pump estimate. No reply yet."
-        },
-        {
-          "day": "Day 1",
-          "title": "First follow-up",
-          "body": "Client-approved SMS: a polite check-in asking whether the customer reviewed the quote."
-        },
-        {
-          "day": "Day 3",
-          "title": "Second follow-up",
-          "body": "Short reminder. Any reply stops the sequence."
-        },
-        {
-          "day": "Day 3+",
-          "title": "You get alerted",
-          "body": "The reply stops the sequence and opens an item in the linked workspace's human inbox."
-        }
-      ]
     }
   },
   "services": {
@@ -4559,6 +4092,46 @@
         "excluded": "Rewards are for new customers only.",
         "delivery": "Interac e-Transfers are sent by TradeCatch after a reward is approved. TradeCatch may update or pause the program.",
         "storage": "When you open a referral link, a code is saved in this browser for up to 60 days so the right customer can be credited if you book. It is used for nothing else, and you can remove it by clearing this site’s data."
+      }
+    },
+    "form": {
+      "title": "Refer a contractor",
+      "intro": "Know a plumbing, HVAC or electrical company that misses calls? Tell us who to contact. We'll mention that you suggested it.",
+      "optional": "(optional)",
+      "you": {
+        "legend": "Your details",
+        "name": "Your name",
+        "email": "Your email",
+        "code": "Your referral code",
+        "codeHint": "If you're a customer, enter your code so the referral is credited to you."
+      },
+      "them": {
+        "legend": "Who are you referring?",
+        "name": "Their name",
+        "business": "Their business",
+        "phone": "Their phone",
+        "email": "Their email",
+        "contactHint": "Add a phone number or an email (at least one)."
+      },
+      "note": "Anything we should know?",
+      "permission": "I know this person, and they're fine with me sharing their contact details with TradeCatch so we can get in touch.",
+      "submit": "Send referral",
+      "submitting": "Sending…",
+      "errors": {
+        "required": "This field is required.",
+        "email": "Enter a valid email address.",
+        "phone": "Enter a valid phone number.",
+        "contactRequired": "Add a phone number or an email.",
+        "code": "That code doesn't look right. Check it or leave it blank.",
+        "permission": "Please confirm you have their permission.",
+        "verification": "Please complete the verification before sending.",
+        "generic": "We couldn't send your referral. Please try again or email us.",
+        "network": "Network problem. Check your connection and try again."
+      },
+      "success": {
+        "title": "Referral received",
+        "body": "Thanks. We have it and will take it from here.",
+        "another": "Refer someone else"
       }
     }
   }
