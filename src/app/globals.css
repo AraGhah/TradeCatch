@@ -81,7 +81,6 @@
   --shadow-card-hover: 0 26px 46px -28px rgb(var(--ink-rgb) / 0.34);
   --shadow-cta: 0 14px 34px -16px rgba(228, 118, 43, 0.8);
   --shadow-ink-panel: 0 40px 70px -44px rgb(var(--ink-rgb) / 0.7);
-  --shadow-phone: 0 60px 90px -50px rgba(0, 0, 0, 0.9);
   --shadow-header: 0 8px 30px -18px rgb(var(--ink-rgb) / 0.35);
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -114,8 +113,6 @@
   --color-signal-text: #4fcf94;
 
   --ink-rgb: 255 255 255;
-
-  --shadow-phone: 0 60px 90px -50px rgba(0, 0, 0, 0.95);
 }
 
 @theme inline {
@@ -152,7 +149,6 @@
   --shadow-card-hover: var(--shadow-card-hover);
   --shadow-cta: var(--shadow-cta);
   --shadow-ink-panel: var(--shadow-ink-panel);
-  --shadow-phone: var(--shadow-phone);
   --shadow-header: var(--shadow-header);
 }
 
