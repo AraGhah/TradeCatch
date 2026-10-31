@@ -5,6 +5,7 @@ import {
   requireTenantContext,
 } from "@/product/saas/tenant";
 import { AppShell } from "@/components/app/AppShell";
+import { FullMessagesProvider } from "@/components/FullMessagesProvider";
 import { gmailConfigured } from "@/product/gmail/oauth";
 
 export default async function AppLayout({
@@ -29,17 +30,19 @@ export default async function AppLayout({
   }
 
   return (
-    <AppShell
-      orgName={auth.ctx.organization.name}
-      plan={auth.ctx.organization.plan}
-      userName={auth.ctx.user.name}
-      locale={locale === "fr" ? "fr" : "en"}
-      accountType={auth.ctx.organization.accountType}
-      isPlatformAdmin={auth.ctx.isPlatformAdminIdentity}
-      organizationId={auth.ctx.organization.id}
-      gmailEnabled={gmailConfigured()}
-    >
-      {children}
-    </AppShell>
+    <FullMessagesProvider>
+      <AppShell
+        orgName={auth.ctx.organization.name}
+        plan={auth.ctx.organization.plan}
+        userName={auth.ctx.user.name}
+        locale={locale === "fr" ? "fr" : "en"}
+        accountType={auth.ctx.organization.accountType}
+        isPlatformAdmin={auth.ctx.isPlatformAdminIdentity}
+        organizationId={auth.ctx.organization.id}
+        gmailEnabled={gmailConfigured()}
+      >
+        {children}
+      </AppShell>
+    </FullMessagesProvider>
   );
 }
