@@ -26,18 +26,25 @@ test.describe("pricing page", () => {
     await plans(page);
     const main = page.locator("main");
 
-    const receptionist = main.locator("article", { hasText: "Receptionist" }).first();
+    // Match plan cards by their h2 name. Starter's body says "SMS receptionist",
+    // so a loose hasText("Receptionist") incorrectly picks that card first.
+    const planCard = (name: string) =>
+      main.locator("article").filter({
+        has: page.getByRole("heading", { name, exact: true, level: 2 }),
+      });
+
+    const receptionist = planCard("Receptionist Plus");
     await expect(receptionist).toContainText("$1,999.99");
     await expect(receptionist).toContainText("$949.99");
     await expect(receptionist).toContainText("$300.00 a month");
     await expect(receptionist).toContainText("$500.00 more at installation");
 
-    const growth = main.locator("article", { hasText: "Growth" }).first();
+    const growth = planCard("Growth");
     await expect(growth).toContainText("$1,499.99");
     await expect(growth).toContainText("$649.99");
     await expect(growth).toContainText("$300.00 a month");
 
-    const starter = main.locator("article", { hasText: "Starter" }).first();
+    const starter = planCard("Starter");
     await expect(starter).toContainText("$799.99");
     await expect(starter).toContainText("$349.99");
 
