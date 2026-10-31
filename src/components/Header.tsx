@@ -14,14 +14,14 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
 
+// Header = the pages that sell. About, FAQ, Help and Receptionist live in the
+// footer so no page is linked from both places.
 type NavHref =
   | "/services"
   | "/how-it-works"
   | "/industries"
   | "/pricing"
-  | "/referral"
-  | "/about"
-  | "/faq";
+  | "/referral";
 
 export function Header() {
   const t = useTranslations("nav");
@@ -47,8 +47,6 @@ export function Header() {
     { href: "/industries", label: t("industries") },
     { href: "/pricing", label: t("pricing") },
     { href: "/referral", label: t("referral") },
-    { href: "/about", label: t("about") },
-    { href: "/faq", label: t("faq") },
   ];
 
   const phoneDisplay = site("phone").replace(/-/g, "·");
