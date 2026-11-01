@@ -88,11 +88,6 @@ export function ReferralForm() {
 
   function validate(): FieldErrors {
     const found: FieldErrors = {};
-    // Zod skips object-level rules once another field has failed, so report
-    // this one up front; otherwise it would only appear after the first fixes.
-    if (!values.contactEmail.trim() && !values.contactPhone.trim()) {
-      found.contactPhone = t("errors.contactRequired");
-    }
     const result = referralSubmissionSchema.safeParse({
       ...values,
       language: locale,
@@ -103,14 +98,14 @@ export function ReferralForm() {
       for (const issue of result.error.issues) {
         const field = String(issue.path[0]) as keyof Values;
         if (found[field]) continue;
-        if (issue.message === "contact_required") {
-          continue; // already reported above
-        } else if (field === "referrerEmail" || field === "contactEmail") {
+        if (field === "referrerEmail" || field === "contactEmail") {
           found[field] = values[field].trim()
             ? t("errors.email")
             : t("errors.required");
         } else if (field === "contactPhone") {
-          found[field] = t("errors.phone");
+          found[field] = values.contactPhone.trim()
+            ? t("errors.phone")
+            : t("errors.required");
         } else if (field === "referralCode") {
           found[field] = t("errors.code");
         } else if (field === "permissionConfirmed") {
@@ -302,8 +297,7 @@ export function ReferralForm() {
           {field("contactPhone", t("them.phone"), {
             type: "tel",
             inputMode: "tel",
-            optional: true,
-            hint: t("them.contactHint"),
+            hint: t("them.phoneHint"),
           })}
           {field("contactEmail", t("them.email"), {
             type: "email",

@@ -25,23 +25,40 @@ describe("referral submission schema", () => {
     assert.equal(referralSubmissionSchema.safeParse(valid()).success, true);
   });
 
-  it("accepts a referral with an email only", () => {
+  it("accepts a phone number with an optional email", () => {
     const result = referralSubmissionSchema.safeParse(
-      valid({ contactPhone: "", contactEmail: "alex@example.test" }),
+      valid({ contactEmail: "alex@example.test" }),
     );
     assert.equal(result.success, true);
   });
 
-  it("requires a way to reach the person being referred", () => {
-    const result = referralSubmissionSchema.safeParse(
-      valid({ contactPhone: "", contactEmail: "" }),
-    );
-    assert.equal(result.success, false);
-    if (!result.success) {
-      assert.ok(
-        result.error.issues.some((i) => i.message === "contact_required"),
-      );
+  it("requires the phone number of the person being referred", () => {
+    // An email alone is no longer enough.
+    for (const overrides of [
+      { contactPhone: "", contactEmail: "alex@example.test" },
+      { contactPhone: "   ", contactEmail: "" },
+      { contactPhone: "", contactEmail: "" },
+    ]) {
+      const result = referralSubmissionSchema.safeParse(valid(overrides));
+      assert.equal(result.success, false, JSON.stringify(overrides));
+      if (!result.success) {
+        assert.ok(
+          result.error.issues.some((i) => i.path[0] === "contactPhone"),
+          JSON.stringify(overrides),
+        );
+      }
     }
+    const { contactPhone: _omitted, ...rest } = valid();
+    void _omitted;
+    assert.equal(referralSubmissionSchema.safeParse(rest).success, false);
+  });
+
+  it("keeps a well-formed referral code in the parsed details", () => {
+    const result = referralSubmissionSchema.safeParse(
+      valid({ referralCode: "ABCDEFGHJK" }),
+    );
+    assert.equal(result.success, true);
+    if (result.success) assert.equal(result.data.referralCode, "ABCDEFGHJK");
   });
 
   it("requires the referrer to confirm they have permission", () => {
