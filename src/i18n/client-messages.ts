@@ -19,6 +19,7 @@ export const PUBLIC_CLIENT_NAMESPACES = [
   "demoMode",
   "onePager",
   "referrals",
+  "websiteRequest",
 ] as const;
 
 export function pickMessages(
