@@ -1,6 +1,7 @@
 import { Resend } from "resend";
 import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
 import type { ReferralSubmissionDetails } from "@/lib/validation/referral-submission";
+import type { WebsiteRequest } from "@/product/website-services/model";
 
 let client: Resend | null = null;
 
@@ -179,6 +180,72 @@ export async function sendReferralSubmissionEmail(
     return { sent: true };
   } catch (error) {
     console.error("[email] failed to send referral email", error);
+    return { sent: false };
+  }
+}
+
+/**
+ * Tells the team a Done-for-You Website Service request came in. The request
+ * itself is stored (that is the record); this email is the nudge to answer it,
+ * so a failed send is logged and reported but never loses the request.
+ */
+export async function sendWebsiteRequestEmail(
+  request: WebsiteRequest,
+  idempotencyKey?: string,
+): Promise<{ sent: boolean }> {
+  const resend = getClient();
+  const fromEmail = process.env.RESEND_FROM_EMAIL;
+  const notifyEmail =
+    process.env.RESEND_NOTIFY_EMAIL?.trim() ||
+    process.env.ADMIN_ALERT_EMAIL?.trim();
+
+  if (!resend || !fromEmail || !notifyEmail) {
+    console.warn(
+      "[email] Resend is not fully configured — website request email not sent.",
+    );
+    return { sent: false };
+  }
+
+  const kind =
+    request.requestType === "new" ? "New website" : "Improve existing website";
+  const html = brandedShell(
+    `Website request: ${request.businessName}`,
+    `<p style="margin:0 0 12px;">A website service request came in (${escapeHtml(kind)}). It is a separate one-time project starting at $349 CAD: confirm the scope and final price in writing before any payment.</p>
+    <table style="border-collapse:collapse;width:100%;font-size:14px;">
+      ${row("Business", request.businessName)}
+      ${row("Contact", request.contactName)}
+      ${row("Email", request.contactEmail)}
+      ${row("Phone", request.contactPhone)}
+      ${row("Type", kind)}
+      ${row("Current website", request.currentWebsiteUrl)}
+      ${row("Focus areas", request.focusAreas.join(", "))}
+      ${row("Customer account", request.organizationId ? "yes (signed in)" : "no (public form)")}
+      ${row("Asked from", request.source)}
+      ${row("Language", request.language)}
+      ${row("Notes", request.notes)}
+    </table>`,
+  );
+
+  try {
+    const result = await resend.emails.send(
+      {
+        from: fromEmail,
+        to: notifyEmail,
+        replyTo: request.contactEmail,
+        subject: oneLine(
+          `Website request: ${request.businessName} (${request.requestType})`,
+        ),
+        html,
+      },
+      { idempotencyKey, signal: AbortSignal.timeout(8_000) },
+    );
+    if (result.error || !result.data?.id) {
+      console.error("[email] website request email rejected", result.error);
+      return { sent: false };
+    }
+    return { sent: true };
+  } catch (error) {
+    console.error("[email] failed to send website request email", error);
     return { sent: false };
   }
 }
