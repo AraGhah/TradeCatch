@@ -23,6 +23,7 @@ const GROUPS = [
     label: "groupReceptionist",
     items: [
       { href: "/app/receptionist", key: "receptionistConfig" },
+      { href: "/app/receptionist/voice", key: "receptionistVoice" },
       { href: "/app/calls", key: "callHistory" },
       { href: "/app/test-center", key: "testReceptionist" },
     ],
@@ -54,6 +55,7 @@ const GROUPS = [
     items: [
       { href: "/app/settings/account", key: "account" },
       { href: "/app/settings", key: "settings" },
+      { href: "/app/website-services", key: "websiteServices" },
       { href: "/app/referrals", key: "referrals" },
       { href: "/app/onboarding", key: "onboarding" },
       { href: "/app/help", key: "help" },
