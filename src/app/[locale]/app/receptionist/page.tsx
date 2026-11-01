@@ -75,6 +75,10 @@ export default async function AppReceptionistPage({
           {t("receptionist.headline")}
         </h1>
         <p className="mt-2 text-navy/70">{t("receptionist.intro")}</p>
+        <Link href="/app/receptionist/voice" className="mt-3 inline-block text-sm font-semibold text-navy underline">
+          {t("voice.headline")}
+        </Link>
+        {" · "}
         <Link href="/app/receptionist/fallback" className="mt-3 inline-block text-sm font-semibold text-navy underline">
           {t("monitoring.fallbackTitle")}
         </Link>
