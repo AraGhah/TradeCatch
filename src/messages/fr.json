@@ -4337,7 +4337,7 @@
         "business": "Son entreprise",
         "phone": "Son téléphone",
         "email": "Son courriel",
-        "contactHint": "Indiquez un numéro de téléphone ou un courriel (au moins un)."
+        "phoneHint": "Le meilleur numéro pour communiquer avec cette personne."
       },
       "note": "Quelque chose à nous dire?",
       "permission": "Je connais cette personne et elle est d'accord pour que je transmette ses coordonnées à TradeCatch afin que nous la contactions.",
@@ -4347,7 +4347,6 @@
         "required": "Ce champ est obligatoire.",
         "email": "Entrez une adresse courriel valide.",
         "phone": "Entrez un numéro de téléphone valide.",
-        "contactRequired": "Ajoutez un numéro de téléphone ou un courriel.",
         "code": "Ce code ne semble pas valide. Vérifiez-le ou laissez le champ vide.",
         "permission": "Confirmez que vous avez l'accord de cette personne.",
         "verification": "Terminez la vérification avant d'envoyer.",
