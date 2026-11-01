@@ -42,7 +42,8 @@ for (const [locale, messages, productName, planName] of [
       if (!value || typeof value !== "object") return [];
       return Object.values(value).flatMap(values);
     };
-    for (const value of values(messages))
+    for (const value of values(messages)) {
       assert.doesNotMatch(value, /\bAI receptionist\b|\bréceptionniste IA\b/i);
+    }
   });
 }
