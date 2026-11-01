@@ -680,7 +680,12 @@
         "ctaHref": "/book-audit",
         "secondaryCtaHref": "/receptionist#try-it",
         "planInterest": "receptionist",
-        "stepUp": "Adds the complete receptionist experience: $300.00 a month and $500.00 more at installation than Growth."
+        "stepUp": "Adds the complete receptionist experience: $300.00 a month and $500.00 more at installation than Growth.",
+        "exclusive": {
+          "badge": "Only on Receptionist Plus",
+          "title": "Custom Voice Cloning",
+          "body": "Make your receptionist sound like you. Record your voice once, and let your receptionist answer customer calls using your voice."
+        }
       }
     ],
     "customTitle": "Operating across locations or high volume?",
@@ -916,6 +921,14 @@
           ]
         },
         {
+          "feature": "Custom Voice Cloning (your own voice)",
+          "values": [
+            "n",
+            "n",
+            "y"
+          ]
+        },
+        {
           "feature": "Native Outlook calendar sync",
           "values": [
             "p",
@@ -944,7 +957,8 @@
       "cta": "Book a free 20-minute audit"
     },
     "onceLabel": "paid once",
-    "monthlyEyebrow": "Each month"
+    "monthlyEyebrow": "Each month",
+    "websiteMention": "Need a website? Add our website service starting at $349."
   },
   "about": {
     "eyebrow": "About",
@@ -1618,7 +1632,7 @@
       "Founder-monitored launch and monthly management"
     ],
     "pricingTitle": "Published prices",
-    "pricing": "Starter: $799.99 installation, then $349.99 / month — SMS missed-call recovery. Growth: $1,499.99 installation, then $649.99 / month, includes Starter plus limited phone answering and workspace booking. Receptionist Plus: $1,999.99 installation, then $949.99 / month, includes Starter and Growth plus complete bilingual call answering, on-call booking, human transfer and emergency routing. Optional Website Builder add-on: $349.99 CAD. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
+    "pricing": "Starter: $799.99 installation, then $349.99 / month — SMS missed-call recovery. Growth: $1,499.99 installation, then $649.99 / month, includes Starter plus limited phone answering and workspace booking. Receptionist Plus: $1,999.99 installation, then $949.99 / month, includes Starter and Growth plus complete bilingual call answering, on-call booking, human transfer and emergency routing. Optional Done-for-You Website Service: starting at $349 CAD, one-time, separate from your subscription. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
     "pilotTitle": "Pilot program",
     "pilot": "Now accepting founding contractors: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
     "ctaTitle": "Next step",
@@ -1710,6 +1724,7 @@
       "gmail": "Gmail inbox",
       "customers": "All customers",
       "receptionistConfig": "Configuration",
+      "receptionistVoice": "Voice",
       "callHistory": "Call history",
       "testReceptionist": "Test receptionist",
       "calendar": "Calendar",
@@ -1718,7 +1733,8 @@
       "quoteFollowUps": "Quote follow-ups",
       "reminders": "Appointment reminders",
       "account": "Business profile",
-      "referrals": "Referrals"
+      "referrals": "Referrals",
+      "websiteServices": "Website Services"
     },
     "automations": {
       "headline": "Automations",
@@ -2644,7 +2660,13 @@
       "skip": "Skip for now",
       "complete": "Complete onboarding",
       "saving": "Saving…",
-      "error": "Could not save onboarding. Check your connection and try again."
+      "error": "Could not save onboarding. Check your connection and try again.",
+      "website": {
+        "title": "Want help with your website?",
+        "body": "Optional. Ask us to build a new website or improve your current one. This does not change your subscription, and nothing is charged until you approve a written scope and price.",
+        "open": "Request the website service",
+        "close": "Not now"
+      }
     },
     "websiteLeads": {
       "headline": "Website leads",
@@ -3105,6 +3127,181 @@
       "testNumber": "Test number",
       "results": "Results",
       "error": "The test failed."
+    },
+    "websiteServices": {
+      "headline": "Website Services",
+      "intro": "Ask TradeCatch to build a new website for your business or improve your current one. It is a separate one-time project, not part of your subscription.",
+      "priceNote": "Starting at $349 CAD. We confirm the scope and the final price with you in writing before you pay anything.",
+      "restricted": "Only an owner or administrator can request this service. You can still follow the requests below.",
+      "unavailable": "Website requests are unavailable right now. Please try again shortly.",
+      "requestsTitle": "Your requests",
+      "empty": "You have not requested the website service yet.",
+      "newTitle": "Request the website service",
+      "newIntro": "Tell us whether you need a new website or improvements to your current one.",
+      "submitted": "Your request was sent. We will write back with the scope and the final price.",
+      "requestedOn": "Requested",
+      "updatedOn": "Last update",
+      "type": {
+        "new": "New website",
+        "improve": "Improve my website"
+      },
+      "currentWebsite": "Current website",
+      "focus": "Focus",
+      "notes": "Your notes",
+      "quotedPrice": "Quoted price",
+      "scope": "Scope we will deliver",
+      "status": {
+        "submitted": "Received",
+        "in_review": "In review",
+        "quoted": "Quote ready",
+        "in_progress": "In progress",
+        "delivered": "Delivered",
+        "cancelled": "Cancelled"
+      },
+      "statusHelp": {
+        "submitted": "We have your request and will review it shortly.",
+        "in_review": "We are reviewing your request and your current site.",
+        "quoted": "We have sent you the scope and the final price. Nothing is charged until you confirm; reply to our message to approve it or ask for changes.",
+        "in_progress": "You approved the scope and price. We are building your website.",
+        "delivered": "Your website is done.",
+        "cancelled": "This request was cancelled."
+      },
+      "progress": "Progress"
+    },
+    "voice": {
+      "headline": "Receptionist voice",
+      "intro": "Make your receptionist sound like you. Record your voice once, and let your receptionist answer customer calls using your voice.",
+      "back": "Back to the receptionist",
+      "loadFailed": "We couldn't load your voice settings. Your calls keep using the standard voice.",
+      "readOnly": "Only an owner or administrator can change the receptionist voice.",
+      "entitlement": "The receptionist voice is not available on your plan.",
+      "unavailable": "Voice cloning isn't available right now. Your calls keep using the standard voice.",
+      "locked": {
+        "badge": "Receptionist Plus",
+        "title": "Custom Voice Cloning is included with Receptionist Plus",
+        "body": "Upgrade to let your receptionist answer calls in your own voice. Until then your calls use the standard voice.",
+        "cta": "See plans",
+        "existing": "Your plan no longer includes a custom voice, so calls use the standard voice. You can still delete the voice you recorded."
+      },
+      "current": {
+        "title": "Which voice answers your calls",
+        "liveCustom": "Calls to your business are answered in your voice.",
+        "liveStandard": "Calls to your business are answered with the standard voice.",
+        "standard": {
+          "title": "Standard voice",
+          "body": "The default TradeCatch receptionist voice."
+        },
+        "custom": {
+          "title": "My voice",
+          "body": "Callers hear a copy of your voice. The receptionist still tells callers it is a virtual receptionist if they ask."
+        },
+        "switchBack": "Switch back to the standard voice",
+        "needsVoice": "Record your voice below to turn this on.",
+        "needsPreview": "Listen to the preview first, then you can turn your voice on.",
+        "activate": "Use my voice on calls"
+      },
+      "yours": {
+        "title": "Your voice",
+        "consent": "Consent given by {name} on {date}.",
+        "outdated": "The consent wording has been updated since. Record a new sample to renew your consent.",
+        "recordAgain": "Record again",
+        "cancelRecordAgain": "Cancel"
+      },
+      "preview": {
+        "intro": "Listen to a short greeting in your cloned voice before it answers a real call.",
+        "button": "Play preview",
+        "loading": "Preparing preview…",
+        "done": "You have listened to a preview of this voice."
+      },
+      "setup": {
+        "title": "Record your voice",
+        "titleAgain": "Record your voice again",
+        "intro": "You will read a short text aloud, about a minute. Use a quiet room and speak naturally, the way you would answer your own phone. You can record here or upload an audio file."
+      },
+      "consent": {
+        "title": "Your consent",
+        "statement": "I confirm that this is my own voice and that I have the right to use it. I give TradeCatch permission to create a synthetic copy of my voice from the recording I am about to make, using its voice provider (ElevenLabs), and to use that copy only to speak for my business's receptionist on calls to my business. I understand that callers are talking to a virtual receptionist, that TradeCatch does not keep my recording but the voice provider keeps the voice sample it needs until I delete my voice, and that I can switch back to the standard voice, withdraw this consent and delete my voice at any time.",
+        "accept": "I have read this and I agree.",
+        "signerLabel": "Type your full name to sign",
+        "signerHint": "Stored with your consent, so we can show who agreed and when."
+      },
+      "record": {
+        "getText": "Get the text to read",
+        "preparing": "Preparing…",
+        "title": "Read this aloud",
+        "wordsIntro": "These three words were chosen just now for you. Say them clearly, they prove this recording was made by you today.",
+        "wordsLabel": "Your three words",
+        "script": "Hello, this is my voice. I am recording it so that my receptionist can sound like me when customers call my business. Thank you for calling, how can I help you today? Today I am saying the words {word1}, {word2} and {word3}. I give permission for this recording to be used to create a copy of my voice, and I am happy for it to greet my customers, take their details and answer their questions about my business. Whether it is a quick question, a quote or an emergency, we will do our best to get back to you as soon as we can.",
+        "tips": "Read the whole text. The text expires in 10 minutes. Nothing is uploaded until you press “Create my voice”.",
+        "newText": "Get new text",
+        "start": "Start recording",
+        "or": "or",
+        "uploadLabel": "Upload an audio file",
+        "recording": "Recording",
+        "stop": "Stop",
+        "recorded": "Your recording",
+        "uploaded": "Your uploaded file",
+        "retake": "Record again",
+        "errors": {
+          "denied": "Microphone access was blocked. Allow the microphone in your browser, or upload an audio file instead.",
+          "noDevice": "No microphone was found. Connect one, or upload an audio file instead.",
+          "unsupported": "This browser can't record audio. Upload an audio file instead.",
+          "failed": "The recording couldn't start. Try again, or upload an audio file instead.",
+          "tooLarge": "That audio is too large. The limit is 10 MB.",
+          "notAudio": "Please choose an audio file."
+        }
+      },
+      "create": {
+        "button": "Create my voice",
+        "creating": "Creating your voice…",
+        "cancel": "Cancel",
+        "privacy": "Your recording is sent to our voice provider to create the voice, and TradeCatch does not keep it."
+      },
+      "remove": {
+        "title": "Delete your voice",
+        "intro": "You can delete your cloned voice, or withdraw your consent, at any time. Calls switch to the standard voice straight away and the voice is deleted from our voice provider.",
+        "working": "Working…",
+        "keep": "Keep my voice",
+        "revokedOn": "Consent was withdrawn on {date}. Record a new sample to use a custom voice again.",
+        "delete": {
+          "button": "Delete my voice",
+          "confirmTitle": "Delete your voice",
+          "confirmBody": "Delete your cloned voice? Calls will use the standard voice. You can record a new one later.",
+          "confirmButton": "Yes, delete my voice"
+        },
+        "revoke": {
+          "button": "Withdraw my consent",
+          "confirmTitle": "Withdraw your consent",
+          "confirmBody": "Withdraw your consent and delete your voice? Calls will use the standard voice, and a new voice needs a new consent.",
+          "confirmButton": "Yes, withdraw and delete"
+        }
+      },
+      "notices": {
+        "created": "Your voice is ready. Listen to the preview, then turn it on.",
+        "activated": "Done. Calls to your business are now answered in your voice.",
+        "standard": "Done. Calls are answered with the standard voice.",
+        "delete": "Your voice was deleted. Calls use the standard voice.",
+        "revoke": "Consent withdrawn and your voice deleted. Calls use the standard voice.",
+        "cleanupPending": "Calls already use the standard voice. We are still waiting for our voice provider to confirm the deletion, press delete again to retry."
+      },
+      "errors": {
+        "generic": "Something went wrong. Your calls keep using their current voice. Please try again.",
+        "not_entitled": "Custom voice is included with Receptionist Plus.",
+        "unavailable": "Voice cloning isn't available right now. Please try again later.",
+        "consent_required": "Please accept the consent statement and type your name.",
+        "consent_outdated": "The consent wording was updated. Reload the page and accept it again.",
+        "challenge_invalid": "This recording session is no longer valid. Get new text to read.",
+        "challenge_expired": "That took too long. Get new text to read and record again.",
+        "challenge_reused": "That text was already used. Get new text to read.",
+        "challenge_failed": "We couldn't hear the three words in your recording. Read the text exactly as shown, in a quiet place, and try again.",
+        "sample_invalid": "We couldn't use that audio. Record again, or upload a clear WAV, MP3, M4A, WebM or OGG file under 10 MB.",
+        "sample_too_short": "The recording is too short. Please read the whole text.",
+        "no_voice": "There is no custom voice yet. Record yours first.",
+        "not_previewed": "Listen to the preview first, then turn your voice on.",
+        "consent_revoked": "Consent for this voice was withdrawn. Record a new sample to use a custom voice.",
+        "provider_error": "Our voice provider didn't respond. Your calls keep using their current voice. Please try again in a few minutes.",
+        "forbidden": "Only an owner or administrator can change the receptionist voice."
+      }
     }
   },
   "aiReceptionist": {
@@ -3951,6 +4148,11 @@
         "label": "Native Outlook calendar sync",
         "demoTitle": "Outlook sync (planned)",
         "demoBody": "Native two-way Outlook sync is planned and is never implied in a quote today."
+      },
+      "customVoice": {
+        "label": "Custom Voice Cloning (your own voice)",
+        "demoTitle": "Sounds like you",
+        "demoBody": "Make your receptionist sound like you. Record your voice once, and it answers customer calls in your voice. You preview it before it goes live, and you can switch back to a standard voice or delete yours at any time."
       }
     },
     "walkthrough": {
@@ -3964,15 +4166,23 @@
       "stepOf": "Step {current} of {total}"
     },
     "addOns": {
-      "websiteBuilder": {
+      "websiteService": {
         "eyebrow": "Optional add-on",
-        "title": "Website Builder",
-        "intro": "A contractor website built and managed with TradeCatch. Available on every plan; never included automatically.",
-        "priceNote": "CAD $349.99 add-on.",
-        "schedulePending": "Billing schedule is confirmed in writing before anything is charged.",
-        "availableOn": "Available to add on Starter, Growth and Receptionist Plus.",
-        "neverIncluded": "Never bundled free with a subscription.",
-        "cta": "Ask about Website Builder on the audit"
+        "title": "Done-for-You Website Service",
+        "intro": "Need a website that actually brings in work? We build a new professional site for your business, or improve the one you already have, so it looks right on every phone, captures leads and works with TradeCatch.",
+        "price": "Starting at $349 CAD",
+        "priceNote": "A one-time project price, separate from your subscription. We confirm the scope and the final price with you in writing before you pay anything.",
+        "availableOn": "An optional add-on for Starter, Growth and Receptionist Plus.",
+        "neverIncluded": "Never added to your subscription automatically, and never billed monthly.",
+        "includesTitle": "What we can do",
+        "includes": [
+          "A new professional website, or improvements to the one you have",
+          "Mobile optimization, so it looks right on every phone",
+          "Contact forms that reach you",
+          "Lead capture that lands in your TradeCatch inbox",
+          "TradeCatch integration: missed-call text-back and your receptionist, linked to your site"
+        ],
+        "cta": "Get My Website Built"
       }
     },
     "referralTeaser": {
@@ -4132,6 +4342,69 @@
         "title": "Referral received",
         "body": "Thanks. We have it and will take it from here.",
         "another": "Refer someone else"
+      }
+    }
+  },
+  "websiteRequest": {
+    "meta": {
+      "title": "Get My Website Built | TradeCatch",
+      "description": "Ask for a new professional website, or improvements to your current one. Starting at $349 CAD, with the scope and final price confirmed before you pay."
+    },
+    "page": {
+      "eyebrow": "Done-for-You Website Service",
+      "headline": "Tell us what your website needs",
+      "intro": "A short form, then a written scope and a firm price before you pay anything. Starting at $349 CAD, one time.",
+      "stepsTitle": "What happens next",
+      "steps": [
+        "We review your request and, if you have one, your current website.",
+        "We write back with exactly what we will do and the final price.",
+        "You approve it. Only then do we start and invoice you."
+      ],
+      "separate": "This is a separate project. It is not added to your TradeCatch subscription and does not change what you pay each month."
+    },
+    "form": {
+      "typeLegend": "What do you need?",
+      "type": {
+        "new": "A new professional website",
+        "newHint": "We build a site for your business from scratch.",
+        "improve": "Improvements to my current website",
+        "improveHint": "Keep your site and make it work harder for you."
+      },
+      "businessName": "Business name",
+      "contactName": "Your name",
+      "contactEmail": "Email",
+      "contactPhone": "Phone",
+      "currentWebsiteUrl": "Your current website",
+      "currentWebsiteHintImprove": "The address of the site we should improve, for example mybusiness.ca.",
+      "currentWebsiteHintNew": "If you already have a site, add it so we can see what you have.",
+      "focusLegend": "What matters most?",
+      "focus": {
+        "mobile": "Looks right on phones",
+        "contact_form": "Contact forms",
+        "lead_capture": "Capturing leads",
+        "tradecatch": "Connecting to TradeCatch",
+        "design": "A fresher design",
+        "content": "Clearer services and content"
+      },
+      "notes": "Anything else we should know?",
+      "optional": "(optional)",
+      "priceNote": "Starting at $349 CAD, one time. Separate from your subscription. We confirm the scope and final price with you before you pay.",
+      "submit": "Get My Website Built",
+      "submitting": "Sending…",
+      "errors": {
+        "required": "This field is required.",
+        "email": "Enter a valid email address.",
+        "phone": "Enter a valid phone number.",
+        "url": "Enter a valid website address, for example mybusiness.ca.",
+        "urlRequired": "Add the address of the website you want improved.",
+        "verification": "Please complete the verification.",
+        "generic": "We couldn't send your request. Please try again.",
+        "network": "Connection problem. Check your network and try again."
+      },
+      "success": {
+        "title": "Request received",
+        "body": "Thank you. We will review it and write back with the scope and the final price. Nothing is charged until you approve it.",
+        "another": "Send another request"
       }
     }
   }
