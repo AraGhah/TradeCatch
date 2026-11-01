@@ -1,4 +1,6 @@
 livekit-agents>=1.8
 livekit-plugins-ai-coustics
+livekit-plugins-elevenlabs
+livekit-plugins-silero
 aiohttp
 python-dotenv
