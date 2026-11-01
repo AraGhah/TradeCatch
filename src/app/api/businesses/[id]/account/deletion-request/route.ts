@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { purgeBusinessVoice } from "@/product/receptionist/custom-voice/runtime";
 import { requireSameBusiness } from "@/product/security/access";
 import { recordSecurityEvent } from "@/product/security/hooks";
 import { getSupportService } from "@/product/support/runtime";
@@ -31,6 +32,9 @@ export async function POST(request: NextRequest, { params }: Params) {
     target: row.id,
     detail: "phone routing unchanged until a transition is confirmed",
   });
+  // The owner asked for their data to go: remove the cloned voice now rather
+  // than wait for the account to be closed. Calls keep working on the standard voice.
+  await purgeBusinessVoice(id);
   return NextResponse.json({
     ok: true,
     request: row,
