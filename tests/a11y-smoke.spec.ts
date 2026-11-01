@@ -6,7 +6,14 @@ import AxeBuilder from "@axe-core/playwright";
  * Catches regressions in document outline and primary landmark structure.
  */
 test.describe("accessibility smoke", () => {
-  for (const path of ["/", "/book-audit", "/fr", "/fr/reserver-audit"]) {
+  for (const path of [
+    "/",
+    "/book-audit",
+    "/fr",
+    "/fr/reserver-audit",
+    "/website-request",
+    "/fr/demande-site-web",
+  ]) {
     test(`${path} has a single h1 and main landmark`, async ({ page }) => {
       await page.goto(path);
       await expect(page.locator("main, [role='main']").first()).toBeVisible();

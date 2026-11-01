@@ -19,9 +19,9 @@ import {
   type PlanWalkthroughCopy,
 } from "@/components/PlanWalkthrough";
 import {
-  WebsiteBuilderAddOn,
-  type WebsiteBuilderAddOnCopy,
-} from "@/components/WebsiteBuilderAddOn";
+  WebsiteServiceAddOn,
+  type WebsiteServiceAddOnCopy,
+} from "@/components/WebsiteServiceAddOn";
 import {
   ReferralProgramTeaser,
   type ReferralProgramTeaserCopy,
@@ -111,15 +111,17 @@ export default async function PricingPage({
     scenes: walkthroughScenes,
   };
 
-  const addOnCopy: WebsiteBuilderAddOnCopy = {
-    eyebrow: plans("addOns.websiteBuilder.eyebrow"),
-    title: plans("addOns.websiteBuilder.title"),
-    intro: plans("addOns.websiteBuilder.intro"),
-    priceNote: plans("addOns.websiteBuilder.priceNote"),
-    schedulePending: plans("addOns.websiteBuilder.schedulePending"),
-    availableOn: plans("addOns.websiteBuilder.availableOn"),
-    neverIncluded: plans("addOns.websiteBuilder.neverIncluded"),
-    cta: plans("addOns.websiteBuilder.cta"),
+  const websiteServiceCopy: WebsiteServiceAddOnCopy = {
+    eyebrow: plans("addOns.websiteService.eyebrow"),
+    title: plans("addOns.websiteService.title"),
+    intro: plans("addOns.websiteService.intro"),
+    price: plans("addOns.websiteService.price"),
+    priceNote: plans("addOns.websiteService.priceNote"),
+    availableOn: plans("addOns.websiteService.availableOn"),
+    neverIncluded: plans("addOns.websiteService.neverIncluded"),
+    includesTitle: plans("addOns.websiteService.includesTitle"),
+    includes: plans.raw("addOns.websiteService.includes") as string[],
+    cta: plans("addOns.websiteService.cta"),
   };
 
   const referralT = await getTranslations("referrals.public");
@@ -219,23 +221,11 @@ export default async function PricingPage({
               customCta: t("customCta"),
               includesTitle: t("includesTitle"),
               includesItems: t.raw("includesItems") as string[],
+              websiteMention: t("websiteMention"),
               details,
             }}
+            afterPlans={<WebsiteServiceAddOn copy={websiteServiceCopy} />}
           />
-        </Container>
-      </section>
-
-      <section
-        id="website-builder"
-        className="scroll-mt-28 bg-paper pb-[clamp(72px,9vw,120px)]"
-      >
-        <Container>
-          <div data-reveal>
-            <WebsiteBuilderAddOn
-              locale={locale === "fr" ? "fr" : "en"}
-              copy={addOnCopy}
-            />
-          </div>
         </Container>
       </section>
 

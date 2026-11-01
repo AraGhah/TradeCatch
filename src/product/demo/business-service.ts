@@ -3,6 +3,7 @@ import { getGrowthStore } from "@/product/growth";
 import { demoClientAccount } from "@/product/missed-call/fixtures";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { getPgPool } from "@/product/missed-call/postgres-store";
+import { purgeBusinessVoice } from "@/product/receptionist/custom-voice/runtime";
 import { newId } from "@/product/saas/ids";
 import { getSaasStore } from "@/product/saas/runtime";
 import { normalizeEmail } from "@/product/saas/store";
@@ -508,6 +509,7 @@ export async function deleteDemoBusiness(
     throw new Error("Demo business not found");
   }
   await wipeOrgScopedDemoData(organizationId);
+  await purgeBusinessVoice(organizationId);
   const deleted = await saas.deleteOrganization(organizationId);
   if (!deleted) throw new Error("Failed to delete demo business");
 }

@@ -54,8 +54,8 @@ export function demoCapabilitiesAreEntitled(plan: PlanId): boolean {
   });
 }
 
-export function websiteBuilderAddOn() {
-  return ADD_ONS.websiteBuilder;
+export function websiteServiceAddOn() {
+  return ADD_ONS.websiteService;
 }
 
 export { PLAN_ORDER, PREMIUM_PLAN, PLAN_CATALOG };

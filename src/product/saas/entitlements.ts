@@ -41,6 +41,7 @@ export const FEATURE_IDS = [
   "AI_CALL_TRANSFER",
   "AI_EMERGENCY_ROUTING",
   "AI_CALL_TRANSCRIPTS",
+  "AI_CUSTOM_VOICE",
   "CRM_INTEGRATION_LIMITED",
   "CRM_INTEGRATION_ADVANCED",
   "ADVANCED_CALL_ROUTING",
@@ -90,6 +91,11 @@ const RECEPTIONIST_EXTRA = [
   "AI_CALL_TRANSFER",
   "AI_EMERGENCY_ROUTING",
   "AI_CALL_TRANSCRIPTS",
+  // Custom Voice Cloning: the receptionist answers in the owner's own
+  // voice. Receptionist Plus ONLY; every endpoint that records, previews or
+  // activates a voice re-checks this entitlement on the server, and the live
+  // call path re-checks it before it hands a cloned voice to the agent.
+  "AI_CUSTOM_VOICE",
   "CRM_INTEGRATION_ADVANCED",
   "ADVANCED_CALL_ROUTING",
   "MULTI_CREW_CALENDARS",
@@ -205,6 +211,10 @@ export const FEATURE_LABELS: Record<FeatureId, { en: string; fr: string }> = {
   AI_CALL_TRANSCRIPTS: {
     en: "Full call transcripts",
     fr: "Transcriptions complètes des appels",
+  },
+  AI_CUSTOM_VOICE: {
+    en: "Custom voice (your own voice)",
+    fr: "Voix personnalisée (votre propre voix)",
   },
   CRM_INTEGRATION_LIMITED: {
     en: "Basic CRM integrations",

@@ -124,6 +124,108 @@ test.describe("pricing page", () => {
     await expect(rows.filter({ hasText: "Starter" })).toContainText("4,3 mois");
   });
 
+  test("Done-for-You Website Service sits directly under the three plans, before enterprise and FAQs", async ({
+    page,
+  }) => {
+    await page.goto("/pricing");
+    await plans(page);
+    const section = page.locator("#website-service");
+    await expect(section).toBeVisible();
+    await expect(section.getByRole("heading", { name: "Done-for-You Website Service" })).toBeVisible();
+    await expect(section).toContainText("Starting at $349 CAD");
+    await expect(section).toContainText("Starter, Growth and Receptionist Plus");
+
+    // Order on the page: plan cards, then the website service, then the rest.
+    const order = await page.evaluate(() => {
+      const main = document.querySelector("main")!;
+      const articles = [...main.querySelectorAll("article")];
+      const lastPlan = articles[articles.length - 1]!;
+      const website = document.querySelector("#website-service")!;
+      const faq = [...main.querySelectorAll("h2")].find((h) => /question|faq/i.test(h.textContent ?? ""));
+      const follows = (a: Element, b: Element) =>
+        Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+      return {
+        websiteAfterPlans: follows(lastPlan, website),
+        faqAfterWebsite: faq ? follows(website, faq) : null,
+        sections: main.querySelectorAll("#website-service").length,
+      };
+    });
+    expect(order.websiteAfterPlans).toBe(true);
+    expect(order.faqAfterWebsite).not.toBe(false);
+    // The old duplicate "Website Builder" block is gone.
+    expect(order.sections).toBe(1);
+    expect(await page.locator("main").innerText()).not.toMatch(/website builder/i);
+  });
+
+  test("each plan says a website is available, and the CTA leads to the request form", async ({
+    page,
+  }) => {
+    await page.goto("/pricing");
+    await plans(page);
+    const mentions = page.getByRole("link", {
+      name: "Need a website? Add our website service starting at $349.",
+    });
+    await expect(mentions).toHaveCount(3);
+    for (const link of await mentions.all()) {
+      await expect(link).toHaveAttribute("href", "#website-service");
+    }
+
+    const cta = page.locator("#website-service").getByRole("link", { name: "Get My Website Built" });
+    await expect(cta).toHaveAttribute("href", "/website-request");
+    await cta.click();
+    await expect(page).toHaveURL(/\/website-request$/);
+    await expect(page.getByRole("heading", { name: "Tell us what your website needs" })).toBeVisible();
+    // The visitor chooses between the two requests; neither is assumed for them.
+    const newSite = page.getByLabel("A new professional website");
+    const improve = page.getByLabel("Improvements to my current website");
+    await expect(newSite).not.toBeChecked();
+    await expect(improve).not.toBeChecked();
+    await improve.check();
+    await expect(page.getByLabel(/Your current website/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Get My Website Built" })).toBeVisible();
+    // It says plainly that this is not part of the subscription.
+    await expect(page.locator("main")).toContainText("Starting at $349 CAD");
+  });
+
+  test("French: the website service and its request page", async ({ page }) => {
+    await page.goto("/fr/tarifs");
+    await plans(page);
+    const section = page.locator("#website-service");
+    await expect(section).toBeVisible();
+    await expect(section).toContainText("349");
+    const cta = section.getByRole("link").filter({ hasText: /site/i }).last();
+    await cta.click();
+    await expect(page).toHaveURL(/\/fr\/demande-site-web$/);
+    await expect(page.locator("main h1")).toBeVisible();
+  });
+
+  test("Custom Voice Cloning is a Receptionist Plus exclusive, on the card and in the comparison table", async ({
+    page,
+  }) => {
+    await page.goto("/pricing");
+    await plans(page);
+    const main = page.locator("main");
+    const planCard = (name: string) =>
+      main.locator("article").filter({
+        has: page.getByRole("heading", { name, exact: true, level: 2 }),
+      });
+
+    const plus = planCard("Receptionist Plus");
+    const callout = plus.getByTestId("plan-exclusive");
+    await expect(callout).toContainText("Only on Receptionist Plus");
+    await expect(callout).toContainText("Custom Voice Cloning");
+    await expect(callout).toContainText(
+      "Make your receptionist sound like you. Record your voice once, and let your receptionist answer customer calls using your voice.",
+    );
+    await expect(planCard("Growth").getByTestId("plan-exclusive")).toHaveCount(0);
+    await expect(planCard("Starter").getByTestId("plan-exclusive")).toHaveCount(0);
+
+    await expect(main.locator("table")).toContainText("Custom Voice Cloning (your own voice)");
+    // Plans and prices are unchanged by it.
+    await expect(plus).toContainText("$1,999.99");
+    await expect(plus).toContainText("$949.99");
+  });
+
   for (const path of ["/pricing", "/fr/tarifs"]) {
     test(`${path} has no WCAG A/AA violations in the calculator and plans`, async ({
       page,

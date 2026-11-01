@@ -15,6 +15,11 @@ const handleI18n = createMiddleware(routing);
 // reaches any handler. No route under /api/* legitimately needs a request
 // body (as opposed to a response) over this size.
 const DEFAULT_MAX_API_BODY_BYTES = 2 * 1024 * 1024;
+// The few routes that really take a file. Each also bounds its own read.
+const LARGE_BODY_ROUTES: Record<string, number> = {
+  // Voice sample (up to 10 MB) plus multipart framing.
+  "/api/app/receptionist/voice/clone": 11 * 1024 * 1024,
+};
 const BODY_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 /** Hostnames this deployment answers to: what the request was sent to, and the configured public site. */
@@ -58,7 +63,10 @@ export default function proxy(request: NextRequest) {
     }
     if (
       BODY_METHODS.has(request.method) &&
-      contentLengthExceeds(request, DEFAULT_MAX_API_BODY_BYTES)
+      contentLengthExceeds(
+        request,
+        LARGE_BODY_ROUTES[path] ?? DEFAULT_MAX_API_BODY_BYTES,
+      )
     ) {
       return NextResponse.json({ error: "Payload too large." }, { status: 413 });
     }

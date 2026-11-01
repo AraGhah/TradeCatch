@@ -186,6 +186,16 @@ async function main() {
       ["src", "product", "referrals", "schema.sql"],
       "033_referral_program",
     );
+    await applyFile(
+      client,
+      ["src", "product", "website-services", "schema.sql"],
+      "034_website_service",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "receptionist", "schema-custom-voice.sql"],
+      "035_custom_receptionist_voice",
+    );
   } finally {
     await client.end();
   }
