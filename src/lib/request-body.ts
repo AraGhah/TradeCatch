@@ -21,16 +21,16 @@ export function contentLengthExceeds(
 }
 
 /**
- * Reads the body as text, stopping as soon as `maxBytes` is crossed. The
+ * Reads the body as bytes, stopping as soon as `maxBytes` is crossed. The
  * declared Content-Length is checked first, but the stream is counted as well
  * because the header is absent on chunked uploads and can be wrong.
  */
-export async function readBodyText(
+export async function readBodyBytes(
   request: Request,
   maxBytes: number,
-): Promise<string> {
+): Promise<Uint8Array> {
   if (contentLengthExceeds(request, maxBytes)) throw new BodyTooLargeError();
-  if (!request.body) return "";
+  if (!request.body) return new Uint8Array(0);
   const reader = request.body.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
@@ -50,7 +50,37 @@ export async function readBodyText(
     joined.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return new TextDecoder().decode(joined);
+  return joined;
+}
+
+/** Reads the body as text with the same bound as {@link readBodyBytes}. */
+export async function readBodyText(
+  request: Request,
+  maxBytes: number,
+): Promise<string> {
+  return new TextDecoder().decode(await readBodyBytes(request, maxBytes));
+}
+
+/**
+ * Bounded replacement for `await request.formData()` on a multipart upload:
+ * the bytes are counted as they arrive and only then handed to the parser, so
+ * an oversized or unbounded (chunked) upload is cut off instead of buffered.
+ * Returns null when the body is not valid form data.
+ */
+export async function readMultipartBounded(
+  request: Request,
+  maxBytes: number,
+): Promise<FormData | null> {
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!/^multipart\/form-data;/i.test(contentType)) return null;
+  const bytes = await readBodyBytes(request, maxBytes);
+  try {
+    return await new Response(bytes as BodyInit, {
+      headers: { "content-type": contentType },
+    }).formData();
+  } catch {
+    return null;
+  }
 }
 
 /**
