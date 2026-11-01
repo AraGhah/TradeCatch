@@ -15,6 +15,13 @@ Calls arrive from the Twilio SIP trunk. For each call this agent:
 Required environment (see .env.example): TRADECATCH_BASE_URL, TRADECATCH_OPS_SECRET.
 LiveKit credentials are provided by LiveKit Cloud. Optional turn-taking and voice
 tuning lives in tuning.py.
+
+Voice: most calls use the realtime speech-to-speech model. A Receptionist Plus
+business that cloned its owner's voice (and activated it) gets a speech-to-text ->
+LLM -> ElevenLabs pipeline instead, because a speech-to-speech model cannot speak
+with a custom voice. TradeCatch decides per call (`cfg["voice"]`, see voice.py);
+if the cloned voice cannot be set up, or fails mid-call, the caller still gets an
+answer in a standard voice.
 """
 
 from __future__ import annotations
@@ -50,6 +57,7 @@ from routing import call_id_from_room, caller_number, dialed_number, pick_transf
 from tool_results import format_availability, format_booking, parse_offers
 from tradecatch_api import TradeCatchClient
 from tuning import turn_handling_from_env, voice_settings
+from voice import CustomVoice, cascade_settings, parse_custom_voice
 
 logger = logging.getLogger("agent-tradecatch-receptionnist")
 
@@ -597,6 +605,71 @@ class ReceptionistAgent(Agent):
 server = AgentServer()
 
 
+def prewarm(proc: Any) -> None:
+    """Load the voice-activity model once per worker process, not once per call.
+
+    Only the cloned-voice pipeline needs it; if the plugin is missing or fails
+    to load, those calls use the standard voice and nothing else is affected.
+    """
+    try:
+        from livekit.plugins import silero
+
+        proc.userdata["vad"] = silero.VAD.load()
+    except Exception:
+        logger.warning("voice-activity model not preloaded; cloned voice unavailable", exc_info=True)
+
+
+server.setup_fnc = prewarm
+
+
+def build_custom_voice_session(
+    custom: CustomVoice, vad: Any, options: dict[str, Any]
+) -> AgentSession:
+    """Speech-to-text -> LLM -> the owner's cloned ElevenLabs voice.
+
+    The text-to-speech is wrapped in a fallback chain: if ElevenLabs errors or
+    times out mid-call, the same sentence is spoken by a standard voice instead
+    of leaving the caller in silence. Plugins are imported here so a deployment
+    without them keeps working with the standard voice.
+    """
+    from livekit.agents import tts as lk_tts
+    from livekit.plugins import elevenlabs
+
+    settings = cascade_settings(os.environ)
+    cloned = elevenlabs.TTS(
+        voice_id=custom.voice_id,
+        model=custom.model,
+        api_key=os.environ["ELEVENLABS_API_KEY"],
+    )
+    return AgentSession(
+        stt=inference.STT(settings.stt, language=settings.stt_language),
+        llm=inference.LLM(settings.llm),
+        tts=lk_tts.FallbackAdapter([cloned, inference.TTS(settings.fallback_tts)]),
+        vad=vad,
+        **options,
+    )
+
+
+def build_session(
+    cfg: dict[str, Any] | None, vad: Any, options: dict[str, Any]
+) -> AgentSession:
+    """The session for this call: the owner's cloned voice when TradeCatch says so
+    and it can be built, otherwise the standard realtime voice."""
+    custom = parse_custom_voice(cfg, os.environ)
+    if custom is not None and vad is not None:
+        try:
+            session = build_custom_voice_session(custom, vad, options)
+            logger.info("answering with the business's custom voice (model %s)", custom.model)
+            return session
+        except Exception:
+            # Never let a voice problem stop the call from being answered.
+            logger.exception("custom voice unavailable; answering with the standard voice")
+    elif custom is not None:
+        logger.warning("custom voice requested but no voice-activity model; using standard voice")
+    model, voice = voice_settings(os.environ)
+    return AgentSession(llm=inference.DuplexModel(model=model, voice=voice), **options)
+
+
 @server.rtc_session(agent_name="tradecatch-receptionnist")
 async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect()
@@ -621,15 +694,11 @@ async def entrypoint(ctx: JobContext) -> None:
         cfg=cfg, call=call, client=client, sip_identity=participant.identity
     )
 
-    model, voice = voice_settings(os.environ)
     options: dict[str, Any] = {"user_away_timeout": agent.check_in_seconds}
     turn_handling = turn_handling_from_env(os.environ)
     if turn_handling:
         options["turn_handling"] = turn_handling
-    session = AgentSession(
-        llm=inference.DuplexModel(model=model, voice=voice),
-        **options,
-    )
+    session = build_session(cfg, ctx.proc.userdata.get("vad"), options)
 
     agent.attach(session, ctx)
     # Backstop: the report goes out once even if the session never reports a close.
