@@ -4111,7 +4111,7 @@
         "business": "Their business",
         "phone": "Their phone",
         "email": "Their email",
-        "contactHint": "Add a phone number or an email (at least one)."
+        "phoneHint": "The best number to reach them on."
       },
       "note": "Anything we should know?",
       "permission": "I know this person, and they're fine with me sharing their contact details with TradeCatch so we can get in touch.",
@@ -4121,7 +4121,6 @@
         "required": "This field is required.",
         "email": "Enter a valid email address.",
         "phone": "Enter a valid phone number.",
-        "contactRequired": "Add a phone number or an email.",
         "code": "That code doesn't look right. Check it or leave it blank.",
         "permission": "Please confirm you have their permission.",
         "verification": "Please complete the verification before sending.",
