@@ -4,7 +4,9 @@ import { NextRequest } from "next/server";
 import {
   BodyTooLargeError,
   contentLengthExceeds,
+  readBodyBytes,
   readBodyText,
+  readMultipartBounded,
   readFormParamsBounded,
   readJsonBody,
 } from "../../src/lib/request-body";
@@ -186,3 +188,75 @@ describe("public endpoints refuse oversized bodies", () => {
     assert.equal(res.status, 413);
   });
 });
+
+describe("readBodyBytes", () => {
+  it("returns the bytes untouched and stops at the limit", async () => {
+    const bytes = new Uint8Array([0, 1, 2, 250, 251, 255]);
+    const got = await readBodyBytes(new Request(URL, { method: "POST", body: bytes }), 6);
+    assert.deepEqual([...got], [...bytes]);
+    await assert.rejects(
+      () => readBodyBytes(new Request(URL, { method: "POST", body: bytes }), 5),
+      BodyTooLargeError,
+    );
+  });
+
+  it("counts a chunked upload that declares no length", async () => {
+    await assert.rejects(
+      () => readBodyBytes(new Request(URL, chunked(["abcdef", "ghijkl"])), 8),
+      BodyTooLargeError,
+    );
+  });
+});
+
+describe("readMultipartBounded", () => {
+  function upload(file: Uint8Array<ArrayBuffer>) {
+    const form = new FormData();
+    form.set("name", "Jo Acme");
+    form.set("sample", new Blob([file], { type: "audio/webm" }), "sample.webm");
+    return new Request(URL, { method: "POST", body: form });
+  }
+
+  it("parses a normal multipart upload, including binary bytes", async () => {
+    const file = new Uint8Array(new ArrayBuffer(2048));
+    file.set([0x1a, 0x45, 0xdf, 0xa3, 0, 255, 254]);
+    const form = await readMultipartBounded(upload(file), 10_000);
+    assert.ok(form);
+    assert.equal(form.get("name"), "Jo Acme");
+    const sample = form.get("sample");
+    assert.ok(sample instanceof Blob);
+    assert.deepEqual([...new Uint8Array(await sample.arrayBuffer())], [...file]);
+  });
+
+  it("cuts off an upload bigger than the limit", async () => {
+    await assert.rejects(
+      () => readMultipartBounded(upload(new Uint8Array(new ArrayBuffer(5000))), 1000),
+      BodyTooLargeError,
+    );
+  });
+
+  it("returns null for anything that is not multipart form data", async () => {
+    assert.equal(
+      await readMultipartBounded(
+        new Request(URL, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: "{}",
+        }),
+        1000,
+      ),
+      null,
+    );
+    assert.equal(
+      await readMultipartBounded(
+        new Request(URL, {
+          method: "POST",
+          headers: { "content-type": "multipart/form-data; boundary=x" },
+          body: "not really multipart",
+        }),
+        1000,
+      ),
+      null,
+    );
+  });
+});
+
