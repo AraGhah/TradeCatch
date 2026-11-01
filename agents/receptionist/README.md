@@ -87,6 +87,7 @@ only reports a failed transfer when the REFER itself is rejected. (The Twilio
 | `tool_results.py` | What each tool tells the model (never "booked" unless confirmed) |
 | `tradecatch_api.py` | HTTP client: timeouts, retries, no PII in logs |
 | `tuning.py` | Env-driven voice, endpointing and interruption settings |
+| `voice.py` | Validates the per-call voice (`cfg["voice"]`) and the cloned-voice pipeline settings |
 | `routing.py` | Choosing a transfer line; caller number and call id from SIP |
 
 ## Configuration
@@ -103,6 +104,25 @@ The speech-to-speech model has no speaking-rate setting, so pacing (calm, slower
 numbers and addresses) is requested in the instructions. Treat it as something to
 listen to on real calls, not as a guarantee.
 
+## Custom voice (Receptionist Plus)
+
+When TradeCatch says a business uses its owner's cloned voice (`cfg["voice"]` is
+`{"mode": "custom", ...}`), the call runs on **speech-to-text → LLM → ElevenLabs**
+instead of the speech-to-speech model, because that model cannot speak with a custom
+voice. Everything else (language menu, tools, booking, transfer, silence, report) is
+the same code. The ElevenLabs voice is wrapped in a fallback chain
+(`AGENT_FALLBACK_TTS`), and anything that stops the pipeline being built (missing
+key, missing plugin, kill switch, a voice id that does not validate) means the call
+is answered with the standard voice. Needs `ELEVENLABS_API_KEY` as a LiveKit secret:
+
+```bash
+lk agent update-secrets --secrets "ELEVENLABS_API_KEY=<key>"
+```
+
+`AGENT_CUSTOM_VOICE=false` turns it off for every call without a redeploy of
+TradeCatch. Expect somewhat higher response latency than the speech-to-speech voice:
+listen to real calls (in French and English) before relying on it.
+
 ## Deploy (LiveKit Cloud)
 
 ```bash
@@ -117,7 +137,7 @@ Roll back with `lk agent rollback` if a new version misbehaves.
 
 ```bash
 pip install -r requirements.txt
-python -m unittest discover -p "test_*.py"     # ~160 tests, no network, no real LiveKit room
+python -m unittest discover -p "test_*.py"     # ~180 tests, no network, no real LiveKit room
 ```
 
 The suite covers the language menu and silence policy, the call record and its
