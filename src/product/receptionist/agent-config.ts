@@ -15,6 +15,10 @@
 
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import {
+  STANDARD_AGENT_VOICE,
+  type AgentVoice,
+} from "./custom-voice/model";
+import {
   firstLanguage,
   languageSelectTimeoutSeconds,
 } from "./language-select";
@@ -83,6 +87,13 @@ export type AgentConfig = {
   emergencyTransferE164: string | null;
   /** Named departments the agent may offer. */
   departments: { name: string; phoneE164: string }[];
+  /**
+   * The voice to speak with. "standard" (the default, and whenever anything is
+   * in doubt) keeps the existing voice; "custom" is a cloned voice the owner
+   * consented to, only present for a Receptionist Plus business. The agent
+   * falls back to the standard voice if the cloned one cannot be used.
+   */
+  voice: AgentVoice;
 };
 
 /** Roughly what each owner setting means in words per minute, for the model. */
@@ -101,6 +112,8 @@ export function voiceAgentContext(input: {
   bookingEnabled?: boolean;
   pricingInfo?: string;
   speakingSpeed?: SpeakingSpeed;
+  /** The voice is a clone of the owner's: be honest that the caller is talking to a virtual receptionist. */
+  customVoice?: boolean;
 }): string {
   const lines = [
     "# THIS CALL — WHAT YOU CAN ACTUALLY DO (overrides anything above that says otherwise)",
@@ -118,6 +131,11 @@ export function voiceAgentContext(input: {
     "* You cannot text or email the caller. Never offer a confirmation text or email.",
     "* Never say you have sent, submitted or scheduled anything yourself. Say you have noted the details and the team will follow up; do not give a callback time.",
   ];
+  if (input.customVoice) {
+    lines.push(
+      "* Your voice was created from a recording of the business owner, with their permission. You are still the business's virtual receptionist: never say or imply that you are the owner or a human. If asked, say you are the virtual receptionist (an AI assistant) and offer to connect the caller with a person.",
+    );
+  }
   if (input.bookingEnabled) {
     lines.push(
       "* To book: call check_availability, read out ONLY the times it returns, then call book_appointment with the time the caller chose. Say the appointment is booked ONLY when book_appointment returns status confirmed.",
@@ -184,6 +202,7 @@ function languageSelectFor(
 export function buildAgentConfig(
   config: ReceptionistConfig,
   now: Date = new Date(),
+  voice: AgentVoice = STANDARD_AGENT_VOICE,
 ): AgentConfig {
   const afterHours = isAfterHours(config, now);
   const emergency =
@@ -212,6 +231,7 @@ export function buildAgentConfig(
       bookingEnabled,
       pricingInfo: config.pricingInfo,
       speakingSpeed,
+      customVoice: voice.mode === "custom",
     })}`,
     greetings: {
       fr: config.greetingFr,
@@ -237,5 +257,6 @@ export function buildAgentConfig(
     transferE164: general,
     emergencyTransferE164: emergency,
     departments,
+    voice,
   };
 }
