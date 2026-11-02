@@ -1807,6 +1807,45 @@
     "missedCall": {
       "playerTitle": "Démo TradeCatch des appels manqués",
       "transcript": "Vous travaillez. Un client appelle. Vous manquez l'appel. Et ce client est peut-être déjà en train d'appeler votre concurrent. Avec TradeCatch, un appel manqué admissible déclenche un texto au nom de votre entreprise, pour reprendre contact avant que l'occasion disparaisse. TradeCatch enregistre la conversation, organise la demande et vous tient informé, dans un seul espace de travail. Une soumission envoyée, mais aucune nouvelle? TradeCatch relance automatiquement, et une réponse arrête la séquence. Moins de temps à courir après les clients. Plus d'occasions. TradeCatch : chaque appel compte. Démonstration illustrative avec une entreprise fictive. La récupération des appels manqués fonctionne en pilote contrôlé."
+    },
+    "underTheSink": {
+      "playerTitle": "Sous l'évier : la réceptionniste IA répond",
+      "transcript": "Les mains sous l'évier. Le téléphone qui sonne. Et tu ne peux pas répondre. Ce client-là ne laissera pas de message. Il va appeler le prochain plombier. Client : [soupir] Ah, voyons donc… Même chantier. Cette fois, TradeCatch décroche. Réceptionniste IA : Merci d'avoir appelé Plomberie NorthStar. Comment puis-je vous aider? Client : Bonjour, l'évier de ma cuisine fuit. Vous desservez Laval? Réceptionniste IA : Oui, nous desservons Laval. Quelle est votre adresse, et quel moment vous conviendrait? Client : Au 45, avenue Laurier, à Laval. Demain matin, vers dix heures? Réceptionniste IA : Parfait. J'ai transmis votre demande à l'équipe. Elle vous écrira pour confirmer. Tu restes sur ton chantier. TradeCatch répond, et te remet les détails. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca. Mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait.",
+      "disclosure": "Mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait."
+    },
+    "theLadder": {
+      "playerTitle": "Sur l'escabeau : un appel manqué reçoit un texto",
+      "transcript": "Tu es électricien. Pas réceptionniste. Bien des gens ne laissent pas de message. Ils appellent quelqu'un d'autre. Avec TradeCatch, un appel manqué reçoit un texto tout de suite, au nom de ton entreprise. Tu termines ta job. La demande est déjà là. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca. Mise en scène avec une entreprise fictive, pas un témoignage de client. La réponse par texto aux appels manqués fonctionne en pilote contrôlé.",
+      "disclosure": "Mise en scène avec une entreprise fictive, pas un témoignage de client. La réponse par texto aux appels manqués fonctionne en pilote contrôlé."
+    },
+    "afterHours": {
+      "playerTitle": "Après les heures : l'urgence est transférée",
+      "transcript": "Tes clients n'appellent pas seulement de neuf à cinq. Réceptionniste IA : Merci d'avoir appelé Plomberie NorthStar. Nous sommes fermés pour la soirée. Comment puis-je vous aider? Client : Mon sous-sol est inondé! J'ai besoin de quelqu'un tout de suite! Réceptionniste IA : Je comprends, c'est urgent. Je vous transfère immédiatement au technicien de garde. Les vraies urgences rejoignent ta ligne de garde. Le reste est là le matin, avec un résumé. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca. Mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait.",
+      "disclosure": "Mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait."
+    }
+  },
+  "demoStories": {
+    "eyebrow": "Voyez-le à l'œuvre",
+    "headline": "Trois appels que vous ne pouvez pas prendre. Voici la suite.",
+    "intro": "De courtes mises en scène avec une entreprise fictive de plomberie et d'électricité. Chacune est sous-titrée, et le son ne joue que si vous appuyez sur lecture.",
+    "note": "Mises en scène avec une entreprise fictive, pas des témoignages de clients. La réceptionniste est un pilote configuré par le fondateur, et la réponse par texto aux appels manqués fonctionne en pilote contrôlé.",
+    "watchLabel": "Regarder la vidéo : {title}",
+    "cards": {
+      "underTheSink": {
+        "tag": "Réceptionniste IA",
+        "title": "Sous l'évier",
+        "blurb": "Vous avez les mains prises. La réceptionniste répond, note les détails de l'appelant et transmet la demande à votre équipe."
+      },
+      "theLadder": {
+        "tag": "Texto après appel manqué",
+        "title": "Sur l'escabeau",
+        "blurb": "Un appel manqué reçoit un texto au nom de votre entreprise : la demande vous attend quand vous redescendez."
+      },
+      "afterHours": {
+        "tag": "Transfert et résumé",
+        "title": "Après les heures",
+        "blurb": "Une vraie urgence est transférée à votre ligne de garde. Le reste vous attend le matin, dans un résumé."
+      }
     }
   },
   "errors": {
