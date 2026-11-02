@@ -153,7 +153,7 @@ test.describe("first-demo journeys", () => {
       }),
     ).toBeVisible();
 
-    const submit = page.getByRole("button", { name: "Submit request" });
+    const submit = page.locator('button[type="submit"]');
     await expect(submit).not.toHaveAttribute("aria-disabled", "true");
     const response = page.waitForResponse("**/api/book-audit");
     await submit.click();

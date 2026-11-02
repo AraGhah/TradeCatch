@@ -75,7 +75,9 @@ for (const [device, viewport] of Object.entries(viewports)) {
         expect(hrefs.length).toBeGreaterThan(0);
         await page
           .getByRole("button", {
-            name: fr ? "Voir la démo vidéo" : "Watch the 90-second demo",
+            name: fr
+              ? "Voir la démo de 90 secondes"
+              : "Watch the 90-second demo",
             exact: true,
           })
           .first()
@@ -178,12 +180,7 @@ for (const [device, viewport] of Object.entries(viewports)) {
         await page.route("**/api/book-audit", (route) =>
           route.fulfill({ json: { ok: true, leadSaved: true } }),
         );
-        await page
-          .getByRole("button", {
-            name: fr ? "Soumettre la demande" : "Submit request",
-            exact: true,
-          })
-          .click();
+        await page.locator('button[type="submit"]').click();
         await expect(page.getByRole("heading", { level: 1 })).toContainText(
           fr ? "demande" : "audit request is in",
         );
