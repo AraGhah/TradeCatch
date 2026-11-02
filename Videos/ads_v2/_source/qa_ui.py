@@ -1,8 +1,11 @@
 import json, subprocess, sys, math, shutil
 from pathlib import Path
 import config as C, ui_specs as U
+# usage: python qa_ui.py [en|fr] [9x16|4x5]  -> still frames + a sheet per scene under WORK/qa_ui/<lang>[_<fmt>]
 lang = sys.argv[1] if len(sys.argv)>1 else "en"
-out = C.WORK / "qa_ui" / lang; shutil.rmtree(out, ignore_errors=True); out.mkdir(parents=True)
+fmt = sys.argv[2] if len(sys.argv)>2 else "9x16"
+C.set_format(fmt)
+out = C.WORK / "qa_ui" / (lang if fmt == "9x16" else f"{lang}_{fmt}"); shutil.rmtree(out, ignore_errors=True); out.mkdir(parents=True)
 fps = C.FPS
 env_r = [max(0,math.sin(i/fps*5))**2*0.8 if (i//fps)%4<2 else 0 for i in range(fps*5)]
 env_c = [max(0,math.sin(i/fps*4+1))**2*0.7 if (i//fps)%4>=2 else 0 for i in range(fps*5)]
@@ -19,7 +22,7 @@ S = {
 }
 procs=[]
 for name,(spec,frames) in S.items():
-    sp = out/f"{name}.json"; sp.write_text(json.dumps(spec,ensure_ascii=False),encoding="utf-8")
+    sp = out/f"{name}.json"; sp.write_text(json.dumps(dict(spec, w=C.W, h=C.H),ensure_ascii=False),encoding="utf-8")
     procs.append((name,subprocess.Popen(["node",str(C.ROOT/"ui"/"render_ui.mjs"),str(sp),str(out/name),",".join(map(str,frames))],stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)))
 for name,p in procs:
     o,_=p.communicate(); print(name,(o or "").strip()[-200:])
