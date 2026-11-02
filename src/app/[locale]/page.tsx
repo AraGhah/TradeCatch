@@ -8,6 +8,7 @@ import { FounderSection } from "@/components/FounderSection";
 import { PricingPreview } from "@/components/PricingPreview";
 import { HomeMobile } from "@/components/home/HomeMobile";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { StoryDemos } from "@/components/StoryDemos";
 import { localizedAnchor } from "@/lib/anchors";
 import { buildMetadata } from "@/lib/seo";
 
@@ -225,6 +226,9 @@ export default async function HomePage({
             </div>
           </Container>
         </section>
+
+        {/* 3b. Three short dramatizations: the product on the job */}
+        <StoryDemos locale={locale} id="on-the-job" />
 
         {/* 4. Plan ladder (full detail lives on /pricing) */}
         <section
