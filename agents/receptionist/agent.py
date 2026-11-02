@@ -279,7 +279,16 @@ class ReceptionistAgent(Agent):
     async def _recover(self) -> None:
         """The model session died: hand the caller to a person if one can be reached."""
         number = self._cfg.get("transferE164")
-        if not number or self._cfg.get("afterHours") or not self._sip_identity or self._transferring:
+        after_hours_blocked = (
+            self._cfg.get("afterHours")
+            and self._cfg.get("transferHours") != "always"
+        )
+        if (
+            not number
+            or after_hours_blocked
+            or not self._sip_identity
+            or self._transferring
+        ):
             await self._hang_up()
             return
         self._transferring = True
