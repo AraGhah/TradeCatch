@@ -1,0 +1,26 @@
+{
+ "bed_A": {
+  "prompt": "Warm, confident modern commercial underscore for a trades-business ad. Fingerpicked acoustic guitar, soft kick, brushed percussion, round bass and a light analog synth pad. Starts sparse and slightly tense for the first 14 seconds, then lifts into a steady optimistic groove, and resolves on a clean final chord at about 52 seconds. Instrumental, no vocals, no spoken words.",
+  "dur": 53.995,
+  "lufs": -16.5,
+  "tp": -1.5
+ },
+ "bed_B": {
+  "prompt": "Clean, upbeat, modern commercial underscore. Plucked electric guitar, tight claps, warm bass and a bright but restrained synth. Begins with a subtle pulse, builds into a confident, friendly groove, ends on a clean final hit at about 32 seconds. Instrumental, no vocals, no spoken words.",
+  "dur": 32.026,
+  "lufs": -15.4,
+  "tp": -0.6
+ },
+ "bed_C": {
+  "prompt": "Cinematic nighttime underscore. Low sustained cello and soft synth pad, a quiet heartbeat-like pulse and sparse piano. Builds tension for about 18 seconds, then resolves into calm, reassuring warm pads and gentle piano, ending softly at about 36 seconds. Instrumental, no vocals, no spoken words.",
+  "dur": 36.075,
+  "lufs": -16.4,
+  "tp": -0.9
+ },
+ "sting": {
+  "prompt": "A short warm confident brand sting: two plucked guitar notes and a soft synth chord that rings out and fades. Instrumental, no vocals.",
+  "dur": 6.087,
+  "lufs": -16.4,
+  "tp": -3.8
+ }
+}
