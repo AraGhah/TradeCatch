@@ -28,6 +28,7 @@ import {
 } from "../../src/product/receptionist/nlu";
 import {
   claimsToBeHuman,
+  claimsTransferPromise,
   claimsUnapprovedPrice,
 } from "../../src/product/receptionist/reply-guards";
 import {
@@ -318,6 +319,22 @@ describe("what the AI is allowed to say", () => {
       "I can take a message for the team.",
     ]) {
       assert.equal(claimsToBeHuman(reply), false, reply);
+    }
+  });
+
+  it("detects a promised transfer that would leave the caller waiting", () => {
+    for (const reply of [
+      "Je vous transfère à l'équipe. Un instant.",
+      "I'm transferring you now.",
+      "I'll connect you with someone.",
+    ]) {
+      assert.equal(claimsTransferPromise(reply), true, reply);
+    }
+    for (const reply of [
+      "Je prends votre demande pour l'équipe.",
+      "I can take a message for a callback.",
+    ]) {
+      assert.equal(claimsTransferPromise(reply), false, reply);
     }
   });
 });

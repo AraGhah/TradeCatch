@@ -186,6 +186,9 @@ export default async function PricingPage({
               <p className="mt-5 max-w-[34em] text-[clamp(16px,1.35vw,18px)] leading-[1.6] text-white/68">
                 {t("intro")}
               </p>
+              <p className="mt-4 max-w-[34em] rounded-[12px] border border-orange/40 bg-[rgba(228,118,43,0.16)] px-3.5 py-2.5 text-[14px] leading-[1.45] text-white/90">
+                {t("billingBanner")}
+              </p>
             </div>
 
             <div className="border-l border-white/15 pl-0 lg:pl-10">

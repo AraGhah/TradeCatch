@@ -17,6 +17,7 @@ import {
   extractName,
   extractPhoneE164,
   matchFaq,
+  wantsHuman,
 } from "../../src/product/receptionist/nlu";
 import { createReceptionistNotifier } from "../../src/product/receptionist/notifications";
 import {
@@ -137,6 +138,14 @@ describe("receptionist NLU", () => {
     assert.equal(detectYesNo("non, c'est correct"), "no");
     assert.equal(detectYesNo("yeah that's right"), "yes");
     assert.equal(detectYesNo("peut-être"), null);
+  });
+
+  it("recognizes transfer requests beyond parler/speak phrasing", () => {
+    assert.equal(wantsHuman("transfère-moi à quelqu'un"), true);
+    assert.equal(wantsHuman("please transfer me"), true);
+    assert.equal(wantsHuman("connect me to a person"), true);
+    assert.equal(wantsHuman("mettez-moi en communication"), true);
+    assert.equal(wantsHuman("j'ai une fuite d'eau"), false);
   });
 
   it("extracts names and phone numbers", () => {
@@ -380,6 +389,41 @@ describe("receptionist transfers, hours and emergencies", () => {
     assert.match(texts(plan), /dès l'ouverture/);
   });
 
+  it("transfers when the caller asks for a human mid-intake, not only at reason", async () => {
+    const { engine } = setup();
+    let plan = await engine.startCall({ callSid: "CB3b", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "fuite d'eau dans la cuisine");
+    assert.match(texts(plan), /nom/i);
+    plan = await say(engine, plan, "transfère-moi à un humain");
+    const dial = plan.verbs.find((v) => v.verb === "dial");
+    assert.ok(dial && dial.verb === "dial" && dial.phoneE164 === "+15145550303");
+    assert.match(texts(plan), /transfère/i);
+  });
+
+  it("uses the configured transfer ring timeout on dial", async () => {
+    const { engine } = setup({
+      config: makeConfig({ transferTimeoutSeconds: 45 }),
+    });
+    let plan = await engine.startCall({ callSid: "CB3c", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "je veux parler à un humain");
+    const dial = plan.verbs.find((v) => v.verb === "dial");
+    assert.ok(dial && dial.verb === "dial");
+    assert.equal(dial.timeoutSeconds, 45);
+  });
+
+  it("transfers after hours when transferHours is always", async () => {
+    const { engine } = setup({
+      at: AFTER_HOURS,
+      config: makeConfig({ transferHours: "always" }),
+    });
+    let plan = await engine.startCall({ callSid: "CB3d", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "je veux parler à un humain");
+    assert.ok(plan.verbs.some((v) => v.verb === "dial"));
+  });
+
   it("bridges a critical emergency to the on-call line immediately and alerts by SMS", async () => {
     const deferred: (() => Promise<void>)[] = [];
     const { engine, store, sms } = setup({ at: AFTER_HOURS });
@@ -492,6 +536,22 @@ describe("receptionist LLM brain guardrails", () => {
     plan = await say(engine, plan, "je veux parler au grand patron");
     assert.equal(plan.verbs.some((v) => v.verb === "dial"), false);
     assert.match(texts(plan), /nom|aider/);
+  });
+
+  it("does not leave the caller waiting when the model promises a transfer with action=ask", async () => {
+    const llm = fakeLlm({
+      reply: "Je vous transfère à l'équipe. Un instant.",
+      action: "ask",
+    });
+    const { engine } = setup({
+      brain: createLlmBrain(llm),
+      config: makeConfig({ fallbackTransferE164: undefined, routing: [] }),
+    });
+    let plan = await engine.startCall({ callSid: "CC2b", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "je veux un vrai humain");
+    assert.equal(plan.verbs.some((v) => v.verb === "dial"), false);
+    assert.doesNotMatch(texts(plan), /Je vous transfère/);
   });
 
   it("falls back to the rule brain when the model errors or returns junk", async () => {

@@ -47,9 +47,10 @@ for (const locale of ["en", "fr"] as const) {
 
         // Both the founder/about CTA and the shared footer use the same flow.
         const links = page.locator(
-          'a[aria-haspopup="dialog"][href^="https://mail.google.com/"]',
+          'a[aria-haspopup="dialog"][href^="https://mail.google.com/"]:visible',
         );
-        await expect(links).toHaveCount(2);
+        const hasAboutCta = path === "/about" || path === "/fr/a-propos";
+        await expect(links).toHaveCount(hasAboutCta || !mobile ? 2 : 1);
         for (const link of await links.all()) {
           await link.click();
           const dialog = page.getByRole("dialog", { name: title });

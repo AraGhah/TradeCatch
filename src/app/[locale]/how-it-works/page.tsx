@@ -96,7 +96,7 @@ export default async function HowItWorksPage({
         }
       />
 
-      <section className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface py-[clamp(48px,6vw,80px)]">
+      <section className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface py-10 sm:py-[clamp(48px,6vw,80px)]">
         <Container size="how">
           <div data-reveal>
             <PlanWalkthrough copy={walkthroughCopy} initialPlan="starter" />

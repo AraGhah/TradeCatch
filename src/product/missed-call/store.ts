@@ -171,10 +171,10 @@ export function createMemoryStore(): MissedCallStore {
     },
     async saveClient(client) {
       clients.set(client.id, client);
-      bySms.set(client.smsFromNumber, client.id);
+      bySms.set(normalizePhone(client.smsFromNumber), client.id);
     },
     async findClientBySmsFromNumber(n) {
-      const id = bySms.get(n);
+      const id = bySms.get(normalizePhone(n));
       return id ? (clients.get(id) ?? null) : null;
     },
     async saveCall(call) {
