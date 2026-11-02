@@ -124,7 +124,7 @@ describe("POST /api/twilio/sms/inbound — SMS receptionist", () => {
     assert.match(replies[0]!.body, /assistant virtuel de Nord Plomberie/);
   });
 
-  it("continues the same conversation on later messages without duplicating the first reply", async () => {
+  it("continues the same conversation on later messages with a follow-up reply", async () => {
     const { client, organization } = await business();
     await POST(webhook(client.smsFromNumber, "Bonjour, j'ai un problème"));
     await POST(webhook(client.smsFromNumber, "Mon évier est bouché"));
@@ -134,7 +134,22 @@ describe("POST /api/twilio/sms/inbound — SMS receptionist", () => {
       50,
     );
     assert.equal(messages.filter((m) => m.direction === "inbound").length, 2);
-    // The acknowledgement is not repeated to someone who already received it.
+    const replies = await automatedReplies(organization.id);
+    assert.equal(replies.length, 2);
+    assert.match(replies[0]!.body, /assistant virtuel de Nord Plomberie/);
+    assert.match(replies[1]!.body, /adresse/i);
+  });
+
+  it("still answers when Twilio redelivers a cold SMS MessageSid after Module A released it", async () => {
+    const { client, organization, store } = await business();
+    const sid = "SMredeliver_cold_1";
+    // Simulate a prior Module A cold-path attempt that claimed then released.
+    assert.equal(await store.claimInboundMessageSid(sid), true);
+    await store.releaseInboundMessageSid(sid);
+    const res = await POST(
+      webhook(client.smsFromNumber, "Salut, besoin d'aide", { sid }),
+    );
+    assert.equal(res.status, 200);
     assert.equal((await automatedReplies(organization.id)).length, 1);
   });
 
