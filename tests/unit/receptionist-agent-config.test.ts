@@ -52,14 +52,39 @@ describe("agent config", () => {
     assert.equal(out.afterHours, false);
   });
 
-  it("restricts transfers to emergencies when the office is closed", () => {
+  it("restricts transfers to emergencies when the office is closed and transferHours is business_hours", () => {
     const out = buildAgentConfig(
-      config({ emergencyTransferE164: "+14389957350" }),
+      config({
+        emergencyTransferE164: "+14389957350",
+        fallbackTransferE164: "+14389957350",
+        transferSettings: {
+          primaryTransferE164: "+14389957350",
+          transferHours: "business_hours",
+          timeoutSeconds: 30,
+          conditions: ["caller_request"],
+          failedAction: "take_message",
+        },
+      }),
       CLOSED,
     );
     assert.equal(out.afterHours, true);
+    assert.equal(out.transferHours, "business_hours");
     assert.match(out.instructions, /currently CLOSED/);
     assert.match(out.instructions, /only transfer for an emergency/);
+  });
+
+  it("keeps normal transfers available after hours when transferHours is always", () => {
+    const out = buildAgentConfig(
+      config({
+        fallbackTransferE164: "+14389957350",
+        emergencyTransferE164: "+14389957350",
+      }),
+      CLOSED,
+    );
+    assert.equal(out.afterHours, true);
+    assert.equal(out.transferHours, "always");
+    assert.match(out.instructions, /MUST call the transfer_call tool/);
+    assert.match(out.instructions, /live transfers are still allowed/);
   });
 
   it("never offers a transfer when no human line exists", () => {
