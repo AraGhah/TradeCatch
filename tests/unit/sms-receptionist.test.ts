@@ -229,13 +229,12 @@ describe("sms receptionist — new customers", () => {
 
   it("answers in English when the customer writes English", async () => {
     const h = harness();
-    await h.service.handleCustomerSms(
+    const result = await h.service.handleCustomerSms(
       h.input("Hi, I have a leak under my sink"),
     );
-    assert.equal(
-      h.sent[0]!.body,
-      fallbackReply("en", { name: "Nord Plomberie" }),
-    );
+    assert.equal(result.status === "replied" && result.source, "rules");
+    assert.match(h.sent[0]!.body, /virtual assistant for Nord Plomberie/);
+    assert.match(h.sent[0]!.body, /address/i);
   });
 
   it("uses the model reply and verified business info when a model is configured", async () => {
@@ -316,7 +315,7 @@ describe("sms receptionist — AI failure", () => {
     assert.equal(result.status === "replied" && result.source, "fallback");
   });
 
-  it("does not repeat the acknowledgement to a customer who already got it", async () => {
+  it("does not repeat the acknowledgement to a short follow-up with nothing to answer", async () => {
     const h = harness({
       history: [
         {
@@ -336,6 +335,35 @@ describe("sms receptionist — AI failure", () => {
     });
     assert.equal(h.sent.length, 0);
     assert.equal(h.escalations[0]?.alertStaff, false);
+  });
+
+  it("continues the conversation with the rules brain when the model is down", async () => {
+    const h = harness({
+      history: [
+        {
+          direction: "outbound",
+          body: fallbackReply("fr", { name: "Nord Plomberie" }),
+          at: "2026-10-28T14:50:00Z",
+          automated: true,
+        },
+      ],
+    });
+    const result = await h.service.handleCustomerSms(
+      h.input("Mon évier est bouché", { messageSid: "SM_in_3" }),
+    );
+    assert.equal(result.status, "replied");
+    assert.equal(result.status === "replied" && result.source, "rules");
+    assert.equal(h.sent.length, 1);
+    assert.match(h.sent[0]!.body, /adresse/i);
+  });
+
+  it("answers hours questions from business context without a model", async () => {
+    const h = harness();
+    const result = await h.service.handleCustomerSms(
+      h.input("Quelles sont vos heures d'ouverture?"),
+    );
+    assert.equal(result.status === "replied" && result.source, "rules");
+    assert.match(h.sent[0]!.body, /08:00/);
   });
 
   it("replaces a model reply that claims a booking nobody made", async () => {
@@ -553,13 +581,14 @@ describe("sms receptionist — eligibility (never reply)", () => {
     });
   }
 
-  it("respects quiet hours in the business time zone and still surfaces the text", async () => {
+  it("replies after hours with a closed-hours notice and still surfaces the text", async () => {
     const h = harness({ now: NIGHT });
     const result = await h.service.handleCustomerSms(
       h.input("Bonjour, j'ai un problème"),
     );
-    assert.deepEqual(result, { status: "skipped", reason: "quiet_hours" });
-    assert.equal(h.sent.length, 0);
+    assert.equal(result.status, "replied");
+    assert.equal(h.sent.length, 1);
+    assert.match(h.sent[0]!.body, /fermés|closed/i);
     assert.deepEqual(
       { reason: h.escalations[0]?.reason, staff: h.escalations[0]?.alertStaff },
       { reason: "quiet_hours", staff: false },

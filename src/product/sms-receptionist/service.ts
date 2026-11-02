@@ -26,6 +26,7 @@ import type {
 } from "@/product/missed-call/types";
 import { isInsideSendingWindow } from "@/product/sms-automation/window";
 import {
+  afterHoursReply,
   bookingConfirmation,
   buildSystemPrompt,
   buildUserPrompt,
@@ -37,6 +38,7 @@ import {
   replyIsSendable,
   requestReply,
   REPLY_SCHEMA,
+  rulesReply,
   sanitizeReply,
   slotTakenReply,
   type BusinessContext,
@@ -66,7 +68,6 @@ export type SkipReason =
   | "suppressed"
   | "active_workflow"
   | "quote_thread"
-  | "quiet_hours"
   | "rate_limited"
   | "fallback_already_sent"
   | "duplicate"
@@ -81,7 +82,7 @@ export type SmsReceptionistResult =
       /** False when Twilio rejected it and the outbox will retry. */
       sent: boolean;
       action: "reply" | "book" | "escalate";
-      source: "model" | "fallback" | "safety" | "booking";
+      source: "model" | "fallback" | "safety" | "booking" | "rules";
       booked: boolean;
       escalated: boolean;
     };
@@ -261,12 +262,11 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
 
       const now = deps.now();
       const window = await deps.quietHours(input.organizationId);
-      if (!isInsideSendingWindow(now, client.timezone, window)) {
-        // Texting back in the middle of the night is not what the owner asked
-        // for. The team still gets the message in their inbox.
-        await safeEscalate(input, "quiet_hours", false, false);
-        return skip("quiet_hours");
-      }
+      const insideWindow = isInsideSendingWindow(
+        now,
+        client.timezone,
+        window,
+      );
 
       const history = await deps.history(
         input.organizationId,
@@ -338,7 +338,56 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
         (t) => t.role === "assistant" && isFallbackReply(t.text, context),
       );
 
+      // Outside the owner's sending window: still answer (customers text
+      // after hours expecting a reply) with a closed-hours script or rules
+      // brain — never go fully silent. Staff get an inbox item, not a wake-up SMS.
+      if (!insideWindow) {
+        const specific = rulesReply({
+          body: input.body,
+          language,
+          context,
+          history: turns,
+          alreadyAcknowledged,
+          specificOnly: true,
+        });
+        const afterHoursDraft = specific
+          ? specific
+          : alreadyAcknowledged
+            ? null
+            : {
+                reply: afterHoursReply(language, context),
+                action: "escalate" as const,
+                language,
+              };
+        if (!afterHoursDraft) {
+          await safeEscalate(input, "quiet_hours", false, false);
+          return skip("fallback_already_sent");
+        }
+        deps.log("reply_generated", {
+          ...base,
+          action: afterHoursDraft.action,
+          language: afterHoursDraft.language,
+          source: "rules",
+          quietHours: true,
+        });
+        const text =
+          sanitizeReply(afterHoursDraft.reply) ??
+          afterHoursReply(language, context);
+        return await deliver(input, {
+          body: text,
+          action: afterHoursDraft.action === "escalate" ? "escalate" : "reply",
+          source: "rules",
+          language: afterHoursDraft.language,
+          escalate: {
+            reason: "quiet_hours",
+            alertStaff: false,
+            handOff: false,
+          },
+        });
+      }
+
       let draft: ModelReply | null = null;
+      let draftSource: "model" | "rules" | "fallback" = "fallback";
       if (deps.llm) {
         try {
           draft = parseModelReply(
@@ -355,42 +404,43 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
               maxTokens: 500,
             }),
           );
-          if (!draft)
-            deps.log("ai_failed", { ...base, reason: "invalid_output" });
+          if (draft) draftSource = "model";
+          else deps.log("ai_failed", { ...base, reason: "invalid_output" });
         } catch (err) {
           deps.log("ai_failed", { ...base, reason: errorCode(err) });
         }
       }
 
       if (!draft) {
-        if (alreadyAcknowledged) {
-          // The customer already got the "team will reply" text and nobody
-          // can answer for the model; repeating it adds noise. Keep the team
-          // informed without texting again.
-          await safeEscalate(input, "ai_unavailable", false, false);
-          return skip("fallback_already_sent");
-        }
-        return await deliver(input, {
-          body: fallbackReply(language, context),
-          action: "escalate",
-          source: "fallback",
+        draft = rulesReply({
+          body: input.body,
           language,
-          escalate: {
-            reason: "ai_unavailable",
-            alertStaff: true,
-            handOff: false,
-          },
+          context,
+          history: turns,
+          alreadyAcknowledged,
         });
+        if (draft) {
+          draftSource = isFallbackReply(draft.reply, context)
+            ? "fallback"
+            : "rules";
+        }
+      }
+
+      if (!draft) {
+        // Rules brain had nothing new to say (generic ack already sent).
+        await safeEscalate(input, "ai_unavailable", false, false);
+        return skip("fallback_already_sent");
       }
 
       deps.log("reply_generated", {
         ...base,
         action: draft.action,
         language: draft.language,
+        source: draftSource,
       });
       const replyLanguage = draft.language;
 
-      if (draft.action === "book") {
+      if (draft.action === "book" && draftSource === "model") {
         return await completeBooking({
           input,
           context,
@@ -408,18 +458,30 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
           ...base,
           reason: text ? "unbacked_booking_claim" : "empty",
         });
-        if (alreadyAcknowledged) {
+        const rules = rulesReply({
+          body: input.body,
+          language: replyLanguage,
+          context,
+          history: turns,
+          alreadyAcknowledged,
+        });
+        if (!rules) {
           await safeEscalate(input, "ai_unavailable", false, false);
           return skip("fallback_already_sent");
         }
+        const rulesText =
+          sanitizeReply(rules.reply) ?? fallbackReply(replyLanguage, context);
+        const rulesSource = isFallbackReply(rulesText, context)
+          ? "fallback"
+          : "rules";
         return await deliver(input, {
-          body: fallbackReply(replyLanguage, context),
-          action: "escalate",
-          source: "fallback",
+          body: rulesText,
+          action: rules.action === "escalate" ? "escalate" : "reply",
+          source: rulesSource,
           language: replyLanguage,
           escalate: {
             reason: "ai_unavailable",
-            alertStaff: true,
+            alertStaff: rulesSource === "fallback",
             handOff: false,
           },
         });
@@ -430,14 +492,18 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
       return await deliver(input, {
         body: text,
         action: escalate ? "escalate" : "reply",
-        source: "model",
+        source: draftSource,
         language: replyLanguage,
         escalate: escalate
           ? {
               reason:
-                urgency.level === "priority" ? "urgent" : "customer_request",
+                urgency.level === "priority"
+                  ? "urgent"
+                  : draftSource === "fallback"
+                    ? "ai_unavailable"
+                    : "customer_request",
               alertStaff: true,
-              handOff: draft.action === "escalate",
+              handOff: draft.action === "escalate" && draftSource === "model",
             }
           : undefined,
       });
@@ -659,7 +725,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
     out: {
       body: string;
       action: "reply" | "book" | "escalate";
-      source: "model" | "fallback" | "safety" | "booking";
+      source: "model" | "fallback" | "safety" | "booking" | "rules";
       language: SmsLanguage;
       booked?: boolean;
       escalate?: {
