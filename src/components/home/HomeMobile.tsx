@@ -99,7 +99,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
               {t("hero.ctaPrimary")}
             </CTAButton>
             <WatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-transparent px-5 py-3.5 text-[15px] font-semibold text-white">
-              {t("hero.ctaSecondary")}
+              {cta("watchDemo")}
             </WatchDemoButton>
           </div>
           <p className="mt-5 text-[12.5px] leading-[1.45] text-white/55">
