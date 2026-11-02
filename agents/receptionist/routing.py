@@ -35,7 +35,9 @@ def pick_transfer(
             "if anyone is in danger, and take their details for an urgent callback.",
         )
 
-    if cfg.get("afterHours"):
+    # transferHours=always keeps normal transfers ringing after hours when a
+    # line exists; business_hours (default) refuses like before.
+    if cfg.get("afterHours") and cfg.get("transferHours") != "always":
         return TransferDecision(
             None,
             "The office is closed, so a normal transfer is not possible. "

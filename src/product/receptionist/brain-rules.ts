@@ -36,6 +36,7 @@ import {
   wantsHuman,
 } from "./nlu";
 import { acknowledgement, phrase } from "./prompts";
+import { liveTransfersAllowedNow, transferHoursMode } from "./transfer-policy";
 import { isEligibleRecoveryCaller } from "@/product/missed-call/call-handling";
 import type {
   AgentDecision,
@@ -98,7 +99,8 @@ export function nextMissingStep(
   opts: NextStepOptions = {},
 ): CallStep {
   if (!slots.issue && !slots.message) return "reason";
-  if (opts.scope !== false && wantsScopeQuestion(session, slots)) return "scope";
+  if (opts.scope !== false && wantsScopeQuestion(session, slots))
+    return "scope";
   if (!slots.callerName) return "name";
   if (needsAddress(session.intent) && !slots.serviceAddress) return "address";
   if (!slots.callbackE164) {
@@ -114,7 +116,8 @@ export function nextMissingStep(
     return "preferred_time";
   }
   // With phone booking on, reading the openings back is the confirmation.
-  const bookingFollows = config.phoneBooking === true && session.intent === "appointment";
+  const bookingFollows =
+    config.phoneBooking === true && session.intent === "appointment";
   if (
     opts.recap !== false &&
     !bookingFollows &&
@@ -249,9 +252,13 @@ export function wrapUpReply(
 /* ------------------------------------------------------------------------- */
 
 /** Copy what the caller said into empty slots; never overwrite something already confirmed. */
-export function mergeCallDetails(slots: CallSlots, details: CallDetails): CallSlots {
+export function mergeCallDetails(
+  slots: CallSlots,
+  details: CallDetails,
+): CallSlots {
   const next = { ...slots };
-  if (details.callerName && !next.callerName) next.callerName = details.callerName;
+  if (details.callerName && !next.callerName)
+    next.callerName = details.callerName;
   if (details.service && !next.service) next.service = details.service;
   if (details.project && !next.project) next.project = details.project;
   if (details.preferredTime && !next.preferredTime) {
@@ -259,7 +266,10 @@ export function mergeCallDetails(slots: CallSlots, details: CallDetails): CallSl
   }
   if (details.location && !next.location) next.location = details.location;
   if (details.serviceAddress && !next.serviceAddress) {
-    next.serviceAddress = withPlace(details.serviceAddress, details.location ?? next.location);
+    next.serviceAddress = withPlace(
+      details.serviceAddress,
+      details.location ?? next.location,
+    );
   }
   if (details.email && !next.email) next.email = details.email;
   return next;
@@ -275,7 +285,11 @@ function withPlace(address: string, place: string | undefined): string {
 const PLACE_CONNECTOR = "(?:à|a|in|at|dans)";
 
 /** Swap the city at the end of a street address; keeps everything before it. */
-function moveToPlace(address: string, oldPlace: string | undefined, newPlace: string): string {
+function moveToPlace(
+  address: string,
+  oldPlace: string | undefined,
+  newPlace: string,
+): string {
   const escaped = oldPlace?.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const trailing = escaped
     ? new RegExp(`(?:,\\s*|\\s+${PLACE_CONNECTOR}\\s+)${escaped}\\s*$`, "iu")
@@ -368,7 +382,10 @@ function finish(
 }
 
 /** The answer to a price question: only the owner's approved wording, never a number of our own. */
-function priceReply(input: BrainInput): { reply: string; flags: Partial<CallFlags> } {
+function priceReply(input: BrainInput): {
+  reply: string;
+  flags: Partial<CallFlags>;
+} {
   const { config, session } = input;
   const lang = session.language;
   if (session.flags?.pricingAsked) {
@@ -384,9 +401,80 @@ function priceReply(input: BrainInput): { reply: string; flags: Partial<CallFlag
 }
 
 function identityReply(input: BrainInput): string {
-  return phrase("aiIdentity", input.session.language, {
-    business: input.config.businessName,
-  });
+  const canConnect = liveTransfersAllowedNow(
+    input.config,
+    input.session.afterHours,
+  );
+  return phrase(
+    canConnect ? "aiIdentity" : "aiIdentityNoTransfer",
+    input.session.language,
+    { business: input.config.businessName },
+  );
+}
+
+/**
+ * Caller asked for a person or a named department. Honoured at every intake
+ * step — not only at `reason` — so "transfer me" mid-call still dials.
+ */
+function tryCallerTransfer(input: BrainInput): AgentDecision | null {
+  const { config, session, utterance } = input;
+  // Identity questions can mention a "real person" without asking for a transfer.
+  if (asksIfAi(utterance)) return null;
+  const lang = session.language;
+  if (
+    session.step === "language" ||
+    session.step === "done" ||
+    session.step === "voicemail"
+  ) {
+    return null;
+  }
+
+  const allowed = liveTransfersAllowedNow(config, session.afterHours);
+  const closedForTransfers =
+    session.afterHours && transferHoursMode(config) === "business_hours";
+
+  if (wantsHuman(utterance)) {
+    if (allowed && config.fallbackTransferE164) {
+      return {
+        reply: phrase("transferring", lang, {
+          target: lang === "fr" ? "un membre de l'équipe" : "a team member",
+        }),
+        action: { type: "transfer", targetId: "fallback" },
+        nextStep: "done",
+        intent: "transfer",
+        brain: "rules",
+      };
+    }
+    const slots: CallSlots = { ...session.slots };
+    return afterHoursHandoff(
+      input,
+      slots,
+      false,
+      closedForTransfers ? "humanAfterHours" : "humanUnavailable",
+    );
+  }
+
+  const target = matchRoutingTarget(utterance, config.routing);
+  if (target) {
+    if (allowed) {
+      return {
+        reply: phrase("transferring", lang, { target: target.name }),
+        action: { type: "transfer", targetId: target.id },
+        nextStep: "done",
+        intent: "transfer",
+        brain: "rules",
+      };
+    }
+    const slots: CallSlots = { ...session.slots };
+    return afterHoursHandoff(
+      input,
+      slots,
+      true,
+      closedForTransfers ? "humanAfterHours" : "humanUnavailable",
+    );
+  }
+
+  return null;
 }
 
 /** Re-ask what was pending after a side question, in the same step. */
@@ -396,7 +484,8 @@ function resume(
   flags: Partial<CallFlags>,
 ): AgentDecision {
   const { session } = input;
-  const step: CallStep = session.step === "done" ? "anything_else" : session.step;
+  const step: CallStep =
+    session.step === "done" ? "anything_else" : session.step;
   return {
     reply: `${prefix} ${questionForStep(step, session.language, session, session.slots)}`,
     action: { type: "ask" },
@@ -440,7 +529,8 @@ function steerBack(input: BrainInput): AgentDecision | null {
   const { session, utterance } = input;
   const lang = session.language;
   if (isOnTopic(input)) return null;
-  if (isSmallTalk(utterance)) return resume(input, phrase("smallTalk", lang), {});
+  if (isSmallTalk(utterance))
+    return resume(input, phrase("smallTalk", lang), {});
   if (!matchesOffTopic(utterance)) return null;
   const count = session.flags?.offTopic ?? 0;
   if (count >= 2) return null;
@@ -448,13 +538,14 @@ function steerBack(input: BrainInput): AgentDecision | null {
 }
 
 /**
- * After hours, a request for a person cannot be met — but whatever job the
+ * A request for a person cannot be met right now — but whatever job the
  * caller already described is kept, so they are not asked to say it again.
  */
 function afterHoursHandoff(
   input: BrainInput,
   slots: CallSlots,
   keepBareRequest: boolean,
+  notice: "humanAfterHours" | "humanUnavailable" = "humanAfterHours",
 ): AgentDecision {
   const { session, utterance } = input;
   const lang = session.language;
@@ -472,7 +563,7 @@ function afterHoursHandoff(
   } else if (keepBareRequest) {
     next.message = next.message ? `${next.message} — ${detail}` : detail;
   }
-  return ask(input, next, intent, phrase("humanAfterHours", lang));
+  return ask(input, next, intent, phrase(notice, lang));
 }
 
 /* ------------------------------------------------------------------------- */
@@ -488,34 +579,7 @@ function handleReason(input: BrainInput): AgentDecision {
     return resume(input, identityReply(input), { identityAnswered: true });
   }
 
-  if (wantsHuman(utterance)) {
-    if (!session.afterHours && config.fallbackTransferE164) {
-      return {
-        reply: phrase("transferring", lang, {
-          target: lang === "fr" ? "un membre de l'équipe" : "a team member",
-        }),
-        action: { type: "transfer", targetId: "fallback" },
-        nextStep: "done",
-        intent: "transfer",
-        brain: "rules",
-      };
-    }
-    return afterHoursHandoff(input, slots, false);
-  }
-
-  const target = matchRoutingTarget(utterance, config.routing);
-  if (target) {
-    if (!session.afterHours) {
-      return {
-        reply: phrase("transferring", lang, { target: target.name }),
-        action: { type: "transfer", targetId: target.id },
-        nextStep: "done",
-        intent: "transfer",
-        brain: "rules",
-      };
-    }
-    return afterHoursHandoff(input, slots, true);
-  }
+  // Person / department requests are handled in createRuleBrain via tryCallerTransfer.
 
   const faq = matchFaq(utterance, config.faqs);
   if (faq) {
@@ -545,7 +609,10 @@ function handleReason(input: BrainInput): AgentDecision {
       const listed = (config.services ?? []).slice(0, 6).join(", ");
       const label = details.service ?? utterance.trim().slice(0, 40);
       const reply = listed
-        ? phrase("serviceNotOfferedList", lang, { service: label, services: listed })
+        ? phrase("serviceNotOfferedList", lang, {
+            service: label,
+            services: listed,
+          })
         : phrase("serviceNotOffered", lang, { service: label });
       return {
         reply: `${reply} ${phrase("anythingElse", lang)}`,
@@ -663,7 +730,12 @@ function handleConfirm(input: BrainInput): AgentDecision {
   if (corrected) {
     const before = slots;
     slots = applyCorrection(slots, details, phone);
-    return finish(input, slots, session.intent, correctionNotice(before, slots, lang));
+    return finish(
+      input,
+      slots,
+      session.intent,
+      correctionNotice(before, slots, lang),
+    );
   }
   if (yn === "no") {
     return {
@@ -692,12 +764,19 @@ function applyCorrection(
   if (details.preferredTime) next.preferredTime = details.preferredTime;
   if (details.serviceAddress) {
     // A new street address replaces the old one outright.
-    next.serviceAddress = withPlace(details.serviceAddress, details.location ?? next.location);
+    next.serviceAddress = withPlace(
+      details.serviceAddress,
+      details.location ?? next.location,
+    );
     if (details.location) next.location = details.location;
   } else if (details.location) {
     // The street stays, the place changes: "45 rue Principale à Laval" → "45 rue Principale, Montréal".
     if (next.serviceAddress) {
-      next.serviceAddress = moveToPlace(next.serviceAddress, next.location, details.location);
+      next.serviceAddress = moveToPlace(
+        next.serviceAddress,
+        next.location,
+        details.location,
+      );
     }
     next.location = details.location;
   }
@@ -716,10 +795,17 @@ function handleCorrection(input: BrainInput): AgentDecision {
   }
   const details = detailsOf(input);
   const phone = extractPhoneE164(utterance, digits);
-  const name = !details.callerName && wordCount(utterance) <= 4 ? extractName(utterance) : null;
+  const name =
+    !details.callerName && wordCount(utterance) <= 4
+      ? extractName(utterance)
+      : null;
   // A bare street address is the usual answer to "what should I correct?".
   const bareAddress =
-    !details.serviceAddress && !hasAnyDetail(details) && !phone && !name && /^\d{1,5}\s+\p{L}/u.test(utterance.trim())
+    !details.serviceAddress &&
+    !hasAnyDetail(details) &&
+    !phone &&
+    !name &&
+    /^\d{1,5}\s+\p{L}/u.test(utterance.trim())
       ? utterance.trim().slice(0, 120)
       : undefined;
   if (hasAnyDetail(details) || phone || name || bareAddress) {
@@ -733,7 +819,12 @@ function handleCorrection(input: BrainInput): AgentDecision {
       },
       phone,
     );
-    return finish(input, slots, session.intent, correctionNotice(before, slots, lang));
+    return finish(
+      input,
+      slots,
+      session.intent,
+      correctionNotice(before, slots, lang),
+    );
   }
   slots.message = slots.message
     ? `${slots.message} — correction: ${utterance}`
@@ -749,14 +840,19 @@ function correctionNotice(
 ): string {
   const changed: string[] = [];
   const show = (value: string | undefined) => (value ? clip(value, 60) : "");
-  if (after.callerName !== before.callerName) changed.push(show(after.callerName));
-  if (after.serviceAddress !== before.serviceAddress) changed.push(show(after.serviceAddress));
+  if (after.callerName !== before.callerName)
+    changed.push(show(after.callerName));
+  if (after.serviceAddress !== before.serviceAddress)
+    changed.push(show(after.serviceAddress));
   if (after.callbackE164 !== before.callbackE164 && after.callbackE164) {
     changed.push(speakablePhone(after.callbackE164));
   }
-  if (after.preferredTime !== before.preferredTime) changed.push(show(after.preferredTime));
+  if (after.preferredTime !== before.preferredTime)
+    changed.push(show(after.preferredTime));
   const what = changed.filter(Boolean).slice(0, 2).join(", ");
-  return what ? phrase("correctedWith", language, { what }) : phrase("corrected", language);
+  return what
+    ? phrase("correctedWith", language, { what })
+    : phrase("corrected", language);
 }
 
 export function createRuleBrain(): ReceptionistBrain {
@@ -776,10 +872,16 @@ export function createRuleBrain(): ReceptionistBrain {
         if (steered) return steered;
       }
 
+      // "Talk to a person" / named department — any step, before intake absorbs the words.
+      const transfer = tryCallerTransfer(input);
+      if (transfer) return transfer;
+
       // Side questions at any step: answer, then return to the pending question.
       if (SIDE_QUESTION_STEPS.includes(session.step)) {
         if (asksIfAi(utterance)) {
-          return resume(input, identityReply(input), { identityAnswered: true });
+          return resume(input, identityReply(input), {
+            identityAnswered: true,
+          });
         }
         if (asksPrice(utterance)) {
           const price = priceReply(input);
@@ -795,7 +897,9 @@ export function createRuleBrain(): ReceptionistBrain {
           const details = detailsOf(input);
           slots = mergeCallDetails(slots, details);
           if (!details.project) {
-            slots.issue = slots.issue ? `${slots.issue} — ${utterance}` : utterance;
+            slots.issue = slots.issue
+              ? `${slots.issue} — ${utterance}`
+              : utterance;
           }
           return ask(input, slots, session.intent);
         }
@@ -808,7 +912,12 @@ export function createRuleBrain(): ReceptionistBrain {
             if (retries >= 1) {
               // Asked twice: don't hold the call hostage to a name. The team sees it was not given.
               slots.callerName = phrase("noNameGiven", lang);
-              return ask(input, slots, session.intent, acknowledgement(lang, session.callerTurnCount));
+              return ask(
+                input,
+                slots,
+                session.intent,
+                acknowledgement(lang, session.callerTurnCount),
+              );
             }
             return {
               reply: `${phrase("unclear", lang)} ${questionForStep("name", lang, session, slots)}`,
@@ -820,7 +929,12 @@ export function createRuleBrain(): ReceptionistBrain {
             };
           }
           slots.callerName = name;
-          return ask(input, slots, session.intent, acknowledgement(lang, session.callerTurnCount));
+          return ask(
+            input,
+            slots,
+            session.intent,
+            acknowledgement(lang, session.callerTurnCount),
+          );
         }
 
         case "address": {

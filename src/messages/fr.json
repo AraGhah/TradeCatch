@@ -36,10 +36,13 @@
     "toggleThemeToLight": "Passer au mode clair",
     "skipToContent": "Passer au contenu principal",
     "aiReceptionist": "Réceptionniste",
-    "referral": "Programme de parrainage"
+    "referral": "Programme de parrainage",
+    "demo": "Démo",
+    "login": "Connexion",
+    "more": "Plus"
   },
   "cta": {
-    "primary": "Réserver un audit gratuit de 20 minutes",
+    "primary": "Réserver une démo gratuite",
     "secondary": "Voir la démo de 90 secondes",
     "tertiary": "Réserver un audit gratuit de 20 minutes",
     "watchDemo": "Voir la démo de 90 secondes",
@@ -47,9 +50,9 @@
     "viewMissedCall": "Voir le processus des appels manqués",
     "viewQuoteFollowUp": "Voir le processus de relance des soumissions",
     "viewIndustries": "Toutes les industries",
-    "bookAudit": "Réserver l'audit",
-    "bookAuditShort": "Réserver l'audit",
-    "bookAuditFree": "Réserver un audit gratuit de 20 minutes",
+    "bookAudit": "Réserver une démo gratuite",
+    "bookAuditShort": "Réserver",
+    "bookAuditFree": "Réserver une démo gratuite",
     "findMyLeaks": "Réserver un audit gratuit de 20 minutes",
     "talkWithAra": "Réserver un audit gratuit de 20 minutes",
     "emailDirect": "Écrire directement",
@@ -60,7 +63,13 @@
     "allQuestions": "Toutes les questions",
     "backToSite": "Retour au site",
     "submitAnother": "Soumettre une autre demande",
-    "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes"
+    "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes",
+    "bookFreeDemo": "Réserver une démo gratuite",
+    "hearReceptionist": "Écouter la réceptionniste",
+    "seePricing": "Voir les tarifs",
+    "comparePlans": "Comparer les forfaits",
+    "getStarted": "Commencer",
+    "requestDemo": "Demander ma démo"
   },
   "footer": {
     "description": "TradeCatch récupère les appels manqués par texto avec Starter, répond au téléphone avec une réceptionniste limitée avec Growth, et fait tourner la réceptionniste bilingue complète avec Réceptionniste Plus. Les pilotes sont configurés avec le fondateur ; les exemples marketing sont illustratifs.",
@@ -82,14 +91,14 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Récupération de revenus pour les métiers au Québec",
-      "headline": "Récupérez les appels manqués. Réservez plus de chantiers.",
-      "accentWord": "Réservez plus de chantiers.",
-      "subheadline": "Starter répond aux appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée. Réceptionniste Plus fait tourner la réception bilingue complète. Français ou anglais. Pilotes configurés avec le fondateur.",
-      "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
-      "ctaSecondary": "Voir la démo vidéo",
-      "ctaTry": "Ou parlez vous-même à la démo Réceptionniste Plus",
-      "reassurance": "Sans engagement. Aucun accès système requis. Vous parlez avec le fondateur."
+      "eyebrow": "Pour les entrepreneurs qui travaillent sur le terrain",
+      "headline": "Vous êtes sur le chantier. On s'occupe des appels.",
+      "accentWord": "On s'occupe des appels.",
+      "subheadline": "TradeCatch répond aux appels, gère les questions et aide à prendre des rendez-vous — pendant que vous continuez à travailler.",
+      "ctaPrimary": "Réserver une démo gratuite",
+      "ctaSecondary": "Écouter la réceptionniste",
+      "ctaTry": "Essayer la démo live",
+      "reassurance": "Démo gratuite. Aucun accès système requis. Vous parlez avec le fondateur."
     },
     "leaks": {
       "eyebrow": "Le problème",
@@ -149,30 +158,31 @@
     "pricingPreview": {
       "eyebrow": "Tarifs",
       "headline": "Texto de rappel, réponse téléphonique, ou réception complète.",
-      "intro": "Trois forfaits. Chacun conserve tout ce qu'il y a dans le précédent. L'installation est payée une fois. Le grand chiffre est les frais de gestion mensuels.",
+      "intro": "Trois forfaits. Chacun conserve tout ce qu'il y a dans le précédent. Le premier mois, seulement l'installation ; le mensuel commence au mois 2.",
       "tiers": [
         {
           "name": "Starter",
           "price": "349,99 $ / mois",
           "cadence": "799,99 $ d’installation, payé une fois",
-          "idealFor": "Texto sur appel manqué, réponses web et relance de soumissions. Ne répond pas au téléphone."
+          "idealFor": "Ne laissez plus un appel manqué sans suivi. Récupération SMS — ne répond pas au téléphone."
         },
         {
           "name": "Growth",
           "price": "649,99 $ / mois",
           "cadence": "1 499,99 $ d’installation, payé une fois",
-          "idealFor": "Réponse téléphonique limitée, plus réservation, pipeline et avis par-dessus Starter."
+          "idealFor": "Laissez l'IA répondre pendant que vous travaillez. Réponse téléphonique limitée, plus Starter."
         },
         {
           "name": "Réceptionniste Plus",
           "price": "949,99 $ / mois",
           "cadence": "1 999,99 $ d’installation, payé une fois",
-          "idealFor": "Réceptionniste bilingue complète : réservation pendant l'appel, transfert, urgences — et tout ce qui est en dessous."
+          "idealFor": "Votre solution de réception la plus complète. Réservation pendant l'appel, transfert, urgences."
         }
       ],
       "cta": "Voir tous les tarifs",
       "receptionistCta": "Comment fonctionne Réceptionniste Plus",
-      "note": "Le multi-sites et le fort volume se définissent avec vous. Les minutes au-delà de l’allocation écrite ne sont jamais facturées en silence."
+      "note": "Le multi-sites et le fort volume se définissent avec vous. Les minutes au-delà de l’allocation écrite ne sont jamais facturées en silence.",
+      "billingNote": "Premier mois : installation seulement. La gestion mensuelle commence au mois 2."
     },
     "founder": {
       "eyebrow": "Qui vous embauchez vraiment",
@@ -214,7 +224,7 @@
     },
     "faqTeaser": {
       "eyebrow": "Réponses directes",
-      "headline": "Ce que les propriétaires demandent avant de réserver.",
+      "headline": "Des questions ? On a des réponses.",
       "viewAll": "Toutes les questions",
       "items": [
         {
@@ -232,6 +242,18 @@
         {
           "q": "Peut-il fonctionner avec notre numéro de téléphone actuel?",
           "a": "En général oui. Ça dépend de votre fournisseur et de la configuration. L'audit détermine la façon la plus sûre de connecter sans déranger votre ligne existante."
+        },
+        {
+          "q": "Que paie-t-on le premier mois ?",
+          "a": "Seulement les frais d'installation. L'abonnement mensuel commence au deuxième mois. Les prix sont sur la page des tarifs."
+        },
+        {
+          "q": "Les appels peuvent-ils m'être transférés ?",
+          "a": "Le transfert en direct est disponible avec Réceptionniste Plus selon les heures configurées. Growth répond et résume sans transfert live."
+        },
+        {
+          "q": "Combien de temps prend l'installation ?",
+          "a": "On configure avec vous et on met en ligne seulement après votre approbation de ce que dit la réceptionniste. Le délai dépend de votre disponibilité et du forfait."
         }
       ]
     },
@@ -250,6 +272,116 @@
       "guarantee": "Garantie de lancement : si le système convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité.",
       "cta": "Réserver un audit gratuit de 20 minutes",
       "landingNote": "Les pilotes sont de vrais mandats avec une portée signée. Les résultats publics n'apparaissent qu'avec une autorisation écrite du client."
+    },
+    "mobile": {
+      "demo": {
+        "eyebrow": "Voir en action",
+        "headline": "Ne vous fiez pas qu'au texte. Écoutez.",
+        "intro": "Entendez comment TradeCatch gère une vraie conversation client.",
+        "watchVideo": "Voir la démo de 90 secondes",
+        "tryLive": "Parler à la réceptionniste",
+        "note": "Le son démarre seulement quand vous appuyez sur lecture."
+      },
+      "benefits": {
+        "eyebrow": "Le problème",
+        "headline": "Chaque appel manqué peut être un chantier perdu.",
+        "intro": "Quand vous êtes sur une échelle, sous un évier ou en route vers le prochain job, répondre à chaque appel n'est pas réaliste.",
+        "items": [
+          {
+            "title": "Appels répondus pendant que vous travaillez",
+            "body": "Quelqu'un décroche — même quand vous ne pouvez pas."
+          },
+          {
+            "title": "Rendez-vous pris",
+            "body": "Les clients peuvent demander un créneau sans interrompre votre équipe."
+          },
+          {
+            "title": "Questions traitées",
+            "body": "Heures, services et prochaines étapes — réponses claires."
+          },
+          {
+            "title": "Détails envoyés chez vous",
+            "body": "Nom, numéro et besoin, sur votre téléphone."
+          }
+        ]
+      },
+      "howItWorks": {
+        "eyebrow": "Mise en place",
+        "headline": "Simple à installer. Facile à utiliser.",
+        "intro": "On configure la réceptionniste avec vous. Vous continuez à travailler.",
+        "steps": [
+          {
+            "title": "Parlez-nous de votre entreprise",
+            "body": "Services, heures, secteurs et façon de traiter les appels."
+          },
+          {
+            "title": "On prépare tout",
+            "body": "On configure la ligne, on teste les scénarios, et on valide avec vous avant la mise en ligne."
+          },
+          {
+            "title": "Continuez à travailler",
+            "body": "Les appels pris en charge sont traités pendant que vous restez informé."
+          }
+        ],
+        "cta": "Voir comment ça marche"
+      },
+      "useCases": {
+        "eyebrow": "Sur le terrain",
+        "headline": "Conçu pour la vraie journée d'un entrepreneur.",
+        "intro": "Situations concrètes. Réponses claires.",
+        "items": [
+          {
+            "problem": "Vous êtes en plein job et ne pouvez pas répondre.",
+            "response": "TradeCatch répond, prend les détails et alerte votre équipe."
+          },
+          {
+            "problem": "Un client appelle hors des heures.",
+            "response": "Il obtient une prochaine étape claire — pas une ligne morte."
+          },
+          {
+            "problem": "Quelqu'un veut prendre rendez-vous.",
+            "response": "Growth et Réceptionniste Plus capturent la demande ; Plus peut réserver pendant l'appel si activé."
+          },
+          {
+            "problem": "On pose des questions sur vos services ou tarifs.",
+            "response": "Seulement les réponses approuvées — puis un rappel ou un parcours de réservation."
+          }
+        ],
+        "cta": "Voir les métiers desservis"
+      },
+      "pricing": {
+        "eyebrow": "Tarifs",
+        "headline": "Choisissez la réceptionniste dont vous avez besoin.",
+        "intro": "Trois forfaits. Le premier mois, seulement les frais d'installation. L'abonnement mensuel commence au deuxième mois.",
+        "billingNote": "Premier mois : frais d'installation seulement. Le mensuel commence au mois 2.",
+        "recommended": "Le plus demandé pour répondre au téléphone",
+        "starterTag": "Ne laissez plus un appel manqué sans suivi.",
+        "growthTag": "Laissez l'IA répondre pendant que vous travaillez.",
+        "plusTag": "Votre solution de réception la plus complète.",
+        "setupLabel": "Installation",
+        "monthlyLabel": "Puis / mois",
+        "cta": "Comparer les forfaits",
+        "seeAll": "Voir tous les tarifs"
+      },
+      "addOn": {
+        "eyebrow": "Service de site web optionnel",
+        "headline": "Besoin d'un site web qui vous apporte des clients ?",
+        "intro": "Nous créons un nouveau site professionnel ou améliorons le vôtre, avec une capture de prospects adaptée au mobile et liée à TradeCatch.",
+        "cta": "Faire créer mon site web"
+      },
+      "faq": {
+        "eyebrow": "Questions",
+        "headline": "Des questions ? On a des réponses.",
+        "viewAll": "Toutes les questions"
+      },
+      "finalCta": {
+        "headline": "Votre prochain client pourrait appeler.",
+        "body": "Voyez comment TradeCatch peut aider votre entreprise à gérer les appels pendant que vous êtes occupé.",
+        "primary": "Réserver votre démo gratuite",
+        "secondary": "Comparer les forfaits",
+        "note": "Sans pression. Tarifs clairs. Accès direct au fondateur pour les pilotes."
+      },
+      "stickyCta": "Réserver une démo gratuite"
     }
   },
   "services": {
@@ -513,9 +645,9 @@
   },
   "pricing": {
     "eyebrow": "Tarifs",
-    "headline": "Trois forfaits. Un seul but : arrêter de perdre des clients que vous payez déjà pour attirer.",
-    "intro": "Starter récupère les appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée et réserve le travail dans l'espace de travail. Réceptionniste Plus est la réception bilingue complète, et inclut les deux.",
-    "reassurance": "Installation fixe. Mois par mois. Annulation avec préavis.",
+    "headline": "Choisissez la réceptionniste dont votre entreprise a besoin.",
+    "intro": "Starter récupère les appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée. Réceptionniste Plus est la réception bilingue complète.",
+    "reassurance": "Frais d'installation le premier mois. Mensuel à partir du mois 2. Mois par mois ensuite. Annulation avec préavis.",
     "metaDescription": "Tarifs TradeCatch : récupération SMS Starter, réponse téléphonique limitée Growth, et Réceptionniste Plus — la réception bilingue complète pour les entrepreneurs du Québec.",
     "principles": [
       "Starter rattrape les appels manqués par texto",
@@ -974,7 +1106,8 @@
     },
     "onceLabel": "payé une fois",
     "monthlyEyebrow": "Chaque mois",
-    "websiteMention": "Besoin d'un site web? Ajoutez notre service de site web à partir de 349 $."
+    "websiteMention": "Besoin d'un site web? Ajoutez notre service de site web à partir de 349 $.",
+    "billingBanner": "Le premier mois, seulement les frais d'installation. L'abonnement mensuel commence au deuxième mois."
   },
   "about": {
     "eyebrow": "À propos",
@@ -1135,7 +1268,7 @@
     "consent": "J'accepte d'être contacté au sujet de cette demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Je peux me désabonner en tout temps.",
     "marketingConsent": "Optionnel : m'envoyer occasionnellement des conseils et des offres par courriel. Distinct du contact ci-dessus.",
     "consentRequired": "Veuillez accepter d'être contacté pour que nous puissions donner suite à votre demande.",
-    "submit": "Soumettre la demande",
+    "submit": "Demander ma démo",
     "confirmation": {
       "headline": "C'est reçu. Votre demande d'audit est en main.",
       "body": "Votre demande est enregistrée de façon sécuritaire. Ara vous contactera pour confirmer un moment. Le courriel de confirmation pourrait arriver plus tard. Ayez sous la main votre volume d'appels récent, votre liste de soumissions ouvertes et les logiciels que vous utilisez actuellement.",
@@ -1159,8 +1292,8 @@
       "continue": "Continuer",
       "back": "Retour",
       "skip": "Passer",
-      "submit": "Soumettre la demande",
-      "submitting": "Envoi en cours…",
+      "submit": "Demander ma démo",
+      "submitting": "Envoi…",
       "retry": "Réessayer",
       "edit": "Modifier",
       "editStep": "Modifier",
@@ -4337,7 +4470,7 @@
         "business": "Son entreprise",
         "phone": "Son téléphone",
         "email": "Son courriel",
-        "contactHint": "Indiquez un numéro de téléphone ou un courriel (au moins un)."
+        "phoneHint": "Le meilleur numéro pour communiquer avec cette personne."
       },
       "note": "Quelque chose à nous dire?",
       "permission": "Je connais cette personne et elle est d'accord pour que je transmette ses coordonnées à TradeCatch afin que nous la contactions.",
@@ -4347,7 +4480,6 @@
         "required": "Ce champ est obligatoire.",
         "email": "Entrez une adresse courriel valide.",
         "phone": "Entrez un numéro de téléphone valide.",
-        "contactRequired": "Ajoutez un numéro de téléphone ou un courriel.",
         "code": "Ce code ne semble pas valide. Vérifiez-le ou laissez le champ vide.",
         "permission": "Confirmez que vous avez l'accord de cette personne.",
         "verification": "Terminez la vérification avant d'envoyer.",

@@ -1,0 +1,146 @@
+{
+ "amb_kitchen_day": {
+  "prompt": "quiet residential kitchen room tone, faint refrigerator hum, very distant traffic outside, no voices, no music",
+  "dur": 18.0,
+  "lufs": -70.0,
+  "tp": -54.7
+ },
+ "amb_kitchen_night": {
+  "prompt": "quiet home kitchen at night, soft room tone, faint refrigerator hum, a few distant crickets outside, no voices, no music",
+  "dur": 18.0,
+  "lufs": -55.0,
+  "tp": -38.5
+ },
+ "amb_room_empty": {
+  "prompt": "empty house interior room tone, quiet, soft air, faint distant traffic outside, no voices, no music",
+  "dur": 18.0,
+  "lufs": -69.4,
+  "tp": -51.2
+ },
+ "amb_water_flood": {
+  "prompt": "water gushing and splashing steadily in a basement, urgent ambient flow, no voices, no music",
+  "dur": 10.0,
+  "lufs": -16.5,
+  "tp": -1.1
+ },
+ "wrench_work": {
+  "prompt": "adjustable wrench turning a plumbing slip nut under a kitchen sink, slow metallic ratchet clicks and small scrapes, close, dry, no music",
+  "dur": 8.0,
+  "lufs": -17.3,
+  "tp": 2.4
+ },
+ "tool_clink": {
+  "prompt": "a steel wrench set down on a tile floor, one short clink, close microphone",
+  "dur": 2.0,
+  "lufs": -8.5,
+  "tp": 2.1
+ },
+ "pipe_tap": {
+  "prompt": "light metal tap on a PVC drain pipe, two soft taps, close",
+  "dur": 2.0,
+  "lufs": -23.1,
+  "tp": 0.4
+ },
+ "fabric_kneel": {
+  "prompt": "work overalls fabric rustle as a man shifts his weight while kneeling on a tile floor, subtle, close",
+  "dur": 4.0,
+  "lufs": -50.4,
+  "tp": -33.8
+ },
+ "drip": {
+  "prompt": "slow water drips falling into a stainless steel sink, quiet, three drips",
+  "dur": 4.0,
+  "lufs": -31.7,
+  "tp": -11.1
+ },
+ "ladder_creak": {
+  "prompt": "aluminum step ladder creaking slightly as a person shifts weight, subtle metal creaks, quiet room",
+  "dur": 5.0,
+  "lufs": -30.6,
+  "tp": -14.0
+ },
+ "fixture_work": {
+  "prompt": "a person twisting a metal ceiling light fixture, small metallic clinks and screws turning, close, quiet room",
+  "dur": 7.0,
+  "lufs": -36.6,
+  "tp": -6.4
+ },
+ "phone_buzz_toolbox": {
+  "prompt": "smartphone vibrating on a hard plastic toolbox, three strong buzzes, close",
+  "dur": 3.0,
+  "lufs": -4.6,
+  "tp": 3.1
+ },
+ "phone_buzz_tile": {
+  "prompt": "smartphone vibrating on a tile floor, two buzzes, close",
+  "dur": 2.0,
+  "lufs": -2.5,
+  "tp": 3.0
+ },
+ "phone_ring_floor": {
+  "prompt": "generic smartphone ringtone, soft electronic melody, two rings, slightly muffled as if the phone is lying on a floor in a kitchen",
+  "dur": 5.0,
+  "lufs": -21.1,
+  "tp": -3.6
+ },
+ "phone_pickup": {
+  "prompt": "a hand picking up a smartphone from a plastic toolbox, small plastic scrape and grip",
+  "dur": 1.48,
+  "lufs": -34.3,
+  "tp": -14.4
+ },
+ "sms_in": {
+  "prompt": "soft smartphone text message notification, one short two-note chime, clean, dry",
+  "dur": 1.48,
+  "lufs": -25.0,
+  "tp": -3.5
+ },
+ "sms_sent": {
+  "prompt": "smartphone message sent swoosh, very short soft whoosh",
+  "dur": 1.0,
+  "lufs": -16.7,
+  "tp": 2.1
+ },
+ "ui_tap": {
+  "prompt": "soft touchscreen tap click, tiny, dry",
+  "dur": 0.6,
+  "lufs": -22.7,
+  "tp": 1.5
+ },
+ "notif_lead": {
+  "prompt": "gentle positive app notification chime, three ascending soft notes, clean and modern, dry",
+  "dur": 2.0,
+  "lufs": -21.4,
+  "tp": -4.5
+ },
+ "call_connect": {
+  "prompt": "telephone call connecting click and soft line open, subtle",
+  "dur": 1.48,
+  "lufs": -24.8,
+  "tp": 1.2
+ },
+ "call_end": {
+  "prompt": "smartphone call ended, a short low double beep, dry",
+  "dur": 1.2,
+  "lufs": -10.3,
+  "tp": -1.1
+ },
+ "whoosh_soft": {
+  "prompt": "short soft cinematic whoosh transition, subtle, no music",
+  "dur": 1.2,
+  "lufs": -19.4,
+  "tp": -2.0
+ },
+ "whoosh_hit": {
+  "prompt": "cinematic riser into a deep soft low impact hit, subtle and tasteful, no music",
+  "dur": 2.48,
+  "lufs": -12.3,
+  "tp": 2.6
+ },
+ "keys_truck": {
+  "prompt": "car keys jingling and a pickup truck door closing, then an engine starting, outdoors at night",
+  "dur": 6.0,
+  "lufs": -20.5,
+  "tp": 2.2
+ }
+}

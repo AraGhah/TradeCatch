@@ -47,14 +47,20 @@ test.describe("/api/referrals/submit", () => {
     expect(response.status()).toBe(400);
   });
 
-  test("rejects a referral with no way to reach the contact", async ({
+  test("rejects a referral without the contact's phone number", async ({
     request,
   }) => {
-    const response = await request.post("/api/referrals/submit", {
-      headers: { "x-forwarded-for": nextTestIp() },
-      data: validPayload({ contactPhone: "", contactEmail: "" }),
-    });
-    expect(response.status()).toBe(400);
+    for (const overrides of [
+      { contactPhone: "", contactEmail: "" },
+      // An email alone no longer qualifies.
+      { contactPhone: "", contactEmail: "alex@example.test" },
+    ]) {
+      const response = await request.post("/api/referrals/submit", {
+        headers: { "x-forwarded-for": nextTestIp() },
+        data: validPayload(overrides),
+      });
+      expect(response.status()).toBe(400);
+    }
   });
 
   test("silently no-ops when the honeypot field is filled", async ({
@@ -111,7 +117,9 @@ test.describe("referral page form", () => {
     await page.locator("#referral-field-contactName").fill("Alex Roy");
     await page.locator("#referral-field-businessName").fill("Roy Plomberie");
     await form.getByRole("button", { name: "Send referral" }).click();
-    await expect(form).toContainText("Add a phone number or an email.");
+    await expect(
+      page.locator("#referral-field-contactPhone-error"),
+    ).toHaveText("This field is required.");
     await expect(form).toContainText("Please confirm you have their permission.");
 
     await page.locator("#referral-field-contactPhone").fill("514-555-0187");
