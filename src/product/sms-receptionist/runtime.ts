@@ -173,7 +173,12 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
         serviceAreaNotes: client.serviceAreaNotes || areas || undefined,
         businessFacts: config?.businessFacts,
         personality: config?.personality,
-        faqs: config?.faqs ?? [],
+        faqs: (config?.faqs ?? []).map((f) => ({
+          question: f.question,
+          answerFr: f.answerFr,
+          answerEn: f.answerEn,
+          keywords: f.keywords,
+        })),
         collectPreferredTime: config?.collectPreferredTime ?? true,
       };
       return {
@@ -296,9 +301,10 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
 }
 
 /**
- * Entry point for the inbound SMS webhook. Never throws: the webhook has
- * already claimed this MessageSid, so a failure here is logged and (where a
- * reply was already queued) retried by the outbox flush, not by Twilio.
+ * Entry point for the inbound SMS webhook. Never throws: Module A releases the
+ * MessageSid claim on the cold-SMS path so Twilio redeliveries can retry here;
+ * once a reply is queued, the outbox id `smsrep_{MessageSid}` keeps delivery
+ * idempotent and the escalations tick retries failed sends.
  */
 export async function handleCustomerSms(
   input: SmsReceptionistInput,
