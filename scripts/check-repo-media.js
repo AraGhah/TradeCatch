@@ -175,6 +175,43 @@ for (const [cut, locales] of Object.entries(media)) {
   }
 }
 
+// Portrait "on the job" stories (src/components/demo-video/stories.ts): each needs
+// its MP4, WebVTT captions that end inside the video (the end card runs a little
+// past the last spoken line) and a poster. Captions are spoken-word only, so the
+// honesty label is checked in the message files by tests/demo-and-pilot.spec.ts.
+for (const story of ["under-the-sink", "the-ladder", "after-hours"]) {
+  const base = path.join(ROOT, "public/demo-video/stories");
+  const poster = path.join(base, `${story}-poster.jpg`);
+  if (!fs.existsSync(poster)) errors.push(`${story}: poster is missing`);
+  for (const locale of LOCALES) {
+    const label = `story ${story} ${locale.toUpperCase()}`;
+    try {
+      const videoDuration = durationSeconds(path.join(base, `${story}-${locale}.mp4`));
+      const captions = fs.readFileSync(
+        path.join(base, "captions", `${story}-${locale}.vtt`),
+        "utf8",
+      );
+      if (!captions.replace(/^﻿/, "").startsWith("WEBVTT")) {
+        errors.push(`${label} captions do not start with WEBVTT`);
+      }
+      const captionEnd = lastCaptionEnd(captions);
+      if (
+        captionEnd === null ||
+        captionEnd > videoDuration + 0.05 ||
+        videoDuration - captionEnd > 3
+      ) {
+        errors.push(
+          `${label} captions end at ${captionEnd ?? "unknown"}s but the MP4 is ${videoDuration.toFixed(2)}s`,
+        );
+      }
+    } catch (error) {
+      errors.push(
+        `${label}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+}
+
 const demoMb = demoBytes / (1024 * 1024);
 if (demoMb > MAX_TRACKED_DEMO_MB) {
   errors.push(
