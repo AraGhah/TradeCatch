@@ -1,0 +1,48 @@
+1
+00:00:00,250 --> 00:00:02,900
+Tes clients n'appellent pas
+seulement de neuf à cinq.
+
+2
+00:00:03,417 --> 00:00:05,497
+Réceptionniste IA : Merci d'avoir
+appelé Plomberie NorthStar.
+
+3
+00:00:05,537 --> 00:00:09,017
+Nous sommes fermés pour la soirée.
+Comment puis-je vous aider?
+
+4
+00:00:09,167 --> 00:00:12,228
+Client : Mon sous-sol est inondé!
+J'ai besoin de quelqu'un tout de suite!
+
+5
+00:00:12,268 --> 00:00:14,108
+Réceptionniste IA :
+Je comprends, c'est urgent.
+
+6
+00:00:14,148 --> 00:00:17,148
+Je vous transfère immédiatement
+au technicien de garde.
+
+7
+00:00:20,717 --> 00:00:23,477
+Les vraies urgences
+rejoignent ta ligne de garde.
+
+8
+00:00:23,517 --> 00:00:25,837
+Le reste est là le matin, avec un résumé.
+
+9
+00:00:27,217 --> 00:00:29,297
+TradeCatch. Chaque appel compte.
+
+10
+00:00:29,517 --> 00:00:32,477
+Réserve ton audit gratuit
+sur tradecatch.ca.
+
