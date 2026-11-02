@@ -121,6 +121,17 @@ export type ReceptionistConfig = {
   emergencyTransferE164?: string;
   /** Human fallback when the agent fails or the caller asks for a person. */
   fallbackTransferE164?: string;
+  /**
+   * When normal transfers may ring. `business_hours` (default for env configs)
+   * refuses after hours; `always` keeps transferring when a number exists.
+   * Owner profiles copy `transferSettings.transferHours`.
+   */
+  transferHours?: "always" | "business_hours";
+  /**
+   * How long an explicit transfer `<Dial>` rings before no-answer fallback.
+   * Owner profiles copy `transferSettings.timeoutSeconds` (10–120).
+   */
+  transferTimeoutSeconds?: number;
   /** Explicit opt-in to voicemail + email while no live transfer line exists. */
   allowVoicemailOnly?: boolean;
   faqs: FaqEntry[];
