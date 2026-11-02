@@ -180,6 +180,16 @@ export const PHRASES = {
     fr: "Oui, je suis l'assistante virtuelle de {business}. Je peux prendre votre demande ou vous mettre en contact avec l'équipe.",
     en: "Yes, I'm the virtual assistant for {business}. I can take your request or connect you with the team.",
   },
+  /** Same honesty when no live transfer line is available on this call. */
+  aiIdentityNoTransfer: {
+    fr: "Oui, je suis l'assistante virtuelle de {business}. Je peux prendre votre demande pour l'équipe.",
+    en: "Yes, I'm the virtual assistant for {business}. I can take your request for the team.",
+  },
+  /** Caller asked for a person but no dialable line / transfer not allowed right now. */
+  humanUnavailable: {
+    fr: "Je ne peux pas vous mettre en ligne pour le moment, mais je prends votre demande pour qu'on vous rappelle.",
+    en: "I can't put you through right now, but I'll take your request so we can call you back.",
+  },
   /** Not about the business at all: one polite redirect, then the pending question. */
   offTopic: {
     fr: "Ça, je ne pourrai pas vous aider, mais je peux prendre votre demande de service.",

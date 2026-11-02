@@ -64,3 +64,26 @@ export function claimsToBeHuman(reply: string): boolean {
     .trim();
   return CLAIMS_HUMAN.some((re) => re.test(n));
 }
+
+const CLAIMS_TRANSFER: RegExp[] = [
+  /\bje vous (?:transf\w*|connecte|mets en (?:ligne|communication))\b/,
+  /\bje (?:vais |peux )?vous (?:transf\w*|connecter|mettre en (?:ligne|communication))\b/,
+  /\bun instant[^.]*transf/,
+  /\bi\s*ll (?:transfer|connect|put you through)\b/,
+  /\bi will (?:transfer|connect|put you through)\b/,
+  /\bi am (?:transferring|connecting) you\b/,
+  /\bone moment[^.]*(?:transfer|connect)\b/,
+  /\b(?:transferring|connecting) you (?:now|to)\b/,
+];
+
+/**
+ * The reply promises a live bridge. Used when action is not `transfer`, so the
+ * caller is never left waiting after words with no `<Dial>`.
+ */
+export function claimsTransferPromise(reply: string): boolean {
+  const n = normalizeSpeech(reply)
+    .replace(/'/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return CLAIMS_TRANSFER.some((re) => re.test(n));
+}
