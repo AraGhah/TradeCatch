@@ -69,6 +69,131 @@ test.describe("first-demo journeys", () => {
     await expect(dialog).toContainText("controlled pilot");
   });
 
+  test("the on-the-job stories open a captioned, labelled 4:5 player (English)", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    await rejectCookiesIfVisible(page);
+
+    const card = page.getByRole("button", {
+      name: "Watch the video: Under the sink",
+    });
+    await card.scrollIntoViewIfNeeded();
+    await card.click();
+
+    const dialog = page.getByRole("dialog", {
+      name: "Under the sink: the AI receptionist answers",
+    });
+    await expect(dialog).toBeVisible();
+    const video = dialog.locator("video");
+    await expect(video).toHaveAttribute(
+      "src",
+      "/demo-video/stories/under-the-sink-en.mp4",
+    );
+    await expect(video).toHaveAttribute(
+      "poster",
+      "/demo-video/stories/under-the-sink-poster.jpg",
+    );
+    await expect(dialog.locator("track[kind='captions']")).toHaveAttribute(
+      "src",
+      "/demo-video/stories/captions/under-the-sink-en.vtt",
+    );
+
+    // The honesty label is visible without opening anything.
+    await expect(dialog).toContainText(
+      "Dramatization with a fictional business, not a customer story",
+    );
+    await expect(dialog).toContainText("founder-configured pilot");
+
+    // Portrait player: 4:5, and the whole video fits on screen with its controls.
+    const box = await video.boundingBox();
+    const viewport = page.viewportSize()!;
+    expect(box).not.toBeNull();
+    expect(box!.width / box!.height).toBeCloseTo(0.8, 1);
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
+
+    // The receptionist takes a request; the team confirms. It never books a slot itself.
+    await dialog.getByText("Transcript", { exact: true }).click();
+    await expect(dialog).toContainText("I've sent your request to the team");
+    await expect(dialog).not.toContainText("I've booked");
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(card).toBeFocused();
+  });
+
+  test("the on-the-job stories play in French with French captions and label", async ({
+    page,
+  }) => {
+    await page.goto("/fr");
+    await page
+      .getByRole("button", { name: "Refuser les non essentiels" })
+      .click({ timeout: 2_000 })
+      .catch(() => undefined);
+
+    const card = page.getByRole("button", {
+      name: "Regarder la vidéo : Sur l'escabeau",
+    });
+    await card.scrollIntoViewIfNeeded();
+    await card.click();
+
+    const dialog = page.getByRole("dialog", {
+      name: "Sur l'escabeau : un appel manqué reçoit un texto",
+    });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.locator("video")).toHaveAttribute(
+      "src",
+      "/demo-video/stories/the-ladder-fr.mp4",
+    );
+    await expect(dialog.locator("track[kind='captions']")).toHaveAttribute(
+      "src",
+      "/demo-video/stories/captions/the-ladder-fr.vtt",
+    );
+    await expect(dialog).toContainText(
+      "Mise en scène avec une entreprise fictive, pas un témoignage de client",
+    );
+    await expect(dialog).toContainText("pilote contrôlé");
+  });
+
+  test("the receptionist page offers its two stories", async ({ page }) => {
+    await page.goto("/receptionist");
+    await rejectCookiesIfVisible(page);
+    await expect(
+      page.getByRole("button", { name: "Watch the video: Under the sink" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Watch the video: After hours" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Watch the video: On the ladder" }),
+    ).toHaveCount(0);
+  });
+
+  test("every story video, caption track and poster is served", async ({
+    request,
+  }) => {
+    for (const id of ["under-the-sink", "the-ladder", "after-hours"] as const) {
+      const poster = await request.get(`/demo-video/stories/${id}-poster.jpg`);
+      expect(poster.status()).toBe(200);
+      expect(poster.headers()["content-type"]).toContain("image/jpeg");
+      for (const locale of ["en", "fr"] as const) {
+        const mp4 = await request.get(`/demo-video/stories/${id}-${locale}.mp4`, {
+          headers: { range: "bytes=0-1" },
+        });
+        expect([200, 206]).toContain(mp4.status());
+        expect(mp4.headers()["content-type"]).toContain("video/mp4");
+
+        const vtt = await request.get(
+          `/demo-video/stories/captions/${id}-${locale}.vtt`,
+        );
+        expect(vtt.status()).toBe(200);
+        expect(vtt.headers()["content-type"]).toContain("text/vtt");
+        expect(await vtt.text()).toContain("WEBVTT");
+      }
+    }
+  });
+
   test("every exported video and caption track is served", async ({
     request,
   }) => {
