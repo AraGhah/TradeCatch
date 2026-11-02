@@ -39,7 +39,7 @@ export function StickyAuditCta({ label }: { label: string }) {
   return (
     <div
       ref={barRef}
-      className="pointer-events-none fixed inset-x-0 z-40 p-3 md:hidden"
+      className="pointer-events-none fixed inset-x-0 z-40 p-3 lg:hidden"
       style={{ bottom: "var(--tc-cookie-offset, 0px)" }}
     >
       <div className="pointer-events-auto mx-auto max-w-lg border border-[rgb(var(--ink-rgb)/0.12)] bg-surface/95 p-3 shadow-[0_-8px_30px_-18px_rgb(var(--ink-rgb)/0.35)] backdrop-blur-sm">
