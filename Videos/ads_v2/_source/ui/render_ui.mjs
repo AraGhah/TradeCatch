@@ -15,7 +15,7 @@ const faces = [
   ['Archivo', 700, 'archivo-latin-700-normal.woff2'], ['Archivo', 800, 'archivo-latin-800-normal.woff2'],
 ].map(([fam, w, file]) => `@font-face{font-family:'${fam}';font-weight:${w};src:url(data:font/woff2;base64,${f(file)}) format('woff2')}`).join('\n');
 const browser = await chromium.launch({ headless: true, args: ['--force-device-scale-factor=1', '--disable-lcd-text'] });
-const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
+const page = await browser.newPage({ viewport: { width: spec.w || 1080, height: spec.h || 1920 }, deviceScaleFactor: 1 });
 await page.goto(pathToFileURL(path.join(here, 'ui.html')).href);
 await page.addStyleTag({ content: faces });
 await page.evaluate(() => document.fonts.load("600 40px Plex"));
