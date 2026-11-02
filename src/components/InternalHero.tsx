@@ -19,7 +19,7 @@ export function InternalHero({
   aside?: ReactNode;
 }) {
   return (
-    <section className="bg-navy pt-[clamp(72px,8vw,100px)] pb-[clamp(56px,6vw,80px)]">
+    <section className="bg-navy pt-12 pb-10 sm:pt-[clamp(56px,7vw,100px)] sm:pb-[clamp(48px,6vw,80px)]">
       <Container>
         <div
           className={`grid items-end gap-x-[clamp(32px,5vw,64px)] gap-y-8 ${
