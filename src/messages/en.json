@@ -36,10 +36,13 @@
     "toggleThemeToLight": "Switch to light mode",
     "skipToContent": "Skip to main content",
     "aiReceptionist": "Receptionist",
-    "referral": "Referral program"
+    "referral": "Referral program",
+    "demo": "Demo",
+    "login": "Login",
+    "more": "More"
   },
   "cta": {
-    "primary": "Book a free 20-minute audit",
+    "primary": "Book a Free Demo",
     "secondary": "Watch the 90-second demo",
     "tertiary": "Book a free 20-minute audit",
     "watchDemo": "Watch the 90-second demo",
@@ -47,9 +50,9 @@
     "viewMissedCall": "View missed-call workflow",
     "viewQuoteFollowUp": "See the quote follow-up process",
     "viewIndustries": "All industries",
-    "bookAudit": "Book audit",
-    "bookAuditShort": "Book audit",
-    "bookAuditFree": "Book a free 20-minute audit",
+    "bookAudit": "Book a Free Demo",
+    "bookAuditShort": "Book demo",
+    "bookAuditFree": "Book a Free Demo",
     "findMyLeaks": "Book a free 20-minute audit",
     "talkWithAra": "Book a free 20-minute audit",
     "emailDirect": "Email direct",
@@ -60,7 +63,13 @@
     "allQuestions": "All questions",
     "backToSite": "Back to the site",
     "submitAnother": "Submit another",
-    "bookAuditDescriptive": "Book a free 20-minute audit"
+    "bookAuditDescriptive": "Book a free 20-minute audit",
+    "bookFreeDemo": "Book a Free Demo",
+    "hearReceptionist": "Hear the Receptionist",
+    "seePricing": "See Pricing",
+    "comparePlans": "Compare Plans",
+    "getStarted": "Get Started",
+    "requestDemo": "Request My Demo"
   },
   "footer": {
     "description": "TradeCatch recovers missed calls by text on Starter, answers the phone with a limited receptionist on Growth, and runs the complete bilingual receptionist on Receptionist Plus. Pilots are founder-configured; marketing examples are illustrative.",
@@ -82,14 +91,14 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Revenue recovery for Québec trades",
-      "headline": "Win back missed callers. Book more jobs.",
-      "accentWord": "Book more jobs.",
-      "subheadline": "Starter texts missed callers back. Growth answers the phone with a limited receptionist. Receptionist Plus runs the complete bilingual front desk. French or English. Founder-configured pilots.",
-      "ctaPrimary": "Book a free 20-minute audit",
-      "ctaSecondary": "Watch the 90-second demo",
-      "ctaTry": "Or talk to the Receptionist Plus demo yourself",
-      "reassurance": "No commitment. No system access needed. You talk with the founder."
+      "eyebrow": "For contractors who work with their hands",
+      "headline": "You're on the job. We'll handle the calls.",
+      "accentWord": "We'll handle the calls.",
+      "subheadline": "TradeCatch answers customer calls, handles questions, and helps book appointments — so you can keep working.",
+      "ctaPrimary": "Book a Free Demo",
+      "ctaSecondary": "Hear the Receptionist",
+      "ctaTry": "Try the live receptionist demo",
+      "reassurance": "Free demo. No system access needed. You talk with the founder."
     },
     "leaks": {
       "eyebrow": "The problem",
@@ -149,30 +158,31 @@
     "pricingPreview": {
       "eyebrow": "Pricing",
       "headline": "Text back, answer the phone, or run a complete front desk.",
-      "intro": "Three plans. Each one keeps everything in the plan before it. Installation is paid once. The large figure is the monthly management fee.",
+      "intro": "Three plans. Each keeps everything in the plan before it. Month one is the setup fee only; the monthly fee starts in month two.",
       "tiers": [
         {
           "name": "Starter",
           "price": "$349.99 / month",
           "cadence": "$799.99 installation, paid once",
-          "idealFor": "Missed-call text-back, website replies and quiet-quote follow-up. Does not answer the phone."
+          "idealFor": "Never leave a missed call without follow-up. SMS recovery — does not answer the phone."
         },
         {
           "name": "Growth",
           "price": "$649.99 / month",
           "cadence": "$1,499.99 installation, paid once",
-          "idealFor": "Limited phone answering, plus booking, pipeline and reviews on top of Starter."
+          "idealFor": "Let AI answer while you work. Limited phone answering plus Starter."
         },
         {
           "name": "Receptionist Plus",
           "price": "$949.99 / month",
           "cadence": "$1,999.99 installation, paid once",
-          "idealFor": "Complete bilingual receptionist: on-call booking, transfer, emergencies — and everything below."
+          "idealFor": "Your most complete front-desk solution. Booking on the call, transfer, emergencies."
         }
       ],
       "cta": "See full pricing",
       "receptionistCta": "How Receptionist Plus works",
-      "note": "Multi-location and high-volume work is scoped with you. Minutes past the written allowance are never billed in silence."
+      "note": "Multi-location and high-volume work is scoped with you. Minutes past the written allowance are never billed in silence.",
+      "billingNote": "First month: setup fee only. Monthly management begins in month two."
     },
     "founder": {
       "eyebrow": "Who you're actually hiring",
@@ -214,7 +224,7 @@
     },
     "faqTeaser": {
       "eyebrow": "Straight answers",
-      "headline": "What owners ask before they book.",
+      "headline": "Questions? We've got answers.",
       "viewAll": "All questions",
       "items": [
         {
@@ -232,6 +242,18 @@
         {
           "q": "Can it work with our current phone number?",
           "a": "Usually. It depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
+        },
+        {
+          "q": "What do I pay in the first month?",
+          "a": "The setup fee only. Your monthly subscription starts in month two. Prices are listed on the pricing page."
+        },
+        {
+          "q": "Can calls be transferred to me?",
+          "a": "Live transfer is available on Receptionist Plus during configured hours. Growth answers and summarizes without live transfer."
+        },
+        {
+          "q": "How long does setup take?",
+          "a": "We configure with you and go live only after you approve what the receptionist says. Timing depends on your availability and the plan."
         }
       ]
     },
@@ -250,6 +272,116 @@
       "guarantee": "Launch guarantee: if the agreed system isn't live because of a delay on our side, your first management month is credited.",
       "cta": "Book a free 20-minute audit",
       "landingNote": "Pilots are real engagements with signed scope. Public result claims appear only with written client permission."
+    },
+    "mobile": {
+      "demo": {
+        "eyebrow": "See it",
+        "headline": "Don't just read about it. Hear it.",
+        "intro": "Hear how TradeCatch handles a real customer conversation.",
+        "watchVideo": "Watch the 90-second demo",
+        "tryLive": "Talk to the receptionist",
+        "note": "Sound plays only when you press play."
+      },
+      "benefits": {
+        "eyebrow": "The problem",
+        "headline": "Every missed call could be a missed job.",
+        "intro": "When you're on a ladder, under a sink, or driving to the next job, answering every call isn't realistic.",
+        "items": [
+          {
+            "title": "Calls answered while you work",
+            "body": "Someone picks up — even when you cannot."
+          },
+          {
+            "title": "Appointments booked",
+            "body": "Callers can request a time without interrupting your crew."
+          },
+          {
+            "title": "Questions handled",
+            "body": "Hours, services, and next steps — answered clearly."
+          },
+          {
+            "title": "Details sent to you",
+            "body": "Name, number, and what they need, on your phone."
+          }
+        ]
+      },
+      "howItWorks": {
+        "eyebrow": "Setup",
+        "headline": "Simple to set up. Easy to use.",
+        "intro": "We configure the receptionist with you. You keep working.",
+        "steps": [
+          {
+            "title": "Tell us about your business",
+            "body": "Services, hours, areas, and how you want callers handled."
+          },
+          {
+            "title": "We get everything ready",
+            "body": "We configure the line, test the scenarios, and confirm with you before go-live."
+          },
+          {
+            "title": "Keep working",
+            "body": "Supported calls are handled while you stay informed."
+          }
+        ],
+        "cta": "See how it works"
+      },
+      "useCases": {
+        "eyebrow": "On the job",
+        "headline": "Built for the way contractors actually work.",
+        "intro": "Real situations. Clear responses.",
+        "items": [
+          {
+            "problem": "You're mid-job and can't answer.",
+            "response": "TradeCatch answers, takes details, and alerts your team."
+          },
+          {
+            "problem": "A customer calls after hours.",
+            "response": "They still get a clear next step — not a dead line."
+          },
+          {
+            "problem": "Someone wants to book an appointment.",
+            "response": "Growth and Receptionist Plus capture the request; Plus can book on the call when enabled."
+          },
+          {
+            "problem": "They ask about your services or pricing.",
+            "response": "Approved answers only — then a callback or booking path."
+          }
+        ],
+        "cta": "See trades we serve"
+      },
+      "pricing": {
+        "eyebrow": "Pricing",
+        "headline": "Choose the receptionist your business needs.",
+        "intro": "Three plans. Month one is the setup fee only. Monthly billing starts in month two.",
+        "billingNote": "First month: setup fee only. Recurring monthly fee starts month two.",
+        "recommended": "Most popular for phone answering",
+        "starterTag": "Never leave a missed call without follow-up.",
+        "growthTag": "Let AI answer while you work.",
+        "plusTag": "Your most complete front-desk solution.",
+        "setupLabel": "Setup",
+        "monthlyLabel": "Then / month",
+        "cta": "Compare plans",
+        "seeAll": "See full pricing"
+      },
+      "addOn": {
+        "eyebrow": "Optional website service",
+        "headline": "Need a website that brings in work?",
+        "intro": "We build a new professional site or improve the one you have, with mobile-friendly lead capture connected to TradeCatch.",
+        "cta": "Get My Website Built"
+      },
+      "faq": {
+        "eyebrow": "Questions",
+        "headline": "Questions? We've got answers.",
+        "viewAll": "All questions"
+      },
+      "finalCta": {
+        "headline": "Your next customer could be calling.",
+        "body": "See how TradeCatch can help your business handle calls while you are busy.",
+        "primary": "Book Your Free Demo",
+        "secondary": "Compare Plans",
+        "note": "No pressure. Clear pricing. Direct founder support on pilots."
+      },
+      "stickyCta": "Book a Free Demo"
     }
   },
   "services": {
@@ -513,9 +645,9 @@
   },
   "pricing": {
     "eyebrow": "Pricing",
-    "headline": "Three plans. One goal: stop losing leads you already paid to generate.",
-    "intro": "Starter recovers missed calls by text. Growth answers the phone with a limited receptionist and books work in the workspace. Receptionist Plus is the complete bilingual front desk, and includes both.",
-    "reassurance": "Fixed installation. Month-to-month. Cancel with notice.",
+    "headline": "Choose the receptionist your business needs.",
+    "intro": "Starter recovers missed calls by text. Growth answers the phone with a limited receptionist. Receptionist Plus is the complete bilingual front desk.",
+    "reassurance": "Setup fee in month one. Monthly fee starts month two. Month-to-month after that. Cancel with notice.",
     "metaDescription": "TradeCatch pricing: Starter SMS recovery, Growth limited phone answering, and Receptionist Plus — the complete bilingual front desk for Québec contractors.",
     "principles": [
       "Starter catches missed calls by text",
@@ -958,7 +1090,8 @@
     },
     "onceLabel": "paid once",
     "monthlyEyebrow": "Each month",
-    "websiteMention": "Need a website? Add our website service starting at $349."
+    "websiteMention": "Need a website? Add our website service starting at $349.",
+    "billingBanner": "First month charges the setup fee only. Recurring monthly billing begins in month two."
   },
   "about": {
     "eyebrow": "About",
@@ -1119,7 +1252,7 @@
     "consent": "I agree to be contacted about this request by phone, email or text. Message and data rates may apply. I can opt out at any time.",
     "marketingConsent": "Optional: send me occasional tips and offers by email. Separate from the contact above.",
     "consentRequired": "Please agree to be contacted so we can follow up on your request.",
-    "submit": "Submit request",
+    "submit": "Request My Demo",
     "confirmation": {
       "headline": "Got it. Your audit request is in.",
       "body": "Your request is safely saved. Ara will follow up to confirm a time. Email confirmation may arrive later. Have your recent call volume, your open quote list and any software you currently run handy for the call.",
@@ -1143,8 +1276,8 @@
       "continue": "Continue",
       "back": "Back",
       "skip": "Skip",
-      "submit": "Submit request",
-      "submitting": "Submitting…",
+      "submit": "Request My Demo",
+      "submitting": "Sending…",
       "retry": "Try again",
       "edit": "Edit",
       "editStep": "Edit",
