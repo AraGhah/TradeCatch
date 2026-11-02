@@ -28,18 +28,28 @@ GRADES = {
               "curves=all='0/0 0.10/0.085 0.5/0.5 0.9/0.915 1/0.985'",
 }
 
-def footage_segment(out, clip, t_in, dur, zoom=(1.08, 1.14), anchor=(0.5, 0.5), grade="day", speed=1.0, seed=0, grain=7):
+def footage_segment(out, clip, t_in, dur, zoom=(1.08, 1.14), anchor=(0.5, 0.5), grade="day", speed=1.0, seed=0, grain=7, a45=None):
     """Cut `dur` seconds (output time) of `clip` starting at source time t_in; upscale 720p -> 1080x1920 with a slow push-in
     (zoom z0->z1 about `anchor`), subtle handheld drift, temporal denoise (removes generative shimmer), light sharpening,
-    grade, vignette and real film grain."""
-    nf = frames(dur); d = nf / FPS; z0, z1 = zoom; ax, ay = anchor
+    grade, vignette and real film grain.
+    Output size follows config.W x config.H.  The picture is always scaled as for 1080x1920 (so the look and the push-in
+    are identical across formats); a shorter frame (4:5) simply crops a window out of it, placed by `a45` = (x, y) in 0..1
+    (0 = top/left, 1 = bottom/right of the available slack) instead of `anchor`. A 3-tuple (x, y_from, y_to) tilts the
+    window from y_from to y_to over the shot (used to follow the story: face -> phone)."""
+    OW, OH = C.W, C.H
+    if (OW, OH) != (1080, 1920) and a45 is not None: anchor = a45
+    nf = frames(dur); d = nf / FPS; z0, z1 = zoom; ax, ay = anchor[0], anchor[1]
+    ay_expr = f"{ay}"
+    if len(anchor) == 3:     # (x, y_from, y_to): a slow handheld tilt, eased, over the middle of the shot (4:5 only)
+        u = f"clip((t-{0.12 * d:.3f})/{0.73 * d:.3f},0,1)"
+        ay_expr = f"({anchor[1]}+({anchor[2]}-{anchor[1]})*{u}*{u}*(3-2*{u}))"
     ph = [(seed * 1.7 + k * 2.1) % 6.283 for k in range(4)]
     Z = f"({z0}+({z1}-{z0})*t/{d:.4f})"
     sx = f"4.2*sin(2*PI*0.37*t+{ph[0]:.3f})+1.9*sin(2*PI*1.10*t+{ph[1]:.3f})"
     sy = f"3.4*sin(2*PI*0.29*t+{ph[2]:.3f})+1.5*sin(2*PI*0.93*t+{ph[3]:.3f})"
     vf = (f"setpts=(PTS-STARTPTS)/{speed},fps={FPS},hqdn3d=1.6:1.3:4.5:3.5,"
           f"scale=w='trunc(1080*{Z}/2)*2':h='trunc(1920*{Z}/2)*2':eval=frame:flags=lanczos,"
-          f"crop=1080:1920:x='(iw-1080)*{ax}+{sx}':y='(ih-1920)*{ay}+{sy}',"
+          f"crop={OW}:{OH}:x='(iw-{OW})*{ax}+{sx}':y='(ih-{OH})*{ay_expr}+{sy}',"
           f"unsharp=5:5:0.55:5:5:0.0,{GRADES[grade]},vignette=PI/5.2,"
           f"noise=alls={grain}:allf=t+u,format=yuv420p")
     cmd = [FF, "-v", "error", "-y", "-ss", f"{t_in:.4f}", "-t", f"{d * speed + 0.2:.4f}", "-i", str(CLIPS[clip]), "-an", "-vf", vf,
@@ -51,9 +61,14 @@ def _node_render(spec_path, out_dir, rng_list):
     r = subprocess.run(["node", str(C.ROOT / "ui" / "render_ui.mjs"), str(spec_path), str(out_dir), rng_list], capture_output=True, text=True)
     if r.returncode != 0: raise RuntimeError(r.stderr[-800:] or r.stdout[-800:])
 
+def with_format(spec):
+    """Stamp the active output size into a UI spec (ui.html lays itself out for 1080x1920 or 1080x1350)."""
+    return dict(spec, w=C.W, h=C.H)
+
 def render_ui_scene(spec, workers=6, force=False):
     """Render a UI scene to an mp4 (cached by spec hash). Returns the mp4 path."""
-    key = hashlib.sha1(json.dumps(spec, sort_keys=True, ensure_ascii=False).encode() + (C.ROOT / "ui" / "ui.html").read_bytes()).hexdigest()[:14]
+    spec = with_format(spec)
+    key =hashlib.sha1(json.dumps(spec, sort_keys=True, ensure_ascii=False).encode() + (C.ROOT / "ui" / "ui.html").read_bytes()).hexdigest()[:14]
     cdir = C.WORK / "ui_cache"; cdir.mkdir(parents=True, exist_ok=True)
     mp4 = cdir / f"{spec['type']}_{key}.mp4"
     if mp4.exists() and not force: return mp4
@@ -88,4 +103,16 @@ def mux(video, audio_wav, out, crf=15):
          "-c:v", "libx264", "-preset", "slow", "-crf", str(crf), "-profile:v", "high", "-level", "4.2", "-pix_fmt", "yuv420p",
          "-maxrate", "14M", "-bufsize", "28M", "-g", "48", "-bf", "2", "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
          "-c:a", "aac", "-b:a", "256k", "-ar", "48000", "-ac", "2", "-shortest", "-movflags", "+faststart", str(out)])
+    return out
+
+def duration(path):
+    r = run([FF.replace("ffmpeg", "ffprobe"), "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(path)])
+    return float(r.stdout.strip())
+
+def mux_copy_audio(video, audio_src, out, crf=15):
+    """Same platform encode as mux(), but the audio stream is copied (not re-encoded) from an existing master."""
+    run([FF, "-v", "error", "-y", "-i", str(video), "-i", str(audio_src), "-map", "0:v:0", "-map", "1:a:0",
+         "-c:v", "libx264", "-preset", "slow", "-crf", str(crf), "-profile:v", "high", "-level", "4.2", "-pix_fmt", "yuv420p",
+         "-maxrate", "14M", "-bufsize", "28M", "-g", "48", "-bf", "2", "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709",
+         "-c:a", "copy", "-shortest", "-movflags", "+faststart", str(out)])
     return out
