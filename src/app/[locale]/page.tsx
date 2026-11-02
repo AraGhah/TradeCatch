@@ -6,6 +6,7 @@ import { CTAButton } from "@/components/CTAButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { PricingPreview } from "@/components/PricingPreview";
+import { HomeMobile } from "@/components/home/HomeMobile";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { localizedAnchor } from "@/lib/anchors";
 import { buildMetadata } from "@/lib/seo";
@@ -57,6 +58,9 @@ export default async function HomePage({
 
   return (
     <>
+      <HomeMobile locale={locale} />
+
+      <div className="hidden lg:block">
       {/* 1. Hero */}
       <section
         className="relative overflow-hidden bg-navy text-white"
@@ -234,6 +238,8 @@ export default async function HomePage({
             cta={t("pricingPreview.cta")}
             receptionistCta={t("pricingPreview.receptionistCta")}
             note={t("pricingPreview.note")}
+            billingNote={t("pricingPreview.billingNote")}
+            recommendedIndex={1}
           />
         </Container>
       </section>
@@ -357,6 +363,7 @@ export default async function HomePage({
           </div>
         </Container>
       </section>
+      </div>
     </>
   );
 }
