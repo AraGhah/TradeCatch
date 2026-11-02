@@ -1196,13 +1196,27 @@ export function createMissedCallEngine(deps: {
           };
         }
 
-        if (!client) return { handled: false, replies };
+        // Cold SMS (no Module A client / no active collection workflow):
+        // release the MessageSid claim so a Twilio redelivery can still reach
+        // the SMS receptionist. Module A paths that return handled:true keep
+        // the claim for idempotency; the receptionist uses its own outbox id.
+        if (!client) {
+          if (claimedSid) {
+            await deps.store.releaseInboundMessageSid(claimedSid);
+            claimedSid = undefined;
+          }
+          return { handled: false, replies };
+        }
 
         const workflow = await deps.store.findActiveWorkflowByCaller(
           client.id,
           input.fromE164,
         );
         if (!workflow || workflow.status !== "awaiting_customer") {
+          if (claimedSid) {
+            await deps.store.releaseInboundMessageSid(claimedSid);
+            claimedSid = undefined;
+          }
           return { handled: false, replies };
         }
 
