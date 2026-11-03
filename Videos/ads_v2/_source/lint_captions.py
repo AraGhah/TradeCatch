@@ -2,7 +2,7 @@
     python lint_captions.py [max_cps]"""
 import glob, sys, json
 import config as C
-LIMIT = float(sys.argv[1]) if len(sys.argv) > 1 else 31.0
+LIMIT = float(sys.argv[1]) if len(sys.argv) > 1 else 30.0
 meta = json.loads((C.ADS_DIR / "captions" / "transcripts.json").read_text(encoding="utf-8"))
 sec = lambda s: (lambda h, m, r: int(h) * 3600 + int(m) * 60 + int(r.split(",")[0]) + int(r.split(",")[1]) / 1000)(*s.split(":"))
 bad = 0; worst = 0
