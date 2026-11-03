@@ -61,7 +61,7 @@ jobs:
 
       - name: Count prior attempts
         id: attempts
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const comments = await github.paginate(
@@ -73,7 +73,7 @@ jobs:
 
       - name: Stop after 3 failed attempts
         if: fromJSON(steps.attempts.outputs.count) >= 3
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.issues.createComment({
@@ -134,7 +134,7 @@ jobs:
 
       - name: Record failed attempt
         if: failure() && fromJSON(steps.attempts.outputs.count) < 3
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.issues.createComment({
@@ -150,7 +150,7 @@ jobs:
 
       - name: Open pull request
         if: success() && fromJSON(steps.attempts.outputs.count) < 3
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const needsReview = "${{ steps.guardrails.outputs.needs_human_review }}" === "true";
