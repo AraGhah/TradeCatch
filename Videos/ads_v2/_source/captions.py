@@ -7,7 +7,7 @@ from the audio, and they are identical for the 9:16 and 4:5 versions (same timel
 burned-in subtitles; captions are shipped as separate sidecar files so each platform can show or hide them.
 
 Display text differs from the spoken text in three places only: the brand is written TradeCatch (the French voice says
-"Tréïd Catch"), the URL is written tradecatch.ca, and call speakers are labelled so it is clear the receptionist is an AI."""
+"Tréïd Catch"), the URL is written tradecatch.ca, and call speakers are labelled so a muted viewer can tell who is speaking."""
 import json, re, sys
 from pathlib import Path
 import config as C
@@ -21,8 +21,8 @@ TARGET_CPS = 20.0                     # reading speed to aim for (characters per
 MAX_HOLD = 1.2                        # a cue may stay up this long after the voice stops, if the next cue has not started
 
 SPEAKER = {   # (lang, who) -> label put in front of in-call lines; narration is unlabelled
-    ("en", "recep"): "AI receptionist:", ("en", "cust"): "Caller:",
-    ("fr", "recep"): "Réceptionniste IA :", ("fr", "cust"): "Client :",
+    ("en", "recep"): "Receptionist:", ("en", "cust"): "Caller:",
+    ("fr", "recep"): "Réceptionniste :", ("fr", "cust"): "Client :",
 }
 SOUND = {"en": {"[sighs]": "[sighs]"}, "fr": {"[sighs]": "[soupir]"}}
 
@@ -36,7 +36,7 @@ def piece_starts(lang, lid, t0, pieces):
     word (found in the cached word timings near where the character count says it should be). None -> no word data."""
     ws = WORDS.get(f"{lang}/{lid}")
     if not ws: return None
-    clean = [re.sub(r"\[[^\]]*\]", "", re.sub(r"^(AI receptionist|Caller|Réceptionniste IA|Client) ?:", "", p)).strip() for p in pieces]
+    clean = [re.sub(r"\[[^\]]*\]", "", re.sub(r"^(Receptionist|Caller|Réceptionniste|Client) ?:", "", p)).strip() for p in pieces]
     total = sum(len(c) + 1 for c in clean)
     cum, c = [], 0
     for w in ws: cum.append(c); c += len(w[0]) + 1
@@ -144,7 +144,7 @@ def transcript(cues):
     out = []
     for c in cues:
         t = " ".join(c["lines"])
-        if out and out[-1][0] == c["who"] and not re.match(r"^(AI receptionist|Caller|Réceptionniste IA|Client) ?:", t): out[-1][1] += " " + t
+        if out and out[-1][0] == c["who"] and not re.match(r"^(Receptionist|Caller|Réceptionniste|Client) ?:", t): out[-1][1] += " " + t
         else: out.append([c["who"], t])
     return " ".join(x[1] for x in out)
 
