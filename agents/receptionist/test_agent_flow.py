@@ -6,13 +6,19 @@ whether Twilio delivers the keypress: that needs a live call.
 """
 
 import asyncio
+import contextlib
 import copy
+import time
 import unittest
 from types import SimpleNamespace
 
 try:
     import agent as A
+    import warm_transfer as W
     from call_record import CallRecord
+    from livekit import api
+    from livekit.agents.llm import ToolError
+    from transfer import TransferFailure, TransferSettings
 except ImportError as err:  # livekit-agents is not installed here
     raise unittest.SkipTest(f"livekit-agents unavailable: {err}")
 
@@ -62,21 +68,49 @@ class FakeHandle:
         return self.wait_for_playout().__await__()
 
 
+class FakeAudio:
+    def __init__(self):
+        self.enabled = True
+
+    def set_audio_enabled(self, value):
+        self.enabled = value
+
+
 class FakeSession:
     def __init__(self):
         self.replies: list[str] = []
         self.interrupts = 0
         self.away_resets = 0
+        self.shutdowns: list[bool] = []
+        self.input = FakeAudio()
+        self.output = FakeAudio()
+        self.handle_factory = FakeHandle
 
     def generate_reply(self, *, instructions, allow_interruptions=True, **_):
         self.replies.append(instructions)
-        return FakeHandle()
+        return self.handle_factory()
 
     async def interrupt(self, force=False):
         self.interrupts += 1
 
     def reset_away_timer(self):
         self.away_resets += 1
+
+    def shutdown(self, *, drain=True):
+        self.shutdowns.append(drain)
+
+
+class FakeContext:
+    """The RunContext a tool receives: the session, and the floor it can hold."""
+
+    def __init__(self, session):
+        self.session = session
+        self.floors = 0
+
+    @contextlib.asynccontextmanager
+    async def foreground(self):
+        self.floors += 1
+        yield
 
 
 class FakeClient:
@@ -112,23 +146,79 @@ class FakeClient:
         return True
 
 
+def refer_response(status="STS_TRANSFER_SUCCESSFUL", reason="STR_COMPLETED", sip=None):
+    """What LiveKit returns for a SIP REFER, built from the real message type."""
+    response = api.TransferSIPParticipantResponse(
+        status=api.SIPTransferStatus.Value(status), reason=api.SIPTransferReason.Value(reason)
+    )
+    if sip:
+        response.sip_status.code = sip
+    return response
+
+
+def sip_call_error(code):
+    return api.SipCallError(
+        "unavailable", "call failed", status=503, metadata={"sip_status_code": str(code)}
+    )
+
+
+class FakeRoom:
+    def __init__(self, name="call-room"):
+        self.name = name
+        self.handlers: dict[str, list] = {}
+
+    def on(self, event, handler):
+        self.handlers.setdefault(event, []).append(handler)
+
+    def off(self, event, handler):
+        if handler in self.handlers.get(event, []):
+            self.handlers[event].remove(handler)
+
+
 class FakeJob:
     def __init__(self, transfer_error=None):
         self.deleted = 0
+        self.deleted_rooms: list[str] = []
         self.transfers: list[str] = []
+        self.refer_requests: list = []
+        self.bridges: list = []
         self.shutdowns: list[str] = []
-        self.room = SimpleNamespace(name="call-room")
+        self.room = FakeRoom()
         self.transfer_error = transfer_error
+        self.transfer_response = refer_response()
+        # One entry per REFER, in order: a response, or an exception to raise.
+        self.transfer_queue: list = []
+        self.bridge_error = None
 
         async def transfer(request):
             if self.transfer_error:
                 raise self.transfer_error
             self.transfers.append(request.transfer_to)
+            self.refer_requests.append(request)
+            result = self.transfer_queue.pop(0) if self.transfer_queue else self.transfer_response
+            if isinstance(result, Exception):
+                raise result
+            return result
 
-        self.api = SimpleNamespace(sip=SimpleNamespace(transfer_sip_participant=transfer))
+        async def create_participant(request):
+            self.bridges.append(request)
+            if self.bridge_error:
+                raise self.bridge_error
 
-    async def delete_room(self):
+        self.api = SimpleNamespace(
+            sip=SimpleNamespace(
+                transfer_sip_participant=transfer, create_sip_participant=create_participant
+            )
+        )
+
+    def delete_room(self, room_name=None):
+        # Like the real one, returns a future: callers may await it or ignore it.
         self.deleted += 1
+        if room_name:
+            self.deleted_rooms.append(room_name)
+        done = asyncio.get_running_loop().create_future()
+        done.set_result(None)
+        return done
 
     def shutdown(self, reason=""):
         self.shutdowns.append(reason)
@@ -151,27 +241,33 @@ def state(new_state):
 
 class FlowCase(unittest.IsolatedAsyncioTestCase):
     cfg = CFG
+    # Tests never read the machine's environment: REFER unless a test says otherwise.
+    transfers = TransferSettings(mode="blind", ring_seconds=25, budget_seconds=100)
 
     async def asyncSetUp(self):
         self.client = FakeClient()
         self.job = FakeJob()
         self._patch = A.get_job_context
         A.get_job_context = lambda: self.job
+        self._patch_wt = W.get_job_context
+        W.get_job_context = lambda: self.job
         self.call = CallRecord(call_id="call-abc123", number="+14382314700", from_e164="+15145550142")
         self.make_agent()
 
     async def asyncTearDown(self):
         A.get_job_context = self._patch
+        W.get_job_context = self._patch_wt
         for task in list(self.agent._tasks):
             task.cancel()
         await asyncio.sleep(0)
 
-    def make_agent(self, cfg=None, client="default"):
+    def make_agent(self, cfg=None, client="default", transfers=None):
         self.agent = Harness(
             cfg=copy.deepcopy(self.cfg if cfg is None else cfg),
             call=self.call,
             client=self.client if client == "default" else client,
             sip_identity="sip_1",
+            transfers=transfers or self.transfers,
         )
         self.agent.fake_session = FakeSession()
         self.agent._ctx = self.job
@@ -512,28 +608,46 @@ class RecordDetailsTests(FlowCase):
         self.assertTrue(self.call.payload()["emergency"])
 
 
+def ctx_for(session):
+    return FakeContext(session)
+
+
 class TransferTests(FlowCase):
-    async def test_transfer_hands_the_call_to_the_configured_line(self):
-        reply = await self.agent.transfer_call(SimpleNamespace(session=self.session), "caller_request")
-        self.assertIn("transfer has started", reply)
+    """The SIP REFER path (no outbound trunk): the result LiveKit reports is what counts."""
+
+    async def test_a_completed_handoff_connects_the_call_and_the_agent_leaves(self):
+        ctx = ctx_for(self.session)
+        reply = await self.agent.transfer_call(ctx, "caller_request")
+        self.assertIn("now connected", reply)
         self.assertEqual(self.job.transfers, ["tel:+14389957350"])
         self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
-        self.assertIn("connecting them now", self.session.replies[0])
+        self.assertEqual(self.call.end_reason, "completed")
+        self.assertEqual(self.session.shutdowns, [False])
+        self.assertEqual(self.job.deleted, 0)
+        self.assertEqual(ctx.floors, 1)
+        request = self.job.refer_requests[0]
+        self.assertEqual(request.participant_identity, "sip_1")
+        self.assertEqual(request.ringing_timeout.seconds, 25)
+
+    async def test_the_caller_is_asked_to_hold_not_told_they_are_connected(self):
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("stay on the line", self.session.replies[0])
+        self.assertIn("Do not say they are connected", self.session.replies[0])
 
     async def test_a_named_department_goes_to_its_own_number(self):
-        await self.agent.transfer_call(SimpleNamespace(session=self.session), "caller_request", "billing")
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request", "billing")
         self.assertEqual(self.job.transfers, ["tel:+14385550002"])
         self.assertEqual(self.call.transfer["targetName"], "Billing")
 
     async def test_a_number_smuggled_in_as_department_is_never_dialed(self):
-        await self.agent.transfer_call(SimpleNamespace(session=self.session), "caller_request", "+19005551234")
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request", "+19005551234")
         self.assertEqual(self.job.transfers, ["tel:+14389957350"])
 
     async def test_emergency_uses_the_emergency_line_after_hours_and_is_flagged(self):
         cfg = copy.deepcopy(CFG)
         cfg["afterHours"] = True
         self.make_agent(cfg)
-        await self.agent.transfer_call(SimpleNamespace(session=self.session), "emergency")
+        await self.agent.transfer_call(ctx_for(self.session), "emergency")
         self.assertEqual(self.job.transfers, ["tel:+14385550001"])
         self.assertTrue(self.call.emergency)
 
@@ -541,29 +655,451 @@ class TransferTests(FlowCase):
         cfg = copy.deepcopy(CFG)
         cfg["afterHours"] = True
         self.make_agent(cfg)
-        reply = await self.agent.transfer_call(SimpleNamespace(session=self.session), "caller_request")
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
         self.assertIn("closed", reply)
         self.assertEqual(self.job.transfers, [])
         self.assertIsNone(self.call.transfer)
 
-    async def test_a_failed_transfer_is_reported_honestly_and_can_be_retried(self):
-        self.job.transfer_error = RuntimeError("sip 486")
-        reply = await self.agent.transfer_call(SimpleNamespace(session=self.session), "caller_request")
-        self.assertIn("transfer failed", reply)
+    async def test_a_handoff_that_reports_failure_without_raising_is_not_a_success(self):
+        # The original bug: the response was never read, so a contractor who did not
+        # pick up still produced "completed: true" and a caller left in silence.
+        self.job.transfer_response = refer_response("STS_TRANSFER_FAILED", "STR_RINGING_TIMEOUT")
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("did NOT connect", reply)
+        self.assertIn("nobody answered", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
+        self.assertNotEqual(self.call.payload().get("intent"), "transfer")
+        self.assertEqual(self.session.shutdowns, [])
+        self.assertFalse(self.agent._closing)
+        self.assertFalse(self.agent._transferring)
+
+    async def test_a_handoff_still_in_progress_is_not_a_success_either(self):
+        self.job.transfer_response = refer_response("STS_TRANSFER_ONGOING", "STR_UNSPECIFIED")
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("did NOT connect", reply)
+        self.assertFalse(self.call.transfer["completed"])
+
+    async def test_a_busy_contractor_is_reported_as_busy(self):
+        self.job.transfer_error = sip_call_error(486)
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("busy", reply)
+        self.assertFalse(self.call.transfer["completed"])
+
+    async def test_a_failed_transfer_can_be_retried_once_the_caller_asks_again(self):
+        self.job.transfer_queue = [RuntimeError("trunk down")]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("did NOT connect", reply)
         self.assertIn("callback", reply)
         self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
         self.assertFalse(self.agent._transferring)
-        self.assertNotEqual(self.call.payload().get("intent"), "transfer")
 
-        self.job.transfer_error = None
-        await self.agent.transfer_call(SimpleNamespace(session=self.session), "caller_request")
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request")
         self.assertTrue(self.call.transfer["completed"])
+
+    async def test_an_emergency_tries_the_general_line_when_the_emergency_line_fails(self):
+        self.job.transfer_queue = [refer_response("STS_TRANSFER_FAILED", "STR_REJECTED", sip=486)]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        self.assertEqual(self.job.transfers, ["tel:+14385550001", "tel:+14389957350"])
+        self.assertIn("now connected", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
 
     async def test_a_second_transfer_while_one_runs_is_ignored(self):
         self.agent._transferring = True
-        reply = await self.agent.transfer_call(SimpleNamespace(session=self.session), "caller_request")
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
         self.assertIn("already in progress", reply)
         self.assertEqual(self.job.transfers, [])
+
+
+class FakeScreened:
+    """Stands in for ScreenedTransfer. Awaiting it ends the way the script says.
+
+    `script` has one entry per attempt: "connected", or the kind of failure.
+    """
+
+    script: list[str] = []
+    made: list["FakeScreened"] = []
+    hang = False
+
+    def __init__(
+        self, *, target, settings, language_name, emergency, facts, caller_id, business_name=""
+    ):
+        self.target = target
+        self.business_name = business_name
+        self.settings = settings
+        self.language_name = language_name
+        self.emergency = emergency
+        self.facts = facts
+        self.caller_id = caller_id
+        cls = type(self)
+        self.kind = cls.script.pop(0) if cls.script else "provider_error"
+        self.created = time.monotonic()
+        self.aborted = None
+        self._done = False
+        self._gate = asyncio.Event()
+        cls.made.append(self)
+
+    def done(self):
+        return self._done
+
+    def abort(self, kind="caller_left"):
+        self.aborted = kind
+        self._done = True
+        self._gate.set()
+
+    def __await__(self):
+        return self._run().__await__()
+
+    async def _run(self):
+        if type(self).hang:
+            await self._gate.wait()
+        self._done = True
+        if self.kind == "connected":
+            return SimpleNamespace(human_agent_identity="human-agent-sip")
+        if self.kind == "boom":
+            raise RuntimeError("unexpected")
+        raise ToolError("transfer failed")
+
+    def outcome(self):
+        if self.aborted:
+            return A.TransferOutcome(False, TransferFailure(self.aborted), "warm")
+        if self.kind == "connected":
+            return A.TransferOutcome(True, mechanism="warm")
+        return A.TransferOutcome(False, TransferFailure(self.kind), "warm")
+
+
+class NeverFinishes:
+    def __await__(self):
+        return asyncio.Event().wait().__await__()
+
+
+WARM = TransferSettings(
+    mode="warm",
+    trunk_id="ST_test123",
+    caller_id="+14385550100",
+    ring_seconds=25,
+    consult_seconds=45,
+    budget_seconds=100,
+)
+
+
+class WarmTransferFlowTests(FlowCase):
+    """The screened warm transfer, with the LiveKit task replaced by a script."""
+
+    transfers = WARM
+
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        FakeScreened.script, FakeScreened.made, FakeScreened.hang = [], [], False
+        self._real_screened = A.ScreenedTransfer
+        A.ScreenedTransfer = FakeScreened
+        self._real_pause = A.BETWEEN_ATTEMPTS_SECONDS
+        A.BETWEEN_ATTEMPTS_SECONDS = 0.0  # tests that care set their own
+
+    async def asyncTearDown(self):
+        A.ScreenedTransfer = self._real_screened
+        A.BETWEEN_ATTEMPTS_SECONDS = self._real_pause
+        await super().asyncTearDown()
+
+    async def test_a_second_attempt_waits_for_the_first_side_room_to_be_released(self):
+        A.BETWEEN_ATTEMPTS_SECONDS = 0.15
+        FakeScreened.script = ["no_answer", "connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        first, second = FakeScreened.made
+        self.assertGreaterEqual(second.created - first.created, 0.14)
+
+    async def test_an_accepted_call_connects_and_the_agent_leaves_without_hanging_up(self):
+        FakeScreened.script = ["connected"]
+        ctx = ctx_for(self.session)
+        reply = await self.agent.transfer_call(ctx, "caller_request")
+
+        self.assertIn("now connected", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertEqual(self.call.end_reason, "completed")
+        self.assertEqual(self.session.shutdowns, [False])
+        self.assertFalse(self.session.input.enabled)
+        self.assertFalse(self.session.output.enabled)
+        self.assertEqual(self.job.deleted, 0)  # deleting the room would drop both people
+        self.assertEqual(self.job.transfers, [])  # no blind REFER in warm mode
+        self.assertEqual(ctx.floors, 1)
+        self.assertTrue(self.agent._keep_job_alive)
+
+    async def test_the_process_stays_up_to_end_the_call_but_the_report_still_goes_out(self):
+        FakeScreened.script = ["connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        self.agent._on_close(SimpleNamespace(reason=A.CloseReason.USER_INITIATED, error=None))
+        await self.settle()
+
+        self.assertEqual(len(self.client.reports), 1)
+        report = self.client.reports[0]
+        self.assertEqual(report["intent"], "transfer")
+        self.assertEqual(report["transfer"], {"targetName": "Emergency", "completed": True})
+        self.assertTrue(report["emergency"])
+        self.assertEqual(self.job.shutdowns, [])  # job must outlive the model session
+        self.assertEqual(self.job.deleted, 0)
+        # LiveKit's own task installs the "either side left" hook (see test_warm_transfer);
+        # a second one here would end the call twice.
+        self.assertEqual(self.job.room.handlers.get("participant_disconnected", []), [])
+
+    async def test_the_caller_is_asked_to_hold_before_the_phone_rings(self):
+        FakeScreened.script = ["connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        self.assertIn("emergency contact", self.session.replies[0])
+        self.assertIn("stay on the line", self.session.replies[0])
+
+    async def test_what_the_caller_said_and_the_caller_id_reach_the_screening_call(self):
+        self.call.update(caller_name="Marie Tremblay", address="12 rue Saint-Denis")
+        FakeScreened.script = ["connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        made = FakeScreened.made[0]
+        self.assertEqual(made.facts["callerName"], "Marie Tremblay")
+        self.assertEqual(made.facts["serviceAddress"], "12 rue Saint-Denis")
+        self.assertEqual(made.caller_id, "+14385550100")
+        self.assertEqual(made.business_name, "")  # the test config carries no business name
+        self.assertTrue(made.emergency)
+        self.assertEqual(made.target.number, "+14385550001")
+
+    async def test_without_a_configured_caller_id_the_business_line_is_shown(self):
+        no_id = TransferSettings(mode="warm", trunk_id="ST_test123", caller_id=None)
+        self.make_agent(transfers=no_id)
+        FakeScreened.script = ["connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertEqual(FakeScreened.made[0].caller_id, "+14382314700")
+
+    async def test_an_emergency_falls_back_to_the_general_line(self):
+        FakeScreened.script = ["no_answer", "connected"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        self.assertEqual(
+            [m.target.number for m in FakeScreened.made], ["+14385550001", "+14389957350"]
+        )
+        self.assertIn("now connected", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+
+    async def test_nobody_reachable_returns_the_caller_to_the_agent_with_safety_advice(self):
+        FakeScreened.script = ["no_answer", "busy"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "emergency")
+
+        self.assertIn("did NOT connect", reply)
+        self.assertIn("911", reply)
+        self.assertIn("alerted", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
+        self.assertFalse(self.agent._transferring)
+        self.assertFalse(self.agent._closing)
+        self.assertFalse(self.agent._keep_job_alive)
+        self.assertEqual(self.session.shutdowns, [])
+        self.assertEqual(self.job.deleted, 0)
+        # The owner is told through the normal report: an emergency whose transfer failed.
+        payload = self.call.payload()
+        self.assertTrue(payload["emergency"])
+        self.assertEqual(payload["transfer"]["completed"], False)
+        self.assertNotEqual(payload.get("intent"), "transfer")
+
+    async def test_voicemail_is_not_a_transfer(self):
+        FakeScreened.script = ["voicemail"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("voicemail", reply)
+        self.assertIn("callback", reply)
+        self.assertFalse(self.call.transfer["completed"])
+
+    async def test_a_department_that_declines_falls_back_to_the_general_line(self):
+        FakeScreened.script = ["declined", "connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request", "billing")
+        self.assertEqual(
+            [m.target.number for m in FakeScreened.made], ["+14385550002", "+14389957350"]
+        )
+
+    async def test_a_phone_system_failure_does_not_waste_the_callers_time_on_a_second_line(self):
+        FakeScreened.script = ["provider_error", "connected"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        self.assertEqual(len(FakeScreened.made), 1)
+        self.assertIn("phone system", reply)
+        self.assertFalse(self.call.transfer["completed"])
+
+    async def test_a_wrong_number_is_skipped_for_the_next_line(self):
+        FakeScreened.script = ["invalid_number", "connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        self.assertEqual(len(FakeScreened.made), 2)
+        self.assertTrue(self.call.transfer["completed"])
+
+    async def test_no_second_attempt_starts_when_the_time_budget_is_spent(self):
+        tight = TransferSettings(
+            mode="warm", trunk_id="ST_test123", ring_seconds=25, budget_seconds=20
+        )
+        self.make_agent(transfers=tight)
+        FakeScreened.script = ["no_answer", "connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        self.assertEqual(len(FakeScreened.made), 1)
+        self.assertFalse(self.call.transfer["completed"])
+
+    async def test_an_unexpected_error_in_the_transfer_is_a_failure_not_a_crash(self):
+        FakeScreened.script = ["boom"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("did NOT connect", reply)
+        self.assertEqual(FakeScreened.made[0].aborted, "provider_error")
+        self.assertFalse(self.agent._transferring)
+
+    async def test_a_caller_who_hangs_up_while_the_phone_rings_drops_the_second_leg(self):
+        FakeScreened.hang = True
+        running = asyncio.create_task(
+            self.agent.transfer_call(ctx_for(self.session), "emergency")
+        )
+        for _ in range(50):
+            await asyncio.sleep(0.01)
+            if FakeScreened.made:
+                break
+        self.assertTrue(FakeScreened.made)
+        self.agent._on_close(
+            SimpleNamespace(reason=A.CloseReason.PARTICIPANT_DISCONNECTED, error=None)
+        )
+        await asyncio.wait_for(running, 2)
+        await self.settle()
+
+        self.assertEqual(FakeScreened.made[0].aborted, "caller_left")
+        self.assertEqual(len(self.client.reports), 1)
+        self.assertEqual(self.client.reports[0]["transfer"]["completed"], False)
+        self.assertEqual(self.client.reports[0]["endReason"], "caller_hung_up")
+        self.assertEqual(self.job.shutdowns, ["call ended"])
+
+    async def test_the_caller_cannot_keep_asking_forever(self):
+        FakeScreened.script = ["no_answer", "no_answer"]
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertEqual(len(FakeScreened.made), 2)
+        self.assertIn("Do not try to transfer again", reply)
+
+    async def test_a_second_request_after_success_does_nothing(self):
+        FakeScreened.script = ["connected"]
+        await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("already connected", reply)
+        self.assertEqual(len(FakeScreened.made), 1)
+
+    async def test_a_hold_announcement_that_never_finishes_does_not_delay_the_ringing(self):
+        A.HOLD_LINE_TIMEOUT_SECONDS, saved = 0.05, A.HOLD_LINE_TIMEOUT_SECONDS
+        self.addCleanup(setattr, A, "HOLD_LINE_TIMEOUT_SECONDS", saved)
+        self.session.handle_factory = NeverFinishes
+        FakeScreened.script = ["connected"]
+        reply = await asyncio.wait_for(
+            self.agent.transfer_call(ctx_for(self.session), "caller_request"), 2
+        )
+        self.assertIn("now connected", reply)
+
+    async def test_a_hold_announcement_that_raises_does_not_stop_the_transfer(self):
+        def broken(**_):
+            raise RuntimeError("tts down")
+
+        self.session.generate_reply = broken
+        FakeScreened.script = ["connected"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("now connected", reply)
+
+
+class TransfersOffTests(FlowCase):
+    transfers = TransferSettings(mode="off", problem="warm transfer needs a trunk")
+
+    async def test_a_transfer_that_cannot_be_placed_says_so_instead_of_pretending(self):
+        reply = await self.agent.transfer_call(ctx_for(self.session), "emergency")
+        self.assertIn("did NOT connect", reply)
+        self.assertIn("not available", reply)
+        self.assertIn("911", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "Emergency", "completed": False})
+        self.assertEqual(self.job.transfers, [])
+        self.assertEqual(self.job.bridges, [])
+        self.assertEqual(self.session.shutdowns, [])
+        self.assertTrue(self.call.emergency)
+
+    async def test_the_business_rule_for_after_hours_still_wins_over_the_configuration_message(self):
+        cfg = copy.deepcopy(CFG)
+        cfg["afterHours"] = True
+        self.make_agent(cfg)
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertIn("closed", reply)
+        self.assertIsNone(self.call.transfer)
+
+
+class RecoveryTests(FlowCase):
+    """The model session died: connect the caller to a person without the model."""
+
+    def die(self):
+        self.agent._on_close(
+            SimpleNamespace(reason=A.CloseReason.ERROR, error=RuntimeError("model down"))
+        )
+
+    async def test_a_refer_that_reports_failure_ends_the_call_and_reports_it_honestly(self):
+        self.job.transfer_response = refer_response("STS_TRANSFER_FAILED", "STR_RINGING_TIMEOUT")
+        self.die()
+        await self.settle()
+        self.assertEqual(self.job.deleted, 1)
+        report = self.client.reports[0]
+        self.assertEqual(report["endReason"], "error")
+        self.assertEqual(report["transfer"]["completed"], False)
+
+    async def test_warm_mode_dials_the_contractor_straight_into_the_callers_room(self):
+        self.make_agent(transfers=WARM)
+        self.call.emergency = True
+        self.die()
+        await self.settle()
+
+        self.assertEqual(self.job.transfers, [])
+        request = self.job.bridges[0]
+        self.assertEqual(request.sip_trunk_id, "ST_test123")
+        self.assertEqual(request.sip_call_to, "+14385550001")  # the emergency line
+        self.assertEqual(request.room_name, "call-room")
+        self.assertTrue(request.wait_until_answered)
+        self.assertEqual(request.sip_number, "+14385550100")
+        self.assertEqual(request.ringing_timeout.seconds, 25)
+        self.assertEqual(self.job.deleted, 0)
+        self.assertEqual(self.job.shutdowns, [])  # stays to end the call when someone leaves
+        self.assertTrue(self.client.reports[0]["transfer"]["completed"])
+        # Dialed straight into the room, so nothing else will end the call: this does.
+        (watcher,) = self.job.room.handlers["participant_disconnected"]
+        watcher(SimpleNamespace(kind=W.rtc.ParticipantKind.PARTICIPANT_KIND_SIP))
+        self.assertEqual(self.job.deleted_rooms, ["call-room"])
+
+    async def test_warm_mode_with_nobody_answering_ends_the_call_and_says_so(self):
+        self.make_agent(transfers=WARM)
+        self.job.bridge_error = sip_call_error(480)
+        self.die()
+        await self.settle()
+        self.assertEqual(self.job.deleted, 1)
+        self.assertEqual(self.client.reports[0]["transfer"]["completed"], False)
+
+    async def test_transfers_off_ends_the_call_instead_of_leaving_dead_air(self):
+        self.make_agent(transfers=TransferSettings(mode="off"))
+        self.die()
+        await self.settle()
+        self.assertEqual(self.job.deleted, 1)
+        self.assertEqual(self.job.transfers, [])
+        self.assertEqual(self.job.bridges, [])
+
+    async def test_a_dead_model_during_a_transfer_drops_the_ringing_leg_first(self):
+        self.make_agent(transfers=WARM)
+        pending = FakeScreened.__new__(FakeScreened)
+        pending.target = A.TransferTarget("+14385550001", "Emergency")
+        pending.aborted = None
+        pending._done = False
+        pending._gate = asyncio.Event()
+        pending.done = lambda: pending._done
+        pending.abort = lambda kind="caller_left": setattr(pending, "aborted", kind)
+        self.agent._active_transfer = pending
+        self.die()
+        await self.settle()
+        self.assertEqual(pending.aborted, "caller_left")
+
+
+class RoomWatcherTests(FlowCase):
+    async def test_either_party_leaving_ends_the_call_but_an_agent_leaving_does_not(self):
+        room = FakeRoom("bridged")
+        W.delete_room_when_a_party_leaves(room)
+        (watcher,) = room.handlers["participant_disconnected"]
+
+        watcher(SimpleNamespace(kind=W.rtc.ParticipantKind.PARTICIPANT_KIND_AGENT))
+        self.assertEqual(self.job.deleted_rooms, [])
+        self.assertEqual(len(room.handlers["participant_disconnected"]), 1)
+
+        watcher(SimpleNamespace(kind=W.rtc.ParticipantKind.PARTICIPANT_KIND_SIP))
+        self.assertEqual(self.job.deleted_rooms, ["bridged"])
+        self.assertEqual(room.handlers["participant_disconnected"], [])  # removed itself
 
 
 class EndOfCallTests(FlowCase):
