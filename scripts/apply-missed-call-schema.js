@@ -44,6 +44,7 @@ async function main() {
       ["src", "product", "starter", "schema.sql"],
       "003_starter_features",
     );
+    await applyFile(client, ["src", "product", "sms-receptionist", "schema.sql"], "sms_receptionist_inbox");
     await applyFile(
       client,
       ["src", "product", "growth", "schema.sql"],
@@ -185,6 +186,16 @@ async function main() {
       client,
       ["src", "product", "referrals", "schema.sql"],
       "033_referral_program",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "website-services", "schema.sql"],
+      "034_website_service",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "receptionist", "schema-custom-voice.sql"],
+      "035_custom_receptionist_voice",
     );
   } finally {
     await client.end();

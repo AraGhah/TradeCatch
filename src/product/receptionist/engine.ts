@@ -71,6 +71,7 @@ import type {
   VoicePlan,
   VoiceVerb,
 } from "./types";
+import { transferRingTimeoutSeconds } from "./transfer-policy";
 import { gatherTuning } from "./voice";
 
 export type ReceptionistEngineDeps = {
@@ -545,7 +546,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         verb: "dial",
         next: "dial",
         phoneE164: config.fallbackTransferE164,
-        timeoutSeconds: 25,
+        timeoutSeconds: transferRingTimeoutSeconds(config),
       });
     } else {
       verbs.push(
@@ -651,7 +652,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
                 verb: "dial",
                 next: "dial",
                 phoneE164: target.phoneE164,
-                timeoutSeconds: 25,
+                timeoutSeconds: transferRingTimeoutSeconds(config),
               },
             ],
           },
@@ -760,7 +761,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
               verb: "dial",
               next: "dial",
               phoneE164: config.emergencyTransferE164!,
-              timeoutSeconds: 30,
+              timeoutSeconds: Math.max(30, transferRingTimeoutSeconds(config)),
             },
           ],
         },

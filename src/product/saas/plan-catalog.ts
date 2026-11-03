@@ -80,6 +80,7 @@ export const CAPABILITIES = [
   { id: "appointmentRequests", group: "voice", feature: "AI_RECEPTIONIST_VOICE" },
   { id: "callSummary", group: "voice", feature: "AI_RECEPTIONIST_VOICE" },
   // Premium: the complete receptionist
+  { id: "customVoice", group: "premium", feature: "AI_CUSTOM_VOICE" },
   { id: "phoneBooking", group: "premium", feature: "AI_PHONE_BOOKING" },
   { id: "callTransfer", group: "premium", feature: "AI_CALL_TRANSFER" },
   { id: "emergencyRouting", group: "premium", feature: "AI_EMERGENCY_ROUTING" },
@@ -209,6 +210,7 @@ export const PLAN_CATALOG: Record<PlanId, PlanDefinition> = {
     planInterest: "receptionist",
     emphasis: "premium",
     cardCapabilities: [
+      "customVoice",
       "phoneBooking",
       "callTransfer",
       "emergencyRouting",
@@ -291,7 +293,13 @@ export type BillingSchedule = "one-time" | "monthly" | "annual";
 
 export type AddOnDefinition = {
   id: string;
+  /**
+   * The price in CAD. For a service whose scope is quoted (`priceIsStartingAt`)
+   * this is the lowest price, never a promise of the final one.
+   */
   priceCad: number;
+  /** True when `priceCad` is a "starting at" price: the final price is confirmed first. */
+  priceIsStartingAt: boolean;
   /**
    * How the add-on is billed. `null` until it is configured; the site then
    * says the schedule is confirmed in writing before anything is charged and
@@ -305,10 +313,17 @@ export type AddOnDefinition = {
 };
 
 export const ADD_ONS = {
-  websiteBuilder: {
-    id: "websiteBuilder",
-    priceCad: 349.99,
-    billingSchedule: null,
+  /**
+   * Done-for-You Website Service: TradeCatch builds a new site or improves the
+   * customer's existing one. It is a separate one-time project, never part of
+   * a subscription: nothing is charged until the written scope and final price
+   * are confirmed (see src/product/website-services).
+   */
+  websiteService: {
+    id: "websiteService",
+    priceCad: 349,
+    priceIsStartingAt: true,
+    billingSchedule: "one-time",
     includedInPlans: [],
     availableOn: PLAN_IDS,
   },

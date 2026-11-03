@@ -36,10 +36,13 @@
     "toggleThemeToLight": "Passer au mode clair",
     "skipToContent": "Passer au contenu principal",
     "aiReceptionist": "Réceptionniste",
-    "referral": "Programme de parrainage"
+    "referral": "Programme de parrainage",
+    "demo": "Démo",
+    "login": "Connexion",
+    "more": "Plus"
   },
   "cta": {
-    "primary": "Réserver un audit gratuit de 20 minutes",
+    "primary": "Réserver une démo gratuite",
     "secondary": "Voir la démo de 90 secondes",
     "tertiary": "Réserver un audit gratuit de 20 minutes",
     "watchDemo": "Voir la démo de 90 secondes",
@@ -47,9 +50,9 @@
     "viewMissedCall": "Voir le processus des appels manqués",
     "viewQuoteFollowUp": "Voir le processus de relance des soumissions",
     "viewIndustries": "Toutes les industries",
-    "bookAudit": "Réserver l'audit",
-    "bookAuditShort": "Réserver l'audit",
-    "bookAuditFree": "Réserver un audit gratuit de 20 minutes",
+    "bookAudit": "Réserver une démo gratuite",
+    "bookAuditShort": "Réserver",
+    "bookAuditFree": "Réserver une démo gratuite",
     "findMyLeaks": "Réserver un audit gratuit de 20 minutes",
     "talkWithAra": "Réserver un audit gratuit de 20 minutes",
     "emailDirect": "Écrire directement",
@@ -60,7 +63,13 @@
     "allQuestions": "Toutes les questions",
     "backToSite": "Retour au site",
     "submitAnother": "Soumettre une autre demande",
-    "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes"
+    "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes",
+    "bookFreeDemo": "Réserver une démo gratuite",
+    "hearReceptionist": "Écouter la réceptionniste",
+    "seePricing": "Voir les tarifs",
+    "comparePlans": "Comparer les forfaits",
+    "getStarted": "Commencer",
+    "requestDemo": "Demander ma démo"
   },
   "footer": {
     "description": "TradeCatch récupère les appels manqués par texto avec Starter, répond au téléphone avec une réceptionniste limitée avec Growth, et fait tourner la réceptionniste bilingue complète avec Réceptionniste Plus. Les pilotes sont configurés avec le fondateur ; les exemples marketing sont illustratifs.",
@@ -82,14 +91,14 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Récupération de revenus pour les métiers au Québec",
-      "headline": "Récupérez les appels manqués. Réservez plus de chantiers.",
-      "accentWord": "Réservez plus de chantiers.",
-      "subheadline": "Starter répond aux appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée. Réceptionniste Plus fait tourner la réception bilingue complète. Français ou anglais. Pilotes configurés avec le fondateur.",
-      "ctaPrimary": "Réserver un audit gratuit de 20 minutes",
-      "ctaSecondary": "Voir la démo vidéo",
-      "ctaTry": "Ou parlez vous-même à la démo Réceptionniste Plus",
-      "reassurance": "Sans engagement. Aucun accès système requis. Vous parlez avec le fondateur."
+      "eyebrow": "Pour les entrepreneurs qui travaillent sur le terrain",
+      "headline": "Vous êtes sur le chantier. On s'occupe des appels.",
+      "accentWord": "On s'occupe des appels.",
+      "subheadline": "TradeCatch répond aux appels, gère les questions et aide à prendre des rendez-vous — pendant que vous continuez à travailler.",
+      "ctaPrimary": "Réserver une démo gratuite",
+      "ctaSecondary": "Écouter la réceptionniste",
+      "ctaTry": "Essayer la démo live",
+      "reassurance": "Démo gratuite. Aucun accès système requis. Vous parlez avec le fondateur."
     },
     "leaks": {
       "eyebrow": "Le problème",
@@ -149,30 +158,31 @@
     "pricingPreview": {
       "eyebrow": "Tarifs",
       "headline": "Texto de rappel, réponse téléphonique, ou réception complète.",
-      "intro": "Trois forfaits. Chacun conserve tout ce qu'il y a dans le précédent. L'installation est payée une fois. Le grand chiffre est les frais de gestion mensuels.",
+      "intro": "Trois forfaits. Chacun conserve tout ce qu'il y a dans le précédent. Le premier mois, seulement l'installation ; le mensuel commence au mois 2.",
       "tiers": [
         {
           "name": "Starter",
           "price": "349,99 $ / mois",
           "cadence": "799,99 $ d’installation, payé une fois",
-          "idealFor": "Texto sur appel manqué, réponses web et relance de soumissions. Ne répond pas au téléphone."
+          "idealFor": "Ne laissez plus un appel manqué sans suivi. Récupération SMS — ne répond pas au téléphone."
         },
         {
           "name": "Growth",
           "price": "649,99 $ / mois",
           "cadence": "1 499,99 $ d’installation, payé une fois",
-          "idealFor": "Réponse téléphonique limitée, plus réservation, pipeline et avis par-dessus Starter."
+          "idealFor": "Laissez l'IA répondre pendant que vous travaillez. Réponse téléphonique limitée, plus Starter."
         },
         {
           "name": "Réceptionniste Plus",
           "price": "949,99 $ / mois",
           "cadence": "1 999,99 $ d’installation, payé une fois",
-          "idealFor": "Réceptionniste bilingue complète : réservation pendant l'appel, transfert, urgences — et tout ce qui est en dessous."
+          "idealFor": "Votre solution de réception la plus complète. Réservation pendant l'appel, transfert, urgences."
         }
       ],
       "cta": "Voir tous les tarifs",
       "receptionistCta": "Comment fonctionne Réceptionniste Plus",
-      "note": "Le multi-sites et le fort volume se définissent avec vous. Les minutes au-delà de l’allocation écrite ne sont jamais facturées en silence."
+      "note": "Le multi-sites et le fort volume se définissent avec vous. Les minutes au-delà de l’allocation écrite ne sont jamais facturées en silence.",
+      "billingNote": "Premier mois : installation seulement. La gestion mensuelle commence au mois 2."
     },
     "founder": {
       "eyebrow": "Qui vous embauchez vraiment",
@@ -214,7 +224,7 @@
     },
     "faqTeaser": {
       "eyebrow": "Réponses directes",
-      "headline": "Ce que les propriétaires demandent avant de réserver.",
+      "headline": "Des questions ? On a des réponses.",
       "viewAll": "Toutes les questions",
       "items": [
         {
@@ -232,6 +242,18 @@
         {
           "q": "Peut-il fonctionner avec notre numéro de téléphone actuel?",
           "a": "En général oui. Ça dépend de votre fournisseur et de la configuration. L'audit détermine la façon la plus sûre de connecter sans déranger votre ligne existante."
+        },
+        {
+          "q": "Que paie-t-on le premier mois ?",
+          "a": "Seulement les frais d'installation. L'abonnement mensuel commence au deuxième mois. Les prix sont sur la page des tarifs."
+        },
+        {
+          "q": "Les appels peuvent-ils m'être transférés ?",
+          "a": "Le transfert en direct est disponible avec Réceptionniste Plus selon les heures configurées. Growth répond et résume sans transfert live."
+        },
+        {
+          "q": "Combien de temps prend l'installation ?",
+          "a": "On configure avec vous et on met en ligne seulement après votre approbation de ce que dit la réceptionniste. Le délai dépend de votre disponibilité et du forfait."
         }
       ]
     },
@@ -250,6 +272,116 @@
       "guarantee": "Garantie de lancement : si le système convenu n'est pas en ligne en raison d'un retard de notre part, votre premier mois de gestion est crédité.",
       "cta": "Réserver un audit gratuit de 20 minutes",
       "landingNote": "Les pilotes sont de vrais mandats avec une portée signée. Les résultats publics n'apparaissent qu'avec une autorisation écrite du client."
+    },
+    "mobile": {
+      "demo": {
+        "eyebrow": "Voir en action",
+        "headline": "Ne vous fiez pas qu'au texte. Écoutez.",
+        "intro": "Entendez comment TradeCatch gère une vraie conversation client.",
+        "watchVideo": "Voir la démo de 90 secondes",
+        "tryLive": "Parler à la réceptionniste",
+        "note": "Le son démarre seulement quand vous appuyez sur lecture."
+      },
+      "benefits": {
+        "eyebrow": "Le problème",
+        "headline": "Chaque appel manqué peut être un chantier perdu.",
+        "intro": "Quand vous êtes sur une échelle, sous un évier ou en route vers le prochain job, répondre à chaque appel n'est pas réaliste.",
+        "items": [
+          {
+            "title": "Appels répondus pendant que vous travaillez",
+            "body": "Quelqu'un décroche — même quand vous ne pouvez pas."
+          },
+          {
+            "title": "Rendez-vous pris",
+            "body": "Les clients peuvent demander un créneau sans interrompre votre équipe."
+          },
+          {
+            "title": "Questions traitées",
+            "body": "Heures, services et prochaines étapes — réponses claires."
+          },
+          {
+            "title": "Détails envoyés chez vous",
+            "body": "Nom, numéro et besoin, sur votre téléphone."
+          }
+        ]
+      },
+      "howItWorks": {
+        "eyebrow": "Mise en place",
+        "headline": "Simple à installer. Facile à utiliser.",
+        "intro": "On configure la réceptionniste avec vous. Vous continuez à travailler.",
+        "steps": [
+          {
+            "title": "Parlez-nous de votre entreprise",
+            "body": "Services, heures, secteurs et façon de traiter les appels."
+          },
+          {
+            "title": "On prépare tout",
+            "body": "On configure la ligne, on teste les scénarios, et on valide avec vous avant la mise en ligne."
+          },
+          {
+            "title": "Continuez à travailler",
+            "body": "Les appels pris en charge sont traités pendant que vous restez informé."
+          }
+        ],
+        "cta": "Voir comment ça marche"
+      },
+      "useCases": {
+        "eyebrow": "Sur le terrain",
+        "headline": "Conçu pour la vraie journée d'un entrepreneur.",
+        "intro": "Situations concrètes. Réponses claires.",
+        "items": [
+          {
+            "problem": "Vous êtes en plein job et ne pouvez pas répondre.",
+            "response": "TradeCatch répond, prend les détails et alerte votre équipe."
+          },
+          {
+            "problem": "Un client appelle hors des heures.",
+            "response": "Il obtient une prochaine étape claire — pas une ligne morte."
+          },
+          {
+            "problem": "Quelqu'un veut prendre rendez-vous.",
+            "response": "Growth et Réceptionniste Plus capturent la demande ; Plus peut réserver pendant l'appel si activé."
+          },
+          {
+            "problem": "On pose des questions sur vos services ou tarifs.",
+            "response": "Seulement les réponses approuvées — puis un rappel ou un parcours de réservation."
+          }
+        ],
+        "cta": "Voir les métiers desservis"
+      },
+      "pricing": {
+        "eyebrow": "Tarifs",
+        "headline": "Choisissez la réceptionniste dont vous avez besoin.",
+        "intro": "Trois forfaits. Le premier mois, seulement les frais d'installation. L'abonnement mensuel commence au deuxième mois.",
+        "billingNote": "Premier mois : frais d'installation seulement. Le mensuel commence au mois 2.",
+        "recommended": "Le plus demandé pour répondre au téléphone",
+        "starterTag": "Ne laissez plus un appel manqué sans suivi.",
+        "growthTag": "Laissez l'IA répondre pendant que vous travaillez.",
+        "plusTag": "Votre solution de réception la plus complète.",
+        "setupLabel": "Installation",
+        "monthlyLabel": "Puis / mois",
+        "cta": "Comparer les forfaits",
+        "seeAll": "Voir tous les tarifs"
+      },
+      "addOn": {
+        "eyebrow": "Service de site web optionnel",
+        "headline": "Besoin d'un site web qui vous apporte des clients ?",
+        "intro": "Nous créons un nouveau site professionnel ou améliorons le vôtre, avec une capture de prospects adaptée au mobile et liée à TradeCatch.",
+        "cta": "Faire créer mon site web"
+      },
+      "faq": {
+        "eyebrow": "Questions",
+        "headline": "Des questions ? On a des réponses.",
+        "viewAll": "Toutes les questions"
+      },
+      "finalCta": {
+        "headline": "Votre prochain client pourrait appeler.",
+        "body": "Voyez comment TradeCatch peut aider votre entreprise à gérer les appels pendant que vous êtes occupé.",
+        "primary": "Réserver votre démo gratuite",
+        "secondary": "Comparer les forfaits",
+        "note": "Sans pression. Tarifs clairs. Accès direct au fondateur pour les pilotes."
+      },
+      "stickyCta": "Réserver une démo gratuite"
     }
   },
   "services": {
@@ -513,9 +645,9 @@
   },
   "pricing": {
     "eyebrow": "Tarifs",
-    "headline": "Trois forfaits. Un seul but : arrêter de perdre des clients que vous payez déjà pour attirer.",
-    "intro": "Starter récupère les appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée et réserve le travail dans l'espace de travail. Réceptionniste Plus est la réception bilingue complète, et inclut les deux.",
-    "reassurance": "Installation fixe. Mois par mois. Annulation avec préavis.",
+    "headline": "Choisissez la réceptionniste dont votre entreprise a besoin.",
+    "intro": "Starter récupère les appels manqués par texto. Growth répond au téléphone avec une réceptionniste limitée. Réceptionniste Plus est la réception bilingue complète.",
+    "reassurance": "Frais d'installation le premier mois. Mensuel à partir du mois 2. Mois par mois ensuite. Annulation avec préavis.",
     "metaDescription": "Tarifs TradeCatch : récupération SMS Starter, réponse téléphonique limitée Growth, et Réceptionniste Plus — la réception bilingue complète pour les entrepreneurs du Québec.",
     "principles": [
       "Starter rattrape les appels manqués par texto",
@@ -680,7 +812,12 @@
         "ctaHref": "/book-audit",
         "secondaryCtaHref": "/receptionist#try-it",
         "planInterest": "receptionist",
-        "stepUp": "Ajoute l'expérience réceptionniste complète : 300,00 $ de plus par mois et 500,00 $ de plus à l'installation que Growth."
+        "stepUp": "Ajoute l'expérience réceptionniste complète : 300,00 $ de plus par mois et 500,00 $ de plus à l'installation que Growth.",
+        "exclusive": {
+          "badge": "Exclusif à Réceptionniste Plus",
+          "title": "Clonage de voix personnalisé",
+          "body": "Donnez à votre réceptionniste votre propre voix. Enregistrez votre voix une seule fois, et laissez votre réceptionniste répondre aux appels de vos clients avec votre voix."
+        }
       }
     ],
     "customTitle": "Plusieurs sites ou un volume élevé?",
@@ -932,6 +1069,14 @@
           ]
         },
         {
+          "feature": "Clonage de voix personnalisé (votre propre voix)",
+          "values": [
+            "n",
+            "n",
+            "y"
+          ]
+        },
+        {
           "feature": "Synchronisation native Outlook",
           "values": [
             "p",
@@ -960,7 +1105,9 @@
       "cta": "Réserver un audit gratuit de 20 minutes"
     },
     "onceLabel": "payé une fois",
-    "monthlyEyebrow": "Chaque mois"
+    "monthlyEyebrow": "Chaque mois",
+    "websiteMention": "Besoin d'un site web? Ajoutez notre service de site web à partir de 349 $.",
+    "billingBanner": "Le premier mois, seulement les frais d'installation. L'abonnement mensuel commence au deuxième mois."
   },
   "about": {
     "eyebrow": "À propos",
@@ -1121,7 +1268,7 @@
     "consent": "J'accepte d'être contacté au sujet de cette demande par téléphone, courriel ou texto. Des frais de messagerie et de données peuvent s'appliquer. Je peux me désabonner en tout temps.",
     "marketingConsent": "Optionnel : m'envoyer occasionnellement des conseils et des offres par courriel. Distinct du contact ci-dessus.",
     "consentRequired": "Veuillez accepter d'être contacté pour que nous puissions donner suite à votre demande.",
-    "submit": "Soumettre la demande",
+    "submit": "Demander ma démo",
     "confirmation": {
       "headline": "C'est reçu. Votre demande d'audit est en main.",
       "body": "Votre demande est enregistrée de façon sécuritaire. Ara vous contactera pour confirmer un moment. Le courriel de confirmation pourrait arriver plus tard. Ayez sous la main votre volume d'appels récent, votre liste de soumissions ouvertes et les logiciels que vous utilisez actuellement.",
@@ -1145,8 +1292,8 @@
       "continue": "Continuer",
       "back": "Retour",
       "skip": "Passer",
-      "submit": "Soumettre la demande",
-      "submitting": "Envoi en cours…",
+      "submit": "Demander ma démo",
+      "submitting": "Envoi…",
       "retry": "Réessayer",
       "edit": "Modifier",
       "editStep": "Modifier",
@@ -1634,7 +1781,7 @@
       "Lancement suivi par le fondateur et gestion mensuelle"
     ],
     "pricingTitle": "Prix affichés",
-    "pricing": "Starter : 799,99 $ d'installation, puis 349,99 $ / mois — récupération SMS des appels manqués. Growth : 1 499,99 $ d'installation, puis 649,99 $ / mois, inclut Starter plus réponse téléphonique limitée et réservation dans l'espace de travail. Réceptionniste Plus : 1 999,99 $ d'installation, puis 949,99 $ / mois, inclut Starter et Growth plus réponse téléphonique bilingue complète, réservation pendant l'appel, transfert humain et acheminement d'urgence. Option Créateur de site web : 349,99 $. L'utilisation des appels est soumise à l'allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
+    "pricing": "Starter : 799,99 $ d'installation, puis 349,99 $ / mois — récupération SMS des appels manqués. Growth : 1 499,99 $ d'installation, puis 649,99 $ / mois, inclut Starter plus réponse téléphonique limitée et réservation dans l'espace de travail. Réceptionniste Plus : 1 999,99 $ d'installation, puis 949,99 $ / mois, inclut Starter et Growth plus réponse téléphonique bilingue complète, réservation pendant l'appel, transfert humain et acheminement d'urgence. Service de site web clé en main facultatif : à partir de 349 $ CAD, une seule fois, distinct de votre abonnement. L'utilisation des appels est soumise à l'allocation du forfait et aux limites applicables. Gestion mois par mois, annulation avec préavis.",
     "pilotTitle": "Programme pilote",
     "pilot": "Nous acceptons maintenant des entrepreneurs fondateurs : configuration directe avec le fondateur, portée Starter/Growth écrite, prix verrouillé 12 mois et crédit si nous retardons le pilote convenu.",
     "ctaTitle": "Prochaine étape",
@@ -1660,6 +1807,45 @@
     "missedCall": {
       "playerTitle": "Démo TradeCatch des appels manqués",
       "transcript": "Vous travaillez. Un client appelle. Vous manquez l'appel. Et ce client est peut-être déjà en train d'appeler votre concurrent. Avec TradeCatch, un appel manqué admissible déclenche un texto au nom de votre entreprise, pour reprendre contact avant que l'occasion disparaisse. TradeCatch enregistre la conversation, organise la demande et vous tient informé, dans un seul espace de travail. Une soumission envoyée, mais aucune nouvelle? TradeCatch relance automatiquement, et une réponse arrête la séquence. Moins de temps à courir après les clients. Plus d'occasions. TradeCatch : chaque appel compte. Démonstration illustrative avec une entreprise fictive. La récupération des appels manqués fonctionne en pilote contrôlé."
+    },
+    "underTheSink": {
+      "playerTitle": "Sous l'évier : la réceptionniste répond",
+      "transcript": "Les mains sous l'évier. Le téléphone qui sonne. Et tu ne peux pas répondre. Ce client-là ne laissera pas de message. Il va appeler le prochain plombier. Client : [soupir] Ah, voyons donc… Même chantier. Cette fois, TradeCatch décroche. Réceptionniste : Merci d'avoir appelé Plomberie NorthStar. Comment puis-je vous aider? Client : Bonjour, l'évier de ma cuisine fuit. Vous desservez Laval? Réceptionniste : Oui, nous desservons Laval. Quelle est votre adresse, et quel moment vous conviendrait? Client : Au 45, avenue Laurier, à Laval. Demain matin, vers dix heures? Réceptionniste : Parfait. J'ai transmis votre demande à l'équipe. Elle vous écrira pour confirmer. Tu restes sur ton chantier. TradeCatch répond, et te remet les détails. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca. Mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait.",
+      "disclosure": "Mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait."
+    },
+    "theLadder": {
+      "playerTitle": "Sur l'escabeau : un appel manqué reçoit un texto",
+      "transcript": "Tu es électricien. Pas réceptionniste. Bien des gens ne laissent pas de message. Ils appellent quelqu'un d'autre. Avec TradeCatch, un appel manqué reçoit un texto tout de suite, au nom de ton entreprise. Tu termines ta job. La demande est déjà là. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca. Mise en scène avec une entreprise fictive, pas un témoignage de client. La réponse par texto aux appels manqués fonctionne en pilote contrôlé.",
+      "disclosure": "Mise en scène avec une entreprise fictive, pas un témoignage de client. La réponse par texto aux appels manqués fonctionne en pilote contrôlé."
+    },
+    "afterHours": {
+      "playerTitle": "Après les heures : l'urgence est transférée",
+      "transcript": "Tes clients n'appellent pas seulement de neuf à cinq. Réceptionniste : Merci d'avoir appelé Plomberie NorthStar. Nous sommes fermés pour la soirée. Comment puis-je vous aider? Client : Mon sous-sol est inondé! J'ai besoin de quelqu'un tout de suite! Réceptionniste : Je comprends, c'est urgent. Je vous transfère immédiatement au technicien de garde. Les vraies urgences rejoignent ta ligne de garde. Le reste est là le matin, avec un résumé. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca. Mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait.",
+      "disclosure": "Mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste est un pilote configuré par le fondateur; les fonctions varient selon le forfait."
+    }
+  },
+  "demoStories": {
+    "eyebrow": "Voyez-le à l'œuvre",
+    "headline": "Trois appels que vous ne pouvez pas prendre. Voici la suite.",
+    "intro": "De courtes mises en scène avec une entreprise fictive de plomberie et d'électricité. Chacune est sous-titrée, et le son ne joue que si vous appuyez sur lecture.",
+    "note": "Mises en scène avec une entreprise fictive, pas des témoignages de clients. La réceptionniste est un pilote configuré par le fondateur, et la réponse par texto aux appels manqués fonctionne en pilote contrôlé.",
+    "watchLabel": "Regarder la vidéo : {title}",
+    "cards": {
+      "underTheSink": {
+        "tag": "Réceptionniste",
+        "title": "Sous l'évier",
+        "blurb": "Vous avez les mains prises. La réceptionniste répond, note les détails de l'appelant et transmet la demande à votre équipe."
+      },
+      "theLadder": {
+        "tag": "Texto après appel manqué",
+        "title": "Sur l'escabeau",
+        "blurb": "Un appel manqué reçoit un texto au nom de votre entreprise : la demande vous attend quand vous redescendez."
+      },
+      "afterHours": {
+        "tag": "Transfert et résumé",
+        "title": "Après les heures",
+        "blurb": "Une vraie urgence est transférée à votre ligne de garde. Le reste vous attend le matin, dans un résumé."
+      }
     }
   },
   "errors": {
@@ -1726,6 +1912,7 @@
       "gmail": "Boîte Gmail",
       "customers": "Tous les clients",
       "receptionistConfig": "Configuration",
+      "receptionistVoice": "Voix",
       "callHistory": "Historique des appels",
       "testReceptionist": "Tester la réceptionniste",
       "calendar": "Calendrier",
@@ -1734,7 +1921,8 @@
       "quoteFollowUps": "Suivi des soumissions",
       "reminders": "Rappels de rendez-vous",
       "account": "Profil de l’entreprise",
-      "referrals": "Parrainage"
+      "referrals": "Parrainage",
+      "websiteServices": "Services de site web"
     },
     "automations": {
       "headline": "Automatisations",
@@ -2660,7 +2848,13 @@
       "skip": "Passer pour l'instant",
       "complete": "Terminer le démarrage",
       "saving": "Enregistrement…",
-      "error": "Impossible d'enregistrer le démarrage. Vérifiez votre connexion et réessayez."
+      "error": "Impossible d'enregistrer le démarrage. Vérifiez votre connexion et réessayez.",
+      "website": {
+        "title": "Besoin d'aide avec votre site web?",
+        "body": "Facultatif. Demandez-nous de créer un nouveau site ou d'améliorer le site actuel. Cela ne change pas votre abonnement, et rien n'est facturé avant que vous approuviez une portée et un prix écrits.",
+        "open": "Demander le service de site web",
+        "close": "Pas maintenant"
+      }
     },
     "websiteLeads": {
       "headline": "Leads site web",
@@ -3121,6 +3315,181 @@
       "testNumber": "Numéro de test",
       "results": "Résultats",
       "error": "Le test a échoué."
+    },
+    "websiteServices": {
+      "headline": "Services de site web",
+      "intro": "Demandez à TradeCatch de créer un nouveau site web pour votre entreprise ou d'améliorer le site actuel. C'est un projet unique et distinct, qui ne fait pas partie de votre abonnement.",
+      "priceNote": "À partir de 349 $ CAD. Nous confirmons la portée et le prix final avec vous par écrit avant tout paiement.",
+      "restricted": "Seul un propriétaire ou un administrateur peut demander ce service. Vous pouvez tout de même suivre les demandes ci-dessous.",
+      "unavailable": "Les demandes de site web sont indisponibles pour le moment. Veuillez réessayer sous peu.",
+      "requestsTitle": "Vos demandes",
+      "empty": "Vous n'avez pas encore demandé le service de site web.",
+      "newTitle": "Demander le service de site web",
+      "newIntro": "Dites-nous si vous avez besoin d'un nouveau site ou d'améliorations à votre site actuel.",
+      "submitted": "Votre demande a été envoyée. Nous vous répondrons avec la portée et le prix final.",
+      "requestedOn": "Demandé le",
+      "updatedOn": "Dernière mise à jour",
+      "type": {
+        "new": "Nouveau site web",
+        "improve": "Améliorer mon site"
+      },
+      "currentWebsite": "Site actuel",
+      "focus": "Priorités",
+      "notes": "Vos notes",
+      "quotedPrice": "Prix soumis",
+      "scope": "Portée que nous livrerons",
+      "status": {
+        "submitted": "Reçue",
+        "in_review": "En examen",
+        "quoted": "Soumission prête",
+        "in_progress": "En cours",
+        "delivered": "Livrée",
+        "cancelled": "Annulée"
+      },
+      "statusHelp": {
+        "submitted": "Nous avons votre demande et l'examinerons sous peu.",
+        "in_review": "Nous examinons votre demande et votre site actuel.",
+        "quoted": "Nous vous avons envoyé la portée et le prix final. Rien n'est facturé avant votre confirmation; répondez à notre message pour approuver ou demander des changements.",
+        "in_progress": "Vous avez approuvé la portée et le prix. Nous créons votre site web.",
+        "delivered": "Votre site web est terminé.",
+        "cancelled": "Cette demande a été annulée."
+      },
+      "progress": "Progression"
+    },
+    "voice": {
+      "headline": "Voix de la réceptionniste",
+      "intro": "Faites en sorte que votre réceptionniste vous ressemble. Enregistrez votre voix une seule fois et laissez votre réceptionniste répondre aux appels de vos clients avec votre voix.",
+      "back": "Retour à la réceptionniste",
+      "loadFailed": "Nous n'avons pas pu charger les réglages de votre voix. Vos appels continuent d'utiliser la voix standard.",
+      "readOnly": "Seul un propriétaire ou un administrateur peut modifier la voix de la réceptionniste.",
+      "entitlement": "La voix de la réceptionniste n'est pas offerte avec votre forfait.",
+      "unavailable": "Le clonage de voix n'est pas disponible pour le moment. Vos appels continuent d'utiliser la voix standard.",
+      "locked": {
+        "badge": "Réceptionniste Plus",
+        "title": "Le clonage de voix personnalisée est inclus avec Réceptionniste Plus",
+        "body": "Passez au forfait supérieur pour que votre réceptionniste réponde aux appels avec votre propre voix. D'ici là, vos appels utilisent la voix standard.",
+        "cta": "Voir les forfaits",
+        "existing": "Votre forfait n'inclut plus de voix personnalisée : les appels utilisent la voix standard. Vous pouvez tout de même supprimer la voix que vous avez enregistrée."
+      },
+      "current": {
+        "title": "La voix qui répond à vos appels",
+        "liveCustom": "Les appels à votre entreprise sont pris avec votre voix.",
+        "liveStandard": "Les appels à votre entreprise sont pris avec la voix standard.",
+        "standard": {
+          "title": "Voix standard",
+          "body": "La voix de réceptionniste TradeCatch par défaut."
+        },
+        "custom": {
+          "title": "Ma voix",
+          "body": "Les appelants entendent une copie de votre voix. La réceptionniste précise toujours qu'elle est virtuelle si on le lui demande."
+        },
+        "switchBack": "Revenir à la voix standard",
+        "needsVoice": "Enregistrez votre voix ci-dessous pour activer cette option.",
+        "needsPreview": "Écoutez d'abord l'aperçu, puis vous pourrez activer votre voix.",
+        "activate": "Utiliser ma voix pour les appels"
+      },
+      "yours": {
+        "title": "Votre voix",
+        "consent": "Consentement donné par {name} le {date}.",
+        "outdated": "Le texte du consentement a été mis à jour depuis. Enregistrez un nouvel échantillon pour renouveler votre consentement.",
+        "recordAgain": "Enregistrer à nouveau",
+        "cancelRecordAgain": "Annuler"
+      },
+      "preview": {
+        "intro": "Écoutez un court message d'accueil avec votre voix clonée avant qu'elle réponde à un vrai appel.",
+        "button": "Écouter l'aperçu",
+        "loading": "Préparation de l'aperçu…",
+        "done": "Vous avez écouté un aperçu de cette voix."
+      },
+      "setup": {
+        "title": "Enregistrez votre voix",
+        "titleAgain": "Enregistrez à nouveau votre voix",
+        "intro": "Vous lirez un court texte à voix haute, environ une minute. Choisissez une pièce calme et parlez naturellement, comme si vous répondiez à votre propre téléphone. Vous pouvez enregistrer ici ou téléverser un fichier audio."
+      },
+      "consent": {
+        "title": "Votre consentement",
+        "statement": "Je confirme que cette voix est la mienne et que j'ai le droit de l'utiliser. J'autorise TradeCatch à créer une copie synthétique de ma voix à partir de l'enregistrement que je m'apprête à faire, au moyen de son fournisseur de voix (ElevenLabs), et à n'utiliser cette copie que pour faire parler la réceptionniste de mon entreprise lors des appels à mon entreprise. Je comprends que les appelants parlent à une réceptionniste virtuelle, que TradeCatch ne conserve pas mon enregistrement mais que le fournisseur de voix conserve l'échantillon dont il a besoin jusqu'à ce que je supprime ma voix, et que je peux revenir à la voix standard, retirer ce consentement et supprimer ma voix à tout moment.",
+        "accept": "J'ai lu ce texte et je suis d'accord.",
+        "signerLabel": "Saisissez votre nom complet pour signer",
+        "signerHint": "Conservé avec votre consentement, afin de pouvoir montrer qui a accepté et quand."
+      },
+      "record": {
+        "getText": "Obtenir le texte à lire",
+        "preparing": "Préparation…",
+        "title": "Lisez ceci à voix haute",
+        "wordsIntro": "Ces trois mots ont été choisis à l'instant pour vous. Prononcez-les clairement : ils prouvent que cet enregistrement a été fait par vous, aujourd'hui.",
+        "wordsLabel": "Vos trois mots",
+        "script": "Bonjour, voici ma voix. Je l'enregistre pour que ma réceptionniste puisse parler comme moi lorsque des clients appellent mon entreprise. Merci d'avoir appelé, comment puis-je vous aider aujourd'hui ? Aujourd'hui, je prononce les mots {word1}, {word2} et {word3}. J'autorise l'utilisation de cet enregistrement pour créer une copie de ma voix, et j'accepte que cette voix accueille mes clients, note leurs coordonnées et réponde à leurs questions sur mon entreprise. Qu'il s'agisse d'une simple question, d'une soumission ou d'une urgence, nous ferons de notre mieux pour vous rappeler dès que possible.",
+        "tips": "Lisez tout le texte. Il expire dans 10 minutes. Rien n'est envoyé avant que vous appuyiez sur « Créer ma voix ».",
+        "newText": "Obtenir un nouveau texte",
+        "start": "Commencer l'enregistrement",
+        "or": "ou",
+        "uploadLabel": "Téléverser un fichier audio",
+        "recording": "Enregistrement",
+        "stop": "Arrêter",
+        "recorded": "Votre enregistrement",
+        "uploaded": "Votre fichier téléversé",
+        "retake": "Enregistrer à nouveau",
+        "errors": {
+          "denied": "L'accès au microphone a été bloqué. Autorisez le microphone dans votre navigateur ou téléversez plutôt un fichier audio.",
+          "noDevice": "Aucun microphone n'a été trouvé. Branchez-en un ou téléversez plutôt un fichier audio.",
+          "unsupported": "Ce navigateur ne peut pas enregistrer de l'audio. Téléversez plutôt un fichier audio.",
+          "failed": "L'enregistrement n'a pas pu démarrer. Réessayez ou téléversez plutôt un fichier audio.",
+          "tooLarge": "Cet audio est trop volumineux. La limite est de 10 Mo.",
+          "notAudio": "Veuillez choisir un fichier audio."
+        }
+      },
+      "create": {
+        "button": "Créer ma voix",
+        "creating": "Création de votre voix…",
+        "cancel": "Annuler",
+        "privacy": "Votre enregistrement est envoyé à notre fournisseur de voix pour créer la voix, et TradeCatch ne le conserve pas."
+      },
+      "remove": {
+        "title": "Supprimer votre voix",
+        "intro": "Vous pouvez supprimer votre voix clonée, ou retirer votre consentement, à tout moment. Les appels passent aussitôt à la voix standard et la voix est supprimée chez notre fournisseur de voix.",
+        "working": "En cours…",
+        "keep": "Garder ma voix",
+        "revokedOn": "Le consentement a été retiré le {date}. Enregistrez un nouvel échantillon pour utiliser de nouveau une voix personnalisée.",
+        "delete": {
+          "button": "Supprimer ma voix",
+          "confirmTitle": "Supprimer votre voix",
+          "confirmBody": "Supprimer votre voix clonée ? Les appels utiliseront la voix standard. Vous pourrez en enregistrer une nouvelle plus tard.",
+          "confirmButton": "Oui, supprimer ma voix"
+        },
+        "revoke": {
+          "button": "Retirer mon consentement",
+          "confirmTitle": "Retirer votre consentement",
+          "confirmBody": "Retirer votre consentement et supprimer votre voix ? Les appels utiliseront la voix standard, et une nouvelle voix demandera un nouveau consentement.",
+          "confirmButton": "Oui, retirer et supprimer"
+        }
+      },
+      "notices": {
+        "created": "Votre voix est prête. Écoutez l'aperçu, puis activez-la.",
+        "activated": "C'est fait. Les appels à votre entreprise sont maintenant pris avec votre voix.",
+        "standard": "C'est fait. Les appels sont pris avec la voix standard.",
+        "delete": "Votre voix a été supprimée. Les appels utilisent la voix standard.",
+        "revoke": "Consentement retiré et voix supprimée. Les appels utilisent la voix standard.",
+        "cleanupPending": "Les appels utilisent déjà la voix standard. Nous attendons encore la confirmation de la suppression par notre fournisseur de voix : appuyez de nouveau sur supprimer pour réessayer."
+      },
+      "errors": {
+        "generic": "Un problème est survenu. Vos appels continuent d'utiliser leur voix actuelle. Veuillez réessayer.",
+        "not_entitled": "La voix personnalisée est incluse avec Réceptionniste Plus.",
+        "unavailable": "Le clonage de voix n'est pas disponible pour le moment. Veuillez réessayer plus tard.",
+        "consent_required": "Veuillez accepter la déclaration de consentement et saisir votre nom.",
+        "consent_outdated": "Le texte du consentement a été mis à jour. Rechargez la page et acceptez-le de nouveau.",
+        "challenge_invalid": "Cette séance d'enregistrement n'est plus valide. Obtenez un nouveau texte à lire.",
+        "challenge_expired": "Cela a pris trop de temps. Obtenez un nouveau texte à lire et enregistrez à nouveau.",
+        "challenge_reused": "Ce texte a déjà été utilisé. Obtenez un nouveau texte à lire.",
+        "challenge_failed": "Nous n'avons pas entendu les trois mots dans votre enregistrement. Lisez le texte exactement comme affiché, dans un endroit calme, puis réessayez.",
+        "sample_invalid": "Nous n'avons pas pu utiliser cet audio. Enregistrez à nouveau ou téléversez un fichier WAV, MP3, M4A, WebM ou OGG clair de moins de 10 Mo.",
+        "sample_too_short": "L'enregistrement est trop court. Veuillez lire tout le texte.",
+        "no_voice": "Il n'y a pas encore de voix personnalisée. Enregistrez d'abord la vôtre.",
+        "not_previewed": "Écoutez d'abord l'aperçu, puis activez votre voix.",
+        "consent_revoked": "Le consentement pour cette voix a été retiré. Enregistrez un nouvel échantillon pour utiliser une voix personnalisée.",
+        "provider_error": "Notre fournisseur de voix n'a pas répondu. Vos appels continuent d'utiliser leur voix actuelle. Veuillez réessayer dans quelques minutes.",
+        "forbidden": "Seul un propriétaire ou un administrateur peut modifier la voix de la réceptionniste."
+      }
     }
   },
   "aiReceptionist": {
@@ -3967,6 +4336,11 @@
         "label": "Sync calendrier Outlook native",
         "demoTitle": "Sync Outlook (prévu)",
         "demoBody": "La sync Outlook bidirectionnelle native est prévue et n'est jamais implicite dans une soumission aujourd'hui."
+      },
+      "customVoice": {
+        "label": "Clonage de voix personnalisé (votre propre voix)",
+        "demoTitle": "Une voix qui vous ressemble",
+        "demoBody": "Donnez à votre réceptionniste votre propre voix. Enregistrez votre voix une seule fois, et elle répond aux appels de vos clients avec votre voix. Vous l'écoutez avant de l'activer, et vous pouvez revenir à une voix standard ou supprimer la vôtre en tout temps."
       }
     },
     "walkthrough": {
@@ -3980,15 +4354,23 @@
       "stepOf": "Étape {current} sur {total}"
     },
     "addOns": {
-      "websiteBuilder": {
-        "eyebrow": "Optionnel",
-        "title": "Créateur de site web",
-        "intro": "Un site web d'entrepreneur conçu et géré avec TradeCatch. Offert sur chaque forfait ; jamais inclus automatiquement.",
-        "priceNote": "Option à 349,99 $ CAD.",
-        "schedulePending": "Le mode de facturation est confirmé par écrit avant tout prélèvement.",
-        "availableOn": "Disponible en ajout sur Starter, Growth et Réceptionniste Plus.",
-        "neverIncluded": "Jamais inclus gratuitement avec un abonnement.",
-        "cta": "Demandez le créateur de site à l'audit"
+      "websiteService": {
+        "eyebrow": "Option facultative",
+        "title": "Service de site web clé en main",
+        "intro": "Besoin d'un site web qui vous rapporte vraiment du travail? Nous créons un nouveau site professionnel pour votre entreprise, ou nous améliorons celui que vous avez, pour qu'il s'affiche bien sur tous les téléphones, capte des clients potentiels et fonctionne avec TradeCatch.",
+        "price": "À partir de 349 $ CAD",
+        "priceNote": "Un prix de projet unique, distinct de votre abonnement. Nous confirmons la portée et le prix final avec vous par écrit avant tout paiement.",
+        "availableOn": "Une option facultative pour Starter, Growth et Réceptionniste Plus.",
+        "neverIncluded": "Jamais ajoutée automatiquement à votre abonnement, et jamais facturée chaque mois.",
+        "includesTitle": "Ce que nous pouvons faire",
+        "includes": [
+          "Un nouveau site web professionnel, ou des améliorations à celui que vous avez",
+          "Optimisation mobile, pour un bon affichage sur tous les téléphones",
+          "Des formulaires de contact qui vous parviennent",
+          "Une capture de clients potentiels qui arrive dans votre boîte TradeCatch",
+          "Intégration à TradeCatch : texto d'appel manqué et réceptionniste reliés à votre site"
+        ],
+        "cta": "Faire créer mon site web"
       }
     },
     "referralTeaser": {
@@ -4147,6 +4529,69 @@
         "title": "Parrainage reçu",
         "body": "Merci! Nous l'avons bien reçu et nous prenons le relais.",
         "another": "Parrainer quelqu'un d'autre"
+      }
+    }
+  },
+  "websiteRequest": {
+    "meta": {
+      "title": "Faire créer mon site web | TradeCatch",
+      "description": "Demandez un nouveau site web professionnel ou des améliorations à votre site actuel. À partir de 349 $ CAD, avec la portée et le prix final confirmés avant tout paiement."
+    },
+    "page": {
+      "eyebrow": "Service de site web clé en main",
+      "headline": "Dites-nous ce dont votre site web a besoin",
+      "intro": "Un court formulaire, puis une portée écrite et un prix ferme avant tout paiement. À partir de 349 $ CAD, une seule fois.",
+      "stepsTitle": "Et ensuite?",
+      "steps": [
+        "Nous examinons votre demande et, si vous en avez un, votre site actuel.",
+        "Nous vous répondons avec ce que nous ferons exactement et le prix final.",
+        "Vous approuvez. Nous commençons et nous vous facturons seulement à ce moment."
+      ],
+      "separate": "Il s'agit d'un projet distinct. Il n'est pas ajouté à votre abonnement TradeCatch et ne change pas ce que vous payez chaque mois."
+    },
+    "form": {
+      "typeLegend": "De quoi avez-vous besoin?",
+      "type": {
+        "new": "Un nouveau site web professionnel",
+        "newHint": "Nous créons un site pour votre entreprise à partir de zéro.",
+        "improve": "Des améliorations à mon site actuel",
+        "improveHint": "Gardez votre site et faites-le travailler plus fort pour vous."
+      },
+      "businessName": "Nom de l'entreprise",
+      "contactName": "Votre nom",
+      "contactEmail": "Courriel",
+      "contactPhone": "Téléphone",
+      "currentWebsiteUrl": "Votre site web actuel",
+      "currentWebsiteHintImprove": "L'adresse du site à améliorer, par exemple monentreprise.ca.",
+      "currentWebsiteHintNew": "Si vous avez déjà un site, ajoutez-le pour que nous voyions ce que vous avez.",
+      "focusLegend": "Qu'est-ce qui compte le plus?",
+      "focus": {
+        "mobile": "Un bon affichage sur téléphone",
+        "contact_form": "Formulaires de contact",
+        "lead_capture": "Capture de clients potentiels",
+        "tradecatch": "Connexion à TradeCatch",
+        "design": "Un design plus actuel",
+        "content": "Des services et un contenu plus clairs"
+      },
+      "notes": "Autre chose à nous dire?",
+      "optional": "(facultatif)",
+      "priceNote": "À partir de 349 $ CAD, une seule fois. Distinct de votre abonnement. Nous confirmons la portée et le prix final avec vous avant tout paiement.",
+      "submit": "Faire créer mon site web",
+      "submitting": "Envoi en cours…",
+      "errors": {
+        "required": "Ce champ est obligatoire.",
+        "email": "Entrez une adresse courriel valide.",
+        "phone": "Entrez un numéro de téléphone valide.",
+        "url": "Entrez une adresse de site valide, par exemple monentreprise.ca.",
+        "urlRequired": "Ajoutez l'adresse du site web à améliorer.",
+        "verification": "Veuillez terminer la vérification.",
+        "generic": "Nous n'avons pas pu envoyer votre demande. Veuillez réessayer.",
+        "network": "Problème de connexion. Vérifiez votre réseau et réessayez."
+      },
+      "success": {
+        "title": "Demande reçue",
+        "body": "Merci. Nous l'examinerons et nous vous répondrons avec la portée et le prix final. Rien n'est facturé avant votre approbation.",
+        "another": "Envoyer une autre demande"
       }
     }
   }

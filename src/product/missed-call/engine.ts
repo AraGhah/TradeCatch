@@ -30,7 +30,7 @@ import {
   validateCollectionAnswer,
 } from "./messaging";
 import { checkServiceArea } from "./service-area";
-import { SmsRateLimitError } from "./twilio";
+import { SmsRateLimitError, smsFailureDisposition } from "./twilio";
 import type { MissedCallStore } from "./store";
 import { DuplicateActiveWorkflowError } from "./store";
 import {
@@ -139,6 +139,12 @@ export type MissedCallEngine = {
     outboxSent: number;
     outboxFailed: number;
   }>;
+
+  /**
+   * Send queued texts now rather than at the next maintenance tick. Uses the
+   * same claim, suppression and retry rules as the tick.
+   */
+  flushOutbound(): Promise<{ sent: number; failed: number }>;
 };
 
 export function createMissedCallEngine(deps: {
@@ -280,12 +286,16 @@ export function createMissedCallEngine(deps: {
         failed += 1;
         continue;
       }
+      let accepted = false;
       try {
         const result = await deps.sms.send({
           toE164: msg.toE164,
           fromE164: msg.fromE164,
           body: msg.body,
+          outboxId: msg.id,
+          internal: msg.detail === "sms_receptionist_alert",
         });
+        accepted = true;
         await deps.store.markOutboundSent(msg.id, result.sid);
         if (msg.workflowId) {
           const wf = await deps.store.getWorkflow(msg.workflowId);
@@ -301,13 +311,19 @@ export function createMissedCallEngine(deps: {
         }
         sent += 1;
       } catch (err) {
+        if (accepted && msg.detail?.startsWith("sms_receptionist")) {
+          // Provider accepted it; its signed callback can reconcile the row.
+          failed += 1;
+          continue;
+        }
         const message = err instanceof Error ? err.message : String(err);
         // A rate-limit denial means the message was never attempted with
         // Twilio — it will go through once the window resets, so it must
         // never burn through MAX_OUTBOUND_ATTEMPTS and die permanently.
-        const next =
-          err instanceof SmsRateLimitError ||
-          msg.attempts + 1 < MAX_OUTBOUND_ATTEMPTS
+        const next = msg.detail?.startsWith("sms_receptionist")
+          ? smsFailureDisposition(err)
+          : err instanceof SmsRateLimitError ||
+              msg.attempts + 1 < MAX_OUTBOUND_ATTEMPTS
             ? "retry"
             : "dead";
         await deps.store.markOutboundFailed(msg.id, message, next);
@@ -1196,13 +1212,27 @@ export function createMissedCallEngine(deps: {
           };
         }
 
-        if (!client) return { handled: false, replies };
+        // Cold SMS (no Module A client / no active collection workflow):
+        // release the MessageSid claim so a Twilio redelivery can still reach
+        // the SMS receptionist. Module A paths that return handled:true keep
+        // the claim for idempotency; the receptionist uses its own outbox id.
+        if (!client) {
+          if (claimedSid) {
+            await deps.store.releaseInboundMessageSid(claimedSid);
+            claimedSid = undefined;
+          }
+          return { handled: false, replies };
+        }
 
         const workflow = await deps.store.findActiveWorkflowByCaller(
           client.id,
           input.fromE164,
         );
         if (!workflow || workflow.status !== "awaiting_customer") {
+          if (claimedSid) {
+            await deps.store.releaseInboundMessageSid(claimedSid);
+            claimedSid = undefined;
+          }
           return { handled: false, replies };
         }
 
@@ -1384,6 +1414,8 @@ export function createMissedCallEngine(deps: {
         throw err;
       }
     },
+
+    flushOutbound: () => flushOutboundQueue(),
 
     async processEscalations() {
       const escalated: string[] = [];

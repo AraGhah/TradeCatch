@@ -8,6 +8,7 @@ import { CallFlowDiagram, type FlowNode } from "@/components/CallFlowDiagram";
 import { CallSummaryCard } from "@/components/CallSummaryCard";
 import { CallDemo, type CallDemoCopy } from "@/components/CallDemo";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { StoryDemos } from "@/components/StoryDemos";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -113,10 +114,34 @@ export default async function AiReceptionistPage({
         }
       />
 
-      {/* 1. How a call runs */}
+      {/* Interactive demo first — especially important on mobile. */}
+      <section
+        id="try-it"
+        className="scroll-mt-28 border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface py-10 lg:py-[clamp(48px,5vw,72px)]"
+      >
+        <Container>
+          <div data-reveal>
+            <SectionHeading
+              align="left"
+              eyebrow={t("demo.eyebrow")}
+              title={t("demo.title")}
+              intro={t("demo.intro")}
+              className="max-w-[46em]"
+            />
+          </div>
+          <div data-reveal className="mt-6 lg:mt-[clamp(32px,4vw,48px)]">
+            <CallDemo
+              copy={t.raw("demo") as CallDemoCopy}
+              locale={locale === "fr" ? "fr" : "en"}
+            />
+          </div>
+        </Container>
+      </section>
+
+      {/* How a call runs */}
       <section
         id="how-a-call-runs"
-        className="scroll-mt-28 bg-paper pt-[clamp(48px,5vw,72px)] pb-[clamp(56px,6vw,88px)]"
+        className="scroll-mt-28 bg-paper py-10 lg:pt-[clamp(48px,5vw,72px)] lg:pb-[clamp(56px,6vw,88px)]"
       >
         <Container>
           <div data-reveal>
@@ -128,7 +153,7 @@ export default async function AiReceptionistPage({
               className="max-w-[46em]"
             />
           </div>
-          <div data-reveal className="mt-[clamp(32px,4vw,48px)]">
+          <div data-reveal className="mt-6 lg:mt-[clamp(32px,4vw,48px)]">
             <CallFlowDiagram
               steps={t.raw("flow.steps") as FlowNode[]}
               branchLabel={t("flow.branchLabel")}
@@ -141,30 +166,12 @@ export default async function AiReceptionistPage({
         </Container>
       </section>
 
-      {/* 1b. Interactive demo (real conversation engine, no side effects) */}
-      <section
-        id="try-it"
-        className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <div data-reveal>
-            <SectionHeading
-              align="left"
-              eyebrow={t("demo.eyebrow")}
-              title={t("demo.title")}
-              intro={t("demo.intro")}
-              className="max-w-[46em]"
-            />
-          </div>
-          <div data-reveal className="mt-[clamp(32px,4vw,48px)]">
-            <CallDemo
-              copy={t.raw("demo") as CallDemoCopy}
-              locale={locale === "fr" ? "fr" : "en"}
-            />
-          </div>
-        </Container>
-      </section>
+      {/* The receptionist on the job: two short dramatizations */}
+      <StoryDemos
+        locale={locale}
+        ids={["under-the-sink", "after-hours"]}
+        id="on-the-job"
+      />
 
       {/* 2. What it handles on the call */}
       <section

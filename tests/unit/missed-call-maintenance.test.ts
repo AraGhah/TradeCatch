@@ -149,6 +149,79 @@ test("database failures still propagate and an unauthorized request never reads 
   assert.equal(read.mock.callCount(), 0);
   await assert.rejects(() => POST(request()), /database unavailable/);
 });
+test("a broken SMS inbox is reported but never stops escalation timers", async () => {
+  // Not a real production runtime, so the inbox is "available" and the injected
+  // one is used; the point is what the tick does when it throws.
+  process.env.TRADECATCH_ENV = "staging";
+  const client = demoClientAccount({
+    id: "inbox-isolation-client",
+    timeouts: { customerCollectionMs: 1000 },
+  });
+  await store.saveClient(client);
+  const now = new Date(Date.now() - 60_000);
+  const setup = createMissedCallEngine({
+    store,
+    sms: createMemorySmsPort(),
+    clock: { now: () => now },
+  });
+  const started = await setup.handleCallEvent({
+    clientAccountId: client.id,
+    callerE164: "+15145557098",
+    answered: false,
+    abandoned: false,
+    calledAt: now,
+  });
+  assert.ok(started.workflow);
+  (globalThis as { __tradecatchSmsInbox?: unknown }).__tradecatchSmsInbox = {
+    async enqueue() {},
+    async claim() {
+      throw Error("inbox table missing: private customer detail");
+    },
+    async finish() {},
+    async purge() {},
+  };
+  const logged: string[] = [];
+  mock.method(console, "error", (line: unknown) => logged.push(String(line)));
+  try {
+    const response = await POST(request());
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as {
+      ok: boolean;
+      timedOut: string[];
+      inbox: { failed: number };
+    };
+    assert.equal(body.ok, false, "an inbox failure must not look healthy");
+    assert.equal(body.inbox.failed, 1);
+    assert.deepEqual(
+      body.timedOut,
+      [started.workflow.id],
+      "escalation timers still ran",
+    );
+    assert.ok(
+      logged.some((line) => line.includes("inbox_tick_failed")),
+      "the failure is logged",
+    );
+    assert.ok(
+      logged.every((line) => !line.includes("private customer detail")),
+      "only an error name is logged, never its message",
+    );
+  } finally {
+    delete (globalThis as { __tradecatchSmsInbox?: unknown })
+      .__tradecatchSmsInbox;
+  }
+});
+test("production without durable storage skips the inbox: nothing can have been accepted", async () => {
+  // The webhook answers 503 in this state, so there is nothing to drain and the
+  // tick must still report healthy and run everything else.
+  const response = await POST(request());
+  const body = (await response.json()) as {
+    ok: boolean;
+    inbox: { skipped?: boolean; processed: number; failed: number };
+  };
+  assert.equal(response.status, 200);
+  assert.equal(body.ok, true);
+  assert.deepEqual(body.inbox, { processed: 0, failed: 0, skipped: true });
+});
 test("maintenance never permits a production memory fallback when no store was injected", () => {
   delete globals.__tradecatchMissedCallReadStore;
   assert.throws(

@@ -11,7 +11,10 @@ import {
   ensureMissedCallReady,
   isRuntimeUsingDurableStore,
 } from "@/product/missed-call/runtime";
-import { createTwilioSmsPort } from "@/product/missed-call/twilio";
+import {
+  createTwilioSmsPort,
+  smsFailureDisposition,
+} from "@/product/missed-call/twilio";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import type { BusinessContext } from "./reply";
 import {
@@ -48,25 +51,50 @@ function logEvent(event: string, fields: Record<string, unknown>) {
   else console.info(line);
 }
 
-async function receptionistConfigFor(
-  clientId: string,
-): Promise<{
+async function receptionistConfigFor(input: SmsReceptionistInput): Promise<{
   config?: ReceptionistConfig;
   llm: ReturnType<typeof createLlmClientFromEnv>;
 }> {
-  try {
-    const { getReceptionistRuntime } =
-      await import("@/product/receptionist/runtime");
-    const runtime = getReceptionistRuntime();
-    await runtime.refresh();
-    return {
-      config: runtime.configs.find((c) => c.clientAccountId === clientId),
-      llm: runtime.llm,
-    };
-  } catch {
-    // The voice runtime being unavailable must not stop texts being answered.
-    return { llm: createLlmClientFromEnv() };
-  }
+  const [
+    { getReceptionistRuntime },
+    { buildProfileConfig },
+    { getSaasStore },
+    { voiceCapabilitiesForPlan },
+  ] = await Promise.all([
+    import("@/product/receptionist/runtime"),
+    import("@/product/receptionist/profile"),
+    import("@/product/saas/runtime"),
+    import("@/product/receptionist/plan-limits"),
+  ]);
+  const runtime = getReceptionistRuntime();
+  // SMS needs this tenant's saved knowledge even if its voice line is inactive.
+  // Do not refresh every tenant's voice configuration on each incoming text.
+  const [profile, org] = await Promise.all([
+    runtime.profileStore.getProfile(input.organizationId),
+    getSaasStore().getOrganization(input.organizationId),
+  ]);
+  const config =
+    profile && org?.missedCallClientId === input.client.id
+      ? buildProfileConfig(profile, {
+          client: input.client,
+          capabilities: voiceCapabilitiesForPlan(org.plan),
+        })
+      : runtime.configs.find((c) => c.clientAccountId === input.client.id);
+  return { config, llm: createLlmClientFromEnv(smsLlmEnv()) };
+}
+
+/**
+ * A text is answered after the webhook has already been acknowledged, so it can
+ * wait for the model longer than a live call can. The voice budget
+ * (RECEPTIONIST_LLM_TIMEOUT_MS, 4.5 s) would push a reasoning model to the
+ * canned rules reply; SMS_LLM_TIMEOUT_MS (default 10 s) is its own knob.
+ */
+export function smsLlmEnv(
+  env: Partial<NodeJS.ProcessEnv> = process.env,
+): Partial<NodeJS.ProcessEnv> {
+  const raw = Number(env.SMS_LLM_TIMEOUT_MS);
+  const ms = Number.isFinite(raw) && raw >= 1_000 ? Math.min(raw, 20_000) : 10_000;
+  return { ...env, RECEPTIONIST_LLM_TIMEOUT_MS: String(ms) };
 }
 
 type Profile = Awaited<ReturnType<typeof receptionistConfigFor>>;
@@ -166,14 +194,19 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
       const { config } = profile;
       const areas = client.approvedServiceAreas.map((a) => a.label).join(", ");
       const context: BusinessContext = {
-        name: client.contractorDisplayName,
+        name: config?.businessName || client.contractorDisplayName,
         assistantName: config?.receptionistName,
         timezone: client.timezone,
-        hours: client.businessHours,
+        hours: config?.businessHours ?? client.businessHours,
         serviceAreaNotes: client.serviceAreaNotes || areas || undefined,
         businessFacts: config?.businessFacts,
         personality: config?.personality,
-        faqs: config?.faqs ?? [],
+        faqs: (config?.faqs ?? []).map((f) => ({
+          question: f.question,
+          answerFr: f.answerFr,
+          answerEn: f.answerEn,
+          keywords: f.keywords,
+        })),
         collectPreferredTime: config?.collectPreferredTime ?? true,
       };
       return {
@@ -190,7 +223,8 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
       claim: (id) => store.claimOutboundById(id),
       markSent: (id, providerSid) => store.markOutboundSent(id, providerSid),
       // "retry": the cron outbox flush picks it up again.
-      markFailed: (id, error) => store.markOutboundFailed(id, error, "retry"),
+      markFailed: (id, error, cause) =>
+        store.markOutboundFailed(id, error, smsFailureDisposition(cause)),
     },
 
     sendSms: (message) => sms.send(message),
@@ -201,6 +235,8 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
       businessE164,
       body,
       sent,
+      providerSid,
+      outboxId,
     }) {
       await crm.capture({
         organizationId,
@@ -208,6 +244,7 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
         phoneE164: customerE164,
         actor: "sms_receptionist",
         message: {
+          id: outboxId,
           direction: "outbound",
           body,
           fromE164: businessE164,
@@ -215,8 +252,18 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
           automated: true,
           simulated: false,
           deliveryStatus: sent ? "sent" : "queued",
+          providerMessageSid: providerSid,
         },
       });
+      if (outboxId) {
+        const { getCrmRuntime } = await import("@/product/crm/runtime");
+        await getCrmRuntime().store.updateMessageDelivery(
+          organizationId,
+          outboxId,
+          providerSid,
+          sent ? "sent" : "queued",
+        );
+      }
     },
 
     async escalate(input) {
@@ -296,15 +343,16 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
 }
 
 /**
- * Entry point for the inbound SMS webhook. Never throws: the webhook has
- * already claimed this MessageSid, so a failure here is logged and (where a
- * reply was already queued) retried by the outbox flush, not by Twilio.
+ * Entry point for the inbound SMS webhook. Never throws: Module A releases the
+ * MessageSid claim on the cold-SMS path so Twilio redeliveries can retry here;
+ * once a reply is queued, the outbox id `smsrep_{MessageSid}` keeps delivery
+ * idempotent and the escalations tick retries failed sends.
  */
 export async function handleCustomerSms(
   input: SmsReceptionistInput,
 ): Promise<SmsReceptionistResult> {
   try {
-    const profile = await receptionistConfigFor(input.client.id);
+    const profile = await receptionistConfigFor(input);
     const deps = await buildDeps(profile);
     return await createSmsReceptionist(deps).handleCustomerSms(input);
   } catch (err) {

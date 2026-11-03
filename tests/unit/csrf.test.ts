@@ -111,4 +111,22 @@ describe("request body size cap in the proxy", () => {
     const read = await api("GET", { "content-length": String(10 * 1024 * 1024) });
     assert.equal(read.headers.get("x-middleware-next"), "1");
   });
+
+  it("allows a voice-sample upload only on the voice clone route, and only up to its own cap", async () => {
+    const clone = "/api/app/receptionist/voice/clone";
+    const ok = await api("POST", { "content-length": String(10 * 1024 * 1024) }, clone);
+    assert.equal(ok.headers.get("x-middleware-next"), "1");
+    const tooBig = await api("POST", { "content-length": String(12 * 1024 * 1024) }, clone);
+    assert.equal(tooBig.status, 413);
+    // Every other route, including its sibling voice routes, keeps the 2 MB cap.
+    for (const path of [
+      "/api/app/receptionist/voice",
+      "/api/app/receptionist/voice/challenge",
+      "/api/app/receptionist/voice/preview",
+      "/api/app/api-keys",
+    ]) {
+      const res = await api("POST", { "content-length": String(3 * 1024 * 1024) }, path);
+      assert.equal(res.status, 413, path);
+    }
+  });
 });

@@ -21,6 +21,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "cloudflare-env.d.ts",
     "worker-configuration.d.ts",
+    // Minified production site snapshots are evidence artifacts, not source.
+    "Videos/_site_probe/**",
     "TradeCatch UI redesign/**",
     "scripts/**",
   ]),

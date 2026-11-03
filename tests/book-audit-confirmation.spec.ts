@@ -38,7 +38,7 @@ test("confirmation acknowledges storage while notifications are pending", async 
     }),
   );
   await reviewRequest(page);
-  await page.getByRole("button", { name: "Submit request" }).click();
+  await page.locator('button[type="submit"]').click();
   await expect(
     page.getByRole("heading", { name: "Got it. Your audit request is in." }),
   ).toBeVisible();
@@ -56,7 +56,7 @@ for (const body of [{ ok: true }, { ok: true, leadSaved: false }]) {
       route.fulfill({ status: 200, json: body }),
     );
     await reviewRequest(page);
-    await page.getByRole("button", { name: "Submit request" }).click();
+    await page.locator('button[type="submit"]').click();
     await expect(
       page
         .getByRole("alert")

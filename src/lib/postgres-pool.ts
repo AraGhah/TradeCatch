@@ -45,9 +45,10 @@ function managedPool(options: PoolConfig): Pool {
  * socket for every SQL statement exhausts the platform's subrequest budget. */
 export async function withPostgresRequestScope<T>(
   run: () => Promise<T>,
+  options: { independent?: boolean } = {},
 ): Promise<T> {
   const existing = requestPools.getStore();
-  if (existing && !existing.closed) return run();
+  if (existing && !existing.closed && !options.independent) return run();
   const state: RequestPools = { pools: new Map(), closed: false };
   return requestPools.run(state, async () => {
     try {

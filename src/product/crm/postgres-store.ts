@@ -128,7 +128,8 @@ function mapConversation(row: Record<string, unknown>): Conversation {
     organizationId: String(row.organization_id),
     customerId: String(row.customer_id),
     leadId: opt(row.lead_id),
-    channel: row.channel === "call" || row.channel === "mixed" ? row.channel : "sms",
+    channel:
+      row.channel === "call" || row.channel === "mixed" ? row.channel : "sms",
     control: String(row.control) as ConversationControl,
     lastMessageAt: row.last_message_at ? iso(row.last_message_at) : undefined,
     createdAt: iso(row.created_at),
@@ -175,7 +176,10 @@ export function createPostgresCrmStore(url: string): CrmStore {
 
   return {
     async listCustomers(organizationId, limit = 1001) {
-      const res = await pool.query('SELECT * FROM tc_customers WHERE organization_id=$1 ORDER BY id LIMIT $2',[organizationId,limit]);
+      const res = await pool.query(
+        "SELECT * FROM tc_customers WHERE organization_id=$1 ORDER BY id LIMIT $2",
+        [organizationId, limit],
+      );
       return res.rows.map(mapCustomer);
     },
     async upsertCustomer(input: UpsertCustomerInput) {
@@ -494,7 +498,7 @@ export function createPostgresCrmStore(url: string): CrmStore {
         `SELECT * FROM tc_conversations
          WHERE organization_id = $1
          ORDER BY updated_at DESC LIMIT $2`,
-        [organizationId,limit ?? null],
+        [organizationId, limit ?? null],
       );
       return res.rows.map(mapConversation);
     },
@@ -533,8 +537,7 @@ export function createPostgresCrmStore(url: string): CrmStore {
            id, organization_id, conversation_id, direction, body, from_e164, to_e164,
            automated, delivery_status, provider_message_sid, simulated, at
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-         ON CONFLICT (provider_message_sid) WHERE provider_message_sid IS NOT NULL
-         DO NOTHING
+         ON CONFLICT DO NOTHING
          RETURNING *`,
         [
           id,
@@ -554,12 +557,26 @@ export function createPostgresCrmStore(url: string): CrmStore {
       return res.rows[0] ? mapMessage(res.rows[0]) : null;
     },
 
+    async updateMessageDelivery(organizationId, id, providerSid, status) {
+      await pool.query(
+        `UPDATE tc_crm_messages SET
+        provider_message_sid=COALESCE($3,provider_message_sid),
+        delivery_status=CASE WHEN delivery_status='delivered' THEN delivery_status
+          WHEN delivery_status IN ('failed','undelivered') AND $4 <> 'delivered' THEN delivery_status ELSE $4 END
+        WHERE organization_id=$1 AND id=$2`,
+        [organizationId, id, providerSid ?? null, status],
+      );
+    },
+
     async listMessages(organizationId, conversationId, limit) {
       const res = await pool.query(
-        `SELECT * FROM tc_crm_messages
+        // The newest `limit` messages, oldest first. Taking the oldest N (the
+        // previous query) hands a long thread's opening to the AI instead of
+        // what the customer just said. `id` makes a same-millisecond tie stable.
+        `SELECT * FROM (SELECT * FROM tc_crm_messages
          WHERE organization_id = $1 AND conversation_id = $2
-         ORDER BY at ASC LIMIT $3`,
-        [organizationId, conversationId,limit ?? null],
+         ORDER BY at DESC, id DESC LIMIT $3) recent ORDER BY at ASC, id ASC`,
+        [organizationId, conversationId, limit ?? null],
       );
       return res.rows.map(mapMessage);
     },

@@ -37,6 +37,13 @@ class PickTransfer(unittest.TestCase):
         self.assertIsNone(decision.number)
         self.assertIn("closed", decision.refusal)
 
+    def test_normal_transfer_works_after_hours_when_transfer_hours_is_always(self):
+        decision = pick_transfer(
+            {**CFG, "afterHours": True, "transferHours": "always"},
+            "caller_request",
+        )
+        self.assertEqual(decision.number, "+14389957350")
+
     def test_no_line_configured_explains_instead_of_dialing(self):
         decision = pick_transfer({"departments": []}, "caller_request")
         self.assertIsNone(decision.number)

@@ -20,7 +20,10 @@ function withCustomer(lead: Lead, customer: Customer): LeadWithCustomer {
   return { ...clone(lead), customer: clone(customer) };
 }
 
-function matchesFilters(row: LeadWithCustomer, filters: LeadListFilters): boolean {
+function matchesFilters(
+  row: LeadWithCustomer,
+  filters: LeadListFilters,
+): boolean {
   if (filters.status && row.status !== filters.status) return false;
   if (filters.source && row.source !== filters.source) return false;
   if (filters.priority && row.priority !== filters.priority) return false;
@@ -67,12 +70,18 @@ export function createMemoryCrmStore(): CrmStore {
 
   return {
     async listCustomers(organizationId, limit = 1001) {
-      return [...customers.values()].filter(c=>c.organizationId===organizationId).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,limit).map(clone);
+      return [...customers.values()]
+        .filter((c) => c.organizationId === organizationId)
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .slice(0, limit)
+        .map(clone);
     },
     async upsertCustomer(input: UpsertCustomerInput) {
       const key = phoneKey(input.phoneE164);
       const existing = [...customers.values()].find(
-        (c) => c.organizationId === input.organizationId && phoneKey(c.phoneE164) === key,
+        (c) =>
+          c.organizationId === input.organizationId &&
+          phoneKey(c.phoneE164) === key,
       );
       const now = input.lastContactAt;
       if (existing) {
@@ -83,7 +92,8 @@ export function createMemoryCrmStore(): CrmStore {
           displayName: input.displayName ?? existing.displayName,
           email: input.email ?? existing.email,
           serviceAddress: input.serviceAddress ?? existing.serviceAddress,
-          preferredLanguage: input.preferredLanguage || existing.preferredLanguage,
+          preferredLanguage:
+            input.preferredLanguage || existing.preferredLanguage,
           notes: input.notes ?? existing.notes,
           phoneE164: input.phoneE164 || existing.phoneE164,
           lastContactAt: now,
@@ -122,7 +132,8 @@ export function createMemoryCrmStore(): CrmStore {
     async findCustomerByPhone(organizationId, phoneE164) {
       const key = phoneKey(phoneE164);
       const row = [...customers.values()].find(
-        (c) => c.organizationId === organizationId && phoneKey(c.phoneE164) === key,
+        (c) =>
+          c.organizationId === organizationId && phoneKey(c.phoneE164) === key,
       );
       return row ? clone(row) : null;
     },
@@ -252,7 +263,7 @@ export function createMemoryCrmStore(): CrmStore {
       return [...conversations.values()]
         .filter((c) => c.organizationId === organizationId)
         .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-        .slice(0,limit)
+        .slice(0, limit)
         .map(clone);
     },
 
@@ -269,6 +280,7 @@ export function createMemoryCrmStore(): CrmStore {
     },
 
     async appendMessage(message) {
+      if (message.id && messages.some((m) => m.id === message.id)) return null;
       if (message.providerMessageSid) {
         const dup = messages.find(
           (m) => m.providerMessageSid === message.providerMessageSid,
@@ -293,6 +305,21 @@ export function createMemoryCrmStore(): CrmStore {
       return clone(row);
     },
 
+    async updateMessageDelivery(organizationId, id, providerSid, status) {
+      const row = messages.find(
+        (m) => m.organizationId === organizationId && m.id === id,
+      );
+      if (!row) return;
+      row.providerMessageSid = providerSid ?? row.providerMessageSid;
+      if (
+        row.deliveryStatus === "delivered" ||
+        (["failed", "undelivered"].includes(row.deliveryStatus) &&
+          status !== "delivered")
+      )
+        return;
+      row.deliveryStatus = status;
+    },
+
     async listMessages(organizationId, conversationId, limit) {
       return messages
         .filter(
@@ -301,7 +328,7 @@ export function createMemoryCrmStore(): CrmStore {
             m.conversationId === conversationId,
         )
         .sort((a, b) => a.at.localeCompare(b.at))
-        .slice(0,limit)
+        .slice(limit ? -limit : 0)
         .map(clone);
     },
 
@@ -330,7 +357,8 @@ export function createMemoryCrmStore(): CrmStore {
         if (events[i]?.organizationId === organizationId) events.splice(i, 1);
       }
       for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i]?.organizationId === organizationId) messages.splice(i, 1);
+        if (messages[i]?.organizationId === organizationId)
+          messages.splice(i, 1);
       }
     },
   };
