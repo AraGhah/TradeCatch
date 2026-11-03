@@ -29,7 +29,7 @@ TradeCatch décroche.
 
 8
 00:00:15,725 --> 00:00:17,725
-Réceptionniste IA : Merci d'avoir
+Réceptionniste : Merci d'avoir
 appelé Plomberie NorthStar.
 
 9
@@ -43,7 +43,7 @@ cuisine fuit. Vous desservez Laval?
 
 11
 00:00:23,095 --> 00:00:24,955
-Réceptionniste IA : Oui,
+Réceptionniste : Oui,
 nous desservons Laval.
 
 12
@@ -61,7 +61,7 @@ Demain matin, vers dix heures?
 
 15
 00:00:31,735 --> 00:00:34,315
-Réceptionniste IA : Parfait.
+Réceptionniste : Parfait.
 J'ai transmis votre demande à l'équipe.
 
 16
