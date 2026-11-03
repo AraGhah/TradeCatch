@@ -1,308 +1,132 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
-import { isOptOut } from "@/product/missed-call/messaging";
-import { demoClientAccount } from "@/product/missed-call/fixtures";
-import { orgHasFeature } from "@/product/saas/entitlements";
-import {
-  getStarterServices,
-  resolveOrganizationFromSmsTo,
-} from "@/product/starter/org-context";
+import { ensureMissedCallReady } from "@/product/missed-call/runtime";
+import { getSaasStore } from "@/product/saas/runtime";
 import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
+import { runAfterResponse } from "@/lib/after-response";
+import { withPostgresRequestScope } from "@/lib/postgres-pool";
+import {
+  getSmsInbox,
+  processSmsInbox,
+} from "@/product/sms-receptionist/inbox-runtime";
 
 export const dynamic = "force-dynamic";
 
-const MAX_FORM_BODY_BYTES = 32_768;
+const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
 
-function escapeXml(s: string) {
-  return s
+function escapeXml(text: string) {
+  return text
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
 }
 
-function twimlMessages(bodies: string[]) {
-  if (bodies.length === 0) {
-    return `<?xml version="1.0" encoding="UTF-8"?><Response></Response>`;
-  }
-  const msgs = bodies.map((b) => `<Message>${escapeXml(b)}</Message>`).join("");
-  return `<?xml version="1.0" encoding="UTF-8"?><Response>${msgs}</Response>`;
+function twiml(replies: string[]) {
+  if (!replies.length) return EMPTY_TWIML;
+  const messages = replies.map((r) => `<Message>${escapeXml(r)}</Message>`);
+  return `<?xml version="1.0" encoding="UTF-8"?><Response>${messages.join("")}</Response>`;
 }
 
-async function parseForm(
-  request: NextRequest,
-): Promise<Record<string, string>> {
-  return readFormParamsBounded(request, MAX_FORM_BODY_BYTES);
-}
-
-/**
- * Twilio Messaging webhook — customer + technician SMS replies for Module A.
- * Outbound prompts are primarily sent via REST; TwiML Message used for
- * immediate technician guidance replies when the engine returns them.
- */
 export async function POST(request: NextRequest) {
+  const started = Date.now();
   let params: Record<string, string>;
   try {
-    params = await parseForm(request);
-  } catch (err) {
-    if (err instanceof BodyTooLargeError) {
-      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
-    }
-    return NextResponse.json({ error: "Invalid form" }, { status: 400 });
-  }
-
-  const ok = await assertTwilioWebhook(request, params);
-  if (!ok) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
-  }
-
-  const from = params.From ?? "";
-  const to = params.To ?? "";
-  const body = params.Body ?? "";
-  const numMedia = Number(params.NumMedia || "0");
-  const mediaUrls: string[] = [];
-  for (let i = 0; i < numMedia; i++) {
-    const url = params[`MediaUrl${i}`];
-    if (url) mediaUrls.push(url);
-  }
-
-  if (!from || !to) {
-    return new NextResponse(twimlMessages([]), {
-      status: 200,
-      headers: { "Content-Type": "text/xml; charset=utf-8" },
-    });
-  }
-
-  const { engine } = await ensureMissedCallReady();
-  let replies: string[] = [];
-  let moduleAHandled = false;
-  let crmOrgId: string | null = null;
-  let automationPaused = false;
-  try {
-    const { resolveOrganizationFromSmsTo: resolveOrg } =
-      await import("@/product/starter/org-context");
-    const linked = await resolveOrg(to);
-    crmOrgId = linked?.id ?? null;
-    if (!crmOrgId) {
-      const { store } = await ensureMissedCallReady();
-      const client = await store.findClientBySmsFromNumber(to);
-      if (client) {
-        const { getSaasStore } = await import("@/product/saas/runtime");
-        const org = await getSaasStore().findOrganizationByMissedCallClientId(
-          client.id,
-        );
-        crmOrgId = org?.status === "active" ? org.id : null;
-      }
-    }
-    if (crmOrgId) {
-      const { getCrmService } = await import("@/product/crm/runtime");
-      automationPaused = await getCrmService().isAutomationPaused(
-        crmOrgId,
-        from,
-      );
-    }
-  } catch (err) {
-    console.warn("[crm] pause check skipped", err);
-  }
-
-  if (!crmOrgId) {
-    // No organization or legacy Module A client claims this receiving
-    // number. Fail safe (accept the webhook, do not route or reply) and log
-    // only the "To" number — TradeCatch's own provisioned number, not
-    // customer data — so ops can spot an unprovisioned/misconfigured
-    // number without any customer phone number or message content in logs.
-    console.warn(
-      JSON.stringify({
-        event: "tradecatch.sms.unrouted_to_number",
-        to,
-      }),
+    params = await readFormParamsBounded(request, 32_768);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Invalid form" },
+      {
+        status: error instanceof BodyTooLargeError ? 413 : 400,
+      },
     );
   }
-
-  const technicianCommand = /^(accepter|refuser|appeler)\b/i.test(body.trim());
+  if (!(await assertTwilioWebhook(request, params))) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+  }
+  const id = params.MessageSid || params.SmsSid;
+  if (!id || !params.From || !params.To || !/^[A-Za-z0-9_-]{3,128}$/.test(id)) {
+    return NextResponse.json(
+      { error: "Missing message identity" },
+      { status: 400 },
+    );
+  }
+  params.MessageSid = id;
+  let replies: string[] = [];
   try {
-    if (automationPaused && !technicianCommand) {
-      moduleAHandled = true;
-    } else {
+    const { store, engine } = await ensureMissedCallReady();
+    const client = await store.findClientBySmsFromNumber(params.To);
+    const org = client
+      ? await getSaasStore().findOrganizationByMissedCallClientId(client.id)
+      : null;
+    if (client && org?.status === "active") {
+      await getSmsInbox().enqueue({
+        id,
+        organizationId: org.id,
+        clientId: client.id,
+        fromE164: params.From,
+        toE164: params.To,
+        params,
+      });
+      await runAfterResponse(async () => {
+        await withPostgresRequestScope(
+          async () => {
+            await processSmsInbox();
+          },
+          { independent: true },
+        );
+      });
+    } else if (client) {
+      // A business whose organization is suspended or missing gets no AI reply
+      // and no CRM record, but a customer's STOP and a technician's reply must
+      // still be honored, exactly as before the inbox existed.
+      const mediaCount = Math.min(10, Math.max(0, Number(params.NumMedia) || 0));
       const result = await engine.handleInboundSms({
-        fromE164: from,
-        toE164: to,
-        body,
-        mediaUrls,
-        messageSid: params.MessageSid,
+        fromE164: params.From,
+        toE164: params.To,
+        body: params.Body ?? "",
+        mediaUrls: Array.from(
+          { length: mediaCount },
+          (_, i) => params[`MediaUrl${i}`],
+        ).filter(Boolean),
+        messageSid: id,
       });
       replies = result.replies;
-      moduleAHandled = result.handled;
-    }
-  } catch (err) {
-    console.error("[missed-call/sms]", err);
-    return NextResponse.json({ error: "Processing failed" }, { status: 500 });
-  }
-
-  // Read before the quote dispatcher below: a customer reply stops the active
-  // quote thread, and the SMS receptionist must not answer a quote reply.
-  let quoteThreadActive = false;
-  if (crmOrgId && !moduleAHandled) {
-    try {
-      const { getStarterStore } = await import("@/product/starter/runtime");
-      quoteThreadActive = Boolean(
-        await getStarterStore().findActiveQuoteByPhone(crmOrgId, from),
-      );
-    } catch (err) {
-      console.warn("[starter/sms] quote thread lookup skipped", err);
-    }
-  }
-
-  // Quote follow-up: stop on reply / opt-out when Module A did not claim the SMS,
-  // or always on STOP keywords so dual workflows still honour opt-out.
-  try {
-    const org = await resolveOrganizationFromSmsTo(to);
-    if (
-      org &&
-      orgHasFeature(org.plan, "QUOTE_FOLLOW_UP") &&
-      !automationPaused &&
-      (!moduleAHandled || isOptOut(body, demoClientAccount()))
-    ) {
-      await getStarterServices().handleInboundSms({
-        fromE164: from,
-        toE164: to,
-        body,
-        organizationId: org.id,
-      });
-    }
-  } catch (err) {
-    console.warn("[starter/sms] quote dispatcher skipped", err);
-  }
-
-  if (crmOrgId && body.trim()) {
-    try {
-      const { getCrmService } = await import("@/product/crm/runtime");
-      const crm = getCrmService();
-      await crm.capture({
-        organizationId: crmOrgId,
-        source: "sms",
-        phoneE164: from,
-        actor: "sms",
-        message: {
-          direction: "inbound",
-          body,
-          fromE164: from,
-          toE164: to,
-          automated: false,
-          providerMessageSid: params.MessageSid,
-          deliveryStatus: "delivered",
-        },
-      });
-      for (const reply of replies) {
-        await crm.capture({
-          organizationId: crmOrgId,
-          source: "sms",
-          phoneE164: from,
-          actor: "sms",
-          message: {
-            direction: "outbound",
-            body: reply,
-            fromE164: to,
-            toE164: from,
-            automated: true,
-            simulated: false,
-            deliveryStatus: "queued",
-          },
-        });
-      }
-    } catch (err) {
-      console.warn("[crm] sms sync skipped", err);
-    }
-  }
-
-  if (crmOrgId && body.trim()) {
-    try {
-      const { getAutomationServices } =
-        await import("@/product/sms-automation/runtime");
-      await getAutomationServices().applyInbound({
-        organizationId: crmOrgId,
-        fromE164: from,
-        body,
-        messageSid: params.MessageSid,
-        skipCrm: true,
-      });
-      const { emitBusinessEvent } =
-        await import("@/product/notifications/hooks");
-      await emitBusinessEvent({
-        organizationId: crmOrgId,
-        type: "customer_message",
-        idempotencyKey: `sms:${params.MessageSid}`,
-        service: "Customer reply",
-        href: "/app/conversations",
-        consolidateKey: params.MessageSid,
-      });
-    } catch (err) {
-      console.warn("[sms-automation] inbound skipped", err);
-    }
-  }
-
-  // Routing priority: Module A (STOP, technician commands, an active
-  // missed-call workflow) and the pause check have already had their turn.
-  // Only a message nobody else claimed reaches the SMS receptionist, which
-  // delivers through the durable outbox — so the TwiML below stays empty on
-  // purpose and the customer gets exactly one reply.
-  if (crmOrgId && !moduleAHandled && body.trim()) {
-    try {
-      const { store } = await ensureMissedCallReady();
-      const client = await store.findClientBySmsFromNumber(to);
-      if (client) {
-        const { handleCustomerSms } =
-          await import("@/product/sms-receptionist/runtime");
-        const outcome = await handleCustomerSms({
-          organizationId: crmOrgId,
-          client,
-          fromE164: from,
-          toE164: to,
-          body,
-          messageSid: params.MessageSid ?? "",
-          paused: automationPaused,
-          quoteThreadActive,
-        });
-        console.info(
-          JSON.stringify({
-            event: "tradecatch.sms_receptionist.webhook_outcome",
-            organizationId: crmOrgId,
-            messageSid: params.MessageSid,
-            status: outcome.status,
-            reason: outcome.status === "skipped" ? outcome.reason : undefined,
-            twiml:
-              outcome.status === "replied"
-                ? "empty_outbox_owns_delivery"
-                : "empty_no_reply",
-          }),
-        );
-      } else {
-        console.warn(
-          JSON.stringify({
-            event: "tradecatch.sms_receptionist.skipped",
-            organizationId: crmOrgId,
-            messageSid: params.MessageSid,
-            reason: "no_client_for_number",
-          }),
-        );
-      }
-    } catch (err) {
-      // Name only: provider/DB error text can carry customer numbers.
       console.warn(
         JSON.stringify({
-          event: "tradecatch.sms_receptionist.failed",
-          organizationId: crmOrgId,
-          messageSid: params.MessageSid,
-          reason: err instanceof Error ? err.name : "Error",
-          stage: "route",
+          event: "tradecatch.sms.inactive_organization",
+          messageSid: id,
+        }),
+      );
+    } else {
+      console.warn(
+        JSON.stringify({
+          event: "tradecatch.sms.unrouted_to_number",
+          messageSid: id,
         }),
       );
     }
+  } catch (error) {
+    console.warn(
+      JSON.stringify({
+        event: "tradecatch.sms.receipt_failed",
+        messageSid: id,
+        code: error instanceof Error ? error.name : "Error",
+      }),
+    );
+    return NextResponse.json(
+      { error: "Receipt could not be saved" },
+      { status: 503 },
+    );
   }
-
-  return new NextResponse(twimlMessages(replies), {
-    status: 200,
+  console.info(
+    JSON.stringify({
+      event: "tradecatch.sms.received",
+      messageSid: id,
+      receiptMs: Date.now() - started,
+    }),
+  );
+  return new NextResponse(twiml(replies), {
     headers: { "Content-Type": "text/xml; charset=utf-8" },
   });
 }

@@ -10,6 +10,7 @@ import type { LlmClient } from "../../src/product/receptionist/llm";
 import type { ReceptionistScheduler } from "../../src/product/receptionist/booking";
 import type { ReceptionistConfig } from "../../src/product/receptionist/types";
 import {
+  afterHoursReply,
   detectLanguage,
   fallbackReply,
   parseModelReply,
@@ -49,6 +50,7 @@ const bookingConfig = {
 
 type Overrides = {
   client?: Partial<ClientAccount>;
+  context?: Partial<BusinessContext>;
   now?: Date;
   llm?: LlmClient | null;
   scheduler?: ReceptionistScheduler | null;
@@ -143,7 +145,7 @@ function harness(overrides: Overrides = {}) {
     },
     async loadBusiness() {
       return {
-        context,
+        context: { ...context, ...overrides.context },
         bookingConfig: overrides.booking ? bookingConfig : undefined,
       };
     },
@@ -170,7 +172,9 @@ function harness(overrides: Overrides = {}) {
       return { sid: `SM_out_${sent.length}` };
     },
     async recordOutbound({ body, sent: wasSent }) {
-      crm.push({ body, sent: wasSent });
+      const existing = crm.find((m) => m.body === body);
+      if (existing) existing.sent = wasSent;
+      else crm.push({ body, sent: wasSent });
     },
     async escalate(input) {
       escalations.push(input);
@@ -613,6 +617,20 @@ describe("sms receptionist — eligibility (never reply)", () => {
 });
 
 describe("sms receptionist — idempotency and failures", () => {
+  it("uses the model and conversation context after hours", async () => {
+    const llm = llmReturning({
+      reply: "Yes, we serve Laval. What is the address?",
+      action: "reply",
+      language: "en",
+    });
+    const h = harness({ now: NIGHT, llm });
+    const result = await h.service.handleCustomerSms(
+      h.input("Do you serve Laval?"),
+    );
+    assert.equal(result.status, "replied");
+    assert.equal(llm.calls, 1);
+    assert.match(h.sent[0]!.body, /Laval/);
+  });
   it("sends exactly one reply when Twilio delivers the same webhook twice", async () => {
     const h = harness();
     const first = await h.service.handleCustomerSms(h.input("Bonjour"));
@@ -733,5 +751,96 @@ describe("sms receptionist — reply helpers", () => {
     assert.ok(out.length <= MAX_REPLY_CHARS);
     assert.equal(sanitizeReply("\u0000\u0007  "), null);
     assert.equal(sanitizeReply("a\u0000b"), "ab");
+  });
+});
+
+describe("sms receptionist — what the AI is told", () => {
+  const reply = { reply: "Oui, on couvre Laval.", action: "reply", language: "fr" };
+
+  it("states the local day and time and whether the business is open right now", async () => {
+    for (const [now, expected] of [
+      [
+        OPEN,
+        /RIGHT NOW AT THE BUSINESS: Wednesday 11:00 \(America\/Toronto\)\. The business is currently OPEN\./,
+      ],
+      [
+        NIGHT,
+        /RIGHT NOW AT THE BUSINESS: Tuesday 23:00 \(America\/Toronto\)\. The business is currently CLOSED\./,
+      ],
+    ] as const) {
+      const llm = llmReturning(reply);
+      const h = harness({ llm, now });
+      await h.service.handleCustomerSms(h.input("Bonjour, vous servez Laval?"));
+      assert.match(llm.last!.user, expected);
+    }
+  });
+
+  it("tells the model how to behave when closed, without promising a callback time", async () => {
+    const llm = llmReturning(reply);
+    const h = harness({ llm, now: NIGHT });
+    await h.service.handleCustomerSms(h.input("Bonjour"));
+    assert.match(llm.last!.system, /OPEN or CLOSED right now/);
+    assert.match(llm.last!.system, /never promise a callback time/i);
+  });
+
+  it("after hours, answers a follow-up from the saved business facts, not the canned closed script", async () => {
+    const llm = llmReturning({
+      reply: "Oui, on répare les chauffe-eau. Le déplacement d’urgence est à 150 $.",
+      action: "reply",
+      language: "fr",
+    });
+    const facts =
+      "We repair and replace water heaters. Emergency dispatch fee is $150.";
+    const h = harness({
+      llm,
+      now: NIGHT,
+      context: { businessFacts: facts },
+      history: [
+        { direction: "inbound", body: "Mon chauffe-eau fuit", at: "2026-10-28T02:50:00Z", providerMessageSid: "SM_a" },
+        { direction: "outbound", body: "Pouvez-vous me dire votre adresse?", at: "2026-10-28T02:51:00Z", automated: true },
+        { direction: "inbound", body: "Combien pour une urgence?", at: "2026-10-28T02:59:00Z", providerMessageSid: "SM_in_1" },
+      ],
+    });
+    const result = await h.service.handleCustomerSms(
+      h.input("Combien pour une urgence?"),
+    );
+    assert.equal(result.status === "replied" && result.source, "model");
+    assert.equal(llm.calls, 1);
+    assert.match(h.sent[0]!.body, /150/);
+    assert.notEqual(h.sent[0]!.body, afterHoursReply("fr", { ...context, ...{ businessFacts: facts } }));
+    assert.match(llm.last!.system, /Emergency dispatch fee is \$150/);
+    assert.match(llm.last!.user, /Customer: Mon chauffe-eau fuit/);
+    assert.match(llm.last!.user, /Assistant: Pouvez-vous me dire votre adresse\?/);
+    assert.match(llm.last!.user, /CLOSED/);
+  });
+
+  it("with no model configured, after hours still gets the honest closed-hours script", async () => {
+    const h = harness({ now: NIGHT });
+    const result = await h.service.handleCustomerSms(h.input("Bonjour"));
+    assert.equal(result.status, "replied");
+    assert.equal(h.sent[0]!.body, afterHoursReply("fr", context));
+  });
+
+  it("in a long conversation the prompt carries the latest turns, not the opening ones", async () => {
+    const llm = llmReturning(reply);
+    const history: HistoryMessage[] = Array.from({ length: 100 }, (_, i) => ({
+      direction: i % 2 === 0 ? ("inbound" as const) : ("outbound" as const),
+      body: `turn ${i}`,
+      at: new Date(OPEN.getTime() - (100 - i) * 120_000).toISOString(),
+      providerMessageSid: i % 2 === 0 ? `SM_old_${i}` : undefined,
+      automated: i % 2 === 1,
+    }));
+    const h = harness({ llm, history });
+    await h.service.handleCustomerSms(h.input("Et pour jeudi?"));
+    const prompt = llm.last!.user;
+    assert.match(prompt, /turn 99/, "the most recent exchange is present");
+    assert.match(prompt, /turn 60/);
+    assert.doesNotMatch(prompt, /turn 59\b/, "older turns are dropped, not the newest");
+    assert.doesNotMatch(prompt, /turn 0\b/);
+    assert.ok(
+      prompt.indexOf("turn 60") < prompt.indexOf("turn 99"),
+      "oldest first, so the thread reads in order",
+    );
+    assert.match(prompt, /NEW MESSAGE FROM CUSTOMER[^\n]*\nEt pour jeudi\?/);
   });
 });
