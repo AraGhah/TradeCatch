@@ -1794,7 +1794,7 @@
     },
     "underTheSink": {
       "playerTitle": "Under the sink: the Receptionist answers",
-      "transcript": "You're under a sink. Your phone's ringing. And you can't answer. That caller isn't leaving a voicemail. They're calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. AI receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi - my kitchen sink is leaking. Do you cover Laval? AI receptionist: We do. What's your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? AI receptionist: Perfect. I've sent your request to the team. They'll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan.",
+      "transcript": "You're under a sink. Your phone's ringing. And you can't answer. That caller isn't leaving a voicemail. They're calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi - my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What's your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I've sent your request to the team. They'll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan.",
       "disclosure": "Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan."
     },
     "theLadder": {
@@ -1804,7 +1804,7 @@
     },
     "afterHours": {
       "playerTitle": "After hours: an emergency is transferred",
-      "transcript": "Your customers don't stop calling at five. AI receptionist: Thanks for calling NorthStar Plumbing. You've reached us after hours. How can I help? Caller: My basement is flooding! I need someone right now! AI receptionist: I understand, this is urgent. I'm connecting you to the on-call technician right now. Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan.",
+      "transcript": "Your customers don't stop calling at five. Receptionist: Thanks for calling NorthStar Plumbing. You've reached us after hours. How can I help? Caller: My basement is flooding! I need someone right now! Receptionist: I understand, this is urgent. I'm connecting you to the on-call technician right now. Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan.",
       "disclosure": "Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan."
     }
   },
@@ -1816,7 +1816,7 @@
     "watchLabel": "Watch the video: {title}",
     "cards": {
       "underTheSink": {
-        "tag": "AI receptionist",
+        "tag": "Receptionist",
         "title": "Under the sink",
         "blurb": "Your hands are full. The receptionist answers, takes the caller's details and sends your team the request."
       },
