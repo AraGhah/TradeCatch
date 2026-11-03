@@ -278,6 +278,7 @@ export function createCrmService(store: CrmStore) {
       let message: CrmMessage | undefined;
       if (input.message?.body.trim()) {
         const saved = await store.appendMessage({
+          id: input.message.id,
           organizationId: input.organizationId,
           conversationId: conversation.id,
           direction: input.message.direction,

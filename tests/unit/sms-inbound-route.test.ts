@@ -6,6 +6,12 @@ import { getCrmService } from "../../src/product/crm/runtime";
 import { demoClientAccount } from "../../src/product/missed-call/fixtures";
 import { ensureMissedCallReady } from "../../src/product/missed-call/runtime";
 import { getSaasStore } from "../../src/product/saas/runtime";
+import {
+  getSmsInbox,
+  processSmsInbox,
+} from "../../src/product/sms-receptionist/inbox-runtime";
+import { workAsyncStorage } from "next/dist/server/app-render/work-async-storage.external";
+import { workUnitAsyncStorage } from "next/dist/server/app-render/work-unit-async-storage.external";
 
 // Wednesday 11:00 in Toronto: inside the default 08:00–20:00 sending window.
 const NOW = new Date("2026-10-28T15:00:00Z").getTime();
@@ -78,6 +84,77 @@ async function automatedReplies(orgId: string, phone = CUSTOMER) {
 }
 
 describe("POST /api/twilio/sms/inbound — SMS receptionist", () => {
+  it("acknowledges persisted receipt before processing, then completes from background work", async () => {
+    const { client, organization } = await business();
+    const pending: (() => Promise<void>)[] = [];
+    const work = mock.method(
+      workAsyncStorage,
+      "getStore",
+      () =>
+        ({
+          afterContext: {
+            after: (task: () => Promise<void>) => pending.push(task),
+          },
+        }) as unknown as NonNullable<
+          ReturnType<typeof workAsyncStorage.getStore>
+        >,
+    );
+    const unit = mock.method(
+      workUnitAsyncStorage,
+      "getStore",
+      () =>
+        ({ type: "request" }) as NonNullable<
+          ReturnType<typeof workUnitAsyncStorage.getStore>
+        >,
+    );
+    try {
+      const response = await POST(
+        webhook(client.smsFromNumber, "Hello, my drain is blocked"),
+      );
+      assert.equal(response.status, 200);
+      assert.equal(pending.length, 1);
+      assert.equal((await automatedReplies(organization.id)).length, 0);
+      await pending[0]!();
+      assert.equal((await automatedReplies(organization.id)).length, 1);
+    } finally {
+      work.mock.restore();
+      unit.mock.restore();
+    }
+  });
+
+  it("returns retryable 503 when receipt storage fails", async () => {
+    const { client } = await business();
+    const enqueue = mock.method(getSmsInbox(), "enqueue", async () => {
+      throw new Error("DB unavailable");
+    });
+    try {
+      assert.equal(
+        (await POST(webhook(client.smsFromNumber, "Hello"))).status,
+        503,
+      );
+    } finally {
+      enqueue.mock.restore();
+    }
+  });
+
+  it("retries a failed history write from the inbox without requiring Twilio redelivery", async () => {
+    const { client, organization } = await business();
+    const capture = mock.method(getCrmService(), "capture", async () => {
+      throw new Error("DB unavailable");
+    });
+    try {
+      assert.equal(
+        (await POST(webhook(client.smsFromNumber, "Hello, blocked drain")))
+          .status,
+        200,
+      );
+    } finally {
+      capture.mock.restore();
+    }
+    mock.timers.tick(61_000);
+    await processSmsInbox();
+    assert.equal((await automatedReplies(organization.id)).length, 1);
+  });
   before(() => {
     for (const key of ENV_KEYS) savedEnv[key] = process.env[key];
     for (const key of ENV_KEYS) delete process.env[key];
@@ -229,6 +306,63 @@ describe("POST /api/twilio/sms/inbound — SMS receptionist", () => {
       (await automatedReplies(organization.id, technician)).length,
       0,
     );
+  });
+
+  it("still honors STOP for a business whose organization is suspended, with no AI reply or CRM record", async () => {
+    const { client, organization, store } = await business();
+    await getSaasStore().updateOrganization(organization.id, {
+      status: "suspended",
+    });
+    const res = await POST(webhook(client.smsFromNumber, "STOP"));
+    assert.equal(res.status, 200);
+    assert.equal(
+      await store.isSmsSuppressed(client.id, CUSTOMER, { asCustomer: true }),
+      true,
+      "the opt-out is recorded even though the business is suspended",
+    );
+    const later = await POST(
+      webhook(client.smsFromNumber, "Finalement j'ai un problème"),
+    );
+    assert.equal(later.status, 200);
+    assert.equal((await automatedReplies(organization.id)).length, 0);
+    assert.equal(
+      (
+        await getCrmService().recentMessagesByPhone(
+          organization.id,
+          CUSTOMER,
+          50,
+        )
+      ).length,
+      0,
+      "a suspended business gets no new CRM history",
+    );
+  });
+
+  it("flushes technician guidance right away instead of waiting for the next tick", async () => {
+    const { client, store } = await business();
+    const technician = client.technicianRoster[0]!.phone;
+    const { engine } = await ensureMissedCallReady();
+    const handle = mock.method(engine, "handleInboundSms", async () => ({
+      handled: true,
+      replies: ["Accepté. Voici les détails du client."],
+    }));
+    const flush = mock.method(engine, "flushOutbound");
+    try {
+      const res = await POST(
+        webhook(client.smsFromNumber, "Accepter", { from: technician }),
+      );
+      assert.equal(res.status, 200);
+      assert.equal(handle.mock.callCount(), 1);
+      assert.equal(flush.mock.callCount(), 1, "sent immediately");
+      assert.equal(
+        (await store.getOutboundQueueStats()).queued,
+        0,
+        "nothing left waiting for the cron",
+      );
+    } finally {
+      handle.mock.restore();
+      flush.mock.restore();
+    }
   });
 
   it("stays silent for a number no business owns", async () => {

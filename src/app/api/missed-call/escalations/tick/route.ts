@@ -8,8 +8,48 @@ import {
 import { isDurableMissedCallStoreConfigured } from "@/lib/config";
 import { getMissedCallMaintenanceRuntime } from "@/product/missed-call/runtime";
 import { getPgPool } from "@/product/missed-call/postgres-store";
+import {
+  getSmsInbox,
+  isSmsInboxAvailable,
+  processSmsInbox,
+} from "@/product/sms-receptionist/inbox-runtime";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Resume texts the webhook accepted but a Worker did not finish. This must
+ * never stop escalation timers or the outbox from running, so a failure is
+ * reported (`ok: false`) instead of thrown.
+ */
+async function drainInbound() {
+  if (!isSmsInboxAvailable()) {
+    return { processed: 0, failed: 0, skipped: true };
+  }
+  let result: { processed: number; failed: number };
+  try {
+    result = await processSmsInbox();
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        event: "tradecatch.sms.inbox_tick_failed",
+        code: error instanceof Error ? error.name : "Error",
+      }),
+    );
+    return { processed: 0, failed: 1, skipped: false };
+  }
+  try {
+    await getSmsInbox().purge();
+  } catch (error) {
+    // Housekeeping only; the next tick tries again.
+    console.warn(
+      JSON.stringify({
+        event: "tradecatch.sms.inbox_purge_failed",
+        code: error instanceof Error ? error.name : "Error",
+      }),
+    );
+  }
+  return { ...result, skipped: false };
+}
 
 /** Process escalation timers (cron or manual). Requires ops bearer auth. */
 async function tick(request: NextRequest) {
@@ -23,6 +63,7 @@ async function tick(request: NextRequest) {
   }
 
   const { engine, store } = getMissedCallMaintenanceRuntime();
+  const inbox = await drainInbound();
   const result = await engine.processEscalations();
 
   if (isDurableMissedCallStoreConfigured()) {
@@ -49,7 +90,12 @@ async function tick(request: NextRequest) {
     queue = undefined;
   }
 
-  return NextResponse.json({ ok: result.outboxFailed === 0, ...result, queue });
+  return NextResponse.json({
+    ok: result.outboxFailed === 0 && inbox.failed === 0,
+    ...result,
+    inbox,
+    queue,
+  });
 }
 
 // Vercel Cron invokes routes with GET; POST remains available for manual ops.

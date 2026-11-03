@@ -28,6 +28,29 @@ export class SmsRateLimitError extends Error {
   }
 }
 
+export class SmsDeliveryError extends Error {
+  /**
+   * `code` is the stable machine-readable reason stored on the outbox row.
+   * `detail` is an optional static, human-readable sentence; never put a
+   * phone number, message text or provider response in it.
+   */
+  constructor(
+    readonly disposition: "retry" | "dead" | "uncertain",
+    readonly code: string,
+    detail?: string,
+  ) {
+    super(detail ?? `SMS delivery: ${code}`);
+    this.name = "SmsDeliveryError";
+  }
+}
+
+export function smsFailureDisposition(
+  error: unknown,
+): "retry" | "dead" | "uncertain" {
+  if (error instanceof SmsRateLimitError) return "retry";
+  return error instanceof SmsDeliveryError ? error.disposition : "uncertain";
+}
+
 async function assertSmsSendAllowed(
   toE164: string,
   fromE164: string,
@@ -115,8 +138,10 @@ export function createTwilioSmsPort(
     if (isLiveProd) {
       return {
         async send() {
-          throw new Error(
-            "Twilio SMS is not configured in production (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN).",
+          throw new SmsDeliveryError(
+            "retry",
+            "credentials_not_configured",
+            "Twilio SMS credentials are not configured",
           );
         },
       };
@@ -137,10 +162,16 @@ export function createTwilioSmsPort(
       });
       if (message.mediaUrl) body.set("MediaUrl", message.mediaUrl);
 
-      const siteUrl = env.NEXT_PUBLIC_SITE_URL?.trim()?.replace(/\/$/, "");
+      const siteUrl = (
+        env.MISSED_CALL_PUBLIC_WEBHOOK_BASE || env.NEXT_PUBLIC_SITE_URL
+      )
+        ?.trim()
+        ?.replace(/\/$/, "");
       if (siteUrl) {
-        body.set("StatusCallback", `${siteUrl}/api/twilio/sms/status`);
-        body.set("StatusCallbackMethod", "POST");
+        const callback = new URL(`${siteUrl}/api/twilio/sms/status`);
+        if (message.outboxId)
+          callback.searchParams.set("outboxId", message.outboxId);
+        body.set("StatusCallback", callback.toString());
       }
 
       const res = await fetch(
@@ -157,8 +188,16 @@ export function createTwilioSmsPort(
       );
 
       if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Twilio SMS failed: ${res.status} ${text}`);
+        // Do not retain provider text, which can contain phone numbers/body.
+        const json = (await res.json().catch(() => ({}))) as { code?: number };
+        throw new SmsDeliveryError(
+          res.status === 429
+            ? "retry"
+            : res.status < 500
+              ? "dead"
+              : "uncertain",
+          String(json.code ?? res.status),
+        );
       }
       const json = (await res.json()) as { sid: string };
       return { sid: json.sid };

@@ -41,7 +41,41 @@ export async function POST(request: NextRequest) {
 
   try {
     const store = getMissedCallReadStore();
-    const updated = await store.applyOutboundProviderStatus(sid, status);
+    const updated = await store.applyOutboundProviderStatus(
+      sid,
+      status,
+      request.nextUrl.searchParams.get("outboxId") ?? undefined,
+    );
+    if (updated?.detail === "sms_receptionist") {
+      const { getSaasStore } = await import("@/product/saas/runtime");
+      const { getCrmRuntime } = await import("@/product/crm/runtime");
+      const org = await getSaasStore().findOrganizationByMissedCallClientId(
+        updated.clientAccountId,
+      );
+      if (org) {
+        await getCrmRuntime().store.updateMessageDelivery(
+          org.id,
+          updated.id,
+          sid,
+          updated.status === "delivered"
+            ? "delivered"
+            : updated.status === "undelivered"
+              ? "undelivered"
+              : "sent",
+        );
+        if (updated.status === "undelivered") {
+          const { getStarterStore } = await import("@/product/starter/runtime");
+          await getStarterStore().upsertInboxItem({
+            organizationId: org.id,
+            kind: "missed_call",
+            refId: updated.id,
+            title: "SMS reply was not delivered",
+            status: "open",
+            reason: `Provider delivery failure (${/^\d+$/.test(params.ErrorCode ?? "") ? params.ErrorCode : "unknown"}). Follow up with the customer.`,
+          });
+        }
+      }
+    }
     if (!updated) {
       console.warn("[twilio/sms/status] unknown MessageSid", sid, status);
     }
