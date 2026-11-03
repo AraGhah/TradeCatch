@@ -2,6 +2,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { getGrowthStore } from "@/product/growth";
 import { OnboardingWizard } from "@/components/app/OnboardingWizard";
+import { OnboardingWebsiteOffer } from "@/components/app/OnboardingWebsiteOffer";
+import { canManageBilling } from "@/product/saas/billing-access";
 
 export default async function AppOnboardingPage({
   params,
@@ -34,6 +36,17 @@ export default async function AppOnboardingPage({
         isGrowth={auth.ctx.organization.plan === "growth"}
         alreadyComplete={Boolean(settings.onboardingCompletedAt)}
       />
+
+      {/* Optional and separate from the subscription: it only records a request. */}
+      {canManageBilling(auth.ctx.membership.role) ? (
+        <OnboardingWebsiteOffer
+          defaults={{
+            businessName: auth.ctx.organization.name,
+            contactName: auth.ctx.user.name,
+            contactEmail: auth.ctx.user.email,
+          }}
+        />
+      ) : null}
     </div>
   );
 }

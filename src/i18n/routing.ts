@@ -12,6 +12,7 @@ export const routing = defineRouting({
     "/receptionist": { en: "/receptionist", fr: "/receptionniste" },
     "/pricing": { en: "/pricing", fr: "/tarifs" },
     "/referral": { en: "/referral", fr: "/parrainage" },
+    "/website-request": { en: "/website-request", fr: "/demande-site-web" },
     "/about": { en: "/about", fr: "/a-propos" },
     "/book-audit": { en: "/book-audit", fr: "/reserver-audit" },
     "/faq": { en: "/faq", fr: "/faq" },
@@ -199,6 +200,14 @@ export const routing = defineRouting({
     "/app/receptionist": {
       en: "/app/receptionist",
       fr: "/app/receptionniste",
+    },
+    "/app/receptionist/voice": {
+      en: "/app/receptionist/voice",
+      fr: "/app/receptionniste/voix",
+    },
+    "/app/website-services": {
+      en: "/app/website-services",
+      fr: "/app/services-site-web",
     },
     "/app/receptionist/fallback": {
       en: "/app/receptionist/fallback",

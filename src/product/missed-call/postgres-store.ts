@@ -773,6 +773,12 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
         await client.query("BEGIN");
         // Finalize stale sends that already have a provider SID — never double-send.
         await client.query(
+          `UPDATE mc_outbound_messages SET status='uncertain', updated_at=now()
+           WHERE status='sending' AND provider_sid IS NULL AND detail LIKE 'sms_receptionist%'
+             AND updated_at < now()-($1::bigint * interval '1 millisecond')`,
+          [staleSendingMs],
+        );
+        await client.query(
           `UPDATE mc_outbound_messages
            SET status = 'sent',
                sent_at = COALESCE(sent_at, now()),
@@ -847,7 +853,7 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
       await q(
         db,
         `UPDATE mc_outbound_messages
-         SET status = 'sent',
+         SET status = CASE WHEN status IN ('delivered','undelivered') THEN status ELSE 'sent' END,
              provider_sid = $2,
              attempts = attempts + 1,
              sent_at = now(),
@@ -858,7 +864,7 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
       );
     },
 
-    async applyOutboundProviderStatus(providerSid, providerStatus) {
+    async applyOutboundProviderStatus(providerSid, providerStatus, outboxId) {
       const normalized = providerStatus.toLowerCase();
       let mode: "delivered" | "failed" | "noop" = "noop";
       if (normalized === "delivered") {
@@ -893,14 +899,18 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
         `UPDATE mc_outbound_messages
          SET provider_status = $2,
              status = CASE
+               WHEN status='delivered' THEN status
+               WHEN status='undelivered' AND $3 <> 'delivered' THEN status
                WHEN $3 = 'delivered' THEN 'delivered'
+               WHEN $3 = 'failed' AND detail LIKE 'sms_receptionist%' THEN 'undelivered'
                WHEN $3 = 'failed' AND attempts < 3 THEN 'retry'
                WHEN $3 = 'failed' THEN 'undelivered'
+               WHEN $2 = 'sent' THEN 'sent'
                ELSE status
              END,
              provider_sid = CASE
-               WHEN $3 = 'failed' AND attempts < 3 THEN NULL
-               ELSE provider_sid
+               WHEN $3 = 'failed' AND attempts < 3 AND COALESCE(detail,'') NOT LIKE 'sms_receptionist%' AND status <> 'delivered' THEN NULL
+               ELSE $1
              END,
              delivered_at = CASE WHEN $3 = 'delivered' THEN now() ELSE delivered_at END,
              last_error = CASE
@@ -908,11 +918,11 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
                ELSE last_error
              END,
              updated_at = now()
-         WHERE provider_sid = $1
+         WHERE provider_sid = $1 OR (id=$4 AND provider_sid IS NULL AND status IN ('sending','uncertain'))
          RETURNING id, workflow_id, client_account_id, to_e164, from_e164,
                    body, detail, status, provider_sid, provider_status, attempts,
                    last_error, created_at, updated_at, sent_at, delivered_at`,
-        [providerSid, normalized, mode],
+        [providerSid, normalized, mode, outboxId ?? null],
       );
       const row = rows[0];
       if (!row) return null;
@@ -955,11 +965,13 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
         retry: string;
         sending: string;
         stale_sending: string;
+        uncertain: string;
       }>(
         db,
         `SELECT
            COUNT(*) FILTER (WHERE status = 'queued')::text AS queued,
            COUNT(*) FILTER (WHERE status = 'retry')::text AS retry,
+           COUNT(*) FILTER (WHERE status = 'uncertain')::text AS uncertain,
            COUNT(*) FILTER (WHERE status = 'sending')::text AS sending,
            COUNT(*) FILTER (
              WHERE status = 'sending'
@@ -974,6 +986,7 @@ export function createPostgresStore(connectionString: string): MissedCallStore {
         retry: Number(row?.retry ?? 0),
         sending: Number(row?.sending ?? 0),
         staleSending: Number(row?.stale_sending ?? 0),
+        uncertain: Number(row?.uncertain ?? 0),
       };
     },
   };

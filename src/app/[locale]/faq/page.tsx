@@ -71,7 +71,7 @@ export default async function FaqPage({
         }
       />
 
-      <section className="bg-paper pt-[clamp(28px,4vw,40px)] pb-[clamp(64px,8vw,100px)]">
+      <section className="bg-paper pt-8 pb-12 sm:pt-[clamp(28px,4vw,40px)] sm:pb-[clamp(64px,8vw,100px)]">
         <Container size="faq">
           <div
             data-reveal
@@ -82,7 +82,7 @@ export default async function FaqPage({
 
           <div
             data-reveal
-            className="mt-10 bg-navy p-[clamp(28px,3.4vw,40px)] text-center text-white"
+            className="mt-8 bg-navy p-6 text-center text-white sm:mt-10 sm:p-[clamp(28px,3.4vw,40px)]"
           >
             <h2 className="m-0 font-heading text-[clamp(22px,2.6vw,32px)] font-extrabold tracking-[-0.035em] text-white">
               {t("stillHave.headline")}

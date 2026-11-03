@@ -35,7 +35,9 @@ def pick_transfer(
             "if anyone is in danger, and take their details for an urgent callback.",
         )
 
-    if cfg.get("afterHours"):
+    # transferHours=always keeps normal transfers ringing after hours when a
+    # line exists; business_hours (default) refuses like before.
+    if cfg.get("afterHours") and cfg.get("transferHours") != "always":
         return TransferDecision(
             None,
             "The office is closed, so a normal transfer is not possible. "
@@ -55,6 +57,62 @@ def pick_transfer(
         None,
         "No person is available to transfer to. Take the caller's details for a callback.",
     )
+
+
+@dataclass(frozen=True)
+class TransferTarget:
+    number: str
+    name: str
+
+
+@dataclass(frozen=True)
+class TransferPlan:
+    """The numbers to try, in order, and why there are none."""
+
+    targets: tuple[TransferTarget, ...] = ()
+    refusal: str | None = None
+
+
+def _general_line_allowed(cfg: Mapping[str, Any]) -> bool:
+    """The owner's rule for ringing the general line outside business hours."""
+    return not cfg.get("afterHours") or cfg.get("transferHours") == "always"
+
+
+def plan_transfer(
+    cfg: Mapping[str, Any],
+    reason: str,
+    department: str | None = None,
+) -> TransferPlan:
+    """The ordered list of lines to try for a transfer.
+
+    The first line is exactly what `pick_transfer` chooses. A second line is added
+    only from numbers the owner already configured: the general line, when it is a
+    different number and the owner's hours rule lets it ring. Nothing the caller or
+    the model says can add a number.
+    """
+    decision = pick_transfer(cfg, reason, department)
+    if decision.number is None:
+        return TransferPlan(refusal=decision.refusal)
+
+    departments = {
+        str(d.get("phoneE164")): str(d.get("name") or "")
+        for d in cfg.get("departments") or []
+        if d.get("phoneE164")
+    }
+    general = cfg.get("transferE164")
+    emergency_line = cfg.get("emergencyTransferE164")
+
+    def label(number: str) -> str:
+        if reason == "emergency" and number == (emergency_line or general):
+            return "Emergency"
+        return departments.get(number) or (
+            "General line" if number == general else "Transfer line"
+        )
+
+    targets = [TransferTarget(decision.number, label(decision.number))]
+    if general and general != decision.number and _general_line_allowed(cfg):
+        targets.append(TransferTarget(str(general), label(str(general))))
+    return TransferPlan(targets=tuple(targets))
 
 
 def digits(value: str) -> str:

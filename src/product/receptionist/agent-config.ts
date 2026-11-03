@@ -15,6 +15,10 @@
 
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import {
+  STANDARD_AGENT_VOICE,
+  type AgentVoice,
+} from "./custom-voice/model";
+import {
   firstLanguage,
   languageSelectTimeoutSeconds,
 } from "./language-select";
@@ -25,6 +29,7 @@ import {
   openingQuestion,
   phrase,
 } from "./prompts";
+import { liveTransfersAllowedNow } from "./transfer-policy";
 import type {
   ReceptionistConfig,
   ReceptionistLanguage,
@@ -77,12 +82,21 @@ export type AgentConfig = {
   /** True when the owner turned on phone booking; the server still decides each request. */
   bookingEnabled: boolean;
   afterHours: boolean;
+  /** Owner setting: when normal transfers may ring. */
+  transferHours: "always" | "business_hours";
   /** Where "talk to a person" goes. Null when no live human is configured. */
   transferE164: string | null;
   /** Where emergencies go (works after hours). Null when none is configured. */
   emergencyTransferE164: string | null;
   /** Named departments the agent may offer. */
   departments: { name: string; phoneE164: string }[];
+  /**
+   * The voice to speak with. "standard" (the default, and whenever anything is
+   * in doubt) keeps the existing voice; "custom" is a cloned voice the owner
+   * consented to, only present for a Receptionist Plus business. The agent
+   * falls back to the standard voice if the cloned one cannot be used.
+   */
+  voice: AgentVoice;
 };
 
 /** Roughly what each owner setting means in words per minute, for the model. */
@@ -101,6 +115,8 @@ export function voiceAgentContext(input: {
   bookingEnabled?: boolean;
   pricingInfo?: string;
   speakingSpeed?: SpeakingSpeed;
+  /** The voice is a clone of the owner's: be honest that the caller is talking to a virtual receptionist. */
+  customVoice?: boolean;
 }): string {
   const lines = [
     "# THIS CALL — WHAT YOU CAN ACTUALLY DO (overrides anything above that says otherwise)",
@@ -118,6 +134,11 @@ export function voiceAgentContext(input: {
     "* You cannot text or email the caller. Never offer a confirmation text or email.",
     "* Never say you have sent, submitted or scheduled anything yourself. Say you have noted the details and the team will follow up; do not give a callback time.",
   ];
+  if (input.customVoice) {
+    lines.push(
+      "* Your voice was created from a recording of the business owner, with their permission. You are still the business's virtual receptionist: never say or imply that you are the owner or a human. If asked, say you are the virtual receptionist (an AI assistant) and offer to connect the caller with a person.",
+    );
+  }
   if (input.bookingEnabled) {
     lines.push(
       "* To book: call check_availability, read out ONLY the times it returns, then call book_appointment with the time the caller chose. Say the appointment is booked ONLY when book_appointment returns status confirmed.",
@@ -139,9 +160,13 @@ export function voiceAgentContext(input: {
       '* To connect the caller with a person, you MUST call the transfer_call tool. Saying "I\'ll transfer you" without calling it does nothing and leaves the caller waiting in silence.',
       "* After calling transfer_call, say nothing more. If it returns a failure, tell the caller briefly and offer to take their details for a callback.",
     );
-    if (input.afterHours) {
+    if (input.afterHours && !input.canTransfer && input.canTransferEmergency) {
       lines.push(
         '* The office is closed: only transfer for an emergency (reason "emergency"). Otherwise take a message.',
+      );
+    } else if (input.afterHours && input.canTransfer) {
+      lines.push(
+        "* The office is closed, but live transfers are still allowed on this line. Call transfer_call when the caller asks for a person.",
       );
     }
     if (input.departments.length > 0) {
@@ -184,6 +209,7 @@ function languageSelectFor(
 export function buildAgentConfig(
   config: ReceptionistConfig,
   now: Date = new Date(),
+  voice: AgentVoice = STANDARD_AGENT_VOICE,
 ): AgentConfig {
   const afterHours = isAfterHours(config, now);
   const emergency =
@@ -200,18 +226,23 @@ export function buildAgentConfig(
     config.systemPrompt?.trim() ||
     `You are the receptionist for ${config.businessName}, a home-services contractor. Be warm, brief and professional. Never invent prices, services or availability.`;
 
+  const transferHours =
+    config.transferHours === "always" ? "always" : "business_hours";
+  const canTransferNow = liveTransfersAllowedNow(config, afterHours);
+
   return {
     configId: config.id,
     businessName: config.businessName,
     receptionistName: config.receptionistName ?? null,
     instructions: `${base}\n\n${voiceAgentContext({
       afterHours,
-      canTransfer: general !== null || departments.length > 0,
+      canTransfer: canTransferNow,
       canTransferEmergency: emergency !== null,
       departments: departments.map((d) => d.name),
       bookingEnabled,
       pricingInfo: config.pricingInfo,
       speakingSpeed,
+      customVoice: voice.mode === "custom",
     })}`,
     greetings: {
       fr: config.greetingFr,
@@ -234,8 +265,10 @@ export function buildAgentConfig(
     timezone: config.timezone,
     bookingEnabled,
     afterHours,
+    transferHours,
     transferE164: general,
     emergencyTransferE164: emergency,
     departments,
+    voice,
   };
 }

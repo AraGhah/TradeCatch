@@ -110,7 +110,7 @@ export function MobileNav({
             onClick={close}
             // The menu opens rarely, so its links earn a short staggered entrance.
             style={{ animationDelay: `${60 + i * 40}ms` }}
-            className={`animate-tc-in border-b border-white/[0.09] py-5 font-heading text-[26px] font-bold tracking-[-0.03em] text-white ${FOCUS_RING}`}
+            className={`animate-tc-in border-b border-white/[0.09] py-3.5 font-heading text-[22px] font-bold tracking-[-0.03em] text-white ${FOCUS_RING}`}
           >
             {link.label}
           </Link>

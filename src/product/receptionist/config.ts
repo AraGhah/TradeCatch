@@ -100,6 +100,9 @@ export const receptionistConfigSchema = z.object({
     .default([]),
   emergencyTransferE164: e164.optional(),
   fallbackTransferE164: e164.optional(),
+  /** Env/demo default keeps after-hours transfers off; profiles override. */
+  transferHours: z.enum(["always", "business_hours"]).default("business_hours"),
+  transferTimeoutSeconds: z.number().int().min(10).max(120).default(30),
   allowVoicemailOnly: z.boolean().default(false),
   faqs: z
     .array(

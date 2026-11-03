@@ -15,6 +15,13 @@ Calls arrive from the Twilio SIP trunk. For each call this agent:
 Required environment (see .env.example): TRADECATCH_BASE_URL, TRADECATCH_OPS_SECRET.
 LiveKit credentials are provided by LiveKit Cloud. Optional turn-taking and voice
 tuning lives in tuning.py.
+
+Voice: most calls use the realtime speech-to-speech model. A Receptionist Plus
+business that cloned its owner's voice (and activated it) gets a speech-to-text ->
+LLM -> ElevenLabs pipeline instead, because a speech-to-speech model cannot speak
+with a custom voice. TradeCatch decides per call (`cfg["voice"]`, see voice.py);
+if the cloned voice cannot be set up, or fails mid-call, the caller still gets an
+answer in a standard voice.
 """
 
 from __future__ import annotations
@@ -23,10 +30,11 @@ import asyncio
 import contextlib
 import logging
 import os
+import time
 from typing import Any, Coroutine, Literal
 
 from dotenv import load_dotenv
-from livekit import api, rtc
+from livekit import rtc
 from livekit.agents import (
     Agent,
     AgentServer,
@@ -39,6 +47,7 @@ from livekit.agents import (
     inference,
     room_io,
 )
+from livekit.agents.llm import ToolError
 from livekit.agents.voice.events import CloseReason
 from livekit.plugins import ai_coustics
 
@@ -46,10 +55,32 @@ import phrases
 from call_record import CallRecord, is_e164
 from language import LanguageChoice, LanguageMenu
 from policy import SilencePolicy
-from routing import call_id_from_room, caller_number, dialed_number, pick_transfer
+from routing import (
+    TransferPlan,
+    TransferTarget,
+    call_id_from_room,
+    caller_number,
+    dialed_number,
+    plan_transfer,
+)
 from tool_results import format_availability, format_booking, parse_offers
 from tradecatch_api import TradeCatchClient
+from transfer import (
+    TransferFailure,
+    TransferOutcome,
+    TransferSettings,
+    failure_message,
+    hold_line,
+    transfer_settings,
+)
 from tuning import turn_handling_from_env, voice_settings
+from voice import CustomVoice, cascade_settings, parse_custom_voice
+from warm_transfer import (
+    ScreenedTransfer,
+    bridge_without_screening,
+    delete_room_when_a_party_leaves,
+    refer_transfer,
+)
 
 logger = logging.getLogger("agent-tradecatch-receptionnist")
 
@@ -65,6 +96,19 @@ will call back. Never state prices, availability or hours, and never say anythin
 booked or confirmed. If anyone is in danger, tell the caller to hang up and call 911.
 Never say you will transfer the call: no transfer is available."""
 
+# A caller can ask again after a failed transfer, but not forever: each round holds
+# the caller for up to the whole transfer budget.
+MAX_TRANSFER_ROUNDS = 2
+# How long the "please hold" line may take before ringing starts anyway.
+HOLD_LINE_TIMEOUT_SECONDS = 10.0
+# Every screening attempt uses the same side-room name and identity, and the previous
+# room is deleted asynchronously. A short pause keeps a quick second attempt from
+# joining a room that is still being torn down.
+BETWEEN_ATTEMPTS_SECONDS = 1.5
+# After a successful warm transfer this process stays only to hang up the second
+# leg when either person leaves; this is the backstop if that never happens.
+CONNECTED_JOB_MAX_SECONDS = 4 * 3600.0
+
 
 class ReceptionistAgent(Agent):
     def __init__(
@@ -74,6 +118,7 @@ class ReceptionistAgent(Agent):
         call: CallRecord,
         client: TradeCatchClient | None,
         sip_identity: str | None,
+        transfers: TransferSettings | None = None,
     ) -> None:
         self._cfg: dict[str, Any] = cfg or {}
         self._has_config = cfg is not None
@@ -81,6 +126,12 @@ class ReceptionistAgent(Agent):
         self._call = call
         self._client = client
         self._sip_identity = sip_identity
+        self._transfer_settings = transfers or transfer_settings(os.environ)
+        self._transfer_rounds = 0
+        self._active_transfer: ScreenedTransfer | None = None
+        # True once a person has the call. The process then stays alive only to end
+        # the call when either side leaves.
+        self._keep_job_alive = False
 
         self._menu = LanguageMenu(
             phrases.enabled_languages(cfg),
@@ -250,6 +301,12 @@ class ReceptionistAgent(Agent):
             self._call.add_turn(speaker, item.text_content)
 
     def _on_close(self, ev: Any) -> None:
+        pending = self._active_transfer
+        if pending is not None and not pending.done():
+            # The caller left (or the model died) while a contractor's phone was ringing:
+            # drop that second leg now, and report that no one was connected.
+            pending.abort("caller_left")
+            self._call.transfer = {"targetName": pending.target.name, "completed": False}
         if ev.reason == CloseReason.ERROR:
             logger.error("session closed with an error: %s", type(ev.error).__name__)
             self._call.end_reason = "error"
@@ -265,34 +322,49 @@ class ReceptionistAgent(Agent):
         if failed:
             await self._recover()
         await self.finish()
-        if self._ctx is not None:
+        if self._ctx is not None and not self._keep_job_alive:
             self._ctx.shutdown(reason="call ended")
 
+    @property
+    def transfer_settings(self) -> TransferSettings:
+        return self._transfer_settings
+
+    def _caller_id(self) -> str | None:
+        """The number the contractor's phone shows: the configured one, else the business line."""
+        return self._transfer_settings.caller_id or self._call.number or None
+
     async def _recover(self) -> None:
-        """The model session died: hand the caller to a person if one can be reached."""
-        number = self._cfg.get("transferE164")
-        if not number or self._cfg.get("afterHours") or not self._sip_identity or self._transferring:
+        """The model session died: connect the caller to a person if one can be reached.
+
+        With no model there is nobody to screen the answer, so this is a direct
+        connection. It is only used here, to avoid leaving the caller in dead air.
+        """
+        if self._keep_job_alive:
+            return  # a person already has the call; the model failing no longer matters
+        settings = self._transfer_settings
+        plan = plan_transfer(
+            self._cfg, "emergency" if self._call.emergency else "caller_request"
+        )
+        if not plan.targets or settings.mode == "off" or not self._sip_identity:
             await self._hang_up()
             return
         self._transferring = True
-        try:
-            await self._transfer(number)
-            self._call.transfer = {"targetName": "General line", "completed": True}
-        except Exception:
-            logger.exception("recovery transfer failed")
-            self._call.transfer = {"targetName": "General line", "completed": False}
-            await self._hang_up()
-
-    async def _transfer(self, number: str) -> None:
-        job = get_job_context()
-        await job.api.sip.transfer_sip_participant(
-            api.TransferSIPParticipantRequest(
-                room_name=job.room.name,
-                participant_identity=self._sip_identity,
-                transfer_to=f"tel:{number}",
-                play_dialtone=True,
+        target = plan.targets[0]
+        if settings.mode == "warm":
+            outcome = await bridge_without_screening(
+                number=target.number, caller_id=self._caller_id(), settings=settings
             )
-        )
+        else:
+            outcome = await refer_transfer(
+                identity=self._sip_identity, number=target.number, settings=settings
+            )
+        self._call.transfer = {"targetName": target.name, "completed": outcome.connected}
+        if not outcome.connected:
+            logger.error("recovery transfer failed (%s)", _why(outcome))
+            await self._hang_up()
+            return
+        if outcome.mechanism == "bridge":
+            self._stay_until_call_ends(watch_room=True)
 
     async def _hang_up(self) -> None:
         try:
@@ -524,60 +596,198 @@ class ReceptionistAgent(Agent):
     ) -> str:
         """Connect the caller to a real person. Call this tool whenever the caller
         asks for a person, or in an emergency. Saying you will transfer without
-        calling this tool does nothing.
+        calling this tool does nothing. It rings the person while the caller waits
+        on the line, and only connects them if the person accepts; the tool result
+        says what really happened.
 
         Args:
             reason: "emergency" for gas leaks, flooding, fire, injury or anything
                 dangerous; otherwise "caller_request".
             department: Optional department name to offer, if the caller asked for one.
         """
-        if reason == "emergency":
+        emergency = reason == "emergency"
+        if emergency:
             self._call.emergency = True
         if not self._has_config or not self._sip_identity:
             return (
                 "Transfers are unavailable on this call. Apologize briefly and "
                 "take the caller's details for a callback."
             )
+        if self._keep_job_alive:
+            return "The caller is already connected to a person. Say nothing more."
         if self._transferring:
             return "A transfer is already in progress. Say nothing more."
 
-        decision = pick_transfer(self._cfg, reason, department)
-        if decision.number is None:
-            return decision.refusal or "No transfer is possible. Offer a callback."
+        plan = plan_transfer(self._cfg, reason, department)
+        if not plan.targets:
+            return plan.refusal or "No transfer is possible. Offer a callback."
 
-        target = next(
-            (
-                str(d.get("name") or "")
-                for d in self._cfg.get("departments") or []
-                if d.get("phoneE164") == decision.number
-            ),
-            "Emergency" if reason == "emergency" else "General line",
-        )
-        language = phrases.LANGUAGE_NAMES.get(self._call.language, self._call.language)
-        self._transferring = True
-        try:
-            await context.session.generate_reply(
-                instructions=(
-                    f"Tell the caller in one short sentence, in {language}, that you are "
-                    "connecting them now."
-                ),
-                allow_interruptions=False,
+        settings = self._transfer_settings
+        if settings.mode == "off":
+            # A configuration problem, not a business rule: make it loud in the logs.
+            logger.error("transfer requested but unavailable: %s", settings.problem)
+            self._call.transfer = {"targetName": plan.targets[0].name, "completed": False}
+            return failure_message(
+                TransferFailure("unavailable"),
+                emergency=emergency,
+                attempts=0,
+                can_retry=False,
             )
-            await self._transfer(decision.number)
-            # The trunk accepted the handoff. Whether the person answers cannot be
-            # seen from here, so the report says "handed off", not "spoke with".
-            self._call.transfer = {"targetName": target, "completed": True}
+        if self._transfer_rounds >= MAX_TRANSFER_ROUNDS:
+            return failure_message(
+                TransferFailure("no_answer"),
+                emergency=emergency,
+                attempts=0,
+                can_retry=False,
+            )
+
+        self._transferring = True
+        self._transfer_rounds += 1
+        try:
+            outcome, attempts, target = await self._run_transfer(
+                context, plan, settings, emergency
+            )
+        finally:
+            self._active_transfer = None
+        if outcome.connected:
+            self._call.transfer = {"targetName": target.name, "completed": True}
             self._call.end_reason = "completed"
             self._closing = True
-            logger.info("transfer started (%s)", reason)
-            return "The transfer has started. Say nothing more."
+            logger.info("transfer connected (%s, %s)", outcome.mechanism, target.name)
+            if outcome.mechanism != "blind":
+                # LiveKit's task has already installed the "either side left" hook.
+                self._stay_until_call_ends(watch_room=False)
+            self._leave_call()
+            return "The caller is now connected to a person. Say nothing more."
+
+        self._transferring = False
+        self._call.transfer = {"targetName": target.name, "completed": False}
+        failure = outcome.failure or TransferFailure("provider_error")
+        logger.warning("transfer did not connect (%s)", _why(outcome))
+        return failure_message(
+            failure,
+            emergency=emergency,
+            attempts=attempts,
+            can_retry=self._transfer_rounds < MAX_TRANSFER_ROUNDS,
+        )
+
+    async def _run_transfer(
+        self,
+        context: RunContext,
+        plan: TransferPlan,
+        settings: TransferSettings,
+        emergency: bool,
+    ) -> tuple[TransferOutcome, int, TransferTarget]:
+        """Try each line in the plan until a person accepts. Never raises."""
+        language = phrases.LANGUAGE_NAMES.get(self._call.language, self._call.language)
+        started = time.monotonic()
+        attempts = 0
+        target = plan.targets[0]
+        outcome = TransferOutcome(False, TransferFailure("provider_error"))
+        try:
+            # Hold the floor so nothing else is said while the person is being reached.
+            async with context.foreground():
+                await self._say_hold_line(context, hold_line(language, emergency))
+                for target in plan.targets:
+                    spent = time.monotonic() - started
+                    if attempts and spent + settings.ring_seconds > settings.budget_seconds:
+                        break
+                    if attempts:
+                        await asyncio.sleep(BETWEEN_ATTEMPTS_SECONDS)
+                    attempts += 1
+                    outcome = await self._attempt(target, settings, language, emergency)
+                    if outcome.connected:
+                        break
+                    logger.info("transfer attempt %d failed (%s)", attempts, _why(outcome))
+                    if outcome.failure is None or not outcome.failure.try_next:
+                        break
+        except asyncio.CancelledError:
+            raise
         except Exception:
-            self._transferring = False
-            self._call.transfer = {"targetName": target, "completed": False}
-            logger.exception("SIP transfer failed")
-            return (
-                "The transfer failed. Tell the caller briefly that you could not "
-                "connect them and offer to take their details for a callback."
+            logger.exception("transfer failed unexpectedly")
+            outcome = TransferOutcome(False, TransferFailure("provider_error"))
+        return outcome, attempts, target
+
+    async def _say_hold_line(self, context: RunContext, instructions: str) -> None:
+        """Tell the caller to hold. A slow or failed announcement never blocks ringing."""
+        try:
+            speech = context.session.generate_reply(
+                instructions=instructions, allow_interruptions=False
+            )
+
+            async def finished() -> None:
+                await speech
+
+            waiter = self._spawn(finished())
+            done, _ = await asyncio.wait({waiter}, timeout=HOLD_LINE_TIMEOUT_SECONDS)
+            if not done:
+                logger.warning("the hold announcement took too long; ringing anyway")
+        except Exception:
+            logger.warning("could not announce the hold", exc_info=True)
+
+    async def _attempt(
+        self,
+        target: TransferTarget,
+        settings: TransferSettings,
+        language: str,
+        emergency: bool,
+    ) -> TransferOutcome:
+        if settings.mode != "warm":
+            return await refer_transfer(
+                identity=self._sip_identity or "", number=target.number, settings=settings
+            )
+        task = ScreenedTransfer(
+            target=target,
+            settings=settings,
+            language_name=language,
+            emergency=emergency,
+            facts=self._call.report_slots(),
+            caller_id=self._caller_id(),
+            business_name=str(self._cfg.get("businessName") or ""),
+        )
+        self._active_transfer = task
+        try:
+            await task
+        except ToolError:
+            pass  # the reason is on task.failure
+        except asyncio.CancelledError:
+            task.abort("caller_left")
+            raise
+        except Exception:
+            logger.exception("screened transfer raised")
+            task.abort("provider_error")
+        finally:
+            self._active_transfer = None
+        return task.outcome()
+
+    def _leave_call(self) -> None:
+        """A person has the call: the model must neither listen nor speak, and ends."""
+        session = self.session
+        with contextlib.suppress(Exception):
+            session.output.set_audio_enabled(False)
+        with contextlib.suppress(Exception):
+            session.input.set_audio_enabled(False)
+        with contextlib.suppress(Exception):
+            # Not delete_room: that would hang up on both of them.
+            session.shutdown(drain=False)
+
+    def _stay_until_call_ends(self, *, watch_room: bool) -> None:
+        """Keep this process running so the call is ended when either side leaves.
+
+        `watch_room` installs the hook that does that. A screened transfer already has
+        one (LiveKit adds it when it merges the calls); a contractor dialed straight
+        into the room does not.
+        """
+        self._keep_job_alive = True
+        ctx = self._ctx
+        if ctx is None:
+            return
+        if watch_room:
+            with contextlib.suppress(Exception):
+                delete_room_when_a_party_leaves(ctx.room)
+        with contextlib.suppress(Exception):
+            asyncio.get_running_loop().call_later(
+                CONNECTED_JOB_MAX_SECONDS, ctx.shutdown, "connected call limit"
             )
 
     @function_tool()
@@ -594,7 +804,81 @@ class ReceptionistAgent(Agent):
         return "Call ended."
 
 
+def _why(outcome: TransferOutcome) -> str:
+    """A log-safe reason (no phone numbers, no caller speech)."""
+    failure = outcome.failure
+    if failure is None:
+        return "connected" if outcome.connected else "unknown"
+    code = f", sip {failure.sip_status}" if failure.sip_status else ""
+    return f"{outcome.mechanism or 'transfer'}: {failure.kind}{code}"
+
+
 server = AgentServer()
+
+
+def prewarm(proc: Any) -> None:
+    """Load the voice-activity model once per worker process, not once per call.
+
+    Only the cloned-voice pipeline needs it; if the plugin is missing or fails
+    to load, those calls use the standard voice and nothing else is affected.
+    """
+    try:
+        from livekit.plugins import silero
+
+        proc.userdata["vad"] = silero.VAD.load()
+    except Exception:
+        logger.warning("voice-activity model not preloaded; cloned voice unavailable", exc_info=True)
+
+
+server.setup_fnc = prewarm
+
+
+def build_custom_voice_session(
+    custom: CustomVoice, vad: Any, options: dict[str, Any]
+) -> AgentSession:
+    """Speech-to-text -> LLM -> the owner's cloned ElevenLabs voice.
+
+    The text-to-speech is wrapped in a fallback chain: if ElevenLabs errors or
+    times out mid-call, the same sentence is spoken by a standard voice instead
+    of leaving the caller in silence. Plugins are imported here so a deployment
+    without them keeps working with the standard voice.
+    """
+    from livekit.agents import tts as lk_tts
+    from livekit.plugins import elevenlabs
+
+    settings = cascade_settings(os.environ)
+    cloned = elevenlabs.TTS(
+        voice_id=custom.voice_id,
+        model=custom.model,
+        api_key=os.environ["ELEVENLABS_API_KEY"],
+    )
+    return AgentSession(
+        stt=inference.STT(settings.stt, language=settings.stt_language),
+        llm=inference.LLM(settings.llm),
+        tts=lk_tts.FallbackAdapter([cloned, inference.TTS(settings.fallback_tts)]),
+        vad=vad,
+        **options,
+    )
+
+
+def build_session(
+    cfg: dict[str, Any] | None, vad: Any, options: dict[str, Any]
+) -> AgentSession:
+    """The session for this call: the owner's cloned voice when TradeCatch says so
+    and it can be built, otherwise the standard realtime voice."""
+    custom = parse_custom_voice(cfg, os.environ)
+    if custom is not None and vad is not None:
+        try:
+            session = build_custom_voice_session(custom, vad, options)
+            logger.info("answering with the business's custom voice (model %s)", custom.model)
+            return session
+        except Exception:
+            # Never let a voice problem stop the call from being answered.
+            logger.exception("custom voice unavailable; answering with the standard voice")
+    elif custom is not None:
+        logger.warning("custom voice requested but no voice-activity model; using standard voice")
+    model, voice = voice_settings(os.environ)
+    return AgentSession(llm=inference.DuplexModel(model=model, voice=voice), **options)
 
 
 @server.rtc_session(agent_name="tradecatch-receptionnist")
@@ -620,16 +904,17 @@ async def entrypoint(ctx: JobContext) -> None:
     agent = ReceptionistAgent(
         cfg=cfg, call=call, client=client, sip_identity=participant.identity
     )
+    settings = agent.transfer_settings
+    if settings.problem:
+        # Transfers are off or degraded by configuration: say so at the start of every
+        # call, not only when a caller finally asks for a person.
+        logger.warning("transfers: %s (mode %s)", settings.problem, settings.mode)
 
-    model, voice = voice_settings(os.environ)
     options: dict[str, Any] = {"user_away_timeout": agent.check_in_seconds}
     turn_handling = turn_handling_from_env(os.environ)
     if turn_handling:
         options["turn_handling"] = turn_handling
-    session = AgentSession(
-        llm=inference.DuplexModel(model=model, voice=voice),
-        **options,
-    )
+    session = build_session(cfg, ctx.proc.userdata.get("vad"), options)
 
     agent.attach(session, ctx)
     # Backstop: the report goes out once even if the session never reports a close.

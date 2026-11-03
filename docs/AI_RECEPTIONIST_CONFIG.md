@@ -76,6 +76,76 @@ The owner's "test conversation" in settings never reserves a slot. This has not
 been validated on live Twilio traffic; keep describing the feature publicly as
 appointment requests confirmed by your team.
 
+## Custom voice (Receptionist Plus only)
+
+Owners on Receptionist Plus can make the LiveKit receptionist speak with a copy
+of their own voice (dashboard: **Receptionist → Voice**, `/app/receptionist/voice`).
+Everything lives in `src/product/receptionist/custom-voice/`.
+
+**Flow.** The owner accepts the consent wording and types their name → the server
+issues a signed challenge of three random words → the owner reads a short text
+containing them (recorded in the browser, or an uploaded file) → the sample is
+transcribed and must contain the words → ElevenLabs creates the voice → the
+owner **previews** it → only then can they switch calls to it. They can switch
+back to the standard voice, delete the voice, or withdraw consent at any time.
+
+**What is stored.** `rc_custom_voices` (one row per organization: mode, the
+provider voice id, the consent record with its wording version and signer name,
+revocation, preview/activation times) and `rc_voice_events` (an audit trail with
+no audio, transcripts or secrets). Both tables have RLS on and no `anon` /
+`authenticated` grants; the app reaches them over its direct Postgres
+connection only. **The recording itself is never stored by TradeCatch**: it is
+read into memory, sent to ElevenLabs and dropped. ElevenLabs keeps the sample it
+needs until the voice is deleted, which is why the consent text says so.
+
+**Rules enforced on the server** (`service.ts`, not the UI):
+
+- *Plan.* `AI_CUSTOM_VOICE` is in `RECEPTIONIST_EXTRA` only. It is re-checked at
+  challenge, clone, preview and activation, and again on every call
+  (`resolveForAgent`), so a downgrade stops the cloned voice on the next call.
+  Deleting, withdrawing consent and switching back stay allowed on any plan.
+- *Roles.* Owner/administrator can change anything; other members can read the
+  status. The organization always comes from the session, never from a body.
+- *Isolation.* Every store call is keyed by organization id; there is no
+  cross-tenant listing. Challenge tokens are bound to organization + user.
+- *Consent.* No sample is sent anywhere without the current consent version.
+  Bump `CONSENT_STATEMENT_VERSION` in `model.ts` whenever the wording in
+  `app.voice.consent.statement` changes.
+- *Verification.* The three-word challenge proves the recording was made now by
+  someone reading our words. It is a liveness and attestation check, **not**
+  biometric proof that the speaker is who they say they are.
+- *Never live by itself.* A new voice starts on the standard mode; activation
+  needs a successful preview. Re-recording resets it.
+- *Voice id.* Never sent to a browser. Only the ops-authenticated
+  `/api/receptionist/agent-config` hands it to the call worker.
+- *Delete.* The business is put back on the standard voice first, then the
+  provider voice is deleted (a 404 counts as already gone). If the provider is
+  down the record stays in `deleting` and the owner can retry. A deletion
+  request from the account page and deleting a demo business also remove it.
+
+**Calls.** `agent-config` returns `voice: {mode:"standard"}` or
+`{mode:"custom", provider, voiceId, model}`; any doubt (no organization, store
+error, not entitled, not previewed, revoked) is `standard`. The Python agent
+(`agents/receptionist/voice.py`, `agent.py`) re-validates it and, for a custom
+voice, builds a speech-to-text → LLM → ElevenLabs pipeline with a fallback TTS
+instead of the usual speech-to-speech model (which cannot speak with a custom
+voice). If that cannot be built, or ElevenLabs fails mid-call, the caller still
+gets an answer in a standard voice. With a custom voice the instructions add a
+line so the receptionist never claims to be the owner or a human.
+
+**Configuration.** `ELEVENLABS_API_KEY` (server and agent), optional
+`ELEVENLABS_STT_MODEL` (default `scribe_v2`), and the agent variables in
+`agents/receptionist/.env.example`. Without the key the feature reports itself
+unavailable and every call uses the standard voice. Apply the schema with
+`npm run db:schema` (migration `035_custom_receptionist_voice`).
+
+**Not verified without a live account.** Voice quality, French pronunciation of
+the clone, call latency of the speech-to-text → LLM → TTS pipeline compared with
+the speech-to-speech model, and the real ElevenLabs/LiveKit calls have only been
+exercised against fakes. Listen to real calls before announcing the feature. The
+consent wording and the voice-cloning terms need legal review for the
+jurisdictions you sell in (including Québec Law 25).
+
 ## Simulated appointments
 
 `appointment-sim.ts` keeps an in-memory calendar per organization for tests.

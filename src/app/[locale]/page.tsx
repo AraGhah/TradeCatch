@@ -6,7 +6,9 @@ import { CTAButton } from "@/components/CTAButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { PricingPreview } from "@/components/PricingPreview";
+import { HomeMobile } from "@/components/home/HomeMobile";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { StoryDemos } from "@/components/StoryDemos";
 import { localizedAnchor } from "@/lib/anchors";
 import { buildMetadata } from "@/lib/seo";
 
@@ -52,311 +54,323 @@ export default async function HomePage({
   const headline = t("hero.headline");
   const accentWord = t("hero.accentWord");
   const leakCards = t.raw("leaks.cards") as { title: string; body: string }[];
-  const systemSteps = t.raw("system.steps") as { title: string; body: string }[];
+  const systemSteps = t.raw("system.steps") as {
+    title: string;
+    body: string;
+  }[];
   const pilotPoints = t.raw("pilot.points") as string[];
 
   return (
     <>
-      {/* 1. Hero */}
-      <section
-        className="relative overflow-hidden bg-navy text-white"
-        style={{
-          padding: "clamp(64px, 8vw, 112px) 0 clamp(72px, 9vw, 128px)",
-        }}
-      >
-        <div
-          aria-hidden
-          className="bg-grid-ink pointer-events-none absolute inset-0"
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute top-[-160px] right-[-120px] h-[520px] w-[520px] rounded-full"
+      <HomeMobile locale={locale} />
+
+      <div className="hidden lg:block">
+        {/* 1. Hero */}
+        <section
+          className="relative overflow-hidden bg-navy text-white"
           style={{
-            background:
-              "radial-gradient(circle, rgba(228,118,43,0.16), transparent 66%)",
+            padding: "clamp(64px, 8vw, 112px) 0 clamp(72px, 9vw, 128px)",
           }}
-        />
-        <Container className="relative text-center">
-          <div className="mx-auto max-w-[46rem]">
-            <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
-              <span className="animate-tc-pulse block h-[7px] w-[7px] rounded-full bg-green" />
-              {t("hero.eyebrow")}
-            </span>
-
-            <h1 className="text-hero mt-[26px] text-white">
-              {accentHeadline(headline, accentWord)}
-            </h1>
-
-            <p className="text-lede mx-auto mt-[26px] max-w-[36em] text-white/68">
-              {t("hero.subheadline")}
-            </p>
-
-            <div className="mt-[34px] flex flex-wrap justify-center gap-3">
-              <CTAButton href="/book-audit" variant="ember" size="lg">
-                {t("hero.ctaPrimary")}
-              </CTAButton>
-              <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
-                {t("hero.ctaSecondary")}
-              </WatchDemoButton>
-            </div>
-
-            <CTAButton
-              href={tryHref}
-              variant="link-ink"
-              className="mt-6 text-[15.5px]"
-            >
-              {t("hero.ctaTry")} <span aria-hidden>→</span>
-            </CTAButton>
-
-            <p className="mt-[22px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
-              {t("hero.reassurance")}
-            </p>
-          </div>
-        </Container>
-      </section>
-
-      {/* 2. The problem: where revenue leaks */}
-      <section
-        className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
-        style={{ padding: "var(--section-y) 0" }}
-        data-reveal
-      >
-        <Container>
+        >
           <div
-            className="grid items-start"
+            aria-hidden
+            className="bg-grid-ink pointer-events-none absolute inset-0"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute top-[-160px] right-[-120px] h-[520px] w-[520px] rounded-full"
             style={{
-              gap: "clamp(28px, 4vw, 64px)",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              background:
+                "radial-gradient(circle, rgba(228,118,43,0.16), transparent 66%)",
             }}
-          >
-            <div className="max-w-[34rem] lg:sticky lg:top-[120px]">
-              <SectionHeading
-                align="left"
-                eyebrow={t("leaks.eyebrow")}
-                title={t("leaks.headline")}
-                intro={t("leaks.intro")}
-              />
+          />
+          <Container className="relative text-center">
+            <div className="mx-auto max-w-[46rem]">
+              <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
+                <span className="animate-tc-pulse block h-[7px] w-[7px] rounded-full bg-green" />
+                {t("hero.eyebrow")}
+              </span>
+
+              <h1 className="text-hero mt-[26px] text-white">
+                {accentHeadline(headline, accentWord)}
+              </h1>
+
+              <p className="text-lede mx-auto mt-[26px] max-w-[36em] text-white/68">
+                {t("hero.subheadline")}
+              </p>
+
+              <div className="mt-[34px] flex flex-wrap justify-center gap-3">
+                <CTAButton href="/book-audit" variant="ember" size="lg">
+                  {t("hero.ctaPrimary")}
+                </CTAButton>
+                <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
+                  {cta("watchDemo")}
+                </WatchDemoButton>
+              </div>
+
               <CTAButton
-                href="/book-audit"
-                variant="ember"
-                className="mt-[30px]"
+                href={tryHref}
+                variant="link-ink"
+                className="mt-6 text-[15.5px]"
               >
-                {t("leaks.cta")}
+                {t("hero.ctaTry")} <span aria-hidden>→</span>
               </CTAButton>
+
+              <p className="mt-[22px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
+                {t("hero.reassurance")}
+              </p>
+            </div>
+          </Container>
+        </section>
+
+        {/* 2. The problem: where revenue leaks */}
+        <section
+          className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+          style={{ padding: "var(--section-y) 0" }}
+          data-reveal
+        >
+          <Container>
+            <div
+              className="grid items-start"
+              style={{
+                gap: "clamp(28px, 4vw, 64px)",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              }}
+            >
+              <div className="max-w-[34rem] lg:sticky lg:top-[120px]">
+                <SectionHeading
+                  align="left"
+                  eyebrow={t("leaks.eyebrow")}
+                  title={t("leaks.headline")}
+                  intro={t("leaks.intro")}
+                />
+                <CTAButton
+                  href="/book-audit"
+                  variant="ember"
+                  className="mt-[30px]"
+                >
+                  {t("leaks.cta")}
+                </CTAButton>
+              </div>
+
+              <div className="flex flex-col">
+                {leakCards.map((card, i) => (
+                  <div
+                    key={card.title}
+                    className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] ${
+                      i === leakCards.length - 1
+                        ? "border-y border-[rgb(var(--ink-rgb)/0.12)]"
+                        : "border-t border-[rgb(var(--ink-rgb)/0.12)]"
+                    }`}
+                    style={{ gridTemplateColumns: "auto 1fr" }}
+                  >
+                    <span className="pt-1.5 font-mono text-[12px] font-semibold tracking-[0.08em] text-ember-text">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <div>
+                      <h3 className="font-heading text-[clamp(21px,2.2vw,27px)] font-bold tracking-[-0.028em] text-heading">
+                        {card.title}
+                      </h3>
+                      <p className="mt-2.5 max-w-[44em] text-[16px] leading-[1.65] text-muted">
+                        {card.body}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        {/* 3. The system: how a missed call becomes a tracked outcome */}
+        <section className="bg-paper" style={{ padding: "var(--section-y) 0" }}>
+          <Container>
+            <div data-reveal>
+              <SectionHeading
+                eyebrow={t("system.eyebrow")}
+                title={t("system.headline")}
+                intro={t("system.intro")}
+              />
             </div>
 
-            <div className="flex flex-col">
-              {leakCards.map((card, i) => (
+            <div className="mt-[clamp(40px,5vw,56px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {systemSteps.map((step, i) => (
                 <div
-                  key={card.title}
-                  className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] ${
-                    i === leakCards.length - 1
-                      ? "border-y border-[rgb(var(--ink-rgb)/0.12)]"
-                      : "border-t border-[rgb(var(--ink-rgb)/0.12)]"
-                  }`}
-                  style={{ gridTemplateColumns: "auto 1fr" }}
+                  key={step.title}
+                  data-reveal
+                  className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)]"
                 >
-                  <span className="pt-1.5 font-mono text-[12px] font-semibold tracking-[0.08em] text-ember-text">
+                  <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <div>
-                    <h3 className="font-heading text-[clamp(21px,2.2vw,27px)] font-bold tracking-[-0.028em] text-heading">
-                      {card.title}
-                    </h3>
-                    <p className="mt-2.5 max-w-[44em] text-[16px] leading-[1.65] text-muted">
-                      {card.body}
-                    </p>
-                  </div>
+                  <h3 className="mt-4 font-heading text-[19.5px] font-bold tracking-[-0.028em] text-heading">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 text-[15px] leading-[1.6] text-muted">
+                    {step.body}
+                  </p>
                 </div>
               ))}
             </div>
-          </div>
-        </Container>
-      </section>
 
-      {/* 3. The system: how a missed call becomes a tracked outcome */}
-      <section className="bg-paper" style={{ padding: "var(--section-y) 0" }}>
-        <Container>
-          <div data-reveal>
-            <SectionHeading
-              eyebrow={t("system.eyebrow")}
-              title={t("system.headline")}
-              intro={t("system.intro")}
-            />
-          </div>
-
-          <div className="mt-[clamp(40px,5vw,56px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {systemSteps.map((step, i) => (
-              <div
-                key={step.title}
-                data-reveal
-                className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)]"
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              <WatchDemoButton
+                video="missed-call"
+                className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[translate,scale,background] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
               >
-                <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
-                  {String(i + 1).padStart(2, "0")}
+                {t("proofExamples.demoCta")}
+              </WatchDemoButton>
+              <CTAButton href="/how-it-works" variant="secondary">
+                {t("system.cta")} →
+              </CTAButton>
+            </div>
+          </Container>
+        </section>
+
+        {/* 3b. Three short dramatizations: the product on the job */}
+        <StoryDemos locale={locale} id="on-the-job" />
+
+        {/* 4. Plan ladder (full detail lives on /pricing) */}
+        <section
+          id="plans"
+          className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+          style={{ padding: "var(--section-y) 0" }}
+        >
+          <Container>
+            <PricingPreview
+              eyebrow={t("pricingPreview.eyebrow")}
+              headline={t("pricingPreview.headline")}
+              intro={t("pricingPreview.intro")}
+              tiers={t.raw("pricingPreview.tiers")}
+              cta={t("pricingPreview.cta")}
+              receptionistCta={t("pricingPreview.receptionistCta")}
+              note={t("pricingPreview.note")}
+              billingNote={t("pricingPreview.billingNote")}
+              recommendedIndex={1}
+            />
+          </Container>
+        </section>
+
+        {/* 5. Founder: the one trust signal a pilot-stage product has */}
+        <section
+          className="bg-paper"
+          style={{ padding: "var(--section-y) 0" }}
+          data-reveal
+        >
+          <Container>
+            <FounderSection
+              eyebrow={t("founder.eyebrow")}
+              headline={t("founder.headline")}
+              name={t("founder.name")}
+              role={t("founder.role")}
+              floatLabel={t("founder.floatLabel")}
+              statement={t("founder.statement")}
+              points={t.raw("founder.points")}
+              workLabel={t("founder.workLabel")}
+              work={t.raw("founder.work")}
+              emailLabel={cta("emailDirect")}
+              email={site("founderEmail")}
+              talkCta={t("founder.talkCta")}
+            />
+          </Container>
+        </section>
+
+        {/* 6. Objections */}
+        <section
+          className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
+          style={{ padding: "var(--section-y) 0" }}
+        >
+          <Container>
+            <div
+              className="grid items-start"
+              style={{
+                gap: "clamp(28px, 4vw, 56px)",
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              }}
+            >
+              <div data-reveal className="max-w-[min(100%,28rem)]">
+                <SectionHeading
+                  align="left"
+                  eyebrow={t("faqTeaser.eyebrow")}
+                  title={t("faqTeaser.headline")}
+                />
+                <CTAButton href="/faq" variant="secondary" className="mt-7">
+                  {t("faqTeaser.viewAll")}
+                </CTAButton>
+              </div>
+              <div
+                data-reveal
+                className="min-w-0 border-t border-[rgb(var(--ink-rgb)/0.12)]"
+              >
+                <FaqAccordion items={t.raw("faqTeaser.items")} />
+              </div>
+            </div>
+          </Container>
+        </section>
+
+        {/* 7. The offer: founding pilot */}
+        <section
+          id="pilot"
+          className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
+          style={{ padding: "var(--section-y) 0" }}
+        >
+          <Container>
+            <div
+              className="grid items-start"
+              style={{
+                gap: "clamp(32px, 5vw, 72px)",
+                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+              }}
+            >
+              <div data-reveal>
+                <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(228,118,43,0.13)] px-[13px] py-1.5 font-mono text-[10.5px] font-semibold tracking-[0.13em] text-ember-text uppercase">
+                  {t("pilot.badge")}
                 </span>
-                <h3 className="mt-4 font-heading text-[19.5px] font-bold tracking-[-0.028em] text-heading">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-[15px] leading-[1.6] text-muted">
-                  {step.body}
+                <h2 className="mt-[18px] font-heading text-[clamp(30px,3.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-heading">
+                  {t("pilot.headline")}
+                </h2>
+                <p className="text-lede mt-[18px] max-w-[34em] text-muted">
+                  {t("pilot.body")}
+                </p>
+                <p className="mt-4 max-w-[34em] text-[14px] leading-[1.55] text-muted">
+                  {t("pilot.landingNote")}
                 </p>
               </div>
-            ))}
-          </div>
 
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-            <WatchDemoButton
-              video="missed-call"
-              className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[translate,scale,background] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
-            >
-              {t("proofExamples.demoCta")}
-            </WatchDemoButton>
-            <CTAButton href="/how-it-works" variant="secondary">
-              {t("system.cta")} →
-            </CTAButton>
-          </div>
-        </Container>
-      </section>
-
-      {/* 4. Plan ladder (full detail lives on /pricing) */}
-      <section
-        id="plans"
-        className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <PricingPreview
-            eyebrow={t("pricingPreview.eyebrow")}
-            headline={t("pricingPreview.headline")}
-            intro={t("pricingPreview.intro")}
-            tiers={t.raw("pricingPreview.tiers")}
-            cta={t("pricingPreview.cta")}
-            receptionistCta={t("pricingPreview.receptionistCta")}
-            note={t("pricingPreview.note")}
-          />
-        </Container>
-      </section>
-
-      {/* 5. Founder: the one trust signal a pilot-stage product has */}
-      <section
-        className="bg-paper"
-        style={{ padding: "var(--section-y) 0" }}
-        data-reveal
-      >
-        <Container>
-          <FounderSection
-            eyebrow={t("founder.eyebrow")}
-            headline={t("founder.headline")}
-            name={t("founder.name")}
-            role={t("founder.role")}
-            floatLabel={t("founder.floatLabel")}
-            statement={t("founder.statement")}
-            points={t.raw("founder.points")}
-            workLabel={t("founder.workLabel")}
-            work={t.raw("founder.work")}
-            emailLabel={cta("emailDirect")}
-            email={site("founderEmail")}
-            talkCta={t("founder.talkCta")}
-          />
-        </Container>
-      </section>
-
-      {/* 6. Objections */}
-      <section
-        className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <div
-            className="grid items-start"
-            style={{
-              gap: "clamp(28px, 4vw, 56px)",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-            }}
-          >
-            <div data-reveal className="max-w-[min(100%,28rem)]">
-              <SectionHeading
-                align="left"
-                eyebrow={t("faqTeaser.eyebrow")}
-                title={t("faqTeaser.headline")}
-              />
-              <CTAButton href="/faq" variant="secondary" className="mt-7">
-                {t("faqTeaser.viewAll")}
-              </CTAButton>
-            </div>
-            <div
-              data-reveal
-              className="min-w-0 border-t border-[rgb(var(--ink-rgb)/0.12)]"
-            >
-              <FaqAccordion items={t.raw("faqTeaser.items")} />
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      {/* 7. The offer: founding pilot */}
-      <section
-        id="pilot"
-        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <div
-            className="grid items-start"
-            style={{
-              gap: "clamp(32px, 5vw, 72px)",
-              gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            }}
-          >
-            <div data-reveal>
-              <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(228,118,43,0.13)] px-[13px] py-1.5 font-mono text-[10.5px] font-semibold tracking-[0.13em] text-ember-text uppercase">
-                {t("pilot.badge")}
-              </span>
-              <h2 className="mt-[18px] font-heading text-[clamp(30px,3.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-heading">
-                {t("pilot.headline")}
-              </h2>
-              <p className="text-lede mt-[18px] max-w-[34em] text-muted">
-                {t("pilot.body")}
-              </p>
-              <p className="mt-4 max-w-[34em] text-[14px] leading-[1.55] text-muted">
-                {t("pilot.landingNote")}
-              </p>
-            </div>
-
-            <div
-              data-reveal
-              className="rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(28px,3.4vw,40px)]"
-            >
-              <p className="font-mono text-[11px] tracking-[0.14em] text-muted uppercase">
-                {t("pilot.pointsLabel")}
-              </p>
-              <ul className="mt-[22px] flex flex-col">
-                {pilotPoints.map((point) => (
-                  <li
-                    key={point}
-                    className="flex items-start gap-3.5 border-t border-[rgb(var(--ink-rgb)/0.08)] py-[15px] text-[15.5px] leading-[1.6] text-secondary"
-                  >
-                    <span
-                      className="mt-0.5 shrink-0 text-[14px] text-green"
-                      aria-hidden
+              <div
+                data-reveal
+                className="rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(28px,3.4vw,40px)]"
+              >
+                <p className="font-mono text-[11px] tracking-[0.14em] text-muted uppercase">
+                  {t("pilot.pointsLabel")}
+                </p>
+                <ul className="mt-[22px] flex flex-col">
+                  {pilotPoints.map((point) => (
+                    <li
+                      key={point}
+                      className="flex items-start gap-3.5 border-t border-[rgb(var(--ink-rgb)/0.08)] py-[15px] text-[15.5px] leading-[1.6] text-secondary"
                     >
-                      ✓
-                    </span>
-                    {point}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-[22px] border-t border-[rgb(var(--ink-rgb)/0.08)] pt-5 text-[14px] leading-[1.6] text-muted">
-                {t("pilot.guarantee")}
-              </p>
-              <CTAButton href="/book-audit" variant="ember" className="mt-6">
-                {t("pilot.cta")}
-              </CTAButton>
+                      <span
+                        className="mt-0.5 shrink-0 text-[14px] text-green"
+                        aria-hidden
+                      >
+                        ✓
+                      </span>
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-[22px] border-t border-[rgb(var(--ink-rgb)/0.08)] pt-5 text-[14px] leading-[1.6] text-muted">
+                  {t("pilot.guarantee")}
+                </p>
+                <CTAButton href="/book-audit" variant="ember" className="mt-6">
+                  {t("pilot.cta")}
+                </CTAButton>
+              </div>
             </div>
-          </div>
-        </Container>
-      </section>
+          </Container>
+        </section>
+      </div>
     </>
   );
 }

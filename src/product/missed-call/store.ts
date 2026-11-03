@@ -86,11 +86,12 @@ export type MissedCallStore = {
   applyOutboundProviderStatus(
     providerSid: string,
     providerStatus: string,
+    outboxId?: string,
   ): Promise<OutboundMessageRecord | null>;
   markOutboundFailed(
     id: string,
     error: string,
-    nextStatus: "retry" | "dead",
+    nextStatus: "retry" | "dead" | "uncertain",
   ): Promise<void>;
   /** Ops observability: queued/retry/sending depth and stale sending count. */
   getOutboundQueueStats(): Promise<{
@@ -98,6 +99,8 @@ export type MissedCallStore = {
     retry: number;
     sending: number;
     staleSending: number;
+    /** Sent without a provider answer; waiting on Twilio's callback, never resent. */
+    uncertain: number;
   }>;
 };
 
@@ -171,10 +174,10 @@ export function createMemoryStore(): MissedCallStore {
     },
     async saveClient(client) {
       clients.set(client.id, client);
-      bySms.set(client.smsFromNumber, client.id);
+      bySms.set(normalizePhone(client.smsFromNumber), client.id);
     },
     async findClientBySmsFromNumber(n) {
-      const id = bySms.get(n);
+      const id = bySms.get(normalizePhone(n));
       return id ? (clients.get(id) ?? null) : null;
     },
     async saveCall(call) {
@@ -418,6 +421,15 @@ export function createMemoryStore(): MissedCallStore {
           msg.status === "sending" &&
           now - new Date(msg.updatedAt).getTime() >= staleSendingMs;
         if (!isQueued && !isStaleSending) continue;
+        if (
+          isStaleSending &&
+          !msg.providerSid &&
+          msg.detail?.startsWith("sms_receptionist")
+        ) {
+          outbound.set(msg.id, { ...msg, status: "uncertain" });
+          outboundClaimed.delete(msg.id);
+          continue;
+        }
         // Provider already accepted — finalize instead of double-sending.
         if (isStaleSending && msg.providerSid) {
           outbound.set(msg.id, {
@@ -447,7 +459,9 @@ export function createMemoryStore(): MissedCallStore {
       const now = new Date().toISOString();
       outbound.set(id, {
         ...msg,
-        status: "sent",
+        status: ["delivered", "undelivered"].includes(msg.status)
+          ? msg.status
+          : "sent",
         providerSid,
         attempts: msg.attempts + 1,
         updatedAt: now,
@@ -455,11 +469,24 @@ export function createMemoryStore(): MissedCallStore {
       });
       outboundClaimed.delete(id);
     },
-    async applyOutboundProviderStatus(providerSid, providerStatus) {
+    async applyOutboundProviderStatus(providerSid, providerStatus, outboxId) {
       const normalized = providerStatus.toLowerCase();
       for (const [id, msg] of outbound) {
-        if (msg.providerSid !== providerSid) continue;
-        let status = msg.status;
+        if (
+          msg.providerSid !== providerSid &&
+          !(
+            id === outboxId &&
+            !msg.providerSid &&
+            ["sending", "uncertain"].includes(msg.status)
+          )
+        )
+          continue;
+        if (
+          msg.status === "delivered" ||
+          (msg.status === "undelivered" && normalized !== "delivered")
+        )
+          return { ...msg };
+        let status: OutboundMessageRecord["status"] = msg.status;
         let deliveredAt = msg.deliveredAt;
         if (normalized === "delivered") {
           status = "delivered";
@@ -470,14 +497,19 @@ export function createMemoryStore(): MissedCallStore {
           normalized === "canceled"
         ) {
           // Recoverable undelivered → retry outbox rather than silent success.
-          status = msg.attempts < 3 ? "retry" : "undelivered";
+          status =
+            !msg.detail?.startsWith("sms_receptionist") && msg.attempts < 3
+              ? "retry"
+              : "undelivered";
+        } else if (normalized === "sent") {
+          status = "sent";
         }
         const next = {
           ...msg,
           status,
           providerStatus: normalized,
           // Clear SID so a retry can claim and resend without unique conflicts.
-          providerSid: status === "retry" ? undefined : msg.providerSid,
+          providerSid: status === "retry" ? undefined : providerSid,
           deliveredAt,
           updatedAt: new Date().toISOString(),
         };
@@ -505,9 +537,11 @@ export function createMemoryStore(): MissedCallStore {
       let retry = 0;
       let sending = 0;
       let staleSending = 0;
+      let uncertain = 0;
       for (const msg of outbound.values()) {
         if (msg.status === "queued") queued += 1;
         else if (msg.status === "retry") retry += 1;
+        else if (msg.status === "uncertain") uncertain += 1;
         else if (msg.status === "sending") {
           sending += 1;
           if (
@@ -518,7 +552,7 @@ export function createMemoryStore(): MissedCallStore {
           }
         }
       }
-      return { queued, retry, sending, staleSending };
+      return { queued, retry, sending, staleSending, uncertain };
     },
   };
 }

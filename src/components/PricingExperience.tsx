@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { motion, type Variants } from "framer-motion";
 import { CTAButton, type AnchorHref } from "@/components/CTAButton";
 
@@ -78,6 +78,11 @@ export type PricingTier = {
   stepUp?: string;
   /** Allowance/limits disclosure shown under the price */
   usageNote?: string;
+  /**
+   * A capability only this plan has, called out above the feature groups so
+   * the premium plan is clearly set apart from the one below it.
+   */
+  exclusive?: { badge: string; title: string; body: string };
   ctaLabel?: string;
   ctaHref?: string;
   /** Tags the intake submission with the plan this CTA came from. */
@@ -97,6 +102,8 @@ type Labels = {
   details: { title: string; body: string }[];
   onceLabel: string;
   monthlyEyebrow: string;
+  /** Small line under each plan CTA pointing at the Done-for-You Website Service. */
+  websiteMention: string;
 };
 
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -116,9 +123,15 @@ const includesItem: Variants = {
 export function PricingExperience({
   tiers,
   labels,
+  afterPlans,
 }: {
   tiers: PricingTier[];
   labels: Labels;
+  /**
+   * Rendered directly under the plan cards, before the custom-plan block and
+   * the FAQs. The pricing page puts the Done-for-You Website Service here.
+   */
+  afterPlans?: ReactNode;
 }) {
   return (
     <div className="w-full">
@@ -136,9 +149,14 @@ export function PricingExperience({
             setupLabel={labels.setupLabel}
             onceLabel={labels.onceLabel}
             monthlyEyebrow={labels.monthlyEyebrow}
+            websiteMention={labels.websiteMention}
           />
         ))}
       </div>
+
+      {afterPlans ? (
+        <div className="mt-[clamp(40px,5vw,56px)]">{afterPlans}</div>
+      ) : null}
 
       <motion.section
         initial={{ y: 14 }}
@@ -234,6 +252,7 @@ function PlanCard({
   setupLabel,
   onceLabel,
   monthlyEyebrow,
+  websiteMention,
 }: {
   tier: PricingTier;
   index: number;
@@ -241,6 +260,7 @@ function PlanCard({
   setupLabel: string;
   onceLabel: string;
   monthlyEyebrow: string;
+  websiteMention: string;
 }) {
   const setupDisplay = tier.setupAmount ?? tier.price;
   const monthlyDisplay =
@@ -389,6 +409,24 @@ function PlanCard({
       </div>
 
       <div className="relative mt-7 flex flex-1 flex-col gap-5">
+        {tier.exclusive ? (
+          <div
+            data-testid="plan-exclusive"
+            className={`border-l-2 border-orange px-4 py-3.5 ${
+              premium ? "bg-white/[0.07]" : "bg-[rgba(228,118,43,0.08)]"
+            }`}
+          >
+            <p className="text-[11px] font-semibold tracking-[0.1em] text-orange uppercase">
+              {tier.exclusive.badge}
+            </p>
+            <p className={`mt-1.5 font-heading text-[18px] font-extrabold tracking-[-0.02em] ${strongText}`}>
+              {tier.exclusive.title}
+            </p>
+            <p className={`mt-1.5 text-[14.5px] leading-[1.5] ${listText}`}>
+              {tier.exclusive.body}
+            </p>
+          </div>
+        ) : null}
         {tier.includesPrevious ? (
           <p
             className={`border-t pt-4 text-[14.5px] font-semibold ${softDivider} ${strongText}`}
@@ -451,6 +489,14 @@ function PlanCard({
             {tier.secondaryCtaLabel}
           </CTAButton>
         ) : null}
+        <p className={`text-center text-[13px] leading-[1.45] ${mutedText}`}>
+          <a
+            href="#website-service"
+            className="underline decoration-1 underline-offset-[3px] transition-colors hover:text-orange focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+          >
+            {websiteMention}
+          </a>
+        </p>
       </div>
     </motion.article>
   );

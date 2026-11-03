@@ -18,6 +18,8 @@ export function PricingPreview({
   cta,
   receptionistCta,
   note,
+  billingNote,
+  recommendedIndex = 1,
 }: {
   eyebrow: string;
   headline: string;
@@ -26,6 +28,9 @@ export function PricingPreview({
   cta: string;
   receptionistCta: string;
   note: string;
+  billingNote?: string;
+  /** Growth is the recommended phone-answering middle tier. */
+  recommendedIndex?: number;
 }) {
   return (
     <>
@@ -39,6 +44,15 @@ export function PricingPreview({
         />
       </div>
 
+      {billingNote ? (
+        <p
+          data-reveal
+          className="mt-5 max-w-[42em] rounded-[12px] border border-orange/30 bg-[rgba(228,118,43,0.08)] px-4 py-3 text-[14.5px] leading-[1.5] text-heading"
+        >
+          {billingNote}
+        </p>
+      ) : null}
+
       <StaggerGroup
         as="ol"
         stagger={0.12}
@@ -46,12 +60,13 @@ export function PricingPreview({
       >
         {tiers.map((tier, i) => {
           const premium = i === tiers.length - 1;
+          const recommended = i === recommendedIndex;
           return (
             <StaggerItem
               as="li"
               key={tier.name}
               className={`flex flex-col p-[clamp(22px,2.6vw,30px)] transition-[translate,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:shadow-card-hover ${
-                premium
+                premium || recommended
                   ? "animate-tc-glow border border-orange/45 bg-surface ring-1 ring-orange/15"
                   : "border border-[rgb(var(--ink-rgb)/0.1)] bg-surface hover:border-[rgb(var(--ink-rgb)/0.2)]"
               }`}
@@ -64,7 +79,7 @@ export function PricingPreview({
               </h3>
               <p
                 className={`mt-3 font-heading text-[clamp(28px,3vw,36px)] font-extrabold leading-[0.95] tracking-[-0.04em] break-words ${
-                  premium ? "text-orange" : "text-heading"
+                  premium || recommended ? "text-orange" : "text-heading"
                 }`}
               >
                 {tier.price}

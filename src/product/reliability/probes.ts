@@ -1,3 +1,4 @@
+import { resolveLlmConfig } from "@/product/receptionist/llm";
 import type { Probe } from "./service";
 import type { ServiceName } from "./types";
 
@@ -97,40 +98,39 @@ export async function providerProbes(
       state: "configured",
       detail: "Rule-based mode; live voice flow not verified",
     });
-  else if (
-    (provider === "anthropic" || !provider) &&
-    env.ANTHROPIC_API_KEY?.trim()
-  ) {
-    probes.push(
-      await check(
-        "ai_receptionist",
-        "https://api.anthropic.com/v1/models?limit=1",
-        {
-          "x-api-key": env.ANTHROPIC_API_KEY.trim(),
-          "anthropic-version": "2023-06-01",
-        },
-        (b) => Array.isArray(b.data) && b.data.length > 0,
-      ),
-    );
-  } else if (
-    (provider === "openai" || !provider) &&
-    env.OPENAI_API_KEY?.trim() &&
-    !env.RECEPTIONIST_LLM_BASE_URL?.trim()
-  ) {
-    probes.push(
-      await check(
-        "ai_receptionist",
-        "https://api.openai.com/v1/models",
-        { authorization: `Bearer ${env.OPENAI_API_KEY.trim()}` },
-        (b) => Array.isArray(b.data) && b.data.length > 0,
-      ),
-    );
-  } else
-    probes.push({
-      ...off("ai_receptionist"),
-      state: env.RECEPTIONIST_LLM_BASE_URL ? "configured" : "unconfigured",
-      detail:
-        "No supported provider connection check; live voice flow not verified",
-    });
+  else {
+    // Same provider/model decision the receptionist itself makes.
+    const { config: llm } = resolveLlmConfig(env);
+    if (llm?.provider === "anthropic") {
+      probes.push(
+        await check(
+          "ai_receptionist",
+          "https://api.anthropic.com/v1/models?limit=1",
+          {
+            "x-api-key": llm.apiKey,
+            "anthropic-version": "2023-06-01",
+          },
+          (b) => Array.isArray(b.data) && b.data.length > 0,
+        ),
+      );
+    } else if (llm?.provider === "openai" && llm.hosted && llm.apiKey) {
+      // Reads the one model the receptionist will call, so a key that cannot
+      // use it (or a mistyped RECEPTIONIST_LLM_MODEL) shows up here, not on a call.
+      probes.push(
+        await check(
+          "ai_receptionist",
+          `${llm.baseUrl}/models/${encodeURIComponent(llm.model)}`,
+          { authorization: `Bearer ${llm.apiKey}` },
+          (b) => b.id === llm.model,
+        ),
+      );
+    } else
+      probes.push({
+        ...off("ai_receptionist"),
+        state: env.RECEPTIONIST_LLM_BASE_URL ? "configured" : "unconfigured",
+        detail:
+          "No supported provider connection check; live voice flow not verified",
+      });
+  }
   return probes;
 }

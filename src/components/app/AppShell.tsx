@@ -23,6 +23,7 @@ const GROUPS = [
     label: "groupReceptionist",
     items: [
       { href: "/app/receptionist", key: "receptionistConfig" },
+      { href: "/app/receptionist/voice", key: "receptionistVoice" },
       { href: "/app/calls", key: "callHistory" },
       { href: "/app/test-center", key: "testReceptionist" },
     ],
@@ -54,6 +55,7 @@ const GROUPS = [
     items: [
       { href: "/app/settings/account", key: "account" },
       { href: "/app/settings", key: "settings" },
+      { href: "/app/website-services", key: "websiteServices" },
       { href: "/app/referrals", key: "referrals" },
       { href: "/app/onboarding", key: "onboarding" },
       { href: "/app/help", key: "help" },
@@ -142,25 +144,31 @@ export function AppShell({
           </div>
           <button
             type="button"
-            className={`w-fit rounded-md border border-[rgb(var(--ink-rgb)/0.15)] px-3 py-1.5 text-sm font-semibold text-heading md:hidden ${FOCUS_RING}`}
+            className={`min-h-11 w-fit rounded-md border border-[rgb(var(--ink-rgb)/0.15)] px-4 py-2.5 text-sm font-semibold text-heading md:hidden ${FOCUS_RING}`}
             aria-expanded={navOpen}
             onClick={() => setNavOpen((open) => !open)}
           >
             {navOpen ? t("nav.closeMenu") : t("nav.menu")}
           </button>
-          <div className={navOpen ? "flex flex-col gap-6" : "hidden md:flex md:flex-col md:gap-6"}>
-          <nav aria-label="TradeCatch" className="flex flex-col gap-5">
+          <div
+            className={
+              navOpen
+                ? "flex flex-col gap-5 rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-3 md:border-0 md:bg-transparent md:p-0"
+                : "hidden md:flex md:flex-col md:gap-6"
+            }
+          >
+          <nav aria-label="TradeCatch" className="flex flex-col gap-4 md:gap-5">
             {isPlatformAdmin ? (
               <Link
                 href="/admin"
-                className={`w-fit rounded-md px-2 py-1 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
+                className={`w-fit rounded-md px-3 py-2.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
               >
                 {t("nav.admin")}
               </Link>
             ) : null}
             {GROUPS.map((group) => (
               <div key={group.label}>
-                <p className="px-2 font-mono text-[10px] tracking-[0.12em] text-muted uppercase">
+                <p className="px-3 font-mono text-[10px] tracking-[0.12em] text-muted uppercase">
                   {t(`nav.${group.label}`)}
                 </p>
                 <ul className="mt-1 flex flex-col">
@@ -173,7 +181,7 @@ export function AppShell({
                         <Link
                           href={item.href}
                           aria-current={active ? "page" : undefined}
-                          className={`block rounded-md px-2 py-1.5 text-sm ${FOCUS_RING} ${
+                          className={`block min-h-11 rounded-md px-3 py-2.5 text-sm ${FOCUS_RING} ${
                             active
                               ? "bg-navy text-white"
                               : "text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"

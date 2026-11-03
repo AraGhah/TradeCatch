@@ -15,13 +15,21 @@ const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
 
 // Header = the pages that sell. About, FAQ, Help and Receptionist live in the
-// footer so no page is linked from both places.
-type NavHref =
+// footer so no page is linked from both places on desktop. Mobile drawer is a
+// shorter conversion path (demo / pricing / FAQ / login).
+type DesktopNavHref =
   | "/services"
   | "/how-it-works"
   | "/industries"
   | "/pricing"
   | "/referral";
+
+type MobileNavHref =
+  | "/how-it-works"
+  | "/receptionist"
+  | "/pricing"
+  | "/faq"
+  | "/login";
 
 export function Header() {
   const t = useTranslations("nav");
@@ -41,12 +49,20 @@ export function Header() {
     };
   }, []);
 
-  const links: { href: NavHref; label: string }[] = [
+  const links: { href: DesktopNavHref; label: string }[] = [
     { href: "/services", label: t("services") },
     { href: "/how-it-works", label: t("howItWorks") },
     { href: "/industries", label: t("industries") },
     { href: "/pricing", label: t("pricing") },
     { href: "/referral", label: t("referral") },
+  ];
+
+  const mobileLinks: { href: MobileNavHref; label: string }[] = [
+    { href: "/how-it-works", label: t("howItWorks") },
+    { href: "/receptionist", label: t("demo") },
+    { href: "/pricing", label: t("pricing") },
+    { href: "/faq", label: t("faq") },
+    { href: "/login", label: t("login") },
   ];
 
   const phoneDisplay = site("phone").replace(/-/g, "·");
@@ -102,17 +118,22 @@ export function Header() {
               labelToLight={t("toggleThemeToLight")}
             />
             <CTAButton href="/book-audit" variant="ink" size="sm">
-              {cta("bookAudit")}
+              {cta("bookFreeDemo")}
             </CTAButton>
           </div>
 
           <div className="flex items-center gap-2.5 min-[1080px]:hidden">
-            <CTAButton href="/book-audit" variant="ink" size="sm" className="!px-3.5 !py-2.5 text-[13px]">
+            <CTAButton
+              href="/book-audit"
+              variant="ink"
+              size="sm"
+              className="!px-3.5 !py-2.5 text-[13px]"
+            >
               {cta("bookAuditShort")}
             </CTAButton>
             <MobileNav
-              links={links}
-              ctaLabel={cta("bookAuditFree")}
+              links={mobileLinks}
+              ctaLabel={cta("bookFreeDemo")}
               phone={phoneDisplay}
               phoneHref={site("phoneHref")}
             />

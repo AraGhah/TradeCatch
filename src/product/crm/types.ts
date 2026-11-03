@@ -176,6 +176,7 @@ export type ConversationView = Conversation & {
 };
 
 export type CaptureMessage = {
+  id?: string;
   direction: "inbound" | "outbound";
   body: string;
   fromE164?: string;

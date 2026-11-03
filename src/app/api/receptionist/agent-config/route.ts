@@ -6,7 +6,10 @@ import {
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
 import { buildAgentConfig } from "@/product/receptionist/agent-config";
+import { resolveAgentVoice } from "@/product/receptionist/custom-voice/agent-voice";
+import { getVoiceService } from "@/product/receptionist/custom-voice/runtime";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
+import { getSaasStore } from "@/product/saas/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +18,9 @@ const digits = (s: string) => s.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
 /**
  * Ops-only: the realtime voice agent asks, per call, how to answer the number
  * that was dialed. Returns the business's rendered instructions and its
- * validated transfer lines. Bearer ops auth + X-Ops-Actor in production.
+ * validated transfer lines, and which voice to speak with (the standard voice,
+ * or the business's own cloned voice on Receptionist Plus). Bearer ops auth +
+ * X-Ops-Actor in production.
  */
 export async function GET(request: NextRequest) {
   if (!authorizeOpsRequest(request)) return unauthorizedOpsResponse();
@@ -43,5 +48,14 @@ export async function GET(request: NextRequest) {
       { status: 404 },
     );
   }
-  return NextResponse.json({ ok: true, config: buildAgentConfig(config) });
+  // The cloned voice (Receptionist Plus), or the standard voice whenever it is
+  // not entitled, not activated, revoked, or anything at all goes wrong.
+  const voice = await resolveAgentVoice(config.id, {
+    getOrganization: (id) => getSaasStore().getOrganization(id),
+    voices: getVoiceService(),
+  });
+  return NextResponse.json({
+    ok: true,
+    config: buildAgentConfig(config, new Date(), voice),
+  });
 }

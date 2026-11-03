@@ -312,6 +312,7 @@ function stylePersonality(
 export function composeBusinessFacts(
   knowledge: KnowledgeSettings | undefined,
   freeform?: string,
+  opts?: { canTransfer?: boolean },
 ): string | undefined {
   const k = knowledge ?? {
     services: [],
@@ -346,7 +347,9 @@ export function composeBusinessFacts(
     lines.push(`Business rules: ${k.additionalInstructions}`);
   if (freeform?.trim()) lines.push(freeform.trim());
   lines.push(
-    "Never invent services, prices, or arrival times. Offer a human transfer when unsure.",
+    opts?.canTransfer === false
+      ? "Never invent services, prices, or arrival times. Never offer a live transfer; take a message for a callback instead."
+      : "Never invent services, prices, or arrival times. Offer a human transfer when unsure.",
   );
   const text = lines.join("\n").trim();
   return text || undefined;
@@ -507,7 +510,9 @@ export function buildProfileConfig(
       s.communicationStyle ?? "professional_friendly",
       s.personality,
     ),
-    businessFacts: composeBusinessFacts(knowledge, s.businessFacts),
+    businessFacts: composeBusinessFacts(knowledge, s.businessFacts, {
+      canTransfer,
+    }),
     systemPrompt,
     routing: (canTransfer ? (s.routing ?? []) : []).map((r, i) => ({
       id: slug(r.name, i),
@@ -530,6 +535,8 @@ export function buildProfileConfig(
         client.humanReviewPhone ??
         ownerPhone(client))
       : undefined,
+    transferHours: transfer.transferHours,
+    transferTimeoutSeconds: transfer.timeoutSeconds,
     allowVoicemailOnly: !canTransfer || transfer.failedAction === "voicemail",
     collectPreferredTime:
       s.collectPreferredTime !== false && collect.preferredDate !== false,
