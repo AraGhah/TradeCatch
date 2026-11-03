@@ -150,7 +150,9 @@ describe("account export sections", () => {
     assert.equal(result.manifest.sections[2].status, "not_applicable");
     assert.ok(result.manifest.sections[3].reasons.includes("invalid_record"));
   });
-  it("bounds slow reads, aborts derived readers, and marks sections skipped after the deadline", async () => {
+  it("bounds slow reads, aborts derived readers, and marks sections skipped after the deadline", async (t) => {
+    // Timers can fire before Date.now() advances to the deadline.
+    t.mock.method(Date, "now", () => 1000);
     let aborted = false,
       called = false;
     const result = await buildAccountExport(

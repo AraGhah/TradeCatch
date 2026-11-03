@@ -52,6 +52,7 @@ export async function buildAccountExport(
     reasons: string[];
   }[] = [];
   let totalBytes = 0;
+  let deadlineReached = false;
   for (const source of sources) {
     const section: (typeof sections)[number] = {
       name: source.name,
@@ -68,12 +69,17 @@ export async function buildAccountExport(
     const controller = new AbortController();
     try {
       const remaining = deadline - Date.now();
-      if (remaining <= 0) throw new Error("export_time_limit");
+      if (deadlineReached || remaining <= 0)
+        throw new Error("export_time_limit");
+      const boundedByDeadline = remaining <= limits.readMs;
       const result = await Promise.race([
         Promise.resolve().then(() => source.load(controller.signal)),
         new Promise<never>((_, reject) => {
           timer = setTimeout(
-            () => reject(new Error("source_timeout")),
+            () => {
+              if (boundedByDeadline) deadlineReached = true;
+              reject(new Error("source_timeout"));
+            },
             Math.min(limits.readMs, remaining),
           );
         }),
