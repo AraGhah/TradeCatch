@@ -17,7 +17,7 @@ Environment (all optional except the key for custom voices):
                             call uses the standard voice
   AGENT_CUSTOM_VOICE        "false" is a kill switch: standard voice for everyone
   AGENT_CUSTOM_VOICE_STT    speech-to-text for cloned-voice calls (default deepgram/nova-3)
-  AGENT_CUSTOM_VOICE_LLM    language model for cloned-voice calls (default openai/gpt-4.1-mini)
+  AGENT_CUSTOM_VOICE_LLM    language model for cloned-voice calls (default openai/gpt-6-luna)
   AGENT_FALLBACK_TTS        voice used mid-call if the cloned voice fails to
                             synthesize (default cartesia/sonic-3; "provider/model"
                             or "provider/model:voice")
@@ -37,7 +37,7 @@ DEFAULT_MODEL = "eleven_flash_v2_5"
 DEFAULT_STT = "deepgram/nova-3"
 # "multi" lets the speech-to-text follow a caller who switches between French and English.
 STT_LANGUAGE = "multi"
-DEFAULT_LLM = "openai/gpt-4.1-mini"
+DEFAULT_LLM = "openai/gpt-6-luna"
 DEFAULT_FALLBACK_TTS = "cartesia/sonic-3"
 
 # A LiveKit Inference descriptor: "provider/model" with an optional ":voice".
