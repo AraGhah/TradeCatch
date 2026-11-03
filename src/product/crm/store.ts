@@ -104,7 +104,10 @@ export type CrmStore = {
     organizationId: string,
     customerId: string,
   ): Promise<Conversation | null>;
-  listConversations(organizationId: string, limit?: number): Promise<Conversation[]>;
+  listConversations(
+    organizationId: string,
+    limit?: number,
+  ): Promise<Conversation[]>;
   updateConversation(
     organizationId: string,
     id: string,
@@ -116,6 +119,12 @@ export type CrmStore = {
   appendMessage(
     message: Omit<CrmMessage, "id" | "at"> & { id?: string; at?: string },
   ): Promise<CrmMessage | null>;
+  updateMessageDelivery(
+    organizationId: string,
+    id: string,
+    providerSid: string | undefined,
+    status: CrmMessage["deliveryStatus"],
+  ): Promise<void>;
   listMessages(
     organizationId: string,
     conversationId: string,

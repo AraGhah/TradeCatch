@@ -19,6 +19,7 @@ import {
 import type { LlmClient } from "@/product/receptionist/llm";
 import type { ReceptionistConfig } from "@/product/receptionist/types";
 import { classifyUrgency } from "@/product/missed-call/urgency";
+import { SmsDeliveryError } from "@/product/missed-call/twilio";
 import type {
   ClientAccount,
   OutboundMessageRecord,
@@ -50,9 +51,9 @@ import {
 export const SMS_RECEPTIONIST_EVENT_PREFIX = "tradecatch.sms_receptionist.";
 
 /** Automated replies to one customer within a rolling hour, to stop loops. */
-export const MAX_AUTO_REPLIES_PER_HOUR = 6;
-const HISTORY_LIMIT = 20;
-const PROMPT_HISTORY_LIMIT = 10;
+export const MAX_AUTO_REPLIES_PER_HOUR = 20;
+const HISTORY_LIMIT = 60;
+const PROMPT_HISTORY_LIMIT = 40;
 const OPENINGS_TIMEOUT_MS = 3_500;
 const OPENINGS_HORIZON_DAYS = 7;
 const DEFAULT_LANGUAGE: SmsLanguage = "fr";
@@ -151,7 +152,7 @@ export type SmsReceptionistDeps = {
     enqueue(message: OutboundMessageRecord): Promise<void>;
     claim(id: string): Promise<OutboundMessageRecord | null>;
     markSent(id: string, providerSid: string): Promise<void>;
-    markFailed(id: string, error: string): Promise<void>;
+    markFailed(id: string, error: string, cause?: unknown): Promise<void>;
   };
   sendSms(message: OutboundSms): Promise<{ sid: string }>;
   recordOutbound(input: {
@@ -160,6 +161,8 @@ export type SmsReceptionistDeps = {
     businessE164: string;
     body: string;
     sent: boolean;
+    providerSid?: string;
+    outboxId?: string;
   }): Promise<void>;
   escalate(input: {
     organizationId: string;
@@ -218,6 +221,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
       clientId: input.client.id,
       messageSid: input.messageSid,
     };
+    const started = Date.now();
     const skip = (
       reason: SkipReason,
       extra: Record<string, unknown> = {},
@@ -262,11 +266,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
 
       const now = deps.now();
       const window = await deps.quietHours(input.organizationId);
-      const insideWindow = isInsideSendingWindow(
-        now,
-        client.timezone,
-        window,
-      );
+      const insideWindow = isInsideSendingWindow(now, client.timezone, window);
 
       const history = await deps.history(
         input.organizationId,
@@ -341,7 +341,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
       // Outside the owner's sending window: still answer (customers text
       // after hours expecting a reply) with a closed-hours script or rules
       // brain — never go fully silent. Staff get an inbox item, not a wake-up SMS.
-      if (!insideWindow) {
+      if (!insideWindow && !deps.llm) {
         const specific = rulesReply({
           body: input.body,
           language,
@@ -399,6 +399,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
                 body: input.body,
                 language,
                 slots: openings.offered,
+                now,
               }),
               schema: REPLY_SCHEMA as unknown as Record<string, unknown>,
               maxTokens: 500,
@@ -510,6 +511,8 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
     } catch (err) {
       deps.log("failed", { ...base, reason: errorCode(err) });
       return { status: "skipped", reason: "unexpected_error" };
+    } finally {
+      deps.log("processed", { ...base, processingMs: Date.now() - started });
     }
   }
 
@@ -785,20 +788,51 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
       return { status: "skipped", reason: "duplicate" };
     }
 
+    try {
+      await deps.recordOutbound({
+        organizationId: input.organizationId,
+        customerE164: input.fromE164,
+        businessE164: claimed.fromE164,
+        body: claimed.body,
+        sent: false,
+        outboxId,
+      });
+    } catch (error) {
+      // No provider request was made; retry after history storage recovers.
+      await deps.outbox.markFailed(
+        outboxId,
+        "history_unavailable",
+        new SmsDeliveryError("retry", "history_unavailable"),
+      );
+      throw error;
+    }
+
     let sent = false;
+    let providerSid: string | undefined;
     try {
       const result = await deps.sendSms({
-        toE164: input.fromE164,
-        fromE164: input.client.smsFromNumber,
-        body: out.body,
+        toE164: claimed.toE164,
+        fromE164: claimed.fromE164,
+        body: claimed.body,
+        outboxId,
       });
-      await deps.outbox.markSent(outboxId, result.sid);
       sent = true;
+      try {
+        await deps.outbox.markSent(outboxId, result.sid);
+      } catch (err) {
+        // Twilio accepted it. A DB failure is not permission to send it again.
+        deps.log("db_failed", {
+          ...base,
+          stage: "mark_sent",
+          reason: errorCode(err),
+        });
+      }
+      providerSid = result.sid;
       deps.log("sent", base);
     } catch (err) {
       deps.log("send_failed", { ...base, reason: errorCode(err) });
       try {
-        await deps.outbox.markFailed(outboxId, errorCode(err));
+        await deps.outbox.markFailed(outboxId, errorCode(err), err);
       } catch (markErr) {
         deps.log("db_failed", {
           ...base,
@@ -813,8 +847,10 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
         organizationId: input.organizationId,
         customerE164: input.fromE164,
         businessE164: input.client.smsFromNumber,
-        body: out.body,
+        body: claimed.body,
         sent,
+        providerSid,
+        outboxId,
       });
     } catch (err) {
       deps.log("db_failed", { ...base, stage: "crm", reason: errorCode(err) });

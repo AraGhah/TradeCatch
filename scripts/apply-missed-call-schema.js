@@ -44,6 +44,7 @@ async function main() {
       ["src", "product", "starter", "schema.sql"],
       "003_starter_features",
     );
+    await applyFile(client, ["src", "product", "sms-receptionist", "schema.sql"], "sms_receptionist_inbox");
     await applyFile(
       client,
       ["src", "product", "growth", "schema.sql"],

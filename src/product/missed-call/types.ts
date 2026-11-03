@@ -309,6 +309,7 @@ export type InboundSms = {
 };
 
 export type OutboundSms = {
+  outboxId?: string;
   toE164: string;
   fromE164: string;
   body: string;
@@ -330,6 +331,8 @@ export type OutboundMessageStatus =
   | "sent"
   | "delivered"
   | "undelivered"
+  /** Provider may have accepted a timed-out request. Reconcile; do not resend. */
+  | "uncertain"
   | "dead";
 
 /** Durable SMS outbox row (Postgres mc_outbound_messages / memory mirror). */
