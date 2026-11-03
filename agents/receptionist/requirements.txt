@@ -1,4 +1,9 @@
-livekit-agents>=1.8
+# WarmTransferTask is a beta API and warm_transfer.py overrides three of its private
+# methods, so the version it was written and tested against is pinned. Raise it
+# deliberately and re-run `python -m unittest discover -p "test_*.py"`.
+livekit-agents~=1.8.10
+# Transfers read the SIP REFER response status (SIPTransferStatus), added in livekit-api 1.2.
+livekit-api>=1.2.2
 livekit-plugins-ai-coustics
 livekit-plugins-elevenlabs
 livekit-plugins-silero

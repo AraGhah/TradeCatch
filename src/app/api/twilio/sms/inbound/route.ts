@@ -12,7 +12,8 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
+const EMPTY_TWIML =
+  '<?xml version="1.0" encoding="UTF-8"?><Response></Response>';
 
 function escapeXml(text: string) {
   return text
@@ -80,7 +81,10 @@ export async function POST(request: NextRequest) {
       // A business whose organization is suspended or missing gets no AI reply
       // and no CRM record, but a customer's STOP and a technician's reply must
       // still be honored, exactly as before the inbox existed.
-      const mediaCount = Math.min(10, Math.max(0, Number(params.NumMedia) || 0));
+      const mediaCount = Math.min(
+        10,
+        Math.max(0, Number(params.NumMedia) || 0),
+      );
       const result = await engine.handleInboundSms({
         fromE164: params.From,
         toE164: params.To,
