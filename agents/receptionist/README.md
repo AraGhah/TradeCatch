@@ -45,22 +45,72 @@ TradeCatch (`/app/receptionist`, or `/admin/businesses/<id>`), not in this folde
 If TradeCatch cannot be reached when the call starts, the agent uses a minimal,
 bilingual instruction set with **no** transfer and no promises.
 
-## Why transfers used to do nothing
+## Transfers
 
-The first version of this agent had **no tools**, so "I'll transfer you" was only
-words. Now `transfer_call` calls LiveKit's `transfer_sip_participant`, which sends a
-SIP REFER to Twilio. Two things must be true for it to work:
+`transfer_call` never claims a transfer worked because it was *started*. The call is
+reported as transferred (`completed: true`, outcome "transferred" / "emergency
+transferred" in TradeCatch) only after a person has been reached and has accepted.
+Anything else is a named failure, the caller stays on the line with the agent, and
+the report says `completed: false` (for an emergency that also raises the owner's
+critical alert).
 
-1. The agent calls the tool (the prompt requires it).
-2. The Twilio trunk allows transfers: **Elastic SIP Trunking → the trunk → General →
-   Call Transfer (SIP REFER) = "Enabled for all calls"** (API: `TransferMode=enable-all`).
-   With the default `disable-all`, Twilio rejects the transfer and the caller is left
-   waiting in silence.
+`AGENT_TRANSFER_MODE` picks the mechanism (default `auto`):
 
-A REFER hands the call to Twilio and LiveKit does not hear what happens next, so a
-transfer that **rings out with no answer cannot be detected** on this path. The agent
-only reports a failed transfer when the REFER itself is rejected. (The Twilio
-`<Gather>` path does detect no-answer and offers a callback.)
+| Mode | How it works | Needs |
+| --- | --- | --- |
+| `warm` | The agent rings the contractor on a **second leg** while the caller stays connected and hears hold music. A short screening call tells the contractor who is waiting (and that it is an emergency). The calls are merged only when the contractor says yes or **presses 1**; then the agent leaves **without hanging up**. Busy, no answer, voicemail, wrong number, a refusal, a hang-up, a provider error or a missed deadline all return the caller to the agent. | A LiveKit **outbound** SIP trunk (`LIVEKIT_SIP_OUTBOUND_TRUNK`) |
+| `blind` | SIP REFER hands the caller to the contractor. LiveKit reports the REFER's final status and **that status is what counts** (the old code ignored it). A voicemail greeting still counts as an answer, and there is no screening. | Twilio trunk: **General → Call Transfer (SIP REFER) = "Enabled for all calls"** |
+| `auto` | `warm` when a trunk id is configured, otherwise `blind`. | |
+| `off` | No transfers; the agent takes a message. | |
+
+If the first line fails and the owner configured another one, the next is tried
+(emergency: emergency line, then the general line, and the general line only when the
+owner's hours rule lets it ring). A phone-system failure (bad credentials, geographic
+permission, provider outage) stops after the first attempt, because a second number
+would fail the same way. A whole attempt is bounded: ring time + confirmation time,
+and the total is capped by `AGENT_TRANSFER_BUDGET_SECONDS`.
+
+Why a keypress: for the SIP layer a voicemail greeting is an *answered* call
+(`wait_until_answered` returns), so the contractor has to do something a recording
+cannot. The screening assistant also calls `voicemail_detected` when it hears one.
+
+When the model session itself dies, there is nobody to screen the answer, so the
+contractor is dialed straight into the caller's room (`warm`) or handed off with a
+checked REFER (`blind`). A voicemail would look like success on that path only.
+
+### Setting up warm transfers
+
+1. **Twilio** (Elastic SIP Trunking → the trunk → *Termination*): a Termination SIP URI
+   (`<name>.pstn.twilio.com`) and a Credential List (or IP ACL) for it. Under *Voice →
+   Geographic Permissions* enable **Canada** (and the US if contractors dial there):
+   a 403 on every transfer attempt is almost always this.
+2. **LiveKit**: create the outbound trunk and note its id.
+
+   ```bash
+   # outbound-trunk.json
+   # {"trunk": {"name": "TradeCatch transfers", "address": "<name>.pstn.twilio.com", "numbers": ["*"]}}
+   lk sip outbound create outbound-trunk.json --auth-user "$TWILIO_TERMINATION_USER" --auth-pass "$TWILIO_TERMINATION_PASS"
+   ```
+
+   `numbers: ["*"]` lets each call show the business's own number to the contractor.
+   Set `LIVEKIT_SIP_NUMBER` to one fixed caller ID instead if you prefer; either must
+   be a Twilio number or a verified caller ID on the same account.
+3. **Agent secrets** (never in git):
+
+   ```bash
+   lk agent update-secrets --secrets "LIVEKIT_SIP_OUTBOUND_TRUNK=<ST_...>"
+   lk agent deploy
+   ```
+
+At the start of every call the agent logs a warning if transfers are degraded
+(`transfers: ... (mode ...)`), so a missing trunk shows up before a caller needs it.
+
+### Plan rules still apply
+
+The numbers come from the TradeCatch profile. A plan without `AI_CALL_TRANSFER` /
+`AI_EMERGENCY_ROUTING` (e.g. Growth) is sent to the agent with **no** transfer numbers,
+so the agent never offers one. That is intentional and unchanged: the fix for such a
+business is a plan change or an owner decision, not agent configuration.
 
 ## Safety
 
@@ -88,7 +138,9 @@ only reports a failed transfer when the REFER itself is rejected. (The Twilio
 | `tradecatch_api.py` | HTTP client: timeouts, retries, no PII in logs |
 | `tuning.py` | Env-driven voice, endpointing and interruption settings |
 | `voice.py` | Validates the per-call voice (`cfg["voice"]`) and the cloned-voice pipeline settings |
-| `routing.py` | Choosing a transfer line; caller number and call id from SIP |
+| `routing.py` | Choosing the transfer lines (primary + fallback); caller number and call id from SIP |
+| `transfer.py` | Transfer settings, failure classification and wording (pure, no LiveKit) |
+| `warm_transfer.py` | The screened warm transfer on LiveKit's `WarmTransferTask`, the checked REFER, the direct bridge |
 
 ## Configuration
 
@@ -98,6 +150,8 @@ ranges: `AGENT_VOICE`, `AGENT_REALTIME_MODEL`, `AGENT_ENDPOINTING_MODE`,
 `AGENT_MIN_ENDPOINTING_DELAY`, `AGENT_MAX_ENDPOINTING_DELAY`, `AGENT_INTERRUPTIONS`,
 `AGENT_INTERRUPTION_MIN_DURATION`, `AGENT_INTERRUPTION_MIN_WORDS`,
 `AGENT_PREEMPTIVE_GENERATION`, and `AGENT_{CONFIG,AVAILABILITY,BOOK}_TIMEOUT_SECONDS`.
+Transfers: `AGENT_TRANSFER_MODE`, `LIVEKIT_SIP_OUTBOUND_TRUNK`, `LIVEKIT_SIP_NUMBER`,
+`AGENT_TRANSFER_{RING,CONSULT,BUDGET}_SECONDS`.
 Out-of-range values are ignored (a typo cannot make the line cut callers off).
 
 The speech-to-speech model has no speaking-rate setting, so pacing (calm, slower for
@@ -137,13 +191,19 @@ Roll back with `lk agent rollback` if a new version misbehaves.
 
 ```bash
 pip install -r requirements.txt
-python -m unittest discover -p "test_*.py"     # ~180 tests, no network, no real LiveKit room
+python -m unittest discover -p "test_*.py"     # ~260 tests, no network, no real LiveKit room
 ```
+
+Run it with the same Python that has `livekit-agents` installed: without it the agent
+tests are **skipped, not failed**, and the run still says OK.
 
 The suite covers the language menu and silence policy, the call record and its
 validation, the API client against a local HTTP server (timeouts, retries, 4xx vs 5xx),
 tool results, and the agent end to end with a fake session (opening, DTMF, silence,
-booking confirmed / taken / failed, transfer, report-once, error recovery).
+booking confirmed / taken / failed, transfers, report-once, error recovery). The
+transfer tests drive LiveKit's real `WarmTransferTask` with a fake job, rooms and SIP
+API (busy, no answer, wrong number, voicemail, refusal, keypress, deadlines, the caller
+hanging up, a failed merge). They prove our code; they cannot prove a carrier's behaviour.
 The TypeScript side (`npx tsx --test tests/unit/receptionist-*.test.ts`) covers the
 endpoints and the Twilio `<Gather>` path, including 20 full-call scenarios in
 `tests/unit/receptionist-scenarios.test.ts`.
@@ -162,8 +222,14 @@ Before relying on a number, call it and check:
 - [ ] Ask for a price: no number is invented, the open question resumes.
 - [ ] Book an appointment: it is only called "booked" after it shows in the calendar;
       take the slot first from another phone and check the "just taken" path.
-- [ ] Transfer to a department, then to a number that does not answer — expect the
-      SIP limitation above on this path.
+- [ ] Transfer, contractor says yes (and again with "press 1"): the caller hears hold
+      music, then the contractor; the agent is gone; hanging up on either side ends both.
+- [ ] Transfer to a phone that is busy, one that rings out, one that goes to voicemail,
+      and a number the trunk cannot dial: each time the agent comes back, says what
+      happened, offers a callback (emergency: 911 advice), and TradeCatch shows a
+      *failed* transfer.
+- [ ] Hang up while the contractor's phone is still ringing: the ringing stops.
+- [ ] The contractor's phone shows the number you expect, in French and in English.
 - [ ] Say nothing for the silence window: one check-in, then goodbye.
 - [ ] "Are you a robot?": honest, short, then back to the question.
 - [ ] Ear check of pace and pauses; adjust the `AGENT_*` delays if it feels hurried or slow.
