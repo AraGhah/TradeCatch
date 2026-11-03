@@ -1791,6 +1791,45 @@
     "missedCall": {
       "playerTitle": "TradeCatch missed-call demo",
       "transcript": "You're working. A customer calls. You miss it. And that customer might already be calling your competitor. With TradeCatch, an eligible missed call triggers a text back under your company's name, so you reconnect before the opportunity disappears. TradeCatch captures the conversation, organizes the lead, and keeps you informed, all in one workspace. Sent a quote and heard nothing back? TradeCatch follows up automatically, and a reply stops the sequence. Less chasing. More opportunities. TradeCatch: every call counts. Illustrative demo with a fictional business. Missed-call recovery runs as a controlled pilot."
+    },
+    "underTheSink": {
+      "playerTitle": "Under the sink: the Receptionist answers",
+      "transcript": "You're under a sink. Your phone's ringing. And you can't answer. That caller isn't leaving a voicemail. They're calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi - my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What's your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I've sent your request to the team. They'll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan.",
+      "disclosure": "Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan."
+    },
+    "theLadder": {
+      "playerTitle": "On the ladder: a missed call gets a text back",
+      "transcript": "You're an electrician. Not a receptionist. Plenty of callers won't leave a voicemail. They'll just call someone else. With TradeCatch, a missed call gets a text back right away, under your company's name. You wrap up the job. The request is already waiting. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. Missed-call text-back runs as a controlled pilot.",
+      "disclosure": "Dramatization with a fictional business, not a customer story. Missed-call text-back runs as a controlled pilot."
+    },
+    "afterHours": {
+      "playerTitle": "After hours: an emergency is transferred",
+      "transcript": "Your customers don't stop calling at five. Receptionist: Thanks for calling NorthStar Plumbing. You've reached us after hours. How can I help? Caller: My basement is flooding! I need someone right now! Receptionist: I understand, this is urgent. I'm connecting you to the on-call technician right now. Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan.",
+      "disclosure": "Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan."
+    }
+  },
+  "demoStories": {
+    "eyebrow": "See it on the job",
+    "headline": "Three calls you can't take. Here is what happens next.",
+    "intro": "Short dramatizations with a fictional plumbing and electrical company. Each one has captions, and sound plays only when you press play.",
+    "note": "Dramatizations with a fictional business, not customer stories. The Receptionist is a founder-configured pilot, and missed-call text-back runs as a controlled pilot.",
+    "watchLabel": "Watch the video: {title}",
+    "cards": {
+      "underTheSink": {
+        "tag": "Receptionist",
+        "title": "Under the sink",
+        "blurb": "Your hands are full. The receptionist answers, takes the caller's details and sends your team the request."
+      },
+      "theLadder": {
+        "tag": "Missed-call text-back",
+        "title": "On the ladder",
+        "blurb": "A missed call gets a text back under your company's name, so the request is waiting when you come down."
+      },
+      "afterHours": {
+        "tag": "Transfer and summary",
+        "title": "After hours",
+        "blurb": "A real emergency is transferred to your on-call line. Everything else waits for you as a morning summary."
+      }
     }
   },
   "errors": {

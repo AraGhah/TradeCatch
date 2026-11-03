@@ -3,6 +3,7 @@
 Every cut, sound, buzz and UI animation is derived from measured audio durations, so EN and FR versions
 re-time themselves and picture/sound cannot drift.  All scenes are dramatizations with a fictional business."""
 import sys, json, shutil, subprocess
+from pathlib import Path
 import numpy as np
 import config as C, ui_specs as U, mixlib as M, videolib as V
 from audio_util import SR, write_wav, lufs, decode, run, FF, ff_filter
@@ -13,15 +14,17 @@ class Ad:
     def __init__(self, key, lang, max_dur=75):
         self.key, self.lang = key, lang
         self.mix = M.Mix(max_dur); self.items = []; self.t = 0.0
-        self.work = C.WORK / f"{key}_{lang}"; shutil.rmtree(self.work, ignore_errors=True); self.work.mkdir(parents=True)
+        self.work = C.WORK / (f"{key}_{lang}" if C.FMT == "9x16" else f"{key}_{lang}_{C.FMT}"); shutil.rmtree(self.work, ignore_errors=True); self.work.mkdir(parents=True)
         self.amb = []                                   # (t0, t1, gain_db, kind)
         self.notes = []; self.amb_kind = "day"
+        self.cues = []                                  # spoken lines as placed in the mix: (line id, start s, end s, speaker)
     # ---- helpers
     def d(self, lid): return len(M.voice(self.lang, lid)) / SR
     def vo(self, lid, t, kind="narr", who="narr", gain_db=0.0):
         a = M.voice(self.lang, lid)
         if kind == "narr": self.mix.speech("narr", a, t, "narr")
         else: self.mix.speech(who, a, t, kind)
+        self.cues.append((lid, round(t, 3), round(t + len(a) / SR, 3), "narr" if kind == "narr" else who))
         return t + len(a) / SR
     def sfx(self, name, t, gain_db=0.0, ref=-24.0, off=0.0, dur=None, fade=0.04, pan=0.0):
         a = M.sfx(name); a = a[int(off * SR):]
@@ -40,6 +43,30 @@ class Ad:
         self.items.append(dict(kind="u", spec=spec, sub=(round(sub[0] * V.FPS) / V.FPS, sub[1]), dur=dq, start=s)); self.t += dq
         self.amb.append((s, s + dq, region_gain)); return s
     # ---- rendering
+    def build_video(self):
+        """Render every footage / UI segment at the active format (config.W x config.H) and concatenate them."""
+        segs = []
+        for i, it in enumerate(self.items):
+            out = self.work / f"seg{i:02d}.mp4"
+            if it["kind"] == "f": V.footage_segment(out, it["clip"], it["t_in"], it["dur"], **it["kw"])
+            else:
+                src = V.render_ui_scene(it["spec"]); V.cut_range(src, out, it["sub"][0], it["dur"])
+            segs.append(out)
+        return V.concat(segs, self.work / "video.mp4")
+
+    def render_picture(self, audio_master):
+        """Picture-only render for a non-9:16 format. The picture timeline is identical to the 9:16 master (every cut is derived
+        from the same measured audio durations), so the finished master's audio stream is copied bit-for-bit: same mix, same
+        loudness, no re-encode."""
+        audio_master = Path(audio_master)
+        if not audio_master.exists(): raise FileNotFoundError(f"build the 9x16 master first: {audio_master}")
+        vid = self.build_video()
+        dv, da = V.duration(vid), V.duration(audio_master)
+        if abs(dv - da) > 0.05: raise RuntimeError(f"timeline mismatch: picture {dv:.3f}s vs master {da:.3f}s")
+        final = OUTDIR / f"TradeCatch_{self.key}_{self.lang.upper()}_{C.FMT}.mp4"
+        V.mux_copy_audio(vid, audio_master, final)
+        print(json.dumps(dict(file=final.name, seconds=round(dv, 2), master_seconds=round(da, 2)), indent=1)); return final
+
     def render(self, music_bed, music_gain_db=-11.0, amb_kind=None, out_name=None):
         amb_kind = amb_kind or self.amb_kind
         total = V.q(self.t); mix = self.mix
@@ -56,14 +83,7 @@ class Ad:
         bed = bed[:need]
         mix.place("music", bed, 0.0, 0.0, fin=0.5, fout=2.2)
         # --- video
-        segs = []
-        for i, it in enumerate(self.items):
-            out = self.work / f"seg{i:02d}.mp4"
-            if it["kind"] == "f": V.footage_segment(out, it["clip"], it["t_in"], it["dur"], **it["kw"])
-            else:
-                src = V.render_ui_scene(it["spec"]); V.cut_range(src, out, it["sub"][0], it["dur"])
-            segs.append(out)
-        vid = V.concat(segs, self.work / "video.mp4")
+        vid = self.build_video()
         # --- audio
         stereo = mix.render(music_gain_db=music_gain_db)[:int(total * SR)]
         mastered, stats = M.master(stereo)
@@ -87,7 +107,7 @@ def phone_pulses(sample="phone_buzz_toolbox", limit=3.0):
 def build_A(lang):
     ad = Ad("A_UnderTheSink", lang); d = ad.d
     # S1  cold open: the problem (footage)
-    s1 = ad.footage("p_before", 0.0, 3.0, zoom=(1.07, 1.15), anchor=(0.5, 0.78), seed=1)
+    s1 = ad.footage("p_before", 0.0, 3.0, zoom=(1.07, 1.15), anchor=(0.5, 0.78), seed=1, a45=(0.5, 0.40, 0.90))
     ad.sfx("wrench_work", s1 + 0.0, -9, ref=-27, off=0.5, dur=3.2)
     ad.sfx("fabric_kneel", s1 + 0.3, -8, ref=-30)
     ad.sfx("drip", s1 + 1.7, -12, ref=-30)
@@ -112,7 +132,7 @@ def build_A(lang):
     ad.ui(U.spec_calling(lang, D3, end_at, search_at, tap_at))
     # S4  the reset: same job, this time TradeCatch picks up
     D4 = max(2.7, ad.d("A_vo3") + 0.25)
-    s4 = ad.footage("p_after", 0.2, D4, zoom=(1.08, 1.14), anchor=(0.5, 0.78), seed=2)
+    s4 = ad.footage("p_after", 0.2, D4, zoom=(1.08, 1.14), anchor=(0.5, 0.78), seed=2, a45=(0.5, 0.45, 0.90))
     ad.sfx("whoosh_hit", s4 - 0.35, -9, ref=-26)
     ad.sfx("wrench_work", s4, -9, ref=-27, off=3.0, dur=D4)
     ad.sfx("phone_buzz_tile", s4 + 0.8, -4, ref=-25)
@@ -130,7 +150,7 @@ def build_A(lang):
     ad.ui(live, sub=(0.0, cutA0))
     ca = ad.t
     ad.mix.cut_windows.append((ca, ca + (cutA1 - cutA0)))
-    ad.footage("p_after", 5.0, cutA1 - cutA0, zoom=(1.08, 1.13), anchor=(0.45, 0.6), seed=3, region_gain=+3.0)
+    ad.footage("p_after", 5.0, cutA1 - cutA0, zoom=(1.08, 1.13), anchor=(0.45, 0.6), seed=3, region_gain=+3.0, a45=(0.45, 0.42))
     ad.sfx("wrench_work", ca, -3, ref=-27, off=1.0, dur=cutA1 - cutA0)
     ad.sfx("tool_clink", ca + (cutA1 - cutA0) - 0.9, -6, ref=-26)
     ad.ui(live, sub=(cutA1, end5))
@@ -143,7 +163,7 @@ def build_A(lang):
     ad.sfx("ui_tap", s6 + tap_notif, -4, ref=-28)
     ad.ui(lead, sub=(0.0, card_at))
     sm = ad.t
-    ad.footage("p_after", 8.1, 1.45, zoom=(1.12, 1.18), anchor=(0.5, 0.55), seed=4, region_gain=+3.0)
+    ad.footage("p_after", 8.1, 1.45, zoom=(1.12, 1.18), anchor=(0.5, 0.55), seed=4, region_gain=+3.0, a45=(0.5, 0.5))
     ad.sfx("wrench_work", sm, -6, ref=-27, off=5.0, dur=1.5)
     vo4_end = ad.vo("A_vo4", sm + 0.05)
     ad.ui(lead, sub=(card_at, D6))
@@ -174,7 +194,7 @@ def end_card(ad, lang, prev_end):
 def build_B(lang):
     ad = Ad("B_TheLadder", lang); d = ad.d; LAD = dict(grade="ladder")
     # S1  cold open: hands overhead on a ladder, the phone rings out of reach
-    s1 = ad.footage("e_before", 0.0, 3.5, zoom=(1.03, 1.09), anchor=(0.5, 0.45), seed=11, **LAD)
+    s1 = ad.footage("e_before", 0.0, 3.5, zoom=(1.03, 1.09), anchor=(0.5, 0.45), seed=11, a45=(0.5, 0.14), **LAD)
     ad.sfx("ladder_creak", s1 + 0.2, -8, ref=-30)
     ad.sfx("fixture_work", s1, -7, ref=-29, dur=3.6)
     ad.sfx("phone_buzz_toolbox", s1 + 0.15, -6, ref=-25, dur=3.3)
@@ -189,7 +209,7 @@ def build_B(lang):
     ad.sfx("call_end", s2 + miss, -7, ref=-26)
     ad.ui(sp)
     # S3  a beat: the phone is dark, he keeps working, the caller is gone
-    s3 = ad.footage("e_before", 6.6, 1.4, zoom=(1.05, 1.10), anchor=(0.5, 0.4), seed=12, **LAD)
+    s3 = ad.footage("e_before", 6.6, 1.4, zoom=(1.05, 1.10), anchor=(0.5, 0.4), seed=12, a45=(0.5, 0.12), **LAD)
     ad.sfx("fixture_work", s3, -8, ref=-29, off=1.0, dur=1.5)
     ad.sfx("ladder_creak", s3 + 0.5, -10, ref=-31)
     # S4  the text-back thread (customer's phone); one cutaway to him working calmly while it plays out
@@ -211,7 +231,7 @@ def build_B(lang):
     ad.sfx("sms_sent", s4 + m2_at, -5, ref=-26)
     ad.ui(sms, sub=(0.0, cut_a))
     ca = ad.t
-    ad.footage("e_after", 1.0, cut_b - cut_a, zoom=(1.05, 1.10), anchor=(0.5, 0.4), seed=13, region_gain=+3.0, **LAD)
+    ad.footage("e_after", 1.0, cut_b - cut_a, zoom=(1.05, 1.10), anchor=(0.5, 0.4), seed=13, region_gain=+3.0, a45=(0.5, 0.12), **LAD)
     ad.sfx("fixture_work", ca, -6, ref=-29, off=2.0, dur=cut_b - cut_a + 0.1)
     ad.sfx("sms_in", s4 + m3_at, -7, ref=-25); ad.sfx("phone_buzz_tile", s4 + m3_at - 0.05, -11, ref=-25, dur=0.6)
     ad.mix.place("sfx", M.typing_track(m4_ts, m4_te, len(texts[3]), end4 + 0.5), s4)
@@ -219,7 +239,7 @@ def build_B(lang):
     ad.sfx("sms_in", s4 + m5_at, -3, ref=-25)
     ad.ui(sms, sub=(cut_b, end4))
     # S5  wrap-up beat, then the request is waiting on his phone
-    s5 = ad.footage("e_after", 7.0, 1.5, zoom=(1.05, 1.10), anchor=(0.5, 0.4), seed=14, **LAD)
+    s5 = ad.footage("e_after", 7.0, 1.5, zoom=(1.05, 1.10), anchor=(0.5, 0.4), seed=14, a45=(0.5, 0.12), **LAD)
     ad.sfx("fixture_work", s5, -7, ref=-29, off=3.5, dur=1.6)
     v4_end = ad.vo("B_vo4", s5 + 0.10)
     s6 = ad.t; notif_at, tap_notif, card_at = 0.15, 1.00, 1.15
@@ -252,7 +272,7 @@ def water_under_call(ad, t0, dur, lufs_near=-33.0):
 def build_C(lang):
     ad = Ad("C_AfterHours", lang); d = ad.d; NIT = dict(grade="night"); ad.amb_kind = "night"
     # S1  cold open: night, still working
-    s1 = ad.footage("p_night", 0.0, 2.9, zoom=(1.04, 1.10), anchor=(0.35, 0.55), seed=21, **NIT)
+    s1 = ad.footage("p_night", 0.0, 2.9, zoom=(1.04, 1.10), anchor=(0.35, 0.55), seed=21, a45=(0.35, 0.22), **NIT)
     ad.sfx("wrench_work", s1, -8, ref=-27, off=0.5, dur=3.0)
     ad.sfx("pipe_tap", s1 + 1.6, -8, ref=-28)
     ad.sfx("drip", s1 + 0.7, -12, ref=-30)
@@ -270,7 +290,7 @@ def build_C(lang):
     ad.ui(live, sub=(0.0, cutC0))
     ca = ad.t
     ad.mix.cut_windows.append((ca, ca + CUT))
-    ad.footage("p_night", 5.7, CUT, zoom=(1.06, 1.11), anchor=(0.35, 0.55), seed=22, region_gain=+3.0, **NIT)
+    ad.footage("p_night", 5.7, CUT, zoom=(1.06, 1.11), anchor=(0.35, 0.55), seed=22, region_gain=+3.0, a45=(0.35, 0.4), **NIT)
     ad.sfx("wrench_work", ca, -4, ref=-27, off=2.5, dur=CUT)
     ad.sfx("phone_buzz_tile", ca + CUT - 0.75, -4, ref=-25, dur=0.8)
     # S3  his phone: the emergency transfer arrives and he takes it
@@ -282,7 +302,7 @@ def build_C(lang):
     ad.sfx("call_connect", s3 + ans + 0.10, -7, ref=-26)
     ad.ui(tr)
     # S4  he gets on it; the narration explains what reaches him and what waits
-    s4 = ad.footage("p_night", 7.7, 2.0, zoom=(1.06, 1.11), anchor=(0.35, 0.55), seed=23, **NIT)
+    s4 = ad.footage("p_night", 7.7, 2.0, zoom=(1.06, 1.11), anchor=(0.35, 0.55), seed=23, a45=(0.35, 0.3), **NIT)
     ad.sfx("wrench_work", s4, -7, ref=-27, off=3.0, dur=2.1)
     ad.sfx("keys_truck", s4 + 0.9, -9, ref=-28, dur=1.1)
     dv3 = d("C_vo3"); vo3_end = ad.vo("C_vo3", s4 + 0.05)
@@ -300,9 +320,13 @@ def build_C(lang):
 BUILDERS = {"A": (build_A, "bed_A"), "B": (build_B, "bed_B"), "C": (build_C, "bed_C")}
 
 if __name__ == "__main__":
+    # python build_ads.py <A|B|C> <en|fr> [--format 9x16|4x5] [--no-render]
     key, lang = sys.argv[1], sys.argv[2]
+    fmt = sys.argv[sys.argv.index("--format") + 1] if "--format" in sys.argv else "9x16"
+    C.set_format(fmt)
     fn, bed = BUILDERS[key]
     ad = fn(lang)
-    print(f"planned length: {ad.t:.2f}s  items={len(ad.items)}")
+    print(f"planned length: {ad.t:.2f}s  items={len(ad.items)}  format={fmt}")
     if "--no-render" not in sys.argv:
-        ad.render(bed)
+        if fmt == "9x16": ad.render(bed)
+        else: ad.render_picture(OUTDIR / f"TradeCatch_{ad.key}_{lang.upper()}_9x16.mp4")

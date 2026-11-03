@@ -5,6 +5,7 @@ testimonial or result is depicted. Product behaviour mirrors the site copy and
 docs/CAPABILITY_MATRIX.md (the receptionist is a founder-configured pilot; the
 caller's appointment is a REQUEST that the team confirms).
 """
+import os, tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent            # .../Videos/ads_v2/_source
@@ -12,10 +13,20 @@ ADS_DIR = ROOT.parent                              # .../Videos/ads_v2
 ASSETS = ROOT / "assets"
 VIDEOS = ADS_DIR.parent                            # .../Videos (raw clips live here)
 REPO = VIDEOS.parent
-WORK = Path(r"C:\Users\aragh\AppData\Local\Temp\claude\C--Dev-TradeCatch\f2264590-db68-4f03-ae8a-da4c10e06ff9\scratchpad\work")
+# scratch space for intermediates (UI frame cache, per-ad segments); override with ADS_WORK
+WORK = Path(os.environ.get("ADS_WORK") or Path(tempfile.gettempdir()) / "tradecatch_ads_work")
 
 FPS = 24
-W, H = 1080, 1920
+# output formats: 9x16 = Reels / TikTok / Shorts / Stories (masters); 4x5 = Instagram + Facebook feed
+FORMATS = {"9x16": (1080, 1920), "4x5": (1080, 1350)}
+FMT = "9x16"
+W, H = FORMATS[FMT]
+
+def set_format(name):
+    """Select the output format for videolib / build_ads (picture only; audio is format-independent)."""
+    global FMT, W, H
+    if name not in FORMATS: raise ValueError(f"unknown format {name!r}; choose from {sorted(FORMATS)}")
+    FMT = name; W, H = FORMATS[name]
 
 # ---- casting (ElevenLabs voice ids) -------------------------------------------------
 VOICES = {

@@ -8,6 +8,7 @@ import { CallFlowDiagram, type FlowNode } from "@/components/CallFlowDiagram";
 import { CallSummaryCard } from "@/components/CallSummaryCard";
 import { CallDemo, type CallDemoCopy } from "@/components/CallDemo";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { StoryDemos } from "@/components/StoryDemos";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -164,6 +165,13 @@ export default async function AiReceptionistPage({
           </div>
         </Container>
       </section>
+
+      {/* The receptionist on the job: two short dramatizations */}
+      <StoryDemos
+        locale={locale}
+        ids={["under-the-sink", "after-hours"]}
+        id="on-the-job"
+      />
 
       {/* 2. What it handles on the call */}
       <section
