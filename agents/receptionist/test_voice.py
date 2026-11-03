@@ -71,7 +71,7 @@ class CascadeSettingsTest(unittest.TestCase):
         s = voice.cascade_settings({})
         self.assertEqual(s.stt, "deepgram/nova-3")
         self.assertEqual(s.stt_language, "multi")
-        self.assertEqual(s.llm, "openai/gpt-4.1-mini")
+        self.assertEqual(s.llm, "openai/gpt-6-luna")
         self.assertEqual(s.fallback_tts, "cartesia/sonic-3")
 
     def test_overrides_are_validated(self):
