@@ -82,7 +82,7 @@ test.describe("first-demo journeys", () => {
     await card.click();
 
     const dialog = page.getByRole("dialog", {
-      name: "Under the sink: the AI receptionist answers",
+      name: "Under the sink: the Receptionist answers",
     });
     await expect(dialog).toBeVisible();
     const video = dialog.locator("video");
