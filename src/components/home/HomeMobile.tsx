@@ -3,6 +3,7 @@ import { Container } from "@/components/Container";
 import { CTAButton } from "@/components/CTAButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { StickyAuditCta } from "@/components/StickyAuditCta";
+import { StoryDemos } from "@/components/StoryDemos";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { WebsiteServiceAddOn } from "@/components/WebsiteServiceAddOn";
 import { formatPlanMoney, PLAN_PRICES } from "@/lib/plans";
@@ -135,6 +136,9 @@ export async function HomeMobile({ locale }: { locale: string }) {
           <p className="mt-3 text-[13px] text-muted">{t("mobile.demo.note")}</p>
         </Container>
       </section>
+
+      {/* 2b. Three short dramatizations: the product on the job */}
+      <StoryDemos locale={locale} compact />
 
       {/* 3. Benefits */}
       <section className={`${SECTION} bg-paper`}>

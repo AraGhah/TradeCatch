@@ -1,0 +1,88 @@
+1
+00:00:00,250 --> 00:00:01,670
+Les mains sous l'évier.
+
+2
+00:00:01,710 --> 00:00:03,410
+Le téléphone qui sonne.
+
+3
+00:00:03,450 --> 00:00:05,040
+Et tu ne peux pas répondre.
+
+4
+00:00:05,492 --> 00:00:07,592
+Ce client-là ne laissera pas de message.
+
+5
+00:00:07,632 --> 00:00:08,952
+Il va appeler le prochain plombier.
+
+6
+00:00:08,992 --> 00:00:10,912
+Client : [soupir] Ah, voyons donc…
+
+7
+00:00:11,763 --> 00:00:15,043
+Même chantier. Cette fois,
+TradeCatch décroche.
+
+8
+00:00:15,725 --> 00:00:17,725
+Réceptionniste : Merci d'avoir
+appelé Plomberie NorthStar.
+
+9
+00:00:17,765 --> 00:00:19,155
+Comment puis-je vous aider?
+
+10
+00:00:19,295 --> 00:00:22,895
+Client : Bonjour, l'évier de ma
+cuisine fuit. Vous desservez Laval?
+
+11
+00:00:23,095 --> 00:00:24,955
+Réceptionniste : Oui,
+nous desservons Laval.
+
+12
+00:00:24,995 --> 00:00:27,655
+Quelle est votre adresse,
+et quel moment vous conviendrait?
+
+13
+00:00:27,695 --> 00:00:30,135
+Client : Au 45, avenue Laurier, à Laval.
+
+14
+00:00:30,175 --> 00:00:31,675
+Demain matin, vers dix heures?
+
+15
+00:00:31,735 --> 00:00:34,315
+Réceptionniste : Parfait.
+J'ai transmis votre demande à l'équipe.
+
+16
+00:00:34,355 --> 00:00:36,135
+Elle vous écrira pour confirmer.
+
+17
+00:00:37,883 --> 00:00:39,923
+Tu restes sur ton chantier.
+
+18
+00:00:39,963 --> 00:00:42,674
+TradeCatch répond,
+et te remet les détails.
+
+19
+00:00:42,874 --> 00:00:44,954
+TradeCatch. Chaque appel compte.
+
+20
+00:00:45,174 --> 00:00:48,134
+Réserve ton audit gratuit
+sur tradecatch.ca.
+

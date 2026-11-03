@@ -111,11 +111,19 @@ Production validation (`validateReceptionistConfig`) rejects reserved demo /
 | `RECEPTIONIST_LLM_PROVIDER` | Behavior |
 | --- | --- |
 | *(unset, no keys)* / `none` | Deterministic rule brain (slot-filling, FAQ, routing) — no AI cost, fully tested. |
-| `anthropic` (default if `ANTHROPIC_API_KEY`) | Claude via the Messages API with a forced tool call. Default model `claude-haiku-4-5-20251001` (low latency); override with `RECEPTIONIST_LLM_MODEL`. |
-| `openai` | Any OpenAI-compatible `/chat/completions` endpoint. Set `RECEPTIONIST_LLM_BASE_URL` to self-host (Ollama, vLLM, LocalAI) so caller audio transcripts never leave your infrastructure. `RECEPTIONIST_LLM_MODEL` is required. |
+| `openai` (default if `OPENAI_API_KEY` or `RECEPTIONIST_LLM_BASE_URL` is set) | Any OpenAI-compatible `/chat/completions` endpoint. On OpenAI itself the default model is `gpt-6-luna`; override with `RECEPTIONIST_LLM_MODEL`. Set `RECEPTIONIST_LLM_BASE_URL` to self-host (Ollama, vLLM, LocalAI) so caller audio transcripts never leave your infrastructure; a self-hosted server has no default, so `RECEPTIONIST_LLM_MODEL` is then required. |
+| `anthropic` (default only when `ANTHROPIC_API_KEY` is the only key) | Claude via the Messages API with a forced tool call. Default model `claude-haiku-4-5-20251001` (low latency); override with `RECEPTIONIST_LLM_MODEL`. With both keys set, OpenAI wins unless `RECEPTIONIST_LLM_PROVIDER=anthropic` or `RECEPTIONIST_LLM_MODEL` names a `claude…` model. |
+
+Provider and model are decided in one place, `resolveLlmConfig` in `llm.ts`; the
+provider health probe uses it too, so `/api/health` checks the model that calls
+will actually use (for OpenAI it reads `GET /v1/models/<model>`, which fails if
+the key cannot use that model).
 
 Latency budget: Twilio waits ~15 s for a webhook. `RECEPTIONIST_LLM_TIMEOUT_MS`
-(default 4500) bounds each turn; on timeout the rule brain answers.
+(default 4500) bounds each turn; on timeout the rule brain answers. `gpt-6-luna`
+reasons before it answers, so measure real turn times before relying on it for
+calls: `RECEPTIONIST_LLM_REASONING_EFFORT=low` (OpenAI itself only) shortens the
+reasoning, and nothing is sent unless you set it.
 
 ## Running on self-hosted Fonoster instead of Twilio
 
