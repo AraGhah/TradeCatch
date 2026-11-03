@@ -23,8 +23,8 @@ LinkedIn plays feed video muted until someone taps it, and these ads are narrati
 
 - Upload the `.srt` with the video (organic post: edit the video and add captions; Campaign Manager: the video ad's caption setting. Menu names move around, the file is a standard SRT).
 - Timing: each cue starts when its words are spoken (line starts come from where the mixer placed the recording; the second and third cue inside a long line come from word timings of the isolated recording). Measured against the finished audio: 63 of the 69 cues are within 0.35 s of the spoken words, median 0.09 s, slightly early on average. The other six are the two "[sighs]" cues (they start at the sound on purpose) and four the check could not match by word. The same file works for the 4:5 and the 9:16 version.
-- On the phone call, speakers are labelled ("AI receptionist:", "Caller:" / "Réceptionniste IA :", "Client :"). That keeps it clear to a muted viewer that the receptionist is an AI.
-- Formatting: at most two lines of 42 characters, no overlapping cues. Reading speed is up to about 31 characters per second on three in-call cues that start with a speaker label (the voices speak at normal conversational pace, about 3 words per second, and the label counts as reading); most cues are at 20 or under. `python lint_captions.py` re-checks this.
+- On the phone call, speakers are labelled ("Receptionist:", "Caller:" / "Réceptionniste :", "Client :") so a muted viewer can follow who is talking.
+- Formatting: at most two lines of 42 characters, no overlapping cues. Reading speed is up to about 29 characters per second on 2 in-call cues that start with a speaker label (the voices speak at normal conversational pace, about 3 words per second, and the label counts as reading); most cues are at 20 or under. `python lint_captions.py` re-checks this.
 - The brand is written TradeCatch and the URL tradecatch.ca (the voice says "Tréïd Catch" / "trade catch dot C A").
 
 ## Copy
@@ -60,12 +60,12 @@ FR
 ### A - Under the Sink
 
 EN
-- Intro: `You're under a sink and the phone rings. The AI receptionist answers, takes the caller's details and sends your team the request. (Dramatization, fictional business.)`
+- Intro: `You're under a sink and the phone rings. The TradeCatch Receptionist answers, takes the caller's details and sends your team the request. (Dramatization, fictional business.)`
 - Headline: `Keep working. TradeCatch picks up.`
 - Longer post text: `The receptionist answers as your business, answers the caller's basic question and takes an appointment request. Your team confirms it; nothing is booked behind your back.` / `Dramatization with a fictional business. The Receptionist is a founder-configured pilot. Free 20-minute audit: tradecatch.ca`
 
 FR
-- Intro: `Tu as les mains sous l'évier et le téléphone sonne. La réceptionniste IA répond, note les détails et transmet la demande à ton équipe. (Mise en scène, entreprise fictive.)`
+- Intro: `Tu as les mains sous l'évier et le téléphone sonne. La réceptionniste TradeCatch répond, note les détails et transmet la demande à ton équipe. (Mise en scène, entreprise fictive.)`
 - Headline: `Continue ton travail. TradeCatch répond.`
 - Texte du message : `La réceptionniste répond au nom de ton entreprise, répond à la question de base de l'appelant et prend une demande de rendez-vous. Ton équipe la confirme; rien n'est réservé dans ton dos.` / `Mise en scène avec une entreprise fictive. La réceptionniste est un pilote configuré par le fondateur. Audit gratuit de 20 minutes : tradecatch.ca`
 
