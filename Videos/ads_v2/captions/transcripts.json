@@ -2,12 +2,12 @@
  "TradeCatch_A_UnderTheSink_EN": {
   "seconds": 44.042,
   "cues": 14,
-  "transcript": "You're under a sink. Your phone's ringing. And you can't answer. That caller isn't leaving a voicemail. They're calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. AI receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi - my kitchen sink is leaking. Do you cover Laval? AI receptionist: We do. What's your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? AI receptionist: Perfect. I've sent your request to the team. They'll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca."
+  "transcript": "You're under a sink. Your phone's ringing. And you can't answer. That caller isn't leaving a voicemail. They're calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi - my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What's your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I've sent your request to the team. They'll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca."
  },
  "TradeCatch_A_UnderTheSink_FR": {
   "seconds": 49.083,
   "cues": 20,
-  "transcript": "Les mains sous l'évier. Le téléphone qui sonne. Et tu ne peux pas répondre. Ce client-là ne laissera pas de message. Il va appeler le prochain plombier. Client : [soupir] Ah, voyons donc… Même chantier. Cette fois, TradeCatch décroche. Réceptionniste IA : Merci d'avoir appelé Plomberie NorthStar. Comment puis-je vous aider? Client : Bonjour, l'évier de ma cuisine fuit. Vous desservez Laval? Réceptionniste IA : Oui, nous desservons Laval. Quelle est votre adresse, et quel moment vous conviendrait? Client : Au 45, avenue Laurier, à Laval. Demain matin, vers dix heures? Réceptionniste IA : Parfait. J'ai transmis votre demande à l'équipe. Elle vous écrira pour confirmer. Tu restes sur ton chantier. TradeCatch répond, et te remet les détails. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca."
+  "transcript": "Les mains sous l'évier. Le téléphone qui sonne. Et tu ne peux pas répondre. Ce client-là ne laissera pas de message. Il va appeler le prochain plombier. Client : [soupir] Ah, voyons donc… Même chantier. Cette fois, TradeCatch décroche. Réceptionniste : Merci d'avoir appelé Plomberie NorthStar. Comment puis-je vous aider? Client : Bonjour, l'évier de ma cuisine fuit. Vous desservez Laval? Réceptionniste : Oui, nous desservons Laval. Quelle est votre adresse, et quel moment vous conviendrait? Client : Au 45, avenue Laurier, à Laval. Demain matin, vers dix heures? Réceptionniste : Parfait. J'ai transmis votre demande à l'équipe. Elle vous écrira pour confirmer. Tu restes sur ton chantier. TradeCatch répond, et te remet les détails. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca."
  },
  "TradeCatch_B_TheLadder_EN": {
   "seconds": 30.333,
@@ -22,11 +22,11 @@
  "TradeCatch_C_AfterHours_EN": {
   "seconds": 31.167,
   "cues": 10,
-  "transcript": "Your customers don't stop calling at five. AI receptionist: Thanks for calling NorthStar Plumbing. You've reached us after hours. How can I help? Caller: My basement is flooding! I need someone right now! AI receptionist: I understand, this is urgent. I'm connecting you to the on-call technician right now. Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary. TradeCatch. Every call counts. Book your free audit at tradecatch.ca."
+  "transcript": "Your customers don't stop calling at five. Receptionist: Thanks for calling NorthStar Plumbing. You've reached us after hours. How can I help? Caller: My basement is flooding! I need someone right now! Receptionist: I understand, this is urgent. I'm connecting you to the on-call technician right now. Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary. TradeCatch. Every call counts. Book your free audit at tradecatch.ca."
  },
  "TradeCatch_C_AfterHours_FR": {
   "seconds": 33.417,
   "cues": 10,
-  "transcript": "Tes clients n'appellent pas seulement de neuf à cinq. Réceptionniste IA : Merci d'avoir appelé Plomberie NorthStar. Nous sommes fermés pour la soirée. Comment puis-je vous aider? Client : Mon sous-sol est inondé! J'ai besoin de quelqu'un tout de suite! Réceptionniste IA : Je comprends, c'est urgent. Je vous transfère immédiatement au technicien de garde. Les vraies urgences rejoignent ta ligne de garde. Le reste est là le matin, avec un résumé. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca."
+  "transcript": "Tes clients n'appellent pas seulement de neuf à cinq. Réceptionniste : Merci d'avoir appelé Plomberie NorthStar. Nous sommes fermés pour la soirée. Comment puis-je vous aider? Client : Mon sous-sol est inondé! J'ai besoin de quelqu'un tout de suite! Réceptionniste : Je comprends, c'est urgent. Je vous transfère immédiatement au technicien de garde. Les vraies urgences rejoignent ta ligne de garde. Le reste est là le matin, avec un résumé. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca."
  }
 }
