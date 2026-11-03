@@ -18,7 +18,7 @@ Same job. This time, TradeCatch picks up.
 
 5
 00:00:14,350 --> 00:00:17,170
-AI receptionist: Thanks for calling
+Receptionist: Thanks for calling
 NorthStar Plumbing. How can I help?
 
 6
@@ -28,8 +28,8 @@ is leaking. Do you cover Laval?
 
 7
 00:00:20,685 --> 00:00:23,965
-AI receptionist: We do.
-What's your address, and when works best?
+Receptionist: We do. What's your
+address, and when works best?
 
 8
 00:00:24,085 --> 00:00:26,325
@@ -41,7 +41,7 @@ Tomorrow morning, around ten?
 
 10
 00:00:27,885 --> 00:00:30,525
-AI receptionist: Perfect.
+Receptionist: Perfect.
 I've sent your request to the team.
 
 11
