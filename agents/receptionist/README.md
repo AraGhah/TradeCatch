@@ -64,8 +64,9 @@ critical alert).
 | `off` | No transfers; the agent takes a message. | |
 
 If the first line fails and the owner configured another one, the next is tried
-(emergency: emergency line, then the general line, and the general line only when the
-owner's hours rule lets it ring). A phone-system failure (bad credentials, geographic
+(emergency: emergency line, then the general line; a department: its line, then the
+general line; then the owner's secondary transfer number, sent as `backupTransferE164`.
+The general and backup lines ring only when the owner's hours rule lets them). A phone-system failure (bad credentials, geographic
 permission, provider outage) stops after the first attempt, because a second number
 would fail the same way. A whole attempt is bounded: ring time + confirmation time,
 and the total is capped by `AGENT_TRANSFER_BUDGET_SECONDS`.
@@ -178,6 +179,15 @@ TradeCatch. Expect somewhat higher response latency than the speech-to-speech vo
 listen to real calls (in French and English) before relying on it.
 
 ## Deploy (LiveKit Cloud)
+
+Check before trusting a deployment (all read-only):
+
+- `lk agent secrets` lists `TRADECATCH_BASE_URL` and `TRADECATCH_OPS_SECRET`. Without
+  them every call gets the safe fallback prompt: no transfers, no booking, no report.
+- `lk agent versions` shows *this* folder's build, not an Agent Builder version.
+- `lk sip dispatch list` dispatches the name in `agent.py`
+  (`@server.rtc_session(agent_name="tradecatch-receptionist")`).
+- `lk sip outbound list` has the outbound trunk if you want `warm` transfers.
 
 ```bash
 cd agents/receptionist
