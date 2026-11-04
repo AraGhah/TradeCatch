@@ -413,6 +413,18 @@ function identityReply(input: BrainInput): string {
 }
 
 /**
+ * The caller explicitly asked for a person ("talk to someone", "un humain") and
+ * a live transfer is allowed right now: the transfer decision, or null. Used
+ * by the LLM brain before it calls the model, so a model that answers with
+ * another question (or times out) can never leave that request unhonoured.
+ */
+export function explicitHumanTransfer(input: BrainInput): AgentDecision | null {
+  if (!wantsHuman(input.utterance)) return null;
+  const decision = tryCallerTransfer(input);
+  return decision?.action.type === "transfer" ? decision : null;
+}
+
+/**
  * Caller asked for a person or a named department. Honoured at every intake
  * step — not only at `reason` — so "transfer me" mid-call still dials.
  */
