@@ -5,8 +5,7 @@ Calls arrive from the Twilio SIP trunk. For each call this agent:
   2. fetches that business's rendered instructions, opening words and transfer
      lines from TradeCatch (so every company is configured in the TradeCatch UI,
      not here),
-  3. opens in Canadian French with a language menu (key 1 = English, key 2 =
-     French, no key = French) and keeps the chosen language for the whole call,
+  3. opens in the configured language with a menu (1 = English, 2 = French) and keeps the chosen language for the whole call,
   4. talks to the caller, books only through TradeCatch's calendar, and can
      really transfer the call,
   5. reports the finished call to TradeCatch, which sends the owner the usual
@@ -91,8 +90,8 @@ load_dotenv(".env.local")
 FALLBACK_INSTRUCTIONS = """You are the phone receptionist for a home-services contractor.
 You are having technical difficulties and cannot look up the business's details.
 Be brief, warm and polite. Collect the caller's name, callback number, address and the
-reason for the call, repeat them back, and say you have noted the request and the team
-will call back. Never state prices, availability or hours, and never say anything is
+reason for the call. Explain that delivery is unconfirmed and ask them to try again.
+Never state prices, availability or hours, and never say anything is
 booked or confirmed. If anyone is in danger, tell the caller to hang up and call 911.
 Never say you will transfer the call: no transfer is available."""
 
@@ -888,9 +887,7 @@ async def entrypoint(ctx: JobContext) -> None:
         kind=rtc.ParticipantKind.PARTICIPANT_KIND_SIP
     )
 
-    number = dialed_number(participant.attributes) or os.environ.get(
-        "DEFAULT_BUSINESS_NUMBER"
-    )
+    number = dialed_number(participant.attributes)
     client = TradeCatchClient.from_env()
     cfg = await client.fetch_business_config(number) if client and number else None
     if cfg is None:

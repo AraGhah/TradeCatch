@@ -12,7 +12,12 @@ FROM python:${PYTHON_VERSION}-slim AS base
 ENV PYTHONUNBUFFERED=1
 
 # Disable pip version check to speed up builds
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    HF_HOME=/app/.cache/huggingface \
+    XDG_CACHE_HOME=/app/.cache
+
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
 
 # --- Build stage ---
 # Install dependencies, build native extensions, and prepare the application
@@ -34,13 +39,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy just the dependency files first, for more efficient layer caching
-COPY requirements.txt ./
+COPY requirements.txt requirements-linux.lock ./
 
 # Create a virtual environment and install Python dependencies
 # The venv keeps dependencies in /app so they can be copied to the production stage
 RUN python -m venv .venv
 ENV PATH="/app/.venv/bin:$PATH"
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt -c requirements-linux.lock && pip check
 
 # Pre-download any ML models or files the agent needs
 # This runs before COPY . . so the download layer is cached across code-only changes.

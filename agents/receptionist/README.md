@@ -20,10 +20,10 @@ TradeCatch (`/app/receptionist`, or `/admin/businesses/<id>`), not in this folde
 
 ## How a call goes
 
-1. **Opening, French first.** "Bonjour! Merci d'avoir appelé *Business*. Pour continuer
+1. **Opening in the configured language.** For a French-default line: "Bonjour! Merci d'avoir appelé *Business*. Pour continuer
    en français, restez en ligne. For English, press 1." The wording comes from the
    business config; this agent only reads it out.
-2. **Language.** `1` → English, `2` → French, nothing within the menu timeout → French.
+2. **Language.** `1` → English, `2` → French, nothing within the menu timeout → the configured default.
    Speech never picks the language (a cough or a TV in the background must not flip
    the call), and the greeting is never repeated after a choice. Later in the call the
    caller can ask out loud ("in English please"); the agent offers once in that language
@@ -180,22 +180,7 @@ listen to real calls (in French and English) before relying on it.
 
 ## Deploy (LiveKit Cloud)
 
-Check before trusting a deployment (all read-only):
-
-- `lk agent secrets` lists `TRADECATCH_BASE_URL` and `TRADECATCH_OPS_SECRET`. Without
-  them every call gets the safe fallback prompt: no transfers, no booking, no report.
-- `lk agent versions` shows *this* folder's build, not an Agent Builder version.
-- `lk sip dispatch list` dispatches the name in `agent.py`
-  (`@server.rtc_session(agent_name="tradecatch-receptionist")`).
-- `lk sip outbound list` has the outbound trunk if you want `warm` transfers.
-
-```bash
-cd agents/receptionist
-lk agent update-secrets --secrets "TRADECATCH_BASE_URL=https://tradecatch.ca,TRADECATCH_OPS_SECRET=<MISSED_CALL_OPS_SECRET value>"
-lk agent deploy
-```
-
-Roll back with `lk agent rollback` if a new version misbehaves.
+Follow [the production cutover procedure](CUTOVER.md) to replace the Builder agent, check the worker and recover service.
 
 ## Test
 
@@ -223,7 +208,7 @@ endpoints and the Twilio `<Gather>` path, including 20 full-call scenarios in
 Automated tests cannot judge sound, recognition on a real line, or carrier behaviour.
 Before relying on a number, call it and check:
 
-- [ ] No key pressed: French greeting, French conversation, no repeated greeting.
+- [ ] No key pressed on a French-default line: French greeting, French conversation, no repeated greeting.
 - [ ] Press `1` during the greeting and again right after it: English, once, no restart.
 - [ ] Press `2`; press a stray key (`5`); talk over the menu — language never flips by voice.
 - [ ] Speak with a Québec accent and background noise: names and street addresses come
