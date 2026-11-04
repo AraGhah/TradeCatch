@@ -82,7 +82,7 @@ from warm_transfer import (
     refer_transfer,
 )
 
-logger = logging.getLogger("agent-tradecatch-receptionnist")
+logger = logging.getLogger("agent-tradecatch-receptionist")
 
 load_dotenv(".env.local")
 
@@ -881,7 +881,7 @@ def build_session(
     return AgentSession(llm=inference.DuplexModel(model=model, voice=voice), **options)
 
 
-@server.rtc_session(agent_name="tradecatch-receptionnist")
+@server.rtc_session(agent_name="tradecatch-receptionist")
 async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect()
     participant = await ctx.wait_for_participant(
