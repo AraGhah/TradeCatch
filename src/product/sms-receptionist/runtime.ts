@@ -155,10 +155,19 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
       return automation.isSuppressed(organizationId, phoneE164);
     },
 
-    async hasActiveWorkflow(clientId, phoneE164) {
-      return Boolean(
-        await store.findActiveWorkflowByCaller(clientId, phoneE164),
+    async activeWorkflow(clientId, phoneE164) {
+      const workflow = await store.findActiveWorkflowByCaller(
+        clientId,
+        phoneE164,
       );
+      if (!workflow) return null;
+      // Module A answers only while it is asking its intake questions. Once the
+      // job is with a technician or a person it returns "not handled", so the
+      // receptionist must answer or the customer's text gets no reply at all.
+      return workflow.status === "started" ||
+        workflow.status === "awaiting_customer"
+        ? "collecting"
+        : "with_team";
     },
 
     async quietHours(organizationId) {

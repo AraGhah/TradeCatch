@@ -12,6 +12,7 @@ import { z } from "zod";
 import { claimsBooking } from "./booking";
 import {
   createRuleBrain,
+  explicitHumanTransfer,
   mergeCallDetails,
   nextMissingStep,
   wrapUpOutcome,
@@ -267,6 +268,9 @@ export function createLlmBrain(
   return {
     async decide(input): Promise<AgentDecision> {
       const { config, session } = input;
+      // An explicit request for a person is not the model's call to make.
+      const human = explicitHumanTransfer(input);
+      if (human) return human;
       try {
         const missing = nextMissingStep(config, session, session.slots, {
           recap: false,

@@ -86,6 +86,11 @@ export type AgentConfig = {
   transferHours: "always" | "business_hours";
   /** Where "talk to a person" goes. Null when no live human is configured. */
   transferE164: string | null;
+  /**
+   * Second line to try when `transferE164` is busy, unanswered or declines.
+   * Same hours rule as `transferE164`. Null when none is configured.
+   */
+  backupTransferE164: string | null;
   /** Where emergencies go (works after hours). Null when none is configured. */
   emergencyTransferE164: string | null;
   /** Named departments the agent may offer. */
@@ -215,6 +220,10 @@ export function buildAgentConfig(
   const emergency =
     config.emergencyTransferE164 ?? config.fallbackTransferE164 ?? null;
   const general = config.fallbackTransferE164 ?? null;
+  const backup =
+    general && config.backupTransferE164 && config.backupTransferE164 !== general
+      ? config.backupTransferE164
+      : null;
   const departments = config.routing.map((r) => ({
     name: r.name,
     phoneE164: r.phoneE164,
@@ -267,6 +276,7 @@ export function buildAgentConfig(
     afterHours,
     transferHours,
     transferE164: general,
+    backupTransferE164: backup,
     emergencyTransferE164: emergency,
     departments,
     voice,

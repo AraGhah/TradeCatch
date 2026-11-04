@@ -447,6 +447,12 @@ export function buildProfileConfig(
       transfer.primaryTransferE164 ||
       s.fallbackTransferE164
     : undefined;
+  const fallbackTransfer = canTransfer
+    ? (primaryTransfer ??
+      transfer.secondaryTransferE164 ??
+      client.humanReviewPhone ??
+      ownerPhone(client))
+    : undefined;
   const emergency = canBridgeEmergency
     ? (s.emergencyTransferE164 ?? primaryPhone(client) ?? client.humanReviewPhone)
     : undefined;
@@ -529,12 +535,13 @@ export function buildProfileConfig(
     })),
     urgencyRubric: client.urgencyRubric,
     emergencyTransferE164: emergency,
-    fallbackTransferE164: canTransfer
-      ? (primaryTransfer ??
-        transfer.secondaryTransferE164 ??
-        client.humanReviewPhone ??
-        ownerPhone(client))
-      : undefined,
+    fallbackTransferE164: fallbackTransfer,
+    backupTransferE164:
+      canTransfer &&
+      transfer.secondaryTransferE164 &&
+      transfer.secondaryTransferE164 !== fallbackTransfer
+        ? transfer.secondaryTransferE164
+        : undefined,
     transferHours: transfer.transferHours,
     transferTimeoutSeconds: transfer.timeoutSeconds,
     allowVoicemailOnly: !canTransfer || transfer.failedAction === "voicemail",

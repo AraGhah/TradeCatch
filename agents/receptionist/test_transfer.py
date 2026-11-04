@@ -268,6 +268,37 @@ class PlanTests(unittest.TestCase):
         plan = plan_transfer(CFG, "caller_request", "+19005551234")
         self.assertEqual(numbers(plan), ["+14389957350"])
 
+    def test_the_owners_backup_line_is_tried_after_the_general_line(self):
+        cfg = {**CFG, "backupTransferE164": "+14385550003"}
+        plan = plan_transfer(cfg, "caller_request")
+        self.assertEqual(numbers(plan), ["+14389957350", "+14385550003"])
+        self.assertEqual([t.name for t in plan.targets], ["General line", "Backup line"])
+
+    def test_a_department_falls_back_to_the_general_then_the_backup_line(self):
+        cfg = {**CFG, "backupTransferE164": "+14385550003"}
+        plan = plan_transfer(cfg, "caller_request", "billing")
+        self.assertEqual(
+            numbers(plan), ["+14385550002", "+14389957350", "+14385550003"]
+        )
+
+    def test_a_backup_line_equal_to_the_general_line_is_not_dialed_twice(self):
+        cfg = {**CFG, "backupTransferE164": "+14389957350"}
+        self.assertEqual(numbers(plan_transfer(cfg, "caller_request")), ["+14389957350"])
+
+    def test_the_backup_line_follows_the_owners_hours_rule(self):
+        cfg = {**CFG, "afterHours": True, "backupTransferE164": "+14385550003"}
+        self.assertEqual(numbers(plan_transfer(cfg, "emergency")), ["+14385550001"])
+        always = {**cfg, "transferHours": "always"}
+        self.assertEqual(
+            numbers(plan_transfer(always, "emergency")),
+            ["+14385550001", "+14389957350", "+14385550003"],
+        )
+
+    def test_an_older_server_without_a_backup_line_still_plans(self):
+        cfg = {k: v for k, v in CFG.items()}
+        cfg.pop("backupTransferE164", None)
+        self.assertEqual(numbers(plan_transfer(cfg, "caller_request")), ["+14389957350"])
+
 
 if __name__ == "__main__":
     unittest.main()
