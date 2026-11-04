@@ -208,7 +208,7 @@ class ReceptionistAgent(Agent):
             self._menu_task = self._spawn(self._run_menu(opening))
 
     async def _run_menu(self, opening: Any) -> None:
-        """After the menu is spoken, wait a moment for a key; no key means French."""
+        """After the menu is spoken, wait a moment for a key; no key keeps the configured language."""
         await opening.wait_for_playout()
         await asyncio.sleep(phrases.menu_timeout_seconds(self._cfg or None))
         choice = self._menu.on_timeout()
@@ -687,12 +687,13 @@ class ReceptionistAgent(Agent):
             # Hold the floor so nothing else is said while the person is being reached.
             async with context.foreground():
                 await self._say_hold_line(context, hold_line(language, emergency))
-                for target in plan.targets:
+                for candidate in plan.targets:
                     spent = time.monotonic() - started
                     if attempts and spent + settings.ring_seconds > settings.budget_seconds:
                         break
                     if attempts:
                         await asyncio.sleep(BETWEEN_ATTEMPTS_SECONDS)
+                    target = candidate
                     attempts += 1
                     outcome = await self._attempt(target, settings, language, emergency)
                     if outcome.connected:
