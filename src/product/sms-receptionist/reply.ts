@@ -204,6 +204,39 @@ export function fallbackReply(
     : `Hello, this is the virtual assistant for ${context.name}. Thanks for your message, a team member will reply shortly. To speed things up, please send your name, address and what you need.`;
 }
 
+/**
+ * A short "we got it" for a customer who texts again after the first
+ * acknowledgement when there is nothing new to answer (the model is down, or
+ * the message is just "ok?" / "allo?"). Silence reads as a dead line; repeating
+ * the full introduction reads as a bot loop. `openRequest`: the team already
+ * holds this customer's request (from a missed call).
+ */
+export function followUpReply(
+  language: SmsLanguage,
+  context: Pick<BusinessContext, "name">,
+  openRequest = false,
+): string {
+  if (language === "fr") {
+    return openRequest
+      ? `Bien reçu, merci. L’équipe de ${context.name} a déjà votre demande et vous répondra ici dès que possible.`
+      : `Bien reçu, merci. J’ai transmis votre message à l’équipe de ${context.name}; quelqu’un vous répondra ici dès que possible.`;
+  }
+  return openRequest
+    ? `Got it, thanks. The ${context.name} team already has your request and will reply here as soon as possible.`
+    : `Got it, thanks. I’ve passed your message to the ${context.name} team; someone will reply here as soon as possible.`;
+}
+
+export function isFollowUpReply(
+  text: string,
+  context: Pick<BusinessContext, "name">,
+): boolean {
+  return (["fr", "en"] as const).some(
+    (lang) =>
+      text === followUpReply(lang, context) ||
+      text === followUpReply(lang, context, true),
+  );
+}
+
 export function afterHoursReply(
   language: SmsLanguage,
   context: BusinessContext,
@@ -539,10 +572,18 @@ export function buildUserPrompt(input: {
   language: SmsLanguage;
   slots: OpenSlot[];
   now?: Date;
+  /** The team already holds this customer's request (from a missed call). */
+  openRequest?: boolean;
 }): string {
   const lines: string[] = [];
   const nowLine = input.now ? describeNow(input.context, input.now) : null;
   if (nowLine) lines.push(nowLine, "");
+  if (input.openRequest) {
+    lines.push(
+      "OPEN REQUEST: this customer already called and their request was passed to the team, who will follow up. Do not ask again for details already given; answer their message, and say the team will follow up. Never promise when.",
+      "",
+    );
+  }
   if (input.history.length) {
     lines.push("CONVERSATION SO FAR");
     for (const turn of input.history) {
