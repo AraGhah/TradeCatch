@@ -85,10 +85,11 @@ def plan_transfer(
 ) -> TransferPlan:
     """The ordered list of lines to try for a transfer.
 
-    The first line is exactly what `pick_transfer` chooses. A second line is added
-    only from numbers the owner already configured: the general line, when it is a
-    different number and the owner's hours rule lets it ring. Nothing the caller or
-    the model says can add a number.
+    The first line is exactly what `pick_transfer` chooses. Further lines come only
+    from numbers the owner already configured, each when it is a different number
+    and the owner's hours rule lets it ring: the general line, then the backup line
+    (the owner's secondary transfer number). Nothing the caller or the model says can
+    add a number.
     """
     decision = pick_transfer(cfg, reason, department)
     if decision.number is None:
@@ -100,18 +101,23 @@ def plan_transfer(
         if d.get("phoneE164")
     }
     general = cfg.get("transferE164")
+    backup = cfg.get("backupTransferE164")
     emergency_line = cfg.get("emergencyTransferE164")
 
     def label(number: str) -> str:
         if reason == "emergency" and number == (emergency_line or general):
             return "Emergency"
-        return departments.get(number) or (
-            "General line" if number == general else "Transfer line"
-        )
+        if number in departments:
+            return departments[number]
+        if number == general:
+            return "General line"
+        return "Backup line" if number == backup else "Transfer line"
 
     targets = [TransferTarget(decision.number, label(decision.number))]
-    if general and general != decision.number and _general_line_allowed(cfg):
-        targets.append(TransferTarget(str(general), label(str(general))))
+    if _general_line_allowed(cfg):
+        for extra in (general, backup):
+            if extra and all(str(extra) != t.number for t in targets):
+                targets.append(TransferTarget(str(extra), label(str(extra))))
     return TransferPlan(targets=tuple(targets))
 
 
