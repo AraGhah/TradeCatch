@@ -67,6 +67,7 @@ export function applyVoicePlanLimits(
       ...next,
       routing: [],
       fallbackTransferE164: undefined,
+      backupTransferE164: undefined,
       inboundStrategy: "ai_first",
       allowVoicemailOnly: true,
     };
