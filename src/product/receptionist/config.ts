@@ -100,6 +100,7 @@ export const receptionistConfigSchema = z.object({
     .default([]),
   emergencyTransferE164: e164.optional(),
   fallbackTransferE164: e164.optional(),
+  backupTransferE164: e164.optional(),
   /** Env/demo default keeps after-hours transfers off; profiles override. */
   transferHours: z.enum(["always", "business_hours"]).default("business_hours"),
   transferTimeoutSeconds: z.number().int().min(10).max(120).default(30),
@@ -208,6 +209,7 @@ export function validateReceptionistConfig(config: ReceptionistConfig): {
     ["phoneNumberE164", config.phoneNumberE164],
     ["emergencyTransferE164", config.emergencyTransferE164],
     ["fallbackTransferE164", config.fallbackTransferE164],
+    ["backupTransferE164", config.backupTransferE164],
     ["smsFromE164", config.smsFromE164],
     ...config.routing.map(
       (r) => [`routing.${r.id}`, r.phoneE164] as [string, string],

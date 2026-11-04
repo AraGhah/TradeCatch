@@ -122,6 +122,11 @@ export type ReceptionistConfig = {
   /** Human fallback when the agent fails or the caller asks for a person. */
   fallbackTransferE164?: string;
   /**
+   * Second person to try when the fallback line is busy, unanswered or
+   * declines (owner's "secondary transfer number"). Never dialed first.
+   */
+  backupTransferE164?: string;
+  /**
    * When normal transfers may ring. `business_hours` (default for env configs)
    * refuses after hours; `always` keeps transferring when a number exists.
    * Owner profiles copy `transferSettings.transferHours`.

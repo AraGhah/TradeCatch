@@ -703,6 +703,14 @@ class TransferTests(FlowCase):
         self.assertIn("now connected", reply)
         self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
 
+    async def test_a_refer_to_a_busy_operator_rolls_over_to_the_backup_line(self):
+        self.make_agent(cfg={**CFG, "backupTransferE164": "+14385550003"})
+        self.job.transfer_queue = [refer_response("STS_TRANSFER_FAILED", "STR_REJECTED", sip=486)]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertEqual(self.job.transfers, ["tel:+14389957350", "tel:+14385550003"])
+        self.assertIn("now connected", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "Backup line", "completed": True})
+
     async def test_a_second_transfer_while_one_runs_is_ignored(self):
         self.agent._transferring = True
         reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
@@ -892,6 +900,28 @@ class WarmTransferFlowTests(FlowCase):
         self.assertTrue(payload["emergency"])
         self.assertEqual(payload["transfer"]["completed"], False)
         self.assertNotEqual(payload.get("intent"), "transfer")
+
+    async def test_an_unavailable_operator_rolls_over_to_the_owners_backup_line(self):
+        self.make_agent(cfg={**CFG, "backupTransferE164": "+14385550003"})
+        FakeScreened.script = ["no_answer", "connected"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertEqual(
+            [m.target.number for m in FakeScreened.made], ["+14389957350", "+14385550003"]
+        )
+        self.assertIn("now connected", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "Backup line", "completed": True})
+
+    async def test_when_every_operator_is_unavailable_the_caller_is_offered_a_callback(self):
+        self.make_agent(cfg={**CFG, "backupTransferE164": "+14385550003"})
+        FakeScreened.script = ["busy", "declined"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertEqual(len(FakeScreened.made), 2)
+        self.assertIn("did NOT connect", reply)
+        self.assertIn("all the available lines", reply)
+        self.assertIn("callback", reply)
+        self.assertEqual(self.call.transfer, {"targetName": "Backup line", "completed": False})
+        self.assertFalse(self.agent._transferring)
+        self.assertFalse(self.agent._keep_job_alive)
 
     async def test_voicemail_is_not_a_transfer(self):
         FakeScreened.script = ["voicemail"]
