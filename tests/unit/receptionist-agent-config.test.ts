@@ -52,6 +52,74 @@ describe("agent config", () => {
     assert.equal(out.afterHours, false);
   });
 
+  it("sends the owner's secondary transfer number as the backup line", () => {
+    const transferSettings = {
+      primaryTransferE164: "+14389957350",
+      secondaryTransferE164: "+14389957351",
+      transferHours: "always",
+      timeoutSeconds: 30,
+      conditions: ["caller_request"],
+      failedAction: "take_message",
+    };
+    const out = buildAgentConfig(config({ transferSettings }), OPEN);
+    assert.equal(out.transferE164, "+14389957350");
+    assert.equal(out.backupTransferE164, "+14389957351");
+
+    // Only a secondary number: it becomes the main line, never also the backup.
+    const only = buildAgentConfig(
+      config({
+        transferSettings: { ...transferSettings, primaryTransferE164: undefined },
+      }),
+      OPEN,
+    );
+    assert.equal(only.transferE164, "+14389957351");
+    assert.equal(only.backupTransferE164, null);
+
+    // Same number twice is not a second person.
+    const same = buildAgentConfig(
+      config({
+        transferSettings: {
+          ...transferSettings,
+          secondaryTransferE164: "+14389957350",
+        },
+      }),
+      OPEN,
+    );
+    assert.equal(same.backupTransferE164, null);
+  });
+
+  it("drops the backup line when the plan has no live transfers", () => {
+    const built = buildProfileConfig(
+      {
+        organizationId: "org_agent",
+        phoneNumberE164: "+14385597100",
+        activated: true,
+        settings: profileSettingsSchema.parse({
+          knowledge: { companyName: "Nord Plomberie" },
+          notifyEmail: "owner@example.com",
+          transferSettings: {
+            primaryTransferE164: "+14389957350",
+            secondaryTransferE164: "+14389957351",
+          },
+        }),
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        client,
+        capabilities: {
+          voice: true,
+          transfer: false,
+          emergencyRouting: false,
+          phoneBooking: false,
+          transcripts: false,
+        },
+      },
+    );
+    const out = buildAgentConfig(built, OPEN);
+    assert.equal(out.transferE164, null);
+    assert.equal(out.backupTransferE164, null);
+  });
+
   it("restricts transfers to emergencies when the office is closed and transferHours is business_hours", () => {
     const out = buildAgentConfig(
       config({
