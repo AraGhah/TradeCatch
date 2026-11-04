@@ -6,6 +6,7 @@ import { getCrmService } from "../../src/product/crm/runtime";
 import { demoClientAccount } from "../../src/product/missed-call/fixtures";
 import { ensureMissedCallReady } from "../../src/product/missed-call/runtime";
 import { getSaasStore } from "../../src/product/saas/runtime";
+import type { MissedCallWorkflow } from "../../src/product/missed-call/types";
 import {
   getSmsInbox,
   processSmsInbox,
@@ -216,6 +217,62 @@ describe("POST /api/twilio/sms/inbound — SMS receptionist", () => {
     assert.match(replies[0]!.body, /assistant virtuel de Nord Plomberie/);
     assert.match(replies[1]!.body, /adresse/i);
   });
+
+  it("never leaves a customer's short follow-ups unanswered (no model configured)", async () => {
+    const { client, organization } = await business();
+    for (const body of ["Hi", "ok", "hello?"]) {
+      assert.equal(
+        (await POST(webhook(client.smsFromNumber, body))).status,
+        200,
+      );
+    }
+    const replies = await automatedReplies(organization.id);
+    assert.equal(replies.length, 3, "one reply per text");
+    assert.match(replies[0]!.body, /virtual assistant for Nord Plomberie/);
+    assert.match(replies[1]!.body, /Got it, thanks/);
+    assert.match(replies[2]!.body, /Got it, thanks/);
+  });
+
+  for (const status of ["awaiting_technician", "awaiting_human"] as const) {
+    it(`answers a customer whose missed-call job is ${status}`, async () => {
+      const { client, organization, store } = await business();
+      const at = new Date(NOW - 10 * 60_000).toISOString();
+      await store.saveWorkflow({
+        id: `wf_open_${status}`,
+        clientAccountId: client.id,
+        callId: `call_open_${status}`,
+        callerE164: CUSTOMER,
+        status,
+        currentStep: "done",
+        collected: {
+          language: "fr",
+          photoUrls: [],
+          customerName: "Marie",
+          serviceAddress: "12 rue Main",
+          issueDescription: "évier bouché",
+        },
+        escalationIndex: 0,
+        escalationStage: "primary",
+        technicianAlerts: [],
+        outcome: "open",
+        events: [],
+        createdAt: at,
+        updatedAt: at,
+        dedupeKey: `dedupe_open_${status}`,
+      } as MissedCallWorkflow);
+      const res = await POST(
+        webhook(
+          client.smsFromNumber,
+          "Bonjour, est-ce que quelqu'un s'en vient?",
+        ),
+      );
+      assert.equal(res.status, 200);
+      const replies = await automatedReplies(organization.id);
+      assert.equal(replies.length, 1, "the customer is answered");
+      assert.match(replies[0]!.body, /a déjà votre demande/);
+      assert.doesNotMatch(replies[0]!.body, /adresse/);
+    });
+  }
 
   it("still answers when Twilio redelivers a cold SMS MessageSid after Module A released it", async () => {
     const { client, organization, store } = await business();
