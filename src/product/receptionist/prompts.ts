@@ -287,10 +287,16 @@ export function acknowledgement(
  * The language menu, spoken right after the French greeting: the French half in
  * the French voice, the English half in the English voice.
  */
-export function languageMenuPrompts(): {
+export function languageMenuPrompts(start: ReceptionistLanguage = "fr"): {
   text: string;
   lang: ReceptionistLanguage;
 }[] {
+  if (start === "en") {
+    return [
+      { text: "To continue in English, stay on the line.", lang: "en" },
+      { text: "Pour le français, appuyez sur le 2.", lang: "fr" },
+    ];
+  }
   return [
     { text: PHRASES.stayForFrench.fr, lang: "fr" },
     { text: PHRASES.pressForEnglish.en, lang: "en" },

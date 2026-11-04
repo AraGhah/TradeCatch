@@ -194,13 +194,13 @@ describe("agent config", () => {
     assert.ok(!out.instructions.includes("no calendar or booking system"));
   });
 
-  it("starts every call in French with one key for English and a short wait", () => {
+  it("opens a French-default line in French with one key for English and a short wait", () => {
     const out = buildAgentConfig(
-      config({ languages: ["en", "fr"], defaultLanguage: "en" }),
+      config({ languages: ["en", "fr"], defaultLanguage: "fr" }),
       OPEN,
     );
     const menu = out.languageSelect;
-    assert.equal(menu.startLanguage, "fr", "French first even when English is the default");
+    assert.equal(menu.startLanguage, "fr");
     assert.deepEqual(menu.keys, { "1": "en", "2": "fr" });
     assert.equal(menu.timeoutSeconds, 3);
     assert.match(menu.opening.statement.text, /Nord Plomberie/);
@@ -215,6 +215,14 @@ describe("agent config", () => {
     assert.match(menu.afterChoice.fr.question, /Comment puis-je vous aider/);
     assert.match(menu.afterChoice.en.question, /How can I help you/);
     assert.match(menu.afterChoice.en.chosen, /continue in English/);
+  });
+
+  it("honors the English default and offers French on key 2", () => {
+    const { languageSelect: menu } = buildAgentConfig(config({ languages: ["en", "fr"], defaultLanguage: "en" }), OPEN);
+    assert.equal(menu.startLanguage, "en");
+    assert.equal(menu.opening.statement.lang, "en");
+    assert.match(menu.opening.menu[1].text, /français.*2/);
+    assert.equal(menu.keys["2"], "fr");
   });
 
   it("says nothing about a menu on a single-language line, and carries the after-hours notice", () => {
