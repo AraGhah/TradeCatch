@@ -328,14 +328,33 @@ class OpeningAndLanguageTests(FlowCase):
         self.assertEqual(self.call.language, "fr")
         self.assertEqual(self.session.interrupts, 0)
 
-    async def test_a_key_after_the_menu_closed_does_nothing(self):
+    async def test_key_1_after_timeout_continues_in_english_without_restarting(self):
         await self.agent.on_enter()
         await self.settle()
         before = len(self.session.replies)
         self.agent._on_dtmf(dtmf("1"))
         await self.settle()
-        self.assertEqual(len(self.session.replies), before)
-        self.assertEqual(self.call.language, "fr")
+        self.assertEqual(len(self.session.replies), before + 1)
+        self.assertEqual(self.call.language, "en")
+        self.assertIn("North American English", self.session.replies[-1])
+        self.assertNotIn("How can I help?", self.session.replies[-1])
+
+    async def test_key_code_switches_fallback_to_english_after_noise(self):
+        self.agent = Harness(cfg=None, call=self.call, client=None, sip_identity="sip_1")
+        self.agent.fake_session = self.session
+        await self.agent.on_enter()
+        self.agent._on_user_state(state("speaking"))
+        self.agent._on_dtmf(SimpleNamespace(code=1, digit="", participant=SimpleNamespace(identity="sip_1")))
+        await self.settle()
+        self.assertEqual(self.call.language, "en")
+        self.assertIn("North American English", self.agent.instructions)
+        self.assertIn("technical difficulties", self.agent.instructions)
+
+    async def test_key_during_transfer_is_ignored(self):
+        await self.agent.on_enter()
+        self.agent._transferring = True
+        self.agent._on_dtmf(dtmf("1"))
+        self.assertEqual(self.agent._menu.language, "fr")
 
     async def test_speech_at_the_menu_does_not_pick_a_language_or_trigger_a_second_greeting(self):
         await self.agent.on_enter()

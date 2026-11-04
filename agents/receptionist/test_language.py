@@ -49,11 +49,12 @@ class LanguageMenuTests(unittest.TestCase):
         self.assertFalse(menu.is_open)
         self.assertIsNone(menu.on_timeout())
 
-    def test_a_key_after_the_menu_closed_cannot_restart_the_greeting(self):
+    def test_keys_can_switch_mid_call_but_duplicates_are_ignored(self):
         menu = self.menu()
         menu.on_digit("1")
-        self.assertIsNone(menu.on_digit("2"))
-        self.assertEqual(menu.language, "en")
+        self.assertIsNone(menu.on_digit("1"))
+        self.assertEqual(menu.on_digit("2").language, "fr")
+        self.assertFalse(menu.is_open)
 
     def test_a_single_language_line_has_no_menu(self):
         menu = self.menu(start="en", languages=("en",))
