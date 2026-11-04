@@ -564,7 +564,7 @@ class BookingTests(FlowCase):
         await self.agent.check_availability(None)
         self.client.book_result = None
         text = await self.agent.book_appointment(None, 1)
-        self.assertIn("NOT booked", text)
+        self.assertIn("unconfirmed", text)
         self.assertNotIn("BOOKED", text)
         self.assertFalse(self.call.booked)
         self.assertNotEqual(self.call.payload().get("intent"), None)
@@ -959,6 +959,7 @@ class WarmTransferFlowTests(FlowCase):
         await self.agent.transfer_call(ctx_for(self.session), "emergency")
         self.assertEqual(len(FakeScreened.made), 1)
         self.assertFalse(self.call.transfer["completed"])
+        self.assertEqual(self.call.transfer["targetName"], "Emergency")
 
     async def test_an_unexpected_error_in_the_transfer_is_a_failure_not_a_crash(self):
         FakeScreened.script = ["boom"]
