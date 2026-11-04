@@ -39,7 +39,7 @@ import type {
 type PerLanguage = Record<ReceptionistLanguage, string>;
 
 export type AgentLanguageSelect = {
-  /** The language every call starts in (French whenever it is enabled). */
+  /** The language every call starts in (the business default when enabled). */
   startLanguage: ReceptionistLanguage;
   languages: ReceptionistLanguage[];
   /** Seconds the menu waits for a key before staying in the start language. */
@@ -191,7 +191,9 @@ function languageSelectFor(
   config: ReceptionistConfig,
   afterHours: boolean,
 ): AgentLanguageSelect {
-  const start = firstLanguage(config.languages, config.defaultLanguage);
+  const start = config.languages.includes(config.defaultLanguage)
+    ? config.defaultLanguage
+    : firstLanguage(config.languages);
   const bilingual = config.languages.length > 1;
   const forLanguage = (lang: ReceptionistLanguage) => ({
     chosen: phrase(lang === "en" ? "languageChosenEn" : "languageChosenFr", lang),
@@ -205,7 +207,7 @@ function languageSelectFor(
     keys: { "1": "en", "2": "fr" },
     opening: {
       statement: { text: greetingStatement(config, start), lang: start },
-      menu: bilingual ? languageMenuPrompts().map((p) => ({ text: p.text, lang: p.lang })) : [],
+      menu: bilingual ? languageMenuPrompts(start).map((p) => ({ text: p.text, lang: p.lang })) : [],
     },
     afterChoice: { fr: forLanguage("fr"), en: forLanguage("en") },
   };

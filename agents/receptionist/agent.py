@@ -5,8 +5,7 @@ Calls arrive from the Twilio SIP trunk. For each call this agent:
   2. fetches that business's rendered instructions, opening words and transfer
      lines from TradeCatch (so every company is configured in the TradeCatch UI,
      not here),
-  3. opens in Canadian French with a language menu (key 1 = English, key 2 =
-     French, no key = French) and keeps the chosen language for the whole call,
+  3. opens in the configured language with a menu (1 = English, 2 = French) and keeps the chosen language for the whole call,
   4. talks to the caller, books only through TradeCatch's calendar, and can
      really transfer the call,
   5. reports the finished call to TradeCatch, which sends the owner the usual
@@ -91,8 +90,8 @@ load_dotenv(".env.local")
 FALLBACK_INSTRUCTIONS = """You are the phone receptionist for a home-services contractor.
 You are having technical difficulties and cannot look up the business's details.
 Be brief, warm and polite. Collect the caller's name, callback number, address and the
-reason for the call, repeat them back, and say you have noted the request and the team
-will call back. Never state prices, availability or hours, and never say anything is
+reason for the call. Explain that delivery is unconfirmed and ask them to try again.
+Never state prices, availability or hours, and never say anything is
 booked or confirmed. If anyone is in danger, tell the caller to hang up and call 911.
 Never say you will transfer the call: no transfer is available."""
 
@@ -209,7 +208,7 @@ class ReceptionistAgent(Agent):
             self._menu_task = self._spawn(self._run_menu(opening))
 
     async def _run_menu(self, opening: Any) -> None:
-        """After the menu is spoken, wait a moment for a key; no key means French."""
+        """After the menu is spoken, wait a moment for a key; no key keeps the configured language."""
         await opening.wait_for_playout()
         await asyncio.sleep(phrases.menu_timeout_seconds(self._cfg or None))
         choice = self._menu.on_timeout()
@@ -688,12 +687,13 @@ class ReceptionistAgent(Agent):
             # Hold the floor so nothing else is said while the person is being reached.
             async with context.foreground():
                 await self._say_hold_line(context, hold_line(language, emergency))
-                for target in plan.targets:
+                for candidate in plan.targets:
                     spent = time.monotonic() - started
                     if attempts and spent + settings.ring_seconds > settings.budget_seconds:
                         break
                     if attempts:
                         await asyncio.sleep(BETWEEN_ATTEMPTS_SECONDS)
+                    target = candidate
                     attempts += 1
                     outcome = await self._attempt(target, settings, language, emergency)
                     if outcome.connected:
@@ -888,9 +888,7 @@ async def entrypoint(ctx: JobContext) -> None:
         kind=rtc.ParticipantKind.PARTICIPANT_KIND_SIP
     )
 
-    number = dialed_number(participant.attributes) or os.environ.get(
-        "DEFAULT_BUSINESS_NUMBER"
-    )
+    number = dialed_number(participant.attributes)
     client = TradeCatchClient.from_env()
     cfg = await client.fetch_business_config(number) if client and number else None
     if cfg is None:
