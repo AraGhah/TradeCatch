@@ -138,6 +138,8 @@ class ReceptionistAgent(Agent):
             phrases.menu_keys(cfg),
         )
         call.language = self._menu.language
+        # The language the voice model was last told to speak.
+        self._model_language = self._menu.language
         self.check_in_seconds, max_check_ins = phrases.silence_settings(cfg)
         self._silence = SilencePolicy(max_check_ins)
 
@@ -238,13 +240,28 @@ class ReceptionistAgent(Agent):
             return
         self._spawn(self._apply_choice(choice, during_opening=during_opening))
 
+    def _instructions_are_fixed(self) -> bool:
+        """gpt-live refuses new instructions once the session has started."""
+        capabilities = getattr(getattr(self.session, "llm", None), "capabilities", None)
+        return getattr(capabilities, "mutable_instructions", True) is False
+
     async def _set_language(self, language: str) -> None:
         async with self._language_lock:
             if language != self._menu.language:
                 return
             self._call.language = language
+            if language == self._model_language:
+                return
             try:
-                await self.update_instructions(self._instructions_for(language))
+                if self._instructions_are_fixed():
+                    # A system message reaches gpt-live as a standing rule (append_instructions).
+                    chat_ctx = self.chat_ctx.copy()
+                    chat_ctx.add_message(role="system", content=phrases.language_update(language))
+                    await self.update_chat_ctx(chat_ctx)
+                else:
+                    await self.update_instructions(self._instructions_for(language))
+                self._model_language = language
+                logger.info("language rule sent to the voice model: %s", language)
             except Exception:
                 logger.exception("could not update instructions for the new language")
 
