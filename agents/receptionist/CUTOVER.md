@@ -18,7 +18,7 @@ Owner-operated maintenance window for the existing TradeCatch project. The repor
     if (Test-Path livekit.toml) { throw 'Inspect the existing deployment binding before proceeding.' }
     ```
 
-4. Build the exact Linux image before freeing the slot. Run with Docker Desktop in Linux container mode. The commands below only need public packages. Stop on any unsuccessful command. Use a clean checkout without local settings. The model load must succeed as the runtime user with networking disabled.
+4. Verify the Linux build before freeing the slot. Check that the **Python receptionist image** CI job passed for the same worker source and Dockerfile you will deploy. To repeat the check locally, run the commands below with Docker Desktop in Linux container mode, using a clean checkout without local settings. Stop on any unsuccessful command. The model load must succeed as the runtime user with networking disabled.
 
     ```powershell
     docker build --platform linux/amd64 -t tradecatch-receptionist:cutover .
@@ -55,11 +55,12 @@ The remaining optional numeric limits and units for transfer ringing, consultati
 ## Owner cutover
 
 1. Proceed only after preflight, backup and the alternate contact are ready. In the verified LiveKit project, open the Builder agent, check its ID again, then use the Builder's **Delete agent** action and confirmation. Do this yourself. If the UI lacks that action, stop and use LiveKit support. Leave the trunk and dispatch rule in place. Refresh `lk --project tradecatch agent list` until the Builder is gone.
-2. From the receptionist directory, create once with the preflighted image, the existing project and region, and the privately prepared settings. CLI **2.19.2** supports these flags. The worker decorator supplies the dispatch name.
+2. From the verified receptionist directory, create the Python agent once. LiveKit Cloud builds from the Dockerfile in this directory. Allow time for that build during the maintenance window. The worker decorator supplies the dispatch name. Uploading a prebuilt image requires Enterprise. [LiveKit build documentation](https://docs.livekit.io/deploy/agents/builds/)
 
     ```powershell
     $settingsFile = Read-Host 'Path to your private settings file'
-    lk --project tradecatch agent create --region us-east --image tradecatch-receptionist:cutover --secrets-file $settingsFile .
+    if (!(Test-Path -LiteralPath $settingsFile -PathType Leaf)) { throw 'Private settings file missing' }
+    lk --project tradecatch agent create --region us-east --secrets-file $settingsFile .
     lk --project tradecatch agent list
     ```
 
