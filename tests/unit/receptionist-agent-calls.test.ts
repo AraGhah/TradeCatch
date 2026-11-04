@@ -121,6 +121,13 @@ const details = {
 };
 
 describe("voice agent — availability", () => {
+  it("rejects a call ID already used by another business", async () => {
+    const { service, config } = setup({ scheduler: fakeScheduler().scheduler });
+    await service.availability(config, base);
+    const other = makeConfig({ id: "another_line", clientAccountId: "another_client" });
+    await assert.rejects(service.availability(other, base), /different receptionist/);
+  });
+
   it("returns real openings with spoken labels in the call language", async () => {
     const { scheduler, calls } = fakeScheduler();
     const { service, config } = setup({ scheduler });

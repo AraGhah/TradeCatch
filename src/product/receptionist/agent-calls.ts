@@ -190,6 +190,9 @@ export function createAgentCallService(deps: AgentCallDeps) {
       version: 1,
     };
     const { session } = await deps.store.insertSessionIfAbsent(draft);
+    if (session.configId !== config.id || session.clientAccountId !== config.clientAccountId) {
+      throw new Error("Call belongs to a different receptionist");
+    }
     return session;
   }
 

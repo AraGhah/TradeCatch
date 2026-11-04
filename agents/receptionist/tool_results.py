@@ -80,7 +80,7 @@ def format_booking(
     """`result` is the `booking` object from the endpoint, or None if it failed."""
     if result is None:
         return (
-            "The booking system did not respond, so the appointment is NOT booked. "
+            "The booking system did not respond. The appointment is unconfirmed. "
             + NO_BOOKING_ADVICE
         )
     status = result.get("status")

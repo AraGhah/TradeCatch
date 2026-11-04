@@ -85,6 +85,7 @@ class TradeCatchClient:
                 params=params,
                 json=json,
                 headers=self._headers,
+                allow_redirects=False,
                 timeout=aiohttp.ClientTimeout(total=timeout),
             ) as res:
                 try:
@@ -110,7 +111,6 @@ class TradeCatchClient:
         attempts: int,
     ) -> dict[str, Any] | None:
         """POST with retries on network errors and 5xx. A 4xx is final."""
-        call_id = body.get("callId")
         for attempt in range(1, attempts + 1):
             answer = await self._request("POST", path, timeout=timeout, json=body)
             if answer is not None:
@@ -118,9 +118,9 @@ class TradeCatchClient:
                 if status == 200 and data.get("ok") is True:
                     return data
                 if status < 500:
-                    logger.error("%s returned %s (call %s)", path, status, call_id)
+                    logger.error("%s returned %s", path, status)
                     return None
-                logger.warning("%s returned %s (call %s)", path, status, call_id)
+                logger.warning("%s returned %s", path, status)
             if attempt < attempts:
                 await asyncio.sleep(self._retry_pause * attempt)
         return None
@@ -146,7 +146,7 @@ class TradeCatchClient:
                     config = data.get("config")
                     return config if isinstance(config, dict) else None
                 if status < 500:
-                    logger.error("agent-config returned %s for %s", status, number)
+                    logger.error("agent-config returned %s", status)
                     return None
                 logger.warning("agent-config returned %s (attempt %d)", status, attempt)
             if attempt < CONFIG_ATTEMPTS:

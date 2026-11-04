@@ -1,0 +1,28 @@
+name: Python receptionist image
+on:
+  pull_request:
+    paths:
+      - "agents/receptionist/**"
+      - ".github/workflows/receptionist-image.yml"
+permissions:
+  contents: read
+jobs:
+  worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Build the Linux worker and load its runtime as the service user
+        working-directory: agents/receptionist
+        run: |
+          docker build -t receptionist:check .
+          docker run --rm --network none receptionist:check python agent.py start --help
+          docker run --rm --network none receptionist:check python -c 'import os, agent; from livekit.plugins import silero; assert os.getuid() != 0; silero.VAD.load()'
+      - name: Exercise call flows with local test doubles
+        working-directory: agents/receptionist
+        run: |
+          mkdir "$RUNNER_TEMP/agent-tests"
+          cp test_*.py "$RUNNER_TEMP/agent-tests/"
+          docker run --rm --network none -e PYTHONPATH=/app -v "$RUNNER_TEMP/agent-tests:/checks:ro" receptionist:check python -m unittest discover -s /checks -p 'test_*.py'
