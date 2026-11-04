@@ -115,7 +115,20 @@ def language_directive(language: str) -> str:
         "If the caller keeps speaking the other language without asking, answer in the "
         "call's language and offer once, in one short sentence in their language, to "
         "continue in it; switch only if they accept. "
-        "Never repeat the greeting or the language menu."
+        "Never repeat the greeting or the language menu. "
+        "A later LANGUAGE UPDATE replaces this section."
+    )
+
+
+def language_update(language: str) -> str:
+    """A standing rule added mid-call, for a voice model whose instructions are fixed."""
+    name = LANGUAGE_NAMES.get(language, language)
+    return (
+        "# LANGUAGE UPDATE\n"
+        f"The call is now in {name}. This replaces the LANGUAGE OF THIS CALL section, any "
+        "earlier language update and any starting language in the business prompt. "
+        f"From now on speak only {name}, in every reply, including the business details "
+        "you read from your instructions. Do not greet again or repeat the language menu."
     )
 
 
