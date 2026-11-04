@@ -26,6 +26,8 @@ BOOK_TIMEOUT_SECONDS = 9.0
 REPORT_TIMEOUT_SECONDS = 10.0
 
 REPORT_ATTEMPTS = 3
+# One retry: the caller hears ringing meanwhile, so the total stays a few seconds.
+CONFIG_ATTEMPTS = 2
 BOOK_ATTEMPTS = 2
 RETRY_PAUSE_SECONDS = 1.0
 
@@ -126,20 +128,31 @@ class TradeCatchClient:
     # -- endpoints ------------------------------------------------------
 
     async def fetch_business_config(self, number: str) -> dict[str, Any] | None:
-        answer = await self._request(
-            "GET",
-            "/api/receptionist/agent-config",
-            timeout=_seconds("AGENT_CONFIG_TIMEOUT_SECONDS", CONFIG_TIMEOUT_SECONDS),
-            params={"number": number},
-        )
-        if answer is None:
-            return None
-        status, data = answer
-        if status != 200:
-            logger.error("agent-config returned %s for %s", status, number)
-            return None
-        config = data.get("config")
-        return config if isinstance(config, dict) else None
+        """The business's config, or None. Without it the call gets the safe fallback
+        prompt with no transfers and no booking, so a network error or a 5xx (a cold
+        server, a slow database) is retried once. A 4xx is final: an unknown number
+        must not be answered as anyone else."""
+        timeout = _seconds("AGENT_CONFIG_TIMEOUT_SECONDS", CONFIG_TIMEOUT_SECONDS)
+        for attempt in range(1, CONFIG_ATTEMPTS + 1):
+            answer = await self._request(
+                "GET",
+                "/api/receptionist/agent-config",
+                timeout=timeout,
+                params={"number": number},
+            )
+            if answer is not None:
+                status, data = answer
+                if status == 200:
+                    config = data.get("config")
+                    return config if isinstance(config, dict) else None
+                if status < 500:
+                    logger.error("agent-config returned %s for %s", status, number)
+                    return None
+                logger.warning("agent-config returned %s (attempt %d)", status, attempt)
+            if attempt < CONFIG_ATTEMPTS:
+                await asyncio.sleep(self._retry_pause * attempt)
+        logger.error("agent-config unavailable after %d attempts", CONFIG_ATTEMPTS)
+        return None
 
     async def availability(self, body: Mapping[str, Any]) -> dict[str, Any] | None:
         data = await self._post(
