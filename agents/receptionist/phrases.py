@@ -108,7 +108,8 @@ def language_directive(language: str) -> str:
     name = LANGUAGE_NAMES.get(language, language)
     return (
         "# LANGUAGE OF THIS CALL\n"
-        f"The call is in {name}. Speak only {name} and keep it for the whole call. "
+        f"The call is in {name}. This current selection overrides any starting language "
+        f"in the business prompt. Speak only {name}, except for the bilingual opening menu. "
         "Do not switch because of an accent, a borrowed word or a name. Switch only when "
         "the caller clearly asks for the other language, by calling set_language. "
         "If the caller keeps speaking the other language without asking, answer in the "
