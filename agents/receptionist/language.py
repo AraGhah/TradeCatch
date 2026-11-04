@@ -1,14 +1,7 @@
-"""French-first language selection for the voice agent (pure, no LiveKit imports).
+"""Keep the configured starting language until the caller chooses another.
 
-Mirrors src/product/receptionist/language-select.ts, which the Twilio engine uses:
-
-* every call starts in French (when French is enabled), whatever the caller's number;
-* the caller hears "... restez en ligne. For English, press 1.";
-* key 1 = English, key 2 = French, any other key is ignored;
-* no key within the wait = stay in French and ask the opening question;
-* speech never chooses the language at the menu (a cough, a TV, or a caller who
-  simply starts explaining must not flip the call);
-* later, the model may call `set_language` when the caller clearly asks out loud.
+Speech or timeout ends the opening question window. The language keys remain
+available during the conversation even when background noise closed that window.
 """
 
 from __future__ import annotations
@@ -42,11 +35,9 @@ class LanguageMenu:
         self.is_open = len(self._languages) > 1
 
     def on_digit(self, digit: str) -> LanguageChoice | None:
-        """A key during the window. Returns the choice, or None if it means nothing."""
-        if not self.is_open:
-            return None
+        """A key selects an enabled language. Ignore repeats after the opening."""
         language = self._keys.get(digit)
-        if language is None or language not in self._languages:
+        if language not in self._languages or (not self.is_open and language == self.language):
             return None
         self.language = language
         self.is_open = False

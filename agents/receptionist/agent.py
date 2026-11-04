@@ -144,6 +144,7 @@ class ReceptionistAgent(Agent):
         self._ctx: JobContext | None = None
         self._opened = False
         self._pending_choice: LanguageChoice | None = None
+        self._language_lock = asyncio.Lock()
         self._menu_task: asyncio.Task[None] | None = None
         self._tasks: set[asyncio.Task[Any]] = set()
         self._busy = 0
@@ -213,8 +214,7 @@ class ReceptionistAgent(Agent):
         await asyncio.sleep(phrases.menu_timeout_seconds(self._cfg or None))
         choice = self._menu.on_timeout()
         if choice is not None:
-            # The greeting has finished playing; there is nothing to cut.
-            await self._apply_choice(choice, cut_greeting=False)
+            await self._apply_choice(choice)
 
     def _close_menu(self) -> None:
         if self._menu_task is not None and self._menu_task is not asyncio.current_task():
@@ -222,10 +222,13 @@ class ReceptionistAgent(Agent):
         self._menu_task = None
 
     def _on_dtmf(self, ev: rtc.SipDTMF) -> None:
+        if self._transferring or self._keep_job_alive or self._closing:
+            return
         if ev.participant is not None and self._sip_identity:
             if ev.participant.identity != self._sip_identity:
                 return
-        choice = self._menu.on_digit(ev.digit)
+        during_opening = self._menu.is_open
+        choice = self._menu.on_digit(ev.digit or str(ev.code))
         if choice is None:
             return
         logger.info("language key pressed: %s", choice.language)
@@ -233,29 +236,37 @@ class ReceptionistAgent(Agent):
         if not self._opened:
             self._pending_choice = choice
             return
-        self._spawn(self._apply_choice(choice))
+        self._spawn(self._apply_choice(choice, during_opening=during_opening))
 
     async def _set_language(self, language: str) -> None:
-        self._call.language = language
-        try:
-            await self.update_instructions(self._instructions_for(language))
-        except Exception:
-            # The next reply is still told its language explicitly.
-            logger.exception("could not update instructions for the new language")
+        async with self._language_lock:
+            if language != self._menu.language:
+                return
+            self._call.language = language
+            try:
+                await self.update_instructions(self._instructions_for(language))
+            except Exception:
+                logger.exception("could not update instructions for the new language")
 
-    async def _apply_choice(
-        self, choice: LanguageChoice, *, cut_greeting: bool = True
-    ) -> None:
+    async def _apply_choice(self, choice: LanguageChoice, *, during_opening: bool = True) -> None:
         self._silence.on_activity()
         await self._set_language(choice.language)
-        if cut_greeting:
+        if choice.language != self._menu.language:
+            return
+        if choice.chosen:
             with contextlib.suppress(Exception):
-                # A key press while the greeting plays: the caller already knows the menu.
                 await self.session.interrupt(force=True)
+        if choice.language != self._menu.language:
+            return
+        if during_opening:
+            instructions = phrases.after_choice_instruction(self._cfg or None, choice.language, choice.chosen)
+        else:
+            instructions = (
+                f"Continue the current conversation in {phrases.LANGUAGE_NAMES[choice.language]}. "
+                "Briefly acknowledge the change. Do not restart the greeting or menu."
+            )
         self.session.generate_reply(
-            instructions=phrases.after_choice_instruction(
-                self._cfg or None, choice.language, choice.chosen
-            ),
+            instructions=instructions,
             allow_interruptions=True,
         )
 
