@@ -17,7 +17,7 @@ try:
     import warm_transfer as W
     from call_record import CallRecord
     from livekit import api
-    from livekit.agents.llm import ToolError
+    from livekit.agents.llm import RealtimeError, ToolError
     from transfer import TransferFailure, TransferSettings
 except ImportError as err:  # livekit-agents is not installed here
     raise unittest.SkipTest(f"livekit-agents unavailable: {err}")
@@ -422,6 +422,103 @@ class OpeningAndLanguageTests(FlowCase):
         self.assertIn("Bonjour", self.session.replies[0])
         self.assertIn("no transfer is available", self.agent.instructions)
         self.assertIn("Transfers are unavailable", await self.agent.transfer_call(None, "caller_request"))
+
+
+class GptLiveHarness(Harness):
+    """The agent on gpt-live, the production voice model, as LiveKit 1.8.10 drives it.
+
+    Its starting instructions cannot change once the session runs (update_instructions
+    raises), and a new system message in the chat context reaches the model as a
+    standing rule (append_instructions). `rules` is everything the model was told to
+    follow, oldest first.
+    """
+
+    def start_voice_model(self):
+        self.fake_session.llm = SimpleNamespace(
+            capabilities=SimpleNamespace(mutable_instructions=False)
+        )
+        self.rules = [self.instructions]
+
+    async def update_instructions(self, instructions):
+        raise RealtimeError(
+            "gpt-live voice instructions are immutable after session start; use "
+            "append_instructions for a standing rule"
+        )
+
+    async def update_chat_ctx(self, chat_ctx, **kwargs):
+        known = {item.id for item in self.chat_ctx.items}
+        for item in chat_ctx.items:
+            if item.id not in known and getattr(item, "role", None) in ("system", "developer"):
+                self.rules.append(item.text_content)
+        await super().update_chat_ctx(chat_ctx, **kwargs)
+
+
+class GptLiveLanguageTests(FlowCase):
+    """Regression: key 1 was logged, but gpt-live kept its French rule and answered in French."""
+
+    def make_agent(self, cfg=None, client="default", transfers=None):
+        self.agent = GptLiveHarness(
+            cfg=copy.deepcopy(self.cfg if cfg is None else cfg),
+            call=self.call,
+            client=self.client if client == "default" else client,
+            sip_identity="sip_1",
+            transfers=transfers or self.transfers,
+        )
+        self.agent.fake_session = FakeSession()
+        self.agent._ctx = self.job
+        self.agent.start_voice_model()
+        self.session = self.agent.fake_session
+        return self.agent
+
+    def assert_model_speaks_english_from_now_on(self, rules_before):
+        # The caller's next questions get model replies with no per-reply instruction,
+        # so the newest standing rule is what decides their language.
+        self.assertEqual(len(self.agent.rules), rules_before + 1)
+        rule = self.agent.rules[-1]
+        self.assertIn("LANGUAGE UPDATE", rule)
+        self.assertIn("speak only North American English", rule)
+        self.assertIn("replaces the LANGUAGE OF THIS CALL section", rule)
+        self.assertNotIn("Canadian French", rule)
+        # The starting rule says a later update wins, so the two do not compete.
+        self.assertIn("A later LANGUAGE UPDATE replaces this section.", self.agent.rules[0])
+
+    async def test_key_1_tells_the_voice_model_to_answer_in_english(self):
+        await self.agent.on_enter()
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="ERROR"):
+            self.agent._on_dtmf(dtmf("1"))
+            await self.settle()
+        self.assert_model_speaks_english_from_now_on(1)
+        # What the caller hears right after the key: the English acknowledgement and question.
+        self.assertEqual(len(self.session.replies), 2)
+        self.assertIn('[North American English] "Sure, English. How can I help?"', self.session.replies[1])
+        self.assertEqual(self.call.language, "en")
+
+    async def test_key_1_on_the_fallback_prompt_also_reaches_the_voice_model(self):
+        self.agent = GptLiveHarness(cfg=None, call=self.call, client=None, sip_identity="sip_1")
+        self.agent.fake_session = self.session
+        self.agent.start_voice_model()
+        self.assertIn("technical difficulties", self.agent.rules[0])
+        await self.agent.on_enter()
+        self.agent._on_user_state(state("speaking"))  # noise closed the menu window first
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="ERROR"):
+            self.agent._on_dtmf(dtmf("1"))
+            await self.settle()
+        self.assert_model_speaks_english_from_now_on(1)
+        self.assertIn("North American English", self.session.replies[-1])
+
+    async def test_asking_out_loud_for_english_reaches_the_voice_model(self):
+        await self.agent.on_enter()
+        await self.settle()
+        self.assertIn("Switched", await self.agent.set_language(None, "en"))
+        self.assert_model_speaks_english_from_now_on(1)
+
+    async def test_switching_back_to_french_adds_a_newer_french_rule(self):
+        await self.agent.on_enter()
+        self.agent._on_dtmf(dtmf("1"))
+        await self.settle()
+        await self.agent.set_language(None, "fr")
+        self.assertIn("speak only Canadian French", self.agent.rules[-1])
+        self.assertEqual(self.call.language, "fr")
 
 
 class SilenceTests(FlowCase):
