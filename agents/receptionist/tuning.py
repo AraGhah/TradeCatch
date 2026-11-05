@@ -14,6 +14,15 @@ or wait half a minute before answering.
   AGENT_INTERRUPTION_MIN_DURATION   seconds of speech that count as an interruption (0.1-2)
   AGENT_INTERRUPTION_MIN_WORDS      words that count as an interruption (0-5)
   AGENT_PREEMPTIVE_GENERATION       "true"/"false": start replying before the turn ends
+  AGENT_DELEGATION_REASONING        gpt-live backend reasoning effort before a tool call
+                                    ("minimal", "low", "medium", "high")
+  AGENT_DELEGATION_VERBOSITY        gpt-live backend text verbosity ("low", "medium", "high")
+
+gpt-live (the standard voice) takes its own turns, so the endpointing, interruption
+and preemptive settings above only shape the cloned-voice pipeline. Its replies are
+spoken by the voice model; every tool call (saving details, checking the calendar,
+booking, transferring) first runs on a backend model, which is what the two
+AGENT_DELEGATION_* settings speed up.
 """
 
 from __future__ import annotations
@@ -50,6 +59,22 @@ def voice_settings(env: Mapping[str, str]) -> tuple[str, str]:
         (env.get("AGENT_REALTIME_MODEL") or "").strip() or DEFAULT_MODEL,
         (env.get("AGENT_VOICE") or "").strip() or DEFAULT_VOICE,
     )
+
+
+REASONING_EFFORTS = ("minimal", "low", "medium", "high")
+VERBOSITY_LEVELS = ("low", "medium", "high")
+
+
+def delegation_options(env: Mapping[str, str]) -> dict[str, Any]:
+    """extra_kwargs for the gpt-live DuplexModel. Empty when nothing valid is set."""
+    responses: dict[str, Any] = {}
+    effort = (env.get("AGENT_DELEGATION_REASONING") or "").strip().lower()
+    if effort in REASONING_EFFORTS:
+        responses["reasoning"] = {"effort": effort}
+    verbosity = (env.get("AGENT_DELEGATION_VERBOSITY") or "").strip().lower()
+    if verbosity in VERBOSITY_LEVELS:
+        responses["text"] = {"verbosity": verbosity}
+    return {"responses_options": responses} if responses else {}
 
 
 def turn_handling_from_env(env: Mapping[str, str]) -> dict[str, Any]:
