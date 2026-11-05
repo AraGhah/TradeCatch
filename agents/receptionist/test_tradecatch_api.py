@@ -51,6 +51,18 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sent["actor"], "livekit-agent")
         self.assertEqual(sent["body"], BODY)
 
+    async def test_config_lookup_sends_the_caller_for_the_contacts_policy(self):
+        self.payload = {"ok": True, "config": {"configId": "rc_1"}}
+        self.assertEqual(
+            await self.client.fetch_business_config("+14382314700", "+15145551111"),
+            {"configId": "rc_1"},
+        )
+        self.assertEqual(
+            self.requests[0]["query"], {"number": "+14382314700", "from": "+15145551111"}
+        )
+        await self.client.fetch_business_config("+14382314700")
+        self.assertEqual(self.requests[1]["query"], {"number": "+14382314700"})
+
     async def test_report_retries_a_server_error_then_succeeds(self):
         self.statuses = [500, 502]
         self.payload = {"ok": True, "recorded": True}
