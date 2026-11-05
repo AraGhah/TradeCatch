@@ -30,6 +30,9 @@ const REQUIRED_SCHEMA_MIGRATIONS = [
   "003_starter_features",
   "004_growth_and_settings",
   "005_crm_webhook_dlq",
+  // Every inbound text is saved here before Twilio is answered: without it the
+  // webhook returns 503 and no customer text is ever replied to.
+  "sms_receptionist_inbox",
 ] as const;
 
 function hasValidProductionClientRouting(): boolean {
@@ -155,6 +158,7 @@ export async function GET(request: NextRequest) {
              AND to_regclass('public.tc_quote_threads') IS NOT NULL
              AND to_regclass('public.tc_appointments') IS NOT NULL
              AND to_regclass('public.tc_crm_dlq') IS NOT NULL
+             AND to_regclass('public.mc_sms_inbox') IS NOT NULL
              AND EXISTS (
                SELECT 1 FROM information_schema.columns
                WHERE table_name = 'mc_workflows' AND column_name = 'revision'
