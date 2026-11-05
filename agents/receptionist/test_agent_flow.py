@@ -521,6 +521,39 @@ class GptLiveLanguageTests(FlowCase):
         self.assertEqual(self.call.language, "fr")
 
 
+class ReplyGapTests(FlowCase):
+    def caller_stops(self):
+        self.agent._on_user_state(state("speaking"))
+        self.agent._on_user_state(SimpleNamespace(old_state="speaking", new_state="listening"))
+
+    async def test_logs_how_long_the_caller_waits_for_an_answer(self):
+        self.caller_stops()
+        self.agent._on_metrics(
+            SimpleNamespace(metrics=SimpleNamespace(type="llm_metrics", reasoning_tokens=40, completion_tokens=12))
+        )
+        with self.assertLogs("agent-tradecatch-receptionist", level="INFO") as logs:
+            self.agent._on_agent_state(SimpleNamespace(old_state="thinking", new_state="speaking"))
+        line = logs.output[-1]
+        self.assertRegex(line, r"reply gap \d+\.\d\ds \(1 backend runs\)")
+
+    async def test_agent_speech_without_a_caller_turn_logs_no_gap(self):
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="INFO"):
+            self.agent._on_agent_state(SimpleNamespace(old_state="listening", new_state="speaking"))
+
+    async def test_each_caller_turn_is_measured_once(self):
+        self.caller_stops()
+        self.agent._on_agent_state(SimpleNamespace(old_state="thinking", new_state="speaking"))
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="INFO"):
+            self.agent._on_agent_state(SimpleNamespace(old_state="listening", new_state="speaking"))
+
+    async def test_backend_runs_log_token_counts_only(self):
+        with self.assertLogs("agent-tradecatch-receptionist", level="INFO") as logs:
+            self.agent._on_metrics(
+                SimpleNamespace(metrics=SimpleNamespace(type="llm_metrics", reasoning_tokens=40, completion_tokens=12))
+            )
+        self.assertIn("backend run: 40 reasoning tokens, 12 output tokens", logs.output[-1])
+
+
 class SilenceTests(FlowCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
