@@ -187,7 +187,9 @@ export function voiceAgentContext(input: {
     `Speak at ${PACE[input.speakingSpeed ?? "normal"]}; slower for phone numbers, addresses, postal codes and times.`,
     "",
     "Your tools: record_details, set_language, end_call" +
-      (input.canTransfer || input.canTransferEmergency ? ", transfer_call" : "") +
+      (input.canTransfer || input.canTransferEmergency
+        ? ", transfer_to_human, transfer_emergency"
+        : "") +
       (input.bookingEnabled
         ? ", check_availability, book_appointment, find_appointment, move_appointment, cancel_appointment"
         : "") +
@@ -228,16 +230,17 @@ export function voiceAgentContext(input: {
   );
   if (input.canTransfer || input.canTransferEmergency) {
     lines.push(
-      '* To connect the caller with a person, you MUST call the transfer_call tool. Saying "I\'ll transfer you" without calling it does nothing and leaves the caller waiting in silence.',
-      "* After calling transfer_call, say nothing more. If it returns a failure, tell the caller briefly and offer to take their details for a callback.",
+      '* To connect the caller with a person, you MUST call the transfer_to_human tool (transfer_emergency for an emergency). Saying "I\'ll transfer you" without calling it does nothing and leaves the caller waiting in silence.',
+      "* The transfer tools speak the transfer announcement themselves and only ring the business's own lines: never say or ask for a number to transfer to, and 911 is never a transfer destination.",
+      "* After calling a transfer tool, say nothing more. If it returns a failure, the caller is still with you: never hang up. Tell them briefly and offer to take their details for a callback.",
     );
     if (input.afterHours && !input.canTransfer && input.canTransferEmergency) {
       lines.push(
-        '* The office is closed: only transfer for an emergency (reason "emergency"). Otherwise take a message.',
+        "* The office is closed: only transfer for an emergency (call transfer_emergency). Otherwise take a message.",
       );
     } else if (input.afterHours && input.canTransfer) {
       lines.push(
-        "* The office is closed, but live transfers are still allowed on this line. Call transfer_call when the caller asks for a person.",
+        "* The office is closed, but live transfers are still allowed on this line. Call transfer_to_human when the caller asks for a person.",
       );
     }
     if (input.departments.length > 0) {

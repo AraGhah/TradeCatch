@@ -36,7 +36,7 @@ const OPEN = new Date("2026-10-28T15:00:00Z");
 const CLOSED = new Date("2026-10-28T03:00:00Z");
 
 describe("agent config", () => {
-  it("tells the model it must call transfer_call, not just say it will", () => {
+  it("tells the model it must call transfer_to_human, not just say it will", () => {
     const out = buildAgentConfig(
       config({
         fallbackTransferE164: "+14389957350",
@@ -44,7 +44,7 @@ describe("agent config", () => {
       }),
       OPEN,
     );
-    assert.match(out.instructions, /MUST call the transfer_call tool/);
+    assert.match(out.instructions, /MUST call the transfer_to_human tool/);
     assert.match(out.instructions, /currently OPEN/);
     assert.match(out.instructions, /Nord Plomberie/);
     assert.equal(out.transferE164, "+14389957350");
@@ -151,7 +151,7 @@ describe("agent config", () => {
     );
     assert.equal(out.afterHours, true);
     assert.equal(out.transferHours, "always");
-    assert.match(out.instructions, /MUST call the transfer_call tool/);
+    assert.match(out.instructions, /MUST call the transfer_to_human tool/);
     assert.match(out.instructions, /live transfers are still allowed/);
   });
 
@@ -169,7 +169,7 @@ describe("agent config", () => {
     assert.equal(out.transferE164, null);
     assert.equal(out.emergencyTransferE164, null);
     assert.match(out.instructions, /No live transfer is configured/);
-    assert.ok(!out.instructions.includes("MUST call the transfer_call"));
+    assert.ok(!out.instructions.includes("MUST call the transfer_to_human"));
   });
 
   it("forbids claiming bookings or submissions the agent cannot make", () => {
