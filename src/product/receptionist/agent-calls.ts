@@ -49,8 +49,19 @@ export type AgentCallDeps = {
   scheduler?: ReceptionistScheduler;
   /** The engine's finalizeSession: summary, notifications, lead sync, SMS recovery. */
   finalize(sessionId: string): Promise<CallSession | null>;
+  /**
+   * Alerts the owner that a caller asked for a person and nobody was reached
+   * (the existing `transfer_failed` notification). Defaults to the shared hook;
+   * best-effort, it never fails the report.
+   */
+  notifyTransferFailed?(clientAccountId: string, sessionId: string): Promise<void>;
   clock?: Clock;
 };
+
+async function defaultNotifyTransferFailed(clientAccountId: string, sessionId: string) {
+  const { emitTransferFailed } = await import("@/product/notifications/hooks");
+  await emitTransferFailed(clientAccountId, sessionId);
+}
 
 export type AgentOffer = { startAt: string; label: string };
 
@@ -88,7 +99,13 @@ export type AgentReportInput = {
   slots?: Partial<CallSlots>;
   transcript?: { speaker: "agent" | "caller"; text: string }[];
   /** The agent handed the caller to a person (tool call result, not the model's claim). */
-  transfer?: { targetName?: string; completed: boolean };
+  transfer?: {
+    targetName?: string;
+    completed: boolean;
+    /** Only a screened transfer can confirm a person answered; a SIP REFER cannot. */
+    answerConfirmed?: boolean;
+    mechanism?: "warm" | "blind" | "bridge";
+  };
   emergency?: boolean;
   durationSeconds?: number;
   endReason?: "completed" | "caller_hung_up" | "silence" | "error";
@@ -434,6 +451,9 @@ export function createAgentCallService(deps: AgentCallDeps) {
                   phoneE164: "",
                   reason: input.emergency ? "emergency" : "caller_request",
                   status: input.transfer.completed ? "completed" : "failed",
+                  answerConfirmed:
+                    input.transfer.completed && input.transfer.answerConfirmed === true,
+                  ...(input.transfer.mechanism ? { mechanism: input.transfer.mechanism } : {}),
                 },
               ]
             : s.transfers,
@@ -454,7 +474,23 @@ export function createAgentCallService(deps: AgentCallDeps) {
         };
       });
       if (!updated) return null;
-      return deps.finalize(updated.id);
+      const finalized = await deps.finalize(updated.id);
+      if (input.transfer && !input.transfer.completed) {
+        // The caller stayed with the agent for a callback: tell the owner now.
+        // Keyed by the call, so a repeated report never alerts twice.
+        try {
+          await (deps.notifyTransferFailed ?? defaultNotifyTransferFailed)(
+            config.clientAccountId,
+            updated.id,
+          );
+        } catch (error) {
+          console.warn(
+            "[receptionist] transfer alert skipped",
+            error instanceof Error ? error.message : "unknown",
+          );
+        }
+      }
+      return finalized;
     },
   };
 }
