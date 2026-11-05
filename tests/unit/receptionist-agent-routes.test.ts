@@ -4,6 +4,7 @@ import { NextRequest } from "next/server";
 import { POST as availability } from "../../src/app/api/receptionist/agent/availability/route";
 import { POST as book } from "../../src/app/api/receptionist/agent/book/route";
 import { POST as report } from "../../src/app/api/receptionist/agent/report/route";
+import { POST as appointments } from "../../src/app/api/receptionist/agent/appointments/route";
 import {
   getReceptionistRuntime,
   resetReceptionistRuntimeForTests,
@@ -89,6 +90,40 @@ describe("voice agent endpoints", () => {
       assert.doesNotMatch(text, /script/);
     });
   }
+
+  it("appointments: same ops bearer, exact number and validated actions as the other endpoints", async () => {
+    const find = { ...call, action: "find", callerName: "Marie" };
+    assert.equal((await post(appointments, find, {})).status, 401);
+    assert.equal((await post(appointments, { ...find, number: "+14165550199" })).status, 404);
+    assert.equal((await post(appointments, { ...call, action: "drop_table" })).status, 400);
+    assert.equal(
+      (await post(appointments, { ...call, action: "text", kind: "anything", callerName: "Marie" })).status,
+      400,
+      "only the server-written kinds of text exist",
+    );
+  });
+
+  it("appointments: nothing is found, changed or texted when the owner has not enabled it", async () => {
+    const answer = async (body: unknown) => (await (await post(appointments, body)).json()) as unknown;
+    assert.deepEqual(await answer({ ...call, action: "find", callerName: "Marie" }), {
+      ok: true,
+      result: { status: "disabled" },
+    });
+    assert.deepEqual(
+      await answer({ ...call, action: "cancel", callerName: "Marie", appointmentId: "appt_1" }),
+      { ok: true, result: { status: "disabled" } },
+    );
+    assert.deepEqual(
+      await answer({ ...call, action: "text", kind: "business_info" }),
+      { ok: true, result: { status: "unavailable" } },
+      "no business SMS number configured",
+    );
+    const moving = await post(availability, { ...call, appointmentId: "appt_1", callerName: "Marie" });
+    assert.deepEqual(await moving.json(), {
+      ok: true,
+      availability: { ok: false, reason: "not_bookable" },
+    });
+  });
 
   it("refuses an oversize body", async () => {
     const res = await post(report, { ...call, slots: { issue: "x".repeat(300_000) } });
