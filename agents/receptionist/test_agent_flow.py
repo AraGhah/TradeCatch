@@ -141,6 +141,34 @@ class FakeClient:
         self.book_calls.append(body)
         return self.book_result
 
+    # find / move / cancel / text, answered per action.
+    appointment_calls: list[dict]
+    appointment_results: dict
+
+    async def appointments(self, body):
+        if not hasattr(self, "appointment_calls"):
+            self.appointment_calls = []
+        self.appointment_calls.append(body)
+        results = getattr(self, "appointment_results", None) or {
+            "find": {
+                "status": "found",
+                "appointments": [
+                    {
+                        "appointmentId": "appt_1",
+                        "label": "jeudi à 10 h",
+                        "serviceName": "Débouchage",
+                        "technicianName": "Marc",
+                        "status": "confirmed",
+                        "started": False,
+                    }
+                ],
+            },
+            "move": {"status": "moved", "label": "mardi à 9 h", "startAt": OFFERS[0]["startAt"]},
+            "cancel": {"status": "canceled"},
+            "text": {"status": "sent"},
+        }
+        return results.get(body.get("action"))
+
     async def report(self, body):
         self.reports.append(body)
         return True
@@ -728,6 +756,143 @@ class BookingTests(FlowCase):
         with self.assertRaises(RuntimeError):
             await self.agent.check_availability(None)
         self.assertEqual(self.agent._busy, 0)
+
+
+class ExistingAppointmentTests(FlowCase):
+    async def find(self, name="Hélène Tremblay"):
+        return await self.agent.find_appointment(None, caller_name=name)
+
+    async def test_find_needs_a_name_and_sends_the_carrier_caller_id_not_a_model_number(self):
+        text = await self.agent.find_appointment(None)
+        self.assertIn("Ask for the name", text)
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+        text = await self.find()
+        self.assertIn("1. jeudi à 10 h, Débouchage, technician Marc", text)
+        self.assertIn("never give an arrival estimate", text)
+        body = self.client.appointment_calls[0]
+        self.assertEqual(body["action"], "find")
+        self.assertEqual(body["from"], "+15145550142")
+        self.assertEqual(body["callerName"], "Hélène Tremblay")
+
+    async def test_a_hidden_number_cannot_look_up_anything(self):
+        self.call.from_e164 = None
+        text = await self.find()
+        self.assertIn("number is hidden", text)
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+
+    async def test_nothing_found_reveals_nothing(self):
+        self.client.appointment_results = {"find": {"status": "not_found"}}
+        text = await self.find()
+        self.assertIn("Do NOT reveal anything about other bookings", text)
+        self.assertEqual(self.call.appointments, [])
+
+    async def test_moving_uses_new_times_for_that_appointment_and_only_says_moved_when_moved(self):
+        await self.find()
+        text = await self.agent.check_availability(None, preferred_time="mardi", existing_appointment=1)
+        self.assertIn("call move_appointment with appointment 1", text)
+        self.assertNotIn("call book_appointment", text)
+        body = self.client.availability_calls[-1]
+        self.assertEqual(body["appointmentId"], "appt_1")
+        self.assertEqual(body["callerName"], "Hélène Tremblay")
+        self.assertNotIn("serviceAddress", body)
+
+        refused = await self.agent.book_appointment(None, 1)
+        self.assertIn("for moving an existing appointment", refused)
+        self.assertEqual(self.client.book_calls, [])
+
+        text = await self.agent.move_appointment(None, 1, 1)
+        self.assertTrue(text.startswith("MOVED."))
+        move = self.client.appointment_calls[-1]
+        self.assertEqual(move["action"], "move")
+        self.assertEqual(move["startAt"], OFFERS[0]["startAt"])
+        self.assertEqual(self.call.found(1).label, "mardi à 9 h")
+        self.assertEqual(self.call.appointment_changes, [{"change": "moved", "label": "mardi à 9 h"}])
+        self.assertEqual(self.call.payload().get("intent"), "appointment")
+
+    async def test_move_needs_times_for_that_appointment_first(self):
+        await self.find()
+        await self.agent.check_availability(None)  # times for a NEW booking
+        text = await self.agent.move_appointment(None, 1, 1)
+        self.assertIn("Call check_availability", text)
+        self.assertEqual([c["action"] for c in self.client.appointment_calls], ["find"])
+
+    async def test_a_failed_move_is_never_reported_as_moved(self):
+        await self.find()
+        await self.agent.check_availability(None, existing_appointment=1)
+        self.client.appointment_results = {"move": None}
+        text = await self.agent.move_appointment(None, 1, 1)
+        self.assertIn("NOT moved", text)
+        self.assertEqual(self.call.appointment_changes, [])
+
+    async def test_cancel_waits_for_a_clear_yes(self):
+        await self.find()
+        text = await self.agent.cancel_appointment(None, 1, caller_confirmed=False)
+        self.assertIn("Not canceled", text)
+        self.assertIn("jeudi à 10 h", text)
+        self.assertNotIn("cancel", [c["action"] for c in self.client.appointment_calls])
+        text = await self.agent.cancel_appointment(None, 1, caller_confirmed=True)
+        self.assertTrue(text.startswith("CANCELED."))
+        self.assertEqual(self.call.appointments, [])
+
+    async def test_unknown_appointment_numbers_never_reach_the_server(self):
+        for tool in (
+            self.agent.move_appointment(None, 3, 1),
+            self.agent.cancel_appointment(None, 3, caller_confirmed=True),
+            self.agent.check_availability(None, existing_appointment=3),
+        ):
+            self.assertIn("not in the list", await tool)
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+
+    async def test_appointment_tools_are_off_without_phone_booking(self):
+        cfg = copy.deepcopy(CFG)
+        cfg["bookingEnabled"] = False
+        self.make_agent(cfg)
+        self.assertIn("cannot be looked up", await self.find())
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+
+
+class CallerTextTests(FlowCase):
+    def texts_on(self):
+        cfg = copy.deepcopy(CFG)
+        cfg["callerTexts"] = True
+        self.make_agent(cfg)
+
+    async def test_texts_are_off_unless_the_business_has_an_sms_number(self):
+        text = await self.agent.text_caller(None, "business_info")
+        self.assertIn("not available", text)
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+
+    async def test_business_info_goes_to_the_caller_id_and_is_written_by_the_server(self):
+        self.texts_on()
+        text = await self.agent.text_caller(None, "business_info")
+        self.assertTrue(text.startswith("SENT."))
+        body = self.client.appointment_calls[0]
+        self.assertEqual(body["action"], "text")
+        self.assertEqual(body["kind"], "business_info")
+        self.assertEqual(body["from"], "+15145550142")
+        self.assertNotIn("body", body, "the model never supplies the words")
+
+    async def test_an_appointment_text_needs_a_found_appointment(self):
+        self.texts_on()
+        self.assertIn("Call find_appointment first", await self.agent.text_caller(None, "appointment"))
+        await self.agent.find_appointment(None, caller_name="Hélène")
+        self.assertTrue((await self.agent.text_caller(None, "appointment", 1)).startswith("SENT."))
+        self.assertEqual(self.client.appointment_calls[-1]["appointmentId"], "appt_1")
+
+    async def test_opted_out_and_queued_texts_are_never_called_sent(self):
+        self.texts_on()
+        self.client.appointment_results = {"text": {"status": "opted_out"}}
+        self.assertIn("opted out", await self.agent.text_caller(None, "business_info"))
+        self.client.appointment_results = {"text": {"status": "queued"}}
+        self.assertIn("do not say it was sent", await self.agent.text_caller(None, "business_info"))
+        self.client.appointment_results = {"text": None}
+        self.assertIn("could not be sent", await self.agent.text_caller(None, "business_info"))
+
+    async def test_a_hidden_number_is_never_texted(self):
+        self.texts_on()
+        self.call.from_e164 = None
+        self.assertIn("not available", await self.agent.text_caller(None, "business_info"))
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
 
 
 class RecordDetailsTests(FlowCase):
