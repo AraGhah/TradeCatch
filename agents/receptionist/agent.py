@@ -72,8 +72,8 @@ from transfer import (
     hold_line,
     transfer_settings,
 )
-from tuning import turn_handling_from_env, voice_settings
-from voice import CustomVoice, cascade_settings, parse_custom_voice
+from tuning import delegation_options, turn_handling_from_env, voice_settings
+from voice import CustomVoice, call_voice, cascade_settings, delivery_settings
 from warm_transfer import (
     ScreenedTransfer,
     bridge_without_screening,
@@ -155,6 +155,10 @@ class ReceptionistAgent(Agent):
         self._closing = False
         self._reported = False
         self._report_lock = asyncio.Lock()
+        # When the caller last stopped talking, and the backend runs since: the reply
+        # gap the caller hears, logged without any of their words.
+        self._caller_stopped_at: float | None = None
+        self._backend_runs = 0
 
         super().__init__(instructions=self._instructions_for(self._menu.language))
 
@@ -163,6 +167,8 @@ class ReceptionistAgent(Agent):
     def attach(self, session: AgentSession, ctx: JobContext) -> None:
         """Subscribe to the call's events. Call before session.start()."""
         session.on("user_state_changed", self._on_user_state)
+        session.on("agent_state_changed", self._on_agent_state)
+        session.on("metrics_collected", self._on_metrics)
         session.on("conversation_item_added", self._on_item)
         session.on("close", self._on_close)
         session.on("error", lambda ev: logger.error("session error: %s", type(ev.error).__name__))
@@ -289,8 +295,30 @@ class ReceptionistAgent(Agent):
 
     # -- session events -------------------------------------------------
 
+    def _on_agent_state(self, ev: Any) -> None:
+        if ev.new_state != "speaking" or self._caller_stopped_at is None:
+            return
+        gap = time.monotonic() - self._caller_stopped_at
+        logger.info("reply gap %.2fs (%d backend runs)", gap, self._backend_runs)
+        self._caller_stopped_at = None
+
+    def _on_metrics(self, ev: Any) -> None:
+        metrics = getattr(ev, "metrics", None)
+        if getattr(metrics, "type", None) != "llm_metrics":
+            return
+        self._backend_runs += 1
+        logger.info(
+            "backend run: %s reasoning tokens, %s output tokens",
+            getattr(metrics, "reasoning_tokens", "?"),
+            getattr(metrics, "completion_tokens", "?"),
+        )
+
     def _on_user_state(self, ev: Any) -> None:
+        if getattr(ev, "old_state", None) == "speaking" and ev.new_state != "speaking":
+            self._caller_stopped_at = time.monotonic()
+            self._backend_runs = 0
         if ev.new_state == "speaking":
+            self._caller_stopped_at = None
             # Speech never picks the language; it only ends the wait for a key.
             self._menu.on_speech()
             self._close_menu()
@@ -849,7 +877,13 @@ def prewarm(proc: Any) -> None:
 
     Only the cloned-voice pipeline needs it; if the plugin is missing or fails
     to load, those calls use the standard voice and nothing else is affected.
+    The standard voice's model code is imported here too: loading it on the first
+    use blocked each call's event loop for about a second before the greeting.
     """
+    try:
+        import livekit.agents.inference.realtime  # noqa: F401
+    except Exception:
+        logger.warning("realtime voice model not preloaded", exc_info=True)
     try:
         from livekit.plugins import silero
 
@@ -864,7 +898,7 @@ server.setup_fnc = prewarm
 def build_custom_voice_session(
     custom: CustomVoice, vad: Any, options: dict[str, Any]
 ) -> AgentSession:
-    """Speech-to-text -> LLM -> the owner's cloned ElevenLabs voice.
+    """Speech-to-text -> LLM -> an ElevenLabs voice (the owner's clone or the standard one).
 
     The text-to-speech is wrapped in a fallback chain: if ElevenLabs errors or
     times out mid-call, the same sentence is spoken by a standard voice instead
@@ -875,10 +909,12 @@ def build_custom_voice_session(
     from livekit.plugins import elevenlabs
 
     settings = cascade_settings(os.environ)
+    delivery = delivery_settings(os.environ)
     cloned = elevenlabs.TTS(
         voice_id=custom.voice_id,
         model=custom.model,
         api_key=os.environ["ELEVENLABS_API_KEY"],
+        **({"voice_settings": elevenlabs.VoiceSettings(**delivery)} if delivery else {}),
     )
     return AgentSession(
         stt=inference.STT(settings.stt, language=settings.stt_language),
@@ -892,21 +928,29 @@ def build_custom_voice_session(
 def build_session(
     cfg: dict[str, Any] | None, vad: Any, options: dict[str, Any]
 ) -> AgentSession:
-    """The session for this call: the owner's cloned voice when TradeCatch says so
-    and it can be built, otherwise the standard realtime voice."""
-    custom = parse_custom_voice(cfg, os.environ)
+    """The session for this call: the business's cloned voice, else the operator's
+    standard ElevenLabs voice, else the realtime voice. Logs which one answers, so
+    a live call shows the voice production really loaded."""
+    custom = call_voice(cfg, os.environ)
     if custom is not None and vad is not None:
         try:
             session = build_custom_voice_session(custom, vad, options)
-            logger.info("answering with the business's custom voice (model %s)", custom.model)
+            logger.info("voice for this call: %s", custom.describe())
             return session
         except Exception:
             # Never let a voice problem stop the call from being answered.
-            logger.exception("custom voice unavailable; answering with the standard voice")
+            logger.exception("ElevenLabs voice unavailable; answering with the realtime voice")
     elif custom is not None:
-        logger.warning("custom voice requested but no voice-activity model; using standard voice")
+        logger.warning("ElevenLabs voice requested but no voice-activity model; using the realtime voice")
     model, voice = voice_settings(os.environ)
-    return AgentSession(llm=inference.DuplexModel(model=model, voice=voice), **options)
+    extra = delegation_options(os.environ)
+    duplex = (
+        inference.DuplexModel(model=model, voice=voice, extra_kwargs=extra)
+        if extra
+        else inference.DuplexModel(model=model, voice=voice)
+    )
+    logger.info("voice for this call: realtime %s, voice %s", model, voice)
+    return AgentSession(llm=duplex, **options)
 
 
 @server.rtc_session(agent_name="tradecatch-receptionist")
