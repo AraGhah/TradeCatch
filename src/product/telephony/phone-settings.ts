@@ -39,6 +39,96 @@ const safeOptionalCanadian = z
   .transform((v) => (v === "" ? undefined : v))
   .optional();
 
+/**
+ * A caller number as the owner typed it ("514 555-0142", "+1 (514) …") →
+ * E.164. North American 10/11-digit numbers get +1; anything already starting
+ * with + keeps its country code. Returns null when it cannot be a phone number.
+ */
+export function normalizeContactE164(raw: string): string | null {
+  const trimmed = raw.trim();
+  const digits = trimmed.replace(/\D/g, "");
+  let e164: string;
+  if (trimmed.startsWith("+")) e164 = `+${digits}`;
+  else if (digits.length === 10) e164 = `+1${digits}`;
+  else if (digits.length === 11 && digits.startsWith("1")) e164 = `+${digits}`;
+  else return null;
+  return /^\+[1-9]\d{7,14}$/.test(e164) ? e164 : null;
+}
+
+const contactE164 = z
+  .string()
+  .trim()
+  .max(32)
+  .transform((v, ctx) => {
+    const e164 = normalizeContactE164(v);
+    if (!e164) {
+      ctx.addIssue({ code: "custom", message: "must be a phone number" });
+      return z.NEVER;
+    }
+    return e164;
+  });
+
+const personalContactSchema = z.object({
+  e164: contactE164,
+  label: z.string().trim().max(60).optional(),
+});
+
+const isoTimestamp = z.string().datetime().optional();
+
+/** Spoken to excluded callers; plain text, short, no markup. */
+const personalMessageText = z
+  .string()
+  .trim()
+  .max(300)
+  .regex(/^[^<>{}]*$/, "must be plain text")
+  .optional();
+
+/**
+ * The AI Call Handling fields. Every one is optional with no default, so a
+ * profile stored before this feature parses to exactly what it was.
+ */
+export const aiCallHandlingFields = {
+  aiCallMode: z.enum(["missed_calls_only", "ai_answers_all"]).optional(),
+  routingMethod: z.enum(["tradecatch_number", "carrier_forwarding"]).optional(),
+  contractorPhoneE164: safeOptionalCanadian,
+  personalContacts: z
+    .array(personalContactSchema)
+    .max(50)
+    .transform((list) => {
+      const seen = new Set<string>();
+      return list.filter((c) => !seen.has(c.e164) && Boolean(seen.add(c.e164)));
+    })
+    .optional(),
+  personalCallPolicy: z.enum(["message", "transfer", "end"]).optional(),
+  personalCallMessage: z
+    .object({ fr: personalMessageText, en: personalMessageText })
+    .optional(),
+  personalCallTransferE164: safeOptionalCanadian,
+  unknownCallerPolicy: z.enum(["ai", "message"]).optional(),
+  modeUpdatedAt: isoTimestamp,
+  routingTestStartedAt: isoTimestamp,
+  /** Last read-only check of where Twilio sends the TradeCatch number. */
+  numberRoutingCheck: z
+    .object({
+      result: z.enum(["webhook", "sip_trunk", "elsewhere", "unknown"]),
+      checkedAt: z.string().datetime(),
+    })
+    .optional(),
+  routingVerification: z
+    .object({
+      mode: z.enum(["missed_calls_only", "ai_answers_all"]),
+      method: z.enum(["tradecatch_number", "carrier_forwarding"]),
+      path: z.enum([
+        "rang_contractor_first",
+        "ai_answered_webhook",
+        "ai_answered_livekit_direct",
+        "forwarded_by_carrier",
+      ]),
+      verifiedAt: z.string().datetime(),
+    })
+    .optional(),
+};
+
 export const phoneSettingsSchema = z.object({
   businessPhoneE164: optionalE164,
   tradecatchNumberE164: optionalE164,
@@ -49,7 +139,7 @@ export const phoneSettingsSchema = z.object({
   aiEnabled: z.boolean().default(true),
   inboundStrategy: z.enum(["ai_first", "human_first"]).default("ai_first"),
   voiceEngine: z
-    .enum(["gather", "conversation_relay"])
+    .enum(["gather", "conversation_relay", "livekit"])
     .default("gather"),
   humanTransferE164: safeOptionalCanadian,
   backupTransferE164: safeOptionalCanadian,
@@ -57,7 +147,13 @@ export const phoneSettingsSchema = z.object({
   callRecordingEnabled: z.boolean().default(false),
   forwardingInstructionsAck: z.boolean().default(false),
   ringHumanOnOverflow: z.boolean().default(true),
+  ...aiCallHandlingFields,
 });
+
+/** Fields only the AI Call Handling endpoint writes; other saves keep them. */
+export const AI_CALL_HANDLING_KEYS = Object.keys(
+  aiCallHandlingFields,
+) as (keyof typeof aiCallHandlingFields)[];
 
 export type PhoneSettingsInput = z.infer<typeof phoneSettingsSchema>;
 

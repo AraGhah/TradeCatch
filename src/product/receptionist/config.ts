@@ -52,7 +52,23 @@ export const receptionistConfigSchema = z.object({
     .default("always"),
   inboundStrategy: z.enum(["ai_first", "human_first"]).default("ai_first"),
   humanRingTimeoutSeconds: z.number().int().min(10).max(60).default(25),
-  voiceEngine: z.enum(["gather", "conversation_relay"]).default("gather"),
+  voiceEngine: z
+    .enum(["gather", "conversation_relay", "livekit"])
+    .default("gather"),
+  /** Owner's AI Call Handling choice; unset on founder/env configs. */
+  aiCallMode: z.enum(["missed_calls_only", "ai_answers_all"]).optional(),
+  routingMethod: z.enum(["tradecatch_number", "carrier_forwarding"]).optional(),
+  /** The contractor's own phone, rung before the AI in missed-calls-only. */
+  ringFirstE164: e164.optional(),
+  /** Ask whoever answers the ring-first leg to press 1 (voicemail cannot). */
+  callScreening: z.boolean().default(false),
+  /** Callers who never reach the AI (E.164). Server-side only. */
+  personalContacts: z.array(e164).max(50).default([]),
+  personalCallPolicy: z.enum(["message", "transfer", "end"]).default("message"),
+  personalCallMessageFr: z.string().trim().min(1).max(300).optional(),
+  personalCallMessageEn: z.string().trim().min(1).max(300).optional(),
+  personalCallTransferE164: e164.optional(),
+  unknownCallerPolicy: z.enum(["ai", "message"]).default("ai"),
   timezone: z
     .string()
     .min(1)

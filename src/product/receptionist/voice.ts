@@ -8,6 +8,11 @@
  *   self-hosted Fonoster VoiceServer (see README) — and for tests.
  */
 
+import {
+  livekitSipConfig,
+  livekitSipUri,
+  type LivekitSipTarget,
+} from "@/product/telephony/livekit-handoff";
 import { toSpeechMarkup } from "./speech-style";
 import type {
   ReceptionistLanguage,
@@ -83,6 +88,8 @@ export type RenderOptions = {
   /** Pacing markup on <Say>. Defaults to the RECEPTIONIST_SSML switch. */
   ssml?: boolean;
   tuning?: GatherTuning;
+  /** LiveKit SIP target for `sip_handoff`. Defaults to the environment. */
+  livekitSip?: LivekitSipTarget | null;
 };
 
 function sayXml(
@@ -113,7 +120,7 @@ function verbToTwiml(
       const tuning = opts.tuning ?? gatherTuning();
       const attrs = [
         `input="${verb.input.join(" ")}"`,
-        `action="${escapeXml(callbackUrl("gather", sessionId))}"`,
+        `action="${escapeXml(callbackUrl(verb.next, sessionId))}"`,
         `method="POST"`,
         `language="${SPEECH_LANGUAGE[verb.language]}"`,
         `timeout="${verb.timeoutSeconds}"`,
@@ -147,7 +154,31 @@ function verbToTwiml(
       if (verb.callerIdE164) {
         attrs.push(`callerId="${escapeXml(verb.callerIdE164)}"`);
       }
-      return `<Dial ${attrs.join(" ")}><Number>${escapeXml(verb.phoneE164)}</Number></Dial>`;
+      // Screening runs TwiML on the answered leg before it is bridged, so a
+      // carrier voicemail that picks up is never mistaken for the contractor.
+      const number = verb.screen
+        ? `<Number url="${escapeXml(callbackUrl("screen", sessionId))}" method="POST">${escapeXml(verb.phoneE164)}</Number>`
+        : `<Number>${escapeXml(verb.phoneE164)}</Number>`;
+      return `<Dial ${attrs.join(" ")}>${number}</Dial>`;
+    }
+    case "sip_handoff": {
+      const dialUrl = escapeXml(callbackUrl("dial", sessionId));
+      let target = opts.livekitSip;
+      if (target === undefined) {
+        const resolved = livekitSipConfig();
+        target = resolved.ok ? resolved.target : null;
+      }
+      const uri = target ? livekitSipUri(verb.calledE164, target) : null;
+      if (!target || !uri) {
+        // No hand-off target: report a failed dial so the engine falls back
+        // to the built-in receptionist instead of dropping the caller.
+        return `<Redirect method="POST">${dialUrl}</Redirect>`;
+      }
+      const auth =
+        target.username && target.password
+          ? ` username="${escapeXml(target.username)}" password="${escapeXml(target.password)}"`
+          : "";
+      return `<Dial action="${dialUrl}" method="POST" timeout="${verb.timeoutSeconds}"><Sip${auth}>${escapeXml(uri)}</Sip></Dial>`;
     }
     case "record":
       return `<Record action="${escapeXml(callbackUrl("voicemail", sessionId))}" method="POST" maxLength="${verb.maxLengthSeconds}" playBeep="true" finishOnKey="#" timeout="5"/>`;
@@ -193,6 +224,8 @@ export type ImperativeVoiceChannel = {
     maxLengthSeconds: number;
   }): Promise<{ recordingUrl?: string; durationSeconds?: number }>;
   pause?(seconds: number): Promise<void>;
+  /** Bridge to the LiveKit agent; channels without it report a failed dial. */
+  sipHandoff?(calledE164: string): Promise<{ status: string }>;
   hangup(): Promise<void>;
 };
 
@@ -280,6 +313,17 @@ export async function runVoicePlanLoop(
           status,
           durationSeconds,
         });
+        break;
+      } else if (verb.verb === "sip_handoff") {
+        let status = "failed";
+        try {
+          if (channel.sipHandoff) {
+            status = (await channel.sipHandoff(verb.calledE164)).status;
+          }
+        } catch {
+          status = "failed";
+        }
+        next = await callbacks.onDial({ sessionId: plan.sessionId, status });
         break;
       } else if (verb.verb === "record") {
         const r = await channel.record({

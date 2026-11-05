@@ -9,6 +9,10 @@ import {
   parsePhoneSettings,
 } from "@/product/telephony/phone-settings";
 import { PhoneSettingsForm } from "@/components/app/PhoneSettingsForm";
+import { AiCallHandlingSection } from "@/components/app/AiCallHandlingSection";
+import { buildAiCallHandlingView } from "@/product/telephony/ai-call-handling-service";
+import { livekitHandoffReady } from "@/product/telephony/livekit-handoff";
+import { allows } from "@/product/security/permissions";
 
 export default async function PhoneSettingsPage({
   params,
@@ -29,6 +33,7 @@ export default async function PhoneSettingsPage({
   const runtime = getReceptionistRuntime();
   const profile = await runtime.profileStore.getProfile(organization.id);
   const settings = profile?.settings ?? defaultProfileSettings();
+  const phone = parsePhoneSettings(settings.phoneSettings);
   const view = buildPhoneSettingsView({
     organizationId: organization.id,
     activated: profile?.activated ?? false,
@@ -37,7 +42,24 @@ export default async function PhoneSettingsPage({
     defaultLanguage: settings.defaultLanguage,
     businessHours: settings.businessHours,
     receptionistName: settings.receptionistName,
-    phone: parsePhoneSettings(settings.phoneSettings),
+    phone,
+  });
+  const aiCallHandling = buildAiCallHandlingView({
+    plan: organization.plan,
+    activated: profile?.activated ?? false,
+    tradecatchNumberE164: phone.tradecatchNumberE164 || profile?.phoneNumberE164,
+    phone,
+    canEdit: allows(membership.role, "manage_settings", false),
+    livekitHandoffReady: livekitHandoffReady(),
+    transferTargets: [
+      settings.emergencyTransferE164,
+      settings.fallbackTransferE164,
+      settings.transferSettings?.primaryTransferE164,
+      settings.transferSettings?.secondaryTransferE164,
+      phone.humanTransferE164,
+      phone.backupTransferE164,
+      ...settings.routing.map((r) => r.phoneE164),
+    ],
   });
 
   return (
@@ -53,6 +75,10 @@ export default async function PhoneSettingsPage({
         </h1>
         <p className="mt-2 text-navy/70">{t("intro")}</p>
       </header>
+      <AiCallHandlingSection
+        organizationId={organization.id}
+        initial={aiCallHandling}
+      />
       <PhoneSettingsForm
         organizationId={organization.id}
         initial={view}
