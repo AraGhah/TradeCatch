@@ -231,6 +231,14 @@ class CallRecord:
                 "targetName": str(self.transfer.get("targetName") or "")[:80],
                 "completed": bool(self.transfer.get("completed")),
             }
+            # Older servers drop unknown keys, so these are safe to send to any backend.
+            if "answerConfirmed" in self.transfer:
+                body["transfer"]["answerConfirmed"] = bool(
+                    self.transfer.get("completed") and self.transfer.get("answerConfirmed")
+                )
+            mechanism = self.transfer.get("mechanism")
+            if mechanism in ("warm", "blind", "bridge"):
+                body["transfer"]["mechanism"] = mechanism
         if self.end_reason:
             body["endReason"] = self.end_reason
         return body
