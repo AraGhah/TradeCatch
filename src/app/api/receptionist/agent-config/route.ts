@@ -10,6 +10,10 @@ import { resolveAgentVoice } from "@/product/receptionist/custom-voice/agent-voi
 import { getVoiceService } from "@/product/receptionist/custom-voice/runtime";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { getSaasStore } from "@/product/saas/runtime";
+import {
+  callerPolicyFor,
+  personalCallMessage,
+} from "@/product/telephony/caller-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -54,8 +58,33 @@ export async function GET(request: NextRequest) {
     getOrganization: (id) => getSaasStore().getOrganization(id),
     voices: getVoiceService(),
   });
+  // With `from` (the agent sends "anonymous" for a withheld caller ID), the
+  // owner's personal-contacts policy is decided here. Only this call's
+  // decision goes back; the list never leaves the server.
+  const from = request.nextUrl.searchParams.get("from");
+  const policy =
+    from === null ? null : callerPolicyFor(config, from.slice(0, 32));
+  const callerPolicy =
+    !policy || policy.kind === "ai"
+      ? undefined
+      : {
+          kind: policy.kind,
+          messages:
+            policy.kind === "personal_end"
+              ? []
+              : personalCallMessage(
+                  config,
+                  policy.kind === "unknown_message" ? "unknown" : "personal",
+                ),
+          ...(policy.kind === "personal_transfer"
+            ? { transferE164: policy.transferE164 }
+            : {}),
+        };
   return NextResponse.json({
     ok: true,
-    config: buildAgentConfig(config, new Date(), voice),
+    config: {
+      ...buildAgentConfig(config, new Date(), voice),
+      ...(callerPolicy ? { callerPolicy } : {}),
+    },
   });
 }
