@@ -25,4 +25,5 @@ jobs:
         run: |
           mkdir "$RUNNER_TEMP/agent-tests"
           cp test_*.py "$RUNNER_TEMP/agent-tests/"
+          cp transfer_testing.py "$RUNNER_TEMP/agent-tests/"
           docker run --rm --network none -e PYTHONPATH=/app -v "$RUNNER_TEMP/agent-tests:/checks:ro" receptionist:check python -m unittest discover -s /checks -p 'test_*.py'
