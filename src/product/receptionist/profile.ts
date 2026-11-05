@@ -468,6 +468,7 @@ export function buildProfileConfig(
     s.systemPrompt ?? DEFAULT_SYSTEM_PROMPT,
     buildPromptValues({
       businessName,
+      receptionistName: s.receptionistName,
       services: knowledge.services,
       serviceAreas: knowledge.serviceAreas,
       businessAddress: knowledge.businessAddress,
@@ -508,6 +509,8 @@ export function buildProfileConfig(
     services: knowledge.services,
     serviceAreas: knowledge.serviceAreas,
     pricingInfo: knowledge.startingPrices?.trim() || undefined,
+    businessAddress: knowledge.businessAddress?.trim() || undefined,
+    businessPhone: knowledge.businessPhone?.trim() || undefined,
     greetingFr: s.greetingFr,
     greetingEn: s.greetingEn,
     afterHoursMessageFr: s.afterHoursMessageFr,
