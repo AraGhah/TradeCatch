@@ -41,7 +41,36 @@ export const availabilitySchema = agentBaseSchema.extend({
   preferredTime: short(200),
   issue: short(600),
   serviceAddress: short(300),
+  /** New times for this existing appointment (found earlier in the call). */
+  appointmentId: short(120),
+  /** The name the caller gave: required with appointmentId. */
+  callerName: short(80),
 });
+
+/**
+ * Existing appointments and texts. The caller is always `from` (the carrier's
+ * caller ID, sent by the agent from the SIP call), never a number the model chose.
+ */
+export const appointmentActionSchema = z.discriminatedUnion("action", [
+  agentBaseSchema.extend({ action: z.literal("find"), callerName: short(80) }),
+  agentBaseSchema.extend({
+    action: z.literal("move"),
+    callerName: short(80),
+    appointmentId: z.string().min(1).max(120),
+    startAt: z.string().min(10).max(40),
+  }),
+  agentBaseSchema.extend({
+    action: z.literal("cancel"),
+    callerName: short(80),
+    appointmentId: z.string().min(1).max(120),
+  }),
+  agentBaseSchema.extend({
+    action: z.literal("text"),
+    callerName: short(80),
+    kind: z.enum(["business_info", "appointment"]),
+    appointmentId: short(120),
+  }),
+]);
 
 export const bookSchema = agentBaseSchema.extend({
   startAt: z.string().min(10).max(40),

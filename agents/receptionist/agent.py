@@ -51,7 +51,7 @@ from livekit.agents.voice.events import CloseReason
 from livekit.plugins import ai_coustics
 
 import phrases
-from call_record import CallRecord, is_e164
+from call_record import CallRecord, FoundAppointment, is_e164
 from language import LanguageChoice, LanguageMenu
 from policy import SilencePolicy
 from routing import (
@@ -62,7 +62,16 @@ from routing import (
     dialed_number,
     plan_transfer,
 )
-from tool_results import format_availability, format_booking, parse_offers
+from tool_results import (
+    format_availability,
+    format_booking,
+    format_cancel,
+    format_found,
+    format_move,
+    format_text,
+    parse_appointments,
+    parse_offers,
+)
 from tradecatch_api import TradeCatchClient
 from transfer import (
     TransferFailure,
@@ -451,6 +460,11 @@ class ReceptionistAgent(Agent):
             self._has_config and self._client is not None and self._cfg.get("bookingEnabled")
         )
 
+    def _texts_enabled(self) -> bool:
+        return bool(
+            self._has_config and self._client is not None and self._cfg.get("callerTexts")
+        )
+
     def _body(self, **fields: Any) -> dict[str, Any]:
         body: dict[str, Any] = {
             "number": self._call.number,
@@ -528,8 +542,9 @@ class ReceptionistAgent(Agent):
     async def set_language(
         self, context: RunContext, language: Literal["fr", "en"]
     ) -> str:
-        """Switch the call's language. Only when the caller clearly asks to continue in
-        the other language (or accepts your offer to). Never because of an accent."""
+        """Switch the call's language: when the caller asks for the other language, or
+        clearly talks to you in full sentences of it. Never because of an accent, a
+        borrowed word or a name."""
         if language not in phrases.enabled_languages(self._cfg or None):
             return "That language is not available on this line. Say so politely."
         if not self._menu.switch(language):
@@ -548,6 +563,7 @@ class ReceptionistAgent(Agent):
         context: RunContext,
         preferred_time: str | None = None,
         reason: str | None = None,
+        existing_appointment: int | None = None,
     ) -> str:
         """Look up real appointment openings in the calendar. Say a short phrase such as
         "one moment, I'm checking the calendar" first. Use it for any appointment or
@@ -556,23 +572,47 @@ class ReceptionistAgent(Agent):
         Args:
             preferred_time: The day and time the caller prefers, in their words, if any.
             reason: A short description of the job, if you have not recorded it yet.
+            existing_appointment: To move one of the caller's appointments: its number
+                from find_appointment. Leave empty for a new booking.
         """
         if not self._booking_enabled():
             return format_availability({"ok": False, "reason": "booking_disabled"}, [])
-        self._call.update(preferred_time=preferred_time, reason=reason)
+        moving = None
+        if existing_appointment is not None:
+            moving = self._call.found(existing_appointment)
+            if moving is None:
+                return (
+                    "That appointment number is not in the list. Call find_appointment "
+                    "first, then use one of its numbers."
+                )
+        else:
+            self._call.update(preferred_time=preferred_time, reason=reason)
         slots = self._call.report_slots()
         async with self._working():
             result = await self._client.availability(  # type: ignore[union-attr]
                 self._body(
-                    preferredTime=slots.get("preferredTime"),
-                    issue=slots.get("issue"),
-                    serviceAddress=slots.get("serviceAddress"),
+                    preferredTime=preferred_time if moving else slots.get("preferredTime"),
+                    issue=None if moving else slots.get("issue"),
+                    serviceAddress=None if moving else slots.get("serviceAddress"),
+                    appointmentId=moving.appointment_id if moving else None,
+                    callerName=slots.get("callerName") if moving else None,
                 )
             )
         offers = parse_offers(result.get("offers")) if result and result.get("ok") else []
         if result and result.get("ok") and not offers:
             result = {"ok": False, "reason": "no_openings"}
+        if offers and result and moving:
+            # New times for an existing appointment: book_appointment must not use them.
+            self._call.offers = list(offers)
+            self._call.timezone = result.get("timezone") or self._call.timezone
+            self._call.offers_for = moving.appointment_id
+            return format_availability(result, offers).replace(
+                "call book_appointment with that option number",
+                f"call move_appointment with appointment {existing_appointment} and that "
+                "option number",
+            )
         if offers and result:
+            self._call.offers_for = None
             self._call.set_offers(
                 offers, result.get("serviceId"), result.get("serviceName"), result.get("timezone")
             )
@@ -593,6 +633,11 @@ class ReceptionistAgent(Agent):
             return (
                 f"Already booked for {self._call.booking.get('label')}. "
                 "Do not book again; just confirm it."
+            )
+        if self._call.offers_for:
+            return (
+                "These times are for moving an existing appointment. Use move_appointment, "
+                "or call check_availability without existing_appointment for a new booking."
             )
         offer = self._call.offer(option)
         if offer is None:
@@ -641,6 +686,156 @@ class ReceptionistAgent(Agent):
             alternatives = parse_offers(result.get("offers"))
             self._call.set_offers(alternatives, None, None, result.get("timezone"))
         return format_booking(result, alternatives)
+
+    # -- existing appointments and texts ------------------------------
+
+    @function_tool()
+    async def find_appointment(self, context: RunContext, caller_name: str | None = None) -> str:
+        """Find the caller's own upcoming appointments: when, which service, which
+        technician. Use it when they ask about, want to move or cancel an appointment, or
+        ask where the technician is. Only appointments booked under the number they are
+        calling from and the name they give are found. Say "one moment" first.
+
+        Args:
+            caller_name: The name the appointment is under, if you have not recorded it.
+        """
+        if not self._booking_enabled():
+            return format_found({"status": "disabled"}, [])
+        self._call.update(caller_name=caller_name)
+        if not self._call.slots.get("callerName"):
+            return format_found({"status": "name_needed"}, [])
+        if not is_e164(self._call.from_e164):
+            return format_found({"status": "caller_unknown"}, [])
+        async with self._working():
+            result = await self._client.appointments(  # type: ignore[union-attr]
+                self._body(action="find", callerName=self._call.slots.get("callerName"))
+            )
+        found = parse_appointments(result.get("appointments")) if result else []
+        if result and result.get("status") == "found" and not found:
+            result = {"status": "not_found"}
+        self._call.appointments = found
+        self._call.offers_for = None
+        return format_found(result, found)
+
+    @function_tool()
+    async def move_appointment(self, context: RunContext, appointment: int, option: int) -> str:
+        """Move one of the caller's appointments to a new time. First call
+        check_availability with existing_appointment, read out the times, and let the
+        caller choose. Say it is moved only when this tool says MOVED.
+
+        Args:
+            appointment: The appointment number from find_appointment.
+            option: The number of the new time the caller chose.
+        """
+        found = self._call.found(appointment)
+        if found is None:
+            return "That appointment number is not in the list. Call find_appointment first."
+        if self._call.offers_for != found.appointment_id:
+            return (
+                "There are no new times for this appointment yet. Call check_availability "
+                f"with existing_appointment={appointment} first."
+            )
+        offer = self._call.offer(option)
+        if offer is None:
+            return "That option number is not in the list of new times. Ask which one they want."
+        if not self._booking_enabled():
+            return format_move({"status": "disabled"}, [], appointment)
+        async with self._book_lock, self._working():
+            result = await self._client.appointments(  # type: ignore[union-attr]
+                self._body(
+                    action="move",
+                    callerName=self._call.slots.get("callerName"),
+                    appointmentId=found.appointment_id,
+                    startAt=offer.start_at,
+                )
+            )
+        alternatives: list = []
+        status = result.get("status") if result else None
+        if status == "moved" and result:
+            label = str(result.get("label") or offer.label)
+            self._call.appointments[appointment - 1] = FoundAppointment(
+                found.appointment_id, label, found.service_name, found.technician, found.status
+            )
+            self._call.appointment_changes.append({"change": "moved", "label": label})
+            self._call.offers, self._call.offers_for = [], None
+        elif status == "taken" and result:
+            alternatives = parse_offers(result.get("offers"))
+            self._call.offers = alternatives
+        return format_move(result, alternatives, appointment)
+
+    @function_tool()
+    async def cancel_appointment(
+        self, context: RunContext, appointment: int, caller_confirmed: bool
+    ) -> str:
+        """Cancel one of the caller's appointments. Before calling it, say which
+        appointment (date and time) will be canceled and get a clear yes. Say it is
+        canceled only when this tool says CANCELED.
+
+        Args:
+            appointment: The appointment number from find_appointment.
+            caller_confirmed: True only after the caller clearly said yes to canceling it.
+        """
+        found = self._call.found(appointment)
+        if found is None:
+            return "That appointment number is not in the list. Call find_appointment first."
+        if not caller_confirmed:
+            return (
+                "Not canceled. First ask the caller to confirm canceling the appointment of "
+                f"{found.label}, then call this again with caller_confirmed true."
+            )
+        if not self._booking_enabled():
+            return format_cancel({"status": "disabled"})
+        async with self._book_lock, self._working():
+            result = await self._client.appointments(  # type: ignore[union-attr]
+                self._body(
+                    action="cancel",
+                    callerName=self._call.slots.get("callerName"),
+                    appointmentId=found.appointment_id,
+                )
+            )
+        if result and result.get("status") == "canceled":
+            self._call.appointment_changes.append({"change": "canceled", "label": found.label})
+            del self._call.appointments[appointment - 1]
+            self._call.offers, self._call.offers_for = [], None
+        return format_cancel(result)
+
+    @function_tool()
+    async def text_caller(
+        self,
+        context: RunContext,
+        what: Literal["business_info", "appointment"],
+        appointment: int | None = None,
+    ) -> str:
+        """Text the caller, at the number they are calling from, when they ask for it.
+        "business_info": the business's address, phone and hours. "appointment": the date
+        and time of one of their appointments from find_appointment. The system writes the
+        words; you cannot add anything. Say it was sent only when this tool says SENT.
+
+        Args:
+            what: "business_info" or "appointment".
+            appointment: For "appointment": its number from find_appointment.
+        """
+        if not self._texts_enabled() or not is_e164(self._call.from_e164):
+            return format_text({"status": "unavailable"})
+        appointment_id = None
+        if what == "appointment":
+            found = self._call.found(appointment) if appointment is not None else None
+            if found is None:
+                return (
+                    "Call find_appointment first, then text_caller with that appointment's "
+                    "number."
+                )
+            appointment_id = found.appointment_id
+        async with self._working():
+            result = await self._client.appointments(  # type: ignore[union-attr]
+                self._body(
+                    action="text",
+                    kind=what,
+                    appointmentId=appointment_id,
+                    callerName=self._call.slots.get("callerName"),
+                )
+            )
+        return format_text(result)
 
     @function_tool()
     async def transfer_call(
