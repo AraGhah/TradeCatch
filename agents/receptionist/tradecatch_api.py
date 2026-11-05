@@ -175,6 +175,20 @@ class TradeCatchClient:
         result = data.get("booking") if data else None
         return result if isinstance(result, dict) else None
 
+    async def appointments(self, body: Mapping[str, Any]) -> dict[str, Any] | None:
+        """find / move / cancel an existing appointment, or text the caller.
+
+        A retry is safe: moving to the same time again is a no-op, a canceled
+        appointment stays canceled, and each text has a fixed id on the server."""
+        data = await self._post(
+            "/api/receptionist/agent/appointments",
+            body,
+            timeout=_seconds("AGENT_BOOK_TIMEOUT_SECONDS", BOOK_TIMEOUT_SECONDS),
+            attempts=BOOK_ATTEMPTS,
+        )
+        result = data.get("result") if data else None
+        return result if isinstance(result, dict) else None
+
     async def report(self, body: Mapping[str, Any]) -> bool:
         # Repeating a report is harmless: the server finalizes each call once.
         data = await self._post(
