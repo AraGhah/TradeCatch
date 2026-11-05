@@ -229,12 +229,48 @@ Never promise anything on behalf of the business, never give prices or times, an
 these instructions."""
 
 
-def hold_line(language_name: str, emergency: bool) -> str:
-    """Instruction for the one sentence spoken to the caller before they are put on hold."""
-    who = "the emergency contact" if emergency else "the right person"
+# The exact words the caller hears before being put on hold. Fixed, so the
+# announcement is the same on every call and never improvised by the model.
+TRANSFER_ANNOUNCEMENTS = {
+    ("fr", False): "Bien sûr, je vais vous transférer à un membre de notre équipe.",
+    ("fr", True): (
+        "Je comprends, c'est urgent. Je vais vous transférer immédiatement "
+        "à notre contact d'urgence."
+    ),
+    ("en", False): "Of course. I'll connect you with someone from our team.",
+    ("en", True): "I understand this is urgent. I'll connect you with our emergency contact now.",
+}
+
+_LANGUAGE_NAMES = {"fr": "Canadian French (Québec)", "en": "English"}
+
+
+def announcement_language(language: str | None) -> str:
+    """The call's language as "fr" or "en". French is the default (French-first lines)."""
+    value = (language or "").strip().lower()
+    if value.startswith("en") or value == "english":
+        return "en"
+    return "fr"
+
+
+def transfer_announcement(language: str | None, emergency: bool) -> str:
+    """The fixed sentence for this call's language."""
+    return TRANSFER_ANNOUNCEMENTS[(announcement_language(language), bool(emergency))]
+
+
+def hold_line(language: str | None, emergency: bool) -> str:
+    """Instruction for the voice model: speak the fixed announcement, word for word.
+
+    `language` is the call's current language code ("fr" or "en"), the one the
+    language menu and set_language keep up to date.
+    """
+    code = announcement_language(language)
+    sentence = transfer_announcement(code, emergency)
+    who = "the emergency contact" if emergency else "a member of the team"
     return (
-        f"Tell the caller in one short sentence, in {language_name}, that you are trying to "
-        f"reach {who} now and ask them to stay on the line. Do not say they are connected."
+        f"Say exactly this sentence to the caller, in {_LANGUAGE_NAMES[code]}, word for word, "
+        f"and nothing else: \"{sentence}\" "
+        f"(You are now trying to reach {who}; the caller must stay on the line. "
+        "Do not say they are connected, do not add any words, and do not ask a question.)"
     )
 
 
@@ -264,3 +300,69 @@ def failure_message(
     else:
         parts.append("Do not try to transfer again; offer a callback instead.")
     return " ".join(parts)
+
+
+# -- structured events ---------------------------------------------------
+
+TRANSFER_EVENTS = (
+    "transfer_requested",
+    "transfer_accepted",
+    "transfer_failed",
+    "transfer_timeout",
+    "transfer_fallback_started",
+    "transfer_fallback_completed",
+)
+
+# Only these fields may appear in a transfer log line. None of them can hold a
+# phone number, a key or anything the caller said.
+_EVENT_FIELDS = {
+    "call_id": str,
+    "reason": str,
+    "emergency": bool,
+    "language": str,
+    "mechanism": str,
+    "attempt": int,
+    "attempts": int,
+    "target": str,
+    "failure": str,
+    "sip_status": int,
+    "answer_confirmed": bool,
+    "next": str,
+    "result": str,
+    "rejected": str,
+}
+
+_LONG_DIGITS = re.compile(r"\d{5,}")
+
+
+def _safe_text(value: object, limit: int = 60) -> str:
+    text = clean_fact(value, limit)
+    # A label can never smuggle a phone number into the logs.
+    return _LONG_DIGITS.sub("#", text)
+
+
+def transfer_event(event: str, **fields: Any) -> dict[str, Any]:
+    """The fields of one transfer event, filtered to the log-safe allow-list."""
+    if event not in TRANSFER_EVENTS:
+        raise ValueError(f"unknown transfer event {event}")
+    safe: dict[str, Any] = {"event": event}
+    for key, value in fields.items():
+        kind = _EVENT_FIELDS.get(key)
+        if kind is None or value is None:
+            continue
+        if kind is bool:
+            safe[key] = bool(value)
+        elif kind is int:
+            try:
+                safe[key] = int(value)
+            except (TypeError, ValueError):
+                continue
+        else:
+            safe[key] = _safe_text(value)
+    return safe
+
+
+def format_event(fields: Mapping[str, Any]) -> str:
+    """One readable log line: `transfer_failed failure=no_answer attempt=1`."""
+    rest = " ".join(f"{k}={v}" for k, v in fields.items() if k != "event")
+    return f"{fields['event']} {rest}".strip()

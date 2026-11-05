@@ -37,8 +37,9 @@ TradeCatch (`/app/receptionist`, or `/admin/businesses/<id>`), not in this folde
    book one of the options just offered. The agent says "booked" **only** when the
    server answers `confirmed`. Any other outcome (taken, calendar down, timeout) is
    described honestly and the request is passed to the team.
-5. **Transfers.** `transfer_call` picks one of the business's configured lines. The
-   model never supplies a number. Closed office → normal transfers are refused;
+5. **Transfers.** Two tools: `transfer_to_human` (optional department) and
+   `transfer_emergency`. Both pick one of the business's configured lines; the model
+   never supplies a number. Closed office → normal transfers are refused;
    emergencies still go through.
 6. **Silence.** One "are you still there?", then a polite goodbye and hang-up.
 7. **End.** `report` is sent once (retried on network errors), whether the call ended
@@ -49,12 +50,41 @@ bilingual instruction set with **no** transfer and no promises.
 
 ## Transfers
 
-`transfer_call` never claims a transfer worked because it was *started*. The call is
-reported as transferred (`completed: true`, outcome "transferred" / "emergency
-transferred" in TradeCatch) only after a person has been reached and has accepted.
-Anything else is a named failure, the caller stays on the line with the agent, and
-the report says `completed: false` (for an emergency that also raises the owner's
-critical alert).
+The model has two transfer tools, `transfer_to_human(department?)` and
+`transfer_emergency()`. Neither takes a phone number. Both run the same internal
+`transfer_call`, which never claims a transfer worked because it was *started*.
+
+* **Announcement.** Before ringing, the caller hears one fixed sentence in the call's
+  current language (the language menu / `set_language` state), spoken word for word:
+  FR "Bien sûr, je vais vous transférer à un membre de notre équipe." / emergency
+  "Je comprends, c'est urgent. Je vais vous transférer immédiatement à notre contact
+  d'urgence."; EN "Of course. I'll connect you with someone from our team." /
+  emergency "I understand this is urgent. I'll connect you with our emergency contact
+  now." (`transfer.TRANSFER_ANNOUNCEMENTS`).
+* **Destinations.** Only the tenant's own configured lines, and each must pass
+  `routing.destination_problem`: never 911 or another N11/emergency code, never a
+  premium-rate (900) number, never the business number itself (a loop back into this
+  agent), never the caller's own number, and only well-formed E.164.
+* **Caller still there.** No transfer starts if the caller's SIP participant has
+  already left the room.
+* **Accepted vs answered.** `completed: true` means the call left the agent for a
+  person's line. Only a screened (`warm`) transfer, where the contractor said yes or
+  pressed 1, sets `answerConfirmed: true`. A SIP REFER that LiveKit reports successful
+  is logged `TRANSFER REQUEST ACCEPTED ... human answer not confirmed`; a screened yes
+  is logged `HUMAN ANSWER CONFIRMED`.
+* **Failures.** Anything else is a named failure; the caller stays on the line with
+  the agent, who offers a callback (emergency: tells them to call 911 if anyone is in
+  danger and takes an urgent callback). The report says `completed: false`, and
+  TradeCatch sends the owner the `transfer_failed` alert (and, for an emergency, marks
+  the call critical).
+* **Logs.** Structured events `transfer_requested`, `transfer_accepted`,
+  `transfer_failed`, `transfer_timeout`, `transfer_fallback_started`,
+  `transfer_fallback_completed`, with an allow-list of fields (call id, reason,
+  mechanism, line label, failure kind, SIP code, attempt, `answer_confirmed`). No
+  phone numbers, keys or caller speech.
+* **Prompt.** The agent appends its own `TRANSFER_POLICY` to the business's
+  instructions, so the tool names and rules are right even if the backend prompt is
+  older than the agent.
 
 `AGENT_TRANSFER_MODE` picks the mechanism (default `auto`):
 

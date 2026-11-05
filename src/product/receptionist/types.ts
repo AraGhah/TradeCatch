@@ -311,6 +311,14 @@ export type TransferAttempt = {
   status: "dialing" | "completed" | "no_answer" | "busy" | "failed";
   /** After a failed overflow/human_first ring, continue into the AI. */
   continueWithAi?: boolean;
+  /**
+   * Voice agent only: a person was heard accepting the call (screened
+   * transfer). A completed SIP REFER leaves this false: the carrier took the
+   * call, but a voicemail could have answered it.
+   */
+  answerConfirmed?: boolean;
+  /** Voice agent only: how the call was handed over. */
+  mechanism?: "warm" | "blind" | "bridge";
 };
 
 /**

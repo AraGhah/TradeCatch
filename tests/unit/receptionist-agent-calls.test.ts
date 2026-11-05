@@ -88,7 +88,11 @@ function fakeScheduler(
 }
 
 function setup(
-  opts: { config?: ReceptionistConfig; scheduler?: ReceptionistScheduler } = {},
+  opts: {
+    config?: ReceptionistConfig;
+    scheduler?: ReceptionistScheduler;
+    alerts?: { clientAccountId: string; sessionId: string }[];
+  } = {},
 ) {
   const config = opts.config ?? makeConfig();
   const store = createMemoryReceptionistStore();
@@ -104,10 +108,14 @@ function setup(
     }),
     clock,
   });
+  const alerts = opts.alerts ?? [];
   const service = createAgentCallService({
     store,
     scheduler: opts.scheduler,
     finalize: engine.finalizeSession,
+    notifyTransferFailed: async (clientAccountId, sessionId) => {
+      alerts.push({ clientAccountId, sessionId });
+    },
     clock,
   });
   return { service, store, sms, config };
@@ -445,6 +453,62 @@ describe("voice agent — the finished call", () => {
     assert.equal(session!.transfers[0]?.status, "failed");
   });
 
+  it("alerts the owner once when a transfer failed, and never for a completed one", async () => {
+    const alerts: { clientAccountId: string; sessionId: string }[] = [];
+    const { service, config } = setup({ alerts });
+    const failed = {
+      ...base,
+      callId: "call-xfer-fail",
+      slots: { issue: "chauffage" },
+      transfer: { targetName: "General line", completed: false, mechanism: "warm" as const },
+      endReason: "completed" as const,
+    };
+    const session = await service.report(config, failed);
+    await service.report(config, failed);
+    assert.equal(alerts.length, 1, "a repeated report never alerts twice");
+    assert.equal(alerts[0]?.sessionId, session!.id);
+    assert.equal(alerts[0]?.clientAccountId, config.clientAccountId);
+
+    await service.report(config, {
+      ...base,
+      callId: "call-xfer-ok",
+      transfer: { targetName: "General line", completed: true, mechanism: "blind" },
+      endReason: "completed",
+    });
+    assert.equal(alerts.length, 1);
+  });
+
+  it("keeps a REFER handoff apart from a confirmed human answer", async () => {
+    const { service, config } = setup({});
+    const refer = await service.report(config, {
+      ...base,
+      callId: "call-refer-1",
+      transfer: { targetName: "General line", completed: true, mechanism: "blind" },
+      endReason: "completed",
+    });
+    assert.equal(refer!.outcome, "transferred");
+    assert.equal(refer!.transfers[0]?.answerConfirmed, false);
+    assert.equal(refer!.transfers[0]?.mechanism, "blind");
+
+    const warm = await service.report(config, {
+      ...base,
+      callId: "call-warm-1",
+      transfer: { targetName: "General line", completed: true, answerConfirmed: true, mechanism: "warm" },
+      endReason: "completed",
+    });
+    assert.equal(warm!.transfers[0]?.answerConfirmed, true);
+
+    // An older agent sends neither field: still a transfer, never a confirmed answer.
+    const legacy = await service.report(config, {
+      ...base,
+      callId: "call-legacy1",
+      transfer: { targetName: "General line", completed: true },
+      endReason: "completed",
+    });
+    assert.equal(legacy!.transfers[0]?.answerConfirmed, false);
+    assert.equal(legacy!.transfers[0]?.mechanism, undefined);
+  });
+
   it("marks a call with nothing in it as hung up, and an agent error as failed", async () => {
     const { service, config } = setup({});
     const empty = await service.report(config, { ...base, callId: "call-empty1", endReason: "caller_hung_up" });
@@ -484,6 +548,37 @@ describe("voice agent — slot cleaning", () => {
     assert.equal(
       cleanSlots({ issue: "y".repeat(5000) }).issue!.length,
       600,
+    );
+  });
+});
+
+describe("voice agent — report schema", () => {
+  const body = {
+    number: OFFICE,
+    callId: "call-schema1",
+    language: "fr" as const,
+  };
+
+  it("accepts the transfer's mechanism and answer confirmation", async () => {
+    const { reportSchema } = await import("../../src/product/receptionist/agent-api");
+    const parsed = reportSchema.parse({
+      ...body,
+      transfer: { targetName: "Emergency", completed: true, answerConfirmed: false, mechanism: "blind" },
+    });
+    assert.deepEqual(parsed.transfer, {
+      targetName: "Emergency",
+      completed: true,
+      answerConfirmed: false,
+      mechanism: "blind",
+    });
+  });
+
+  it("still accepts an older agent's report, and refuses an unknown mechanism", async () => {
+    const { reportSchema } = await import("../../src/product/receptionist/agent-api");
+    assert.ok(reportSchema.safeParse({ ...body, transfer: { completed: false } }).success);
+    assert.ok(
+      !reportSchema.safeParse({ ...body, transfer: { completed: true, mechanism: "sip_trunk" } })
+        .success,
     );
   });
 });
