@@ -7,6 +7,7 @@ that needs a live call.
 """
 
 import os
+import sys
 import unittest
 from unittest import mock
 
@@ -56,6 +57,32 @@ class BuildSessionTest(unittest.IsolatedAsyncioTestCase):
         self.standard(A.build_session({"instructions": "x"}, object(), {}))
         self.standard(A.build_session(None, None, {}))
 
+    async def test_backend_speed_settings_reach_the_standard_voice_model(self):
+        env = {"AGENT_DELEGATION_REASONING": "low", "AGENT_DELEGATION_VERBOSITY": "low"}
+        with mock.patch.dict(os.environ, env):
+            session = A.build_session({"instructions": "x"}, object(), {})
+        self.standard(session)
+        responses = session.llm.duplex_model._opts.responses
+        self.assertEqual(responses["reasoning"], {"effort": "low"})
+        self.assertEqual(responses["text"], {"verbosity": "low"})
+
+    async def test_without_speed_settings_the_backend_keeps_its_defaults(self):
+        session = A.build_session({"instructions": "x"}, object(), {})
+        self.assertNotIn("reasoning", session.llm.duplex_model._opts.responses)
+
+    async def test_prewarm_loads_the_standard_voice_model_before_any_call(self):
+        real_import = __import__
+        names = []
+
+        def recording_import(name, *args, **kwargs):
+            names.append(name)
+            return real_import(name, *args, **kwargs)
+
+        with mock.patch("builtins.__import__", side_effect=recording_import):
+            A.prewarm(type("Proc", (), {"userdata": {}})())
+        self.assertIn("livekit.agents.inference.realtime", names)
+        self.assertIn("livekit.agents.inference.realtime", sys.modules)
+
     async def test_standard_mode_keeps_the_standard_voice(self):
         cfg = {"instructions": "x", "voice": {"mode": "standard"}}
         self.standard(A.build_session(cfg, object(), {}))
@@ -84,6 +111,30 @@ class BuildSessionTest(unittest.IsolatedAsyncioTestCase):
         # The cloned voice first, then a standard one.
         self.assertEqual(len(session.tts._tts_instances), 2)
         self.assertIsInstance(session.tts._tts_instances[0], elevenlabs.TTS)
+
+    @unittest.skipUnless(HAVE_PLUGINS, "livekit ElevenLabs/Silero plugins not installed")
+    async def test_the_standard_elevenlabs_voice_answers_businesses_without_a_clone(self):
+        env = {
+            "AGENT_STANDARD_VOICE": "elevenlabs",
+            "AGENT_ELEVENLABS_VOICE_ID": "j9RedbMRSNQ74PyikQwD",
+            "AGENT_ELEVENLABS_SPEED": "1.05",
+            "AGENT_ELEVENLABS_STYLE": "0",
+        }
+        vad = silero.VAD.load()
+        with mock.patch.dict(os.environ, env), self.assertLogs("agent-tradecatch-receptionist", "INFO") as logs:
+            session = A.build_session({"instructions": "x"}, vad, {})
+        eleven = session.tts._tts_instances[0]
+        self.assertIsInstance(eleven, elevenlabs.TTS)
+        self.assertEqual(eleven._opts.voice_id, "j9RedbMRSNQ74PyikQwD")
+        self.assertEqual(eleven._opts.model, "eleven_flash_v2_5")
+        self.assertEqual(eleven._opts.voice_settings.speed, 1.05)
+        self.assertEqual(eleven._opts.voice_settings.style, 0.0)
+        self.assertIn("voice for this call: ElevenLabs standard voice j9RedbMRSNQ74PyikQwD", logs.output[-1])
+
+    async def test_the_realtime_voice_is_logged_by_name(self):
+        with mock.patch.dict(os.environ, {"AGENT_VOICE": "marin"}), self.assertLogs("agent-tradecatch-receptionist", "INFO") as logs:
+            self.standard(A.build_session({"instructions": "x"}, object(), {}))
+        self.assertIn("voice marin", logs.output[-1])
 
     @unittest.skipUnless(HAVE_PLUGINS, "livekit ElevenLabs/Silero plugins not installed")
     async def test_turn_handling_options_are_accepted_by_the_cascade(self):

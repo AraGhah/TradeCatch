@@ -151,6 +151,14 @@ ranges: `AGENT_VOICE`, `AGENT_REALTIME_MODEL`, `AGENT_ENDPOINTING_MODE`,
 `AGENT_MIN_ENDPOINTING_DELAY`, `AGENT_MAX_ENDPOINTING_DELAY`, `AGENT_INTERRUPTIONS`,
 `AGENT_INTERRUPTION_MIN_DURATION`, `AGENT_INTERRUPTION_MIN_WORDS`,
 `AGENT_PREEMPTIVE_GENERATION`, and `AGENT_{CONFIG,AVAILABILITY,BOOK}_TIMEOUT_SECONDS`.
+The standard gpt-live voice takes its own turns, so the endpointing, interruption and
+preemptive settings only affect cloned-voice calls. For gpt-live, `AGENT_DELEGATION_REASONING`
+and `AGENT_DELEGATION_VERBOSITY` speed up the backend model behind every tool call, and each
+caller turn is logged as `reply gap <seconds> (<n> backend runs)`.
+`AGENT_STANDARD_VOICE=elevenlabs` with `AGENT_ELEVENLABS_VOICE_ID` answers every business
+that has no cloned voice with that ElevenLabs voice (speech-to-text -> LLM -> ElevenLabs),
+and `AGENT_ELEVENLABS_{SPEED,STABILITY,SIMILARITY,STYLE}` tune its delivery. Every call logs
+`voice for this call: ...`, which is the way to confirm the voice production loaded.
 Transfers: `AGENT_TRANSFER_MODE`, `LIVEKIT_SIP_OUTBOUND_TRUNK`, `LIVEKIT_SIP_NUMBER`,
 `AGENT_TRANSFER_{RING,CONSULT,BUDGET}_SECONDS`.
 Out-of-range values are ignored (a typo cannot make the line cut callers off).

@@ -1,7 +1,13 @@
 import unittest
 
 from routing import call_id_from_room, caller_number
-from tuning import DEFAULT_MODEL, DEFAULT_VOICE, turn_handling_from_env, voice_settings
+from tuning import (
+    DEFAULT_MODEL,
+    DEFAULT_VOICE,
+    delegation_options,
+    turn_handling_from_env,
+    voice_settings,
+)
 
 
 class TurnHandlingTests(unittest.TestCase):
@@ -56,6 +62,22 @@ class TurnHandlingTests(unittest.TestCase):
             }
         )
         self.assertEqual(options, {})
+
+
+class DelegationOptionsTests(unittest.TestCase):
+    def test_nothing_set_keeps_the_service_defaults(self):
+        self.assertEqual(delegation_options({}), {})
+
+    def test_reads_effort_and_verbosity(self):
+        env = {"AGENT_DELEGATION_REASONING": " Low ", "AGENT_DELEGATION_VERBOSITY": "low"}
+        self.assertEqual(
+            delegation_options(env),
+            {"responses_options": {"reasoning": {"effort": "low"}, "text": {"verbosity": "low"}}},
+        )
+
+    def test_unknown_values_are_ignored_so_tools_keep_working(self):
+        env = {"AGENT_DELEGATION_REASONING": "turbo", "AGENT_DELEGATION_VERBOSITY": "none"}
+        self.assertEqual(delegation_options(env), {})
 
 
 class VoiceSettingsTests(unittest.TestCase):
