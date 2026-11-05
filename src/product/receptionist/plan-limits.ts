@@ -68,9 +68,15 @@ export function applyVoicePlanLimits(
       routing: [],
       fallbackTransferE164: undefined,
       backupTransferE164: undefined,
-      inboundStrategy: "ai_first",
+      // Ringing the contractor's own phone before the AI answers
+      // (missed-calls-only) is not an AI transfer, so it survives; a legacy
+      // human-first setup that relied on the transfer line does not.
+      inboundStrategy: next.ringFirstE164 ? next.inboundStrategy : "ai_first",
       allowVoicemailOnly: true,
     };
+  }
+  if (!caps.voice) {
+    next = { ...next, enabled: false };
   }
   if (!caps.emergencyRouting) {
     next = { ...next, emergencyTransferE164: undefined };
