@@ -1,3 +1,4 @@
+import { ownerVisibleCalls } from "@/product/receptionist/call-history";
 import { NextRequest, NextResponse } from "next/server";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import {
@@ -25,10 +26,12 @@ export async function GET(request: NextRequest, { params }: Params) {
     200,
   );
   const runtime = getReceptionistRuntime();
-  const calls = await runtime.store.listSessions({
-    clientAccountId: client.id,
-    limit,
-  });
+  const calls = ownerVisibleCalls(
+    await runtime.store.listSessions({
+      clientAccountId: client.id,
+      limit,
+    }),
+  );
 
   return NextResponse.json({
     ok: true,
