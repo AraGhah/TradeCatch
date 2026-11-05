@@ -1,3 +1,4 @@
+import { ownerVisibleCalls } from "@/product/receptionist/call-history";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { requireTenantContext } from "@/product/saas/tenant";
@@ -35,7 +36,9 @@ export default async function AppCallsPage({
       const runtime = getReceptionistRuntime();
       await runtime.refresh();
       configured = runtime.configs.some((c) => c.clientAccountId === clientId);
-      calls = await runtime.store.listSessions({ clientAccountId: clientId, limit: 100 });
+      calls = ownerVisibleCalls(
+        await runtime.store.listSessions({ clientAccountId: clientId, limit: 100 }),
+      );
     } catch {
       calls = [];
     }
