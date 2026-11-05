@@ -156,21 +156,26 @@ export function PhoneSettingsForm({
           />
           {t("aiEnabled")}
         </label>
-        <label className="mt-3 block text-xs text-navy/70">
-          {t("inboundStrategy")}
-          <select
-            className={INPUT}
-            value={strategy}
-            onChange={(e) =>
-              setStrategy(
-                e.target.value === "human_first" ? "human_first" : "ai_first",
-              )
-            }
-          >
-            <option value="ai_first">{t("strategy.ai_first")}</option>
-            <option value="human_first">{t("strategy.human_first")}</option>
-          </select>
-        </label>
+        {initial.aiCallMode ? (
+          // AI Call Handling (above) owns the strategy once a mode is saved.
+          <p className="mt-3 text-xs text-navy/60">{t("strategyManaged")}</p>
+        ) : (
+          <label className="mt-3 block text-xs text-navy/70">
+            {t("inboundStrategy")}
+            <select
+              className={INPUT}
+              value={strategy}
+              onChange={(e) =>
+                setStrategy(
+                  e.target.value === "human_first" ? "human_first" : "ai_first",
+                )
+              }
+            >
+              <option value="ai_first">{t("strategy.ai_first")}</option>
+              <option value="human_first">{t("strategy.human_first")}</option>
+            </select>
+          </label>
+        )}
         <label className="mt-3 block text-xs text-navy/70">
           {t("voiceEngine")}
           <select
@@ -178,8 +183,9 @@ export function PhoneSettingsForm({
             value={voiceEngine}
             onChange={(e) =>
               setVoiceEngine(
-                e.target.value === "conversation_relay"
-                  ? "conversation_relay"
+                e.target.value === "conversation_relay" ||
+                  e.target.value === "livekit"
+                  ? e.target.value
                   : "gather",
               )
             }
@@ -188,6 +194,7 @@ export function PhoneSettingsForm({
             <option value="conversation_relay">
               {t("engine.conversation_relay")}
             </option>
+            <option value="livekit">{t("engine.livekit")}</option>
           </select>
         </label>
         <p className="mt-1 text-xs text-navy/50">{t("engineHelp")}</p>
