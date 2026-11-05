@@ -30,7 +30,7 @@ import contextlib
 import logging
 import os
 import time
-from typing import Any, Coroutine, Literal
+from typing import Any, Coroutine, Literal, Mapping
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -79,7 +79,9 @@ from transfer import (
     TransferOutcome,
     TransferSettings,
     failure_message,
+    format_event,
     hold_line,
+    transfer_event,
     transfer_settings,
 )
 from tuning import delegation_options, turn_handling_from_env, voice_settings
@@ -104,6 +106,27 @@ reason for the call. Explain that delivery is unconfirmed and ask them to try ag
 Never state prices, availability or hours, and never say anything is
 booked or confirmed. If anyone is in danger, tell the caller to hang up and call 911.
 Never say you will transfer the call: no transfer is available."""
+
+# Appended to every business's instructions, after the backend's text, so the
+# tool names and the rules are right even before the backend is redeployed.
+TRANSFER_POLICY = """# HUMAN TRANSFERS (these rules override anything above about transfers)
+* When the caller asks for a person (a human, the owner, a manager, a technician, someone from \
+the team, or a department), call transfer_to_human. Pass the department only if the caller named \
+one that is offered.
+* For an emergency (gas smell, fire or smoke, carbon-monoxide alarm, flooding, sparking or \
+burning electrical, no heat in freezing weather, injury), call transfer_emergency.
+* If there is any danger to life (gas, fire, smoke, carbon monoxide, injury), first tell the \
+caller to hang up and call 911 now, then call transfer_emergency. 911 is never a transfer \
+destination: you cannot transfer anyone to 911.
+* Never say or ask for a phone number to transfer to. The tools only ring the business's own \
+configured lines; you cannot dial any other number.
+* Saying you will transfer without calling the tool does nothing. The tool speaks the transfer \
+announcement itself: after calling it, say nothing more unless it returns a failure.
+* A transfer is only done when the tool says so. If it fails, the caller is still with you: \
+never hang up on them. Say briefly that nobody could be reached, offer a callback, and make sure \
+you have their name, callback number and the reason (and the address for an emergency). The team \
+is notified automatically.
+* Keep speaking the caller's current language for every word, including after a failed transfer."""
 
 # A caller can ask again after a failed transfer, but not forever: each round holds
 # the caller for up to the whole transfer budget.
@@ -186,7 +209,11 @@ class ReceptionistAgent(Agent):
         self._ctx = ctx
 
     def _instructions_for(self, language: str) -> str:
-        return f"{self._base_instructions}\n\n{phrases.language_directive(language)}"
+        parts = [self._base_instructions]
+        if self._has_config:
+            parts.append(TRANSFER_POLICY)
+        parts.append(phrases.language_directive(language))
+        return "\n\n".join(parts)
 
     def _spawn(self, work: Coroutine[Any, Any, Any]) -> asyncio.Task[Any]:
         task = asyncio.create_task(work)
@@ -371,7 +398,10 @@ class ReceptionistAgent(Agent):
             # The caller left (or the model died) while a contractor's phone was ringing:
             # drop that second leg now, and report that no one was connected.
             pending.abort("caller_left")
-            self._call.transfer = {"targetName": pending.target.name, "completed": False}
+            self._call.transfer = _transfer_record(pending.target.name, False, "warm")
+            self._log_transfer(
+                "transfer_failed", failure="caller_left", mechanism="warm", target=pending.target.name
+            )
         if ev.reason == CloseReason.ERROR:
             logger.error("session closed with an error: %s", type(ev.error).__name__)
             self._call.end_reason = "error"
@@ -408,7 +438,10 @@ class ReceptionistAgent(Agent):
             return  # a person already has the call; the model failing no longer matters
         settings = self._transfer_settings
         plan = plan_transfer(
-            self._cfg, "emergency" if self._call.emergency else "caller_request"
+            self._cfg,
+            "emergency" if self._call.emergency else "caller_request",
+            business_number=self._call.number,
+            caller=self._call.from_e164,
         )
         if not plan.targets or settings.mode == "off" or not self._sip_identity:
             await self._hang_up()
@@ -423,7 +456,8 @@ class ReceptionistAgent(Agent):
             outcome = await refer_transfer(
                 identity=self._sip_identity, number=target.number, settings=settings
             )
-        self._call.transfer = {"targetName": target.name, "completed": outcome.connected}
+        # Nobody screened this answer, so it is never a confirmed human answer.
+        self._call.transfer = _transfer_record(target.name, outcome.connected, outcome.mechanism)
         if not outcome.connected:
             logger.error("recovery transfer failed (%s)", _why(outcome))
             await self._hang_up()
@@ -838,46 +872,115 @@ class ReceptionistAgent(Agent):
             )
         return format_text(result)
 
+    def _log_transfer(self, event: str, *, level: int = logging.INFO, **fields: Any) -> None:
+        """One structured transfer event. Never a phone number, a key or caller speech."""
+        safe = transfer_event(event, call_id=self._call.call_id, **fields)
+        logger.log(level, format_event(safe), extra={"transfer": safe})
+
+    def _caller_present(self) -> bool:
+        """False only when the room is known and the caller's SIP participant has left."""
+        room = getattr(self._ctx, "room", None) if self._ctx is not None else None
+        participants = getattr(room, "remote_participants", None)
+        if not isinstance(participants, Mapping):
+            return True  # unknown: never block a transfer on a missing attribute
+        return self._sip_identity in participants
+
     @function_tool()
+    async def transfer_to_human(
+        self, context: RunContext, department: str | None = None
+    ) -> str:
+        """Connect the caller with a person from the business's team. Call this whenever
+        the caller asks for a human, the owner, a manager, a technician, someone from the
+        team, or a department. Saying you will transfer without calling this tool does
+        nothing. The tool says the transfer announcement itself, rings the business's own
+        configured line while the caller waits, and returns what really happened.
+
+        Args:
+            department: Optional name of a department the caller asked for, exactly as
+                offered. Never a phone number.
+        """
+        return await self.transfer_call(context, "caller_request", department)
+
+    @function_tool()
+    async def transfer_emergency(self, context: RunContext) -> str:
+        """Connect the caller with the business's emergency contact. Call this for an
+        emergency: gas smell, fire or smoke, carbon-monoxide alarm, flooding, sparking or
+        burning electrical, no heat in freezing weather, or an injury. If anyone is in
+        danger, first tell the caller to hang up and call 911, then call this tool. 911
+        is never a transfer destination. The tool says the announcement itself and
+        returns what really happened; if nobody answers, the caller stays with you.
+        """
+        return await self.transfer_call(context, "emergency")
+
     async def transfer_call(
         self,
         context: RunContext,
         reason: Literal["caller_request", "emergency"],
         department: str | None = None,
     ) -> str:
-        """Connect the caller to a real person. Call this tool whenever the caller
-        asks for a person, or in an emergency. Saying you will transfer without
-        calling this tool does nothing. It rings the person while the caller waits
-        on the line, and only connects them if the person accepts; the tool result
-        says what really happened.
+        """The transfer itself, shared by transfer_to_human and transfer_emergency.
 
-        Args:
-            reason: "emergency" for gas leaks, flooding, fire, injury or anything
-                dangerous; otherwise "caller_request".
-            department: Optional department name to offer, if the caller asked for one.
+        Not a tool: the model reaches it only through those two, and neither can
+        pass a phone number. A transfer counts as connected only when LiveKit says
+        so, and only a screened (warm) transfer confirms that a person answered.
         """
         emergency = reason == "emergency"
         if emergency:
             self._call.emergency = True
+        self._log_transfer(
+            "transfer_requested",
+            reason=reason,
+            emergency=emergency,
+            language=self._call.language,
+            mechanism=self._transfer_settings.mode,
+        )
         if not self._has_config or not self._sip_identity:
+            self._log_transfer("transfer_failed", level=logging.ERROR, failure="no_config")
             return (
                 "Transfers are unavailable on this call. Apologize briefly and "
                 "take the caller's details for a callback."
+                + (" Tell them to hang up and call 911 if anyone is in danger." if emergency else "")
             )
         if self._keep_job_alive:
             return "The caller is already connected to a person. Say nothing more."
         if self._transferring:
             return "A transfer is already in progress. Say nothing more."
+        if not self._caller_present():
+            self._log_transfer("transfer_failed", failure="caller_left")
+            return "The caller has already left the call. Say nothing more."
 
-        plan = plan_transfer(self._cfg, reason, department)
+        plan = plan_transfer(
+            self._cfg,
+            reason,
+            department,
+            business_number=self._call.number,
+            caller=self._call.from_e164,
+        )
+        if plan.rejected:
+            # A saved line that must never ring (a loop, 911, a premium number...).
+            logger.error("transfer lines skipped as unsafe: %s", ",".join(plan.rejected))
         if not plan.targets:
+            if plan.rejected:
+                self._call.transfer = _transfer_record("", False, "")
+            self._log_transfer(
+                "transfer_failed",
+                level=logging.WARNING,
+                failure="invalid_destination" if plan.rejected else "no_destination",
+                rejected=",".join(plan.rejected) or None,
+                emergency=emergency,
+            )
+            self._log_fallback(emergency)
             return plan.refusal or "No transfer is possible. Offer a callback."
 
         settings = self._transfer_settings
         if settings.mode == "off":
             # A configuration problem, not a business rule: make it loud in the logs.
             logger.error("transfer requested but unavailable: %s", settings.problem)
-            self._call.transfer = {"targetName": plan.targets[0].name, "completed": False}
+            self._call.transfer = _transfer_record(plan.targets[0].name, False, "")
+            self._log_transfer(
+                "transfer_failed", level=logging.ERROR, failure="unavailable", emergency=emergency
+            )
+            self._log_fallback(emergency)
             return failure_message(
                 TransferFailure("unavailable"),
                 emergency=emergency,
@@ -885,6 +988,7 @@ class ReceptionistAgent(Agent):
                 can_retry=False,
             )
         if self._transfer_rounds >= MAX_TRANSFER_ROUNDS:
+            self._log_fallback(emergency)
             return failure_message(
                 TransferFailure("no_answer"),
                 emergency=emergency,
@@ -901,26 +1005,62 @@ class ReceptionistAgent(Agent):
         finally:
             self._active_transfer = None
         if outcome.connected:
-            self._call.transfer = {"targetName": target.name, "completed": True}
+            # Only a screened transfer heard the person say yes (or press 1). A REFER
+            # that LiveKit reports successful may still have reached a voicemail.
+            confirmed = outcome.mechanism == "warm"
+            self._call.transfer = _transfer_record(target.name, True, outcome.mechanism, confirmed)
             self._call.end_reason = "completed"
             self._closing = True
-            logger.info("transfer connected (%s, %s)", outcome.mechanism, target.name)
+            if confirmed:
+                logger.info("HUMAN ANSWER CONFIRMED (%s, %s)", outcome.mechanism, target.name)
+            else:
+                logger.info(
+                    "TRANSFER REQUEST ACCEPTED (%s, %s); human answer not confirmed",
+                    outcome.mechanism,
+                    target.name,
+                )
+            self._log_transfer(
+                "transfer_accepted",
+                mechanism=outcome.mechanism,
+                target=target.name,
+                attempt=attempts,
+                answer_confirmed=confirmed,
+                emergency=emergency,
+            )
+            if attempts > 1:
+                self._log_transfer(
+                    "transfer_fallback_completed", result="connected", attempts=attempts
+                )
             if outcome.mechanism != "blind":
                 # LiveKit's task has already installed the "either side left" hook.
                 self._stay_until_call_ends(watch_room=False)
             self._leave_call()
-            return "The caller is now connected to a person. Say nothing more."
+            if confirmed:
+                return "The caller is now connected to a person. Say nothing more."
+            return "The call has been handed to the team's phone line. Say nothing more."
 
         self._transferring = False
-        self._call.transfer = {"targetName": target.name, "completed": False}
+        self._call.transfer = _transfer_record(target.name, False, outcome.mechanism)
         failure = outcome.failure or TransferFailure("provider_error")
         logger.warning("transfer did not connect (%s)", _why(outcome))
+        if failure.kind != "caller_left":
+            self._log_fallback(emergency)
         return failure_message(
             failure,
             emergency=emergency,
             attempts=attempts,
             can_retry=self._transfer_rounds < MAX_TRANSFER_ROUNDS,
         )
+
+    def _log_fallback(self, emergency: bool) -> None:
+        """No line connected: the caller stays with the agent for a callback.
+
+        The owner's alert is sent by TradeCatch when the call report arrives with a
+        failed transfer (and, for an emergency, as an urgent call).
+        """
+        result = "urgent_callback" if emergency else "callback_offered"
+        self._log_transfer("transfer_fallback_started", next=result, emergency=emergency)
+        self._log_transfer("transfer_fallback_completed", result=result, emergency=emergency)
 
     async def _run_transfer(
         self,
@@ -929,7 +1069,7 @@ class ReceptionistAgent(Agent):
         settings: TransferSettings,
         emergency: bool,
     ) -> tuple[TransferOutcome, int, TransferTarget]:
-        """Try each line in the plan until a person accepts. Never raises."""
+        """Try each line in the plan until one connects. Never raises."""
         language = phrases.LANGUAGE_NAMES.get(self._call.language, self._call.language)
         started = time.monotonic()
         attempts = 0
@@ -938,19 +1078,22 @@ class ReceptionistAgent(Agent):
         try:
             # Hold the floor so nothing else is said while the person is being reached.
             async with context.foreground():
-                await self._say_hold_line(context, hold_line(language, emergency))
+                await self._say_hold_line(context, hold_line(self._call.language, emergency))
                 for candidate in plan.targets:
                     spent = time.monotonic() - started
                     if attempts and spent + settings.ring_seconds > settings.budget_seconds:
                         break
                     if attempts:
+                        self._log_transfer(
+                            "transfer_fallback_started", next=candidate.name, attempt=attempts + 1
+                        )
                         await asyncio.sleep(BETWEEN_ATTEMPTS_SECONDS)
                     target = candidate
                     attempts += 1
                     outcome = await self._attempt(target, settings, language, emergency)
                     if outcome.connected:
                         break
-                    logger.info("transfer attempt %d failed (%s)", attempts, _why(outcome))
+                    self._log_attempt_failure(outcome, target, attempts)
                     if outcome.failure is None or not outcome.failure.try_next:
                         break
         except asyncio.CancelledError:
@@ -959,6 +1102,22 @@ class ReceptionistAgent(Agent):
             logger.exception("transfer failed unexpectedly")
             outcome = TransferOutcome(False, TransferFailure("provider_error"))
         return outcome, attempts, target
+
+    def _log_attempt_failure(
+        self, outcome: TransferOutcome, target: TransferTarget, attempt: int
+    ) -> None:
+        failure = outcome.failure or TransferFailure("provider_error")
+        logger.info("transfer attempt %d failed (%s)", attempt, _why(outcome))
+        fields: dict[str, Any] = {
+            "failure": failure.kind,
+            "sip_status": failure.sip_status,
+            "mechanism": outcome.mechanism,
+            "target": target.name,
+            "attempt": attempt,
+        }
+        self._log_transfer("transfer_failed", level=logging.WARNING, **fields)
+        if failure.kind in ("no_answer", "timeout"):
+            self._log_transfer("transfer_timeout", level=logging.WARNING, **fields)
 
     async def _say_hold_line(self, context: RunContext, instructions: str) -> None:
         """Tell the caller to hold. A slow or failed announcement never blocks ringing."""
@@ -1054,6 +1213,22 @@ class ReceptionistAgent(Agent):
         await context.wait_for_playout()
         await self._hang_up()
         return "Call ended."
+
+
+def _transfer_record(
+    target_name: str, completed: bool, mechanism: str, answer_confirmed: bool = False
+) -> dict[str, Any]:
+    """What the call report says about the transfer.
+
+    `completed` means the call left the agent for a person's line; only
+    `answerConfirmed` means a person was heard accepting it.
+    """
+    return {
+        "targetName": target_name,
+        "completed": completed,
+        "answerConfirmed": bool(completed and answer_confirmed),
+        "mechanism": mechanism,
+    }
 
 
 def _why(outcome: TransferOutcome) -> str:
