@@ -52,6 +52,7 @@ from livekit.plugins import ai_coustics
 
 import phrases
 from call_record import CallRecord, FoundAppointment, is_e164
+from caller_policy import CallerPolicy, parse_caller_policy, say_exactly_instruction
 from language import LanguageChoice, LanguageMenu
 from policy import SilencePolicy
 from routing import (
@@ -1148,6 +1149,46 @@ def build_session(
     return AgentSession(llm=duplex, **options)
 
 
+class PolicyAgent(Agent):
+    """A caller the owner keeps away from the receptionist (or a withheld number).
+
+    Reads the owner's short message, or hands the call to the owner's approved line,
+    then ends the call. Nothing is reported: these calls are not leads.
+    """
+
+    def __init__(self, policy: CallerPolicy, sip_identity: str | None) -> None:
+        super().__init__(instructions=say_exactly_instruction(policy))
+        self._policy = policy
+        self._sip_identity = sip_identity
+
+    async def on_enter(self) -> None:
+        policy = self._policy
+        if policy.kind == "personal_transfer" and policy.transfer_e164 and self._sip_identity:
+            outcome = await refer_transfer(
+                identity=self._sip_identity,
+                number=policy.transfer_e164,
+                settings=transfer_settings(os.environ),
+            )
+            if outcome.connected:
+                logger.info("caller policy: handed to the owner's line")
+                return
+            logger.warning("caller policy: hand-off failed (%s)", _why(outcome))
+        if policy.messages:
+            handle = self.session.generate_reply(
+                instructions=say_exactly_instruction(policy), allow_interruptions=False
+            )
+            with contextlib.suppress(Exception):
+                await handle.wait_for_playout()
+        await _end_room()
+
+
+async def _end_room() -> None:
+    try:
+        await get_job_context().delete_room()
+    except Exception:
+        logger.exception("could not end the call")
+
+
 @server.rtc_session(agent_name="tradecatch-receptionist")
 async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect()
@@ -1157,14 +1198,32 @@ async def entrypoint(ctx: JobContext) -> None:
 
     number = dialed_number(participant.attributes)
     client = TradeCatchClient.from_env()
-    cfg = await client.fetch_business_config(number) if client and number else None
+    caller = caller_number(participant.attributes)
+    cfg = (
+        # "anonymous" tells TradeCatch the caller ID was withheld, so the owner's
+        # withheld-number policy applies; a real number is matched server-side.
+        await client.fetch_business_config(number, caller or "anonymous")
+        if client and number
+        else None
+    )
     if cfg is None:
         logger.error("no TradeCatch config for dialed number; using safe fallback")
+
+    policy = parse_caller_policy(cfg)
+    if policy is not None:
+        logger.info("caller policy applies: %s", policy.kind)
+        if policy.kind == "personal_end":
+            await _end_room()
+            return
+        options = {"user_away_timeout": 30.0}
+        session = build_session(cfg, ctx.proc.userdata.get("vad"), options)
+        await session.start(agent=PolicyAgent(policy, participant.identity), room=ctx.room)
+        return
 
     call = CallRecord(
         call_id=call_id_from_room(ctx.room.name, ctx.job.id),
         number=number or "",
-        from_e164=caller_number(participant.attributes),
+        from_e164=caller,
     )
     agent = ReceptionistAgent(
         cfg=cfg, call=call, client=client, sip_identity=participant.identity
