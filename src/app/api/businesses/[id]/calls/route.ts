@@ -1,3 +1,4 @@
+import { ownerVisibleCalls } from "@/product/receptionist/call-history";
 import { NextRequest, NextResponse } from "next/server";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { authorizeBusinessMemberOrAdmin, loadClientForOrg } from "../_shared";
@@ -22,10 +23,12 @@ export async function GET(request: NextRequest, { params }: Params) {
   );
   const q = request.nextUrl.searchParams.get("q")?.trim().toLowerCase();
   const runtime = getReceptionistRuntime();
-  let calls = await runtime.store.listSessions({
-    clientAccountId: client.id,
-    limit: 200,
-  });
+  let calls = ownerVisibleCalls(
+    await runtime.store.listSessions({
+      clientAccountId: client.id,
+      limit: 200,
+    }),
+  );
 
   if (q) {
     calls = calls.filter((c) => {
