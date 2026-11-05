@@ -15,15 +15,35 @@ export async function POST(request: NextRequest) {
     request,
     "availability",
     availabilitySchema,
-    async ({ config, body, runtime }) => ({
-      availability: await runtime.agentCalls.availability(config, {
-        callId: body.callId,
-        fromE164: body.from,
-        language: body.language,
-        preferredTime: body.preferredTime,
-        issue: body.issue,
-        serviceAddress: body.serviceAddress,
-      }),
-    }),
+    async ({ config, body, runtime }) => {
+      // Moving an appointment: only the caller who owns it gets times, for its own service.
+      let existing: {
+        serviceId?: string;
+        serviceAddress?: string;
+        serviceName: string;
+      } | null = null;
+      if (body.appointmentId) {
+        existing = await runtime.agentAppointments.forRescheduling(config, {
+          callerE164: body.from,
+          callerName: body.callerName,
+          appointmentId: body.appointmentId,
+        });
+        if (!existing)
+          return { availability: { ok: false, reason: "not_bookable" } };
+      }
+      return {
+        availability: await runtime.agentCalls.availability(config, {
+          callId: body.callId,
+          fromE164: body.from,
+          language: body.language,
+          preferredTime: body.preferredTime,
+          issue: existing ? existing.serviceName : body.issue,
+          serviceAddress: existing
+            ? existing.serviceAddress
+            : body.serviceAddress,
+          serviceId: existing?.serviceId,
+        }),
+      };
+    },
   );
 }
