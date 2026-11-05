@@ -1,3 +1,4 @@
+import { ownerVisibleCalls } from "@/product/receptionist/call-history";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { recordServerError } from "@/lib/api-error";
 import { requireTenantContext } from "@/product/saas/tenant";
@@ -48,10 +49,12 @@ export default async function AppReceptionistPage({
 
   const profile = await runtime.profileStore.getProfile(organization.id);
   const calls = client
-    ? await runtime.store.listSessions({
-        clientAccountId: client.id,
-        limit: 200,
-      })
+    ? ownerVisibleCalls(
+        await runtime.store.listSessions({
+          clientAccountId: client.id,
+          limit: 200,
+        }),
+      )
     : [];
   const answering = runtime.configs.some(
     (c) =>

@@ -31,6 +31,7 @@ import {
   renderPromptTemplate,
 } from "./system-prompt";
 import { applyVoicePlanLimits, type VoiceCapabilities } from "./plan-limits";
+import { callRoutingForProfile } from "@/product/telephony/ai-call-handling";
 import type {
   CallHandlingMode,
   ReceptionistConfig,
@@ -462,6 +463,11 @@ export function buildProfileConfig(
     phone.tradecatchNumberE164 ||
     profile.phoneNumberE164 ||
     client.smsFromNumber;
+  const routingPlan = callRoutingForProfile(phone, tradecatchNumber);
+  // Loop guard: with carrier forwarding, the contractor's phone forwards to
+  // TradeCatch, so no AI transfer, emergency bridge or backup may ring it.
+  const safeTarget = (target: string | undefined) =>
+    target && routingPlan.blockedTargets.includes(target) ? undefined : target;
 
   const businessHours = s.businessHours ?? client.businessHours;
   const systemPrompt = renderPromptTemplate(
@@ -492,9 +498,19 @@ export function buildProfileConfig(
     businessName,
     receptionistName: s.receptionistName,
     callHandlingMode: mode,
-    inboundStrategy: phone.inboundStrategy ?? "ai_first",
+    inboundStrategy: routingPlan.inboundStrategy,
     humanRingTimeoutSeconds: phone.humanRingTimeoutSeconds ?? 25,
     voiceEngine: phone.voiceEngine ?? "gather",
+    aiCallMode: phone.aiCallMode,
+    routingMethod: phone.routingMethod,
+    ringFirstE164: routingPlan.ringFirstE164,
+    callScreening: routingPlan.callScreening,
+    personalContacts: (phone.personalContacts ?? []).map((c) => c.e164),
+    personalCallPolicy: phone.personalCallPolicy ?? "message",
+    personalCallMessageFr: phone.personalCallMessage?.fr,
+    personalCallMessageEn: phone.personalCallMessage?.en,
+    personalCallTransferE164: safeTarget(phone.personalCallTransferE164),
+    unknownCallerPolicy: phone.unknownCallerPolicy ?? "ai",
     timezone: client.timezone,
     businessHours,
     languages,
@@ -523,7 +539,9 @@ export function buildProfileConfig(
       canTransfer,
     }),
     systemPrompt,
-    routing: (canTransfer ? (s.routing ?? []) : []).map((r, i) => ({
+    routing: (canTransfer ? (s.routing ?? []) : [])
+      .filter((r) => safeTarget(r.phoneE164))
+      .map((r, i) => ({
       id: slug(r.name, i),
       name: r.name,
       phoneE164: r.phoneE164,
@@ -537,13 +555,13 @@ export function buildProfileConfig(
       answerEn: f.answerEn,
     })),
     urgencyRubric: client.urgencyRubric,
-    emergencyTransferE164: emergency,
-    fallbackTransferE164: fallbackTransfer,
+    emergencyTransferE164: safeTarget(emergency),
+    fallbackTransferE164: safeTarget(fallbackTransfer),
     backupTransferE164:
       canTransfer &&
       transfer.secondaryTransferE164 &&
       transfer.secondaryTransferE164 !== fallbackTransfer
-        ? transfer.secondaryTransferE164
+        ? safeTarget(transfer.secondaryTransferE164)
         : undefined,
     transferHours: transfer.transferHours,
     transferTimeoutSeconds: transfer.timeoutSeconds,
@@ -593,6 +611,14 @@ export function validateProfile(
     [
       "phoneSettings.backupTransferE164",
       profile.settings.phoneSettings?.backupTransferE164,
+    ],
+    [
+      "phoneSettings.contractorPhoneE164",
+      profile.settings.phoneSettings?.contractorPhoneE164,
+    ],
+    [
+      "phoneSettings.personalCallTransferE164",
+      profile.settings.phoneSettings?.personalCallTransferE164,
     ],
     ...profile.settings.routing.map(
       (r, i) => [`routing.${i}.phoneE164`, r.phoneE164] as [string, string],

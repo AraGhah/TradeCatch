@@ -127,7 +127,9 @@ class TradeCatchClient:
 
     # -- endpoints ------------------------------------------------------
 
-    async def fetch_business_config(self, number: str) -> dict[str, Any] | None:
+    async def fetch_business_config(
+        self, number: str, caller: str | None = None
+    ) -> dict[str, Any] | None:
         """The business's config, or None. Without it the call gets the safe fallback
         prompt with no transfers and no booking, so a network error or a 5xx (a cold
         server, a slow database) is retried once. A 4xx is final: an unknown number
@@ -138,7 +140,9 @@ class TradeCatchClient:
                 "GET",
                 "/api/receptionist/agent-config",
                 timeout=timeout,
-                params={"number": number},
+                # The caller ID lets TradeCatch apply the owner's personal-contacts
+                # policy server-side; only the decision comes back, never the list.
+                params={"number": number, **({"from": caller} if caller else {})},
             )
             if answer is not None:
                 status, data = answer

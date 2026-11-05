@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { allows } from "@/product/security/permissions";
 import {
+  AI_CALL_HANDLING_KEYS,
   buildPhoneSettingsView,
   parsePhoneSettings,
   phoneSettingsSchema,
@@ -76,9 +77,20 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const runtime = getReceptionistRuntime();
   const existing = await runtime.profileStore.getProfile(id);
   const base = existing?.settings ?? defaultProfileSettings();
+  // AI Call Handling owns its own fields (mode, contacts, verification); a
+  // save from this form never clears them.
+  const previous = parsePhoneSettings(base.phoneSettings);
+  const phoneSettings = { ...parsed.data };
+  for (const key of AI_CALL_HANDLING_KEYS) {
+    (phoneSettings as Record<string, unknown>)[key] = previous[key];
+  }
+  if (previous.aiCallMode) {
+    // The saved mode decides the strategy; keep the two from disagreeing.
+    phoneSettings.inboundStrategy = previous.inboundStrategy;
+  }
   const nextSettings = {
     ...base,
-    phoneSettings: parsed.data,
+    phoneSettings,
     // Keep transfer numbers in sync with phone settings when provided.
     ...(parsed.data.humanTransferE164
       ? {

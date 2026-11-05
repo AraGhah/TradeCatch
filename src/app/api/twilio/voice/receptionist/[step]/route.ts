@@ -26,8 +26,18 @@ export const dynamic = "force-dynamic";
  * - A call comes in        → POST /api/twilio/voice/receptionist/incoming
  * - Call status changes    → POST /api/twilio/voice/receptionist/status
  * `gather`, `dial` and `voicemail` are TwiML action callbacks the engine emits.
+ * `screen` / `screen_result` run on the contractor's leg of a ring-first
+ * call (press 1 to take it), so a voicemail pick-up is never "answered".
  */
-const STEPS = new Set(["incoming", "gather", "dial", "voicemail", "status"]);
+const STEPS = new Set([
+  "incoming",
+  "gather",
+  "dial",
+  "voicemail",
+  "status",
+  "screen",
+  "screen_result",
+]);
 
 function xml(body: string) {
   return new NextResponse(body, {
@@ -192,6 +202,7 @@ async function handlePost(
           callSid,
           fromE164,
           toE164,
+          forwardedFromE164: form.ForwardedFrom,
         });
         const session = plan.sessionId
           ? await store.getSession(plan.sessionId)
@@ -214,7 +225,19 @@ async function handlePost(
               detail: `from=${fromE164} to=${toE164}`,
             });
           }
-          if (plan.verbs.some((v) => v.verb === "dial")) {
+          const policy = session?.routing?.callerPolicy;
+          if (policy) {
+            // The call never reaches the AI. The event names the policy only:
+            // which contact matched stays out of the event log.
+            await events.append({
+              organizationId: orgId,
+              clientAccountId: session!.clientAccountId,
+              callSid,
+              sessionId: session!.id,
+              kind: "routing_decision",
+              detail: `caller_policy:${policy}`,
+            });
+          } else if (plan.verbs.some((v) => v.verb === "dial")) {
             await events.append({
               organizationId: orgId,
               clientAccountId:
@@ -224,7 +247,9 @@ async function handlePost(
               callSid,
               sessionId: session?.id,
               kind: "human_ring",
-              detail: "inbound_strategy",
+              detail: session?.routing?.screened
+                ? "ring_first_screened"
+                : "inbound_strategy",
             });
           } else if (session) {
             await events.append({
@@ -233,7 +258,9 @@ async function handlePost(
               callSid,
               sessionId: session.id,
               kind: "ai_started",
-              detail: config?.voiceEngine || "gather",
+              detail: plan.verbs.some((v) => v.verb === "sip_handoff")
+                ? "livekit_handoff"
+                : config?.voiceEngine || "gather",
             });
           }
         } catch (err) {
@@ -249,7 +276,7 @@ async function handlePost(
         if (
           config?.voiceEngine === "conversation_relay" &&
           plan.sessionId &&
-          !plan.verbs.some((v) => v.verb === "dial")
+          plan.verbs.some((v) => v.verb === "gather")
         ) {
           const base = (
             process.env.MISSED_CALL_PUBLIC_WEBHOOK_BASE?.trim() ||
@@ -294,6 +321,22 @@ async function handlePost(
             dialStatus: form.DialCallStatus ?? "failed",
             durationSeconds: num(form.DialCallDuration),
             callSid: form.CallSid,
+            callStatus: form.CallStatus,
+          }),
+        );
+
+      case "screen":
+      case "screen_result":
+        // Runs on the contractor's leg: its CallSid is the child leg, so the
+        // session is matched on the caller's ParentCallSid when Twilio sends it.
+        if (!sessionId)
+          return render({ sessionId: null, verbs: [{ verb: "hangup" }] });
+        return render(
+          await engine.handleScreen({
+            sessionId,
+            phase: step === "screen" ? "prompt" : "result",
+            digits: form.Digits,
+            parentCallSid: form.ParentCallSid || undefined,
           }),
         );
 

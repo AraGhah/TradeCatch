@@ -3280,7 +3280,8 @@
       "voiceEngine": "Moteur vocal",
       "engine": {
         "gather": "Gather (TwiML, prêt pour Twilio)",
-        "conversation_relay": "ConversationRelay (WebSocket — Durable Objects requis en prod)"
+        "conversation_relay": "ConversationRelay (WebSocket — Durable Objects requis en prod)",
+        "livekit": "Agent LiveKit (transfert SIP depuis le webhook)"
       },
       "engineHelp": "Gather fonctionne dès maintenant avec les webhooks Twilio. ConversationRelay est branché côté TwiML ; le WebSocket de production nécessite Durable Objects.",
       "transferTitle": "Transferts humains",
@@ -3293,7 +3294,8 @@
       "save": "Enregistrer",
       "saving": "Enregistrement…",
       "saved": "Paramètres téléphone enregistrés.",
-      "error": "Impossible d’enregistrer."
+      "error": "Impossible d’enregistrer.",
+      "strategyManaged": "La stratégie d'appel suit votre mode de gestion des appels ci-dessus."
     },
     "livePhoneTesting": {
       "headline": "Test téléphonique live",
@@ -3489,6 +3491,162 @@
         "consent_revoked": "Le consentement pour cette voix a été retiré. Enregistrez un nouvel échantillon pour utiliser une voix personnalisée.",
         "provider_error": "Notre fournisseur de voix n'a pas répondu. Vos appels continuent d'utiliser leur voix actuelle. Veuillez réessayer dans quelques minutes.",
         "forbidden": "Seul un propriétaire ou un administrateur peut modifier la voix de la réceptionniste."
+      }
+    },
+    "aiCallHandling": {
+      "title": "Gestion des appels",
+      "intro": "Choisissez quand votre réceptionniste répond. Le réglage n'est actif qu'après un appel test réussi.",
+      "recommended": "Recommandé",
+      "modeLegend": "Quand votre réceptionniste doit-elle répondre?",
+      "modes": {
+        "missed_calls_only": {
+          "name": "Appels manqués seulement",
+          "description": "Votre téléphone sonne normalement. Si vous ne pouvez pas répondre, votre réceptionniste prend le relais pour que vous ne manquiez aucun client potentiel."
+        },
+        "ai_answers_all": {
+          "name": "L'IA répond à tous les appels",
+          "description": "Votre réceptionniste répond immédiatement aux appels de l'entreprise, traite les demandes des clients et transfère les appels importants au besoin."
+        }
+      },
+      "switchBack": "Vous pouvez passer d'un mode à l'autre en tout temps. Après un changement, faites un nouvel appel test pour le confirmer.",
+      "state": {
+        "active": "Actif : {mode}",
+        "requested": "Demandé : {mode} — pas encore actif"
+      },
+      "status": {
+        "unsupported_plan": "Votre forfait n'inclut pas la réceptionniste téléphonique.",
+        "disabled": "La réceptionniste est en pause et ne répond à aucun appel.",
+        "not_configured": "Votre numéro TradeCatch n'est pas encore branché.",
+        "setup_required": "La configuration n'est pas terminée. Réglez les points ci-dessous.",
+        "awaiting_test_call": "Configuré. Faites un appel test pour confirmer que les clients obtiennent bien ce mode.",
+        "verified": "Vérifié par un appel test."
+      },
+      "effective": {
+        "missed_calls_only": "En ce moment, les clients obtiennent : votre téléphone sonne d'abord.",
+        "ai_answers_all": "En ce moment, les clients obtiennent : la réceptionniste répond immédiatement.",
+        "off": "En ce moment, les clients obtiennent : aucune réponse de la réceptionniste.",
+        "unknown": "En ce moment, les clients obtiennent : ce que votre fournisseur renvoie. TradeCatch ne voit pas les appels que votre fournisseur n'envoie pas."
+      },
+      "legacyNote": "Ce mode vient de vos réglages précédents. Enregistrez pour le confirmer.",
+      "issues": {
+        "plan_has_no_voice": "Passez au forfait Réceptionniste pour faire répondre vos appels.",
+        "receptionist_paused": "Réactivez la réceptionniste dans les réglages téléphoniques.",
+        "no_tradecatch_number": "Aucun numéro TradeCatch n'est encore attribué.",
+        "not_activated": "Votre ligne de réceptionniste n'est pas encore activée.",
+        "missing_contractor_phone": "Ajoutez le téléphone qui doit sonner en premier. D'ici là, la réceptionniste répond à tous les appels.",
+        "contractor_phone_is_tradecatch_number": "Le téléphone qui sonne en premier ne peut pas être votre numéro TradeCatch.",
+        "number_routed_to_sip_trunk": "Votre numéro TradeCatch va directement à la réceptionniste : votre téléphone ne peut pas sonner en premier. Notre équipe doit modifier l'acheminement du numéro.",
+        "number_not_routed_to_tradecatch": "Votre numéro TradeCatch n'envoie pas les appels à TradeCatch.",
+        "livekit_handoff_not_configured": "La voix avancée n'est pas branchée pour cet acheminement; la voix standard répond à la place.",
+        "missing_forwarding_phone": "Ajoutez le numéro d'entreprise que votre fournisseur renvoie.",
+        "carrier_forwarding_unverifiable": "Avec le renvoi d'appels, c'est votre fournisseur qui décide quels appels arrivent chez TradeCatch. Modifier ce réglage ne change pas le renvoi chez votre fournisseur.",
+        "transfer_target_is_forwarding_phone": "Un numéro de transfert est le téléphone qui renvoie vers TradeCatch. Il est ignoré, sinon l'appel tournerait en boucle.",
+        "no_test_call_yet": "Aucun appel test n'a encore confirmé cette configuration.",
+        "test_call_took_other_path": "Le dernier appel test n'a pas suivi le parcours prévu."
+      },
+      "numbers": {
+        "tradecatch": "Numéro TradeCatch",
+        "contractor": "Votre téléphone",
+        "none": "non défini"
+      },
+      "routingLegend": "Comment les clients vous joignent-ils?",
+      "routing": {
+        "tradecatch_number": {
+          "name": "Les clients appellent mon numéro TradeCatch",
+          "description": "TradeCatch fait d'abord sonner votre téléphone (Appels manqués seulement) ou répond tout de suite."
+        },
+        "carrier_forwarding": {
+          "name": "Mon fournisseur renvoie mon numéro d'entreprise",
+          "description": "Les clients appellent votre numéro habituel. Votre fournisseur renvoie les appels vers TradeCatch à l'aide des codes ci-dessous."
+        }
+      },
+      "fields": {
+        "contractorPhone": "Téléphone qui sonne en premier",
+        "contractorPhoneHelp": "Votre cellulaire ou votre ligne de bureau. Il ne doit pas renvoyer vers TradeCatch.",
+        "businessPhone": "Numéro d'entreprise renvoyé par votre fournisseur",
+        "businessPhoneHelp": "Le numéro que vos clients appellent déjà. TradeCatch ne le rappelle jamais.",
+        "ringTimeout": "Durée de sonnerie (secondes)",
+        "ringTimeoutHelp": "Gardez-la plus courte que le délai de votre boîte vocale, souvent 15 à 20 secondes."
+      },
+      "forwarding": {
+        "title": "Configurez le renvoi sur votre téléphone",
+        "honest": "Composez ces codes depuis votre téléphone d'entreprise. TradeCatch ne peut pas modifier le renvoi chez votre fournisseur à votre place.",
+        "noAnswer": "Sans réponse",
+        "busy": "Occupé ou refusé",
+        "unreachable": "Éteint ou injoignable",
+        "all": "Tous les appels",
+        "cancel": "Annuler tous les renvois",
+        "carriersVary": "Les codes varient selon le fournisseur et le forfait. Si un code ne fonctionne pas, demandez le renvoi d'appels conditionnel à votre fournisseur."
+      },
+      "contacts": {
+        "legend": "Contacts personnels",
+        "help": "Les appels de ces numéros n'arrivent jamais à votre réceptionniste. La liste reste sur les serveurs de TradeCatch et n'est jamais montrée à la réceptionniste.",
+        "countOnly": "{count, plural, =0 {Aucun contact personnel} one {# contact personnel} other {# contacts personnels}}. Seul un propriétaire ou un administrateur peut voir la liste.",
+        "number": "Numéro de téléphone",
+        "label": "Nom (facultatif)",
+        "add": "Ajouter un contact",
+        "remove": "Retirer",
+        "policy": "Quand ils appellent",
+        "policies": {
+          "message": "Faire jouer un court message, puis terminer l'appel",
+          "transfer": "Faire sonner un autre téléphone de mon choix",
+          "end": "Terminer l'appel"
+        },
+        "messageFr": "Message en français",
+        "messageEn": "Message en anglais",
+        "messagePlaceholder": "Laissez vide pour le message par défaut.",
+        "transferTo": "Téléphone à faire sonner",
+        "transferHelp": "Ne doit pas être votre numéro TradeCatch ni un téléphone qui renvoie vers lui.",
+        "unknownPolicy": "Quand l'appelant masque son numéro",
+        "unknownPolicies": {
+          "ai": "Répondre normalement",
+          "message": "Lui demander de rappeler en affichant son numéro"
+        },
+        "spoofNote": "L'afficheur peut être falsifié : cette liste ne fait que limiter ce qu'un appel peut faire. Elle ne donne jamais accès à quoi que ce soit."
+      },
+      "test": {
+        "title": "Appel test",
+        "how": {
+          "missed_calls_only": "Appuyez sur Démarrer, puis appelez votre numéro TradeCatch depuis un autre téléphone. Laissez sonner votre téléphone sans répondre : la réceptionniste devrait prendre l'appel. Appuyez ensuite sur Vérifier.",
+          "ai_answers_all": "Appuyez sur Démarrer, puis appelez votre numéro TradeCatch depuis un autre téléphone. La réceptionniste devrait répondre tout de suite. Appuyez ensuite sur Vérifier.",
+          "forwarding": "Appuyez sur Démarrer, puis appelez votre numéro d'entreprise depuis un autre téléphone sans y répondre. Si le renvoi fonctionne, l'appel arrive chez TradeCatch. Appuyez ensuite sur Vérifier."
+        },
+        "start": "Démarrer l'appel test",
+        "starting": "Démarrage…",
+        "check": "Vérifier l'appel test",
+        "checking": "Vérification…",
+        "number": "Vérifier l'acheminement du numéro",
+        "result": {
+          "not_started": "Appuyez sur Démarrer avant de faire l'appel test.",
+          "waiting": "En attente de votre appel test. Appelez maintenant, puis appuyez sur Vérifier.",
+          "expired": "Aucun appel n'est arrivé en 15 minutes. Démarrez un nouveau test.",
+          "verified": "Appel test reçu. Ce mode est maintenant vérifié.",
+          "other_path": "Un appel est arrivé, mais il a suivi un autre parcours : {path}."
+        },
+        "noRealCalls": "TradeCatch ne fait jamais d'appel pendant un test. Seul l'appel que vous faites compte."
+      },
+      "paths": {
+        "rang_contractor_first": "votre téléphone a sonné en premier",
+        "ai_answered_webhook": "la réceptionniste a répondu tout de suite",
+        "ai_answered_livekit_direct": "la réceptionniste a répondu tout de suite",
+        "forwarded_by_carrier": "renvoyé par votre fournisseur"
+      },
+      "numberRouting": {
+        "webhook": "Vérification : les appels passent d'abord par TradeCatch.",
+        "sip_trunk": "Vérification : les appels vont directement à la réceptionniste.",
+        "elsewhere": "Vérification : les appels ne vont pas à TradeCatch.",
+        "unknown": "Vérification : l'acheminement n'a pas pu être lu."
+      },
+      "save": "Enregistrer",
+      "saving": "Enregistrement…",
+      "saved": "Gestion des appels enregistrée. Faites un appel test pour la confirmer.",
+      "readOnly": "Seul un propriétaire ou un administrateur peut modifier la gestion des appels.",
+      "errors": {
+        "generic": "Impossible d'enregistrer. Réessayez.",
+        "invalid": "Certains numéros ne sont pas valides. Vérifiez les champs signalés.",
+        "plan": "Votre forfait n'inclut pas la réceptionniste téléphonique.",
+        "forbidden": "Seul un propriétaire ou un administrateur peut modifier la gestion des appels.",
+        "notLinked": "Votre ligne téléphonique n'est pas encore reliée. Contactez le soutien."
       }
     }
   },

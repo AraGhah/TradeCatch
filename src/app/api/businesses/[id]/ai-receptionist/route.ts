@@ -1,3 +1,4 @@
+import { ownerVisibleCalls } from "@/product/receptionist/call-history";
 import { NextRequest, NextResponse } from "next/server";
 import { recordServerError } from "@/lib/api-error";
 import {
@@ -28,10 +29,12 @@ export async function GET(request: NextRequest, { params }: Params) {
   const profile = await runtime.profileStore.getProfile(id);
   const client = await loadClientForOrg(access.organization);
   const calls = client
-    ? await runtime.store.listSessions({
-        clientAccountId: client.id,
-        limit: 200,
-      })
+    ? ownerVisibleCalls(
+        await runtime.store.listSessions({
+          clientAccountId: client.id,
+          limit: 200,
+        }),
+      )
     : [];
   const answering = runtime.configs.some(
     (c) => c.id === `rc_org_${id}` || c.clientAccountId === client?.id,

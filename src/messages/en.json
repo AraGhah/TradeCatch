@@ -3264,7 +3264,8 @@
       "voiceEngine": "Voice engine",
       "engine": {
         "gather": "Gather (TwiML, Twilio-ready)",
-        "conversation_relay": "ConversationRelay (WebSocket — Durable Objects required in prod)"
+        "conversation_relay": "ConversationRelay (WebSocket — Durable Objects required in prod)",
+        "livekit": "LiveKit agent (SIP hand-off from the webhook)"
       },
       "engineHelp": "Gather works now with Twilio webhooks. ConversationRelay TwiML is wired; production WebSockets need Durable Objects.",
       "transferTitle": "Human transfers",
@@ -3277,7 +3278,8 @@
       "save": "Save",
       "saving": "Saving…",
       "saved": "Phone settings saved.",
-      "error": "Could not save."
+      "error": "Could not save.",
+      "strategyManaged": "Inbound strategy follows your AI Call Handling mode above."
     },
     "livePhoneTesting": {
       "headline": "Live phone testing",
@@ -3473,6 +3475,162 @@
         "consent_revoked": "Consent for this voice was withdrawn. Record a new sample to use a custom voice.",
         "provider_error": "Our voice provider didn't respond. Your calls keep using their current voice. Please try again in a few minutes.",
         "forbidden": "Only an owner or administrator can change the receptionist voice."
+      }
+    },
+    "aiCallHandling": {
+      "title": "AI Call Handling",
+      "intro": "Choose when your receptionist picks up. Your setting is only active once a test call proves it.",
+      "recommended": "Recommended",
+      "modeLegend": "When should your receptionist answer?",
+      "modes": {
+        "missed_calls_only": {
+          "name": "Missed Calls Only",
+          "description": "Your phone rings normally. If you can't answer, your receptionist takes over so you don't miss potential customers."
+        },
+        "ai_answers_all": {
+          "name": "AI Answers All Calls",
+          "description": "Your receptionist answers incoming business calls immediately, handles customer requests, and transfers important calls when needed."
+        }
+      },
+      "switchBack": "You can switch between the two modes at any time. After a change, place a new test call to confirm it.",
+      "state": {
+        "active": "Active: {mode}",
+        "requested": "Requested: {mode} — not active yet"
+      },
+      "status": {
+        "unsupported_plan": "Your plan does not include the phone receptionist.",
+        "disabled": "The receptionist is paused, so it answers no calls.",
+        "not_configured": "Your TradeCatch number is not connected yet.",
+        "setup_required": "Setup is not finished. Fix the items below.",
+        "awaiting_test_call": "Configured. Place a test call to confirm callers really get this mode.",
+        "verified": "Verified by a test call."
+      },
+      "effective": {
+        "missed_calls_only": "Right now callers get: your phone rings first.",
+        "ai_answers_all": "Right now callers get: the receptionist answers immediately.",
+        "off": "Right now callers get: no answer from the receptionist.",
+        "unknown": "Right now callers get: whatever your carrier forwards. TradeCatch cannot see calls your carrier does not send."
+      },
+      "legacyNote": "This mode comes from your earlier settings. Save to confirm it.",
+      "issues": {
+        "plan_has_no_voice": "Upgrade to Receptionist to have calls answered.",
+        "receptionist_paused": "Turn the receptionist back on in phone settings.",
+        "no_tradecatch_number": "No TradeCatch number is assigned yet.",
+        "not_activated": "Your receptionist line has not been activated yet.",
+        "missing_contractor_phone": "Add the phone that should ring first. Until then, the receptionist answers every call.",
+        "contractor_phone_is_tradecatch_number": "The phone that rings first cannot be your TradeCatch number.",
+        "number_routed_to_sip_trunk": "Your TradeCatch number goes straight to the receptionist, so your phone cannot ring first. Our team needs to switch the number's routing.",
+        "number_not_routed_to_tradecatch": "Your TradeCatch number is not sending calls to TradeCatch.",
+        "livekit_handoff_not_configured": "The advanced voice is not connected for this routing; the standard voice answers instead.",
+        "missing_forwarding_phone": "Add the business number your carrier forwards from.",
+        "carrier_forwarding_unverifiable": "With carrier forwarding, your carrier decides which calls reach TradeCatch. Changing this setting does not change your carrier's forwarding.",
+        "transfer_target_is_forwarding_phone": "A transfer number is the phone that forwards to TradeCatch. It is skipped, because the call would loop back.",
+        "no_test_call_yet": "No test call has confirmed this setup yet.",
+        "test_call_took_other_path": "The last test call did not take the expected route."
+      },
+      "numbers": {
+        "tradecatch": "TradeCatch number",
+        "contractor": "Your phone",
+        "none": "not set"
+      },
+      "routingLegend": "How do callers reach you?",
+      "routing": {
+        "tradecatch_number": {
+          "name": "Customers call my TradeCatch number",
+          "description": "TradeCatch rings your phone first (Missed Calls Only) or answers right away."
+        },
+        "carrier_forwarding": {
+          "name": "My carrier forwards my business number",
+          "description": "Customers call your usual number. Your carrier forwards calls to TradeCatch, using the codes below."
+        }
+      },
+      "fields": {
+        "contractorPhone": "Phone that rings first",
+        "contractorPhoneHelp": "Your cell or office line. It must not forward to TradeCatch.",
+        "businessPhone": "Business number your carrier forwards",
+        "businessPhoneHelp": "The number customers already call. TradeCatch never rings it back.",
+        "ringTimeout": "Ring for (seconds)",
+        "ringTimeoutHelp": "Keep it shorter than your voicemail pick-up, usually 15–20 seconds."
+      },
+      "forwarding": {
+        "title": "Set up forwarding on your phone",
+        "honest": "Dial these codes from your business phone. TradeCatch cannot change your carrier's forwarding for you.",
+        "noAnswer": "No answer",
+        "busy": "Busy or declined",
+        "unreachable": "Off or unreachable",
+        "all": "All calls",
+        "cancel": "Cancel all forwarding",
+        "carriersVary": "Codes differ between carriers and plans. If a code fails, ask your carrier for conditional call forwarding."
+      },
+      "contacts": {
+        "legend": "Personal contacts",
+        "help": "Calls from these numbers never reach your receptionist. The list stays on TradeCatch's servers and is never shown to the receptionist.",
+        "countOnly": "{count, plural, =0 {No personal contacts} one {# personal contact} other {# personal contacts}}. Only an owner or admin can see the list.",
+        "number": "Phone number",
+        "label": "Name (optional)",
+        "add": "Add a contact",
+        "remove": "Remove",
+        "policy": "When they call",
+        "policies": {
+          "message": "Play a short message, then end the call",
+          "transfer": "Ring another phone I choose",
+          "end": "End the call"
+        },
+        "messageFr": "Message in French",
+        "messageEn": "Message in English",
+        "messagePlaceholder": "Leave empty for the default message.",
+        "transferTo": "Phone to ring",
+        "transferHelp": "Must not be your TradeCatch number or a phone that forwards to it.",
+        "unknownPolicy": "When the caller hides their number",
+        "unknownPolicies": {
+          "ai": "Answer normally",
+          "message": "Ask them to call back with their number shown"
+        },
+        "spoofNote": "Caller ID can be faked, so this list only limits what a call can do. It never gives anyone access."
+      },
+      "test": {
+        "title": "Test call",
+        "how": {
+          "missed_calls_only": "Press Start, then call your TradeCatch number from another phone. Let your own phone ring without answering: the receptionist should pick up. Then press Check.",
+          "ai_answers_all": "Press Start, then call your TradeCatch number from another phone. The receptionist should answer right away. Then press Check.",
+          "forwarding": "Press Start, then call your business number from another phone and do not answer it. If forwarding works, the call reaches TradeCatch. Then press Check."
+        },
+        "start": "Start test call",
+        "starting": "Starting…",
+        "check": "Check test call",
+        "checking": "Checking…",
+        "number": "Check number routing",
+        "result": {
+          "not_started": "Press Start before placing the test call.",
+          "waiting": "Waiting for your test call. Call now, then press Check.",
+          "expired": "No call arrived within 15 minutes. Start a new test.",
+          "verified": "Test call received. This mode is now verified.",
+          "other_path": "A call arrived, but it took another route: {path}."
+        },
+        "noRealCalls": "TradeCatch never places calls during a test. Only the call you make counts."
+      },
+      "paths": {
+        "rang_contractor_first": "your phone rang first",
+        "ai_answered_webhook": "the receptionist answered right away",
+        "ai_answered_livekit_direct": "the receptionist answered right away",
+        "forwarded_by_carrier": "forwarded by your carrier"
+      },
+      "numberRouting": {
+        "webhook": "Number check: calls go to TradeCatch first.",
+        "sip_trunk": "Number check: calls go straight to the receptionist.",
+        "elsewhere": "Number check: calls do not go to TradeCatch.",
+        "unknown": "Number check: routing could not be read."
+      },
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Call handling saved. Place a test call to confirm it.",
+      "readOnly": "Only an owner or admin can change call handling.",
+      "errors": {
+        "generic": "Could not save. Try again.",
+        "invalid": "Some numbers are not valid. Check the highlighted fields.",
+        "plan": "Your plan does not include the phone receptionist.",
+        "forbidden": "Only an owner or admin can change call handling.",
+        "notLinked": "Your phone line is not linked yet. Contact support."
       }
     }
   },
