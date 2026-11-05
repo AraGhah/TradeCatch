@@ -81,6 +81,8 @@ export type AgentConfig = {
   timezone: string;
   /** True when the owner turned on phone booking; the server still decides each request. */
   bookingEnabled: boolean;
+  /** True when the business has an SMS number, so the agent may text the caller on request. */
+  callerTexts: boolean;
   afterHours: boolean;
   /** Owner setting: when normal transfers may ring. */
   transferHours: "always" | "business_hours";
@@ -111,6 +113,54 @@ const PACE: Record<SpeakingSpeed, string> = {
   fast: "a brisk but clear pace (about 165 words a minute)",
 };
 
+const MAX_FACTS_CHARS = 5_000;
+const MAX_FAQS = 20;
+const MAX_FAQ_CHARS = 400;
+
+/** Collapse whitespace, drop heading marks and cap a value, so an owner field cannot open its own prompt section. */
+function oneLine(text: string, max: number): string {
+  return text.replace(/\s+/g, " ").trim().replace(/^#+\s*/, "").slice(0, max);
+}
+
+/**
+ * The owner's approved facts and FAQ answers. The model may only answer policy
+ * questions (insurance, licences, warranties, payment, recording...) from these
+ * or the business information; without them it says the team will confirm.
+ */
+export function approvedFactsSection(
+  facts: string | undefined,
+  faqs: { question?: string; answerFr: string; answerEn: string }[] = [],
+): string[] {
+  const factLines = (facts ?? "")
+    .split("\n")
+    .map((line) => oneLine(line, MAX_FACTS_CHARS))
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, MAX_FACTS_CHARS);
+  const answers = faqs
+    .slice(0, MAX_FAQS)
+    .map((f) => {
+      const question = f.question?.trim() ? oneLine(f.question, MAX_FAQ_CHARS) : "";
+      const fr = oneLine(f.answerFr ?? "", MAX_FAQ_CHARS);
+      const en = oneLine(f.answerEn ?? "", MAX_FAQ_CHARS);
+      if (!fr && !en) return "";
+      return `* ${question ? `${question} — ` : ""}FR: ${fr || en} / EN: ${en || fr}`;
+    })
+    .filter(Boolean);
+  if (!factLines && answers.length === 0) return [];
+  const section = [
+    "# APPROVED FACTS AND ANSWERS (verified by the business; you may share these)",
+    "",
+  ];
+  if (factLines) section.push(factLines);
+  if (answers.length > 0) {
+    if (factLines) section.push("");
+    section.push("Approved answers to common questions:", ...answers);
+  }
+  section.push("");
+  return section;
+}
+
 /** Added after the business prompt so it never promises tools the agent lacks. */
 export function voiceAgentContext(input: {
   afterHours: boolean;
@@ -118,12 +168,19 @@ export function voiceAgentContext(input: {
   canTransferEmergency: boolean;
   departments: string[];
   bookingEnabled?: boolean;
+  /** The business has an SMS number: the agent may text the caller on request. */
+  callerTexts?: boolean;
   pricingInfo?: string;
   speakingSpeed?: SpeakingSpeed;
   /** The voice is a clone of the owner's: be honest that the caller is talking to a virtual receptionist. */
   customVoice?: boolean;
+  /** Owner-approved facts and business rules (insurance, licences, payment, policies...). */
+  businessFacts?: string;
+  /** Owner-approved answers to common questions. */
+  faqs?: { question?: string; answerFr: string; answerEn: string }[];
 }): string {
   const lines = [
+    ...approvedFactsSection(input.businessFacts, input.faqs),
     "# THIS CALL — WHAT YOU CAN ACTUALLY DO (overrides anything above that says otherwise)",
     "",
     `The office is currently ${input.afterHours ? "CLOSED (after hours)" : "OPEN"}.`,
@@ -131,12 +188,19 @@ export function voiceAgentContext(input: {
     "",
     "Your tools: record_details, set_language, end_call" +
       (input.canTransfer || input.canTransferEmergency ? ", transfer_call" : "") +
-      (input.bookingEnabled ? ", check_availability, book_appointment" : "") +
-      ". You have nothing else: no messaging, email or notification system.",
+      (input.bookingEnabled
+        ? ", check_availability, book_appointment, find_appointment, move_appointment, cancel_appointment"
+        : "") +
+      (input.callerTexts ? ", text_caller" : "") +
+      (input.callerTexts
+        ? ". You have nothing else: no email or other notification system."
+        : ". You have nothing else: no messaging, email or notification system."),
     "* record_details: call it quietly, without mentioning it, as soon as you learn the caller's name, callback number, address or city, the service, the project, the preferred time or an email, and again whenever they correct something. What you record is delivered to the team when the call ends.",
-    "* set_language: call it only when the caller clearly asks to continue in the other language. Switch at once, without comment, and carry on with the question you were on.",
-    "* end_call: call it after you have said goodbye, to hang up. Never hang up while something is still in progress.",
-    "* You cannot text or email the caller. Never offer a confirmation text or email.",
+    "* set_language: call it when the caller asks for the other language, or clearly talks to you in full sentences of it (an accent, a borrowed word or a name is not enough). Switch at once, without comment, and carry on with the question you were on.",
+    "* end_call: call it after you have said goodbye, to hang up: when the request is handled, after a wrong number, or when insults continue after one calm warning. Never hang up while something is still in progress.",
+    input.callerTexts
+      ? "* text_caller: only when the caller asks for something by text. It texts the number they are calling from with the business's details or one of their appointments, in words the system writes. Say it was sent only when it returns SENT. You cannot email the caller."
+      : "* You cannot text or email the caller. Never offer a confirmation text or email.",
     "* Never say you have sent, submitted or scheduled anything yourself. Say you have noted the details and the team will follow up; do not give a callback time.",
   ];
   if (input.customVoice) {
@@ -149,6 +213,8 @@ export function voiceAgentContext(input: {
       "* To book: call check_availability, read out ONLY the times it returns, then call book_appointment with the time the caller chose. Say the appointment is booked ONLY when book_appointment returns status confirmed.",
       "* If book_appointment says the time was taken, offer the alternatives it returns. If booking fails or is unavailable, say so honestly and offer to pass the request to the team, who will confirm a time.",
       "* Never invent or guess an opening. If there are none, offer a callback.",
+      "* Existing appointments (when is it, move it, cancel it, where is the technician): call find_appointment with the name it is under. It only finds appointments booked under the number the caller is calling from; never reveal anything it did not return. To move one: check_availability with existing_appointment, then move_appointment. To cancel: repeat which one, get a clear yes, then cancel_appointment. Say moved or canceled ONLY when the tool says MOVED or CANCELED.",
+      "* There is no live technician tracking: never give an arrival estimate. A late technician: apologize, record a message for the team that the caller is waiting, and offer a transfer if available.",
     );
   } else {
     lines.push(
@@ -231,6 +297,7 @@ export function buildAgentConfig(
     phoneE164: r.phoneE164,
   }));
   const bookingEnabled = config.phoneBooking === true;
+  const callerTexts = Boolean(config.smsFromE164);
   const speakingSpeed = config.speakingSpeed ?? "normal";
 
   const base =
@@ -251,9 +318,12 @@ export function buildAgentConfig(
       canTransferEmergency: emergency !== null,
       departments: departments.map((d) => d.name),
       bookingEnabled,
+      callerTexts,
       pricingInfo: config.pricingInfo,
       speakingSpeed,
       customVoice: voice.mode === "custom",
+      businessFacts: config.businessFacts,
+      faqs: config.faqs,
     })}`,
     greetings: {
       fr: config.greetingFr,
@@ -275,6 +345,7 @@ export function buildAgentConfig(
     speakingSpeed,
     timezone: config.timezone,
     bookingEnabled,
+    callerTexts,
     afterHours,
     transferHours,
     transferE164: general,

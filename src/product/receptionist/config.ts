@@ -86,6 +86,9 @@ export const receptionistConfigSchema = z.object({
   services: z.array(z.string().trim().min(1).max(80)).max(40).default([]),
   serviceAreas: z.array(z.string().trim().min(1).max(80)).max(40).default([]),
   pricingInfo: z.string().trim().max(500).optional(),
+  /** The business's public address and phone, as callers should receive them by text. */
+  businessAddress: z.string().trim().max(200).optional(),
+  businessPhone: z.string().trim().max(40).optional(),
   systemPrompt: z.string().max(40_000).optional(),
   routing: z
     .array(
@@ -148,13 +151,16 @@ export function defaultGreetings(
   businessName: string,
   receptionistName?: string,
 ) {
-  const identityFr = receptionistName ? ` Ici ${receptionistName}, à la réception.` : "";
-  const identityEn = receptionistName
-    ? ` This is ${receptionistName} at the front desk.`
-    : "";
+  // "Bonjour! Merci d'avoir appelé Plomberie Nord, Sophia à l'appareil."
+  const greetingFr = receptionistName
+    ? `Bonjour! Merci d'avoir appelé ${businessName}, ${receptionistName} à l'appareil.`
+    : `Bonjour! Merci d'avoir appelé ${businessName}.`;
+  const greetingEn = receptionistName
+    ? `Hi! Thanks for calling ${businessName}, this is ${receptionistName}.`
+    : `Thanks for calling ${businessName}!`;
   return {
-    greetingFr: `Bonjour! Merci d'avoir appelé ${businessName}.${identityFr}`,
-    greetingEn: `Thanks for calling ${businessName}!${identityEn}`,
+    greetingFr,
+    greetingEn,
     afterHoursMessageFr: `Nos bureaux sont présentement fermés, mais je peux prendre votre demande et l'équipe vous rappellera dès l'ouverture.`,
     afterHoursMessageEn: `Our office is currently closed, but I can take your request and the team will call you back when we open.`,
   };

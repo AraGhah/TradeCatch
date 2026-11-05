@@ -226,6 +226,8 @@ export function createAgentCallService(deps: AgentCallDeps) {
         preferredTime?: string;
         issue?: string;
         serviceAddress?: string;
+        /** Keep this service (moving an existing appointment) instead of guessing from the issue. */
+        serviceId?: string;
       },
     ): Promise<AgentAvailability> {
       if (!bookingEnabled(config)) return { ok: false, reason: "booking_disabled" };
@@ -251,6 +253,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
         );
 
       let opened = await ask({
+        serviceId: input.serviceId,
         from: day && day.from > now ? day.from : now,
         until: day?.until,
       });

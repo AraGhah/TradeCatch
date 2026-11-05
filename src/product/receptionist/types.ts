@@ -110,6 +110,10 @@ export type ReceptionistConfig = {
    * calls from $89"). Unset = no price may be stated.
    */
   pricingInfo?: string;
+  /** The business's public address, as owners entered it. */
+  businessAddress?: string;
+  /** The business's public phone, as callers should hear or receive it. */
+  businessPhone?: string;
   /**
    * The business's rendered system prompt (template + its own details). Set
    * for tenant profiles; unset for founder env configs, which keep the

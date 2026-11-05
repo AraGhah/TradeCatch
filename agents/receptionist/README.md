@@ -11,6 +11,8 @@ caller → Twilio number → SIP trunk → LiveKit → this agent
                                                                  silence wording, transfer lines
    POST /api/receptionist/agent/availability                    real open times
    POST /api/receptionist/agent/book                            reserves one (idempotent)
+   POST /api/receptionist/agent/appointments                    the caller's own appointments (find, move,
+                                                                cancel) and texts to the caller
    POST /api/receptionist/agent/report                          saves the finished call
                               (all with the ops bearer; see "Safety")
 ```

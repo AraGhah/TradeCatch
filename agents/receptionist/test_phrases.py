@@ -162,6 +162,15 @@ class DirectiveTests(unittest.TestCase):
     def test_french_directive_names_quebec_french(self):
         self.assertIn("Québec", phrases.language_directive("fr"))
 
+    def test_switches_on_clear_speech_in_the_other_language_but_not_on_an_accent(self):
+        text = phrases.language_directive("fr")
+        self.assertIn("Do not switch because of an accent, a borrowed word or a name", text)
+        self.assertIn("clearly talks to you in full sentences", text)
+        self.assertNotIn("offer once", text)
+
+    def test_offers_french_or_english_for_any_other_language(self):
+        self.assertIn("can help in either, and ask which they prefer", phrases.language_directive("en"))
+
 
 if __name__ == "__main__":
     unittest.main()
