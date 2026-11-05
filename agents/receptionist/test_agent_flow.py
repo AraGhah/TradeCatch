@@ -302,6 +302,11 @@ class FlowCase(unittest.IsolatedAsyncioTestCase):
         self.session = self.agent.fake_session
         return self.agent
 
+    def assertTransfer(self, actual, expected):
+        """The transfer record has at least these fields, with these values."""
+        self.assertIsNotNone(actual)
+        self.assertEqual({k: actual.get(k) for k in expected}, expected)
+
     async def settle(self):
         """Let spawned tasks (timers, replies) run to completion."""
         for _ in range(5):
@@ -932,9 +937,9 @@ class TransferTests(FlowCase):
     async def test_a_completed_handoff_connects_the_call_and_the_agent_leaves(self):
         ctx = ctx_for(self.session)
         reply = await self.agent.transfer_call(ctx, "caller_request")
-        self.assertIn("now connected", reply)
+        self.assertIn("handed to the team's phone line", reply)  # a REFER never proves a person answered
         self.assertEqual(self.job.transfers, ["tel:+14389957350"])
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": True})
         self.assertEqual(self.call.end_reason, "completed")
         self.assertEqual(self.session.shutdowns, [False])
         self.assertEqual(self.job.deleted, 0)
@@ -981,7 +986,7 @@ class TransferTests(FlowCase):
         reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
         self.assertIn("did NOT connect", reply)
         self.assertIn("nobody answered", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": False})
         self.assertNotEqual(self.call.payload().get("intent"), "transfer")
         self.assertEqual(self.session.shutdowns, [])
         self.assertFalse(self.agent._closing)
@@ -1004,7 +1009,7 @@ class TransferTests(FlowCase):
         reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
         self.assertIn("did NOT connect", reply)
         self.assertIn("callback", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": False})
         self.assertFalse(self.agent._transferring)
 
         await self.agent.transfer_call(ctx_for(self.session), "caller_request")
@@ -1014,16 +1019,16 @@ class TransferTests(FlowCase):
         self.job.transfer_queue = [refer_response("STS_TRANSFER_FAILED", "STR_REJECTED", sip=486)]
         reply = await self.agent.transfer_call(ctx_for(self.session), "emergency")
         self.assertEqual(self.job.transfers, ["tel:+14385550001", "tel:+14389957350"])
-        self.assertIn("now connected", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertIn("handed to the team's phone line", reply)  # a REFER never proves a person answered
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": True})
 
     async def test_a_refer_to_a_busy_operator_rolls_over_to_the_backup_line(self):
         self.make_agent(cfg={**CFG, "backupTransferE164": "+14385550003"})
         self.job.transfer_queue = [refer_response("STS_TRANSFER_FAILED", "STR_REJECTED", sip=486)]
         reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
         self.assertEqual(self.job.transfers, ["tel:+14389957350", "tel:+14385550003"])
-        self.assertIn("now connected", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "Backup line", "completed": True})
+        self.assertIn("handed to the team's phone line", reply)  # a REFER never proves a person answered
+        self.assertTransfer(self.call.transfer, {"targetName": "Backup line", "completed": True})
 
     async def test_a_second_transfer_while_one_runs_is_ignored(self):
         self.agent._transferring = True
@@ -1135,7 +1140,7 @@ class WarmTransferFlowTests(FlowCase):
         reply = await self.agent.transfer_call(ctx, "caller_request")
 
         self.assertIn("now connected", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": True})
         self.assertEqual(self.call.end_reason, "completed")
         self.assertEqual(self.session.shutdowns, [False])
         self.assertFalse(self.session.input.enabled)
@@ -1154,7 +1159,7 @@ class WarmTransferFlowTests(FlowCase):
         self.assertEqual(len(self.client.reports), 1)
         report = self.client.reports[0]
         self.assertEqual(report["intent"], "transfer")
-        self.assertEqual(report["transfer"], {"targetName": "Emergency", "completed": True})
+        self.assertTransfer(report["transfer"], {"targetName": "Emergency", "completed": True})
         self.assertTrue(report["emergency"])
         self.assertEqual(self.job.shutdowns, [])  # job must outlive the model session
         self.assertEqual(self.job.deleted, 0)
@@ -1194,7 +1199,7 @@ class WarmTransferFlowTests(FlowCase):
             [m.target.number for m in FakeScreened.made], ["+14385550001", "+14389957350"]
         )
         self.assertIn("now connected", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": True})
 
     async def test_nobody_reachable_returns_the_caller_to_the_agent_with_safety_advice(self):
         FakeScreened.script = ["no_answer", "busy"]
@@ -1203,7 +1208,7 @@ class WarmTransferFlowTests(FlowCase):
         self.assertIn("did NOT connect", reply)
         self.assertIn("911", reply)
         self.assertIn("alerted", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": False})
         self.assertFalse(self.agent._transferring)
         self.assertFalse(self.agent._closing)
         self.assertFalse(self.agent._keep_job_alive)
@@ -1223,7 +1228,7 @@ class WarmTransferFlowTests(FlowCase):
             [m.target.number for m in FakeScreened.made], ["+14389957350", "+14385550003"]
         )
         self.assertIn("now connected", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "Backup line", "completed": True})
+        self.assertTransfer(self.call.transfer, {"targetName": "Backup line", "completed": True})
 
     async def test_when_every_operator_is_unavailable_the_caller_is_offered_a_callback(self):
         self.make_agent(cfg={**CFG, "backupTransferE164": "+14385550003"})
@@ -1233,7 +1238,7 @@ class WarmTransferFlowTests(FlowCase):
         self.assertIn("did NOT connect", reply)
         self.assertIn("all the available lines", reply)
         self.assertIn("callback", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "Backup line", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "Backup line", "completed": False})
         self.assertFalse(self.agent._transferring)
         self.assertFalse(self.agent._keep_job_alive)
 
@@ -1347,7 +1352,7 @@ class TransfersOffTests(FlowCase):
         self.assertIn("did NOT connect", reply)
         self.assertIn("not available", reply)
         self.assertIn("911", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "Emergency", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "Emergency", "completed": False})
         self.assertEqual(self.job.transfers, [])
         self.assertEqual(self.job.bridges, [])
         self.assertEqual(self.session.shutdowns, [])
