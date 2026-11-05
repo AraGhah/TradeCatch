@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
+import { safeDatabaseErrorCode } from "@/lib/postgres-pool";
 
 export type SmsInboxMessage = {
   id: string;
@@ -190,6 +191,7 @@ export async function drainSmsInbox(
           attempts: job.attempts,
           terminal: job.attempts >= MAX_ATTEMPTS,
           code,
+          sqlState: safeDatabaseErrorCode(error),
         }),
       );
     }
