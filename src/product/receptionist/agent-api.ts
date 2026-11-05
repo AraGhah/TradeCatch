@@ -112,7 +112,17 @@ export const reportSchema = agentBaseSchema.extend({
     .max(400)
     .optional(),
   transfer: z
-    .object({ targetName: short(80), completed: z.boolean() })
+    .object({
+      targetName: short(80),
+      /** The call left the agent for a person's line. */
+      completed: z.boolean(),
+      /**
+       * A person was heard accepting (screened transfer). A SIP REFER the
+       * carrier accepted is `completed` but never `answerConfirmed`.
+       */
+      answerConfirmed: z.boolean().optional(),
+      mechanism: z.enum(["warm", "blind", "bridge"]).optional(),
+    })
     .optional(),
   emergency: z.boolean().optional(),
   durationSeconds: z.number().min(0).max(24 * 3600).optional(),
