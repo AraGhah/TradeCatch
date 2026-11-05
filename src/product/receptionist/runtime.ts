@@ -7,7 +7,7 @@ import {
 } from "@/lib/config";
 import { loadClientAccountFromEnv } from "@/product/missed-call/client-config";
 import { createTwilioSmsPort } from "@/product/missed-call/twilio";
-import type { ClientAccount } from "@/product/missed-call/types";
+import type { ClientAccount, SmsPort } from "@/product/missed-call/types";
 import { createLlmBrain } from "./brain-llm";
 import {
   logReceptionistDiagnostic,
@@ -20,6 +20,11 @@ import { createLlmClientFromEnv, type LlmClient } from "./llm";
 import { createReceptionistNotifier } from "./notifications";
 import { handleReceptionistFailure } from "./outage";
 import { createAgentCallService, type AgentCallService } from "./agent-calls";
+import {
+  createAgentAppointmentService,
+  type AgentAppointmentService,
+  type CallerTextPort,
+} from "./agent-appointments";
 import { createPhoneScheduler } from "./phone-booking";
 import { createPostgresReceptionistStore } from "./postgres-store";
 import { loadProfileConfigs } from "./profile-loader";
@@ -44,6 +49,7 @@ type RuntimeState = {
   profileStore: ProfileStore;
   engine: ReceptionistEngine;
   agentCalls: AgentCallService;
+  agentAppointments: AgentAppointmentService;
   envConfigs: ReceptionistConfig[];
   profileConfigs: ReceptionistConfig[];
   profilesLoadedAt: number;
@@ -183,11 +189,68 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
   }
 }
 
+/**
+ * Texts the agent sends a caller on request: through the same durable outbox as
+ * every other SMS (the minute cron retries failures), from the business's own
+ * SMS number, and never to a number that opted out (STOP) of either system.
+ */
+function callerTextPort(
+  sms: SmsPort,
+  findOrganizationId: (config: ReceptionistConfig) => Promise<string | null>,
+): CallerTextPort {
+  const missedCall = async () =>
+    (await (await import("@/product/missed-call/runtime")).ensureMissedCallReady())
+      .store;
+  return {
+    async sender(config) {
+      return config.smsFromE164 ? { fromE164: config.smsFromE164 } : null;
+    },
+    async isSuppressed(config, phoneE164) {
+      const store = await missedCall();
+      if (
+        await store.isSmsSuppressed(config.clientAccountId, phoneE164, {
+          asCustomer: true,
+        })
+      )
+        return true;
+      const organizationId = await findOrganizationId(config);
+      if (!organizationId) return false;
+      const { getAutomationStore } = await import("@/product/sms-automation/runtime");
+      return getAutomationStore().isSuppressed(organizationId, phoneE164);
+    },
+    enqueue: async (message) => (await missedCall()).enqueueOutbound(message),
+    claim: async (id) => (await missedCall()).claimOutboundById(id),
+    send: (message) => sms.send(message),
+    markSent: async (id, sid) => (await missedCall()).markOutboundSent(id, sid),
+    async markFailed(id, error, cause) {
+      const { smsFailureDisposition } = await import("@/product/missed-call/twilio");
+      await (await missedCall()).markOutboundFailed(id, error, smsFailureDisposition(cause));
+    },
+  };
+}
+
 function bootstrap(): RuntimeState {
   const { store, profileStore, durable } = createStores();
   const envConfigs = loadEnvConfigs();
   const llm = createLlmClientFromEnv();
   const sms = createTwilioSmsPort();
+  // Scheduling for businesses that turned on phone booking in their profile.
+  const scheduling = {
+    async scheduling() {
+      const { getSchedulingService } =
+        await import("@/product/scheduling/runtime");
+      return getSchedulingService();
+    },
+    async findOrganizationId(config: ReceptionistConfig) {
+      if (isRealProductionRuntime() && !isE2eHarness() && !durable)
+        return null;
+      const { getSaasStore } = await import("@/product/saas/runtime");
+      const org = await getSaasStore().findOrganizationByMissedCallClientId(
+        config.clientAccountId,
+      );
+      return org && org.status === "active" ? org.id : null;
+    },
+  };
 
   const state = {
     store,
@@ -232,22 +295,7 @@ function bootstrap(): RuntimeState {
       void runAfterResponse(() => handleReceptionistFailure(failure));
     },
     // Only used for businesses that turned on phone booking in their profile.
-    scheduler: createPhoneScheduler({
-      async scheduling() {
-        const { getSchedulingService } =
-          await import("@/product/scheduling/runtime");
-        return getSchedulingService();
-      },
-      async findOrganizationId(config) {
-        if (isRealProductionRuntime() && !isE2eHarness() && !durable)
-          return null;
-        const { getSaasStore } = await import("@/product/saas/runtime");
-        const org = await getSaasStore().findOrganizationByMissedCallClientId(
-          config.clientAccountId,
-        );
-        return org && org.status === "active" ? org.id : null;
-      },
-    }),
+    scheduler: createPhoneScheduler(scheduling),
 
     async onFinalized(session, config) {
       await syncFinalizedCall(await leadSyncDeps(store), config, session);
@@ -258,6 +306,11 @@ function bootstrap(): RuntimeState {
         console.warn("[crm] ai call sync skipped", err);
       }
     },
+  });
+
+  state.agentAppointments = createAgentAppointmentService({
+    ...scheduling,
+    texts: callerTextPort(sms, scheduling.findOrganizationId),
   });
 
   state.agentCalls = createAgentCallService({
@@ -299,6 +352,8 @@ export function getReceptionistRuntime() {
     engine: s.engine,
     /** Server side of the LiveKit agent's tools: availability, booking and the call report. */
     agentCalls: s.agentCalls,
+    /** Existing appointments (find, move, cancel) and texts to the caller. */
+    agentAppointments: s.agentAppointments,
     llm: s.llm,
     durable: s.durable,
     get profileLoadError(): string | undefined {
