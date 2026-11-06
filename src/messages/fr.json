@@ -2873,7 +2873,15 @@
       "ref": "Réf. soumission (optionnel)",
       "submit": "Démarrer",
       "saving": "Enregistrement…",
-      "error": "Impossible de démarrer la relance."
+      "error": "Impossible de démarrer la relance.",
+      "wordingTitle": "Texte que vos clients recevront",
+      "wordingIntro": "Rien n’est envoyé tant que vous n’avez pas approuvé ce texte. Chaque message part dans la langue du client, au jour indiqué après la soumission.",
+      "wordingDay": "Jour {day}",
+      "wordingApprove": "Approuver ce texte",
+      "wordingWithdraw": "Retirer l’approbation",
+      "wordingApprovedOn": "Approuvé le {date}. Les relances sont envoyées.",
+      "wordingPending": "Pas encore approuvé — aucune relance ne sera envoyée.",
+      "wordingError": "Impossible d’enregistrer votre approbation."
     },
     "inbox": {
       "headline": "Boîte de prise en charge",
@@ -3046,7 +3054,17 @@
       "checkoutError": "Le paiement n’a pas pu démarrer. Réessayez ou contactez le soutien.",
       "usageHeadline": "Utilisation ce mois-ci",
       "usageSms": "SMS : {used} segments utilisés sur {allowance}",
-      "usageVoice": "Voix IA : {used} minutes utilisées sur {allowance}"
+      "usageVoice": "Voix IA : {used} minutes utilisées sur {allowance}",
+      "overageHeadline": "Utilisation au-delà de votre forfait",
+      "overageIntro": "Tout ce qui dépasse votre forfait mensuel écrit n’est facturé que si vous le confirmez ici. D’ici là, rien de plus n’est facturé.",
+      "overageSms": "SMS au-delà du forfait :",
+      "overageVoice": "Réponse téléphonique au-delà du forfait :",
+      "overageStatus_pending": "en attente de votre décision",
+      "overageStatus_confirmed": "confirmé, ce sera facturé",
+      "overageStatus_declined": "refusé, ce ne sera pas facturé",
+      "overageConfirm": "Confirmer la facturation",
+      "overageDecline": "Ne pas facturer",
+      "overageError": "Impossible d’enregistrer votre décision. Réessayez."
     },
     "receptionist": {
       "headline": "Réceptionniste",
