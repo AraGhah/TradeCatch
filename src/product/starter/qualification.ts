@@ -19,6 +19,8 @@ export const orgSettingsSchema = z.object({
   qualificationQuestions: z.array(qualificationQuestionSchema).max(12).optional(),
   onboardingCompletedAt: z.string().datetime().optional().nullable(),
   localeDefault: z.enum(["en", "fr"]).optional(),
+  /** true = the owner approves the quote follow-up wording; false = withdraw approval. */
+  quoteFollowUpApproved: z.boolean().optional(),
 });
 
 export type OrgSettings = {
@@ -28,6 +30,8 @@ export type OrgSettings = {
   crmWebhookUrl?: string;
   qualificationQuestions: QualificationQuestion[];
   onboardingCompletedAt?: string;
+  /** When the owner approved the quote follow-up wording. Nothing is sent until set. */
+  quoteFollowUpApprovedAt?: string;
   localeDefault: "en" | "fr";
   updatedAt: string;
 };
