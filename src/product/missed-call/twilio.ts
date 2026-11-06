@@ -200,6 +200,11 @@ export function createTwilioSmsPort(
         );
       }
       const json = (await res.json()) as { sid: string };
+      // Count the segments against the business's monthly allowance. Never
+      // blocks or fails the send.
+      void import("@/product/saas/usage-metering")
+        .then((m) => m.recordSmsUsageFromNumber(message.fromE164, message.body))
+        .catch(() => undefined);
       return { sid: json.sid };
     },
     async syncOptOut(input) {
