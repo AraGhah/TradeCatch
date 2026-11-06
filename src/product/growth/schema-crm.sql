@@ -4,6 +4,10 @@
 ALTER TABLE tc_org_settings
   ADD COLUMN IF NOT EXISTS crm_webhook_url TEXT;
 
+-- Owner sign-off on the quote follow-up wording. NULL = no quote text is sent.
+ALTER TABLE tc_org_settings
+  ADD COLUMN IF NOT EXISTS quote_followup_approved_at TIMESTAMPTZ;
+
 CREATE TABLE IF NOT EXISTS tc_crm_dlq (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL REFERENCES tc_organizations (id) ON DELETE CASCADE,
