@@ -2857,7 +2857,15 @@
       "ref": "Quote ref (optional)",
       "submit": "Start sequence",
       "saving": "Saving…",
-      "error": "Could not start quote follow-up."
+      "error": "Could not start quote follow-up.",
+      "wordingTitle": "Wording your customers will receive",
+      "wordingIntro": "Nothing is sent until you approve this wording. Each message is sent in the customer’s language, on the day shown after the quote.",
+      "wordingDay": "Day {day}",
+      "wordingApprove": "Approve this wording",
+      "wordingWithdraw": "Withdraw approval",
+      "wordingApprovedOn": "Approved on {date}. Follow-ups are being sent.",
+      "wordingPending": "Not approved yet — no follow-up will be sent.",
+      "wordingError": "Could not save your approval."
     },
     "inbox": {
       "headline": "Human takeover inbox",
@@ -3030,7 +3038,17 @@
       "checkoutError": "Checkout could not be started. Please try again or contact support.",
       "usageHeadline": "Usage this month",
       "usageSms": "SMS: {used} of {allowance} segments used",
-      "usageVoice": "AI voice: {used} of {allowance} minutes used"
+      "usageVoice": "AI voice: {used} of {allowance} minutes used",
+      "overageHeadline": "Usage past your allowance",
+      "overageIntro": "Anything past your written monthly allowance is billed only if you confirm it here. Until you do, nothing extra is charged.",
+      "overageSms": "SMS past the allowance:",
+      "overageVoice": "Phone answering past the allowance:",
+      "overageStatus_pending": "waiting for your decision",
+      "overageStatus_confirmed": "confirmed, it will be billed",
+      "overageStatus_declined": "declined, it will not be billed",
+      "overageConfirm": "Confirm billing",
+      "overageDecline": "Do not bill",
+      "overageError": "Could not save your decision. Try again."
     },
     "receptionist": {
       "headline": "Receptionist",
