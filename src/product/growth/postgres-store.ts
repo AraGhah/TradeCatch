@@ -52,6 +52,9 @@ function mapSettings(row: Record<string, unknown>): OrgSettings {
     onboardingCompletedAt: row.onboarding_completed_at
       ? new Date(row.onboarding_completed_at as string | Date).toISOString()
       : undefined,
+    quoteFollowUpApprovedAt: row.quote_followup_approved_at
+      ? new Date(row.quote_followup_approved_at as string | Date).toISOString()
+      : undefined,
     localeDefault: row.locale_default === "fr" ? "fr" : "en",
     updatedAt: new Date(row.updated_at as string | Date).toISOString(),
   };
@@ -216,8 +219,9 @@ export function createPostgresGrowthStore(
       await pool.query(
         `INSERT INTO tc_org_settings (
            organization_id, notify_email, google_review_url, crm_webhook_url,
-           qualification_json, onboarding_completed_at, locale_default, updated_at
-         ) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,now())
+           qualification_json, onboarding_completed_at, locale_default,
+           quote_followup_approved_at, updated_at
+         ) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,now())
          ON CONFLICT (organization_id) DO UPDATE SET
            notify_email = EXCLUDED.notify_email,
            google_review_url = EXCLUDED.google_review_url,
@@ -225,6 +229,7 @@ export function createPostgresGrowthStore(
            qualification_json = EXCLUDED.qualification_json,
            onboarding_completed_at = EXCLUDED.onboarding_completed_at,
            locale_default = EXCLUDED.locale_default,
+           quote_followup_approved_at = EXCLUDED.quote_followup_approved_at,
            updated_at = now()`,
         [
           organizationId,
@@ -234,6 +239,7 @@ export function createPostgresGrowthStore(
           JSON.stringify(next.qualificationQuestions),
           next.onboardingCompletedAt ?? null,
           next.localeDefault,
+          next.quoteFollowUpApprovedAt ?? null,
         ],
       );
       return next;
