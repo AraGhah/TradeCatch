@@ -8,7 +8,8 @@ import { Link } from "@/i18n/navigation";
 import { PLAN_DISPLAY_NAMES } from "@/product/saas/entitlements";
 import { PLAN_PRICES, formatPlanMoney } from "@/lib/plans";
 import { getInstallationStatus } from "@/product/saas/stripe-checkout";
-import { usageSummary } from "@/product/saas/usage-metering";
+import { listOverages, usageSummary } from "@/product/saas/usage-metering";
+import { UsageOverageConfirm } from "@/components/app/UsageOverageConfirm";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -26,12 +27,13 @@ export default async function BillingPage({
     redirect(locale === "fr" ? "/fr/connexion" : "/login");
   }
   const org = access.ok ? access.ctx.organization : null;
-  const [installation, usage] = org
+  const [installation, usage, overages] = org
     ? await Promise.all([
         getInstallationStatus(org.id).catch(() => null),
         usageSummary(org.id, org.plan).catch(() => []),
+        listOverages(org.id).catch(() => []),
       ])
-    : [null, []];
+    : [null, [], []];
   return (
     <FullMessagesProvider>
       <div className="mx-auto flex max-w-xl flex-col gap-5 px-4 py-12">
@@ -112,6 +114,13 @@ export default async function BillingPage({
                 </ul>
               </div>
             ) : null}
+
+            <UsageOverageConfirm
+              rows={overages.map((o) => ({
+                metric: o.metric,
+                status: o.status,
+              }))}
+            />
 
             <BillingPortalButton />
             {org.status === "active" ? (
