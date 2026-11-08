@@ -41,7 +41,7 @@
   "cta": {
     "primary": "Réserver une démo gratuite",
     "secondary": "Voir la démo",
-    "tertiary": "Réserver un audit gratuit de 20 minutes",
+    "tertiary": "Réserver une démo gratuite",
     "watchDemo": "Voir la démo",
     "seeWorkflow": "Voir le processus complet",
     "viewMissedCall": "Voir le processus des appels manqués",
@@ -50,17 +50,17 @@
     "bookAudit": "Réserver une démo gratuite",
     "bookAuditShort": "Réserver",
     "bookAuditFree": "Réserver une démo gratuite",
-    "findMyLeaks": "Réserver un audit gratuit de 20 minutes",
-    "talkWithAra": "Réserver un audit gratuit de 20 minutes",
+    "findMyLeaks": "Réserver une démo gratuite",
+    "talkWithAra": "Réserver une démo gratuite",
     "emailDirect": "Écrire directement",
     "emailAra": "Écrire à Ara",
-    "mapToBusiness": "Réserver un audit gratuit de 20 minutes",
-    "seeWhichYouNeed": "Réserver un audit gratuit de 20 minutes",
-    "bookForTrade": "Réserver un audit gratuit de 20 minutes",
+    "mapToBusiness": "Réserver une démo gratuite",
+    "seeWhichYouNeed": "Réserver une démo gratuite",
+    "bookForTrade": "Réserver une démo gratuite",
     "allQuestions": "Toutes les questions",
     "backToSite": "Retour au site",
     "submitAnother": "Soumettre une autre demande",
-    "bookAuditDescriptive": "Réserver un audit gratuit de 20 minutes",
+    "bookAuditDescriptive": "Réserver une démo gratuite",
     "bookFreeDemo": "Réserver une démo gratuite",
     "hearReceptionist": "Écouter la réceptionniste",
     "seePricing": "Voir les tarifs",
@@ -100,7 +100,7 @@
       "eyebrow": "Le problème",
       "headline": "Trois endroits où les contrats s’échappent.",
       "intro": "Rien de tout cela n’apparaît comme une vente perdue. Cela apparaît comme une baisse discrète des travaux réservés que personne ne peut relier à une cause.",
-      "cta": "Réserver un audit gratuit de 20 minutes",
+      "cta": "Réserver une démo gratuite",
       "cards": [
         {
           "title": "L’appel sans réponse",
@@ -171,7 +171,7 @@
       ],
       "cta": "Voir tous les tarifs",
       "receptionistCta": "Comment fonctionne la réceptionniste",
-      "note": "Besoin d’un site web aussi? Ajoutez-le pour 349,99 $, seulement si vous le choisissez.",
+      "note": "Besoin d’un site web aussi? Ajoutez-le pour 699,99 $, seulement si vous le choisissez.",
       "billingNote": "Vous payez les frais d’installation à la caisse. Votre premier paiement mensuel a lieu un mois plus tard."
     },
     "founder": {
@@ -190,7 +190,7 @@
       ],
       "emailLabel": "Courriel",
       "statement": "Je m'assois avec votre équipe, je cartographie comment les appels et les soumissions circulent vraiment dans votre entreprise, j'écris chaque message avec vous, et je teste chaque scénario avant qu'un seul client le voie. Ensuite, je continue de surveiller après le lancement.",
-      "talkCta": "Réserver un audit gratuit de 20 minutes",
+      "talkCta": "Réserver une démo gratuite",
       "emailCta": "Écrire directement",
       "workLabel": "Comment le travail se fait",
       "work": [
@@ -243,7 +243,7 @@
         },
         {
           "q": "Pouvez-vous aussi créer mon site web?",
-          "a": "Oui, en option, pour 349,99 $ CAD, payé une seule fois. Il n’est jamais ajouté sans que vous le choisissiez."
+          "a": "Oui, en option, pour 699,99 $ CAD, payé une seule fois. Il n’est jamais ajouté sans que vous le choisissiez."
         },
         {
           "q": "Combien de temps prend l’installation?",
@@ -437,14 +437,14 @@
       }
     ],
     "laterTitle": "Option : un site web",
-    "laterIntro": "Besoin d’un site web qui vous amène du travail? Nous créons un nouveau site professionnel ou améliorons le vôtre pour 349,99 $ CAD, payé une seule fois. Il n’est jamais ajouté sans que vous le choisissiez.",
+    "laterIntro": "Besoin d’un site web qui vous amène du travail? Nous créons un nouveau site professionnel ou améliorons le vôtre pour 699,99 $ CAD, payé une seule fois. Il n’est jamais ajouté sans que vous le choisissiez.",
     "later": [
       "Un nouveau site professionnel, ou des améliorations à votre site actuel",
       "Adapté au mobile, avec une façon simple pour les clients de vous joindre",
       "Portée confirmée avec vous avant tout paiement",
       "Distinct de votre abonnement"
     ],
-    "cta": "Réserver une démo gratuite de 20 minutes",
+    "cta": "Réserver une démo gratuite",
     "heroHighlights": [
       "Réponse aux appels, jour et nuit",
       "Demandes des clients saisies",
@@ -502,7 +502,7 @@
         ]
       }
     ],
-    "cta": "Réserver un audit gratuit de 20 minutes",
+    "cta": "Réserver une démo gratuite",
     "heroSteps": [
       "Un appel arrive",
       "La réceptionniste répond",
@@ -591,7 +591,7 @@
         ]
       }
     ],
-    "cta": "Réserver un audit gratuit de 20 minutes",
+    "cta": "Réserver une démo gratuite",
     "selectLabel": "Choisissez votre métier"
   },
   "pricing": {
@@ -599,7 +599,7 @@
     "headline": "Deux forfaits. Un choix simple.",
     "intro": "Essential répond à vos appels et capte vos clients. Professional prend aussi vos rendez-vous. Tous les prix sont en dollars canadiens.",
     "reassurance": "Mois par mois après l’installation. Annulation avec préavis.",
-    "metaDescription": "Tarifs TradeCatch en CAD : Essential à 249 $ par mois et Professional à 349 $ par mois, avec des frais d’installation uniques de 1 999,99 $. Service de site web facultatif à 349,99 $.",
+    "metaDescription": "Tarifs TradeCatch en CAD : Essential à 249 $ par mois et Professional à 349 $ par mois, avec des frais d’installation uniques de 1 999,99 $. Service de site web facultatif à 699,99 $.",
     "principles": [
       "Essential : nous répondons à vos appels et captons vos clients",
       "Professional : nous répondons à vos appels et prenons vos rendez-vous",
@@ -746,7 +746,7 @@
         "body": "Les dossiers clients et les journaux de conversation appartiennent à votre entreprise. Nous ne les vendons pas et ne les réutilisons pas pour d’autres clients."
       }
     ],
-    "cta": "Réserver un audit gratuit de 20 minutes",
+    "cta": "Réserver une démo gratuite",
     "setupLabel": "Installation",
     "monthlyLabel": "mois",
     "thenLabel": "puis",
@@ -763,7 +763,7 @@
     },
     "onceLabel": "payé une fois",
     "monthlyEyebrow": "Chaque mois",
-    "websiteMention": "Besoin d’un site web? Ajoutez notre service de site web pour 349,99 $.",
+    "websiteMention": "Besoin d’un site web? Ajoutez notre service de site web pour 699,99 $.",
     "billingBanner": "À la caisse, vous payez les frais d’installation uniques. Votre premier paiement mensuel a lieu un mois plus tard.",
     "schedulingNote": "La prise de rendez-vous est activée pour votre entreprise une fois qu’elle a été testée avec votre Google Agenda pendant l’installation."
   },
@@ -789,7 +789,7 @@
       "Les décisions importantes restent humaines, toujours.",
       "L'objectif est la récupération pratique de revenus, pas la technologie expérimentale."
     ],
-    "cta": "Réserver un audit gratuit de 20 minutes",
+    "cta": "Réserver une démo gratuite",
     "emailCta": "Écrire à Ara",
     "founderTitle": "Fondateur",
     "founderBody": "TradeCatch est bâti et exploité directement par son fondateur, un développeur logiciel avec une expertise en automatisation qui travaille aux côtés de chaque entrepreneur pour concevoir, installer et gérer le système. Pas de centre d'appels, pas de support externalisé : vous travaillez avec la personne qui l'a construit.",
@@ -829,7 +829,7 @@
     "snapshotNote": "L’installation, les tests et la surveillance sont faits directement. Rien n’est confié à un centre d’appels."
   },
   "bookAudit": {
-    "headline": "Réservez un audit gratuit de fuites de revenus de 20 minutes",
+    "headline": "Réserver une démo gratuite",
     "intro": "Un formulaire court : nom, entreprise, métier et comment vous joindre. Environ une minute. Sans engagement.",
     "fields": {
       "firstName": "Prénom",
@@ -928,7 +928,7 @@
     "consentRequired": "Veuillez accepter d'être contacté pour que nous puissions donner suite à votre demande.",
     "submit": "Demander ma démo",
     "confirmation": {
-      "headline": "C'est reçu. Votre demande d'audit est en main.",
+      "headline": "C'est reçu. Votre demande de démo est en main.",
       "body": "Votre demande est enregistrée de façon sécuritaire. Ara vous contactera pour confirmer un moment. Le courriel de confirmation pourrait arriver plus tard. Ayez sous la main votre volume d'appels récent, votre liste de soumissions ouvertes et les logiciels que vous utilisez actuellement.",
       "backToSite": "Retour au site",
       "submitAnother": "Soumettre une autre demande",
@@ -963,8 +963,6 @@
       "agreed": "Accepté",
       "notYet": "Pas encore",
       "verifyingHuman": "Vérification en cours…",
-      "genericError": "Impossible d’envoyer votre demande d’audit. Vérifiez vos réponses et réessayez. Si le problème persiste, écrivez à contact@tradecatch.ca.",
-      "networkError": "Impossible de joindre le serveur. Vérifiez votre connexion et réessayez.",
       "errorSummary": "Veuillez corriger les points suivants avant de continuer :",
       "fixField": "Aller à {field}",
       "turnstileRequired": "Complétez la vérification de sécurité avant d'envoyer.",
@@ -975,7 +973,7 @@
           "id": "contact",
           "label": "Coordonnées",
           "title": "Comment pouvons-nous vous joindre?",
-          "help": "Votre courriel professionnel et le meilleur numéro pour votre audit. Aucune donnée de paiement requise."
+          "help": "Votre courriel professionnel et le meilleur numéro pour votre démo. Aucune donnée de paiement requise."
         },
         "name": {
           "id": "name",
@@ -1039,7 +1037,7 @@
           "id": "missed",
           "label": "Manqués / semaine",
           "title": "Combien restent sans réponse dans une semaine?",
-          "help": "Une estimation approximative suffit. L'audit sert à obtenir le vrai chiffre.",
+          "help": "Une estimation approximative suffit. Nous regardons le vrai chiffre ensemble pendant l'appel de démo.",
           "optionsKey": "missed"
         },
         "afterHours": {
@@ -1117,6 +1115,13 @@
         "required": "Ce champ est obligatoire.",
         "email": "Entrez une adresse courriel valide.",
         "phone": "Entrez un numéro de téléphone valide."
+      },
+      "submitFailure": {
+        "generic": "Impossible d'envoyer votre demande de démo. Vos réponses sont conservées. Réessayez; si le problème persiste, écrivez à contact@tradecatch.ca.",
+        "invalid": "Nous n'avons pas pu accepter cette demande. La vérification de sécurité ou l'une de vos réponses a été refusée. Refaites la vérification de sécurité, vérifiez vos réponses et réessayez.",
+        "unavailable": "Nous ne pouvons pas enregistrer les demandes de démo pour le moment : votre demande n'a pas été enregistrée. Vos réponses sont conservées. Réessayez dans quelques minutes ou écrivez à contact@tradecatch.ca.",
+        "rateLimited": "Trop de tentatives depuis cette connexion. Patientez quelques minutes, puis réessayez. Vos réponses sont conservées.",
+        "network": "Nous n'avons pas pu confirmer que votre demande est passée. Vérifiez votre connexion et réessayez. Un nouvel envoi ne créera pas de doublon."
       }
     }
   },
@@ -1151,7 +1156,7 @@
       },
       {
         "q": "Pouvez-vous aussi créer mon site web?",
-        "a": "Oui, en option, pour 349,99 $ CAD, payé une seule fois. Il n’est jamais ajouté à votre commande sans que vous le choisissiez."
+        "a": "Oui, en option, pour 699,99 $ CAD, payé une seule fois. Il n’est jamais ajouté à votre commande sans que vous le choisissiez."
       },
       {
         "q": "Se connecte-t-il à d’autres logiciels?",
@@ -1189,7 +1194,7 @@
     "stillHave": {
       "headline": "Il vous reste une question?",
       "body": "Posez-la pendant l’appel de démonstration. Vingt minutes, sans engagement, et vous aurez une réponse franche dans tous les cas.",
-      "cta": "Réserver une démo gratuite de 20 minutes"
+      "cta": "Réserver une démo gratuite"
     },
     "reassurance": {
       "title": "Ce qui reste sous votre contrôle",
@@ -1223,15 +1228,15 @@
         },
         {
           "heading": "Informations que nous recueillons",
-          "body": "Nous recueillons les renseignements que vous nous fournissez directement lors d’une demande de démo ou d’audit : nom, entreprise, métier, courriel, numéro de téléphone, ville et réponses de qualification. Une fois que vous êtes client, nous traitons aussi, selon la portée convenue, les noms, numéros de téléphone, adresses, détails et photos des demandes de service; le contenu et les métadonnées des appels et textos; les coordonnées des personnes qui reçoivent vos alertes; les rendez-vous et les disponibilités du calendrier lorsque la prise de rendez-vous est activée; ainsi que l’activité de votre compte. Nous recueillons également des données techniques et, avec votre consentement, des données analytiques, comme l’explique notre politique de cookies."
+          "body": "Nous recueillons les renseignements que vous nous fournissez directement lors d’une demande de démo : nom, entreprise, métier, courriel, numéro de téléphone, ville et réponses de qualification. Une fois que vous êtes client, nous traitons aussi, selon la portée convenue, les noms, numéros de téléphone, adresses, détails et photos des demandes de service; le contenu et les métadonnées des appels et textos; les coordonnées des personnes qui reçoivent vos alertes; les rendez-vous et les disponibilités du calendrier lorsque la prise de rendez-vous est activée; ainsi que l’activité de votre compte. Nous recueillons également des données techniques et, avec votre consentement, des données analytiques, comme l’explique notre politique de cookies."
         },
         {
           "heading": "Finalités et fondement du traitement",
-          "body": "Nous utilisons ces renseignements pour répondre aux demandes de démo et d’audit, planifier les appels, préparer les propositions et, une fois que vous êtes client, répondre aux appels, recueillir et acheminer les demandes, effectuer les relances par texto, gérer les rendez-vous et tout afficher dans votre compte. Le fondement applicable dépend du contexte, notamment le consentement, les mesures précontractuelles, l’entente de service et les obligations légales. Nous ne vendons pas de renseignements personnels."
+          "body": "Nous utilisons ces renseignements pour répondre aux demandes de démo, planifier les appels, préparer les propositions et, une fois que vous êtes client, répondre aux appels, recueillir et acheminer les demandes, effectuer les relances par texto, gérer les rendez-vous et tout afficher dans votre compte. Le fondement applicable dépend du contexte, notamment le consentement, les mesures précontractuelles, l’entente de service et les obligations légales. Nous ne vendons pas de renseignements personnels."
         },
         {
           "heading": "Consentement aux communications SMS et courriel",
-          "body": "Vous contacter au sujet de votre demande d'audit précise (par téléphone, courriel ou texto) est une communication de service nécessaire, non optionnelle. Elle est couverte par la case de consentement obligatoire de nos formulaires. Les courriels de marketing (conseils, offres, mises à jour) sont distincts, optionnels, à adhésion explicite et jamais précochés, conformément à la Loi canadienne anti-pourriel (LCAP). Des frais de messagerie et de données peuvent s'appliquer aux SMS. Nous conservons le libellé exact, le formulaire source et l'horodatage de chaque consentement, et donnons suite sans délai à toute demande de retrait ou de désabonnement."
+          "body": "Vous contacter au sujet de votre demande de démo précise (par téléphone, courriel ou texto) est une communication de service nécessaire, non optionnelle. Elle est couverte par la case de consentement obligatoire de nos formulaires. Les courriels de marketing (conseils, offres, mises à jour) sont distincts, optionnels, à adhésion explicite et jamais précochés, conformément à la Loi canadienne anti-pourriel (LCAP). Des frais de messagerie et de données peuvent s'appliquer aux SMS. Nous conservons le libellé exact, le formulaire source et l'horodatage de chaque consentement, et donnons suite sans délai à toute demande de retrait ou de désabonnement."
         },
         {
           "heading": "Partage des données et fournisseurs de services",
@@ -1243,7 +1248,7 @@
         },
         {
           "heading": "Calendrier de conservation des données",
-          "body": "Nous visons une conservation maximale de 24 mois après la dernière interaction pour les demandes de démo et d’audit ainsi que pour les dossiers d’appels et de textos, sauf obligation légale, demande de suppression anticipée ou durée différente prévue à l’entente client. La purge automatisée de ces catégories exige le stockage durable et la tâche planifiée; tant qu’elle n’est pas vérifiée dans l’environnement déployé, elle est effectuée manuellement. Les autres données des clients, comme les demandes web, les soumissions, les rendez-vous et les journaux connexes, suivent la durée prévue à l’entente et sont supprimées manuellement jusqu’à l’automatisation complète de leur cycle de vie. Les données analytiques suivent les paramètres de conservation de Google Analytics."
+          "body": "Nous visons une conservation maximale de 24 mois après la dernière interaction pour les demandes de démo ainsi que pour les dossiers d’appels et de textos, sauf obligation légale, demande de suppression anticipée ou durée différente prévue à l’entente client. La purge automatisée de ces catégories exige le stockage durable et la tâche planifiée; tant qu’elle n’est pas vérifiée dans l’environnement déployé, elle est effectuée manuellement. Les autres données des clients, comme les demandes web, les soumissions, les rendez-vous et les journaux connexes, suivent la durée prévue à l’entente et sont supprimées manuellement jusqu’à l’automatisation complète de leur cycle de vie. Les données analytiques suivent les paramètres de conservation de Google Analytics."
         },
         {
           "heading": "Vos droits en matière de confidentialité",
@@ -1355,7 +1360,7 @@
         },
         {
           "heading": "Fonctionnalités d'accessibilité mises en place",
-          "body": "Repères sémantiques et structure de titres cohérente sur chaque page; un lien « passer au contenu principal »; une navigation entièrement au clavier pour le menu, le menu mobile, les formulaires et l'assistant de réservation d'audit, y compris un piège de focus et la fermeture par Échap dans le menu mobile, avec retour du focus au bouton déclencheur; des indicateurs de focus visibles sur tous les éléments interactifs; la prise en charge du réglage de mouvement réduit; des champs de formulaire avec étiquettes programmatiques, indication des champs requis et messages d'erreur annoncés aux technologies d'assistance et liés au champ concerné; et un texte alternatif sur les images informatives, les graphiques décoratifs étant masqués aux technologies d'assistance."
+          "body": "Repères sémantiques et structure de titres cohérente sur chaque page; un lien « passer au contenu principal »; une navigation entièrement au clavier pour le menu, le menu mobile, les formulaires et l'assistant de réservation de démo, y compris un piège de focus et la fermeture par Échap dans le menu mobile, avec retour du focus au bouton déclencheur; des indicateurs de focus visibles sur tous les éléments interactifs; la prise en charge du réglage de mouvement réduit; des champs de formulaire avec étiquettes programmatiques, indication des champs requis et messages d'erreur annoncés aux technologies d'assistance et liés au champ concerné; et un texte alternatif sur les images informatives, les graphiques décoratifs étant masqués aux technologies d'assistance."
         },
         {
           "heading": "Limites connues",
@@ -1454,7 +1459,7 @@
       "Nous suivons le lancement et nous nous occupons du service chaque mois"
     ],
     "pricingTitle": "Tarifs",
-    "pricing": "Essential : 1 999,99 $ d’installation, puis 249 $ / mois. Répond à vos appels et saisit vos clients. Professional : 1 999,99 $ d’installation, puis 349 $ / mois. Tout ce qu’inclut Essential, plus la prise de rendez-vous. Service de site web en option : 349,99 $, payé une seule fois, seulement si vous le choisissez. Tous les prix sont en dollars canadiens. L’utilisation des appels et des textos est assujettie à l’allocation mensuelle de chaque forfait.",
+    "pricing": "Essential : 1 999,99 $ d’installation, puis 249 $ / mois. Répond à vos appels et saisit vos clients. Professional : 1 999,99 $ d’installation, puis 349 $ / mois. Tout ce qu’inclut Essential, plus la prise de rendez-vous. Service de site web en option : 699,99 $, payé une seule fois, seulement si vous le choisissez. Tous les prix sont en dollars canadiens. L’utilisation des appels et des textos est assujettie à l’allocation mensuelle de chaque forfait.",
     "ctaTitle": "Prochaine étape",
     "cta": "Réservez une démo gratuite de 20 minutes. Aucun accès à vos systèmes requis.",
     "contact": "contact@tradecatch.ca · tradecatch.ca",
@@ -1464,7 +1469,7 @@
   },
   "demoVideo": {
     "auditCta": "Découvrez les clients à récupérer",
-    "auditHint": "Audit gratuit de 20 minutes. Une courte demande, sans données de paiement ni engagement.",
+    "auditHint": "Démo gratuite. Une courte demande, sans données de paiement ni engagement.",
     "title": "Démos du produit",
     "description": "Démonstrations animées de la réceptionniste TradeCatch, de la récupération des appels manqués et de la relance des soumissions, avec une entreprise fictive. Les conversations et les chiffres sont illustratifs.",
     "close": "Fermer",
@@ -1499,7 +1504,12 @@
         "title": "Sous l’évier",
         "blurb": "Vous avez les mains prises. La réceptionniste répond, note les détails de l’appelant et transmet la demande à votre équipe."
       }
-    }
+    },
+    "benefits": [
+      "Répond en français ou en anglais, sous le nom de votre entreprise.",
+      "Recueille le nom, l’adresse, le service demandé et l’urgence.",
+      "Vous transmet la demande pour que vous rappeliez quand vous êtes libre."
+    ]
   },
   "errors": {
     "eyebrow": "Une erreur est survenue",
@@ -1511,7 +1521,7 @@
   "login": {
     "eyebrow": "Centre de compte",
     "headline": "Connexion à votre compte TradeCatch",
-    "intro": "Entrez votre courriel professionnel et nous vous enverrons un lien de connexion à usage unique. Les comptes sont créés par TradeCatch quand vous devenez client, il n’y a donc pas d’inscription publique.",
+    "intro": "Connectez-vous avec votre courriel et votre mot de passe. Les comptes sont créés par TradeCatch quand vous devenez client, il n’y a donc pas d’inscription publique.",
     "email": "Courriel professionnel",
     "submit": "M'envoyer un lien de connexion",
     "sending": "Envoi…",
@@ -1519,7 +1529,21 @@
     "devLink": "Lien de connexion local/dev :",
     "devLinkCta": "Ouvrir l'espace",
     "errorGeneric": "Une erreur est survenue. Réessayez.",
-    "preferAudit": "Pas encore client? Réservez plutôt une démo gratuite."
+    "preferAudit": "Pas encore client? Réservez plutôt une démo gratuite.",
+    "password": "Mot de passe",
+    "passwordSubmit": "Se connecter",
+    "passwordSending": "Connexion…",
+    "forgot": "Mot de passe oublié?",
+    "useLink": "M’envoyer plutôt un lien de connexion",
+    "usePassword": "Utiliser mon mot de passe",
+    "linkIntro": "Nous vous enverrons un lien de connexion qui ne fonctionne qu’une fois.",
+    "errorInvalid": "Ce courriel et ce mot de passe ne correspondent pas. Si vous n’avez pas encore choisi de mot de passe, utilisez Mot de passe oublié.",
+    "errorRateLimited": "Trop de tentatives. Attendez 15 minutes ou demandez plutôt un lien de connexion.",
+    "errorUnavailable": "Votre compte n’est pas disponible pour le moment. Écrivez à contact@tradecatch.ca.",
+    "linkInvalid": "Ce lien de connexion est invalide ou a déjà servi. Demandez-en un nouveau.",
+    "linkRateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
+    "passwordSaved": "Votre mot de passe est enregistré. Connectez-vous ci-dessous.",
+    "errorOutage": "La connexion est temporairement indisponible. Votre courriel et votre mot de passe ne sont pas en cause. Réessayez dans quelques minutes ou écrivez à contact@tradecatch.ca."
   },
   "app": {
     "demoAccountBadge": "Compte démo",
@@ -3030,7 +3054,7 @@
     "websiteServices": {
       "headline": "Services de site web",
       "intro": "Demandez à TradeCatch de créer un nouveau site web pour votre entreprise ou d'améliorer le site actuel. C'est un projet unique et distinct, qui ne fait pas partie de votre abonnement.",
-      "priceNote": "349,99 $ CAD, payé une seule fois. Nous confirmons la portée avec vous par écrit avant tout paiement, et il n’est jamais ajouté à votre forfait sans que vous le choisissiez.",
+      "priceNote": "699,99 $ CAD, payé une seule fois. Nous confirmons la portée avec vous par écrit avant tout paiement, et il n’est jamais ajouté à votre forfait sans que vous le choisissiez.",
       "restricted": "Seul un propriétaire ou un administrateur peut demander ce service. Vous pouvez tout de même suivre les demandes ci-dessous.",
       "unavailable": "Les demandes de site web sont indisponibles pour le moment. Veuillez réessayer sous peu.",
       "requestsTitle": "Vos demandes",
@@ -3362,6 +3386,27 @@
       "title": "Les rendez-vous sont inclus avec Professional",
       "body": "Votre forfait est Essential. Il répond à vos appels et saisit vos clients. Professional ajoute la prise de rendez-vous dans votre Google Agenda, des confirmations et des rappels par texto, ainsi qu’un calendrier dans ce compte.",
       "cta": "Comparer les forfaits"
+    },
+    "passwordSettings": {
+      "headline": "Mot de passe",
+      "intro": "Choisissez un mot de passe fort que vous êtes seul à connaître. Le changer déconnecte vos autres appareils.",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "confirm": "Confirmez le nouveau mot de passe",
+      "rules": "Au moins 10 caractères. Évitez les mots de passe courants et votre adresse courriel.",
+      "submit": "Changer le mot de passe",
+      "saving": "Enregistrement…",
+      "saved": "Mot de passe changé. Vos autres appareils ont été déconnectés.",
+      "wrong": "Votre mot de passe actuel est incorrect.",
+      "same": "Choisissez un mot de passe différent de l’actuel.",
+      "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
+      "mismatch": "Les deux mots de passe ne correspondent pas.",
+      "generic": "Une erreur est survenue. Réessayez.",
+      "noneTitle": "Vous n’avez pas encore choisi de mot de passe",
+      "noneBody": "Vous vous connectez avec des liens envoyés par courriel. Pour choisir un mot de passe, nous enverrons un lien à votre adresse.",
+      "sendLink": "M’envoyer un lien pour choisir un mot de passe",
+      "linkSending": "Envoi…",
+      "linkSent": "Un lien est en route vers votre courriel."
     }
   },
   "aiReceptionist": {
@@ -3468,7 +3513,7 @@
       "afterCall": {
         "title": "C’était la démo. Imaginez maintenant la même chose sur votre propre numéro.",
         "body": "Chaque appel comme celui-ci arrive dans votre compte sous forme de résumé sur lequel vous pouvez agir. Dans une démo gratuite de 20 minutes, nous parcourons l’appel pour votre métier : ce qu’elle dit et ce qu’elle recueille.",
-        "cta": "Réserver une démo gratuite de 20 minutes"
+        "cta": "Réserver une démo gratuite"
       }
     },
     "eyebrow": "Réceptionniste",
@@ -3484,7 +3529,7 @@
     "planLabel": "Deux forfaits",
     "planSetup": "{setup} d’installation, payés une seule fois",
     "planNote": "Les prix sont en dollars canadiens. L’utilisation des appels et des textos est assujettie à l’allocation mensuelle de chaque forfait.",
-    "ctaPrimary": "Réserver une démo gratuite de 20 minutes",
+    "ctaPrimary": "Réserver une démo gratuite",
     "ctaDemo": "Voir la démo",
     "ctaSecondary": "Voir tous les tarifs",
     "flow": {
@@ -3807,7 +3852,7 @@
     "finalCta": {
       "title": "Écoutez-le répondre à un appel avant de décider.",
       "body": "Une démo gratuite de 20 minutes parcourt un vrai appel pour votre métier : ce qu’elle dit, ce qu’elle recueille et ce qui arrive dans votre compte.",
-      "primary": "Réserver une démo gratuite de 20 minutes",
+      "primary": "Réserver une démo gratuite",
       "secondary": "Voir tous les tarifs",
       "note": "20 minutes. Aucun accès à vos systèmes requis. L’installation et l’intégration se font avant la mise en service de la ligne."
     },
@@ -3832,7 +3877,7 @@
   "admin": {
     "sales": {
       "title": "Prospects de TradeCatch",
-      "intro": "Demandes d’audit pour TradeCatch, distinctes des prospects clients des entrepreneurs.",
+      "intro": "Demandes de démo pour TradeCatch, distinctes des prospects clients des entrepreneurs.",
       "company": "Entreprise",
       "contact": "Contact",
       "request": "Demande",
@@ -4094,7 +4139,7 @@
         "eyebrow": "Option facultative",
         "title": "Service de site web clé en main",
         "intro": "Besoin d’un meilleur site web? Nous pouvons créer ou améliorer votre site pour aider à transformer plus de visiteurs en clients.",
-        "price": "349,99 $ CAD",
+        "price": "699,99 $ CAD",
         "priceNote": "Prix unique. Il ne fait pas partie de votre abonnement et n’est facturé que si vous le choisissez.",
         "availableOn": "Offert avec Essential ou Professional.",
         "neverIncluded": "Jamais ajouté automatiquement à votre commande, et jamais facturé chaque mois.",
@@ -4136,7 +4181,7 @@
       "shareSubject": "Une idée pour votre entreprise : TradeCatch",
       "shareMessage": "{business} utilise TradeCatch pour récupérer les appels manqués et ne laisser filer aucun contrat. Jetez-y un œil : {link}",
       "rewardsTitle": "Ce que vous gagnez",
-      "rewardsIntro": "La récompense est la même pour Essential et Professional. Le bonus du site web s’ajoute quand l’entreprise que vous avez parrainée commande aussi le service de site web et que le travail est commencé.",
+      "rewardsIntro": "La récompense dépend du forfait que choisit l’entreprise que vous avez parrainée. Le bonus du site web s’ajoute quand cette entreprise commande aussi le service de site web et que le travail est commencé.",
       "whenTheyChoose": "Quand elle choisit {plan}",
       "giftCardAmount": "{amount} par Interac",
       "noReward": "Aucune récompense",
@@ -4178,7 +4223,7 @@
       "rulesTitle": "Règles du programme",
       "rules": {
         "payment": "Vous gagnez une récompense seulement après le paiement réussi des frais d’installation par l’entreprise que vous avez parrainée.",
-        "plan": "La récompense du forfait est la même pour Essential et Professional. Le bonus du site web est ajouté seulement après que l’entreprise parrainée accepte le service de site web et que le travail est commencé.",
+        "plan": "La récompense dépend du forfait que choisit l’entreprise parrainée. Le bonus du site web est ajouté seulement après que l’entreprise parrainée accepte le service de site web et que le travail est commencé.",
         "once": "Chaque entreprise peut rapporter une récompense de forfait et au plus un bonus de site web, peu importe le nombre de fois qu’elle est parrainée.",
         "review": "Les récompenses sont confirmées environ {days} jours après le paiement, une fois vérifié que le client est toujours actif et que le paiement n’a été ni remboursé ni contesté.",
         "excluded": "Aucune récompense pour un auto-parrainage, une inscription en double, ni pour un achat remboursé, contesté ou annulé.",
@@ -4186,18 +4231,33 @@
       },
       "websiteBonusLabel": "Bonus du service de site web",
       "websiteBonusHelp": "En plus, quand elle commande aussi le service de site web",
-      "maxNote": "Le maximum qu’un parrainage peut rapporter est de {amount}."
+      "maxNote": "Le maximum qu’un parrainage peut rapporter est de {amount}.",
+      "getLink": "Obtenez votre lien",
+      "getLinkHelp": "Votre lien personnel est créé une seule fois et ne change jamais. Toute personne qui réserve une démo par ce lien vous est créditée.",
+      "creating": "Création de votre lien…",
+      "linkReady": "Votre lien est prêt. Copiez-le et partagez-le.",
+      "retry": "Réessayer",
+      "signIn": "Se connecter",
+      "copiedStatus": "Lien copié dans le presse-papiers.",
+      "linkErrors": {
+        "unauthorized": "Votre session est terminée. Reconnectez-vous pour obtenir votre lien.",
+        "forbidden": "Seul le propriétaire ou un administrateur du compte peut créer le lien de parrainage.",
+        "rateLimited": "Trop d’essais. Attendez une minute, puis réessayez.",
+        "unavailable": "Nous n’avons pas pu créer votre lien, et rien n’a été enregistré. Réessayez dans un instant.",
+        "notEligible": "Votre lien de parrainage n’est pas disponible pour ce compte en ce moment.",
+        "invalid": "Nous n’avons pas reçu de lien valide, donc aucun n’est affiché. Réessayez."
+      }
     },
     "public": {
       "metaTitle": "Programme de parrainage",
-      "metaDescription": "Parrainez un entrepreneur chez TradeCatch et gagnez {planReward} CAD quand il s’abonne, plus {bonus} s’il ajoute le service de site web.",
+      "metaDescription": "Parrainez une entreprise chez TradeCatch et gagnez {essentialReward} CAD si elle choisit Essential ou {professionalReward} CAD si elle choisit Professional, plus {bonus} de plus si elle ajoute le service de site web.",
       "eyebrow": "Programme de parrainage",
-      "headline": "Parrainez un entrepreneur. Gagnez jusqu’à {max}.",
-      "intro": "Partagez votre lien. Quand l’entrepreneur que vous parrainez paie ses frais d’installation, vous gagnez {planReward} CAD par virement Interac. S’il commande aussi notre service de site web, vous gagnez {bonus} de plus.",
-      "referredBanner": "Un client de TradeCatch vous a envoyé ici. Réservez votre audit gratuit : si vous devenez client, cette personne est créditée automatiquement.",
+      "headline": "Parrainez une entreprise. Gagnez {essentialReward} avec Essential ou {professionalReward} avec Professional.",
+      "intro": "Partagez votre lien. Quand l’entreprise que vous parrainez paie ses frais d’installation, vous recevez un virement Interac : {essentialReward} CAD si elle choisit Essential, {professionalReward} CAD si elle choisit Professional. Si elle commande aussi notre service de site web, vous gagnez {bonus} de plus.",
+      "referredBanner": "Un client de TradeCatch vous a envoyé ici. Réservez votre démo gratuite : si vous devenez client, cette personne est créditée automatiquement.",
       "paused": "Le programme de parrainage est suspendu pour le moment. Revenez bientôt.",
       "rewardsTitle": "Ce que vous gagnez",
-      "rewardsIntro": "Vous gagnez {planReward} pour chaque entreprise qui devient cliente avec Essential ou Professional. Vous gagnez {bonus} de plus quand elle achète aussi le service de site web.",
+      "rewardsIntro": "La récompense dépend du forfait que choisit l’entreprise que vous parrainez : {essentialReward} pour Essential, {professionalReward} pour Professional. Vous gagnez {bonus} de plus quand elle achète aussi le service de site web.",
       "youEarn": "Vous gagnez",
       "giftCard": "par Interac",
       "noReward": "Aucune récompense",
@@ -4209,7 +4269,7 @@
           "body": "Les clients trouvent leur lien personnel dans le tableau de bord TradeCatch, sous Parrainage."
         },
         "book": {
-          "title": "Il réserve un audit gratuit",
+          "title": "Il réserve une démo gratuite",
           "body": "Il discute avec nous, choisit Essential ou Professional et paie les frais d’installation uniques."
         },
         "earn": {
@@ -4217,12 +4277,12 @@
           "body": "Une fois son paiement confirmé et la période de vérification écoulée, nous vous envoyons l’Interac."
         }
       },
-      "cta": "Réserver un audit gratuit",
-      "existingCustomer": "Déjà client? Obtenez votre lien",
+      "cta": "Réserver une démo gratuite",
+      "existingCustomer": "Déjà client? Connectez-vous pour obtenir votre lien de parrainage personnel.",
       "rulesTitle": "Règles du programme",
       "rules": {
         "payment": "Une récompense n’est gagnée qu’après le paiement réussi des frais d’installation par l’entreprise parrainée.",
-        "plan": "La récompense du forfait est la même pour Essential et Professional. Le bonus du site web est ajouté seulement si l’entreprise parrainée accepte aussi le service de site web et que le travail est commencé.",
+        "plan": "La récompense dépend du forfait que choisit l’entreprise parrainée : {essentialReward} pour Essential, {professionalReward} pour Professional. Le bonus du site web est ajouté seulement si l’entreprise parrainée accepte aussi le service de site web et que le travail est commencé.",
         "once": "Une récompense de forfait et au plus un bonus de site web par entreprise parrainée, peu importe le nombre de fois qu’elle est parrainée. Se parrainer soi-même ou inscrire deux fois la même entreprise ne donne pas droit à une récompense.",
         "review": "Nous confirmons les récompenses environ {days} jours après le paiement, une fois vérifié que le client est toujours actif et que le paiement n’a été ni remboursé ni contesté. Un achat remboursé, contesté, annulé ou invalide ne donne aucune récompense.",
         "excluded": "Les récompenses sont réservées aux nouveaux clients.",
@@ -4232,7 +4292,8 @@
       "bonusTitle": "Bonus du service de site web",
       "bonusLabel": "Ajouté quand elle commande aussi notre service de site web",
       "bonusPlus": "En plus",
-      "maxNote": "Le maximum qu’un parrainage peut rapporter est de {max} CAD."
+      "maxNote": "Le maximum qu’un parrainage peut rapporter est de {max} CAD.",
+      "getLink": "Obtenez votre lien"
     },
     "form": {
       "title": "Parrainer un entrepreneur",
@@ -4277,16 +4338,16 @@
   "websiteRequest": {
     "meta": {
       "title": "Faire créer mon site web | TradeCatch",
-      "description": "Demandez un nouveau site web professionnel ou des améliorations à votre site actuel. 349,99 $ CAD, payé une seule fois, avec la portée confirmée avant tout paiement."
+      "description": "Demandez un nouveau site web professionnel ou des améliorations à votre site actuel. 699,99 $ CAD, payé une seule fois, avec la portée confirmée avant tout paiement."
     },
     "page": {
       "eyebrow": "Service de site web clé en main",
       "headline": "Dites-nous ce dont votre site web a besoin",
-      "intro": "Un court formulaire, puis une portée écrite avant tout paiement. 349,99 $ CAD, payé une seule fois.",
+      "intro": "Un court formulaire, puis une portée écrite avant tout paiement. 699,99 $ CAD, payé une seule fois.",
       "stepsTitle": "Et ensuite?",
       "steps": [
         "Nous examinons votre demande et, si vous en avez un, votre site actuel.",
-        "Nous vous répondons avec ce que nous ferons exactement pour 349,99 $.",
+        "Nous vous répondons avec ce que nous ferons exactement pour 699,99 $.",
         "Vous approuvez. Nous commençons et nous vous facturons seulement à ce moment."
       ],
       "separate": "Il s'agit d'un projet distinct. Il n'est pas ajouté à votre abonnement TradeCatch et ne change pas ce que vous payez chaque mois."
@@ -4317,7 +4378,7 @@
       },
       "notes": "Autre chose à nous dire?",
       "optional": "(facultatif)",
-      "priceNote": "349,99 $ CAD, payé une seule fois. Distinct de votre abonnement. Nous confirmons la portée avec vous avant tout paiement.",
+      "priceNote": "699,99 $ CAD, payé une seule fois. Distinct de votre abonnement. Nous confirmons la portée avec vous avant tout paiement.",
       "submit": "Faire créer mon site web",
       "submitting": "Envoi en cours…",
       "errors": {
@@ -4336,5 +4397,42 @@
         "another": "Envoyer une autre demande"
       }
     }
+  },
+  "forgotPassword": {
+    "eyebrow": "Centre de compte",
+    "headline": "Réinitialiser votre mot de passe",
+    "intro": "Entrez le courriel de votre compte TradeCatch. S’il correspond à un compte, nous vous enverrons un lien pour choisir un nouveau mot de passe. Le lien ne sert qu’une fois et expire dans 30 minutes.",
+    "email": "Courriel professionnel",
+    "submit": "M’envoyer un lien de réinitialisation",
+    "sending": "Envoi…",
+    "sent": "Si ce courriel a un compte, un lien de réinitialisation est en route. Vérifiez votre boîte de réception.",
+    "devLink": "Lien de réinitialisation local/dev :",
+    "devLinkCta": "Choisir un nouveau mot de passe",
+    "errorGeneric": "Une erreur est survenue. Réessayez.",
+    "rateLimited": "Trop de demandes. Réessayez dans quelques minutes.",
+    "back": "Retour à la connexion"
+  },
+  "setPassword": {
+    "eyebrow": "Centre de compte",
+    "headlineActivation": "Bienvenue chez TradeCatch : choisissez votre mot de passe",
+    "headlineReset": "Choisissez un nouveau mot de passe",
+    "introActivation": "Choisissez un mot de passe pour activer votre compte. Vous serez connecté tout de suite après.",
+    "introReset": "Choisissez un nouveau mot de passe. Vos autres appareils connectés à ce compte seront déconnectés.",
+    "password": "Nouveau mot de passe",
+    "confirm": "Confirmez le mot de passe",
+    "rules": "Au moins 10 caractères. Évitez les mots de passe courants et votre adresse courriel.",
+    "submit": "Enregistrer et me connecter",
+    "saving": "Enregistrement…",
+    "mismatch": "Les deux mots de passe ne correspondent pas.",
+    "invalidLink": "Ce lien est invalide, expiré ou déjà utilisé.",
+    "requestNew": "Demander un nouveau lien",
+    "errorGeneric": "Une erreur est survenue. Réessayez.",
+    "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes."
+  },
+  "passwordProblems": {
+    "too_short": "Utilisez au moins 10 caractères.",
+    "too_long": "Utilisez 128 caractères ou moins.",
+    "common": "Ce mot de passe est trop facile à deviner. Choisissez-en un autre.",
+    "contains_email": "N’utilisez pas votre adresse courriel dans votre mot de passe."
   }
 }
