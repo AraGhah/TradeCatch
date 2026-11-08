@@ -9,7 +9,7 @@ export type PricingPreviewTier = {
   idealFor: string;
 };
 
-/** Three-step plan ladder on the home page. Full detail lives on /pricing. */
+/** The two plans on the home page. Full detail lives on /pricing. */
 export function PricingPreview({
   eyebrow,
   headline,
@@ -29,7 +29,7 @@ export function PricingPreview({
   receptionistCta: string;
   note: string;
   billingNote?: string;
-  /** Growth is the recommended phone-answering middle tier. */
+  /** Professional (the second plan) is the one highlighted. */
   recommendedIndex?: number;
 }) {
   return (
@@ -56,7 +56,7 @@ export function PricingPreview({
       <StaggerGroup
         as="ol"
         stagger={0.12}
-        className="m-0 mt-[clamp(32px,4vw,48px)] grid list-none gap-4 p-0 md:grid-cols-3"
+        className="m-0 mt-[clamp(32px,4vw,48px)] grid list-none gap-4 p-0 md:grid-cols-2"
       >
         {tiers.map((tier, i) => {
           const premium = i === tiers.length - 1;

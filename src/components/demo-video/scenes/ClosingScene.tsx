@@ -46,12 +46,9 @@ export function ClosingScene({ p, copy }: SceneProps) {
           {copy.bookDemo}
         </Link>
 
-        {/* One destination to remember; the phone number stays secondary. */}
+        {/* One destination to remember. TradeCatch has no public phone line. */}
         <p className="mt-8 font-heading text-[clamp(28px,2.6vw,40px)] font-extrabold tracking-[-0.03em] text-white">
           {DEMO_DATA.contact.website}
-        </p>
-        <p className="mt-3 font-mono text-[16px] text-white/45">
-          {DEMO_DATA.contact.phone}
         </p>
       </div>
     </div>

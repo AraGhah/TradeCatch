@@ -19,7 +19,7 @@ const TIER_HREFS = {
 type TierHref = keyof typeof TIER_HREFS;
 
 /** Plan ids accepted by the book-audit intake, so a lead stays attributable. */
-const TIER_PLAN_INTEREST = ["starter", "growth", "receptionist"] as const;
+const TIER_PLAN_INTEREST = ["essential", "professional"] as const;
 
 type TierPlanInterest = (typeof TIER_PLAN_INTEREST)[number];
 
@@ -94,9 +94,10 @@ export type PricingTier = {
 type Labels = {
   cta: string;
   setupLabel: string;
-  customTitle: string;
-  customBody: string;
-  customCta: string;
+  /** Optional block under the plans for work outside the two standard plans. */
+  customTitle?: string;
+  customBody?: string;
+  customCta?: string;
   includesTitle: string;
   includesItems: string[];
   details: { title: string; body: string }[];
@@ -135,11 +136,8 @@ export function PricingExperience({
 }) {
   return (
     <div className="w-full">
-      {/*
-        Two standard plans sit side by side from md; the premium plan spans the
-        full row there and only joins them as a third column at lg.
-      */}
-      <div className="relative z-[1] -mt-[clamp(24px,3vw,40px)] grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+      {/* Two plans: stacked on a phone, side by side from md. */}
+      <div className="relative z-[1] -mt-[clamp(24px,3vw,40px)] grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
         {tiers.map((tier, i) => (
           <PlanCard
             key={tier.name}
@@ -158,6 +156,7 @@ export function PricingExperience({
         <div className="mt-[clamp(40px,5vw,56px)]">{afterPlans}</div>
       ) : null}
 
+      {labels.customTitle && labels.customBody && labels.customCta ? (
       <motion.section
         initial={{ y: 14 }}
         whileInView={{ y: 0 }}
@@ -195,6 +194,7 @@ export function PricingExperience({
           </CTAButton>
         </div>
       </motion.section>
+      ) : null}
 
       <motion.section
         initial="hidden"
@@ -269,7 +269,7 @@ function PlanCard({
   const featured = tier.emphasis === "featured";
 
   const shell = premium
-    ? "border-navy bg-navy text-white shadow-[0_36px_72px_-40px_rgb(var(--ink-rgb)/0.6)] md:col-span-2 lg:col-span-1"
+    ? "border-navy bg-navy text-white shadow-[0_36px_72px_-40px_rgb(var(--ink-rgb)/0.6)]"
     : featured
       ? "border-orange/55 bg-surface text-heading shadow-[0_32px_64px_-40px_rgba(228,118,43,0.45)] ring-1 ring-orange/20"
       : "border-[rgb(var(--ink-rgb)/0.1)] bg-surface text-heading shadow-[0_20px_48px_-40px_rgb(var(--ink-rgb)/0.28)]";
@@ -334,7 +334,7 @@ function PlanCard({
             {tier.name}
           </h2>
           <p
-            className={`mt-2 text-[15px] font-semibold tracking-[-0.01em] ${premium ? "text-orange" : "text-orange"}`}
+            className={`mt-2 text-[15px] font-semibold tracking-[-0.01em] ${premium ? "text-orange" : "text-ember-text"}`}
           >
             {tier.tagline}
           </p>

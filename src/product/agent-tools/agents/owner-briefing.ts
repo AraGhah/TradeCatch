@@ -89,8 +89,8 @@ async function briefOneOrganization(
     organizationId: organization.id,
     subject:
       locale === "fr"
-        ? `Votre resume quotidien — ${organization.name}`
-        : `Your daily briefing — ${organization.name}`,
+        ? `Votre résumé quotidien : ${organization.name}`
+        : `Your daily briefing: ${organization.name}`,
     title: locale === "fr" ? "Resume d'aujourd'hui" : "Today's summary",
     lines: briefingLines(overview, locale),
   });

@@ -50,7 +50,7 @@ test.describe("accessibility smoke", () => {
   for (const path of [
     "/",
     "/book-audit",
-    "/demo-video",
+    "/pricing",
     "/login",
     "/fr",
     "/fr/reserver-audit",

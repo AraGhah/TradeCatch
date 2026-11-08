@@ -186,8 +186,8 @@ export function createGrowthServices(deps: {
         );
         const when = new Date(appt.startsAt).toLocaleString();
         const body = is2h
-          ? `${businessName}: reminder — "${appt.title}" starts in about 2 hours (${when}).`
-          : `${businessName}: reminder — "${appt.title}" is tomorrow (${when}).`;
+          ? `${businessName}: appointment reminder. "${appt.title}" starts in about 2 hours (${when}).`
+          : `${businessName}: appointment reminder. "${appt.title}" is tomorrow (${when}).`;
 
         try {
           await sms.send({

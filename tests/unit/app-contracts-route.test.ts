@@ -1,4 +1,9 @@
 import "../support/next-request-context";
+
+// Contract renewal texts are bulk outreach, withheld at launch
+// (src/lib/launch-flags.ts). This file covers the preserved code with the
+// operator switch on; each test file runs in its own process.
+process.env.LAUNCH_ENABLE_BULK_CAMPAIGNS = "1";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { NextRequest } from "next/server";

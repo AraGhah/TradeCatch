@@ -3,6 +3,10 @@ import { requireTenantContext } from "@/product/saas/tenant";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import { getStarterStore } from "@/product/starter/runtime";
 import { QuoteIngestForm } from "@/components/app/QuoteIngestForm";
+import { QuoteWordingApproval } from "@/components/app/QuoteWordingApproval";
+import { getGrowthStore } from "@/product/growth/runtime";
+import { resolveBusinessNameForOrganization } from "@/product/starter/org-context";
+import { DEFAULT_QUOTE_STEPS_MS, quoteFollowUpBody } from "@/product/starter/types";
 
 export default async function AppQuotesPage({
   params,
@@ -24,6 +28,18 @@ export default async function AppQuotesPage({
     auth.ctx.organization.id,
   );
 
+  const settings = await getGrowthStore().getOrgSettings(
+    auth.ctx.organization.id,
+  );
+  const wordingLocale = locale === "fr" ? "fr" : "en";
+  const businessName = await resolveBusinessNameForOrganization(
+    auth.ctx.organization.id,
+  );
+  const wordingSteps = DEFAULT_QUOTE_STEPS_MS.map((ms, stepIndex) => ({
+    day: Math.round(ms / (24 * 60 * 60 * 1000)),
+    text: quoteFollowUpBody({ locale: wordingLocale, stepIndex, businessName }),
+  }));
+
   return (
     <div className="flex flex-col gap-6">
       <header>
@@ -32,6 +48,12 @@ export default async function AppQuotesPage({
         </h1>
         <p className="mt-2 text-navy/70">{t("quotes.intro")}</p>
       </header>
+
+      <QuoteWordingApproval
+        locale={wordingLocale}
+        steps={wordingSteps}
+        approvedAt={settings.quoteFollowUpApprovedAt}
+      />
 
       <QuoteIngestForm locale={locale === "fr" ? "fr" : "en"} />
 

@@ -1,4 +1,9 @@
 import "../support/next-request-context";
+
+// Outbound CRM webhooks are withheld at launch (src/lib/launch-flags.ts). This
+// file covers the preserved plan gate with the operator switch on; each test
+// file runs in its own process.
+process.env.LAUNCH_ENABLE_CRM_INTEGRATIONS = "1";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { NextRequest } from "next/server";

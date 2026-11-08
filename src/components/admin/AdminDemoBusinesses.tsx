@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import type { PlanId } from "@/product/saas/entitlements";
 
 type Business = {
   id: string;
@@ -24,7 +25,7 @@ type FormState = {
   serviceArea: string;
   language: "en" | "fr";
   timezone: string;
-  subscriptionPlan: "starter" | "growth" | "receptionist";
+  subscriptionPlan: PlanId;
   accountStatus: "active" | "suspended";
 };
 
@@ -38,7 +39,7 @@ const EMPTY_FORM: FormState = {
   serviceArea: "Montréal, Laval",
   language: "fr",
   timezone: "America/Toronto",
-  subscriptionPlan: "growth",
+  subscriptionPlan: "professional",
   accountStatus: "active",
 };
 
@@ -253,17 +254,16 @@ export function AdminDemoBusinesses() {
               onChange={(e) =>
                 setForm((prev) => ({
                   ...prev,
-                  subscriptionPlan: e.target.value as
-                    | "starter"
-                    | "growth"
-                    | "receptionist",
+                  subscriptionPlan: e.target.value as PlanId,
                 }))
               }
               className="rounded-md border border-navy/20 px-3 py-2"
             >
-              <option value="receptionist">Receptionist</option>
-              <option value="growth">Growth</option>
-              <option value="starter">Starter</option>
+              <option value="professional">Professional</option>
+              <option value="essential">Essential</option>
+              <option value="receptionist">Receptionist Plus (earlier plan)</option>
+              <option value="growth">Growth (earlier plan)</option>
+              <option value="starter">Starter (earlier plan)</option>
             </select>
           </label>
           <div className="md:col-span-2">

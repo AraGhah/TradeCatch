@@ -5,6 +5,7 @@ import { authorizeAdminRequest } from "@/lib/admin-auth";
 import { toDemoBusinessProfile } from "@/product/demo/business-service";
 import { getSaasStore } from "@/product/saas/runtime";
 import { requireTenantContext } from "@/product/saas/tenant";
+import { PLAN_IDS } from "@/product/saas/entitlements";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ const patchSchema = z
     serviceArea: z.string().trim().max(240).optional(),
     timezone: z.string().trim().min(3).max(64).optional(),
     language: z.enum(["en", "fr"]).optional(),
-    subscriptionPlan: z.enum(["starter", "growth", "receptionist"]).optional(),
+    subscriptionPlan: z.enum(PLAN_IDS).optional(),
     accountStatus: z.enum(["active", "suspended"]).optional(),
     features: z
       .object({

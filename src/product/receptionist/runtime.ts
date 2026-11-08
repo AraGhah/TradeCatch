@@ -298,6 +298,16 @@ function bootstrap(): RuntimeState {
     scheduler: createPhoneScheduler(scheduling),
 
     async onFinalized(session, config) {
+      // Meter the call's minutes against the business's monthly allowance.
+      // Finalization is claimed once per call, so this never double-counts.
+      void import("@/product/saas/usage-metering")
+        .then((m) =>
+          m.recordVoiceUsageForClient(
+            config.clientAccountId,
+            session.durationSeconds,
+          ),
+        )
+        .catch(() => undefined);
       await syncFinalizedCall(await leadSyncDeps(store), config, session);
       try {
         const { syncAiCallToCrm } = await import("@/product/crm/bridge");

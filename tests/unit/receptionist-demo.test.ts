@@ -5,6 +5,7 @@ import { POST as demoRoute } from "../../src/app/api/receptionist/demo/route";
 import {
   DemoError,
   MAX_DEMO_HISTORY,
+  demoConfig,
   runDemoTurn,
   type DemoResponse,
   type DemoScenario,
@@ -41,6 +42,16 @@ class Call {
     return response;
   }
 }
+
+/** A French call played to its end: the request is read back and confirmed. */
+const ENDED_CALL_FR = [
+  "j'ai un évier qui coule depuis hier",
+  "je m'appelle Marie Tremblay",
+  "123 rue Saint-Denis à Montréal",
+  "oui",
+  "demain matin",
+  "oui, c'est bien ça",
+];
 
 const agent = (r: DemoResponse) => r.messages.filter((m) => m.role === "agent").map((m) => m.text).join(" | ");
 
@@ -102,24 +113,37 @@ describe("website demo engine", () => {
     assert.equal(r.language, "en");
   });
 
-  it("bridges an emergency (simulated) and never dials for real", async () => {
-    const call = new Call("fr", "open");
-    await call.start();
-    const r = await call.say("je sens une forte odeur de gaz");
-    assert.equal(r.ended, true);
-    assert.deepEqual(r.transfer, { name: "l'équipe de garde", emergency: true });
-    assert.match(agent(r), /9-1-1/);
-    assert.ok(r.messages.some((m) => m.role === "system" && /simulé/i.test(m.text)));
-    assert.equal(r.summary!.outcome, "emergency_transferred");
-    assert.equal(r.summary!.urgency, "critical");
+  it("flags an emergency as urgent, tells the caller to dial 9-1-1 and never transfers", async () => {
+    for (const [language, speech] of [
+      ["fr", "je sens une forte odeur de gaz"],
+      ["en", "I smell gas in my house"],
+    ] as const) {
+      const call = new Call(language, "open");
+      await call.start();
+      let r = await call.say(speech);
+      // The call carries on and the details are taken: nothing is bridged.
+      assert.equal(r.ended, false, language);
+      assert.equal(r.transfer, undefined, language);
+      assert.match(agent(r), /9-1-1/, language);
+      assert.ok(!r.messages.some((m) => m.role === "system"), language);
+
+      r = await call.say(language === "fr" ? "je m'appelle Marie Tremblay" : "My name is Marie Tremblay");
+      assert.equal(r.step, "callback", language);
+      r = await call.say(language === "fr" ? "oui" : "yes");
+      assert.equal(r.ended, true, language);
+      assert.equal(r.transfer, undefined, language);
+      assert.equal(r.summary!.outcome, "message_taken", language);
+      assert.equal(r.summary!.urgency, "critical", language);
+    }
   });
 
-  it("transfers to a department only when the office is open", async () => {
+  it("never transfers to a department, in or out of office hours", async () => {
     const openCall = new Call("en", "open");
     await openCall.start();
     const open = await openCall.say("I need to talk to billing");
-    assert.equal(open.transfer?.name, "billing");
-    assert.equal(open.summary!.outcome, "transferred");
+    assert.equal(open.transfer, undefined);
+    assert.equal(open.ended, false);
+    assert.equal(open.step, "name");
 
     const closedCall = new Call("en", "after_hours");
     const closedStart = await closedCall.start();
@@ -128,6 +152,16 @@ describe("website demo engine", () => {
     const closed = await closedCall.say("I need to talk to billing");
     assert.equal(closed.transfer, undefined);
     assert.equal(closed.ended, false);
+  });
+
+  it("runs with the Essential plan limits: no transfer targets exist at all", () => {
+    for (const language of ["en", "fr"] as const) {
+      const config = demoConfig(language);
+      assert.deepEqual(config.routing, []);
+      assert.equal(config.fallbackTransferE164, undefined);
+      assert.equal(config.emergencyTransferE164, undefined);
+      assert.equal(config.backupTransferE164, undefined);
+    }
   });
 
   it("replays a call identically, returning only the newest turn", async () => {
@@ -150,15 +184,16 @@ describe("website demo engine", () => {
   });
 
   it("rejects histories that are not a live call", async () => {
-    // The call ends on a gas smell, so nothing can follow it.
+    // The call has already finished (the request was read back and confirmed),
+    // so nothing can follow it.
     await assert.rejects(
       () =>
         runDemoTurn({
           action: "say",
-          language: "en",
+          language: "fr",
           scenario: "open",
-          history: ["I smell gas in my house"],
-          speech: "hello?",
+          history: ENDED_CALL_FR,
+          speech: "allô?",
         }),
       (e) => e instanceof DemoError && e.code === "invalid_state",
     );
@@ -256,7 +291,7 @@ describe("website demo route", () => {
     assert.equal((await post({ action: "say", language: "en", speech: "y".repeat(401) })).status, 400);
     assert.equal((await post({ action: "say", language: "en", speech: "hi", history: Array(13).fill("hi") })).status, 400);
     assert.equal((await post({ action: "say", language: "en", speech: "hi", history: ["x".repeat(9_000)] })).status, 413);
-    assert.equal((await post({ action: "say", language: "en", speech: "hi", history: ["I smell gas"] })).status, 400);
+    assert.equal((await post({ action: "say", language: "fr", scenario: "open", speech: "allô?", history: ENDED_CALL_FR })).status, 400);
   });
 
   it("can be disabled and rate limits per IP", async () => {

@@ -226,7 +226,7 @@ export function technicianAlertBody(
   callerE164: string,
 ): string {
   const lines = [
-    `${client.contractorDisplayName} — nouvelle demande`,
+    `${client.contractorDisplayName} : nouvelle demande`,
     `Appelant: ${callerE164}`,
     collected.customerName ? `Nom: ${collected.customerName}` : null,
     collected.serviceAddress ? `Adresse: ${collected.serviceAddress}` : null,

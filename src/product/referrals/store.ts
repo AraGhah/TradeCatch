@@ -95,7 +95,10 @@ export type ReferralStore = {
     reward: RewardRecord,
   ): Promise<{ created: boolean; reward: RewardRecord }>;
   getReward(id: string): Promise<RewardRecord | null>;
+  /** The plan reward (kind `plan`) of a referral. */
   getRewardByReferral(referralId: string): Promise<RewardRecord | null>;
+  /** The website bonus (kind `website`) of a referral, if one was earned. */
+  getWebsiteBonusByReferral(referralId: string): Promise<RewardRecord | null>;
   getRewardByReferredOrganization(
     organizationId: string,
   ): Promise<RewardRecord | null>;
@@ -215,8 +218,9 @@ export function createMemoryReferralStore(): ReferralStore {
     async insertReward(reward) {
       const existing = findReward(
         (r) =>
-          r.referralId === reward.referralId ||
-          r.referredOrganizationId === reward.referredOrganizationId ||
+          (r.referralId === reward.referralId && r.kind === reward.kind) ||
+          (r.referredOrganizationId === reward.referredOrganizationId &&
+            r.kind === reward.kind) ||
           r.qualifyingSessionId === reward.qualifyingSessionId,
       );
       if (existing) return { created: false, reward: clone(existing) };
@@ -228,11 +232,17 @@ export function createMemoryReferralStore(): ReferralStore {
       return r ? clone(r) : null;
     },
     async getRewardByReferral(referralId) {
-      const r = findReward((x) => x.referralId === referralId);
+      const r = findReward((x) => x.referralId === referralId && x.kind === "plan");
+      return r ? clone(r) : null;
+    },
+    async getWebsiteBonusByReferral(referralId) {
+      const r = findReward((x) => x.referralId === referralId && x.kind === "website");
       return r ? clone(r) : null;
     },
     async getRewardByReferredOrganization(organizationId) {
-      const r = findReward((x) => x.referredOrganizationId === organizationId);
+      const r = findReward(
+        (x) => x.referredOrganizationId === organizationId && x.kind === "plan",
+      );
       return r ? clone(r) : null;
     },
     async getRewardByPaymentIntent(paymentIntentId) {

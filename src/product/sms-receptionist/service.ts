@@ -16,6 +16,7 @@ import {
   type OpenSlot,
   type ReceptionistScheduler,
 } from "@/product/receptionist/booking";
+import { launchFlagEnabled } from "@/lib/launch-flags";
 import type { LlmClient } from "@/product/receptionist/llm";
 import type { ReceptionistConfig } from "@/product/receptionist/types";
 import { classifyUrgency } from "@/product/missed-call/urgency";
@@ -255,6 +256,9 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
       const org = await deps.getOrganization(input.organizationId);
       if (!org || org.status !== "active") return skip("organization_inactive");
       if (!org.entitled) return skip("not_entitled");
+      // Texting is for follow-ups and reminders at launch. A customer who texts first is not
+      // answered by an open-ended assistant; the message is stored and shown to the owner.
+      if (!launchFlagEnabled("smsChatbot")) return skip("disabled");
       if (input.client.aiSmsReplies === false) return skip("disabled");
       if (input.paused) return skip("paused");
 

@@ -324,6 +324,6 @@ describe("texts to the caller", () => {
   it("writes hours the way each language says them", () => {
     const hours = { start: "08:30", end: "17:00", days: [1, 2, 3, 4, 5, 6] };
     assert.equal(hoursForText(hours, "fr"), "du lundi au samedi, de 8 h 30 à 17 h");
-    assert.equal(hoursForText(hours, "en"), "Monday to Saturday, 08:30–17:00");
+    assert.equal(hoursForText(hours, "en"), "Monday to Saturday, 08:30-17:00");
   });
 });

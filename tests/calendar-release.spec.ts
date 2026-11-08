@@ -17,7 +17,7 @@ for (const locale of ["en", "fr"] as const) {
       outlook: "planned",
     });
     await expect(page.getByTestId("calendar-availability")).toContainText(
-      locale === "fr" ? "pilote technique" : "technical pilot",
+      locale === "fr" ? "activé par notre équipe" : "switched on by our team",
     );
     await expect(
       page.getByRole("button", { name: /Connect Google|Connecter Google/ }),
@@ -36,7 +36,7 @@ for (const locale of ["en", "fr"] as const) {
     }
     await page.goto(`${locale === "fr" ? "/fr" : ""}/help/calendar`);
     await expect(page.getByRole("article")).toContainText(
-      locale === "fr" ? "inscription distincte" : "separately enrolled",
+      locale === "fr" ? "Nous l’activons pour votre entreprise" : "We switch it on for your business",
     );
     await expect(page.getByRole("article")).toContainText("Outlook");
   });

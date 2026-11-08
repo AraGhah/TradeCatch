@@ -2,8 +2,14 @@
  * Single source of truth for plan prices (CAD). The strings shown in
  * src/messages/{en,fr}.json are written from these numbers, and
  * tests/unit/plan-prices.test.ts fails if the copy and these numbers diverge.
+ *
+ * `essential` and `professional` are the plans sold at launch. The other three
+ * are LEGACY prices kept only so existing customers' billing, revenue figures
+ * and Stripe mappings stay correct; they are never shown on the public site.
  */
 export const PLAN_PRICES = {
+  essential: { setup: 1999.99, monthly: 249 },
+  professional: { setup: 1999.99, monthly: 349 },
   starter: { setup: 799.99, monthly: 349.99 },
   growth: { setup: 1499.99, monthly: 649.99 },
   receptionist: { setup: 1999.99, monthly: 949.99 },
@@ -19,6 +25,20 @@ export type PlanId = keyof typeof PLAN_PRICES;
  * entitlements.ts); it is not a billed allowance.
  */
 export const USAGE_ALLOWANCES = {
+  essential: {
+    smsSegmentsPerMonth: 1000,
+    voiceMinutesPerMonth: 500,
+    calendars: 1,
+    teamMembers: 3,
+    businessLocations: 1,
+  },
+  professional: {
+    smsSegmentsPerMonth: 2000,
+    voiceMinutesPerMonth: 750,
+    calendars: 1,
+    teamMembers: 5,
+    businessLocations: 1,
+  },
   starter: {
     smsSegmentsPerMonth: 500,
     voiceMinutesPerMonth: 0,
@@ -42,7 +62,7 @@ export const USAGE_ALLOWANCES = {
   },
 } as const satisfies Record<PlanId, Record<string, number>>;
 
-export type UsageMetric = keyof typeof USAGE_ALLOWANCES.starter;
+export type UsageMetric = keyof typeof USAGE_ALLOWANCES.essential;
 
 export function priceLocale(locale: string): "fr-CA" | "en-CA" {
   return locale.startsWith("fr") ? "fr-CA" : "en-CA";
@@ -61,6 +81,16 @@ export function formatPlanMoney(
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(amount);
+}
+
+/**
+ * "$249" for a whole amount, "$1,999.99" otherwise (and the French equivalents).
+ * Use this for every customer-facing price so the same number never appears as
+ * "$249" on one page and "$249.00" on another.
+ */
+export function formatPlanPrice(amount: number, locale: string): string {
+  const whole = Number.isInteger(amount);
+  return formatPlanMoney(amount, locale, whole ? 0 : 2);
 }
 
 /** How many months one job of `jobValue` pays a monthly fee. */

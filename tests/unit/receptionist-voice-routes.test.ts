@@ -1,4 +1,9 @@
 import "../support/next-request-context";
+
+// Voice cloning is withheld at launch (src/lib/launch-flags.ts). This file
+// covers the preserved routes with the operator switch on; each test file runs
+// in its own process.
+process.env.LAUNCH_ENABLE_CUSTOM_VOICE = "1";
 import assert from "node:assert/strict";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { NextRequest } from "next/server";
