@@ -36,7 +36,7 @@ export default async function WebsiteRequestPage({
 
   return (
     <>
-      <section className="relative overflow-hidden bg-navy pt-[clamp(72px,8vw,104px)] pb-[clamp(56px,7vw,88px)]">
+      <section className="relative overflow-hidden bg-navy pt-[clamp(44px,5.4vw,72px)] pb-[clamp(40px,5vw,64px)]">
         <Container className="relative">
           <p className="text-[13px] font-medium text-orange">{t("eyebrow")}</p>
           <h1
