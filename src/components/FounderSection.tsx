@@ -30,10 +30,10 @@ export function FounderSection({
 }) {
   return (
     <div
-      className="grid items-center gap-12"
+      className="grid items-center gap-8 lg:gap-[clamp(32px,5vw,64px)]"
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
     >
-      <div className="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[20px] bg-navy p-[clamp(24px,3vw,32px)] text-white shadow-ink-panel">
+      <div className="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[20px] bg-navy p-6 text-white shadow-ink-panel">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 opacity-45"
@@ -49,11 +49,11 @@ export function FounderSection({
           <p className="font-mono text-[10.5px] tracking-[0.12em] text-[rgba(255,255,255,0.6)] uppercase">
             {workLabel}
           </p>
-          <ol className="mt-5 flex list-none flex-col p-0">
+          <ol className="mt-4 flex list-none flex-col p-0">
             {work.map((item, i) => (
               <li
                 key={item.title}
-                className="flex gap-3.5 border-t border-white/10 py-3.5 first:border-t-0 first:pt-0"
+                className="flex gap-3.5 border-t border-white/10 py-3 first:border-t-0 first:pt-0"
               >
                 <span className="pt-0.5 font-mono text-[11px] font-semibold tracking-[0.08em] text-orange">
                   {String(i + 1).padStart(2, "0")}
@@ -69,7 +69,7 @@ export function FounderSection({
               </li>
             ))}
           </ol>
-          <div className="mt-6 border-t border-white/10 pt-4">
+          <div className="mt-4 border-t border-white/10 pt-3">
             <p className="font-heading text-[16px] font-bold tracking-[-0.02em] text-white">
               {name}
             </p>
@@ -83,11 +83,11 @@ export function FounderSection({
 
       <div>
         <p className="text-mono-label text-muted">{eyebrow}</p>
-        <h2 className="text-section mt-4 text-heading">{headline}</h2>
-        <blockquote className="mt-6 border-l-2 border-orange pl-5 text-[17px] leading-[1.65] text-heading">
+        <h2 className="text-section mt-3 text-heading">{headline}</h2>
+        <blockquote className="mt-4 border-l-2 border-orange pl-5 text-[16.5px] leading-[1.6] text-heading">
           {statement}
         </blockquote>
-        <ul className="mt-7 space-y-3">
+        <ul className="mt-5 space-y-2">
           {points.map((point) => (
             <li
               key={point}
@@ -98,7 +98,7 @@ export function FounderSection({
             </li>
           ))}
         </ul>
-        <div className="mt-8 flex flex-wrap items-center gap-5">
+        <div className="mt-6 flex flex-wrap items-center gap-5">
           <CTAButton href="/book-audit" variant="ink" size="md">
             {talkCta}
           </CTAButton>
