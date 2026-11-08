@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireTenantContext, tenantHasFeature } from "@/product/saas/tenant";
 import { AppointmentDesk } from "@/components/app/AppointmentDesk";
+import { ProfessionalOnlyNotice } from "@/components/app/ProfessionalOnlyNotice";
 import { ScheduleSubnav } from "@/components/app/ScheduleSubnav";
 
 export default async function AppBookingsPage({
@@ -13,6 +14,9 @@ export default async function AppBookingsPage({
   const t = await getTranslations("app.schedule");
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
+  if (!tenantHasFeature(auth.ctx, "APPOINTMENT_BOOKING")) {
+    return <ProfessionalOnlyNotice />;
+  }
 
   return (
     <div className="flex flex-col gap-6">
