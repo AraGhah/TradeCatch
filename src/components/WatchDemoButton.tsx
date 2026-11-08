@@ -11,56 +11,40 @@ import {
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { trackEvent } from "@/lib/analytics";
+import type { DemoLocale } from "@/components/demo-video/cuts";
 import {
-  CUT_MEDIA,
-  type DemoCut,
-  type DemoLocale,
-} from "@/components/demo-video/cuts";
-import {
+  DEFAULT_STORY_ID,
   STORY_COPY_KEY,
   STORY_MEDIA,
-  isStoryId,
   type StoryId,
 } from "@/components/demo-video/stories";
-
-/** i18n namespace under demoVideo for each scripted product cut. */
-const COPY_KEY: Record<DemoCut, "platform" | "missedCall"> = {
-  platform: "platform",
-  "missed-call": "missedCall",
-};
-
-/** What the dialog plays: a 16:9 product cut or a portrait (4:5) story. */
-export type DemoVideoId = DemoCut | StoryId;
 
 function resolveLocale(raw: string): DemoLocale {
   return raw.startsWith("fr") ? "fr" : "en";
 }
 
 /**
- * Opens a locale-matched TradeCatch demo MP4 in an accessible dialog: the
- * full platform demo (receptionist-led) by default, the short missed-call
- * cut, or one of the portrait "on the job" stories (see stories.ts). Not the
- * interactive /demo-video experience.
+ * Opens the one public TradeCatch demo ("Under the sink", see stories.ts) in
+ * an accessible dialog, in the visitor's language. Captions are a separate
+ * track; nothing is burned into the picture. There is no other public demo:
+ * the interactive /demo-video experience and the other cuts are retired.
  */
 export function WatchDemoButton({
   children,
   className,
-  video = "platform",
+  video = DEFAULT_STORY_ID,
   ariaLabel,
 }: {
   children: ReactNode;
   className?: string;
-  video?: DemoVideoId;
+  video?: StoryId;
   /** Needed when the button is a card whose visible text is long. */
   ariaLabel?: string;
 }) {
   const locale = resolveLocale(useLocale());
-  const storyId = isStoryId(video) ? video : null;
-  const cut = storyId ? null : (video as DemoCut);
-  const media = storyId ? STORY_MEDIA[storyId] : CUT_MEDIA[cut!];
-  const poster = storyId ? STORY_MEDIA[storyId].poster : undefined;
-  const portrait = storyId !== null;
-  const copyKey = storyId ? STORY_COPY_KEY[storyId] : COPY_KEY[cut!];
+  const media = STORY_MEDIA[video];
+  const poster = media.poster;
+  const copyKey = STORY_COPY_KEY[video];
   const t = useTranslations("demoVideo");
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -162,9 +146,7 @@ export function WatchDemoButton({
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={transcriptId}
-            className={`relative z-[1] max-h-[calc(100dvh-2rem)] w-full overflow-y-auto rounded-[14px] border border-white/12 bg-[#0a1018] shadow-[0_32px_80px_-24px_rgba(0,0,0,0.75)] ${
-              portrait ? "max-w-[620px] lg:max-w-[900px]" : "max-w-[1100px]"
-            }`}
+            className="relative z-[1] max-h-[calc(100dvh-2rem)] w-full max-w-[620px] overflow-y-auto rounded-[14px] border border-white/12 bg-[#0a1018] shadow-[0_32px_80px_-24px_rgba(0,0,0,0.75)] lg:max-w-[900px]"
           >
             <div className="flex items-center justify-between gap-4 border-b border-white/10 px-4 py-3 sm:px-5">
               <h2
@@ -183,22 +165,10 @@ export function WatchDemoButton({
               </button>
             </div>
 
-            {/* Portrait stories: 4:5, stacked on phones, video beside the text from lg up.
+            {/* Portrait (4:5): stacked on phones, video beside the text from lg up.
                 The video is never taller than a fixed share of the viewport so its controls stay on screen. */}
-            <div
-              className={
-                portrait
-                  ? "lg:grid lg:grid-cols-[auto_minmax(0,1fr)]"
-                  : undefined
-              }
-            >
-              <div
-                className={
-                  portrait
-                    ? "mx-auto aspect-[4/5] w-[min(100%,calc(62dvh*0.8))] bg-black lg:mx-0 lg:w-[calc(min(74dvh,720px)*0.8)]"
-                    : "aspect-video bg-black"
-                }
-              >
+            <div className="lg:grid lg:grid-cols-[auto_minmax(0,1fr)]">
+              <div className="mx-auto aspect-[4/5] w-[min(100%,calc(62dvh*0.8))] bg-black lg:mx-0 lg:w-[calc(min(74dvh,720px)*0.8)]">
                 <video
                   ref={videoRef}
                   key={`${video}-${locale}`}
@@ -224,18 +194,10 @@ export function WatchDemoButton({
                 </video>
               </div>
 
-              <div
-                className={
-                  portrait
-                    ? "lg:flex lg:flex-col lg:border-l lg:border-white/10 lg:[&>*:first-child]:border-t-0"
-                    : "contents"
-                }
-              >
-                {storyId ? (
-                  <p className="border-t border-white/10 px-4 py-3 text-[13px] leading-relaxed text-white/80 sm:px-5">
-                    {t(`${STORY_COPY_KEY[storyId]}.disclosure`)}
-                  </p>
-                ) : null}
+              <div className="lg:flex lg:flex-col lg:border-l lg:border-white/10 lg:[&>*:first-child]:border-t-0">
+                <p className="border-t border-white/10 px-4 py-3 text-[13px] leading-relaxed text-white/80 sm:px-5">
+                  {t(`${copyKey}.disclosure`)}
+                </p>
 
                 <details className="border-t border-white/10 px-4 py-3 sm:px-5">
                   <summary className="cursor-pointer text-[13px] font-semibold text-white/85">
