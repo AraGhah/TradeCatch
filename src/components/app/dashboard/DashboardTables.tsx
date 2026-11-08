@@ -22,7 +22,7 @@ function appointmentStatusLabel(
     : status;
 }
 
-type CallFilter = "all" | "answered" | "missed" | "open" | "ai" | "transferred" | "followUp";
+type CallFilter = "all" | "answered" | "missed" | "open" | "ai" | "followUp";
 type SortDir = "asc" | "desc";
 
 function pagesFor(length: number) {
@@ -86,7 +86,6 @@ export function CallsTable({
     const needle = query.trim().toLowerCase();
     const next = rows.filter((row) => {
       if (filter === "ai" && !row.aiHandled) return false;
-      if (filter === "transferred" && !row.transferred) return false;
       if (filter === "followUp" && !row.followUp) return false;
       if (filter === "answered" || filter === "missed" || filter === "open") {
         if (row.classification !== filter) return false;
@@ -118,7 +117,7 @@ export function CallsTable({
     }
   }
 
-  const filters: CallFilter[] = ["all", "answered", "missed", "open", "ai", "transferred", "followUp"];
+  const filters: CallFilter[] = ["all", "answered", "missed", "open", "ai", "followUp"];
 
   return (
     <section id="calls" className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-[var(--shadow-card)]">
