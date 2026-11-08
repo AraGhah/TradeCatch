@@ -81,7 +81,9 @@
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --header-h: clamp(68px, 7vw, 86px);
-  --section-y: clamp(80px, 9vw, 140px);
+  /* Vertical rhythm of a marketing section: 36px phone, 64px wide desktop. */
+  --section-y: clamp(36px, 5.2vw, 64px);
+  --section-y-tight: clamp(28px, 3.6vw, 48px);
   --pad-x: clamp(20px, 4vw, 40px);
 }
 
@@ -114,7 +116,7 @@
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
-  --container-page: 1320px;
+  --container-page: 1200px;
   --container-how: 1040px;
   --container-faq: 900px;
   --container-wizard: 760px;
@@ -199,29 +201,29 @@ h4 {
 
 /* Typography helpers */
 .text-hero {
-  font-size: clamp(40px, 5.6vw, 74px);
-  line-height: 0.98;
+  font-size: clamp(36px, 4.7vw, 62px);
+  line-height: 1;
   letter-spacing: -0.04em;
   font-weight: 800;
 }
 
 .text-page-hero {
-  font-size: clamp(36px, 4.8vw, 62px);
-  line-height: 1.02;
+  font-size: clamp(32px, 4vw, 52px);
+  line-height: 1.04;
   letter-spacing: -0.04em;
   font-weight: 800;
 }
 
 .text-section {
-  font-size: clamp(32px, 4vw, 52px);
-  line-height: 1.03;
+  font-size: clamp(28px, 3.3vw, 42px);
+  line-height: 1.06;
   letter-spacing: -0.04em;
   font-weight: 800;
 }
 
 .text-lede {
-  font-size: clamp(16.5px, 1.35vw, 19px);
-  line-height: 1.62;
+  font-size: clamp(16px, 1.25vw, 18px);
+  line-height: 1.58;
 }
 
 .text-mono-label {
