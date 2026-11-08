@@ -249,10 +249,10 @@ describe("website request service", () => {
 
     result = await service.adminUpdate(id, {
       status: "quoted",
-      quotedPriceCad: 799,
+      quotedPriceCad: 349.99,
       scopeSummary: "  5-page site, mobile-ready, contact form  ",
     });
-    assert.equal(result.ok && result.request.quotedPriceCad, 799);
+    assert.equal(result.ok && result.request.quotedPriceCad, 349.99);
     assert.equal(
       result.ok && result.request.scopeSummary,
       "5-page site, mobile-ready, contact form",
@@ -264,7 +264,7 @@ describe("website request service", () => {
     assert.equal(result.ok && result.request.status, "delivered");
   });
 
-  it("refuses to quote or start without a written scope and a price", async () => {
+  it("refuses to quote or start without a written scope", async () => {
     const service = setup();
     const { id } = await created(service);
     assert.deepEqual(await service.adminUpdate(id, { status: "quoted" }), {
@@ -272,26 +272,33 @@ describe("website request service", () => {
       error: "quote_required",
     });
     assert.deepEqual(
-      await service.adminUpdate(id, { status: "quoted", quotedPriceCad: 500 }),
-      { ok: false, error: "quote_required" },
-    );
-    assert.deepEqual(
-      await service.adminUpdate(id, { status: "quoted", scopeSummary: "scope" }),
+      await service.adminUpdate(id, { status: "quoted", quotedPriceCad: 349.99 }),
       { ok: false, error: "quote_required" },
     );
   });
 
-  it("refuses a price below the starting price and any skipped step", async () => {
+  it("fills in the published $349.99 itself when the scope is written", async () => {
     const service = setup();
     const { id } = await created(service);
-    assert.deepEqual(
-      await service.adminUpdate(id, {
-        status: "quoted",
-        quotedPriceCad: 200,
-        scopeSummary: "scope",
-      }),
-      { ok: false, error: "price_too_low" },
-    );
+    const result = await service.adminUpdate(id, { status: "quoted", scopeSummary: "scope" });
+    assert.ok(result.ok);
+    assert.equal(result.request.quotedPriceCad, 349.99);
+  });
+
+  it("refuses any price other than the published $349.99, and any skipped step", async () => {
+    const service = setup();
+    const { id } = await created(service);
+    for (const quotedPriceCad of [200, 500, 799]) {
+      assert.deepEqual(
+        await service.adminUpdate(id, {
+          status: "quoted",
+          quotedPriceCad,
+          scopeSummary: "scope",
+        }),
+        { ok: false, error: "price_mismatch" },
+        `price ${quotedPriceCad}`,
+      );
+    }
     assert.deepEqual(await service.adminUpdate(id, { status: "in_progress" }), {
       ok: false,
       error: "invalid_transition",
@@ -307,7 +314,7 @@ describe("website request service", () => {
     const { id } = await created(service);
     await service.adminUpdate(id, {
       status: "quoted",
-      quotedPriceCad: 600,
+      quotedPriceCad: 349.99,
       scopeSummary: "scope",
     });
     await service.adminUpdate(id, { status: "in_progress" });
