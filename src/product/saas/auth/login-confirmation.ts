@@ -13,6 +13,8 @@ export function loginConfirmationHtml(input: {
   token: string;
   nonce: string;
   locale: "en" | "fr";
+  /** Already validated by safeReturnPath; where to land after confirming. */
+  next?: string | null;
 }) {
   const fr = input.locale === "fr";
   const title = fr ? "Confirmez votre connexion" : "Confirm your sign-in";
@@ -40,7 +42,8 @@ export function loginConfirmationHtml(input: {
 <input type="hidden" name="token" value="${escape(input.token)}">
 <input type="hidden" name="confirmation" value="${escape(input.nonce)}">
 <input type="hidden" name="locale" value="${input.locale}">
-<button type="submit" name="confirm" value="1">${fr ? "Confirmer et me connecter" : "Confirm and sign in"}</button>
+${input.next ? `<input type="hidden" name="next" value="${escape(input.next)}">
+` : ""}<button type="submit" name="confirm" value="1">${fr ? "Confirmer et me connecter" : "Confirm and sign in"}</button>
 </form>
 <p class="hint">${fr ? "Votre lien reste inutilisé jusqu’à votre confirmation. Il expire 20 minutes après sa création." : "Your link stays unused until you confirm. It expires 20 minutes after it was created."}</p>
 <a href="${fr ? "/fr/connexion" : "/login"}">${fr ? "Retour à la connexion" : "Back to sign in"}</a>
