@@ -13,6 +13,79 @@ import {
 import { getAuthSecret } from "../tenant";
 
 const MAGIC_LINK_TTL_MS = 20 * 60 * 1000;
+/** An activation invite is read later than a sign-in link, so it lives longer. It is still single use. */
+const ACTIVATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Invites the owner of an account that TradeCatch created for them. The email
+ * carries a single-use link that signs them in; no password exists or is sent.
+ * Only server code that has already authorized an administrator calls this.
+ */
+export async function sendActivationInvite(input: {
+  email: string;
+  locale: "en" | "fr";
+  origin: string;
+  organizationId: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const email = normalizeEmail(input.email);
+  const store = getSaasStore();
+  const user = await store.getUserByEmail(email);
+  const organization = await store.getOrganization(input.organizationId);
+  if (!user || !organization) return { ok: false, error: "Account not found." };
+  const membership = await store.getMembership(organization.id, user.id);
+  if (!membership) return { ok: false, error: "Not a member of this account." };
+
+  const rawToken = randomToken(32);
+  const now = new Date();
+  await store.createMagicLink({
+    id: newId("mlk"),
+    email,
+    tokenHash: hashToken(rawToken),
+    organizationId: organization.id,
+    expiresAt: new Date(now.getTime() + ACTIVATION_TTL_MS).toISOString(),
+    createdAt: now.toISOString(),
+  });
+  const verifyUrl = `${input.origin.replace(/\/$/, "")}/api/auth/callback?token=${encodeURIComponent(rawToken)}&locale=${input.locale}`;
+  return sendEmail({
+    to: email,
+    subject:
+      input.locale === "fr"
+        ? `Activez votre compte TradeCatch`
+        : `Activate your TradeCatch account`,
+    text:
+      input.locale === "fr"
+        ? `Bonjour,
+
+Votre compte TradeCatch pour ${organization.name} est prêt. Cliquez sur le lien pour l’activer et vous connecter :
+${verifyUrl}
+
+Ce lien ne sert qu’une fois et expire dans 7 jours. Il n’y a aucun mot de passe à créer. Pour vous reconnecter plus tard, entrez votre courriel sur la page de connexion et nous vous enverrons un nouveau lien.
+`
+        : `Hi,
+
+Your TradeCatch account for ${organization.name} is ready. Click the link to activate it and sign in:
+${verifyUrl}
+
+The link works once and expires in 7 days. There is no password to create. To sign in later, enter your email on the sign-in page and we will send you a new link.
+`,
+  });
+}
+
+async function sendEmail(input: {
+  to: string;
+  subject: string;
+  text: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  const from = process.env.RESEND_FROM_EMAIL?.trim();
+  if (!apiKey || !from) return { ok: false, error: "Email is not configured." };
+  try {
+    const result = await new Resend(apiKey).emails.send({ from, ...input });
+    return result.error ? { ok: false, error: result.error.message } : { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "send failed" };
+  }
+}
 
 export async function requestMagicLink(input: {
   email: string;
@@ -94,15 +167,15 @@ async function sendMagicLinkEmail(input: {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   const from = process.env.RESEND_FROM_EMAIL?.trim();
   if (!apiKey || !from) {
-    console.warn("[saas-auth] Resend not configured — magic link not emailed");
+    console.warn("[saas-auth] Resend not configured: magic link not emailed");
     return { ok: false, error: "Email is not configured." };
   }
 
   const resend = new Resend(apiKey);
   const subject =
     input.locale === "fr"
-      ? `Connexion TradeCatch — ${input.orgName}`
-      : `TradeCatch sign-in — ${input.orgName}`;
+      ? `Connexion à TradeCatch pour ${input.orgName}`
+      : `TradeCatch sign-in for ${input.orgName}`;
   const body =
     input.locale === "fr"
       ? `Bonjour,\n\nCliquez pour vous connecter à TradeCatch (${input.orgName}) :\n${input.verifyUrl}\n\nCe lien expire dans 20 minutes.\n`
