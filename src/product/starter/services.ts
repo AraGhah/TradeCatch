@@ -263,7 +263,7 @@ export function createStarterServices(deps: {
         if (input.enableOwnerNotify !== false && settings.notifyEmail) {
           await sendBusinessNotifyEmail({
             toEmail: settings.notifyEmail,
-            subject: `New website lead — ${input.businessName}`,
+            subject: `New website lead: ${input.businessName}`,
             title: "New website lead",
             lines: [
               { label: "Name", value: lead.name },
@@ -532,7 +532,7 @@ export function createStarterServices(deps: {
           if (settings.notifyEmail) {
             await sendBusinessNotifyEmail({
               toEmail: settings.notifyEmail,
-              subject: "Quote reply — needs attention",
+              subject: "Quote reply: needs attention",
               title: "Customer replied to a quote follow-up",
               lines: [
                 { label: "Customer", value: active.customerName },
