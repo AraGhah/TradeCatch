@@ -17,7 +17,7 @@ export function Footer() {
   return (
     <footer className="border-t border-white/[0.08] bg-navy text-[rgba(255,255,255,0.62)]">
       <Container
-        className="pt-[clamp(52px,6vw,80px)] pb-10"
+        className="pt-[clamp(36px,4.4vw,56px)] pb-6"
       >
         {/*
           4-track mental model: brand spans 2, Company + Legal take 1 each.
@@ -35,10 +35,10 @@ export function Footer() {
         >
           <div className="min-w-0 [grid-column:1/-1] min-[700px]:[grid-column:span_2]">
             <BrandLockup inverted />
-            <p className="mt-5 max-w-[32em] text-[15.5px] leading-[1.65] text-[rgba(255,255,255,0.7)]">
+            <p className="mt-4 max-w-[32em] text-[15px] leading-[1.6] text-[rgba(255,255,255,0.74)]">
               {t("description")}
             </p>
-            <p className="mt-5 font-mono text-[12px] tracking-[0.05em] text-[rgba(255,255,255,0.64)]">
+            <p className="mt-3 font-mono text-[12px] tracking-[0.05em] text-[rgba(255,255,255,0.7)]">
               {site("serviceArea")}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-x-[14px] gap-y-2 text-[14px]">
@@ -55,7 +55,7 @@ export function Footer() {
             <p className="m-0 font-mono text-[10.5px] font-medium tracking-[0.14em] text-[rgba(255,255,255,0.64)] uppercase">
               {t("company")}
             </p>
-            <ul className="mt-[18px] flex list-none flex-col items-start gap-0.5 p-0">
+            <ul className="mt-3 flex list-none flex-col items-start gap-0 p-0">
               <li>
                 <Link href="/receptionist" className={linkClass}>
                   {nav("aiReceptionist")}
@@ -83,7 +83,7 @@ export function Footer() {
             <p className="m-0 font-mono text-[10.5px] font-medium tracking-[0.14em] text-[rgba(255,255,255,0.64)] uppercase">
               {t("legal")}
             </p>
-            <ul className="mt-[18px] flex list-none flex-col items-start gap-0.5 p-0">
+            <ul className="mt-3 flex list-none flex-col items-start gap-0 p-0">
               <li>
                 <Link href="/privacy-policy" className={linkClass}>
                   {t("legalLinks.privacy")}
@@ -129,7 +129,7 @@ export function Footer() {
       </Container>
 
       <div className="border-t border-white/[0.08]">
-        <Container className="flex flex-wrap items-center justify-between gap-4 py-6">
+        <Container className="flex flex-wrap items-center justify-between gap-3 py-4">
           <p className="m-0 font-mono text-[11.5px] text-[rgba(255,255,255,0.62)]">
             © {year} TradeCatch. {t("rightsReserved")}
           </p>
