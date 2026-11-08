@@ -40,6 +40,17 @@ const SCHEMA = readFileSync(
   path.join(process.cwd(), "src", "product", "referrals", "schema.sql"),
   "utf8",
 );
+// 036_launch_plans also widens the plan checks on the organization and Stripe
+// tables, which this referral-only database does not have. The referral part
+// (sections 2 and 3) is what this test needs.
+const LAUNCH_SQL = readFileSync(
+  path.join(process.cwd(), "src", "product", "saas", "launch-plans.sql"),
+  "utf8",
+);
+const LAUNCH_REFERRAL_SQL = LAUNCH_SQL.slice(
+  LAUNCH_SQL.indexOf("-- 2. Referral settings"),
+  LAUNCH_SQL.lastIndexOf("COMMIT;"),
+);
 const NOW = "2026-03-01T12:00:00.000Z";
 
 function reward(overrides: Partial<RewardRecord> = {}): RewardRecord {
@@ -48,8 +59,9 @@ function reward(overrides: Partial<RewardRecord> = {}): RewardRecord {
     referralId: "ref_1",
     referrerOrganizationId: "org_ref",
     referredOrganizationId: "org_new",
-    plan: "growth",
-    amountCents: 7500,
+    kind: "plan",
+    plan: "essential",
+    amountCents: 6500,
     currency: "CAD",
     status: "pending",
     livemode: true,
@@ -81,6 +93,7 @@ describe("referral schema and Postgres store (real PostgreSQL via PGlite)", { sk
     // The only table the referral schema depends on.
     await instance.exec("CREATE TABLE tc_organizations (id TEXT PRIMARY KEY);");
     await instance.exec(SCHEMA);
+    await instance.exec(LAUNCH_REFERRAL_SQL);
     return instance;
   }
 
@@ -111,6 +124,7 @@ describe("referral schema and Postgres store (real PostgreSQL via PGlite)", { sk
 
   it("applies cleanly and can be applied again (idempotent migration)", async () => {
     await db.exec(SCHEMA);
+    await db.exec(LAUNCH_REFERRAL_SQL);
     const { rows } = await db.query(
       `SELECT count(*)::int AS n FROM information_schema.tables WHERE table_name LIKE 'tc_referral%' OR table_name = 'tc_referrals'`,
     );
@@ -120,19 +134,26 @@ describe("referral schema and Postgres store (real PostgreSQL via PGlite)", { sk
   it("returns the published defaults until settings are saved, then round-trips them", async () => {
     const store = createPostgresReferralStore(poolOf(db));
     const defaults = await store.getSettings();
-    assert.deepEqual(defaults.rewardsCents, { starter: 5000, growth: 7500, receptionist: 12500 });
+    assert.deepEqual(defaults.rewardsCents, {
+      essential: 6500,
+      professional: 6500,
+      starter: 6500,
+      growth: 6500,
+      receptionist: 6500,
+    });
+    assert.equal(defaults.websiteBonusCents, 3500);
     assert.equal(defaults.fulfillmentMethod, "none");
 
     const saved = await store.saveSettings({
       ...defaults,
       holdDays: 14,
-      eligiblePlans: ["growth", "receptionist"],
+      eligiblePlans: ["essential", "professional"],
       fulfillmentMethod: "manual",
       updatedBy: "admin@example.com",
       updatedAt: NOW,
     });
     assert.equal(saved.holdDays, 14);
-    assert.deepEqual(saved.eligiblePlans, ["growth", "receptionist"]);
+    assert.deepEqual(saved.eligiblePlans, ["essential", "professional"]);
     assert.equal((await store.getSettings()).fulfillmentMethod, "manual");
   });
 
