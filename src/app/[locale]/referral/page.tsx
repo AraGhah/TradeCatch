@@ -11,12 +11,28 @@ import { logReferralFailure } from "@/product/referrals/log";
 import {
   DEFAULT_REFERRAL_SETTINGS,
   rewardAmountCents,
+  websiteBonusAmountCents,
   type ReferralSettings,
 } from "@/product/referrals/model";
 import { getReferralServiceReady } from "@/product/referrals/runtime";
-import { PLAN_ORDER, PREMIUM_PLAN } from "@/product/saas/plan-catalog";
+import { PLAN_ORDER } from "@/product/saas/plan-catalog";
 
 export const dynamic = "force-dynamic";
+
+/** The three amounts the copy quotes, formatted for the visitor's language. */
+function referralAmounts(settings: ReferralSettings, locale: string) {
+  const money = (cents: number) =>
+    formatPlanMoney(cents / 100, locale === "fr" ? "fr" : "en", 0);
+  const planCents = Math.max(
+    ...PLAN_ORDER.map((plan) => rewardAmountCents(settings, plan)),
+  );
+  const bonusCents = websiteBonusAmountCents(settings);
+  return {
+    planReward: money(planCents),
+    bonus: money(bonusCents),
+    max: money(planCents + bonusCents),
+  };
+}
 
 export async function generateMetadata({
   params,
@@ -29,7 +45,7 @@ export async function generateMetadata({
     locale,
     pathname: "/referral",
     title: t("metaTitle"),
-    description: t("metaDescription"),
+    description: t("metaDescription", referralAmounts(DEFAULT_REFERRAL_SETTINGS, locale)),
   });
 }
 
@@ -67,6 +83,8 @@ export default async function ReferralPage({
   }
 
   const money = (cents: number) => formatPlanMoney(cents / 100, lang, 0);
+  const amounts = referralAmounts(settings, lang);
+  const bonusCents = websiteBonusAmountCents(settings);
 
   return (
     <>
@@ -83,10 +101,10 @@ export default async function ReferralPage({
               letterSpacing: "-0.04em",
             }}
           >
-            {t("headline")}
+            {t("headline", amounts)}
           </h1>
           <p className="mt-5 max-w-[36em] text-[clamp(16px,1.35vw,18px)] leading-[1.6] text-white/70">
-            {t("intro")}
+            {t("intro", amounts)}
           </p>
           {codeIsLive ? (
             <p
@@ -126,56 +144,50 @@ export default async function ReferralPage({
                 {t("rewardsTitle")}
               </h2>
               <p className="mt-2 max-w-[40em] text-muted">
-                {t("rewardsIntro")}
+                {t("rewardsIntro", amounts)}
               </p>
               <ul className="mt-8 grid list-none gap-4 p-0 md:grid-cols-3">
                 {PLAN_ORDER.map((plan) => {
                   const cents = rewardAmountCents(settings, plan);
-                  const premium = plan === PREMIUM_PLAN;
                   return (
                     <li
                       key={plan}
-                      className={
-                        premium
-                          ? "rounded-lg bg-navy px-6 py-7 text-white shadow-lg ring-2 ring-orange"
-                          : "rounded-lg border border-[rgb(var(--ink-rgb)/0.12)] bg-surface px-6 py-7 text-heading"
-                      }
+                      className="rounded-lg border border-[rgb(var(--ink-rgb)/0.12)] bg-surface px-6 py-7 text-heading"
                     >
-                      <p
-                        className={
-                          premium ? "text-sm text-orange" : "text-sm text-muted"
-                        }
-                      >
-                        {plans(`kind.${plan}`)}
-                      </p>
+                      <p className="text-sm text-muted">{plans(`kind.${plan}`)}</p>
                       <h3 className="mt-1 font-heading text-xl font-extrabold">
                         {plans(`names.${plan}`)}
                       </h3>
-                      <p
-                        className={
-                          premium
-                            ? "mt-5 text-sm text-white/70"
-                            : "mt-5 text-sm text-muted"
-                        }
-                      >
-                        {t("youEarn")}
-                      </p>
+                      <p className="mt-5 text-sm text-muted">{t("youEarn")}</p>
                       <p className="font-heading text-4xl font-extrabold tracking-[-0.03em]">
                         {cents > 0 ? money(cents) : t("noReward")}
                       </p>
-                      <p
-                        className={
-                          premium
-                            ? "mt-1 text-sm text-white/70"
-                            : "mt-1 text-sm text-muted"
-                        }
-                      >
+                      <p className="mt-1 text-sm text-muted">
                         {cents > 0 ? t("giftCard") : ""}
                       </p>
                     </li>
                   );
                 })}
+                {bonusCents > 0 ? (
+                  <li
+                    data-testid="referral-website-bonus"
+                    className="rounded-lg border border-orange/50 bg-surface px-6 py-7 text-heading ring-1 ring-orange/20"
+                  >
+                    <p className="text-sm text-muted">{t("bonusLabel")}</p>
+                    <h3 className="mt-1 font-heading text-xl font-extrabold">
+                      {t("bonusTitle")}
+                    </h3>
+                    <p className="mt-5 text-sm text-muted">{t("bonusPlus")}</p>
+                    <p className="font-heading text-4xl font-extrabold tracking-[-0.03em]">
+                      + {money(bonusCents)}
+                    </p>
+                    <p className="mt-1 text-sm text-muted">{t("giftCard")}</p>
+                  </li>
+                ) : null}
               </ul>
+              <p className="mt-4 text-sm font-medium text-heading">
+                {t("maxNote", amounts)}
+              </p>
               <p className="mt-4 text-sm text-muted">{t("amountsNote")}</p>
             </Container>
           </section>
