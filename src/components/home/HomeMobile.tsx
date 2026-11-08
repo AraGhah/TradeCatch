@@ -6,7 +6,7 @@ import { StickyAuditCta } from "@/components/StickyAuditCta";
 import { StoryDemos } from "@/components/StoryDemos";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { WebsiteServiceAddOn } from "@/components/WebsiteServiceAddOn";
-import { formatPlanMoney, PLAN_PRICES } from "@/lib/plans";
+import { formatPlanPrice, PLAN_PRICES } from "@/lib/plans";
 import { localizedAnchor } from "@/lib/anchors";
 import { websiteServiceAddOn } from "@/lib/plan-marketing";
 
@@ -64,11 +64,10 @@ export async function HomeMobile({ locale }: { locale: string }) {
     cta: t("mobile.addOn.cta"),
   };
   const tags = [
-    t("mobile.pricing.starterTag"),
-    t("mobile.pricing.growthTag"),
-    t("mobile.pricing.plusTag"),
+    t("mobile.pricing.essentialTag"),
+    t("mobile.pricing.professionalTag"),
   ];
-  const planIds = ["starter", "growth", "receptionist"] as const;
+  const planIds = ["essential", "professional"] as const;
   const planNames = previewTiers.map((tier) => tier.name);
 
   return (
@@ -137,7 +136,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
         </Container>
       </section>
 
-      {/* 2b. Three short dramatizations: the product on the job */}
+      {/* 2b. The one public demo video */}
       <StoryDemos locale={locale} compact />
 
       {/* 3. Benefits */}
@@ -271,7 +270,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
           <ol className="mt-6 m-0 flex list-none flex-col gap-3 p-0">
             {planIds.map((id, i) => {
               const prices = PLAN_PRICES[id];
-              const recommended = id === "growth";
+              const recommended = id === "professional";
               return (
                 <li
                   key={id}
@@ -298,7 +297,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
                         {t("mobile.pricing.setupLabel")}
                       </dt>
                       <dd className="mt-0.5 font-heading text-[18px] font-bold text-heading">
-                        {formatPlanMoney(prices.setup, locale)}
+                        {formatPlanPrice(prices.setup, locale)}
                       </dd>
                     </div>
                     <div>
@@ -306,7 +305,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
                         {t("mobile.pricing.monthlyLabel")}
                       </dt>
                       <dd className="mt-0.5 font-heading text-[18px] font-bold text-orange">
-                        {formatPlanMoney(prices.monthly, locale)}
+                        {formatPlanPrice(prices.monthly, locale)}
                       </dd>
                     </div>
                   </dl>
