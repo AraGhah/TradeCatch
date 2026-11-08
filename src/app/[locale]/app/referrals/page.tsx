@@ -123,7 +123,22 @@ export default async function AppReferralsPage({
               </p>
             </li>
           ))}
+          {overview.websiteBonusCents > 0 ? (
+            <li
+              data-testid="referral-website-bonus"
+              className="rounded-md border border-orange/50 px-4 py-3"
+            >
+              <p className="text-sm text-navy/70">{t("websiteBonusLabel")}</p>
+              <p className="mt-1 font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+                + {money(overview.websiteBonusCents)}
+              </p>
+              <p className="mt-1 text-xs text-navy/60">{t("websiteBonusHelp")}</p>
+            </li>
+          ) : null}
         </ul>
+        <p className="mt-3 text-sm font-medium text-navy">
+          {t("maxNote", { amount: money(overview.maxRewardCents) })}
+        </p>
       </section>
 
       <section aria-labelledby="ref-stats">
