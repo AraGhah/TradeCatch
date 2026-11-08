@@ -7,6 +7,7 @@ import { FullMessagesProvider } from "@/components/FullMessagesProvider";
 import { Link } from "@/i18n/navigation";
 import { PLAN_DISPLAY_NAMES } from "@/product/saas/entitlements";
 import { PLAN_PRICES, formatPlanMoney } from "@/lib/plans";
+import { ADD_ONS } from "@/product/saas/plan-catalog";
 import { getInstallationStatus } from "@/product/saas/stripe-checkout";
 import { listOverages, usageSummary } from "@/product/saas/usage-metering";
 import { UsageOverageConfirm } from "@/components/app/UsageOverageConfirm";
@@ -34,6 +35,14 @@ export default async function BillingPage({
         listOverages(org.id).catch(() => []),
       ])
     : [null, [], []];
+  // Setup and the monthly price are shown separately, in Canadian dollars, with the date of the first monthly charge.
+  const websitePrice = formatPlanMoney(ADD_ONS.websiteService.priceCad, locale);
+  const checkoutFigures = org
+    ? {
+        setup: formatPlanMoney(PLAN_PRICES[org.plan].setup, locale),
+        monthly: formatPlanMoney(PLAN_PRICES[org.plan].monthly, locale),
+      }
+    : { setup: "", monthly: "" };
   return (
     <FullMessagesProvider>
       <div className="mx-auto flex max-w-xl flex-col gap-5 px-4 py-12">
@@ -76,16 +85,16 @@ export default async function BillingPage({
               installation.status === "canceled" ? (
                 <div className="mt-3">
                   <p className="mb-2 text-sm text-navy/70">
-                    {t("checkoutIntro")}
+                    {t("checkoutIntro", checkoutFigures)}
                   </p>
-                  <InstallationCheckoutButton />
+                  <InstallationCheckoutButton websitePrice={websitePrice} />
                 </div>
               ) : installation.status === "pending" ? (
                 <div className="mt-3">
                   <p className="mb-2 text-sm text-navy/70">
                     {t("checkoutPendingNote")}
                   </p>
-                  <InstallationCheckoutButton />
+                  <InstallationCheckoutButton websitePrice={websitePrice} />
                 </div>
               ) : null}
             </div>
