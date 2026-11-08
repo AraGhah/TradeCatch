@@ -282,10 +282,9 @@ export const DEMO_DATA = {
   onCall: "Marc D.",
   secondaryCustomer: "Michael Turner",
   secondaryValue: "CA$4,800",
-  /** The closing card shows the domain and the phone only — no personal inbox. */
+  /** The closing card shows the domain only: no personal inbox and no public phone. */
   contact: {
     website: "tradecatch.ca",
-    phone: "438-993-6997",
   },
 } as const;
 
