@@ -23,7 +23,7 @@ function accentHeadline(headline: string, accentWord: string) {
 }
 
 const SECTION =
-  "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-10 sm:py-12";
+  "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-8 sm:py-10";
 
 /**
  * Mobile-first homepage composition. Hidden from `lg` up so desktop keeps
@@ -73,7 +73,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
   return (
     <div className="lg:hidden">
       {/* 1. Hero */}
-      <section className="relative overflow-hidden bg-navy px-0 py-12 text-white sm:py-14">
+      <section className="relative overflow-hidden bg-navy px-0 py-9 text-white sm:py-11">
         <div
           aria-hidden
           className="bg-grid-ink pointer-events-none absolute inset-0"
@@ -365,7 +365,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
       </section>
 
       {/* 9. Final CTA */}
-      <section className="bg-navy px-0 py-12 text-white">
+      <section className="bg-navy px-0 py-9 text-white">
         <Container>
           <h2 className="font-heading text-[clamp(1.55rem,6vw,2.1rem)] font-extrabold tracking-[-0.04em] text-white">
             {t("mobile.finalCta.headline")}
