@@ -18,6 +18,9 @@ import { workUnitAsyncStorage } from "next/dist/server/app-render/work-unit-asyn
 const NOW = new Date("2026-10-28T15:00:00Z").getTime();
 const CUSTOMER = "+15145551234";
 
+// The open-ended text assistant is off at launch; these routes tests cover it for the day it is on.
+process.env.LAUNCH_ENABLE_SMS_CHATBOT = "1";
+
 const ENV_KEYS = [
   "TWILIO_AUTH_TOKEN",
   "TWILIO_ACCOUNT_SID",
