@@ -1,7 +1,7 @@
 /**
- * Marketing views derived from the plan catalog + entitlements. Pricing cards,
- * the comparison table and plan demos read these helpers so the site cannot
- * advertise a capability a plan does not actually have.
+ * Marketing views derived from the plan catalog + entitlements. Pricing cards
+ * and the comparison table read these helpers so the site cannot advertise a
+ * capability a plan does not actually have.
  */
 import {
   ADD_ONS,
@@ -10,22 +10,19 @@ import {
   PLAN_ORDER,
   PREMIUM_PLAN,
   capabilityAvailability,
-  getCapability,
   type Availability,
   type CapabilityId,
   type PlanId,
 } from "@/product/saas/plan-catalog";
 
-export type ComparisonMark = "y" | "n" | "p" | "l";
+export type ComparisonMark = "y" | "n";
 
 const AVAILABILITY_TO_MARK: Record<Availability, ComparisonMark> = {
   included: "y",
-  limited: "l",
   none: "n",
-  planned: "p",
 };
 
-/** Comparison rows in catalog order — one row per capability. */
+/** Comparison rows in catalog order, one row per capability. */
 export function comparisonRowsFromCatalog(): {
   capabilityId: CapabilityId;
   values: ComparisonMark[];
@@ -38,20 +35,10 @@ export function comparisonRowsFromCatalog(): {
   }));
 }
 
-export function planCardCapabilityIds(plan: PlanId): readonly CapabilityId[] {
+export function planCardCapabilityIds(
+  plan: keyof typeof PLAN_CATALOG,
+): readonly CapabilityId[] {
   return PLAN_CATALOG[plan].cardCapabilities;
-}
-
-export function planDemoCapabilityIds(plan: PlanId): readonly CapabilityId[] {
-  return PLAN_CATALOG[plan].demo.capabilities;
-}
-
-/** Every demo capability must be included (or limited) for that plan. */
-export function demoCapabilitiesAreEntitled(plan: PlanId): boolean {
-  return planDemoCapabilityIds(plan).every((id) => {
-    const availability = capabilityAvailability(plan, getCapability(id));
-    return availability === "included" || availability === "limited";
-  });
 }
 
 export function websiteServiceAddOn() {
