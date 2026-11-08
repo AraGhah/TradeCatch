@@ -70,7 +70,7 @@ test.describe("pricing page", () => {
     expect(text).toContain("1 999,99 $");
     expect(text).toContain("249 $");
     expect(text).toContain("349 $");
-    expect(text).toContain("349,99 $");
+    expect(text).toContain("699,99 $");
     expect(text).toContain("Tous les prix sont en dollars canadiens");
     expect(text).not.toMatch(/949,99|1 499,99|649,99|799,99/);
     expect(text).not.toMatch(/mois gratuit/i);
@@ -99,7 +99,7 @@ test.describe("pricing page", () => {
     await expect(
       section.getByRole("heading", { name: "Done-for-You Website Service" }),
     ).toBeVisible();
-    await expect(section).toContainText("$349.99 CAD");
+    await expect(section).toContainText("$699.99 CAD");
     await expect(section).toContainText("Available with Essential or Professional.");
     await expect(section).toContainText("Never added to your order automatically");
 
@@ -117,7 +117,7 @@ test.describe("pricing page", () => {
 
     // Each plan points at the add-on without adding it.
     const mentions = page.getByRole("link", {
-      name: "Need a website? Add our website service for $349.99.",
+      name: "Need a website? Add our website service for $699.99.",
     });
     await expect(mentions).toHaveCount(2);
     for (const link of await mentions.all()) {
@@ -141,7 +141,7 @@ test.describe("pricing page", () => {
     await expect(
       page.getByRole("button", { name: "Get My Website Built" }),
     ).toBeVisible();
-    await expect(page.locator("main")).toContainText("$349.99 CAD");
+    await expect(page.locator("main")).toContainText("$699.99 CAD");
   });
 
   test("French: the website service and its request page", async ({ page }) => {
@@ -149,7 +149,7 @@ test.describe("pricing page", () => {
     await settle(page);
     const section = page.locator("#website-service");
     await expect(section).toBeVisible();
-    await expect(section).toContainText("349,99 $ CAD");
+    await expect(section).toContainText("699,99 $ CAD");
     await section
       .getByRole("link", { name: "Faire créer mon site web" })
       .click();
