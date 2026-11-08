@@ -99,11 +99,11 @@ const COPY: Record<
   appointment_confirmed: {
     en: {
       title: "Appointment confirmed",
-      body: "{customer} — {service} in {location}. {when}",
+      body: "{customer}: {service} in {location}. {when}",
     },
     fr: {
       title: "Rendez-vous confirmé",
-      body: "{customer} — {service} à {location}. {when}",
+      body: "{customer} : {service} à {location}. {when}",
     },
   },
   appointment_canceled: {
@@ -403,6 +403,6 @@ export function renderNotice(
   return {
     title: copy.title,
     message: fill(copy.body, fields),
-    subject: `TradeCatch — ${copy.title}`,
+    subject: `TradeCatch : ${copy.title}`,
   };
 }
