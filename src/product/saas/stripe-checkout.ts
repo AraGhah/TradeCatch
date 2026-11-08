@@ -8,6 +8,7 @@ import {
 } from "@/product/referrals/billing-hooks";
 import type { PlanId } from "./entitlements";
 import { PLAN_IDS } from "./entitlements";
+import { ADD_ONS } from "./plan-catalog";
 import type { Organization } from "./types";
 
 export const CHECKOUT_COMPLETED_EVENT = "checkout.session.completed";
@@ -114,6 +115,47 @@ async function stripeGetJson(path: string, key: string): Promise<unknown> {
   return response.json();
 }
 
+const websitePriceSchema = z.object({
+  unit_amount: z.number().nullable(),
+  currency: z.string(),
+  active: z.boolean(),
+  type: z.string().optional(),
+  recurring: z.unknown().nullish(),
+});
+
+/**
+ * Stripe prices cannot be edited, so a catalog price change needs a new Stripe
+ * Price and a new environment variable. Refuse a configured price that is not
+ * exactly the published website price: the displayed amount and the charged
+ * amount must never differ. Fails closed (misconfigured), never silently charges.
+ */
+async function assertWebsitePriceMatchesCatalog(
+  priceId: string,
+  key: string,
+): Promise<void> {
+  let parsed: z.infer<typeof websitePriceSchema>;
+  try {
+    parsed = websitePriceSchema.parse(
+      await stripeGetJson(`prices/${encodeURIComponent(priceId)}`, key),
+    );
+  } catch {
+    throw new CheckoutError("unavailable");
+  }
+  const expectedCents = Math.round(ADD_ONS.websiteService.priceCad * 100);
+  if (
+    !parsed.active ||
+    parsed.currency.toLowerCase() !== "cad" ||
+    parsed.unit_amount !== expectedCents ||
+    parsed.recurring
+  ) {
+    console.error(
+      "[checkout] website service Stripe price does not match the catalog price",
+      { expectedCents, actualCents: parsed.unit_amount },
+    );
+    throw new CheckoutError("misconfigured");
+  }
+}
+
 const checkoutSessionResponseSchema = z.object({
   id: z.string().min(1),
   url: z.string().min(1).nullable(),
@@ -196,7 +238,9 @@ export async function createInstallationCheckoutSession(
       "metadata[flow]": "installation",
     });
     if (websiteService) {
-      body.set("line_items[1][price]", websiteServicePriceId(livemode));
+      const websitePrice = websiteServicePriceId(livemode);
+      await assertWebsitePriceMatchesCatalog(websitePrice, key);
+      body.set("line_items[1][price]", websitePrice);
       body.set("line_items[1][quantity]", "1");
       body.set("metadata[website_service]", "1");
     }
@@ -425,7 +469,7 @@ export async function synchronizeInstallationCheckout(
     // Referral bookkeeping: best effort, never throws, never delays billing's answer
     // beyond one lookup. See src/product/referrals/billing-hooks.ts.
     if (paidInstallation) await referralInstallationPaid(paidInstallation);
-    // The $349.99 website bonus needs the plan reward first, so it runs second. Also best effort.
+    // The website bonus needs the plan reward first, so it runs second. Also best effort.
     if (websiteChosen) await referralWebsiteServiceStarted(websiteChosen);
   }
 }
