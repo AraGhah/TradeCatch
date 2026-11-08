@@ -1,27 +1,11 @@
-import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
-import { getTranslations } from "next-intl/server";
-import { DemoVideoExperience } from "@/components/demo-video/DemoVideoExperience";
-import { buildMetadata } from "@/lib/seo";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "demoVideo" });
-  return {
-    ...buildMetadata({
-      locale,
-      pathname: "/demo-video",
-      title: t("title"),
-      description: t("description"),
-    }),
-    robots: { index: false, follow: false },
-  };
-}
-
+/**
+ * The interactive multi-story demo is retired for launch: TradeCatch ships one
+ * universal demo video (see WatchDemoButton). Old links go to the home page.
+ * The experience itself stays in src/components/demo-video so it can return.
+ */
 export default async function DemoVideoPage({
   params,
 }: {
@@ -29,6 +13,5 @@ export default async function DemoVideoPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-
-  return <DemoVideoExperience />;
+  redirect(locale === "fr" ? "/fr" : "/");
 }

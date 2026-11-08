@@ -77,18 +77,24 @@ test.describe("receptionist demo on the receptionist page", () => {
     ).toBeVisible();
   });
 
-  test("French: emergency is bridged (simulated) with the 9-1-1 message", async ({
+  test("French: an emergency gets the 9-1-1 message, never a transfer, and the details are still taken", async ({
     page,
   }) => {
     const section = await demoSection(page, "/fr/receptionniste");
-    await section.getByRole("button", { name: /Hors des heures/ }).click();
+    await section.getByRole("button", { name: /En dehors des heures/ }).click();
     const log = section.getByRole("log");
     await expect(log).toContainText("Plomberie Nord (démo)");
     await expect(log).toContainText(/fermés/);
 
     await section.getByRole("button", { name: /odeur de gaz/i }).click();
     await expect(log).toContainText("9-1-1");
-    await expect(log).toContainText(/Transfert d.urgence simulé/);
+    await expect(log).not.toContainText(/transf[eè]r|Transfert/i);
+    // The call carries on so the owner gets the caller's details.
+    await expect(section.getByText(/L.appel est terminé\./)).toHaveCount(0);
+
+    await section.getByLabel(/Ce que dit l.appelant/).fill("je m'appelle Marie Tremblay");
+    await section.getByRole("button", { name: "Envoyer" }).click();
+    await section.getByRole("button", { name: "Oui", exact: true }).click();
     await expect(section.getByText(/L.appel est terminé\./)).toBeVisible();
     await expect(section.locator("dl")).toContainText("Urgence");
   });
