@@ -1,4 +1,10 @@
 import assert from "node:assert/strict";
+
+// Call transfer, emergency routing and voice cloning are withheld at launch
+// (src/lib/launch-flags.ts). This file covers the preserved plan limits with the
+// operator switches on; each test file runs in its own process.
+process.env.LAUNCH_ENABLE_CALL_TRANSFER = "1";
+process.env.LAUNCH_ENABLE_CUSTOM_VOICE = "1";
 import { describe, it } from "node:test";
 import { demoClientAccount } from "../../src/product/missed-call/fixtures";
 import {
