@@ -8,6 +8,7 @@ import {
   consumeMagicLinkAndCreateSession,
   sessionCookieOptions,
 } from "@/product/saas/auth/magic-link";
+import { safeReturnPath } from "@/product/saas/auth/return-path";
 
 export const dynamic = "force-dynamic";
 
@@ -105,15 +106,18 @@ export async function POST(request: NextRequest) {
     if (!result.ok) return loginError(request, locale, result.error);
 
     // A 303 turns the form POST into a fresh GET of the workspace.
+    // Back to the page they were heading to, when it is one of our own.
+    const back = result.billingOnly ? null : safeReturnPath(body.get("next"));
     const response = NextResponse.redirect(
       new URL(
-        result.billingOnly
-          ? locale === "fr"
-            ? "/fr/facturation"
-            : "/billing"
-          : locale === "fr"
-            ? "/fr/app"
-            : "/app",
+        back ??
+          (result.billingOnly
+            ? locale === "fr"
+              ? "/fr/facturation"
+              : "/billing"
+            : locale === "fr"
+              ? "/fr/app"
+              : "/app"),
         request.url,
       ),
       {
