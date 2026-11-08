@@ -222,7 +222,7 @@ export function formatBusinessHours(hours: {
           : `${DAY_NAMES[run[0]!]} to ${DAY_NAMES[run.at(-1)!]}`,
     )
     .join(", ");
-  return `${label}, ${hours.start}–${hours.end}`;
+  return `${label}, ${hours.start}-${hours.end}`;
 }
 
 /** The plain data the placeholders are derived from (no server-only types). */
