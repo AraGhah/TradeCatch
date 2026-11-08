@@ -1,96 +1,23 @@
-import { Resend } from "resend";
-import { canManageBilling } from "../billing-access";
-import { isE2eHarness, isProductionRuntime } from "@/lib/config";
 import { hashToken, newId, randomToken } from "../ids";
 import { getSaasStore } from "../runtime";
 import { normalizeEmail } from "../store";
-import type { User } from "../types";
-import {
-  SESSION_COOKIE,
-  SESSION_TTL_SECONDS,
-  signSessionClaims,
-} from "./session-token";
-import { getAuthSecret } from "../tenant";
+import { devTokenAllowed, sendAuthEmail } from "./mailer";
+import { safeReturnPath } from "./return-path";
+import { getAuthSecret } from "./secret";
+import { SESSION_COOKIE } from "./session-token";
+import { startSessionForUser, type StartedSession } from "./session-start";
+
+// Account invitations now carry a "choose your password" link; see password-auth.ts.
+export { sendActivationInvite } from "./password-auth";
 
 const MAGIC_LINK_TTL_MS = 20 * 60 * 1000;
-/** An activation invite is read later than a sign-in link, so it lives longer. It is still single use. */
-const ACTIVATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-/**
- * Invites the owner of an account that TradeCatch created for them. The email
- * carries a single-use link that signs them in; no password exists or is sent.
- * Only server code that has already authorized an administrator calls this.
- */
-export async function sendActivationInvite(input: {
-  email: string;
-  locale: "en" | "fr";
-  origin: string;
-  organizationId: string;
-}): Promise<{ ok: true } | { ok: false; error: string }> {
-  const email = normalizeEmail(input.email);
-  const store = getSaasStore();
-  const user = await store.getUserByEmail(email);
-  const organization = await store.getOrganization(input.organizationId);
-  if (!user || !organization) return { ok: false, error: "Account not found." };
-  const membership = await store.getMembership(organization.id, user.id);
-  if (!membership) return { ok: false, error: "Not a member of this account." };
-
-  const rawToken = randomToken(32);
-  const now = new Date();
-  await store.createMagicLink({
-    id: newId("mlk"),
-    email,
-    tokenHash: hashToken(rawToken),
-    organizationId: organization.id,
-    expiresAt: new Date(now.getTime() + ACTIVATION_TTL_MS).toISOString(),
-    createdAt: now.toISOString(),
-  });
-  const verifyUrl = `${input.origin.replace(/\/$/, "")}/api/auth/callback?token=${encodeURIComponent(rawToken)}&locale=${input.locale}`;
-  return sendEmail({
-    to: email,
-    subject:
-      input.locale === "fr"
-        ? `Activez votre compte TradeCatch`
-        : `Activate your TradeCatch account`,
-    text:
-      input.locale === "fr"
-        ? `Bonjour,
-
-Votre compte TradeCatch pour ${organization.name} est prêt. Cliquez sur le lien pour l’activer et vous connecter :
-${verifyUrl}
-
-Ce lien ne sert qu’une fois et expire dans 7 jours. Il n’y a aucun mot de passe à créer. Pour vous reconnecter plus tard, entrez votre courriel sur la page de connexion et nous vous enverrons un nouveau lien.
-`
-        : `Hi,
-
-Your TradeCatch account for ${organization.name} is ready. Click the link to activate it and sign in:
-${verifyUrl}
-
-The link works once and expires in 7 days. There is no password to create. To sign in later, enter your email on the sign-in page and we will send you a new link.
-`,
-  });
-}
-
-async function sendEmail(input: {
-  to: string;
-  subject: string;
-  text: string;
-}): Promise<{ ok: true } | { ok: false; error: string }> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.RESEND_FROM_EMAIL?.trim();
-  if (!apiKey || !from) return { ok: false, error: "Email is not configured." };
-  try {
-    const result = await new Resend(apiKey).emails.send({ from, ...input });
-    return result.error ? { ok: false, error: result.error.message } : { ok: true };
-  } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : "send failed" };
-  }
-}
 
 export async function requestMagicLink(input: {
   email: string;
   locale: "en" | "fr";
   origin: string;
+  /** Where to land after signing in; ignored unless it is one of our own pages. */
+  next?: string | null;
 }): Promise<{ ok: true; devToken?: string } | { ok: false; error: string }> {
   const email = normalizeEmail(input.email);
   if (!email.includes("@")) {
@@ -132,7 +59,8 @@ export async function requestMagicLink(input: {
     createdAt: now.toISOString(),
   });
 
-  const verifyUrl = `${input.origin.replace(/\/$/, "")}/api/auth/callback?token=${encodeURIComponent(rawToken)}&locale=${input.locale}`;
+  const back = safeReturnPath(input.next);
+  const verifyUrl = `${input.origin.replace(/\/$/, "")}/api/auth/callback?token=${encodeURIComponent(rawToken)}&locale=${input.locale}${back ? `&next=${encodeURIComponent(back)}` : ""}`;
 
   const sent = await sendMagicLinkEmail({
     to: email,
@@ -141,14 +69,11 @@ export async function requestMagicLink(input: {
     orgName: organization.name,
   });
 
-  const allowDevToken =
-    (process.env.SAAS_DEV_LOGIN === "1" ||
-      (!isProductionRuntime() && !sent.ok)) &&
-    (!isProductionRuntime() || isE2eHarness());
+  const allowDevToken = devTokenAllowed(sent.ok);
 
   if (!sent.ok && !allowDevToken) {
     console.error("[saas-auth] magic-link delivery failed", {
-      error: sent.error || "send failed",
+      error: sent.ok ? "send failed" : sent.error || "send failed",
     });
   }
 
@@ -163,67 +88,31 @@ async function sendMagicLinkEmail(input: {
   verifyUrl: string;
   locale: "en" | "fr";
   orgName: string;
-}): Promise<{ ok: boolean; error?: string }> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from = process.env.RESEND_FROM_EMAIL?.trim();
-  if (!apiKey || !from) {
-    console.warn("[saas-auth] Resend not configured: magic link not emailed");
-    return { ok: false, error: "Email is not configured." };
-  }
-
-  const resend = new Resend(apiKey);
+}) {
   const subject =
     input.locale === "fr"
       ? `Connexion à TradeCatch pour ${input.orgName}`
       : `TradeCatch sign-in for ${input.orgName}`;
-  const body =
+  const text =
     input.locale === "fr"
       ? `Bonjour,\n\nCliquez pour vous connecter à TradeCatch (${input.orgName}) :\n${input.verifyUrl}\n\nCe lien expire dans 20 minutes.\n`
       : `Hi,\n\nClick to sign in to TradeCatch (${input.orgName}):\n${input.verifyUrl}\n\nThis link expires in 20 minutes.\n`;
-
-  try {
-    const result = await resend.emails.send({
-      from,
-      to: input.to,
-      subject,
-      text: body,
-    });
-    if (result.error) {
-      return { ok: false, error: result.error.message };
-    }
-    return { ok: true };
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "send failed",
-    };
-  }
+  return sendAuthEmail({ to: input.to, subject, text });
 }
 
 export async function consumeMagicLinkAndCreateSession(input: {
   rawToken: string;
   userAgent?: string;
   ip?: string;
-}): Promise<
-  | {
-      ok: true;
-      cookieValue: string;
-      user: User;
-      maxAge: number;
-      billingOnly: boolean;
-    }
-  | { ok: false; error: string }
-> {
-  const secret = getAuthSecret();
-  if (!secret) {
+}): Promise<StartedSession> {
+  // Check this before spending the single-use link, so a config gap cannot burn it.
+  if (!getAuthSecret()) {
     return { ok: false, error: "AUTH_SECRET is not configured." };
   }
-
   const store = getSaasStore();
-  const now = new Date();
   const link = await store.consumeMagicLink(
     hashToken(input.rawToken),
-    now.toISOString(),
+    new Date().toISOString(),
   );
   if (!link) {
     return { ok: false, error: "Invalid or expired link." };
@@ -234,60 +123,12 @@ export async function consumeMagicLinkAndCreateSession(input: {
     return { ok: false, error: "User not found." };
   }
 
-  let organizationId = link.organizationId;
-  if (!organizationId) {
-    const memberships = await store.listMembershipsForUser(user.id);
-    organizationId = memberships[0]?.organizationId;
-  }
-  if (!organizationId) {
-    return { ok: false, error: "No organization for this user." };
-  }
-
-  const organization = await store.getOrganization(organizationId);
-  if (!organization) {
-    return { ok: false, error: "Organization unavailable." };
-  }
-
-  const membership = await store.getMembership(organization.id, user.id);
-  if (!membership) {
-    return { ok: false, error: "Not a member of this organization." };
-  }
-
-  const billingOnly = organization.status !== "active";
-  if (billingOnly && !canManageBilling(membership.role)) {
-    return { ok: false, error: "Organization unavailable." };
-  }
-
-  const expiresAt = new Date(now.getTime() + SESSION_TTL_SECONDS * 1000);
-  const sessionId = newId("ses");
-  await store.createSession({
-    id: sessionId,
-    userId: user.id,
-    organizationId: organization.id,
-    expiresAt: expiresAt.toISOString(),
-    createdAt: now.toISOString(),
+  return startSessionForUser({
+    user,
+    organizationId: link.organizationId,
     userAgent: input.userAgent,
     ip: input.ip,
   });
-
-  const cookieValue = await signSessionClaims(
-    {
-      sid: sessionId,
-      uid: user.id,
-      oid: organization.id,
-      plan: organization.plan,
-      exp: Math.floor(expiresAt.getTime() / 1000),
-    },
-    secret,
-  );
-
-  return {
-    ok: true,
-    cookieValue,
-    billingOnly,
-    user,
-    maxAge: SESSION_TTL_SECONDS,
-  };
 }
 
 export function sessionCookieOptions(maxAge: number) {
