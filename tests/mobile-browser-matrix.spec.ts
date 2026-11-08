@@ -182,7 +182,7 @@ for (const [device, viewport] of Object.entries(viewports)) {
         );
         await page.locator('button[type="submit"]').click();
         await expect(page.getByRole("heading", { level: 1 })).toContainText(
-          fr ? "demande" : "audit request is in",
+          fr ? "demande" : "demo request is in",
         );
         await expect.poll(fits).toBe(true);
         expect(errors).toEqual([]);
