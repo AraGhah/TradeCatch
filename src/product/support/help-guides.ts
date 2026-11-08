@@ -81,14 +81,14 @@ export const HELP_GUIDES: Record<string, HelpGuide> = {
       en: [
         "Open Calls, then Phone settings. Confirm you are editing the correct business and have permission to change settings.",
         "Enter the business number and the TradeCatch number assigned by support in international format, for example +15145550101. Do not substitute an unassigned number.",
-        "Choose the inbound strategy, human transfer number, backup number and ring timeout. Keep a reachable human fallback.",
+        "Check the call recording setting and the voicemail fallback. Keep a reachable fallback so no caller is left without an answer.",
         "Read the forwarding instructions and acknowledge them only after your carrier setup is complete. Save and check the displayed connection state.",
         "Place an authorized test call and verify answering and fallback before changing public customer routing.",
       ],
       fr: [
         "Ouvrez Appels, puis Paramètres téléphone. Vérifiez l’entreprise et votre droit de modifier les paramètres.",
         "Saisissez le numéro de l’entreprise et le numéro TradeCatch attribué par le soutien au format international, par exemple +15145550101. N’utilisez pas un numéro non attribué.",
-        "Choisissez la stratégie d’appel, le transfert humain, le secours et le délai de sonnerie. Conservez un repli humain joignable.",
+        "Vérifiez l’enregistrement des appels et la messagerie de repli. Conservez un repli joignable pour qu’aucun appelant ne reste sans réponse.",
         "Lisez les instructions de renvoi et confirmez-les seulement après la configuration chez votre opérateur. Enregistrez et vérifiez l’état de connexion.",
         "Faites un appel de test autorisé et vérifiez la réponse et le repli avant de modifier le routage public.",
       ],
@@ -149,14 +149,14 @@ export const HELP_GUIDES: Record<string, HelpGuide> = {
   calendar: {
     steps: {
       en: [
-        "Open Settings → Calendar and check eligibility. Google Calendar is a founder-approved Growth technical pilot with explicit business enrollment; Outlook is planned. If you see the pilot notice, contact support rather than trying to connect.",
+        "Open Settings → Calendar and check the status. Google Calendar comes with the Professional plan and is switched on by our team after it has been tested with your calendar; Outlook is not available. If you see that it is not switched on yet, email contact@tradecatch.ca rather than trying to connect.",
         "Select Connect Google Calendar. If connection is not configured or not included in your access, ask support; do not enter Google credentials into a support ticket.",
         "When redirected to Google, select the authorized business account and review the requested permissions. Return to TradeCatch after granting access.",
         "Choose the business calendar using its calendar ID and summary, then save the selection. Review Hours and availability separately.",
         "Check that the status is Connected and run an authorized appointment test. Verify the resulting event in the selected business calendar.",
       ],
       fr: [
-        "Ouvrez Paramètres → Calendrier et vérifiez l’admissibilité. Google Calendar est un pilote technique Growth approuvé par le fondateur avec inscription explicite; Outlook reste prévu. Si l’avis de pilote apparaît, contactez le soutien avant toute connexion.",
+        "Ouvrez Paramètres → Calendrier et vérifiez l’état. Google Agenda est inclus avec le forfait Professional et activé par notre équipe après avoir été testé avec votre calendrier; Outlook n’est pas offert. S’il n’est pas encore activé, écrivez à contact@tradecatch.ca avant de tenter une connexion.",
         "Sélectionnez Connecter Google Calendar (Google Agenda). Si la connexion n’est pas configurée ou permise, contactez le soutien; ne mettez pas vos identifiants Google dans un billet.",
         "Après redirection vers Google, choisissez le compte professionnel autorisé et vérifiez les autorisations demandées. Revenez à TradeCatch après avoir accordé l’accès.",
         "Choisissez le calendrier professionnel avec son identifiant et son nom, puis enregistrez. Vérifiez séparément Heures et disponibilités.",
