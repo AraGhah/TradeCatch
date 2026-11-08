@@ -78,7 +78,7 @@ export function buildOverview(input: {
   } else if (activated && !input.answering) {
     status = "error";
     statusDetail =
-      "Activated but not answering — check call-handling mode, hours, or phone assignment.";
+      "Activated but not answering. Check the call-handling mode, hours or phone assignment.";
   }
 
   const completed = input.calls.filter((c) => c.status === "completed" || c.finalizedAt);
