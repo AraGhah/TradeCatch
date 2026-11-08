@@ -8,6 +8,11 @@
  */
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+
+// Live transfer is withheld at launch (src/lib/launch-flags.ts). This file covers
+// the preserved routing code with the operator switch on; each test file runs in
+// its own process.
+process.env.LAUNCH_ENABLE_CALL_TRANSFER = "1";
 import { demoClientAccount } from "../../src/product/missed-call/fixtures";
 import { createRuleBrain } from "../../src/product/receptionist/brain-rules";
 import { createReceptionistEngine } from "../../src/product/receptionist/engine";

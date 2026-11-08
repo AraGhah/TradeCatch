@@ -571,9 +571,9 @@ function afterHoursHandoff(
   let intent: CallIntent = "message";
   if (describesJob) {
     intent = mentionsAppointment(utterance) ? "appointment" : "service_request";
-    next.issue = next.issue ? `${next.issue} — ${detail}` : detail;
+    next.issue = next.issue ? `${next.issue}; ${detail}` : detail;
   } else if (keepBareRequest) {
-    next.message = next.message ? `${next.message} — ${detail}` : detail;
+    next.message = next.message ? `${next.message}; ${detail}` : detail;
   }
   return ask(input, next, intent, phrase(notice, lang));
 }
@@ -657,7 +657,7 @@ function handleReason(input: BrainInput): AgentDecision {
         flags: price.flags,
       };
     }
-    slots.issue = slots.issue ? `${slots.issue} — ${utterance}` : utterance;
+    slots.issue = slots.issue ? `${slots.issue}; ${utterance}` : utterance;
     return ask(input, slots, intent, price.reply, price.flags);
   }
 
@@ -667,7 +667,7 @@ function handleReason(input: BrainInput): AgentDecision {
     slots.message = detail;
     return ask(input, slots, intent, heard);
   }
-  slots.issue = slots.issue ? `${slots.issue} — ${detail}` : detail;
+  slots.issue = slots.issue ? `${slots.issue}; ${detail}` : detail;
   return ask(input, slots, intent, heard);
 }
 
@@ -714,7 +714,7 @@ function handleAnythingElse(input: BrainInput): AgentDecision {
     return handleReason({ ...input, session: { ...session, step: "reason" } });
   }
 
-  slots.message = slots.message ? `${slots.message} — ${utterance}` : utterance;
+  slots.message = slots.message ? `${slots.message}; ${utterance}` : utterance;
   const next = nextMissingStep(config, session, slots);
   if (next !== "anything_else")
     return ask(input, slots, session.intent, phrase("noted", lang));
@@ -759,7 +759,7 @@ function handleConfirm(input: BrainInput): AgentDecision {
     };
   }
   // Neither a clear yes nor anything recognisable: keep their words for the team.
-  slots.message = slots.message ? `${slots.message} — ${utterance}` : utterance;
+  slots.message = slots.message ? `${slots.message}; ${utterance}` : utterance;
   return finish(input, slots, session.intent);
 }
 
@@ -839,7 +839,7 @@ function handleCorrection(input: BrainInput): AgentDecision {
     );
   }
   slots.message = slots.message
-    ? `${slots.message} — correction: ${utterance}`
+    ? `${slots.message}; correction: ${utterance}`
     : `correction: ${utterance}`;
   return finish(input, slots, session.intent);
 }
@@ -910,7 +910,7 @@ export function createRuleBrain(): ReceptionistBrain {
           slots = mergeCallDetails(slots, details);
           if (!details.project) {
             slots.issue = slots.issue
-              ? `${slots.issue} — ${utterance}`
+              ? `${slots.issue}; ${utterance}`
               : utterance;
           }
           return ask(input, slots, session.intent);
@@ -997,7 +997,7 @@ export function createRuleBrain(): ReceptionistBrain {
           }
           // Keep what was said so a human can still read it back.
           slots.message = slots.message
-            ? `${slots.message} — callback: ${utterance}`
+            ? `${slots.message}; callback: ${utterance}`
             : `callback: ${utterance}`;
           if (callerNumberUsable(session))
             slots.callbackE164 = session.fromE164;
