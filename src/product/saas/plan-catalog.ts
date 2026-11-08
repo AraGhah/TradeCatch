@@ -275,7 +275,7 @@ export const ADD_ONS = {
    */
   websiteService: {
     id: "websiteService",
-    priceCad: 349.99,
+    priceCad: 699.99,
     priceIsStartingAt: false,
     billingSchedule: "one-time",
     includedInPlans: [],
@@ -289,25 +289,33 @@ export type AddOnId = keyof typeof ADD_ONS;
 /* Referral rewards                                                           */
 /* -------------------------------------------------------------------------- */
 
-/** Interac e-Transfer reward for a referred customer's paid plan, in CAD cents. */
-export const REFERRAL_PLAN_REWARD_CENTS = 6_500;
+/**
+ * Interac e-Transfer reward for a referred customer's paid plan, in CAD cents.
+ * The reward follows the plan the REFERRED customer buys: $50 for Essential,
+ * $75 for Professional. A reward is stamped with its amount when it is created,
+ * so changing these never touches what was already earned.
+ */
+export const REFERRAL_ESSENTIAL_REWARD_CENTS = 5_000;
+export const REFERRAL_PROFESSIONAL_REWARD_CENTS = 7_500;
+/** What the retired plans earned. They are no longer sold; kept so the table stays total. */
+export const REFERRAL_LEGACY_PLAN_REWARD_CENTS = 6_500;
 /** Extra reward when the referred customer also buys the website service. */
 export const REFERRAL_WEBSITE_BONUS_CENTS = 3_500;
+/** The largest plan reward that can be paid (Professional). */
+export const REFERRAL_PLAN_REWARD_CENTS = REFERRAL_PROFESSIONAL_REWARD_CENTS;
 /** The most one referral can ever earn: plan reward plus website bonus. */
 export const REFERRAL_MAX_REWARD_CENTS =
   REFERRAL_PLAN_REWARD_CENTS + REFERRAL_WEBSITE_BONUS_CENTS;
 
 /**
  * Default reward per plan PURCHASED BY THE REFERRED CUSTOMER, in CAD cents.
- * Essential and Professional earn the same $65. The legacy plans are listed so
- * the table stays total; they are not sold, so they are never paid out in
- * practice. An administrator can change these in the referral settings; the
- * values here seed the program and are what the public page shows until then.
+ * An administrator can change these in the referral settings; the values here
+ * seed the program and are what the public page shows until then.
  */
 export const DEFAULT_REFERRAL_REWARDS_CENTS: Record<PlanId, number> = {
-  essential: REFERRAL_PLAN_REWARD_CENTS,
-  professional: REFERRAL_PLAN_REWARD_CENTS,
-  starter: REFERRAL_PLAN_REWARD_CENTS,
-  growth: REFERRAL_PLAN_REWARD_CENTS,
-  receptionist: REFERRAL_PLAN_REWARD_CENTS,
+  essential: REFERRAL_ESSENTIAL_REWARD_CENTS,
+  professional: REFERRAL_PROFESSIONAL_REWARD_CENTS,
+  starter: REFERRAL_LEGACY_PLAN_REWARD_CENTS,
+  growth: REFERRAL_LEGACY_PLAN_REWARD_CENTS,
+  receptionist: REFERRAL_LEGACY_PLAN_REWARD_CENTS,
 };
