@@ -85,6 +85,7 @@ describe("starter quote follow-up", () => {
     const tick = await services.processDueQuotes({
       businessNameForOrg: async () => "Nord Plumbing",
       smsFromForOrg: async () => "+15145550999",
+      wordingApprovedForOrg: async () => true,
     });
     assert.equal(tick.sent, 1);
     assert.equal(sms.sent.length, 1);
@@ -112,6 +113,7 @@ describe("starter quote follow-up", () => {
     const tick2 = await services.processDueQuotes({
       businessNameForOrg: async () => "Nord Plumbing",
       smsFromForOrg: async () => "+15145550999",
+      wordingApprovedForOrg: async () => true,
     });
     assert.equal(tick2.sent, 0);
   });

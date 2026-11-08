@@ -59,7 +59,7 @@ const FIELD_ORDER: (keyof Values | "turnstile")[] = [
 
 const INPUT =
   "w-full rounded-[10px] border border-[rgb(var(--ink-rgb)/0.22)] bg-surface px-3.5 py-3 text-[16px] text-text outline-none transition-colors placeholder:text-muted/70 focus-visible:border-orange focus-visible:ring-2 focus-visible:ring-orange/40 aria-[invalid=true]:border-red-600 dark:aria-[invalid=true]:border-red-400";
-const ERROR = "text-[13px] font-medium text-red-700 dark:text-red-400";
+const ERROR = "text-[13px] font-medium text-red-700";
 
 function fieldId(name: string, scope: string) {
   return `website-request-${scope}-${name}`;

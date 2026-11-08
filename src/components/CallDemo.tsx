@@ -664,7 +664,7 @@ export function CallDemo({
               <CTAButton
                 href={{
                   pathname: "/book-audit",
-                  query: { plan: "receptionist" },
+                  query: { plan: "essential" },
                 }}
                 variant="ember"
                 className="mt-5"

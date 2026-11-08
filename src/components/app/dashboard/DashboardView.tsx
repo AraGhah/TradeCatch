@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { GrowthUpsell } from "@/components/app/GrowthUpsell";
+import { ProfessionalUpsell } from "@/components/app/ProfessionalUpsell";
 import { DashboardCharts } from "@/components/app/dashboard/DashboardCharts";
 import {
   AppointmentsTable,
@@ -27,14 +27,18 @@ export function DashboardView({
   pollQuery,
   customFrom,
   customTo,
-  showGrowthUpsell,
+  showProfessionalUpsell,
+  showAppointments,
   afterHeader,
 }: {
   initial: DashboardOverview;
   pollQuery: string;
   customFrom?: string;
   customTo?: string;
-  showGrowthUpsell: boolean;
+  /** Essential customers see a short note about what Professional adds. */
+  showProfessionalUpsell: boolean;
+  /** Appointments are a Professional feature: Essential hides every appointment block. */
+  showAppointments: boolean;
   /** Rendered directly under the page header (used for the Gmail summary card). */
   afterHeader?: React.ReactNode;
 }) {
@@ -109,7 +113,7 @@ export function DashboardView({
     (data.calls?.incoming.current ?? 0) === 0 &&
     (data.leads?.captured.current ?? 0) === 0 &&
     (data.recovery?.missedCallLeads.current ?? 0) === 0 &&
-    (data.appointments?.booked.current ?? 0) === 0;
+    (!showAppointments || (data.appointments?.booked.current ?? 0) === 0);
 
   const ranges = [
     { id: "today" as const, label: t("range.today") },
@@ -195,8 +199,8 @@ export function DashboardView({
           {t("notLinked")}
         </p>
       ) : null}
-      {(["calls", "leads", "recovery", "appointments", "notices", "revenue", "pipeline", "reviews"] as const)
-        .filter((key) => data.sources[key] === "error")
+      {(["calls", "leads", "recovery", "appointments", "notices", "revenue", "reviews"] as const)
+        .filter((key) => (key !== "appointments" || showAppointments) && data.sources[key] === "error")
         .map((key) => (
           <p key={key} role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
             {t(`errors.${key}`)}
@@ -289,7 +293,7 @@ export function DashboardView({
             onOpen={() => reveal("leads")}
           />
         ) : null}
-        {appointmentCards(data, t).map((card) => (
+        {(showAppointments ? appointmentCards(data, t) : []).map((card) => (
           <StatCard key={card.label} card={card} onOpen={() => card.onOpen(reveal)} />
         ))}
         {moneyCards(data, t, locale).map((card) => (
@@ -329,8 +333,9 @@ export function DashboardView({
           </h2>
           <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
             <AiStat label={t("ai.handled")} value={data.calls?.aiHandled.current} />
-            <AiStat label={t("ai.appointments")} value={data.appointments?.aiBooked.current} />
-            <AiStat label={t("ai.transfers")} value={data.calls?.transferred.current} />
+            {showAppointments ? (
+              <AiStat label={t("ai.appointments")} value={data.appointments?.aiBooked.current} />
+            ) : null}
             <AiStat label={t("ai.followUp")} value={data.calls?.followUp.current} />
           </dl>
           {data.aiCalls.length === 0 ? (
@@ -478,15 +483,17 @@ export function DashboardView({
         }}
       />
       <LeadsTable rows={data.leadRows} status={leadStatus} onStatus={setLeadStatus} />
-      <AppointmentsTable
-        rows={data.appointmentRows}
-        status={appointmentStatus}
-        onStatus={setAppointmentStatus}
-        onOpen={(id) => {
-          setSelectedCallId(null);
-          setSelectedAppointmentId(id);
-        }}
-      />
+      {showAppointments ? (
+        <AppointmentsTable
+          rows={data.appointmentRows}
+          status={appointmentStatus}
+          onStatus={setAppointmentStatus}
+          onOpen={(id) => {
+            setSelectedCallId(null);
+            setSelectedAppointmentId(id);
+          }}
+        />
+      ) : null}
 
       {data.sources.revenue === "ready" ? (
         // A file download served by a route handler, not a page: <Link> would try to client-route it.
@@ -499,7 +506,7 @@ export function DashboardView({
         </a>
       ) : null}
 
-      {showGrowthUpsell ? <GrowthUpsell /> : null}
+      {showProfessionalUpsell ? <ProfessionalUpsell /> : null}
     </div>
   );
 }
@@ -638,7 +645,6 @@ function callCards(
     countCard(t("cards.answered"), block?.answered, "good", (reveal) => reveal("calls", { calls: "answered" }), unavailable),
     countCard(t("cards.missed"), block?.missed, "bad", (reveal) => reveal("calls", { calls: "missed" }), unavailable),
     countCard(t("cards.ai"), block?.aiHandled, "good", (reveal) => reveal("ai", { calls: "ai" }), unavailable),
-    countCard(t("cards.transferred"), block?.transferred, "neutral", (reveal) => reveal("calls", { calls: "transferred" }), unavailable),
     countCard(t("cards.followUp"), block?.followUp, "bad", (reveal) => reveal("calls", { calls: "followUp" }), unavailable),
   ];
 }
@@ -713,16 +719,6 @@ function moneyCards(
       onOpen: (reveal) => reveal("leads"),
     });
   }
-  if (data.sources.pipeline === "ready") {
-    cards.push({
-      label: t("cards.pipeline"),
-      value: formatMoney(data.pipelineEstimate, locale),
-      hint: data.pipelineEstimate == null ? t("noAmount") : t("pipelineNote"),
-      delta: null,
-      tone: "neutral",
-      onOpen: (reveal) => reveal("leads"),
-    });
-  }
   if (data.reviewsSent) {
     cards.push(countCard(t("cards.reviews"), data.reviewsSent, "neutral", (reveal) => reveal("activity"), t("unavailable")));
   }
@@ -746,8 +742,6 @@ function activityDetail(
       "message_taken",
       "appointment_requested",
       "appointment_booked",
-      "transferred",
-      "emergency_transferred",
       "faq_answered",
       "voicemail",
       "caller_hung_up",

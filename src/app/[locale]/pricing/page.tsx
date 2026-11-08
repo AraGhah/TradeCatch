@@ -11,14 +11,6 @@ import {
   type PlanComparisonData,
 } from "@/components/PlanComparison";
 import {
-  PlanBreakEven,
-  type PlanBreakEvenCopy,
-} from "@/components/PlanBreakEven";
-import {
-  PlanWalkthrough,
-  type PlanWalkthroughCopy,
-} from "@/components/PlanWalkthrough";
-import {
   WebsiteServiceAddOn,
   type WebsiteServiceAddOnCopy,
 } from "@/components/WebsiteServiceAddOn";
@@ -27,8 +19,17 @@ import {
   type ReferralProgramTeaserCopy,
 } from "@/components/ReferralProgramTeaser";
 import { localizedAnchor } from "@/lib/anchors";
+import { schedulingVerified } from "@/lib/launch-flags";
+import { comparisonRowsFromCatalog } from "@/lib/plan-marketing";
+import { formatPlanMoney } from "@/lib/plans";
 import { buildMetadata } from "@/lib/seo";
-import type { PlanId } from "@/product/saas/plan-catalog";
+import {
+  PLAN_ORDER,
+  REFERRAL_MAX_REWARD_CENTS,
+  REFERRAL_PLAN_REWARD_CENTS,
+  REFERRAL_WEBSITE_BONUS_CENTS,
+  type PlanId,
+} from "@/product/saas/plan-catalog";
 
 export async function generateMetadata({
   params,
@@ -52,22 +53,46 @@ export default async function PricingPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const lang = locale === "fr" ? "fr" : "en";
   const t = await getTranslations("pricing");
   const plans = await getTranslations("plans");
   const cta = await getTranslations("cta");
 
+  // Appointment scheduling is advertised as operational only after the operator
+  // confirms live verification (see launch-flags.ts). Until then the Professional
+  // card says plainly that it is switched on per business after testing.
+  const schedulingLive = schedulingVerified();
+
   // Hash links need the visitor's localized path (see localizedAnchor).
-  const tiers = (t.raw("tiers") as PricingTier[]).map((tier) =>
-    tier.secondaryCtaHref?.includes("#")
+  const tiers = (t.raw("tiers") as PricingTier[]).map((tier) => {
+    const linked = tier.secondaryCtaHref?.includes("#")
       ? {
           ...tier,
           secondaryCtaHref: localizedAnchor(locale, tier.secondaryCtaHref),
         }
-      : tier,
-  );
+      : tier;
+    return !schedulingLive && linked.planInterest === "professional"
+      ? { ...linked, usageNote: t("schedulingNote") }
+      : linked;
+  });
   const principles = t.raw("principles") as string[];
   const details = t.raw("details") as { title: string; body: string }[];
-  const comparison = t.raw("comparison") as PlanComparisonData;
+
+  // The comparison table is generated from the entitlements the backend
+  // enforces, so it cannot show Essential with a feature it does not have.
+  const comparisonCopy = t.raw("comparison") as Omit<
+    PlanComparisonData,
+    "columns" | "rows"
+  >;
+  const comparison: PlanComparisonData = {
+    ...comparisonCopy,
+    columns: PLAN_ORDER.map((id) => plans(`names.${id}`)),
+    rows: comparisonRowsFromCatalog().map((row) => ({
+      feature: plans(`capabilities.${row.capabilityId}.label`),
+      values: row.values,
+    })),
+  };
+
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -76,39 +101,6 @@ export default async function PricingPage({
       name: detail.title,
       acceptedAnswer: { "@type": "Answer", text: detail.body },
     })),
-  };
-
-  const walkthroughScenes = Object.fromEntries(
-    (
-      Object.entries(plans.raw("capabilities") as Record<
-        string,
-        { demoTitle: string; demoBody: string }
-      >) as [string, { demoTitle: string; demoBody: string }][]
-    ).map(([id, cap]) => [id, { title: cap.demoTitle, body: cap.demoBody }]),
-  );
-
-  const walkthroughCopy: PlanWalkthroughCopy = {
-    eyebrow: plans("walkthrough.eyebrow"),
-    title: plans("walkthrough.title"),
-    intro: plans("walkthrough.intro"),
-    illustrativeLabel: plans("walkthrough.illustrativeLabel"),
-    selectLabel: plans("walkthrough.selectLabel"),
-    next: plans("walkthrough.next"),
-    previous: plans("walkthrough.previous"),
-    // Plain template — PlanWalkthrough fills {current}/{total}. Do not use
-    // plans("…"): next-intl would require those values at call time.
-    stepOf: plans.raw("walkthrough.stepOf") as string,
-    planKinds: {
-      starter: plans("kind.starter"),
-      growth: plans("kind.growth"),
-      receptionist: plans("kind.receptionist"),
-    },
-    planNames: {
-      starter: plans("names.starter"),
-      growth: plans("names.growth"),
-      receptionist: plans("names.receptionist"),
-    },
-    scenes: walkthroughScenes,
   };
 
   const websiteServiceCopy: WebsiteServiceAddOnCopy = {
@@ -125,21 +117,29 @@ export default async function PricingPage({
   };
 
   const referralT = await getTranslations("referrals.public");
+  const money = (cents: number) => formatPlanMoney(cents / 100, lang, 0);
+  const referralAmounts = {
+    planReward: money(REFERRAL_PLAN_REWARD_CENTS),
+    bonus: money(REFERRAL_WEBSITE_BONUS_CENTS),
+    max: money(REFERRAL_MAX_REWARD_CENTS),
+  };
+  const planNames = Object.fromEntries(
+    (["essential", "professional", "starter", "growth", "receptionist"] as PlanId[]).map(
+      (id) => [id, plans(`names.${id}`)],
+    ),
+  ) as Record<PlanId, string>;
   const referralCopy: ReferralProgramTeaserCopy = {
     eyebrow: referralT("eyebrow"),
-    title: referralT("headline"),
-    intro: referralT("intro"),
+    title: referralT("headline", referralAmounts),
+    intro: referralT("intro", referralAmounts),
     youEarn: referralT("youEarn"),
     giftCard: referralT("giftCard"),
+    bonusTitle: referralT("bonusTitle"),
+    bonusLabel: referralT("bonusLabel"),
+    maxNote: referralT("maxNote", referralAmounts),
     cta: plans("referralTeaser.cta"),
-    planNames: {
-      starter: plans("names.starter"),
-      growth: plans("names.growth"),
-      receptionist: plans("names.receptionist"),
-    },
+    planNames,
   };
-
-  const planIds: PlanId[] = ["starter", "growth", "receptionist"];
 
   return (
     <>
@@ -219,9 +219,6 @@ export default async function PricingPage({
               setupLabel: t("setupLabel"),
               onceLabel: t("onceLabel"),
               monthlyEyebrow: t("monthlyEyebrow"),
-              customTitle: t("customTitle"),
-              customBody: t("customBody"),
-              customCta: t("customCta"),
               includesTitle: t("includesTitle"),
               includesItems: t.raw("includesItems") as string[],
               websiteMention: t("websiteMention"),
@@ -233,13 +230,13 @@ export default async function PricingPage({
       </section>
 
       <section
-        id="see-plans"
+        id="compare"
         className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
       >
         <Container>
           <div data-reveal>
-            <PlanWalkthrough copy={walkthroughCopy} initialPlan="growth" />
+            <PlanComparison data={comparison} />
           </div>
         </Container>
       </section>
@@ -251,41 +248,7 @@ export default async function PricingPage({
       >
         <Container>
           <div data-reveal>
-            <ReferralProgramTeaser
-              locale={locale === "fr" ? "fr" : "en"}
-              copy={referralCopy}
-            />
-          </div>
-        </Container>
-      </section>
-
-      <section
-        id="worth-it"
-        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <div data-reveal>
-            <PlanBreakEven
-              locale={locale === "fr" ? "fr" : "en"}
-              copy={t.raw("breakEven") as PlanBreakEvenCopy}
-              plans={planIds.map((id, i) => ({
-                id,
-                name: tiers[i]!.name,
-              }))}
-            />
-          </div>
-        </Container>
-      </section>
-
-      <section
-        id="compare"
-        className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <div data-reveal>
-            <PlanComparison data={comparison} />
+            <ReferralProgramTeaser locale={lang} copy={referralCopy} />
           </div>
         </Container>
       </section>

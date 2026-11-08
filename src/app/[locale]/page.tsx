@@ -58,7 +58,6 @@ export default async function HomePage({
     title: string;
     body: string;
   }[];
-  const pilotPoints = t.raw("pilot.points") as string[];
 
   return (
     <>
@@ -215,7 +214,6 @@ export default async function HomePage({
 
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <WatchDemoButton
-                video="missed-call"
                 className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[translate,scale,background] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {t("proofExamples.demoCta")}
@@ -227,10 +225,10 @@ export default async function HomePage({
           </Container>
         </section>
 
-        {/* 3b. Three short dramatizations: the product on the job */}
+        {/* 3b. The one public demo video */}
         <StoryDemos locale={locale} id="on-the-job" />
 
-        {/* 4. Plan ladder (full detail lives on /pricing) */}
+        {/* 4. The two plans (full detail lives on /pricing) */}
         <section
           id="plans"
           className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
@@ -251,7 +249,7 @@ export default async function HomePage({
           </Container>
         </section>
 
-        {/* 5. Founder: the one trust signal a pilot-stage product has */}
+        {/* 5. Founder: who builds and runs the system */}
         <section
           className="bg-paper"
           style={{ padding: "var(--section-y) 0" }}
@@ -308,66 +306,29 @@ export default async function HomePage({
           </Container>
         </section>
 
-        {/* 7. The offer: founding pilot */}
+        {/* 7. Final call to action */}
         <section
-          id="pilot"
-          className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
+          className="bg-navy text-white"
           style={{ padding: "var(--section-y) 0" }}
         >
-          <Container>
-            <div
-              className="grid items-start"
-              style={{
-                gap: "clamp(32px, 5vw, 72px)",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              }}
-            >
-              <div data-reveal>
-                <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(228,118,43,0.13)] px-[13px] py-1.5 font-mono text-[10.5px] font-semibold tracking-[0.13em] text-ember-text uppercase">
-                  {t("pilot.badge")}
-                </span>
-                <h2 className="mt-[18px] font-heading text-[clamp(30px,3.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-heading">
-                  {t("pilot.headline")}
-                </h2>
-                <p className="text-lede mt-[18px] max-w-[34em] text-muted">
-                  {t("pilot.body")}
-                </p>
-                <p className="mt-4 max-w-[34em] text-[14px] leading-[1.55] text-muted">
-                  {t("pilot.landingNote")}
-                </p>
-              </div>
-
-              <div
-                data-reveal
-                className="rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(28px,3.4vw,40px)]"
-              >
-                <p className="font-mono text-[11px] tracking-[0.14em] text-muted uppercase">
-                  {t("pilot.pointsLabel")}
-                </p>
-                <ul className="mt-[22px] flex flex-col">
-                  {pilotPoints.map((point) => (
-                    <li
-                      key={point}
-                      className="flex items-start gap-3.5 border-t border-[rgb(var(--ink-rgb)/0.08)] py-[15px] text-[15.5px] leading-[1.6] text-secondary"
-                    >
-                      <span
-                        className="mt-0.5 shrink-0 text-[14px] text-green"
-                        aria-hidden
-                      >
-                        ✓
-                      </span>
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-[22px] border-t border-[rgb(var(--ink-rgb)/0.08)] pt-5 text-[14px] leading-[1.6] text-muted">
-                  {t("pilot.guarantee")}
-                </p>
-                <CTAButton href="/book-audit" variant="ember" className="mt-6">
-                  {t("pilot.cta")}
-                </CTAButton>
-              </div>
+          <Container className="text-center">
+            <h2 className="font-heading text-[clamp(30px,3.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-white">
+              {t("mobile.finalCta.headline")}
+            </h2>
+            <p className="text-lede mx-auto mt-5 max-w-[36em] text-white/70">
+              {t("mobile.finalCta.body")}
+            </p>
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <CTAButton href="/book-audit" variant="ember" size="lg">
+                {t("mobile.finalCta.primary")}
+              </CTAButton>
+              <CTAButton href="/pricing" variant="ghost-ink" size="lg">
+                {t("mobile.finalCta.secondary")}
+              </CTAButton>
             </div>
+            <p className="mt-6 text-[14px] text-white/55">
+              {t("mobile.finalCta.note")}
+            </p>
           </Container>
         </section>
       </div>

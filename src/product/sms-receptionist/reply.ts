@@ -191,7 +191,7 @@ function hoursLine(context: BusinessContext, language: SmsLanguage): string {
     .sort()
     .map((d) => WEEKDAY_NAMES[language][d])
     .join(", ");
-  return `${days} ${context.hours.start}–${context.hours.end} (${context.timezone})`;
+  return `${days} ${context.hours.start}-${context.hours.end} (${context.timezone})`;
 }
 
 /** Fixed first-line wording; also how the duplicate-fallback guard recognises it. */
@@ -243,8 +243,8 @@ export function afterHoursReply(
 ): string {
   const hours = hoursLine(context, language);
   return language === "fr"
-    ? `Bonjour, ici l’assistant virtuel de ${context.name}. Nous sommes actuellement fermés (${hours}). Laissez votre nom, l’adresse et ce dont vous avez besoin — on vous répond dès l’ouverture.`
-    : `Hello, this is the virtual assistant for ${context.name}. We are currently closed (${hours}). Leave your name, address and what you need — we’ll reply when we open.`;
+    ? `Bonjour, ici l’assistant virtuel de ${context.name}. Nous sommes actuellement fermés (${hours}). Laissez votre nom, l’adresse et ce dont vous avez besoin, on vous répond dès l’ouverture.`
+    : `Hello, this is the virtual assistant for ${context.name}. We are currently closed (${hours}). Leave your name, address and what you need, we’ll reply when we open.`;
 }
 
 export function isFallbackReply(
@@ -331,8 +331,8 @@ export function rulesReply(input: {
   if (PERSON_HINT.test(body)) {
     return {
       reply: fr
-        ? `${intro} Je transmets votre message à l’équipe — quelqu’un vous répondra ici sous peu.`
-        : `${intro} I’m passing your message to the team — someone will reply here shortly.`,
+        ? `${intro} Je transmets votre message à l’équipe. Quelqu’un vous répondra ici sous peu.`
+        : `${intro} I’m passing your message to the team. Someone will reply here shortly.`,
       action: "escalate",
       language,
     };

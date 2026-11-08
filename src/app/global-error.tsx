@@ -69,7 +69,7 @@ export default function GlobalError({
             Something went wrong.
           </h1>
           <p style={{ color: "#5C6875", marginTop: 12, lineHeight: 1.6 }}>
-            Please try again, or call 438·993·6997.
+            Please try again, or email contact@tradecatch.ca.
           </p>
           <button
             type="button"

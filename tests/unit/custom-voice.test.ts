@@ -49,11 +49,31 @@ function webmSample(size = MIN_SAMPLE_BYTES + 100): Uint8Array {
   return bytes;
 }
 
+// Voice cloning is withheld from every plan at launch (src/lib/launch-flags.ts).
+// The code is kept, so these tests cover it with the operator switch turned on.
+// Each test file runs in its own process, so this does not leak into other files.
+process.env.LAUNCH_ENABLE_CUSTOM_VOICE = "1";
+
 describe("plan entitlement", () => {
-  it("custom voice is Receptionist Plus only", () => {
+  it("custom voice is only ever granted to the retired Receptionist Plus plan", () => {
     assert.equal(orgHasFeature("receptionist", "AI_CUSTOM_VOICE"), true);
     assert.equal(orgHasFeature("growth", "AI_CUSTOM_VOICE"), false);
     assert.equal(orgHasFeature("starter", "AI_CUSTOM_VOICE"), false);
+    // The two launch plans never include it, even with the switch on.
+    assert.equal(orgHasFeature("essential", "AI_CUSTOM_VOICE"), false);
+    assert.equal(orgHasFeature("professional", "AI_CUSTOM_VOICE"), false);
+  });
+
+  it("is withheld from every plan when the launch switch is off", () => {
+    const previous = process.env.LAUNCH_ENABLE_CUSTOM_VOICE;
+    delete process.env.LAUNCH_ENABLE_CUSTOM_VOICE;
+    try {
+      for (const plan of ["essential", "professional", "starter", "growth", "receptionist"] as const) {
+        assert.equal(orgHasFeature(plan, "AI_CUSTOM_VOICE"), false, plan);
+      }
+    } finally {
+      process.env.LAUNCH_ENABLE_CUSTOM_VOICE = previous;
+    }
   });
 });
 

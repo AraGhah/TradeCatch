@@ -7,8 +7,10 @@ import { FullMessagesProvider } from "@/components/FullMessagesProvider";
 import { Link } from "@/i18n/navigation";
 import { PLAN_DISPLAY_NAMES } from "@/product/saas/entitlements";
 import { PLAN_PRICES, formatPlanMoney } from "@/lib/plans";
+import { ADD_ONS } from "@/product/saas/plan-catalog";
 import { getInstallationStatus } from "@/product/saas/stripe-checkout";
-import { usageSummary } from "@/product/saas/usage-metering";
+import { listOverages, usageSummary } from "@/product/saas/usage-metering";
+import { UsageOverageConfirm } from "@/components/app/UsageOverageConfirm";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -26,12 +28,21 @@ export default async function BillingPage({
     redirect(locale === "fr" ? "/fr/connexion" : "/login");
   }
   const org = access.ok ? access.ctx.organization : null;
-  const [installation, usage] = org
+  const [installation, usage, overages] = org
     ? await Promise.all([
         getInstallationStatus(org.id).catch(() => null),
         usageSummary(org.id, org.plan).catch(() => []),
+        listOverages(org.id).catch(() => []),
       ])
-    : [null, []];
+    : [null, [], []];
+  // Setup and the monthly price are shown separately, in Canadian dollars, with the date of the first monthly charge.
+  const websitePrice = formatPlanMoney(ADD_ONS.websiteService.priceCad, locale);
+  const checkoutFigures = org
+    ? {
+        setup: formatPlanMoney(PLAN_PRICES[org.plan].setup, locale),
+        monthly: formatPlanMoney(PLAN_PRICES[org.plan].monthly, locale),
+      }
+    : { setup: "", monthly: "" };
   return (
     <FullMessagesProvider>
       <div className="mx-auto flex max-w-xl flex-col gap-5 px-4 py-12">
@@ -74,16 +85,16 @@ export default async function BillingPage({
               installation.status === "canceled" ? (
                 <div className="mt-3">
                   <p className="mb-2 text-sm text-navy/70">
-                    {t("checkoutIntro")}
+                    {t("checkoutIntro", checkoutFigures)}
                   </p>
-                  <InstallationCheckoutButton />
+                  <InstallationCheckoutButton websitePrice={websitePrice} />
                 </div>
               ) : installation.status === "pending" ? (
                 <div className="mt-3">
                   <p className="mb-2 text-sm text-navy/70">
                     {t("checkoutPendingNote")}
                   </p>
-                  <InstallationCheckoutButton />
+                  <InstallationCheckoutButton websitePrice={websitePrice} />
                 </div>
               ) : null}
             </div>
@@ -112,6 +123,13 @@ export default async function BillingPage({
                 </ul>
               </div>
             ) : null}
+
+            <UsageOverageConfirm
+              rows={overages.map((o) => ({
+                metric: o.metric,
+                status: o.status,
+              }))}
+            />
 
             <BillingPortalButton />
             {org.status === "active" ? (

@@ -92,7 +92,7 @@ export function EscalationRulesForm({
         ) : null}
         {contacts.map((contact) => (
           <option key={contact.userId} value={contact.userId}>
-            {contact.name} — {t(`contactRoles.${contact.role}`)} —{" "}
+            {contact.name} · {t(`contactRoles.${contact.role}`)} ·{" "}
             {contact.verifiedPhoneE164
               ? `${contact.verifiedPhoneE164} (${t("phoneVerified")})`
               : t("phoneNotVerified")}

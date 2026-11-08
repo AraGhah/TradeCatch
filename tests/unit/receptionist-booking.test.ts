@@ -609,7 +609,7 @@ describe("phone booking — a call that books", () => {
     );
     assert.match(
       summary?.headline ?? "",
-      /^Appointment — Marie Tremblay \(Appointment booked\)$/,
+      /^Appointment · Marie Tremblay \(Appointment booked\)$/,
     );
     assert.match(
       summary?.nextStep ?? "",

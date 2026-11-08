@@ -1,10 +1,38 @@
 /**
  * Central plan entitlements — enforce on the backend; UI only mirrors this.
  * Do not scatter `if (plan === "growth")` through random components.
+ *
+ * Launch offering (November 2026): two plans, Essential and Professional.
+ * The three earlier plans (starter, growth, receptionist) are LEGACY ids. They
+ * stay valid so existing organizations, Stripe subscriptions and database rows
+ * keep working exactly as sold; nothing migrates a legacy customer to a new
+ * plan, and nothing sells a legacy plan on the public site.
  */
+import { launchFlagEnabled, type LaunchFlag } from "@/lib/launch-flags";
 
-export const PLAN_IDS = ["starter", "growth", "receptionist"] as const;
+/** The plans sold on the public site, cheapest first. */
+export const PUBLIC_PLAN_IDS = ["essential", "professional"] as const;
+/** Plans that existing customers may still be on. Never sold to anyone new. */
+export const LEGACY_PLAN_IDS = ["starter", "growth", "receptionist"] as const;
+
+export const PLAN_IDS = [...PUBLIC_PLAN_IDS, ...LEGACY_PLAN_IDS] as const;
 export type PlanId = (typeof PLAN_IDS)[number];
+export type PublicPlanId = (typeof PUBLIC_PLAN_IDS)[number];
+export type LegacyPlanId = (typeof LEGACY_PLAN_IDS)[number];
+
+export function isPublicPlanId(value: unknown): value is PublicPlanId {
+  return (
+    typeof value === "string" &&
+    (PUBLIC_PLAN_IDS as readonly string[]).includes(value)
+  );
+}
+
+export function isLegacyPlanId(value: unknown): value is LegacyPlanId {
+  return (
+    typeof value === "string" &&
+    (LEGACY_PLAN_IDS as readonly string[]).includes(value)
+  );
+}
 
 /**
  * Public-facing tier names. The internal id stays `receptionist` for
@@ -18,6 +46,8 @@ export type PlanId = (typeof PLAN_IDS)[number];
  * Receptionist"; only the plan carries the "Plus".
  */
 export const PLAN_DISPLAY_NAMES: Record<PlanId, string> = {
+  essential: "Essential",
+  professional: "Professional",
   starter: "Starter",
   growth: "Growth",
   receptionist: "Receptionist Plus",
@@ -105,11 +135,63 @@ const RECEPTIONIST_EXTRA = [
   "ADVANCED_AUTOMATION_WORKFLOWS",
 ] as const satisfies readonly FeatureId[];
 
+/**
+ * ESSENTIAL: every call answered and every opportunity captured.
+ *
+ * The complete answering receptionist (no artificially reduced quality) plus
+ * the customer dashboard. It collects appointment REQUESTS but has no booking
+ * system, so it never promises a confirmed time (AI_PHONE_BOOKING and
+ * APPOINTMENT_BOOKING are Professional).
+ */
+const ESSENTIAL_FEATURES = [
+  ...STARTER_FEATURES,
+  "AI_RECEPTIONIST_VOICE",
+  "AI_CALL_TRANSCRIPTS",
+] as const satisfies readonly FeatureId[];
+
+/**
+ * PROFESSIONAL: everything in Essential, plus appointments. The receptionist
+ * checks availability and books during the call, and the dashboard gets the
+ * calendar, reminders and appointment history.
+ */
+const PROFESSIONAL_EXTRA = [
+  "APPOINTMENT_BOOKING",
+  "AI_PHONE_BOOKING",
+] as const satisfies readonly FeatureId[];
+
+/**
+ * What each plan is SOLD with. This is the grant table; whether a granted
+ * feature can actually run today also depends on the launch switches below.
+ */
 export const PLAN_FEATURES: Record<PlanId, readonly FeatureId[]> = {
+  essential: ESSENTIAL_FEATURES,
+  professional: [...ESSENTIAL_FEATURES, ...PROFESSIONAL_EXTRA],
   starter: STARTER_FEATURES,
   growth: [...STARTER_FEATURES, ...GROWTH_EXTRA],
   receptionist: [...STARTER_FEATURES, ...GROWTH_EXTRA, ...RECEPTIONIST_EXTRA],
 };
+
+/**
+ * Features withheld from EVERY plan until the operator switches the matching
+ * launch flag on (src/lib/launch-flags.ts). The code is kept; the ability to
+ * run it is not available at launch. A legacy plan that was sold with one of
+ * these does not get it back through its plan.
+ */
+export const LAUNCH_GATED_FEATURES: Partial<Record<FeatureId, LaunchFlag>> = {
+  AI_CALL_TRANSFER: "callTransfer",
+  AI_EMERGENCY_ROUTING: "callTransfer",
+  ADVANCED_CALL_ROUTING: "callTransfer",
+  AI_CUSTOM_VOICE: "customVoice",
+  CUSTOMER_REACTIVATION: "bulkCampaigns",
+  CONTRACT_RENEWAL_AUTOMATION: "bulkCampaigns",
+  CRM_INTEGRATION_LIMITED: "crmIntegrations",
+  CRM_INTEGRATION_ADVANCED: "crmIntegrations",
+};
+
+export function featureIsLaunchEnabled(feature: FeatureId): boolean {
+  const flag = LAUNCH_GATED_FEATURES[feature];
+  return flag === undefined || launchFlagEnabled(flag);
+}
 
 export function isPlanId(value: string): value is PlanId {
   return (PLAN_IDS as readonly string[]).includes(value);
@@ -119,15 +201,16 @@ export function isFeatureId(value: string): value is FeatureId {
   return (FEATURE_IDS as readonly string[]).includes(value);
 }
 
+/** The features a plan can use right now: its grants minus anything not launched. */
 export function featuresForPlan(plan: PlanId): readonly FeatureId[] {
-  return PLAN_FEATURES[plan];
+  return PLAN_FEATURES[plan].filter(featureIsLaunchEnabled);
 }
 
 export function orgHasFeature(
   plan: PlanId,
   feature: FeatureId,
 ): boolean {
-  return PLAN_FEATURES[plan].includes(feature);
+  return PLAN_FEATURES[plan].includes(feature) && featureIsLaunchEnabled(feature);
 }
 
 export function assertFeature(

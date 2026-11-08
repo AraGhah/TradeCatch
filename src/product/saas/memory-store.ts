@@ -57,7 +57,7 @@ export function createMemorySaasStore(): SaasStore {
         id: newId("org"),
         name: input.name.trim(),
         slug,
-        plan: input.plan ?? "starter",
+        plan: input.plan ?? "essential",
         status: input.status ?? "active",
         missedCallClientId: input.missedCallClientId ?? null,
         accountType: input.accountType ?? "pilot",

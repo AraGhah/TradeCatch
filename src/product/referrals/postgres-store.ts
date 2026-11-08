@@ -36,7 +36,7 @@ const REFERRAL_COLUMNS = `id,
   referrer_business_name, referred_business_name, code, status, rejection_reason,
   review_flags, registered_at, qualified_at, updated_at`;
 
-const REWARD_COLUMNS = `id, referral_id, referrer_organization_id, referred_organization_id,
+const REWARD_COLUMNS = `id, referral_id, kind, referrer_organization_id, referred_organization_id,
   plan, amount_cents, currency, status, livemode, qualifying_session_id,
   qualifying_payment_intent_id, eligible_at, review_flags, rejection_reason,
   decided_by, decided_at, decision_note, fulfillment_method, gift_card_reference,
@@ -63,6 +63,7 @@ function mapReward(row: Row): RewardRecord {
   return {
     id: String(row.id),
     referralId: String(row.referral_id),
+    kind: (row.kind === "website" ? "website" : "plan") as RewardRecord["kind"],
     referrerOrganizationId: String(row.referrer_organization_id),
     referredOrganizationId: String(row.referred_organization_id),
     plan: row.plan as PlanId,
@@ -103,10 +104,13 @@ function mapSettings(row: Row): ReferralSettings {
   return {
     programEnabled: Boolean(row.program_enabled),
     rewardsCents: {
+      essential: Number(row.reward_essential_cents ?? 6500),
+      professional: Number(row.reward_professional_cents ?? 6500),
       starter: Number(row.reward_starter_cents),
       growth: Number(row.reward_growth_cents),
       receptionist: Number(row.reward_receptionist_cents),
     },
+    websiteBonusCents: Number(row.reward_website_bonus_cents ?? 3500),
     eligiblePlans: ((row.eligible_plans as string[]) ?? []) as PlanId[],
     holdDays: Number(row.hold_days),
     requireReferrerActive: Boolean(row.require_referrer_active),
@@ -141,10 +145,12 @@ export function createPostgresReferralStore(pool: Pool): ReferralStore {
       | "qualifying_session_id"
       | "qualifying_payment_intent_id",
     value: string,
+    kind?: "plan" | "website",
   ) {
     const { rows } = await pool.query(
-      `SELECT ${REWARD_COLUMNS} FROM tc_referral_rewards WHERE ${column} = $1`,
-      [value],
+      `SELECT ${REWARD_COLUMNS} FROM tc_referral_rewards
+       WHERE ${column} = $1 AND ($2::text IS NULL OR kind = $2)`,
+      [value, kind ?? null],
     );
     return rows[0] ? mapReward(rows[0]) : null;
   }
@@ -187,8 +193,9 @@ export function createPostgresReferralStore(pool: Pool): ReferralStore {
         `INSERT INTO tc_referral_settings (
            id, program_enabled, reward_starter_cents, reward_growth_cents,
            reward_receptionist_cents, eligible_plans, hold_days,
-           require_referrer_active, fulfillment_method, updated_by, updated_at
-         ) VALUES (1, $1, $2, $3, $4, $5::text[], $6, $7, $8, $9, $10)
+           require_referrer_active, fulfillment_method, updated_by, updated_at,
+           reward_essential_cents, reward_professional_cents, reward_website_bonus_cents
+         ) VALUES (1, $1, $2, $3, $4, $5::text[], $6, $7, $8, $9, $10, $11, $12, $13)
          ON CONFLICT (id) DO UPDATE SET
            program_enabled = EXCLUDED.program_enabled,
            reward_starter_cents = EXCLUDED.reward_starter_cents,
@@ -199,7 +206,10 @@ export function createPostgresReferralStore(pool: Pool): ReferralStore {
            require_referrer_active = EXCLUDED.require_referrer_active,
            fulfillment_method = EXCLUDED.fulfillment_method,
            updated_by = EXCLUDED.updated_by,
-           updated_at = EXCLUDED.updated_at
+           updated_at = EXCLUDED.updated_at,
+           reward_essential_cents = EXCLUDED.reward_essential_cents,
+           reward_professional_cents = EXCLUDED.reward_professional_cents,
+           reward_website_bonus_cents = EXCLUDED.reward_website_bonus_cents
          RETURNING *`,
         [
           s.programEnabled,
@@ -212,6 +222,9 @@ export function createPostgresReferralStore(pool: Pool): ReferralStore {
           s.fulfillmentMethod,
           s.updatedBy ?? null,
           s.updatedAt ?? new Date().toISOString(),
+          s.rewardsCents.essential,
+          s.rewardsCents.professional,
+          s.websiteBonusCents,
         ],
       );
       return mapSettings(rows[0]!);
@@ -323,8 +336,9 @@ export function createPostgresReferralStore(pool: Pool): ReferralStore {
         `INSERT INTO tc_referral_rewards (
            id, referral_id, referrer_organization_id, referred_organization_id,
            plan, amount_cents, currency, status, livemode, qualifying_session_id,
-           qualifying_payment_intent_id, eligible_at, review_flags, created_at, updated_at
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::text[],$14,$15)
+           qualifying_payment_intent_id, eligible_at, review_flags, created_at, updated_at,
+           kind
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13::text[],$14,$15,$16)
          ON CONFLICT DO NOTHING
          RETURNING ${REWARD_COLUMNS}`,
         [
@@ -343,21 +357,24 @@ export function createPostgresReferralStore(pool: Pool): ReferralStore {
           w.reviewFlags,
           w.createdAt,
           w.updatedAt,
+          w.kind,
         ],
       );
       if (rows[0]) return { created: true, reward: mapReward(rows[0]) };
       // Lost to the unique constraints: hand back the reward that already exists.
       const existing =
-        (await rewardBy("referral_id", w.referralId)) ??
-        (await rewardBy("referred_organization_id", w.referredOrganizationId)) ??
+        (await rewardBy("referral_id", w.referralId, w.kind)) ??
+        (await rewardBy("referred_organization_id", w.referredOrganizationId, w.kind)) ??
         (await rewardBy("qualifying_session_id", w.qualifyingSessionId));
       if (!existing) throw new Error("Reward insert conflicted but no row exists");
       return { created: false, reward: existing };
     },
     getReward: (id) => rewardBy("id", id),
-    getRewardByReferral: (referralId) => rewardBy("referral_id", referralId),
+    getRewardByReferral: (referralId) => rewardBy("referral_id", referralId, "plan"),
+    getWebsiteBonusByReferral: (referralId) =>
+      rewardBy("referral_id", referralId, "website"),
     getRewardByReferredOrganization: (organizationId) =>
-      rewardBy("referred_organization_id", organizationId),
+      rewardBy("referred_organization_id", organizationId, "plan"),
     getRewardByPaymentIntent: (paymentIntentId) =>
       rewardBy("qualifying_payment_intent_id", paymentIntentId),
     async listRewardsForReferrer(organizationId) {

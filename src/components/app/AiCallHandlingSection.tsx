@@ -55,10 +55,12 @@ export function AiCallHandlingSection({
   const [contacts, setContacts] = useState<Contact[]>(
     (initial.personalContacts ?? []).map((c) => ({ e164: c.e164, label: c.label ?? "" })),
   );
-  const [policy, setPolicy] = useState<PersonalCallPolicy>(initial.personalCallPolicy);
+  // Call transfer is not offered, so a saved "transfer" policy is shown as taking a message.
+  const [policy, setPolicy] = useState<PersonalCallPolicy>(
+    initial.personalCallPolicy === "transfer" ? "message" : initial.personalCallPolicy,
+  );
   const [messageFr, setMessageFr] = useState(initial.personalCallMessage.fr);
   const [messageEn, setMessageEn] = useState(initial.personalCallMessage.en);
-  const [transfer, setTransfer] = useState(initial.personalCallTransferE164 ?? "");
   const [unknownPolicy, setUnknownPolicy] = useState<UnknownCallerPolicy>(
     initial.unknownCallerPolicy,
   );
@@ -115,7 +117,7 @@ export function AiCallHandlingSection({
           .map((c) => ({ e164: c.e164, label: c.label || undefined })),
         personalCallPolicy: policy,
         personalCallMessage: { fr: messageFr, en: messageEn },
-        personalCallTransferE164: policy === "transfer" ? transfer : "",
+        personalCallTransferE164: "",
         unknownCallerPolicy: unknownPolicy,
       });
       if (!ok || !data) {
@@ -394,7 +396,6 @@ export function AiCallHandlingSection({
               onChange={(e) => setPolicy(e.target.value as PersonalCallPolicy)}
             >
               <option value="message">{t("contacts.policies.message")}</option>
-              <option value="transfer">{t("contacts.policies.transfer")}</option>
               <option value="end">{t("contacts.policies.end")}</option>
             </select>
           </label>
@@ -423,19 +424,6 @@ export function AiCallHandlingSection({
                 />
               </label>
             </div>
-          ) : null}
-          {policy === "transfer" ? (
-            <label className="mt-3 block text-xs text-navy/70">
-              {t("contacts.transferTo")}
-              <input
-                value={transfer}
-                onChange={(e) => setTransfer(e.target.value)}
-                className={INPUT}
-                inputMode="tel"
-                aria-invalid={hasError("personalCallTransferE164")}
-              />
-              <span className="mt-1 block text-navy/50">{t("contacts.transferHelp")}</span>
-            </label>
           ) : null}
           <label className="mt-4 block text-xs text-navy/70">
             {t("contacts.unknownPolicy")}

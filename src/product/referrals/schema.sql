@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS tc_referral_settings (
   reward_growth_cents INTEGER NOT NULL CHECK (reward_growth_cents BETWEEN 0 AND 100000),
   reward_receptionist_cents INTEGER NOT NULL CHECK (reward_receptionist_cents BETWEEN 0 AND 100000),
   eligible_plans TEXT[] NOT NULL
-    CHECK (eligible_plans <@ ARRAY['starter', 'growth', 'receptionist']::text[]),
+    CHECK (eligible_plans <@ ARRAY['essential', 'professional', 'starter', 'growth', 'receptionist']::text[]),
   hold_days INTEGER NOT NULL CHECK (hold_days BETWEEN 0 AND 120),
   require_referrer_active BOOLEAN NOT NULL,
   fulfillment_method TEXT NOT NULL CHECK (fulfillment_method IN ('none', 'manual')),
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS tc_referral_rewards (
   referrer_organization_id TEXT NOT NULL,
   referred_organization_id TEXT NOT NULL UNIQUE,
   -- The plan the REFERRED customer purchased.
-  plan TEXT NOT NULL CHECK (plan IN ('starter', 'growth', 'receptionist')),
+  plan TEXT NOT NULL CHECK (plan IN ('essential', 'professional', 'starter', 'growth', 'receptionist')),
   amount_cents INTEGER NOT NULL CHECK (amount_cents > 0 AND amount_cents <= 100000),
   currency TEXT NOT NULL DEFAULT 'CAD' CHECK (currency = 'CAD'),
   status TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'issued', 'rejected')),

@@ -183,7 +183,7 @@ export function urgencyLabel(
   const map: Record<string, { fr: string; en: string }> = {
     routine: { fr: "Routine", en: "Routine" },
     priority: { fr: "Prioritaire", en: "Priority" },
-    critical: { fr: "CRITIQUE — revue humaine", en: "CRITICAL — human review" },
+    critical: { fr: "CRITIQUE : revue humaine", en: "CRITICAL: human review" },
   };
   return map[urgency.level][lang];
 }
@@ -201,7 +201,7 @@ export function buildJobCardSms(input: {
   const { client, collected, callerE164, urgency } = input;
   const code = input.actionToken.toUpperCase();
   const lines = [
-    `${client.contractorDisplayName} — FICHE JOB`,
+    `${client.contractorDisplayName} : FICHE JOB`,
     `Ref: ${input.workflowId.slice(-8)}`,
     `Code: ${code}`,
     `Client: ${collected.customerName ?? "—"}`,
@@ -222,15 +222,15 @@ export function buildJobCardSms(input: {
     lines.push("Zone: À VÉRIFIER (humain requis si incertain/hors zone)");
   }
   if (input.humanReviewRequired) {
-    lines.push("⚠ Revue humaine obligatoire — ne pas diagnostiquer par texto.");
+    lines.push("⚠ Revue humaine obligatoire. Ne pas diagnostiquer par texto.");
   }
 
   lines.push(
     "",
     "Actions (répondez par texto avec le code):",
-    `ACCEPTER ${code} — prendre le job`,
-    `REFUSER ${code} — refuser`,
-    `APPELER ${code} — rappeler le client maintenant`,
+    `ACCEPTER ${code} : prendre le job`,
+    `REFUSER ${code} : refuser`,
+    `APPELER ${code} : rappeler le client maintenant`,
     "",
     "Ne promettez pas d'heure d'arrivée sans confirmation.",
   );
@@ -280,7 +280,7 @@ export function humanReviewAlertBody(
   workflowId: string,
 ): string {
   return [
-    `${client.contractorDisplayName} — REVUE HUMAINE`,
+    `${client.contractorDisplayName} : REVUE HUMAINE`,
     `Ref: ${workflowId.slice(-8)}`,
     `Raison: ${reason}`,
     `Client: ${collected.customerName ?? "—"} / ${collected.serviceAddress ?? "—"}`,
@@ -288,7 +288,7 @@ export function humanReviewAlertBody(
     ...(collected.preferredContactTime
       ? [`Meilleur moment: ${collected.preferredContactTime}`]
       : []),
-    "Assignez manuellement — ne pas auto-refuser.",
+    "Assignez manuellement. Ne pas auto-refuser.",
   ].join("\n");
 }
 

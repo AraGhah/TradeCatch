@@ -60,7 +60,7 @@ for (const body of [{ ok: true }, { ok: true, leadSaved: false }]) {
     await expect(
       page
         .getByRole("alert")
-        .filter({ hasText: "We couldn't submit your audit request" }),
+        .filter({ hasText: "We couldn’t submit your audit request" }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Got it. Your audit request is in." }),

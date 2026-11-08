@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { CTAButton } from "@/components/CTAButton";
+import { PUBLIC_CONTACT_EMAIL } from "@/lib/contact";
 import { randomUUID } from "@/lib/id";
 
 const SESSION_KEY = "tradecatch-error-session";
@@ -62,8 +63,8 @@ export default function Error({
       </h1>
       <p className="text-lede mt-5 max-w-[32em] text-muted">
         {t.rich("support", {
-          phone: (chunks) => (
-            <a href="tel:4389936997" className="font-semibold text-ember-text">
+          email: (chunks) => (
+            <a href={`mailto:${PUBLIC_CONTACT_EMAIL}`} className="font-semibold text-ember-text">
               {chunks}
             </a>
           ),

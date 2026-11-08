@@ -194,7 +194,7 @@ export function buildPhoneSettingsView(input: {
       connectionStatus = "connected";
       connectionDetail =
         connectionDetail ||
-        "Profile activated — inbound webhooks resolve this number to the business.";
+        "Profile activated. Incoming calls to this number reach the business.";
     }
   } else if (!tradecatch) {
     connectionStatus = "disconnected";

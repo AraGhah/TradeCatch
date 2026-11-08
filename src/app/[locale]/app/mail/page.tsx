@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { GmailInbox } from "@/components/app/GmailInbox";
+import { GmailSyncBadge } from "@/components/app/GmailSyncBadge";
 import { getGmailStore } from "@/product/gmail/runtime";
 import { requireTenantContext } from "@/product/saas/tenant";
 
@@ -27,9 +28,13 @@ export default async function MailPage({ params }: { params: Promise<{ locale: s
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
-          {t("inboxTitle")}
-        </h1>
+        <div className="flex items-center">
+          <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+            {t("inboxTitle")}
+          </h1>
+          {/* Keeps the inbox in sync and shows the unread count while this page is open. */}
+          <GmailSyncBadge />
+        </div>
         <p className="mt-2 text-navy/80">{t("inboxIntro")}</p>
       </header>
       <GmailInbox

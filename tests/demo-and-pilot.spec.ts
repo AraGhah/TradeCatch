@@ -11,65 +11,55 @@ async function rejectCookiesIfVisible(page: import("@playwright/test").Page) {
 }
 
 test.describe("first-demo journeys", () => {
-  test("the English demo modal uses the localized video, captions, and honest transcript", async ({
+  test("the English demo button opens the one universal video with captions and an honest label", async ({
     page,
   }) => {
     await page.goto("/");
     await rejectCookiesIfVisible(page);
 
     await page
-      .getByRole("button", { name: "Watch the 90-second demo" })
+      .getByRole("button", { name: "Watch the demo", exact: true })
       .first()
       .click();
 
-    const dialog = page.getByRole("dialog", { name: "TradeCatch demo" });
+    const dialog = page.getByRole("dialog", {
+      name: "Under the sink: the Receptionist answers",
+    });
     await expect(dialog).toBeVisible();
-    await expect(dialog.locator("video")).toHaveAttribute(
+    const video = dialog.locator("video");
+    await expect(video).toHaveAttribute(
       "src",
-      "/demo-video/TradeCatch-Platform-EN.mp4",
+      "/demo-video/stories/under-the-sink-en.mp4",
     );
+    await expect(video).toHaveAttribute(
+      "poster",
+      "/demo-video/stories/under-the-sink-poster.jpg",
+    );
+    // Captions are a separate track the viewer can switch off, never burned in.
     await expect(dialog.locator("track[kind='captions']")).toHaveAttribute(
       "src",
-      "/demo-video/captions/platform-en.vtt",
+      "/demo-video/stories/captions/under-the-sink-en.vtt",
     );
 
-    await dialog.getByText("Transcript", { exact: true }).click();
+    // The honesty label is visible without opening anything.
     await expect(dialog).toContainText(
-      "Illustrative demo with a fictional business",
+      "A dramatization with a fictional business, not a customer story",
     );
-    // The receptionist takes a request; it never promises a slot on the call.
-    await expect(dialog).toContainText("I've sent your request");
+
+    // The receptionist takes a request; the team confirms. It never books a slot itself.
+    await dialog.getByText("Transcript", { exact: true }).click();
+    await expect(dialog).toContainText("I’ve sent your request to the team");
+    await expect(dialog).not.toContainText("I’ve booked");
+    await expect(dialog).not.toContainText("transfer");
 
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(
-      page.getByRole("button", { name: "Watch the 90-second demo" }).first(),
+      page.getByRole("button", { name: "Watch the demo", exact: true }).first(),
     ).toBeFocused();
   });
 
-  test("the missed-call demo opens its own video from the how-it-works section", async ({
-    page,
-  }) => {
-    await page.goto("/");
-    await rejectCookiesIfVisible(page);
-
-    await page
-      .getByRole("button", { name: "Watch the missed-call demo" })
-      .click();
-
-    const dialog = page.getByRole("dialog", {
-      name: "TradeCatch missed-call demo",
-    });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.locator("video")).toHaveAttribute(
-      "src",
-      "/demo-video/TradeCatch-MissedCall-EN.mp4",
-    );
-    await dialog.getByText("Transcript", { exact: true }).click();
-    await expect(dialog).toContainText("controlled pilot");
-  });
-
-  test("the on-the-job stories open a captioned, labelled 4:5 player (English)", async ({
+  test("the video card on the home page opens a labelled player that fits on screen (English)", async ({
     page,
   }) => {
     await page.goto("/");
@@ -86,24 +76,6 @@ test.describe("first-demo journeys", () => {
     });
     await expect(dialog).toBeVisible();
     const video = dialog.locator("video");
-    await expect(video).toHaveAttribute(
-      "src",
-      "/demo-video/stories/under-the-sink-en.mp4",
-    );
-    await expect(video).toHaveAttribute(
-      "poster",
-      "/demo-video/stories/under-the-sink-poster.jpg",
-    );
-    await expect(dialog.locator("track[kind='captions']")).toHaveAttribute(
-      "src",
-      "/demo-video/stories/captions/under-the-sink-en.vtt",
-    );
-
-    // The honesty label is visible without opening anything.
-    await expect(dialog).toContainText(
-      "Dramatization with a fictional business, not a customer story",
-    );
-    await expect(dialog).toContainText("founder-configured pilot");
 
     // Portrait player: 4:5, and the whole video fits on screen with its controls.
     const box = await video.boundingBox();
@@ -113,17 +85,12 @@ test.describe("first-demo journeys", () => {
     expect(box!.y).toBeGreaterThanOrEqual(0);
     expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
 
-    // The receptionist takes a request; the team confirms. It never books a slot itself.
-    await dialog.getByText("Transcript", { exact: true }).click();
-    await expect(dialog).toContainText("I've sent your request to the team");
-    await expect(dialog).not.toContainText("I've booked");
-
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
     await expect(card).toBeFocused();
   });
 
-  test("the on-the-job stories play in French with French captions and label", async ({
+  test("the same video plays in French with French captions and label", async ({
     page,
   }) => {
     await page.goto("/fr");
@@ -133,89 +100,78 @@ test.describe("first-demo journeys", () => {
       .catch(() => undefined);
 
     const card = page.getByRole("button", {
-      name: "Regarder la vidéo : Sur l'escabeau",
+      name: "Regarder la vidéo : Sous l’évier",
     });
     await card.scrollIntoViewIfNeeded();
     await card.click();
 
     const dialog = page.getByRole("dialog", {
-      name: "Sur l'escabeau : un appel manqué reçoit un texto",
+      name: "Sous l'évier : la réceptionniste répond",
     });
     await expect(dialog).toBeVisible();
     await expect(dialog.locator("video")).toHaveAttribute(
       "src",
-      "/demo-video/stories/the-ladder-fr.mp4",
+      "/demo-video/stories/under-the-sink-fr.mp4",
     );
     await expect(dialog.locator("track[kind='captions']")).toHaveAttribute(
       "src",
-      "/demo-video/stories/captions/the-ladder-fr.vtt",
+      "/demo-video/stories/captions/under-the-sink-fr.vtt",
     );
     await expect(dialog).toContainText(
-      "Mise en scène avec une entreprise fictive, pas un témoignage de client",
+      "Une mise en scène avec une entreprise fictive, pas un témoignage de client",
     );
-    await expect(dialog).toContainText("pilote contrôlé");
   });
 
-  test("the receptionist page offers its two stories", async ({ page }) => {
+  test("the receptionist page offers the single video and no other cut", async ({
+    page,
+  }) => {
     await page.goto("/receptionist");
     await rejectCookiesIfVisible(page);
     await expect(
       page.getByRole("button", { name: "Watch the video: Under the sink" }),
     ).toBeVisible();
+    for (const retired of ["After hours", "On the ladder"]) {
+      await expect(
+        page.getByRole("button", { name: `Watch the video: ${retired}` }),
+      ).toHaveCount(0);
+    }
     await expect(
-      page.getByRole("button", { name: "Watch the video: After hours" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Watch the video: On the ladder" }),
+      page.getByRole("button", { name: "Watch the missed-call demo" }),
     ).toHaveCount(0);
   });
 
-  test("every story video, caption track and poster is served", async ({
+  test("the retired interactive demo page sends visitors home", async ({
     request,
   }) => {
-    for (const id of ["under-the-sink", "the-ladder", "after-hours"] as const) {
-      const poster = await request.get(`/demo-video/stories/${id}-poster.jpg`);
-      expect(poster.status()).toBe(200);
-      expect(poster.headers()["content-type"]).toContain("image/jpeg");
-      for (const locale of ["en", "fr"] as const) {
-        const mp4 = await request.get(`/demo-video/stories/${id}-${locale}.mp4`, {
-          headers: { range: "bytes=0-1" },
-        });
-        expect([200, 206]).toContain(mp4.status());
-        expect(mp4.headers()["content-type"]).toContain("video/mp4");
-
-        const vtt = await request.get(
-          `/demo-video/stories/captions/${id}-${locale}.vtt`,
-        );
-        expect(vtt.status()).toBe(200);
-        expect(vtt.headers()["content-type"]).toContain("text/vtt");
-        expect(await vtt.text()).toContain("WEBVTT");
-      }
-    }
+    const response = await request.get("/demo-video", { maxRedirects: 0 });
+    expect([307, 308]).toContain(response.status());
+    expect(new URL(response.headers()["location"]!, "http://x").pathname).toBe(
+      "/",
+    );
   });
 
-  test("every exported video and caption track is served", async ({
+  test("the demo video, its caption tracks and poster are served in both languages", async ({
     request,
   }) => {
-    for (const [video, captions] of [
-      ["Platform", "platform"],
-      ["MissedCall", "missed-call"],
-    ] as const) {
-      for (const locale of ["EN", "FR"] as const) {
-        const mp4 = await request.get(
-          `/demo-video/TradeCatch-${video}-${locale}.mp4`,
-          { headers: { range: "bytes=0-1" } },
-        );
-        expect([200, 206]).toContain(mp4.status());
-        expect(mp4.headers()["content-type"]).toContain("video/mp4");
+    const poster = await request.get(
+      "/demo-video/stories/under-the-sink-poster.jpg",
+    );
+    expect(poster.status()).toBe(200);
+    expect(poster.headers()["content-type"]).toContain("image/jpeg");
+    for (const locale of ["en", "fr"] as const) {
+      const mp4 = await request.get(
+        `/demo-video/stories/under-the-sink-${locale}.mp4`,
+        { headers: { range: "bytes=0-1" } },
+      );
+      expect([200, 206]).toContain(mp4.status());
+      expect(mp4.headers()["content-type"]).toContain("video/mp4");
 
-        const vtt = await request.get(
-          `/demo-video/captions/${captions}-${locale.toLowerCase()}.vtt`,
-        );
-        expect(vtt.status()).toBe(200);
-        expect(vtt.headers()["content-type"]).toContain("text/vtt");
-        expect(await vtt.text()).toContain("WEBVTT");
-      }
+      const vtt = await request.get(
+        `/demo-video/stories/captions/under-the-sink-${locale}.vtt`,
+      );
+      expect(vtt.status()).toBe(200);
+      expect(vtt.headers()["content-type"]).toContain("text/vtt");
+      expect(await vtt.text()).toContain("WEBVTT");
     }
   });
 
@@ -289,7 +245,7 @@ test.describe("first-demo journeys", () => {
     await expect(
       page
         .getByRole("alert")
-        .filter({ hasText: "We couldn't submit your audit request" }),
+        .filter({ hasText: "We couldn’t submit your audit request" }),
     ).toBeVisible();
     await expect(submit).toHaveAttribute("aria-busy", "false");
     await expect(
@@ -299,7 +255,7 @@ test.describe("first-demo journeys", () => {
     ).toBeVisible();
   });
 
-  test("founder-provisioned magic-link login reaches an authenticated Starter workspace", async ({
+  test("founder-provisioned magic-link login reaches an authenticated Essential workspace", async ({
     page,
   }) => {
     const email = `pilot-${Date.now()}-${test.info().workerIndex}@example.test`;
@@ -315,7 +271,7 @@ test.describe("first-demo journeys", () => {
           organizationName: "TradeCatch E2E Contractor",
           ownerName: "E2E Pilot Owner",
           locale: "en",
-          plan: "starter",
+          plan: "essential",
         },
       },
     );
@@ -326,7 +282,7 @@ test.describe("first-demo journeys", () => {
       owner: { email },
       organization: {
         name: "TradeCatch E2E Contractor",
-        plan: "starter",
+        plan: "essential",
       },
     });
 
@@ -367,7 +323,7 @@ test.describe("first-demo journeys", () => {
     };
     expect(body.user.email).toBe(email);
     expect(body.organization).toMatchObject({
-      plan: "starter",
+      plan: "essential",
       name: "TradeCatch E2E Contractor",
     });
   });

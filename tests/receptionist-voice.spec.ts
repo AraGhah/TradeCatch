@@ -233,7 +233,7 @@ test.describe("receptionist demo: speak with your voice", () => {
     expect(await page.evaluate(() => window.__recognitionLangs.length)).toBe(0);
   });
 
-  test("an emergency is spoken, then the call ends and the microphone closes", async ({
+  test("an emergency is spoken with the 9-1-1 advice, and the call carries on to take the details", async ({
     page,
   }) => {
     await stubSpeech(page);
@@ -243,17 +243,12 @@ test.describe("receptionist demo: speak with your voice", () => {
     });
     await section.getByRole("button", { name: /During business hours/ }).click();
 
-    await expect(section.getByText("The call has ended.")).toBeVisible();
-    // The finished call ends with a clear next step.
-    await expect(
-      section.getByRole("link", { name: "Book a free 20-minute audit" }),
-    ).toHaveAttribute("href", /\/book-audit\?plan=receptionist$/);
+    // The receptionist tells the caller to dial 9-1-1, out loud and in the log.
     await expect.poll(() => spoken(page)).toContain("9-1-1");
-    await expect(section.locator("dl")).toContainText("Emergency");
-    // No further listening after the call ended.
-    const listens = await page.evaluate(() => window.__recognitionLangs.length);
-    await page.waitForTimeout(400);
-    expect(await page.evaluate(() => window.__recognitionLangs.length)).toBe(listens);
+    await expect(section.getByRole("log")).toContainText("9-1-1");
+    // It never claims to transfer or bridge the call, and it keeps taking the details.
+    await expect(section.getByRole("log")).not.toContainText(/transfer|bridg/i);
+    await expect(section.getByText("The call has ended.")).toHaveCount(0);
   });
 
   test("Québec French uses fr-CA for listening and speaking", async ({ page }) => {
@@ -265,7 +260,7 @@ test.describe("receptionist demo: speak with your voice", () => {
       window.__heard.push("j'ai un évier qui coule depuis hier");
     });
     await section
-      .getByRole("button", { name: /Pendant les heures d'ouverture/ })
+      .getByRole("button", { name: /Pendant les heures d.ouverture/ })
       .click();
     const log = section.getByRole("log");
     await expect(log).toContainText("j'ai un évier qui coule depuis hier");

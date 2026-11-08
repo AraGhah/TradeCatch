@@ -1,4 +1,9 @@
 import assert from "node:assert/strict";
+
+// Call transfer and escalation routing are withheld at launch
+// (src/lib/launch-flags.ts). This file covers the preserved code with the
+// operator switch on; each test file runs in its own process.
+process.env.LAUNCH_ENABLE_CALL_TRANSFER = "1";
 import { afterEach, beforeEach, describe, it, mock } from "node:test";
 import { NextRequest } from "next/server";
 import { demoClientAccount } from "../../src/product/missed-call/fixtures";

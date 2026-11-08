@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     ok: true,
     id: row.id,
     token,
-    hint: "Store this token now — it will not be shown again.",
+    hint: "Store this token now. It will not be shown again.",
     usage: {
       header: "X-TradeCatch-Key",
       endpoint: "POST /api/website-leads",

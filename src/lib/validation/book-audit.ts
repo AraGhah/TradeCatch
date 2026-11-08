@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { REFERRAL_CODE_PATTERN } from "@/product/referrals/code";
+import { PLAN_IDS } from "@/product/saas/entitlements";
 
 // Shared shape used by both the client wizard (per-step slices) and the
 // /api/book-audit route (full-payload re-validation). Never trust the client
@@ -39,7 +40,7 @@ export const bookAuditSchema = z.object({
    * value reaches the notification email, so free text would let a caller
    * inject arbitrary content into it.
    */
-  planInterest: z.enum(["starter", "growth", "receptionist"]).optional(),
+  planInterest: z.enum(PLAN_IDS).optional(),
   /**
    * Code from a customer's referral link. Pattern-checked (10 unambiguous
    * characters) because it reaches the notification email and stored lead.

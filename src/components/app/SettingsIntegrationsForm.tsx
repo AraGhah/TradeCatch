@@ -8,13 +8,14 @@ export function SettingsIntegrationsForm({
   initialNotifyEmail,
   initialGoogleReviewUrl,
   initialCrmWebhookUrl,
-  isGrowth,
+  reviewRequestsEnabled,
   crmEnabled,
 }: {
   initialNotifyEmail?: string;
   initialGoogleReviewUrl?: string;
   initialCrmWebhookUrl?: string;
-  isGrowth: boolean;
+  /** Review-request texts exist only on plans sold before launch. */
+  reviewRequestsEnabled: boolean;
   crmEnabled: boolean;
 }) {
   const t = useTranslations("app");
@@ -40,7 +41,7 @@ export function SettingsIntegrationsForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           notifyEmail: notifyEmail.trim() || null,
-          googleReviewUrl: isGrowth
+          googleReviewUrl: reviewRequestsEnabled
             ? googleReviewUrl.trim() || null
             : undefined,
           crmWebhookUrl: crmEnabled
@@ -77,7 +78,7 @@ export function SettingsIntegrationsForm({
           className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
         />
       </label>
-      {isGrowth ? (
+      {reviewRequestsEnabled ? (
         <label className="block text-xs text-navy/70">
           {t("settings.googleReviewUrl")}
           <input
@@ -89,6 +90,9 @@ export function SettingsIntegrationsForm({
           />
         </label>
       ) : null}
+      {/* Outbound connections to other software are not offered at launch. A saved URL from an
+          earlier plan can still be cleared; nothing new can be added. */}
+      {crmEnabled || initialCrmWebhookUrl ? (
       <label className="block text-xs text-navy/70">
         {t("settings.crmWebhookUrl")}
         <input
@@ -105,6 +109,7 @@ export function SettingsIntegrationsForm({
             : t("settings.crmWebhookUpgrade")}
         </span>
       </label>
+      ) : null}
       {error ? (
         <p className="text-sm text-red-700" role="alert">
           {error}

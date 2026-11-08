@@ -26,7 +26,7 @@ function row(
   value: string | undefined | null | boolean,
 ): string {
   if (value === undefined || value === null || value === "") {
-    return `<tr><td style="padding:6px 12px 6px 0;color:#5C6875;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:6px 0;color:#1A2430;">—</td></tr>`;
+    return `<tr><td style="padding:6px 12px 6px 0;color:#5C6875;vertical-align:top;">${escapeHtml(label)}</td><td style="padding:6px 0;color:#1A2430;">-</td></tr>`;
   }
   const display =
     typeof value === "boolean" ? (value ? "yes" : "no") : String(value);
@@ -272,11 +272,11 @@ export async function sendBookAuditCustomerEmail(
     ? `<p>Bonjour ${escapeHtml(payload.firstName)},</p>
        <p>Nous avons bien reçu votre demande d'audit pour <strong>${escapeHtml(payload.company)}</strong>.</p>
        <p>Ara vous contactera sous peu pour confirmer un moment. Ayez sous la main votre volume d'appels récent, vos soumissions ouvertes et les logiciels que vous utilisez déjà.</p>
-       <p>Des questions en attendant? Répondez à ce courriel ou composez le <a href="tel:+14389936997">438·993·6997</a>.</p>`
+       <p>Des questions en attendant? Répondez simplement à ce courriel.</p>`
     : `<p>Hi ${escapeHtml(payload.firstName)},</p>
        <p>We received your audit request for <strong>${escapeHtml(payload.company)}</strong>.</p>
        <p>Ara will follow up shortly to confirm a time. Have your recent call volume, open quotes and any software you already run handy for the call.</p>
-       <p>Questions in the meantime? Reply to this email or call <a href="tel:+14389936997">438·993·6997</a>.</p>`;
+       <p>Questions in the meantime? Just reply to this email.</p>`;
 
   try {
     const leadResult = await resend.emails.send(

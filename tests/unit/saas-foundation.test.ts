@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+
+// Transfer routing, reactivation/renewal campaigns and CRM webhooks are withheld
+// at launch (src/lib/launch-flags.ts). The plan grant table below is still
+// tested, with the operator switches on; each test file runs in its own process.
+process.env.LAUNCH_ENABLE_CALL_TRANSFER = "1";
+process.env.LAUNCH_ENABLE_BULK_CAMPAIGNS = "1";
+process.env.LAUNCH_ENABLE_CRM_INTEGRATIONS = "1";
 import {
   assertFeature,
   featuresForPlan,
@@ -49,6 +56,8 @@ describe("entitlements", () => {
 
   it("keeps the internal plan id `receptionist` mapped to the public name \"Receptionist Plus\"", () => {
     assert.deepEqual(PLAN_DISPLAY_NAMES, {
+      essential: "Essential",
+      professional: "Professional",
       starter: "Starter",
       growth: "Growth",
       receptionist: "Receptionist Plus",
