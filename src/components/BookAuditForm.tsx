@@ -27,7 +27,7 @@ import { randomUUID } from "@/lib/id";
 import { referralCodeForThisVisit } from "@/lib/referral-capture";
 
 const DRAFT_STORAGE_KEY = "tradecatch-book-audit-draft";
-const PLAN_INTEREST_VALUES = ["starter", "growth", "receptionist"] as const;
+const PLAN_INTEREST_VALUES = ["essential", "professional"] as const;
 
 type PlanInterest = (typeof PLAN_INTEREST_VALUES)[number];
 
