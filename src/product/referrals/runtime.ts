@@ -26,11 +26,13 @@ async function buildReferralService(): Promise<ReferralService> {
   const pool = durable && url ? getPgPool(url) : undefined;
 
   let referralStore: ReferralStore = createMemoryReferralStore();
+  let ready = !pool;
   if (pool) {
     const postgres = createPostgresReferralStore(pool);
     try {
       await postgres.getSettings();
       referralStore = postgres;
+      ready = true;
     } catch (error) {
       logReferralFailure("postgres store probe", error);
       referralStore = createMemoryReferralStore();
@@ -40,6 +42,10 @@ async function buildReferralService(): Promise<ReferralService> {
   return createReferralService({
     store: referralStore,
     directory: createSaasReferralDirectory({ store, pool }),
+    // When the platform is durable but the referral tables are not reachable
+    // (schema not applied, database down), the service refuses to hand out
+    // links or show an overview rather than serve them from memory.
+    durability: { expected: Boolean(pool), ready },
   });
 }
 
@@ -50,9 +56,12 @@ export function getReferralService(): ReferralService {
     const { store, durable } = getSaasRuntime();
     const url = process.env.DATABASE_URL?.trim();
     const pool = durable && url ? getPgPool(url) : undefined;
+    // Not ready while a durable store is expected: callers that need the real
+    // store (links, overview) must await getReferralServiceReady().
     globalForReferrals.__tradecatchReferrals = createReferralService({
       store: createMemoryReferralStore(),
       directory: createSaasReferralDirectory({ store, pool }),
+      durability: { expected: Boolean(pool), ready: false },
     });
     if (pool && !globalForReferrals.__tradecatchReferralsReady) {
       globalForReferrals.__tradecatchReferralsReady = buildReferralService().then(
