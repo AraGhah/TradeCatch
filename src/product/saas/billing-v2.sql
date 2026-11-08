@@ -9,7 +9,7 @@
 CREATE TABLE IF NOT EXISTS tc_installation_checkouts (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL REFERENCES tc_organizations(id) ON DELETE CASCADE,
-  plan TEXT NOT NULL CHECK (plan IN ('starter', 'growth', 'receptionist')),
+  plan TEXT NOT NULL CHECK (plan IN ('essential', 'professional', 'starter', 'growth', 'receptionist')),
   checkout_session_id TEXT UNIQUE,
   livemode BOOLEAN NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending'
