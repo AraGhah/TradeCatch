@@ -10,7 +10,6 @@ export function Footer() {
   const nav = useTranslations("nav");
   const site = useTranslations("site");
   const year = new Date().getFullYear();
-  const phoneDisplay = site("phone").replace(/-/g, "·");
 
   const linkClass =
     "block py-1.5 text-left text-[14.5px] text-[rgba(255,255,255,0.75)] transition-colors duration-150 hover:text-white";
@@ -43,15 +42,6 @@ export function Footer() {
               {site("serviceArea")}
             </p>
             <div className="mt-3 flex flex-wrap items-center gap-x-[14px] gap-y-2 text-[14px]">
-              <a
-                href={`tel:${site("phoneHref")}`}
-                className="text-[rgba(255,255,255,0.8)] transition-colors hover:text-orange"
-              >
-                {phoneDisplay}
-              </a>
-              <span aria-hidden className="text-[rgba(255,255,255,0.25)]">
-                ·
-              </span>
               <EmailContactLink
                 email={site("email")}
                 className="text-[rgba(255,255,255,0.8)] transition-colors hover:text-orange"
