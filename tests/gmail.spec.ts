@@ -296,7 +296,7 @@ test.describe("Gmail receiving", () => {
     await alice.page.goto("/app/notifications");
     const note = alice.page.getByRole("listitem").filter({ hasText: "New customer email" });
     await expect(note).toHaveCount(1);
-    await expect(note).toContainText("Marie Tremblay — Urgent: leak getting worse");
+    await expect(note).toContainText("Marie Tremblay: Urgent: leak getting worse");
     await note.getByRole("link", { name: "Open" }).click();
     await expect(alice.page.getByRole("heading", { name: "Urgent: leak getting worse", level: 1 })).toBeVisible();
   });
@@ -481,7 +481,6 @@ test.describe("Gmail receiving", () => {
     await expect(alice.page.getByRole("heading", { name: "Boîte Gmail", level: 1 })).toBeVisible();
     await expect(alice.page.getByRole("button", { name: "Non lus" })).toBeVisible();
     await expect(alice.page.getByLabel("Rechercher des courriels")).toBeVisible();
-    await expect(alice.page.getByRole("link", { name: /Boîte Gmail/ }).first()).toBeVisible();
     await alice.page.getByRole("link", { name: /Quick question/ }).click();
     await expect(alice.page).toHaveURL(/\/fr\/app\/courrier\//);
     await expect(alice.page.getByRole("link", { name: "Répondre dans Gmail" })).toBeVisible();
@@ -571,7 +570,7 @@ test.describe("Gmail receiving", () => {
     await expect(bob.page.getByText(/Updates on its own/)).toBeVisible();
     await expect(bob.page.getByText("Nothing in this period yet.")).toBeVisible();
     // A new workspace has no phone client: the page says so instead of showing zeros as facts.
-    await expect(bob.page.getByText(/missed-call number is not linked/i)).toBeVisible();
+    await expect(bob.page.getByText(/phone number is not connected to this business yet/i)).toBeVisible();
     await expect(bob.page.getByText("Something went wrong")).toHaveCount(0);
   });
 

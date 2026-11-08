@@ -45,12 +45,13 @@ for (const locale of ["en", "fr"] as const) {
           })
           .click();
 
-        // Both the founder/about CTA and the shared footer use the same flow.
+        // The header (desktop only), the founder/about CTA and the shared footer all
+        // use the same flow. The mobile menu's copy is hidden until the menu opens.
         const links = page.locator(
           'a[aria-haspopup="dialog"][href^="https://mail.google.com/"]:visible',
         );
         const hasAboutCta = path === "/about" || path === "/fr/a-propos";
-        await expect(links).toHaveCount(hasAboutCta || !mobile ? 2 : 1);
+        await expect(links).toHaveCount(mobile ? (hasAboutCta ? 2 : 1) : 3);
         for (const link of await links.all()) {
           await link.click();
           const dialog = page.getByRole("dialog", { name: title });
