@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { launchFlagEnabled } from "@/lib/launch-flags";
 import { requireTenantContext, tenantHasFeature } from "@/product/saas/tenant";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { SmsReceptionistSettingsForm } from "@/components/app/SmsReceptionistSettingsForm";
@@ -50,6 +51,7 @@ export default async function SmsReceptionistSettingsPage({
             membership.role === "admin" ||
             isPlatformAdmin
           }
+          chatbotAvailable={launchFlagEnabled("smsChatbot")}
           initial={{
             contractorDisplayName: client.contractorDisplayName,
             timezone: client.timezone,
