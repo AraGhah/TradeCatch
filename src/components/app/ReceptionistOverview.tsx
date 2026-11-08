@@ -69,7 +69,7 @@ export function ReceptionistOverview({
         <p className="font-semibold">
           {t(`status.${overview.status}`)}
           {overview.receptionistName
-            ? ` — ${overview.receptionistName}`
+            ? ` · ${overview.receptionistName}`
             : ""}
         </p>
         {overview.statusDetail ? (
@@ -91,7 +91,6 @@ export function ReceptionistOverview({
             ["calls", String(overview.callsHandled)],
             ["appointments", String(overview.appointmentsBooked)],
             ["appointmentsRequested", String(overview.appointmentsRequested)],
-            ["transfers", String(overview.transfers)],
             [
               "lastActivity",
               overview.lastActivityAt
