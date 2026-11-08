@@ -17,6 +17,10 @@ import { randomUUID } from "@/lib/id";
 import { createRuleBrain } from "./brain-rules";
 import { parseReceptionistConfig } from "./config";
 import { createReceptionistEngine } from "./engine";
+import {
+  applyVoicePlanLimits,
+  voiceCapabilitiesForPlan,
+} from "./plan-limits";
 import { createMemoryReceptionistStore } from "./store";
 import type {
   CallStep,
@@ -62,9 +66,16 @@ const CLOCK: Record<DemoScenario, Date> = {
   after_hours: new Date("2026-03-04T03:00:00Z"),
 };
 
+/**
+ * The demo shows what the Essential plan does: the receptionist answers, takes
+ * the caller's details and flags urgent calls, and never transfers a call.
+ * There are deliberately no transfer numbers or departments in this config,
+ * and the plan limits are applied on top so the demo cannot drift from what a
+ * real Essential line does.
+ */
 export function demoConfig(language: ReceptionistLanguage): ReceptionistConfig {
   const fr = language === "fr";
-  return parseReceptionistConfig({
+  const config = parseReceptionistConfig({
     id: `rc_demo_${language}`,
     clientAccountId: "client_demo_site",
     phoneNumberE164: DEMO_TO,
@@ -72,16 +83,7 @@ export function demoConfig(language: ReceptionistLanguage): ReceptionistConfig {
     languages: [language],
     defaultLanguage: language,
     businessHours: { start: "08:00", end: "17:00", days: [1, 2, 3, 4, 5] },
-    routing: [
-      {
-        id: "billing",
-        name: fr ? "la facturation" : "billing",
-        phoneE164: "+14385597002",
-        keywords: fr
-          ? ["facture", "facturation", "paiement"]
-          : ["invoice", "billing", "payment"],
-      },
-    ],
+    routing: [],
     faqs: [
       {
         id: "hours",
@@ -123,15 +125,14 @@ export function demoConfig(language: ReceptionistLanguage): ReceptionistConfig {
           "Yes, estimates are free. A team member will confirm the time.",
       },
     ],
-    emergencyTransferE164: "+14385597003",
-    fallbackTransferE164: "+14385597004",
-    afterHoursMode: "take_message_emergency_transfer",
+    afterHoursMode: "take_message",
     collectPreferredTime: true,
     maxTurns: 10,
     notifications: [],
     smsRecoveryOnIncomplete: false,
     transcriptRetentionDays: 1,
   });
+  return applyVoicePlanLimits(config, voiceCapabilitiesForPlan("essential"));
 }
 
 /* ----------------------------------------------------------------- engine */
