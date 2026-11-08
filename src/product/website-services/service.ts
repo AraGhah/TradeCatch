@@ -19,6 +19,7 @@ export type WebsiteRequestUpdateError =
   | "not_found"
   | "invalid_transition"
   | "locked"
+  | "price_mismatch"
   | "price_too_low"
   | "quote_required"
   | "conflict";
@@ -62,6 +63,7 @@ export function createWebsiteRequestService(
   now: () => Date = () => new Date(),
 ): WebsiteRequestService {
   const startingPrice = ADD_ONS.websiteService.priceCad;
+  const priceIsStartingAt: boolean = ADD_ONS.websiteService.priceIsStartingAt;
 
   return {
     async submit(input, context) {
@@ -120,10 +122,20 @@ export function createWebsiteRequestService(
         return { ok: false, error: "invalid_transition" };
       }
 
-      const price =
+      let price =
         update.quotedPriceCad !== undefined
           ? update.quotedPriceCad
           : current.quotedPriceCad;
+      // A fixed-price service never needs a hand-typed price: quoting it uses
+      // the published one, so the customer is always told what the site says.
+      const advancing =
+        nextStatus === "quoted" ||
+        nextStatus === "in_progress" ||
+        nextStatus === "delivered";
+      if (!priceIsStartingAt && price === null && advancing) {
+        price = startingPrice;
+        update = { ...update, quotedPriceCad: price };
+      }
       const scope =
         update.scopeSummary !== undefined
           ? update.scopeSummary?.trim() || null
@@ -136,8 +148,8 @@ export function createWebsiteRequestService(
       if (current.status === "in_progress" && quoteChanged) {
         return { ok: false, error: "locked" };
       }
-      if (price !== null && !isValidQuotedPrice(price, startingPrice)) {
-        return { ok: false, error: "price_too_low" };
+      if (price !== null && !isValidQuotedPrice(price, startingPrice, priceIsStartingAt)) {
+        return { ok: false, error: priceIsStartingAt ? "price_too_low" : "price_mismatch" };
       }
       // Nothing moves to "quoted" or beyond without the written scope and the
       // final price the customer will be asked to confirm.
