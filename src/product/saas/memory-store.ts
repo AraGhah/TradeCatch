@@ -4,6 +4,8 @@ import { normalizeEmail, type SaasStore } from "./store";
 import {
   mergeBusinessFeatures,
   type MagicLink,
+  type PasswordCredential,
+  type PasswordToken,
   type Membership,
   type Organization,
   type Session,
@@ -23,6 +25,8 @@ export function createMemorySaasStore(): SaasStore {
   const memberships = new Map<string, Membership>();
   const magicLinks = new Map<string, MagicLink>();
   const sessions = new Map<string, Session>();
+  const passwords = new Map<string, PasswordCredential>();
+  const passwordTokens = new Map<string, PasswordToken>();
   const demoIdempotency = new Map<string, string>();
 
   return {
@@ -278,6 +282,40 @@ export function createMemorySaasStore(): SaasStore {
       for (const [id, s] of sessions) {
         if (s.userId === userId && !s.revokedAt) {
           sessions.set(id, { ...s, revokedAt: atIso });
+        }
+      }
+    },
+
+    async getPasswordCredential(userId) {
+      return passwords.get(userId) ?? null;
+    },
+
+    async setPasswordCredential(credential) {
+      passwords.set(credential.userId, { ...credential });
+    },
+
+    async createPasswordToken(token) {
+      passwordTokens.set(token.tokenHash, { ...token });
+    },
+
+    async findPasswordToken(tokenHash) {
+      const token = passwordTokens.get(tokenHash);
+      return token ? { ...token } : null;
+    },
+
+    async consumePasswordToken(tokenHash, at) {
+      const token = passwordTokens.get(tokenHash);
+      if (!token || token.consumedAt) return null;
+      if (Date.parse(token.expiresAt) <= Date.parse(at)) return null;
+      const consumed = { ...token, consumedAt: at };
+      passwordTokens.set(tokenHash, consumed);
+      return consumed;
+    },
+
+    async invalidatePasswordTokens(userId, at) {
+      for (const [hash, token] of passwordTokens) {
+        if (token.userId === userId && !token.consumedAt) {
+          passwordTokens.set(hash, { ...token, consumedAt: at });
         }
       }
     },

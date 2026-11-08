@@ -1,6 +1,8 @@
 import type {
   CreateOrganizationInput,
   MagicLink,
+  PasswordCredential,
+  PasswordToken,
   Membership,
   Organization,
   Session,
@@ -73,6 +75,19 @@ export type SaasStore = {
   listSessionsForUser(userId: string): Promise<Session[]>;
   revokeSession(id: string, atIso: string): Promise<void>;
   revokeUserSessions(userId: string, atIso: string): Promise<void>;
+  /** The stored password hash for a user, or null when they have not chosen a password. */
+  getPasswordCredential(userId: string): Promise<PasswordCredential | null>;
+  setPasswordCredential(credential: PasswordCredential): Promise<void>;
+  createPasswordToken(token: PasswordToken): Promise<void>;
+  /** Reads a token without using it (even if used or expired), so a form can be checked before the link is spent. */
+  findPasswordToken(tokenHash: string): Promise<PasswordToken | null>;
+  /** Marks a still-valid token of one of the kinds used and returns it; null when unknown, used or expired. */
+  consumePasswordToken(
+    tokenHash: string,
+    nowIso: string,
+  ): Promise<PasswordToken | null>;
+  /** Cancels every unused token for the user (after a password is set, older links must stop working). */
+  invalidatePasswordTokens(userId: string, atIso: string): Promise<void>;
   /** Demo create idempotency — returns existing org id when key already used. */
   claimDemoIdempotencyKey(
     key: string,
