@@ -121,7 +121,7 @@ function Mark({ value, label }: { value: PlanComparisonValue; label: string }) {
 
   return (
     <span className="inline-flex items-center justify-center text-[15px] text-[rgb(var(--ink-rgb)/0.28)]">
-      <span aria-hidden>—</span>
+      <span aria-hidden>-</span>
       <span className="sr-only">{label}</span>
     </span>
   );
