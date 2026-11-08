@@ -1,13 +1,9 @@
 @import "tailwindcss";
 
-/* Class-based dark mode: toggled by adding/removing `.dark` on <html>,
-   independent of the OS/browser color-scheme preference. */
-@custom-variant dark (&:where(.dark, .dark *));
+/* Light theme only. There is no dark mode and no theme toggle. */
 
 :root {
-  /* Ink — background fill for hero/dark sections. Deliberately identical in
-     light and dark mode: these sections are already dark, so the alternating
-     ink/paper rhythm survives as near-black vs. dark-charcoal in dark mode. */
+  /* Ink: background fill for the navy brand sections (hero bands, footer). */
   --color-navy: #0c141e;
   --color-navy-light: #16222f;
   --color-ink-panel: #0f1926;
@@ -91,28 +87,6 @@
 
 :root {
   color-scheme: light;
-}
-
-:root.dark {
-  color-scheme: dark;
-  --color-bg: #16191e;
-  --color-paper: #16191e;
-  --color-paper-deep: #0f1215;
-  --color-paper-hover: #1d2127;
-  --color-surface: #1c2027;
-  --paper-rgb: 22 25 30;
-
-  --color-heading: #f1eee8;
-  --color-text: #e6e2da;
-  --color-muted: #9aa2ab;
-  --color-secondary: #c3c9d0;
-
-  /* Dark-mode-safe tints: the light-mode values are tuned for 4.5:1 AA on
-     paper/white and fail badly on charcoal, so both get a lighter variant. */
-  --color-ember-text: #ff9a5c;
-  --color-signal-text: #4fcf94;
-
-  --ink-rgb: 255 255 255;
 }
 
 @theme inline {
