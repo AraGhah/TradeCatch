@@ -2,8 +2,6 @@
   "site": {
     "name": "TradeCatch",
     "tagline": "Contractor Revenue Recovery System",
-    "phone": "438-993-6997",
-    "phoneHref": "4389936997",
     "email": "contact@tradecatch.ca",
     "serviceArea": "Montréal · Laval · Mirabel · Vaudreuil-Dorion",
     "founderEmail": "contact@tradecatch.ca"
@@ -32,20 +30,19 @@
     "closeMenu": "Close menu",
     "mobileNav": "Mobile navigation",
     "close": "Close",
-    "toggleThemeToDark": "Switch to dark mode",
-    "toggleThemeToLight": "Switch to light mode",
     "skipToContent": "Skip to main content",
     "aiReceptionist": "Receptionist",
     "referral": "Referral program",
     "demo": "Demo",
     "login": "Login",
-    "more": "More"
+    "more": "More",
+    "emailUs": "Email us"
   },
   "cta": {
     "primary": "Book a Free Demo",
-    "secondary": "Watch the 90-second demo",
+    "secondary": "Watch the demo",
     "tertiary": "Book a free 20-minute audit",
-    "watchDemo": "Watch the 90-second demo",
+    "watchDemo": "Watch the demo",
     "seeWorkflow": "See the full workflow",
     "viewMissedCall": "View missed-call workflow",
     "viewQuoteFollowUp": "See the quote follow-up process",
@@ -72,11 +69,10 @@
     "requestDemo": "Request My Demo"
   },
   "footer": {
-    "description": "TradeCatch recovers missed calls by text on Starter, answers the phone with a limited receptionist on Growth, and runs the complete bilingual receptionist on Receptionist Plus. Pilots are founder-configured; marketing examples are illustrative.",
+    "description": "TradeCatch answers your calls in French and English, captures every customer request and keeps you informed. Essential answers and captures. Professional also schedules appointments. Marketing examples are illustrative.",
     "company": "Company",
     "legal": "Legal",
     "resources": "Resources",
-    "pilotLogin": "Pilot login",
     "rightsReserved": "All rights reserved.",
     "disclaimer": "The system does not diagnose technical, electrical, plumbing, HVAC, medical, or safety conditions. Emergency handling and safety instructions remain the responsibility of the contractor and qualified personnel.",
     "manageCookies": "Manage cookies",
@@ -94,7 +90,7 @@
       "eyebrow": "For contractors who work with their hands",
       "headline": "You're on the job. We'll handle the calls.",
       "accentWord": "We'll handle the calls.",
-      "subheadline": "TradeCatch answers customer calls, handles questions, and helps book appointments — so you can keep working.",
+      "subheadline": "TradeCatch answers your customer calls and captures every request, so you can keep working.",
       "ctaPrimary": "Book a Free Demo",
       "ctaSecondary": "Hear the Receptionist",
       "ctaTry": "Try the live receptionist demo",
@@ -102,7 +98,7 @@
     },
     "leaks": {
       "eyebrow": "The problem",
-      "headline": "Three places contracts leak out.",
+      "headline": "Three places jobs slip away.",
       "intro": "None of it ever shows up as a lost sale. It shows up as a quiet drop in booked jobs that nobody can trace back to a cause.",
       "cta": "Book a free 20-minute audit",
       "cards": [
@@ -111,78 +107,72 @@
           "body": "Your crew is up a ladder. The phone rings out. Twenty seconds later that homeowner is calling the next company on Google, and they answer."
         },
         {
-          "title": "The quote that goes quiet",
-          "body": "You send a $9,000 estimate, get busy, and never chase it. Three weeks later they signed with the contractor who sent one polite text."
+          "title": "The details that get lost",
+          "body": "A voicemail with half an address. A sticky note that goes missing. A name nobody wrote down. The job was real, and now it is gone."
         },
         {
-          "title": "The admin nobody bills for",
-          "body": "Someone in your office spends half their day re-typing addresses, forwarding voicemails, chasing statuses and reminding customers. None of it is billable."
+          "title": "The quote that goes quiet",
+          "body": "You send a $9,000 estimate, get busy, and never chase it. Three weeks later they signed with the contractor who sent one polite text."
         }
       ]
     },
     "system": {
       "eyebrow": "The system",
-      "headline": "From missed call to tracked outcome: pilot walkthrough.",
-      "intro": "The missed-call stages show the controlled pilot path. Starter quote follow-up and Growth outcomes run only for entitled organizations linked to the workspace.",
+      "headline": "From a ringing phone to a captured customer.",
+      "intro": "Every call is answered, every request is recorded, and you hear about it right away.",
       "cta": "See how it works",
       "steps": [
         {
-          "title": "Call captured",
-          "body": "Missed and after-hours calls trigger an immediate bilingual text, before the customer dials anyone else."
+          "title": "The phone rings",
+          "body": "A customer calls while you are on a job. The receptionist answers in French or English, under your business name."
         },
         {
-          "title": "Details collected",
-          "body": "Name, address, service needed, urgency and photos, gathered in the customer's own language."
+          "title": "The receptionist asks",
+          "body": "Name, address, the service needed and how urgent it is, gathered in the caller’s own language."
         },
         {
-          "title": "Technician alerted",
-          "body": "The right technician, dispatcher or owner gets a complete job card on their phone."
+          "title": "The request is recorded",
+          "body": "The call, its transcript and the request land in your account, ready to read."
         },
         {
-          "title": "Lead tracked",
-          "body": "The request is logged in the founder/ops pilot path. An entitled organization can also use its linked, organization-scoped workspace; access is not self-serve."
+          "title": "You are alerted",
+          "body": "You are told about the request straight away, so you can call back when you are free."
         },
         {
-          "title": "Quote followed up · Starter pilot",
-          "body": "Linked Starter pilots run day 1 / 3 / 7 / 14 follow-ups that stop on reply, opt-out, won/lost status, or human takeover."
+          "title": "A text follows up",
+          "body": "The customer gets a text, and a reminder if they go quiet. It stops when they reply or say STOP."
         },
         {
-          "title": "Result measured",
-          "body": "Marketing figures are illustrative. Entitled, linked Growth pilots can record pipeline outcomes and attributed revenue when a real value is supplied."
+          "title": "Professional adds appointments",
+          "body": "Scheduling, confirmations and reminders, switched on once they have been tested with your calendar."
         }
       ]
     },
     "proofExamples": {
-      "demoCta": "Watch the missed-call demo"
+      "demoCta": "Watch the demo"
     },
     "pricingPreview": {
       "eyebrow": "Pricing",
-      "headline": "Text back, answer the phone, or run a complete front desk.",
-      "intro": "Three plans. Each keeps everything in the plan before it. Month one is the setup fee only; the monthly fee starts in month two.",
+      "headline": "Two plans. One simple choice.",
+      "intro": "Essential answers your calls and captures your customers. Professional also schedules your appointments. All prices are in Canadian dollars.",
       "tiers": [
         {
-          "name": "Starter",
-          "price": "$349.99 / month",
-          "cadence": "$799.99 installation, paid once",
-          "idealFor": "Never leave a missed call without follow-up. SMS recovery — does not answer the phone."
+          "name": "Essential",
+          "price": "$249 / month",
+          "cadence": "$1,999.99 setup, paid once",
+          "idealFor": "Answers your calls and captures your customers."
         },
         {
-          "name": "Growth",
-          "price": "$649.99 / month",
-          "cadence": "$1,499.99 installation, paid once",
-          "idealFor": "Let AI answer while you work. Limited phone answering plus Starter."
-        },
-        {
-          "name": "Receptionist Plus",
-          "price": "$949.99 / month",
-          "cadence": "$1,999.99 installation, paid once",
-          "idealFor": "Your most complete front-desk solution. Booking on the call, transfer, emergencies."
+          "name": "Professional",
+          "price": "$349 / month",
+          "cadence": "$1,999.99 setup, paid once",
+          "idealFor": "Everything in Essential, plus appointment scheduling."
         }
       ],
       "cta": "See full pricing",
-      "receptionistCta": "How Receptionist Plus works",
-      "note": "Multi-location and high-volume work is scoped with you. Minutes past the written allowance are never billed in silence.",
-      "billingNote": "First month: setup fee only. Monthly management begins in month two."
+      "receptionistCta": "How the receptionist works",
+      "note": "Need a website too? Add it for $349.99, only if you choose it.",
+      "billingNote": "You pay the setup fee at checkout. Your first monthly charge comes one month later."
     },
     "founder": {
       "eyebrow": "Who you're actually hiring",
@@ -229,56 +219,44 @@
       "items": [
         {
           "q": "Does TradeCatch answer the phone like a receptionist?",
-          "a": "On Starter, no: a missed call gets an immediate bilingual text back, job details are collected, and your technician is alerted. On Growth, a limited receptionist answers the phone, qualifies the caller and sends your team a summary — without on-call booking, live transfer or emergency bridging. On Receptionist Plus it answers completely: qualify, book on the call when enabled, transfer or escalate."
+          "a": "Yes. On both plans the receptionist answers your calls in French or English, asks what the customer needs and sends you the details. It does not diagnose problems or give advice you have not approved."
         },
         {
           "q": "Does it replace our receptionist?",
-          "a": "No. Starter absorbs repetitive missed-call and follow-up work. Growth covers calls your team cannot take with limited receptionist features. Receptionist Plus is the complete front desk and still hands anything sensitive, complex or urgent to a person. It covers calls that would otherwise go unanswered, not to remove your staff."
+          "a": "No. It covers the calls your team cannot take. Your people stay in charge of anything sensitive, complex or urgent, and every request is waiting for you to act on."
         },
         {
           "q": "What happens during an emergency?",
-          "a": "The request is escalated using rules your company approved in advance. The system never diagnoses a problem or gives safety instructions you haven't signed off on."
+          "a": "TradeCatch does not transfer calls. For an urgent request, the receptionist records the details and flags it so you see it first. It never diagnoses a problem or gives safety instructions, and in an emergency the caller should always contact emergency services."
         },
         {
           "q": "Can it work with our current phone number?",
-          "a": "Usually. It depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
+          "a": "Usually. It depends on your phone provider and setup. The demo call identifies the safest way to connect without disrupting your existing line."
         },
         {
           "q": "What do I pay in the first month?",
-          "a": "The setup fee only. Your monthly subscription starts in month two. Prices are listed on the pricing page."
+          "a": "At checkout you pay the one-time setup fee of $1,999.99. Your first monthly charge ($249 for Essential, $349 for Professional) comes one month later. All prices are in Canadian dollars."
         },
         {
-          "q": "Can calls be transferred to me?",
-          "a": "Live transfer is available on Receptionist Plus during configured hours. Growth answers and summarizes without live transfer."
+          "q": "Does it book appointments?",
+          "a": "Professional schedules appointments in your Google Calendar once scheduling has been tested with you during setup. Essential records the request, and you confirm the time yourself."
+        },
+        {
+          "q": "Can you build my website too?",
+          "a": "Yes, as an optional extra for $349.99 CAD, paid once. It is never added unless you choose it."
         },
         {
           "q": "How long does setup take?",
-          "a": "We configure with you and go live only after you approve what the receptionist says. Timing depends on your availability and the plan."
+          "a": "We configure with you and go live only after you approve what the receptionist says. Timing depends on your availability."
         }
       ]
-    },
-    "pilot": {
-      "badge": "Pilot program",
-      "headline": "Now accepting founding pilot contractors.",
-      "body": "Join as a founding contractor while TradeCatch is taking a small number of pilots. You get the published rate, direct founder access, implementation around how your crew already works, priority on fitting features, and that rate locked for 12 months. No fabricated case-study promises. Results are tracked with you after launch.",
-      "pointsLabel": "What the pilot includes",
-      "points": [
-        "The rate published on the pricing page",
-        "Direct access to the founder during setup and tuning",
-        "Custom implementation around your real call and quote volume",
-        "Priority on feature requests that fit your trade",
-        "Pricing locked for 12 months"
-      ],
-      "guarantee": "Launch guarantee: if the agreed system isn't live because of a delay on our side, your first management month is credited.",
-      "cta": "Book a free 20-minute audit",
-      "landingNote": "Pilots are real engagements with signed scope. Public result claims appear only with written client permission."
     },
     "mobile": {
       "demo": {
         "eyebrow": "See it",
-        "headline": "Don't just read about it. Hear it.",
+        "headline": "Don’t just read about it. Hear it.",
         "intro": "Hear how TradeCatch handles a real customer conversation.",
-        "watchVideo": "Watch the 90-second demo",
+        "watchVideo": "Watch the demo",
         "tryLive": "Talk to the receptionist",
         "note": "Sound plays only when you press play."
       },
@@ -289,26 +267,26 @@
         "items": [
           {
             "title": "Calls answered while you work",
-            "body": "Someone picks up — even when you cannot."
+            "body": "Someone picks up, even when you cannot."
           },
           {
-            "title": "Appointments booked",
-            "body": "Callers can request a time without interrupting your crew."
+            "title": "Requests captured",
+            "body": "Name, number, address and what they need, every time."
           },
           {
             "title": "Questions handled",
-            "body": "Hours, services, and next steps — answered clearly."
+            "body": "Hours, services and next steps, answered clearly."
           },
           {
             "title": "Details sent to you",
-            "body": "Name, number, and what they need, on your phone."
+            "body": "You are alerted, with the details ready to read."
           }
         ]
       },
       "howItWorks": {
         "eyebrow": "Setup",
         "headline": "Simple to set up. Easy to use.",
-        "intro": "We configure the receptionist with you. You keep working.",
+        "intro": "We set up the receptionist with you. You keep working.",
         "steps": [
           {
             "title": "Tell us about your business",
@@ -320,7 +298,7 @@
           },
           {
             "title": "Keep working",
-            "body": "Supported calls are handled while you stay informed."
+            "body": "Calls are answered while you stay informed."
           }
         ],
         "cta": "See how it works"
@@ -331,42 +309,41 @@
         "intro": "Real situations. Clear responses.",
         "items": [
           {
-            "problem": "You're mid-job and can't answer.",
-            "response": "TradeCatch answers, takes details, and alerts your team."
+            "problem": "You are mid-job and cannot answer.",
+            "response": "TradeCatch answers, takes the details and alerts you."
           },
           {
             "problem": "A customer calls after hours.",
-            "response": "They still get a clear next step — not a dead line."
+            "response": "They still get a clear next step, not a dead line."
           },
           {
             "problem": "Someone wants to book an appointment.",
-            "response": "Growth and Receptionist Plus capture the request; Plus can book on the call when enabled."
+            "response": "Essential records the request. Professional can schedule it, once scheduling is switched on for you."
           },
           {
             "problem": "They ask about your services or pricing.",
-            "response": "Approved answers only — then a callback or booking path."
+            "response": "Approved answers only, then a callback."
           }
         ],
         "cta": "See trades we serve"
       },
       "pricing": {
         "eyebrow": "Pricing",
-        "headline": "Choose the receptionist your business needs.",
-        "intro": "Three plans. Month one is the setup fee only. Monthly billing starts in month two.",
-        "billingNote": "First month: setup fee only. Recurring monthly fee starts month two.",
-        "recommended": "Most popular for phone answering",
-        "starterTag": "Never leave a missed call without follow-up.",
-        "growthTag": "Let AI answer while you work.",
-        "plusTag": "Your most complete front-desk solution.",
+        "headline": "Choose the plan your business needs.",
+        "intro": "Two plans. You pay the setup fee at checkout.",
+        "billingNote": "Your first monthly charge comes one month after setup.",
+        "recommended": "Includes appointments",
         "setupLabel": "Setup",
         "monthlyLabel": "Then / month",
         "cta": "Compare plans",
-        "seeAll": "See full pricing"
+        "seeAll": "See full pricing",
+        "essentialTag": "Answers your calls and captures your customers.",
+        "professionalTag": "Everything in Essential, plus appointment scheduling."
       },
       "addOn": {
         "eyebrow": "Optional website service",
         "headline": "Need a website that brings in work?",
-        "intro": "We build a new professional site or improve the one you have, with mobile-friendly lead capture connected to TradeCatch.",
+        "intro": "We build a new professional site or improve the one you have, with a mobile-friendly way for customers to reach you.",
         "cta": "Get My Website Built"
       },
       "faq": {
@@ -379,7 +356,7 @@
         "body": "See how TradeCatch can help your business handle calls while you are busy.",
         "primary": "Book Your Free Demo",
         "secondary": "Compare Plans",
-        "note": "No pressure. Clear pricing. Direct founder support on pilots."
+        "note": "No pressure. Clear pricing. Direct founder support."
       },
       "stickyCta": "Book a Free Demo"
     }
@@ -387,221 +364,195 @@
   "services": {
     "eyebrow": "Services",
     "headline": "One system. The jobs it does while you work.",
-    "intro": "TradeCatch starts with a controlled missed-call pilot. Quote follow-up is a linked Starter pilot; booking, pipeline, attribution, reviews, and advanced analytics require an entitled Growth organization. Google Calendar is a separately enrolled Growth technical pilot, not general release. Outlook and native two-way CRM sync remain planned.",
+    "intro": "TradeCatch answers your calls, captures every customer request and follows up by text. Essential covers answering and capturing. Professional adds appointment scheduling in your Google Calendar, switched on once it has been tested with you.",
     "groups": [
       {
-        "title": "Lead capture · Controlled pilot",
+        "title": "Call answering",
         "purpose": "Stop callers from dialling your competitor thirty seconds later.",
         "items": [
-          "Missed-call detection",
-          "After-hours SMS response",
+          "Answers calls day and night",
           "French and English",
-          "Customer-information collection",
-          "Photo collection",
-          "Service-area checking",
-          "Lead creation"
+          "Business hours and after-hours handling",
+          "Answers from the information you approved",
+          "Urgent calls flagged first",
+          "Voicemail when nobody can be reached"
         ]
       },
       {
-        "title": "Technician alerts · Controlled pilot",
-        "purpose": "Get the complete request to the right person, fast.",
-        "items": [
-          "On-call schedule configuration",
-          "Technician SMS alerts",
-          "Job cards",
-          "Customer details",
-          "Photos",
-          "Urgency level",
-          "Backup escalation",
-          "Owner notifications"
-        ]
-      },
-      {
-        "title": "Lead qualification · Controlled pilot",
+        "title": "Customer requests",
         "purpose": "Collect enough job details for your team to respond intelligently.",
         "items": [
-          "Approved qualification questions",
-          "Project-type detection",
-          "Service-area verification",
-          "Urgency flagging",
-          "Human review when needed",
-          "In-app appointment booking (entitled Growth pilot)",
-          "SMS appointment reminders (entitled Growth pilot)"
+          "Name and callback number",
+          "Address and service-area check",
+          "Service needed and job description",
+          "Photos when the customer sends them",
+          "Urgency level",
+          "Call summary and transcript"
         ]
       },
       {
-        "title": "Quote recovery · Starter pilot",
-        "purpose": "A founder-configured Starter pilot module for linked organizations and approved estimates.",
+        "title": "Alerts",
+        "purpose": "Get the complete request to the right person, fast.",
         "items": [
-          "Quote ingestion into the linked workspace",
-          "Customer, quote-reference, and amount capture",
-          "Day 1 / 3 / 7 / 14 follow-up sequence",
-          "Stop on reply, opt-out, won/lost, or human takeover",
-          "Reply detection and human-inbox handoff",
-          "Founder-approved message templates",
-          "Won/lost tracking"
+          "Text and email alerts",
+          "Job details in the alert",
+          "Urgency level",
+          "Owner notifications",
+          "On-call schedule for alerts"
         ]
       },
       {
-        "title": "Reporting",
-        "purpose": "Ops and linked-workspace views are pilot tools; every public marketing dashboard remains illustrative.",
+        "title": "Text follow-up",
+        "purpose": "Keep the conversation going without chasing.",
         "items": [
-          "Ops lead list (pilot API)",
-          "Missed-call workflow outcomes (pilot)",
-          "Technician accept / decline tracking (pilot)",
-          "Linked workspace counts (pilot, organization-scoped)",
-          "Starter quote follow-ups and outcomes (pilot)",
-          "Marketing weekly summaries (illustrative only)",
-          "Cases needing human review (pilot)",
-          "Growth pipeline and attribution (entitled pilot; real values only)"
+          "Missed-call text back",
+          "After-hours text response",
+          "Quote follow-up on day 1, 3, 7 and 14",
+          "Stops on reply, STOP, won or lost, or when you take over",
+          "Respects consent and opt-outs"
         ]
       },
       {
-        "title": "Receptionist · Growth limited, Plus complete",
-        "purpose": "Growth answers and summarises. Receptionist Plus books on the call, transfers and bridges emergencies.",
+        "title": "Appointments · Professional",
+        "purpose": "Professional schedules the visit for you.",
         "items": [
-          "Phone answering on Growth (limited) and Receptionist Plus (complete)",
-          "Business knowledge base configured and approved by you",
-          "Lead qualification during the call",
-          "Appointment requests by phone — confirmed by your team on Growth; bookable on-call on Plus when enabled",
-          "Human transfer and emergency routing on Receptionist Plus",
-          "Structured call summaries and next actions",
-          "Transcripts on Receptionist Plus when enabled"
+          "Appointment scheduling in your Google Calendar",
+          "Available times and double-booking protection",
+          "Confirmations and reminders by text",
+          "Rescheduling and cancellation",
+          "Calendar view in your account"
+        ]
+      },
+      {
+        "title": "Your account",
+        "purpose": "One place to see everything.",
+        "items": [
+          "Call activity",
+          "Customer requests",
+          "Text messages",
+          "Billing and plan",
+          "Referrals",
+          "Support"
         ]
       }
     ],
-    "laterTitle": "Additional modules and future bolt-ons",
-    "laterIntro": "Growth review requests are an entitled pilot feature. Every other item below is planned and scoped separately.",
+    "laterTitle": "Optional extra: a website",
+    "laterIntro": "Need a website that brings in work? We build a new professional site or improve the one you have for $349.99 CAD, paid once. It is never added unless you choose it.",
     "later": [
-      "E-signature (planned)",
-      "Deposit collection (planned)",
-      "Invoice reminders (planned)",
-      "Google review requests (entitled Growth pilot)",
-      "Old-lead reactivation (planned)",
-      "Seasonal renewals (planned)",
-      "Material-order automation (planned)"
+      "A new professional website, or improvements to your current one",
+      "Mobile-friendly, with an easy way for customers to reach you",
+      "Scope confirmed with you before you pay",
+      "Separate from your subscription"
     ],
-    "cta": "Book a free 20-minute audit",
+    "cta": "Book a free 20-minute demo",
     "heroHighlights": [
-      "Lead capture (controlled pilot)",
-      "Technician routing (controlled pilot)",
-      "Quote follow-up (Starter pilot)",
-      "In-app booking (entitled Growth pilot)",
-      "Workspace reporting (pilot) · Marketing examples illustrative",
-      "Phone answering (Growth limited · Receptionist Plus complete)"
+      "Call answering, day and night",
+      "Customer requests captured",
+      "Text follow-up",
+      "Appointments with Professional",
+      "Optional website service"
     ]
   },
   "howItWorks": {
     "eyebrow": "How it works",
-    "headline": "From first contact to booked work — by plan.",
-    "intro": "Starter recovers missed calls by text. Growth answers the phone with limited receptionist features and books in the workspace. Receptionist Plus is the complete front desk. Use the walkthrough on this page to see only what each plan includes.",
-    "metaDescription": "See how TradeCatch works on Starter (SMS), Growth (limited phone answering) and Receptionist Plus (complete bilingual receptionist).",
+    "headline": "From a ringing phone to a captured customer.",
+    "intro": "TradeCatch answers your calls when you cannot. Essential captures the customer. Professional also books the appointment.",
+    "metaDescription": "See how TradeCatch answers contractor calls, captures customer requests and, with Professional, books appointments in your Google Calendar.",
     "stages": [
       {
-        "title": "Customer makes contact",
+        "title": "A customer calls",
         "items": [
-          "Phone call",
-          "Website form",
-          "Email",
-          "Landing page"
+          "Day or night",
+          "In French or English",
+          "Even when you are on a job"
         ]
       },
       {
-        "title": "The system responds",
+        "title": "The receptionist answers",
         "items": [
-          "Immediate SMS",
-          "Language selection",
-          "Basic information collection"
+          "Greets the caller with your business name",
+          "Asks what they need",
+          "Takes their name and phone number",
+          "Flags urgent requests"
         ]
       },
       {
-        "title": "The request is routed",
+        "title": "The request reaches you",
         "items": [
-          "Service type",
-          "Location",
-          "Urgency",
-          "Correct technician",
-          "Backup escalation"
+          "Shows up in your dashboard",
+          "Urgent requests stand out",
+          "Missed calls get a follow-up text"
         ]
       },
       {
-        "title": "Your team takes the job",
+        "title": "You take the job",
         "items": [
-          "Calls the customer",
-          "Diagnoses the issue",
-          "Visits the property",
-          "Prepares the quote"
+          "Call the customer back",
+          "Prepare the quote",
+          "Mark the request as handled"
         ]
       },
       {
-        "title": "Quote follow-up begins · Starter pilot",
+        "title": "Professional books the appointment",
         "items": [
-          "Quote added to the linked workspace",
-          "Day 1 / 3 / 7 / 14 follow-ups scheduled",
-          "Reply or opt-out detected",
-          "Human inbox opened on reply"
-        ]
-      },
-      {
-        "title": "The outcome is recorded in the linked pilot workspace",
-        "items": [
-          "In-app appointment booked (Growth)",
-          "Quote won or lost (Starter)",
-          "Follow-up stopped (Starter)",
-          "Pipeline stage updated (Growth)",
-          "Attributed revenue recorded from a real value (Growth)"
+          "Checks your Google Calendar",
+          "Offers times that are free",
+          "Confirms by text",
+          "Sends a reminder before the visit"
         ]
       }
     ],
-    "sequenceTitle": "The Starter pilot quote-follow-up sequence",
-    "sequence": [
-      {
-        "day": "DAY 1",
-        "action": "Confirm the quote landed"
-      },
-      {
-        "day": "DAY 3",
-        "action": "Offer to walk through the quote"
-      },
-      {
-        "day": "DAY 7",
-        "action": "Check interest and timing"
-      },
-      {
-        "day": "DAY 14",
-        "action": "Close the loop, politely"
-      }
-    ],
-    "sequenceNote": "The sequence stops when the customer replies or opts out, when the quote is won or lost, or when your team takes over. A reply opens a human inbox item.",
     "cta": "Book a free 20-minute audit",
     "heroSteps": [
-      "Missed call",
-      "SMS sent",
-      "Details collected",
-      "Technician alerted",
-      "Pilot path",
-      "Job recorded"
-    ]
+      "A call comes in",
+      "The receptionist answers",
+      "Details are captured",
+      "You are alerted",
+      "A text follow-up goes out",
+      "Professional: the appointment is booked"
+    ],
+    "plansTitle": "Which plan does what",
+    "plans": [
+      {
+        "name": "Essential",
+        "line": "We answer your calls and capture your customers.",
+        "items": [
+          "Answers every call, day and night",
+          "Records the request as an appointment request, never a confirmed booking",
+          "Follows up by text"
+        ]
+      },
+      {
+        "name": "Professional",
+        "line": "We answer your calls and book your appointments.",
+        "items": [
+          "Everything in Essential",
+          "Books into your Google Calendar",
+          "Confirmations, reminders, rescheduling and cancellation"
+        ]
+      }
+    ],
+    "schedulingNote": "Appointment scheduling is switched on for your business once it has been tested with your Google Calendar during setup."
   },
   "industriesPage": {
     "eyebrow": "Industries",
     "headline": "Built for busy trade companies.",
-    "intro": "These examples combine the controlled missed-call pilot with linked Starter quote follow-up. Growth workspace modules require an entitled pilot organization.",
+    "intro": "The same two plans fit every trade: Essential answers your calls and captures your customers, and Professional also schedules your appointments.",
     "focusLabel": "Where it earns its keep",
     "sections": [
       {
         "name": "Plumbing",
-        "headline": "Catch the emergency before they call another plumber",
+        "headline": "Catch the urgent call before they dial another plumber",
         "focus": [
-          "Missed emergency calls",
-          "Flooding escalation",
-          "Technician routing",
+          "Missed urgent calls",
+          "Flooding flagged first",
+          "Every detail recorded",
           "Repair and replacement quotes"
         ]
       },
       {
         "name": "HVAC",
-        "headline": "Capture service calls, chase the high-value install quotes",
+        "headline": "Capture service calls and follow up on the big install quotes",
         "focus": [
           "No-heat and no-cooling calls",
           "Heat-pump inquiries",
@@ -611,16 +562,16 @@
       },
       {
         "name": "Electrical",
-        "headline": "Route urgent requests, recover unanswered estimates",
+        "headline": "Flag urgent requests and follow up on unanswered estimates",
         "focus": [
-          "Emergency escalation",
+          "Urgent requests flagged first",
           "Service-area checks",
           "Panel and rewiring estimates"
         ]
       },
       {
         "name": "Roofing & Renovation",
-        "headline": "Follow up on every high-value project estimate",
+        "headline": "Follow up on every large project estimate",
         "focus": [
           "Inspection requests",
           "Estimates",
@@ -630,7 +581,7 @@
       },
       {
         "name": "Exterior Trades",
-        "headline": "Keep leads moving while you're on the job site",
+        "headline": "Keep customers moving while you are on the job site",
         "focus": [
           "Landscaping",
           "Paving",
@@ -645,453 +596,176 @@
   },
   "pricing": {
     "eyebrow": "Pricing",
-    "headline": "Choose the receptionist your business needs.",
-    "intro": "Starter recovers missed calls by text. Growth answers the phone with a limited receptionist. Receptionist Plus is the complete bilingual front desk.",
-    "reassurance": "Setup fee in month one. Monthly fee starts month two. Month-to-month after that. Cancel with notice.",
-    "metaDescription": "TradeCatch pricing: Starter SMS recovery, Growth limited phone answering, and Receptionist Plus — the complete bilingual front desk for Québec contractors.",
+    "headline": "Two plans. One simple choice.",
+    "intro": "Essential answers your calls and captures your customers. Professional also books your appointments. All prices are in Canadian dollars.",
+    "reassurance": "Month to month after setup. Cancel with notice.",
+    "metaDescription": "TradeCatch pricing in CAD: Essential at $249 a month and Professional at $349 a month, each with a one-time $1,999.99 setup fee. Optional website service for $349.99.",
     "principles": [
-      "Starter catches missed calls by text",
-      "Growth answers the phone with limited receptionist features, and includes Starter",
-      "Receptionist Plus is the complete front desk, and includes both",
+      "Essential: we answer your calls and capture your customers",
+      "Professional: we answer your calls and book your appointments",
+      "The same one-time setup fee on both plans",
       "Nothing sends or speaks until you approve the wording"
     ],
     "tiers": [
       {
-        "name": "Starter",
-        "tagline": "SMS receptionist for missed calls",
-        "outcome": "Missed calls get a text back. Website inquiries get a reply. Quotes that go quiet get followed up, in the customer's language, with wording you approve first. Starter does not answer the phone.",
-        "price": "$799.99 setup",
-        "setupAmount": "$799.99",
-        "cadence": "$349.99 / month",
-        "monthlyAmount": "$349.99",
-        "idealFor": "Owner-operators and small crews who lose jobs while they are on the tools.",
-        "reassuranceLine": "A person can take over any thread. Month to month. Further down, see what one of your jobs covers.",
-        "groups": [
-          {
-            "title": "Capture",
-            "items": [
-              "Text-back on missed calls",
-              "Reply to website inquiries",
-              "Bilingual SMS, in French or English"
-            ]
-          },
-          {
-            "title": "Qualify",
-            "items": [
-              "Job, address and urgency collected before anyone calls back"
-            ]
-          },
-          {
-            "title": "Follow up",
-            "items": [
-              "Quote follow-up that stops the moment they reply"
-            ]
-          },
-          {
-            "title": "Respond",
-            "items": [
-              "A person can take over",
-              "Alerts to the owner or the on-call technician"
-            ]
-          },
-          {
-            "title": "Measure",
-            "items": [
-              "A simple report of what came in"
-            ]
-          }
-        ],
-        "planInterest": "starter"
-      },
-      {
-        "name": "Growth",
-        "badge": "Most popular",
-        "emphasis": "featured",
-        "tagline": "Limited receptionist that answers the phone",
-        "outcome": "Everything in Starter, plus a receptionist that answers calls in French or English, captures who is calling and what they need, answers from your approved information, and sends your team a summary — then booking, pipeline and reviews in the workspace.",
-        "price": "$1,499.99 setup",
-        "setupAmount": "$1,499.99",
-        "cadence": "$649.99 / month",
-        "monthlyAmount": "$649.99",
-        "idealFor": "Crews that want the phone answered and leads on the calendar, without the full Plus transfer and booking-on-call set.",
-        "reassuranceLine": "Growth answers the phone with limited receptionist features. Live transfer, on-call booking, emergency bridging and full transcripts are Receptionist Plus. Usage past the written allowance is confirmed with you before it is billed.",
-        "groups": [
-          {
-            "title": "Answer (limited)",
-            "items": [
-              "Phone answering in French or English",
-              "Caller details and job needs captured live",
-              "Answers drawn from your approved business information",
-              "Appointment requests summarised for your team to confirm",
-              "Call summary sent to your team"
-            ]
-          },
-          {
-            "title": "Book",
-            "items": [
-              "Appointment booking in the workspace",
-              "SMS appointment reminders"
-            ]
-          },
-          {
-            "title": "Manage",
-            "items": [
-              "A pipeline of open work",
-              "Routing and escalation across technicians"
-            ]
-          },
-          {
-            "title": "Measure",
-            "items": [
-              "Won revenue from the jobs you close",
-              "Analytics and a CSV export"
-            ]
-          },
-          {
-            "title": "Grow",
-            "items": [
-              "Advanced follow-up sequences",
-              "Google review-request texts"
-            ]
-          }
-        ],
-        "includesPrevious": "Everything in Starter, plus:",
-        "planInterest": "growth",
-        "stepUp": "Adds limited phone answering, booking, pipeline, attribution and reviews: $300.00 a month and $700.00 more at installation than Starter."
-      },
-      {
-        "name": "Receptionist Plus",
-        "badge": "Complete receptionist",
-        "emphasis": "premium",
-        "tagline": "The complete bilingual front desk",
-        "outcome": "Everything in Starter and Growth, plus booking on the call, live transfer to a person, emergency bridging, transcripts when enabled, and the advanced automation tier.",
+        "name": "Essential",
+        "tagline": "We answer your calls and capture your customers.",
+        "outcome": "Every call is answered, day or night, in French or English. You get the caller’s name, number and what they need, so no job slips away.",
         "price": "$1,999.99 setup",
         "setupAmount": "$1,999.99",
-        "cadence": "$949.99 / month",
-        "monthlyAmount": "$949.99",
-        "idealFor": "Companies whose phone must be answered completely — after hours, on jobs, with transfer and on-call booking.",
-        "reassuranceLine": "Installation covers the knowledge base, greeting, on-call booking rules, transfer targets and emergency routing. Onboarding is required before the line goes live.",
-        "usageNote": "Calling usage is subject to plan allowance and applicable usage limits, agreed in writing at the demo.",
-        "includesPrevious": "Everything in Starter and everything in Growth, plus:",
-        "ctaLabel": "Book a free 20-minute audit",
-        "secondaryCtaLabel": "Talk to it yourself",
+        "cadence": "$249 / month",
+        "monthlyAmount": "$249",
+        "idealFor": "For contractors who want every call answered and every opportunity captured.",
+        "reassuranceLine": "Setup is paid once, at checkout. Your first $249 monthly charge comes one month after setup.",
         "groups": [
           {
-            "title": "Answer",
+            "title": "Answers your calls",
             "items": [
-              "Phone answering 24/7, including after hours",
-              "French and English, offered at the start of the call",
-              "Answers drawn from your approved business information"
+              "24/7 AI phone receptionist",
+              "Canadian French and English",
+              "Natural, professional voice",
+              "Missed calls followed up"
             ]
           },
           {
-            "title": "Qualify",
+            "title": "Captures the customer",
             "items": [
-              "Caller, service, address and job details captured live",
-              "Urgency level and type of request (service, appointment, question, message)",
-              "Emergency detection with an immediate text alert to your team"
+              "Name and phone number",
+              "Service and quote requests",
+              "Urgent requests flagged right away",
+              "Text follow-ups on customer requests"
             ]
           },
           {
-            "title": "Request and route",
+            "title": "Shows you the results",
             "items": [
-              "Appointment requests by phone: preferred time captured, confirmed by your team",
-              "Human transfer to owner, office, sales or on-call technician",
-              "Emergency routing rules defined by your business"
+              "Customer dashboard",
+              "Call activity and history",
+              "Captured customer requests",
+              "Basic performance statistics"
             ]
           },
           {
-            "title": "Summarise",
+            "title": "Runs your account",
             "items": [
-              "Structured call summary and next action after every meaningful call",
-              "Transcripts, and voicemail recordings when enabled",
-              "Call and receptionist reporting in the linked workspace"
+              "Secure Account Center",
+              "Subscription and billing",
+              "Business information"
             ]
           }
         ],
-        "ctaHref": "/book-audit",
-        "secondaryCtaHref": "/receptionist#try-it",
-        "planInterest": "receptionist",
-        "stepUp": "Adds the complete receptionist experience: $300.00 a month and $500.00 more at installation than Growth.",
-        "exclusive": {
-          "badge": "Only on Receptionist Plus",
-          "title": "Custom Voice Cloning",
-          "body": "Make your receptionist sound like you. Record your voice once, and let your receptionist answer customer calls using your voice."
-        }
+        "planInterest": "essential"
+      },
+      {
+        "name": "Professional",
+        "badge": "Books appointments",
+        "emphasis": "featured",
+        "tagline": "We answer your calls and book your appointments.",
+        "outcome": "Everything in Essential, plus automatic scheduling with your Google Calendar. Callers are offered a time that is actually free, and you see it on your calendar.",
+        "price": "$1,999.99 setup",
+        "setupAmount": "$1,999.99",
+        "cadence": "$349 / month",
+        "monthlyAmount": "$349",
+        "idealFor": "For contractors who want confirmed appointments, not just requests.",
+        "reassuranceLine": "Setup is paid once, at checkout. Your first $349 monthly charge comes one month after setup.",
+        "includesPrevious": "Everything in Essential, plus:",
+        "stepUp": "Adds appointment scheduling for $100 more a month. The setup fee is the same.",
+        "groups": [
+          {
+            "title": "Books appointments",
+            "items": [
+              "Automatic appointment scheduling",
+              "Availability checked before booking",
+              "Rescheduling and cancellation"
+            ]
+          },
+          {
+            "title": "Connects to your calendar",
+            "items": [
+              "Google Calendar integration",
+              "Scheduling rules and buffer times",
+              "Business availability settings"
+            ]
+          },
+          {
+            "title": "Keeps customers informed",
+            "items": [
+              "Text confirmations",
+              "Automatic reminders",
+              "Appointment follow-ups"
+            ]
+          },
+          {
+            "title": "Shows your schedule",
+            "items": [
+              "Calendar in your dashboard",
+              "Upcoming appointments and history",
+              "Appointment statistics"
+            ]
+          }
+        ],
+        "planInterest": "professional"
       }
     ],
-    "customTitle": "Operating across locations or high volume?",
-    "customBody": "We design a custom pilot scope for multi-location routing, outbound webhook integrations, and priority monitoring. Native two-way CRM remains planned and is never implied by the quote.",
-    "customCta": "Book a free 20-minute audit",
-    "includesTitle": "Every engagement includes",
+    "includesTitle": "Every plan includes",
     "includesItems": [
-      "Installation fee fixed before work begins",
-      "Month-to-month management",
-      "Human-approved message templates",
+      "One-time setup: we configure everything with you",
+      "Month-to-month billing",
+      "Messages you approve before they go live",
       "French and English",
-      "Launch guarantee if we delay",
-      "Your customer data stays yours"
+      "Your customer data stays yours",
+      "Support by email"
     ],
     "details": [
       {
-        "title": "How pilot access and entitlements work",
-        "body": "All listed capabilities are founder-configured pilot modules, not self-serve SaaS. Missed-call recovery is the controlled core on Starter. Growth adds limited phone answering plus booking, reminders, pipeline, attribution, reviews and advanced analytics in a linked organization. Receptionist Plus adds on-call booking, live transfer, emergency bridging and transcripts. Google Calendar is a separately enrolled Growth technical pilot, not general release. Outlook and native two-way CRM sync remain planned."
+        "title": "What does setup cover?",
+        "body": "The one-time setup fee covers getting your receptionist ready: your business information, greeting, the questions it asks, your service area and hours, connecting your phone number, and testing. We create your account for you and send you a secure link to sign in. Your line goes live only after you approve what it says."
       },
       {
-        "title": "What the Receptionist Plus installation covers",
-        "body": "The installation fee covers the configuration work: business knowledge base, greeting and conversation design, qualification questions, booking rules, transfer targets, emergency definitions and testing. The line does not go live until you have approved what it says."
+        "title": "When do I pay?",
+        "body": "At checkout you pay the one-time setup fee of $1,999.99 CAD. Your first monthly charge ($249 for Essential, $349 for Professional) comes one month after your setup payment, then every month. Setup is charged once per business."
       },
       {
-        "title": "Calling usage",
-        "body": "The monthly fee is not unlimited calling. Your included allowance, how overage is handled, SMS usage and any additional phone numbers are agreed in writing before launch. No silent overages."
+        "title": "Are there any other fees?",
+        "body": "No hidden fees. Normal call and text usage is included each month. If your usage grows well past that, we tell you and agree on any change with you before anything extra is billed."
       },
       {
-        "title": "Recording, transcripts and privacy",
-        "body": "Call recordings and transcripts are available when enabled. They are not switched on automatically. Notification wording and retention are configured to your business's requirements. This is a product setting, not legal advice."
+        "title": "Does Essential book appointments?",
+        "body": "No. On Essential the receptionist records the time a caller would like as an appointment request and sends it to you. It never promises a confirmed booking. Professional checks your calendar and books for real."
       },
       {
-        "title": "What the published price includes",
-        "body": "The figures on this page are the prices: a one-time setup and a monthly management fee. The audit confirms the plan fits your trade and locks the written allowance for calls and texts. It does not replace the published rate. Anything past that allowance is agreed in writing before it is billed."
-      },
-      {
-        "title": "Volume and overages",
-        "body": "If volume grows past the agreed range, we flag it and agree any change in writing first. No silent overages."
+        "title": "Is the receptionist a real person?",
+        "body": "No. It is an AI phone receptionist. It sticks to the information you approved, and when it does not know an answer it takes a message for you."
       },
       {
         "title": "Cancellation",
-        "body": "Cancel with notice. Sequences stop. We help export or hand off what you need. Customer data stays with you."
+        "body": "Cancel with notice. Your customer data stays with you, and we help you export what you need."
       },
       {
-        "title": "Data ownership",
-        "body": "Customer records and conversation logs belong to your business. We do not sell or reuse them for other clients."
+        "title": "Who owns the data?",
+        "body": "Customer records and conversation logs belong to your business. We do not sell them or reuse them for other clients."
       }
     ],
     "cta": "Book a free 20-minute audit",
-    "setupLabel": "Installation",
+    "setupLabel": "Setup",
     "monthlyLabel": "month",
     "thenLabel": "then",
     "comparison": {
       "eyebrow": "Compare",
-      "title": "What each plan adds",
-      "intro": "Each plan keeps everything in the plan before it. Upgrading never removes a capability you already rely on.",
+      "title": "What Professional adds",
+      "intro": "Professional includes everything in Essential and adds appointment scheduling.",
       "featureLabel": "Feature",
-      "columns": [
-        "Starter",
-        "Growth",
-        "Receptionist Plus"
-      ],
       "includedLabel": "Included",
       "notIncludedLabel": "Not included",
       "plannedLabel": "Planned",
-      "rows": [
-        {
-          "feature": "Missed-call recovery",
-          "values": [
-            "y",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Bilingual SMS (French and English)",
-          "values": [
-            "y",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Website lead response",
-          "values": [
-            "y",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Lead qualification",
-          "values": [
-            "y",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Quote follow-up",
-          "values": [
-            "y",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Human takeover",
-          "values": [
-            "y",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Lead dashboard",
-          "values": [
-            "y",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Appointment booking",
-          "values": [
-            "n",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Appointment reminders",
-          "values": [
-            "n",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Advanced follow-up sequences",
-          "values": [
-            "n",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Pipeline and revenue attribution",
-          "values": [
-            "n",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Review requests",
-          "values": [
-            "n",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Phone answering",
-          "values": [
-            "n",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "24/7 bilingual receptionist",
-          "values": [
-            "n",
-            "l",
-            "y"
-          ]
-        },
-        {
-          "feature": "Lead qualification on the call",
-          "values": [
-            "n",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Appointment requests by phone",
-          "values": [
-            "n",
-            "l",
-            "y"
-          ]
-        },
-        {
-          "feature": "Call summary to your team",
-          "values": [
-            "n",
-            "y",
-            "y"
-          ]
-        },
-        {
-          "feature": "Appointment booking on the call",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Human call transfer",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Emergency call routing",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Transcripts and voicemail recordings when enabled",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Custom Voice Cloning (your own voice)",
-          "values": [
-            "n",
-            "n",
-            "y"
-          ]
-        },
-        {
-          "feature": "Native Outlook calendar sync",
-          "values": [
-            "p",
-            "p",
-            "p"
-          ]
-        }
-      ],
-      "note": "Every capability above is a founder-configured pilot module, not self-serve software. \"Limited\" means Growth includes a smaller version than Receptionist Plus. Items marked planned are not available yet and are never implied in a quote.",
+      "note": "Professional scheduling works with Google Calendar, which we connect with you during setup.",
       "limitedLabel": "Limited"
-    },
-    "breakEven": {
-      "eyebrow": "Do the math",
-      "title": "What is one job worth to you?",
-      "intro": "Enter the average value of a job. We show how many months one recovered job covers each plan's monthly fee. It is arithmetic on your number, not a forecast.",
-      "inputLabel": "Average job value (CAD)",
-      "inputHint": "Starting figure is an example. Replace it with yours.",
-      "planColumn": "Plan",
-      "feeColumn": "Monthly fee",
-      "coverColumn": "One job covers",
-      "months": "{value} months",
-      "monthOne": "1 month",
-      "partMonth": "{value}% of a month",
-      "invalid": "Enter an amount above zero.",
-      "note": "Monthly fees only. Installation is paid once and calling usage is agreed in writing. This is arithmetic on your own number, not a promise that any plan recovers a given number of jobs.",
-      "cta": "Book a free 20-minute audit"
     },
     "onceLabel": "paid once",
     "monthlyEyebrow": "Each month",
-    "websiteMention": "Need a website? Add our website service starting at $349.",
-    "billingBanner": "First month charges the setup fee only. Recurring monthly billing begins in month two."
+    "websiteMention": "Need a website? Add our website service for $349.99.",
+    "billingBanner": "At checkout you pay the one-time setup fee. Your first monthly charge comes one month later.",
+    "schedulingNote": "Appointment scheduling is switched on for your business once it has been tested with your Google Calendar during setup."
   },
   "about": {
     "eyebrow": "About",
@@ -1141,11 +815,11 @@
       },
       {
         "label": "Model",
-        "value": "Founder-led pilots"
+        "value": "Run directly by the founder"
       },
       {
         "label": "Plans",
-        "value": "Starter · Growth · Receptionist"
+        "value": "Essential · Professional"
       },
       {
         "label": "Support",
@@ -1156,7 +830,7 @@
   },
   "bookAudit": {
     "headline": "Book a free 20-minute revenue leak audit",
-    "intro": "A short form — name, company, trade, and how to reach you. About one minute. No commitment.",
+    "intro": "A short form: name, company, trade, and how to reach you. About one minute. No commitment.",
     "fields": {
       "firstName": "First name",
       "lastName": "Last name",
@@ -1172,7 +846,7 @@
       "afterHours": "Do you offer after-hours service?",
       "quotesPerMonth": "Quotes sent per month",
       "averageJobValue": "Average job value",
-      "currentCrm": "Current CRM or business software",
+      "currentCrm": "Current business software",
       "handlesMissedCalls": "Who currently handles missed calls?",
       "followsUpQuotes": "Who currently follows up on quotes?",
       "mainProblem": "Main operational problem"
@@ -1200,22 +874,22 @@
       ],
       "employees": [
         "Just me",
-        "2–5",
-        "6–15",
-        "16–30",
+        "2 to 5",
+        "6 to 15",
+        "16 to 30",
         "30+"
       ],
       "calls": [
         "Under 50",
-        "50–150",
-        "150–400",
+        "50 to 150",
+        "150 to 400",
         "400+",
         "Honestly, no idea"
       ],
       "missed": [
-        "0–5",
-        "5–15",
-        "15–30",
+        "0 to 5",
+        "5 to 15",
+        "15 to 30",
         "30+",
         "No idea"
       ],
@@ -1226,14 +900,14 @@
       ],
       "quotes": [
         "Under 10",
-        "10–30",
-        "30–75",
+        "10 to 30",
+        "30 to 75",
         "75+"
       ],
       "jobValue": [
         "Under $1,000",
-        "$1,000–$5,000",
-        "$5,000–$15,000",
+        "$1,000 to $5,000",
+        "$5,000 to $15,000",
         "$15,000+"
       ],
       "handlesCalls": [
@@ -1265,7 +939,7 @@
     "reassurance": [
       "No commitment",
       "You get the findings either way",
-      "Or call 438·993·6997"
+      "Or email contact@tradecatch.ca"
     ],
     "wizard": {
       "questionOf": "Question {current} of {total}",
@@ -1285,11 +959,11 @@
       "reviewHeadline": "Check your answers, then send it over.",
       "reviewLabel": "REVIEW",
       "enterHint": "or press Enter ↵",
-      "emptyValue": "—",
+      "emptyValue": "Not provided",
       "agreed": "Agreed",
       "notYet": "Not yet",
       "verifyingHuman": "Verifying you're human…",
-      "genericError": "We couldn't submit your audit request. Check your answers and try again. If it keeps failing, call 438·993·6997.",
+      "genericError": "We couldn’t submit your audit request. Check your answers and try again. If it keeps failing, email contact@tradecatch.ca.",
       "networkError": "We couldn't reach the server. Check your connection and try again.",
       "errorSummary": "Please fix the following before continuing:",
       "fixField": "Go to {field}",
@@ -1306,7 +980,7 @@
         "name": {
           "id": "name",
           "label": "Name",
-          "title": "First — who are we talking to?",
+          "title": "First, who are we talking to?",
           "firstPlaceholder": "Marc",
           "lastPlaceholder": "Tremblay"
         },
@@ -1390,7 +1064,7 @@
           "id": "crm",
           "label": "Current tools",
           "title": "What software are you running today?",
-          "help": "CRM, invoicing, scheduling — whatever you already use. Spreadsheets count.",
+          "help": "Invoicing, scheduling, whatever you already use. Spreadsheets count.",
           "placeholder": "Jobber, QuickBooks, spreadsheets…",
           "optional": true
         },
@@ -1410,14 +1084,14 @@
           "id": "problem",
           "label": "Biggest problem",
           "title": "What's the one thing costing you the most jobs?",
-          "help": "Two lines is plenty — say it how you'd say it on the phone.",
+          "help": "Two lines is plenty. Say it how you’d say it on the phone.",
           "placeholder": "We miss most calls after 4pm and never call them back…",
           "optional": true
         },
         "consent": {
           "id": "consent",
           "label": "Consent",
-          "title": "Last thing — can we contact you about this?"
+          "title": "Last thing: can we contact you about this?"
         },
         "review": {
           "id": "review",
@@ -1449,35 +1123,47 @@
   "faq": {
     "eyebrow": "FAQ",
     "headline": "Straight answers, including the uncomfortable ones.",
-    "metaDescription": "Answers about Starter SMS recovery, Growth limited phone answering, Receptionist Plus, what stays human, and what TradeCatch does not do.",
+    "metaDescription": "Answers about pricing, what the receptionist does, what stays human and what TradeCatch does not do.",
     "items": [
       {
         "q": "Does the system speak directly to customers?",
-        "a": "It depends on the plan. On Starter it does not answer the phone: a missed call triggers an immediate text in French or English that you approved, job details are collected, and your technician is alerted. On Growth a limited receptionist answers incoming calls, captures who is calling and what they need, answers from your approved information, and sends your team a summary — it does not book on the call, transfer live or bridge emergencies. On Receptionist Plus it does the complete job, using only the business information you approved. On every plan, pricing decisions, diagnosis and negotiation stay with your people."
+        "a": "Yes. The receptionist answers your incoming calls, captures who is calling and what they need, answers from the business information you approved and sends you a summary. Text messages go out in French or English under your business name. Pricing decisions, diagnosis and negotiation stay with your people."
       },
       {
         "q": "Does it replace our receptionist?",
-        "a": "No. Starter absorbs the repetitive missed-call and follow-up work. Growth answers calls your team cannot take with limited receptionist features. Receptionist Plus is the complete front desk and hands anything sensitive, complex or urgent to a person. It is built to cover unanswered calls, not to remove your staff."
+        "a": "No. It covers the calls your team cannot take. Your people stay in charge of anything sensitive, complex or urgent, and every request is waiting for you to act on."
       },
       {
         "q": "What happens during an emergency?",
-        "a": "The request is escalated using rules your company approved in advance. The system never diagnoses a problem or gives safety instructions you haven't signed off on."
+        "a": "TradeCatch does not transfer calls. For an urgent request, the receptionist tells the caller to dial 9-1-1 if anyone is in danger, records the details and flags the call so you see it first. It never diagnoses a problem or gives safety instructions you have not signed off on."
       },
       {
         "q": "Can it work with our current phone number?",
-        "a": "Usually. It depends on your phone provider and setup. The audit identifies the safest way to connect without disrupting your existing line."
+        "a": "Usually. It depends on your phone provider and setup. The demo call identifies the safest way to connect without disrupting your existing line."
       },
       {
-        "q": "Can it integrate with our CRM?",
-        "a": "Recovered leads live in the controlled pilot ops path and, once linked, an organization-scoped workspace. A configured outbound CRM/automation webhook can send supported events and retry failures; marketing audit leads can also forward to a configured webhook. Native two-way CRM sync remains planned."
+        "q": "How much does it cost?",
+        "a": "Essential is $249 a month and Professional is $349 a month, plus a one-time setup fee of $1,999.99 on either plan. You pay the setup fee at checkout and your first monthly charge comes one month later. All prices are in Canadian dollars."
       },
       {
-        "q": "Will customers know they're talking to automation?",
+        "q": "What is the difference between Essential and Professional?",
+        "a": "Essential answers your calls and captures your customers. Professional does the same and also schedules appointments in your Google Calendar, with confirmations, reminders, rescheduling and cancellation. Scheduling is switched on for your business once it has been tested with your calendar."
+      },
+      {
+        "q": "Can you build my website too?",
+        "a": "Yes, as an optional extra for $349.99 CAD, paid once. It is never added to your order unless you choose it."
+      },
+      {
+        "q": "Does it connect to other software?",
+        "a": "Not at launch. Your calls, requests and messages live in your TradeCatch account, and Professional connects to your Google Calendar. Other connections, such as CRM sync, are not offered yet."
+      },
+      {
+        "q": "Will customers know they are talking to automation?",
         "a": "The messages clearly represent your business and never pretend to be a specific human employee when that would be misleading. You approve the exact wording."
       },
       {
         "q": "What happens when a customer replies?",
-        "a": "In the missed-call pilot, a reply continues intake or is handed to your team. In a linked Starter quote-follow-up pilot, any reply stops the sequence and opens a human inbox item; opt-out, won/lost status, or human takeover also stops it."
+        "a": "A reply continues the conversation or is handed to your team. Any reply stops automatic follow-up, and so does STOP, a job marked won or lost, or you taking over."
       },
       {
         "q": "Can the system offer discounts?",
@@ -1489,24 +1175,28 @@
       },
       {
         "q": "How long does installation take?",
-        "a": "We give you a realistic range after the audit. It varies with call volume, integrations and how many workflows are involved. We'd rather quote a real timeline than a flattering one."
+        "a": "We give you a realistic range after the demo call. It varies with your call volume and how you want calls handled. We would rather quote a real timeline than a flattering one."
       },
       {
-        "q": "Can TradeCatch answer the phone, not just text back?",
-        "a": "Yes. Growth includes limited phone answering (qualify, summarise, answer from your information). Receptionist Plus adds booking on the call, live transfer, emergency bridging and transcripts when enabled. Missed-call recovery and the workspace keep running underneath. Nothing goes live until you approve what it says."
+        "q": "Can I sign up online?",
+        "a": "No. TradeCatch creates your account for you when you become a customer, so there is no public sign-up. Book a free demo and we will take it from there."
+      },
+      {
+        "q": "How do I contact TradeCatch?",
+        "a": "By email at contact@tradecatch.ca. We reply in French or English."
       }
     ],
     "stillHave": {
       "headline": "Still have a question?",
-      "body": "Ask it on the audit call. Twenty minutes, no commitment, and you'll get a straight answer either way.",
-      "cta": "Book a free 20-minute audit"
+      "body": "Ask it on the demo call. Twenty minutes, no commitment, and you will get a straight answer either way.",
+      "cta": "Book a free 20-minute demo"
     },
     "reassurance": {
       "title": "What stays under your control",
       "items": [
         "Human-approved messaging before anything goes live",
         "No medical or technical diagnosis by the system",
-        "Emergency escalation controlled by your contractor rules",
+        "Urgent calls flagged by rules you approve",
         "Customer data owned by your business",
         "The system can be paused at any time",
         "Every action is logged",
@@ -1516,7 +1206,7 @@
     "heroIntro": "Straight answers about what stays human, what the system does, and what it never touches.",
     "heroTrust": [
       "Messages approved before launch",
-      "Human emergency routing",
+      "Urgent calls flagged first",
       "Your data stays yours"
     ]
   },
@@ -1533,11 +1223,11 @@
         },
         {
           "heading": "Information we collect",
-          "body": "We collect information you provide directly when you request an audit: name, company, trade, email, phone number, city, and qualification answers. When a pilot is activated, we may also process, within the agreed scope, names, phone numbers, addresses, service-request details and photos; call and text content and metadata; technician contact information; and quotes, appointments, pipeline stages, reported values, review requests, and workspace events. We also collect technical data and, with your consent, analytics data as explained in our Cookie Policy."
+          "body": "We collect information you provide directly when you request a demo or audit: name, company, trade, email, phone number, city, and qualification answers. Once you are a customer, we also process, within the agreed scope, names, phone numbers, addresses, service-request details and photos; call and text content and metadata; the contact details of the people who receive your alerts; appointments and calendar availability when scheduling is switched on; and activity in your account. We also collect technical data and, with your consent, analytics data as explained in our Cookie Policy."
         },
         {
           "heading": "Purposes and legal basis for collection",
-          "body": "We use this information to respond to audit requests, schedule calls, prepare proposals and, within an agreed pilot, respond to missed calls, collect and route requests, run follow-ups, manage bookings, populate the linked workspace, and send configured events. The applicable basis depends on context, including consent, pre-contractual steps, the service agreement, and legal obligations. We do not sell personal information."
+          "body": "We use this information to respond to demo and audit requests, schedule calls and prepare proposals and, once you are a customer, to answer calls, collect and route requests, run text follow-ups, manage appointments and show everything in your account. The applicable basis depends on context, including consent, pre-contractual steps, the service agreement, and legal obligations. We do not sell personal information."
         },
         {
           "heading": "SMS and email communication consent",
@@ -1553,7 +1243,7 @@
         },
         {
           "heading": "Data retention schedule",
-          "body": "We target retention of up to 24 months after the last interaction for audit requests and missed-call operational records, unless the law, an earlier deletion request, or a client agreement requires otherwise. Automated purging for those categories depends on durable storage and the scheduled task; until deployment is verified, it is performed manually. Other pilot data—website leads, quotes, bookings, pipeline records, review requests, and related logs—follows the retention term in the client agreement and is deleted manually until full lifecycle automation is in place. Analytics data follows Google Analytics' retention settings."
+          "body": "We target retention of up to 24 months after the last interaction for demo and audit requests and call and text records, unless the law, an earlier deletion request, or a client agreement requires otherwise. Automated purging for those categories depends on durable storage and the scheduled task; until deployment is verified, it is performed manually. Other customer data, such as website leads, quotes, appointments and related logs, follows the retention term in the client agreement and is deleted manually until full lifecycle automation is in place. Analytics data follows Google Analytics’ retention settings."
         },
         {
           "heading": "Your privacy rights",
@@ -1579,11 +1269,11 @@
       "sections": [
         {
           "heading": "Services",
-          "body": "TradeCatch designs, installs, and manages automated communication workflows for contractor businesses. Capabilities are offered only in a founder-led controlled pilot and when explicitly included in a written proposal. Missed-call recovery is the core pilot path; website capture and quote follow-up are linked Starter pilot modules; booking, reminders, pipeline, attribution, reviews, and the activity timeline require an entitled, linked Growth organization. Limited call answering and call summaries are part of Growth; on-call booking, human call transfer, emergency call routing and transcripts are part of Receptionist Plus. Both are configured per business during onboarding; Calling usage is subject to the allowance and limits set out in the written proposal. Google Calendar requires separate Growth technical-pilot enrollment and is not included by default. Outlook and native two-way CRM sync remain planned. Nothing in these terms represents a self-serve SaaS launch or a production-readiness guarantee."
+          "body": "TradeCatch designs, installs, and manages automated communication workflows for contractor businesses. Two plans are offered. Essential answers calls in French and English, captures customer requests, and follows up by text. Professional includes everything in Essential and adds appointment scheduling, including Google Calendar, which is switched on for your business once it has been tested with you. Both plans are set up for your business during onboarding. Call and text usage is subject to the monthly allowance of your plan, and usage past it is not charged without your confirmation. Call transfer, voice cloning, bulk messaging and CRM integrations are not offered. The optional website service is a separate one-time project. Nothing in these terms is a guarantee of results or of uninterrupted service."
         },
         {
           "heading": "Client responsibilities",
-          "body": "Clients are responsible for providing accurate business information, approving message content and escalation rules before launch, and ensuring that licensed staff handle diagnosis, pricing, and safety-related decisions."
+          "body": "Clients are responsible for providing accurate business information, approving message content and urgent-call rules before launch, and ensuring that licensed staff handle diagnosis, pricing, and safety-related decisions."
         },
         {
           "heading": "Service limitations",
@@ -1591,11 +1281,11 @@
         },
         {
           "heading": "Emergency handling",
-          "body": "The system escalates messages using rules the client approves in advance; it does not itself assess or respond to emergencies. Handling of urgent or safety-related situations remains the responsibility of the contractor and their qualified personnel at all times, and clients must maintain their own emergency-response process independent of this system."
+          "body": "The system flags urgent calls using rules the client approves in advance and tells callers to contact emergency services when anyone may be in danger. It does not transfer calls and does not itself assess or respond to emergencies. Handling of urgent or safety-related situations remains the responsibility of the contractor and their qualified personnel at all times, and clients must maintain their own emergency-response process independent of this system."
         },
         {
           "heading": "Fees and payment",
-          "body": "Setup and monthly management fees are outlined in your proposal and invoiced according to the agreed schedule. Late payment may result in suspension of services."
+          "body": "The one-time setup fee is paid at checkout. The monthly fee for your plan is charged from one month after setup and every month after that. The optional website service is a separate one-time fee, charged only if you select it. All prices are in Canadian dollars and are shown on the pricing page. Late payment may result in suspension of services."
         },
         {
           "heading": "Cancellation and refunds",
@@ -1661,7 +1351,7 @@
       "sections": [
         {
           "heading": "Our commitment",
-          "body": "We aim to provide a website that is accessible to the widest possible audience and are working toward conformance with the Web Content Accessibility Guidelines (WCAG) 2.2 at Level AA. WCAG is a technical standard, not a legal designation — we treat conformance with it as our working benchmark rather than a claim of legal compliance in any particular jurisdiction."
+          "body": "We aim to provide a website that is accessible to the widest possible audience and are working toward conformance with the Web Content Accessibility Guidelines (WCAG) 2.2 at Level AA. WCAG is a technical standard, not a legal designation. We treat conformance with it as our working benchmark rather than a claim of legal compliance in any particular jurisdiction."
         },
         {
           "heading": "Accessibility features implemented",
@@ -1669,11 +1359,11 @@
         },
         {
           "heading": "Known limitations",
-          "body": "This site is under active development. Some third-party embeds, such as the Cloudflare Turnstile widget or any separately added external calendar-provider embed, are provided by external vendors and may not fully match our own accessibility standard. Google Calendar is restricted to separately enrolled technical pilots; Outlook is not released. Automated and manual testing cannot catch every barrier — we review and address issues as they're identified rather than treating any point-in-time audit as a guarantee of full conformance."
+          "body": "This site is under active development. Some third-party embeds, such as the Cloudflare Turnstile widget, are provided by external vendors and may not fully match our own accessibility standard. Automated and manual testing cannot catch every barrier. We review and address issues as they are identified rather than treating any point-in-time audit as a guarantee of full conformance."
         },
         {
           "heading": "Standards and legal compliance",
-          "body": "TradeCatch is based in Québec and primarily serves contractors in Québec; we may also serve clients elsewhere in Canada and in the United States. Accessibility legal obligations vary by jurisdiction (for example, Québec's rules under the Act to secure handicapped persons in the exercise of their rights, and — where applicable to U.S. visitors — the Americans with Disabilities Act) and can differ from the WCAG technical standard described above. We do not claim certified legal compliance with any specific accessibility law, and we recommend anyone with a specific legal question consult qualified counsel in the relevant jurisdiction."
+          "body": "TradeCatch is based in Québec and primarily serves contractors in Québec; we may also serve clients elsewhere in Canada and in the United States. Accessibility legal obligations vary by jurisdiction (for example, Québec’s rules under the Act to secure handicapped persons in the exercise of their rights, and, where applicable to U.S. visitors, the Americans with Disabilities Act) and can differ from the WCAG technical standard described above. We do not claim certified legal compliance with any specific accessibility law, and we recommend anyone with a specific legal question consult qualified counsel in the relevant jurisdiction."
         },
         {
           "heading": "Feedback, alternate formats, and contact",
@@ -1687,11 +1377,11 @@
     },
     "emergencyServiceDisclaimer": {
       "title": "Emergency-Service Disclaimer",
-      "metaDescription": "TradeCatch does not diagnose emergencies or replace your emergency-response process. Read how escalation works.",
+      "metaDescription": "TradeCatch does not diagnose emergencies or replace your emergency-response process. Read how urgent calls are flagged.",
       "sections": [
         {
           "heading": "What TradeCatch does",
-          "body": "TradeCatch can text missed callers, collect details you approve, and alert contacts you designate using rules you approve before launch."
+          "body": "TradeCatch can answer calls, text callers, collect details you approve, and alert contacts you designate using rules you approve before launch."
         },
         {
           "heading": "What TradeCatch does not do",
@@ -1702,8 +1392,8 @@
           "body": "Handling of urgent or safety-related situations remains the responsibility of the contractor and qualified personnel at all times. You must maintain your own emergency-response process independent of this system."
         },
         {
-          "heading": "Approved escalation only",
-          "body": "Messages and escalations follow templates and routing rules you signed off on. Change those rules with us in writing before they go live."
+          "heading": "Approved urgent-call rules only",
+          "body": "Messages and urgent-call flags follow templates and rules you signed off on. TradeCatch does not transfer calls. Change those rules with us in writing before they go live."
         },
         {
           "heading": "Customer-facing clarity",
@@ -1730,48 +1420,47 @@
     "cta": "Back to home"
   },
   "onePager": {
-    "title": "TradeCatch — one-page overview",
+    "title": "TradeCatch: one-page overview",
     "metaDescription": "One-page explanation of TradeCatch for Québec plumbing, HVAC and electrical companies.",
     "printCta": "Print / save as PDF",
     "badge": "Illustrative product overview: not a performance guarantee",
-    "headline": "Missed calls and quiet quotes, handled while you work.",
-    "lede": "In a controlled pilot, TradeCatch texts missed callers back, collects job details, and alerts the right technician with messages you approve. Linked Starter pilots can also run scheduled quote follow-up that stops on reply.",
+    "headline": "Calls answered and customers captured, while you work.",
+    "lede": "TradeCatch answers your calls in French and English, collects the customer’s details and alerts you right away. Professional also schedules appointments, once scheduling has been tested with your calendar.",
     "forWhomTitle": "Built for",
     "forWhom": "Québec plumbing, HVAC and electrical companies (and similar trades) that lose work between the ring and the signed job.",
     "doesTitle": "What it does",
     "does": [
-      "Missed-call and after-hours SMS text-back (controlled pilot, FR/EN)",
-      "Lead details and photos collected in the customer’s language (controlled pilot)",
-      "On-call technician / owner alerts (controlled pilot)",
-      "Day 1 / 3 / 7 / 14 quote follow-up (linked Starter pilot)",
-      "Organization-scoped pilot workspace; public report graphic is illustrative",
-      "Answers incoming calls 24/7 in French and English on the Receptionist plan, then takes the request, transfers or escalates"
+      "Answers incoming calls day and night, in French and English",
+      "Collects the caller’s name, number, address and what they need",
+      "Alerts you with the details so you can call back",
+      "Follows up by text, and stops when the customer replies or says STOP",
+      "Professional: schedules appointments in your Google Calendar, with confirmations and reminders"
     ],
     "doesNotTitle": "What it does not do",
     "doesNot": [
+      "Transfer calls to a person",
       "Diagnose plumbing, electrical, HVAC or safety problems",
       "Give emergency instructions you did not approve",
       "Guarantee revenue or that every caller will respond",
       "Replace licensed technicians",
-      "Provide generally available Google Calendar or Outlook sync",
-      "Provide native two-way CRM sync",
-      "Operate as self-serve SaaS"
+      "Send bulk or marketing texts",
+      "Offer public sign-up: TradeCatch creates your account for you"
     ],
     "howTitle": "How engagement works",
     "how": [
-      "Free 20-minute revenue leak audit",
+      "Book a free 20-minute demo call",
       "You approve every message, rule and service area",
-      "Install on your existing number where possible",
-      "Founder-monitored launch and monthly management"
+      "We install it on your existing number where possible",
+      "We watch the launch and look after it every month"
     ],
-    "pricingTitle": "Published prices",
-    "pricing": "Starter: $799.99 installation, then $349.99 / month — SMS missed-call recovery. Growth: $1,499.99 installation, then $649.99 / month, includes Starter plus limited phone answering and workspace booking. Receptionist Plus: $1,999.99 installation, then $949.99 / month, includes Starter and Growth plus complete bilingual call answering, on-call booking, human transfer and emergency routing. Optional Done-for-You Website Service: starting at $349 CAD, one-time, separate from your subscription. Calling usage is subject to plan allowance and applicable usage limits. Month-to-month management, cancel with notice.",
-    "pilotTitle": "Pilot program",
-    "pilot": "Now accepting founding contractors: direct founder configuration, written Starter/Growth scope, 12-month price lock, and launch credit if we delay the agreed pilot.",
+    "pricingTitle": "Prices",
+    "pricing": "Essential: $1,999.99 setup, then $249 / month. Answers your calls and captures your customers. Professional: $1,999.99 setup, then $349 / month. Everything in Essential plus appointment scheduling. Optional website service: $349.99, paid once, only if you choose it. All prices are in Canadian dollars. Call and text usage is subject to each plan’s monthly allowance.",
     "ctaTitle": "Next step",
-    "cta": "Book a free 20-minute audit. No system access required.",
-    "contact": "438·993·6997 · tradecatch.ca",
-    "footerNote": "Examples on the website are illustrative. Real client results are published only with permission."
+    "cta": "Book a free 20-minute demo. No system access required.",
+    "contact": "contact@tradecatch.ca · tradecatch.ca",
+    "footerNote": "Examples on the website are illustrative. Real client results are published only with permission.",
+    "billingTitle": "How billing works",
+    "billing": "The setup fee is paid once, at checkout. Your first monthly charge comes one month later. Month to month, cancel with notice."
   },
   "demoVideo": {
     "auditCta": "Find the jobs you could recover",
@@ -1794,66 +1483,43 @@
     },
     "underTheSink": {
       "playerTitle": "Under the sink: the Receptionist answers",
-      "transcript": "You're under a sink. Your phone's ringing. And you can't answer. That caller isn't leaving a voicemail. They're calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi - my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What's your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I've sent your request to the team. They'll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan.",
-      "disclosure": "Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan."
-    },
-    "theLadder": {
-      "playerTitle": "On the ladder: a missed call gets a text back",
-      "transcript": "You're an electrician. Not a receptionist. Plenty of callers won't leave a voicemail. They'll just call someone else. With TradeCatch, a missed call gets a text back right away, under your company's name. You wrap up the job. The request is already waiting. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. Missed-call text-back runs as a controlled pilot.",
-      "disclosure": "Dramatization with a fictional business, not a customer story. Missed-call text-back runs as a controlled pilot."
-    },
-    "afterHours": {
-      "playerTitle": "After hours: an emergency is transferred",
-      "transcript": "Your customers don't stop calling at five. Receptionist: Thanks for calling NorthStar Plumbing. You've reached us after hours. How can I help? Caller: My basement is flooding! I need someone right now! Receptionist: I understand, this is urgent. I'm connecting you to the on-call technician right now. Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary. TradeCatch. Every call counts. Book your free audit at tradecatch.ca. Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan.",
-      "disclosure": "Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; features vary by plan."
+      "transcript": "You’re under a sink. Your phone’s ringing. And you can’t answer. That caller isn’t leaving a voicemail. They’re calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi, my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What’s your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I’ve sent your request to the team. They’ll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca.",
+      "disclosure": "A dramatization with a fictional business, not a customer story. The receptionist answers and takes the request. Your team confirms the appointment."
     }
   },
   "demoStories": {
     "eyebrow": "See it on the job",
-    "headline": "Three calls you can't take. Here is what happens next.",
-    "intro": "Short dramatizations with a fictional plumbing and electrical company. Each one has captions, and sound plays only when you press play.",
-    "note": "Dramatizations with a fictional business, not customer stories. The Receptionist is a founder-configured pilot, and missed-call text-back runs as a controlled pilot.",
+    "headline": "A call you can’t take. Here is what happens next.",
+    "intro": "A short dramatization with a fictional plumbing company. It has captions, and sound plays only when you press play.",
+    "note": "A dramatization with a fictional business, not a customer story. It shows the receptionist answering and taking the request. Your team confirms the appointment.",
     "watchLabel": "Watch the video: {title}",
     "cards": {
       "underTheSink": {
         "tag": "Receptionist",
         "title": "Under the sink",
-        "blurb": "Your hands are full. The receptionist answers, takes the caller's details and sends your team the request."
-      },
-      "theLadder": {
-        "tag": "Missed-call text-back",
-        "title": "On the ladder",
-        "blurb": "A missed call gets a text back under your company's name, so the request is waiting when you come down."
-      },
-      "afterHours": {
-        "tag": "Transfer and summary",
-        "title": "After hours",
-        "blurb": "A real emergency is transferred to your on-call line. Everything else waits for you as a morning summary."
+        "blurb": "Your hands are full. The receptionist answers, takes the caller’s details and sends your team the request."
       }
     }
   },
   "errors": {
     "eyebrow": "Something went wrong",
     "headline": "We hit a snag loading this page.",
-    "support": "Try again. If it keeps happening, call <phone>438·993·6997</phone>.",
+    "support": "Try again. If it keeps happening, email <email>contact@tradecatch.ca</email>.",
     "retry": "Try again",
     "home": "Back to home"
   },
   "login": {
-    "eyebrow": "Founding pilot access",
-    "headline": "Sign in to your TradeCatch workspace",
-    "intro": "For contractors already in a founder-led pilot. We’ll email a one-time link — no password. New customers: book an audit first.",
+    "eyebrow": "Account Center",
+    "headline": "Sign in to your TradeCatch account",
+    "intro": "Enter your work email and we will send you a one-time sign-in link. Accounts are created by TradeCatch when you become a customer, so there is no public sign-up.",
     "email": "Work email",
-    "companyOptional": "Company name (first pilot login)",
-    "companyPlaceholder": "Nord Plumbing",
-    "companyHelp": "Only needed the first time we create your Starter workspace after the audit.",
     "submit": "Email me a sign-in link",
     "sending": "Sending…",
     "sent": "If that email can sign in, a link is on its way. Check your inbox.",
     "devLink": "Local/dev sign-in link:",
     "devLinkCta": "Open workspace",
     "errorGeneric": "Something went wrong. Try again.",
-    "preferAudit": "Not a pilot yet? Book a free audit instead."
+    "preferAudit": "Not a customer yet? Book a free demo instead."
   },
   "app": {
     "demoAccountBadge": "Demo account",
@@ -1865,7 +1531,7 @@
       "websiteLeads": "Website",
       "quotes": "Quotes & follow-ups",
       "bookings": "Bookings",
-      "appointments": "Appointments",
+      "appointments": "Appointments and calendar",
       "pipeline": "Jobs in progress",
       "reviews": "Reviews",
       "email": "Email",
@@ -1906,7 +1572,13 @@
       "reminders": "Appointment reminders",
       "account": "Business profile",
       "referrals": "Referrals",
-      "websiteServices": "Website Services"
+      "websiteServices": "Website Services",
+      "callActivity": "Call activity",
+      "customerRequests": "Customer requests",
+      "smsActivity": "SMS activity",
+      "businessSettings": "Business settings",
+      "billing": "Billing",
+      "accountSettings": "Account settings"
     },
     "automations": {
       "headline": "Automations",
@@ -2008,7 +1680,7 @@
         "missing": "Missing values"
       },
       "testPanel": {
-        "title": "Test Center — simulated workflows",
+        "title": "Test Center: simulated workflows",
         "intro": "These actions use fictional numbers and never contact a real handset. Run the next action to execute a due simulated job immediately.",
         "missed": "Simulate missed call",
         "run": "Run next scheduled action",
@@ -2066,7 +1738,6 @@
       "stats": {
         "total": "Calls answered",
         "afterHours": "After hours",
-        "transfers": "Transferred to a person",
         "emergencies": "Emergencies",
         "requests": "Messages and appointment requests"
       },
@@ -2076,7 +1747,7 @@
     "email": {
       "headline": "Email follow-up automation",
       "intro": "Templated, scheduled email sequences for quotes and leads. Sequences stop automatically when a contact replies or unsubscribes.",
-      "entitlement": "Email automation is available on the Growth plan.",
+      "entitlement": "Email automation is not included in your plan.",
       "error": "Something went wrong.",
       "enrollTitle": "Add a contact to a sequence",
       "sequence": "Sequence",
@@ -2120,20 +1791,22 @@
       "variablesUsed": "Variables used",
       "autoTitle": "Follow up new website leads automatically",
       "autoIntro": "Off by default. A lead who fills your website form is enrolled only if they gave an email address and consent.",
-      "autoOff": "Off — enroll contacts manually",
+      "autoOff": "Off. Enroll contacts manually",
       "autoSequence": "Sequence for new website leads",
       "autoSave": "Save",
       "autoSaved": "Saved."
     },
     "plan": {
-      "starter": "Starter — SMS Receptionist",
-      "growth": "Growth — Limited Receptionist",
-      "receptionist": "Receptionist Plus — Complete Receptionist"
+      "starter": "Starter",
+      "growth": "Growth",
+      "receptionist": "Receptionist Plus",
+      "essential": "Essential",
+      "professional": "Professional"
     },
     "dashboard": {
       "headline": "What TradeCatch did for you",
-      "intro": "High-level recovery metrics from your linked missed-call pilot workspace. Revenue is shown only when a real amount exists on a lead.",
-      "notLinked": "Your Twilio / missed-call client is not linked yet. Ask the founder to connect your number, or set MISSED_CALL_CLIENT_ID when creating the workspace."
+      "intro": "Recovery totals for your business. Revenue is shown only when a real amount is on file.",
+      "notLinked": "Your TradeCatch phone number is not connected yet. Our team will connect it during setup."
     },
     "metrics": {
       "leadsCaptured": "Leads captured",
@@ -2141,13 +1814,13 @@
       "leadsReplied": "Leads that replied",
       "needsAttention": "Needs attention",
       "jobsAccepted": "Jobs accepted by tech",
-      "pipelineValue": "Pipeline value on file",
-      "pipelineValueNote": "Sum of estimated/final values present on leads — not claimed recovered revenue.",
-      "growthPipeline": "Open Growth pipeline",
+      "pipelineValue": "Value of open requests",
+      "pipelineValueNote": "Sum of the estimated or final values on your requests. This is not claimed as recovered revenue.",
+      "growthPipeline": "Open requests",
       "attributedRevenue": "Attributed revenue",
       "upcomingAppointments": "Upcoming appointments",
       "reviewsSent": "Review requests sent",
-      "exportCsv": "Export pipeline & revenue CSV",
+      "exportCsv": "Export requests and revenue (CSV)",
       "homeAi": "Calls the receptionist finished",
       "homeAppointments": "Appointments requested",
       "homeActivity": "Recent activity",
@@ -2155,11 +1828,11 @@
     },
     "home": {
       "headline": "Your business, right now",
-      "intro": "Calls, requests, appointments and what the receptionist did, for your business only. Amounts appear only when a real value is already on file, and they are estimates unless marked as recorded revenue.",
+      "intro": "Calls, requests and what the receptionist did, for your business only. Amounts appear only when a real value is on file, and they are estimates unless marked as recorded revenue.",
       "live": "Updates on its own",
       "liveError": "Live refresh failed. The figures below are the last ones that loaded.",
       "updated": "Updated",
-      "notLinked": "The missed-call number is not linked to this business yet, so call and recovery totals stay blank.",
+      "notLinked": "Your TradeCatch phone number is not connected to this business yet, so call totals stay blank until it is.",
       "notLinkedShort": "Number not connected",
       "unavailable": "Could not load",
       "truncatedCalls": "Totals use the 500 most recent calls. Older calls in this period may be missing.",
@@ -2504,50 +2177,102 @@
       }
     },
     "settings": {
-      "headline": "Workspace settings",
-      "intro": "Plan entitlements are enforced on the server — hiding a button is not enough.",
-      "plan": "Current plan",
+      "headline": "Business settings",
+      "intro": "Set up how TradeCatch answers for your business and who it alerts.",
+      "plan": "Your plan",
       "included": "Included in your plan",
-      "growthOnly": "Entitled Growth pilot only",
       "clientLinked": "Linked missed-call client",
-      "integrations": "Notifications & CRM",
-      "integrationsIntro": "Owner alerts and outbound CRM/automation webhook (Zapier, Make, HubSpot, etc.). Failures retry via DLQ.",
+      "integrations": "Alerts and links",
+      "integrationsIntro": "Where owner alerts are sent, and the link customers use to leave a review.",
       "notifyEmail": "Notify email",
       "notifyEmailPlaceholder": "you@company.com",
-      "notifyEmailIntro": "Where TradeCatch sends owner alerts (new leads, takeover, bookings).",
+      "notifyEmailIntro": "Where TradeCatch sends owner alerts, such as new requests and bookings.",
       "googleReviewUrl": "Google review URL",
       "googleReviewUrlIntro": "Used when sending post-job review request SMS.",
-      "crmWebhookUrl": "CRM / automation webhook URL",
-      "crmWebhookIntro": "POST JSON events (website leads, bookings, pipeline stages). Retries on failure.",
-      "crmWebhookUpgrade": "CRM webhooks are included with the Growth plan and above. You can still clear an existing URL.",
+      "crmWebhookUrl": "Address for sending requests to other software",
+      "crmWebhookIntro": "Each new request and booking is sent to this address.",
+      "crmWebhookUpgrade": "Connections to other software are not offered right now. You can still remove an address saved earlier.",
       "save": "Save integrations",
       "saving": "Saving…",
       "saved": "Saved.",
       "saveError": "Could not save settings.",
-      "apiKeyTitle": "Website capture API key",
-      "apiKeyIntro": "Use this key on your contractor website form to POST leads to TradeCatch (not the marketing book-audit form).",
+      "apiKeyTitle": "For your web developer: website form key",
+      "apiKeyIntro": "Your web developer can use this key to send requests from the form on your own website to TradeCatch.",
       "apiKeyCreate": "Generate API key",
       "apiKeyCreating": "Generating…",
       "apiKeyOnce": "Copy this key now",
-      "apiKeyHint": "POST /api/website-leads with header X-TradeCatch-Key. The plaintext is shown once.",
+      "apiKeyHint": "Send the request to /api/website-leads with the header X-TradeCatch-Key. The key is shown once.",
       "apiKeyError": "Could not create API key.",
       "demoAccount": "Demo contractor account",
       "featuresHeading": "Feature toggles",
-      "featuresIntro": "Activate or deactivate TradeCatch modules for this business. Plan entitlements still apply.",
+      "featuresIntro": "Turn parts of TradeCatch on or off for this business. Your plan still decides what is available.",
       "saveFeatures": "Save features",
       "featuresSaved": "Features saved.",
       "featuresSaveFailed": "Could not save features.",
       "featureFlags": {
         "aiReceptionist": "Receptionist",
         "appointmentBooking": "Appointment booking",
-        "callTransfer": "Call transfer",
         "missedCallRecovery": "Missed-call recovery",
         "quoteFollowups": "Quote follow-ups"
+      },
+      "planBilling": "Billing and invoices",
+      "planAccount": "Business profile and team",
+      "planProfessionalNote": "Appointments and the calendar come with Professional.",
+      "hubTitle": "Set up",
+      "hub": {
+        "receptionist": {
+          "title": "Receptionist",
+          "body": "What it says, your hours, services, common questions and urgent-call rules."
+        },
+        "phone": {
+          "title": "Phone number and calls",
+          "body": "Your TradeCatch number, forwarding and how incoming calls are answered."
+        },
+        "alerts": {
+          "title": "Alerts",
+          "body": "Who is notified, and how, when a new request comes in."
+        },
+        "followUps": {
+          "title": "Text follow-ups",
+          "body": "Missed-call texts, quote follow-ups and appointment reminders."
+        },
+        "contacts": {
+          "title": "On-call contacts",
+          "body": "The people who receive urgent alerts, and your business hours for texts."
+        },
+        "calendar": {
+          "title": "Google Calendar",
+          "body": "Connect your calendar so appointments only land in times you are free."
+        },
+        "website": {
+          "title": "Website service",
+          "body": "An optional new or improved website, quoted and confirmed before you pay."
+        },
+        "security": {
+          "title": "Security",
+          "body": "Your sign-in and who can use this account."
+        },
+        "privacy": {
+          "title": "Privacy and recordings",
+          "body": "How long call records are kept and what is recorded."
+        },
+        "test": {
+          "title": "Try it",
+          "body": "Run a practice call or text to hear what your customers hear."
+        },
+        "checklist": {
+          "title": "Setup checklist",
+          "body": "What is left to do before you go live."
+        },
+        "help": {
+          "title": "Help articles",
+          "body": "Short guides for setup and everyday questions."
+        }
       }
     },
     "bookings": {
       "headline": "Appointments",
-      "intro": "Entitled Growth pilot: book jobs in the workspace and send confirmation SMS when customer and Twilio numbers are linked. In-app booking does not enable Google Calendar without separate technical-pilot enrollment. Outlook is planned.",
+      "intro": "Book jobs in your account and send confirmation texts.",
       "empty": "No appointments yet. Book one below.",
       "entitlement": "Appointment booking is not on your plan.",
       "add": "Book an appointment",
@@ -2563,7 +2288,7 @@
     },
     "schedule": {
       "headline": "Appointments",
-      "intro": "Times come from the scheduling service. An appointment is confirmed only after the backend reserves it.",
+      "intro": "Times come from your availability and your Google Calendar. An appointment is confirmed only once it is saved.",
       "navList": "Schedule",
       "navHours": "Availability",
       "navServices": "Service types",
@@ -2617,12 +2342,12 @@
       "automatic": "Automatic",
       "consultation": "Consultation",
       "manual": "Manual approval",
-      "escalate": "Escalate to contractor",
+      "escalate": "Flag for the owner",
       "active": "Active",
-      "calendarIntro": "Google Calendar is a separately enrolled Growth technical pilot, not general release. Outlook is planned. Tokens stay on the server.",
-      "calendarPilotTitle": "Google Calendar — technical pilot only",
-      "calendarPilotNotice": "Live Google Calendar is restricted to founder-approved, explicitly enrolled Growth pilot businesses. It is not included automatically with a plan. Outlook is not available yet.",
-      "calendarSimulationNotice": "In-app scheduling and simulations are separate from Google Calendar. A simulation does not read or write a live Google calendar. Contact support to discuss pilot eligibility.",
+      "calendarIntro": "Connect your Google Calendar so TradeCatch books only into times you are free. TradeCatch uses its permissions to see when you are busy, list your calendars, and create, move and cancel the appointments it books. Your sign-in details stay on our servers.",
+      "calendarPilotTitle": "Google Calendar is switched on by our team",
+      "calendarPilotNotice": "We switch Google Calendar on for your business once we have tested it with your own calendar. Email contact@tradecatch.ca and we will set it up with you.",
+      "calendarSimulationNotice": "Practice appointments in your account never touch your Google Calendar. Only real bookings are added to it, once Google Calendar is switched on.",
       "calendarLoading": "Checking calendar availability…",
       "status": "Status",
       "simulated": "Simulated",
@@ -2658,12 +2383,12 @@
       "error": "Could not save that change. Check your connection and try again."
     },
     "smsReceptionist": {
-      "headline": "SMS Receptionist",
-      "intro": "Manage the business details and on-call technician roster your AI SMS receptionist uses when answering missed calls.",
-      "entitlement": "SMS receptionist settings are included with every plan — contact support if you can't see them.",
-      "notLinked": "Your SMS receptionist number is still being set up by our team. We'll notify you once it's ready to configure.",
+      "headline": "On-call contacts and text hours",
+      "intro": "Manage the business details and on-call contacts TradeCatch uses when it alerts you and texts back after a missed call.",
+      "entitlement": "These settings are included with every plan. Contact support if you cannot see them.",
+      "notLinked": "Your text number is still being set up by our team. We will let you know once it is ready to configure.",
       "number": "Receiving number",
-      "numberNote": "Assigned by TradeCatch — contact support to change it.",
+      "numberNote": "Assigned by TradeCatch. Contact support to change it.",
       "businessName": "Business name",
       "timezone": "Timezone",
       "businessHours": "Business hours",
@@ -2679,10 +2404,10 @@
       },
       "humanReviewPhone": "Human review phone (optional)",
       "aiSmsReplies": "Reply to customers who text first",
-      "aiSmsRepliesNote": "When on, the AI answers new text messages from your business info, collects the job details, and alerts you for anything urgent or that it can't handle. It never replies to numbers that opted out.",
-      "roster": "Technician roster",
+      "aiSmsRepliesNote": "Not available right now. Texts that customers send first are saved and shown to you in SMS activity.",
+      "roster": "On-call contacts",
       "namePlaceholder": "Name",
-      "addTechnician": "Add technician",
+      "addTechnician": "Add contact",
       "rolePrimary": "Primary",
       "roleBackup": "Backup",
       "roleOwner": "Owner",
@@ -2798,7 +2523,7 @@
     },
     "reviews": {
       "headline": "Review requests",
-      "intro": "Entitled Growth pilot: after a job is marked complete, TradeCatch can schedule a Google review-request SMS when a review URL is set.",
+      "intro": "After a job is marked complete, TradeCatch can text your customer a Google review request when a review link is set.",
       "empty": "No review requests yet.",
       "entitlement": "Review automation is not on your plan.",
       "setUrl": "Google review link",
@@ -2812,17 +2537,17 @@
     },
     "timeline": {
       "headline": "Activity timeline",
-      "intro": "Pilot activity for this organization only, including entitled Growth bookings and pipeline moves.",
+      "intro": "Recent activity for your business only.",
       "empty": "No timeline events yet.",
       "entitlement": "Timeline is not available on your plan."
     },
     "onboarding": {
       "headline": "Workspace setup",
-      "intro": "A short checklist so notifications and Growth tools work for your team.",
+      "intro": "A short checklist so your alerts and receptionist are ready for customers.",
       "stepNotify": "Where should we notify you?",
       "stepNotifyIntro": "Set an email for owner alerts. You can change it later in Settings.",
       "stepReview": "Google review link",
-      "stepReviewIntro": "Optional on Growth — used for post-job review SMS.",
+      "stepReviewIntro": "Optional: used for the review request text after a job.",
       "stepFinish": "Mark setup complete",
       "stepFinishIntro": "Confirm onboarding so the team knows this workspace is ready.",
       "done": "You’re set",
@@ -2842,13 +2567,13 @@
     },
     "websiteLeads": {
       "headline": "Website leads",
-      "intro": "Linked Starter pilot leads captured from your contractor site through its TradeCatch API key — isolated to this organization.",
+      "intro": "Requests from the form on your own website, sent to TradeCatch with your website key. Only your business sees them.",
       "empty": "No website leads yet. Generate an API key in Settings and wire your form to POST /api/website-leads.",
       "entitlement": "Website lead capture is not on your plan."
     },
     "quotes": {
       "headline": "Quote follow-up",
-      "intro": "Linked Starter pilot sequences at day 1 / 3 / 7 / 14 after the quote is sent. Automation stops on reply, opt-out, won/lost, or human takeover.",
+      "intro": "Follow-up texts go out one, three, seven and fourteen days after a quote is sent. They stop when the customer replies or opts out, when you mark the job won or lost, or when you take over.",
       "empty": "No quote threads yet. Add a customer phone below to start a follow-up sequence.",
       "entitlement": "Quote follow-up is not on your plan.",
       "add": "Start a follow-up sequence",
@@ -2864,7 +2589,7 @@
       "wordingApprove": "Approve this wording",
       "wordingWithdraw": "Withdraw approval",
       "wordingApprovedOn": "Approved on {date}. Follow-ups are being sent.",
-      "wordingPending": "Not approved yet — no follow-up will be sent.",
+      "wordingPending": "Not approved yet. No follow-up will be sent.",
       "wordingError": "Could not save your approval."
     },
     "inbox": {
@@ -2880,9 +2605,9 @@
       "takeoverError": "Could not take over this item. Please try again."
     },
     "upsell": {
-      "title": "Need the entitled Growth pilot modules?",
-      "body": "For linked organizations, Growth pilot access adds in-app booking, pipeline, attribution, and review requests. The founder enables each entitlement; Google Calendar needs separate technical-pilot enrollment; Outlook is planned.",
-      "cta": "See Growth on pricing"
+      "title": "Want your receptionist to book appointments?",
+      "body": "Professional adds appointment scheduling in your Google Calendar, confirmations and reminders by text, and a calendar in this account. Everything in Essential stays the same.",
+      "cta": "Compare the plans"
     },
     "monitoring": {
       "fallbackTitle": "Fallback settings",
@@ -2891,16 +2616,15 @@
       "fallbackLoadError": "Could not load fallback settings. Check your connection and try again.",
       "fallbackRetry": "Retry",
       "fallbackAiUnavailable": "If the Receptionist cannot connect",
-      "fallbackTransfer": "Transfer to the contractor number",
       "fallbackVoicemail": "Take a voicemail",
       "fallbackCalendarNote": "If the calendar is unavailable, TradeCatch collects the preferred time and does not confirm an appointment.",
       "fallbackDatabaseNote": "If the database is unavailable, TradeCatch does not tell the caller that their information was saved.",
-      "fallbackTransferFailed": "If a transfer fails",
       "fallbackBackupNumber": "Backup number",
       "fallbackSave": "Save",
       "fallbackSaving": "Saving…",
       "fallbackSaved": "Fallback settings saved.",
-      "fallbackSaveError": "Could not save fallback settings. Check your connection and try again."
+      "fallbackSaveError": "Could not save fallback settings. Check your connection and try again.",
+      "fallbackAiUnavailableNote": "If the receptionist is ever unavailable, the caller is invited to leave a message and your team is alerted."
     },
     "security": {
       "headline": "Security",
@@ -2922,8 +2646,8 @@
       "saved": "Privacy settings saved."
     },
     "pilot": {
-      "headline": "Pilot feedback",
-      "intro": "Tell TradeCatch what failed or what should change. This stays with your business."
+      "headline": "Send feedback",
+      "intro": "Tell TradeCatch what is not working or what should change. This stays with your business."
     },
     "support": {
       "headline": "Support",
@@ -3028,10 +2752,10 @@
       "billingNoPermission": "Only an owner or administrator can manage billing.",
       "billingHeadline": "Billing",
       "billingSupport": "Contact support",
-      "billingPlanLine": "{plan} — {amount} / month",
+      "billingPlanLine": "{plan}: {amount} per month",
       "billingFirstChargeOn": "First monthly charge: {date}.",
-      "checkoutIntro": "Pay the one-time installation fee to start service. Your first month is included with installation; the monthly subscription begins one calendar month after payment.",
-      "checkoutStart": "Pay installation fee",
+      "checkoutIntro": "Pay the one-time setup fee of {setup} CAD to start. Your first monthly charge of {monthly} CAD comes one month after setup, then every month after that.",
+      "checkoutStart": "Pay the setup fee",
       "checkoutOpening": "Opening checkout…",
       "checkoutPending": "A checkout is already in progress. Finish it or try again in a few minutes.",
       "checkoutPendingNote": "Your installation payment is in progress. If you closed the checkout page, try again below.",
@@ -3048,7 +2772,9 @@
       "overageStatus_declined": "declined, it will not be billed",
       "overageConfirm": "Confirm billing",
       "overageDecline": "Do not bill",
-      "overageError": "Could not save your decision. Try again."
+      "overageError": "Could not save your decision. Try again.",
+      "checkoutWebsiteLabel": "Add the website service ({price} CAD, paid once)",
+      "checkoutWebsiteNote": "Optional. It is added to this payment only if you tick the box. We confirm the scope with you in writing before work starts."
     },
     "receptionist": {
       "headline": "Receptionist",
@@ -3085,7 +2811,7 @@
       "afterHoursFr": "After-hours message (French)",
       "afterHoursEn": "After-hours message (English)",
       "hoursTitle": "Business hours",
-      "hoursIntro": "Outside these hours the receptionist takes a message and never transfers to a department. Emergencies are still bridged to your on-call line.",
+      "hoursIntro": "Outside these hours the receptionist takes a message and flags urgent calls so you see them first.",
       "hoursCustom": "Use different hours for the receptionist",
       "hoursDefault": "Using your business hours: {hours}.",
       "hoursStart": "Opens",
@@ -3191,9 +2917,9 @@
         "error": "Error"
       },
       "connection": {
-        "not_connected": "Configuration saved — live phone connection not established yet (see Task 4).",
+        "not_connected": "Settings saved. Your phone line is not connected yet.",
         "configured": "Routing configured for the assigned number.",
-        "error": "Integration error — fallback behavior applies."
+        "error": "Connection problem. Callers are asked to leave a message until it is fixed."
       },
       "languageValue": {
         "en": "English",
@@ -3253,12 +2979,12 @@
         "transfer": "Transfer",
         "yes": "Yes"
       },
-      "plusOnlyTransfer": "Live call transfer and department routing are part of Receptionist Plus. Growth still answers the phone and sends your team a summary.",
-      "plusOnlyBooking": "Booking an open time during the call is part of Receptionist Plus. On Growth, preferred times are captured and confirmed by your team."
+      "plusOnlyTransfer": "Calls are not transferred. The receptionist takes the details and sends them to your team.",
+      "plusOnlyBooking": "Booking a time during the call comes with Professional. On Essential, the receptionist captures the preferred times and your team confirms them."
     },
     "phoneSettings": {
       "headline": "Phone settings",
-      "intro": "Connect the TradeCatch number, human transfer line, and inbound call routing.",
+      "intro": "Your TradeCatch number and how incoming calls are answered.",
       "entitlement": "Call management is not available on your plan.",
       "backToCalls": "Phone calls",
       "status": {
@@ -3266,7 +2992,6 @@
         "disconnected": "Disconnected",
         "error": "Error"
       },
-      "webhook": "Voice webhook",
       "numbersTitle": "Numbers",
       "businessPhone": "Business phone",
       "tradecatchNumber": "TradeCatch number",
@@ -3274,30 +2999,13 @@
       "forwardingAck": "I verified that call forwarding works with my carrier.",
       "routingTitle": "Routing",
       "aiEnabled": "Receptionist enabled",
-      "inboundStrategy": "Inbound strategy",
-      "strategy": {
-        "ai_first": "Receptionist first",
-        "human_first": "Human first (then Receptionist if no answer)"
-      },
-      "voiceEngine": "Voice engine",
-      "engine": {
-        "gather": "Gather (TwiML, Twilio-ready)",
-        "conversation_relay": "ConversationRelay (WebSocket — Durable Objects required in prod)",
-        "livekit": "LiveKit agent (SIP hand-off from the webhook)"
-      },
-      "engineHelp": "Gather works now with Twilio webhooks. ConversationRelay TwiML is wired; production WebSockets need Durable Objects.",
-      "transferTitle": "Human transfers",
-      "humanTransfer": "Primary transfer number",
-      "backupTransfer": "Backup number",
-      "ringTimeout": "Ring timeout (seconds)",
       "recordingTitle": "Recording",
       "recordingEnabled": "Enable call recording",
       "recordingHelp": "Subject to applicable notices, consent, and retention rules.",
       "save": "Save",
       "saving": "Saving…",
       "saved": "Phone settings saved.",
-      "error": "Could not save.",
-      "strategyManaged": "Inbound strategy follows your AI Call Handling mode above."
+      "error": "Could not save."
     },
     "livePhoneTesting": {
       "headline": "Live phone testing",
@@ -3310,7 +3018,6 @@
       "scenarios": {
         "ai_answers": "Receptionist answers",
         "human_first_missed_then_ai": "Human first, no answer → Receptionist",
-        "transfer_request": "Transfer request",
         "appointment_request": "Appointment request"
       },
       "startSimulation": "Start simulation",
@@ -3323,7 +3030,7 @@
     "websiteServices": {
       "headline": "Website Services",
       "intro": "Ask TradeCatch to build a new website for your business or improve your current one. It is a separate one-time project, not part of your subscription.",
-      "priceNote": "Starting at $349 CAD. We confirm the scope and the final price with you in writing before you pay anything.",
+      "priceNote": "$349.99 CAD, paid once. We confirm the scope with you in writing before you pay anything, and it is never added to your plan unless you choose it.",
       "restricted": "Only an owner or administrator can request this service. You can still follow the requests below.",
       "unavailable": "Website requests are unavailable right now. Please try again shortly.",
       "requestsTitle": "Your requests",
@@ -3507,13 +3214,13 @@
         },
         "ai_answers_all": {
           "name": "AI Answers All Calls",
-          "description": "Your receptionist answers incoming business calls immediately, handles customer requests, and transfers important calls when needed."
+          "description": "Your receptionist answers incoming business calls right away and takes the customer’s details."
         }
       },
       "switchBack": "You can switch between the two modes at any time. After a change, place a new test call to confirm it.",
       "state": {
         "active": "Active: {mode}",
-        "requested": "Requested: {mode} — not active yet"
+        "requested": "Requested: {mode}. Not active yet"
       },
       "status": {
         "unsupported_plan": "Your plan does not include the phone receptionist.",
@@ -3568,7 +3275,7 @@
         "businessPhone": "Business number your carrier forwards",
         "businessPhoneHelp": "The number customers already call. TradeCatch never rings it back.",
         "ringTimeout": "Ring for (seconds)",
-        "ringTimeoutHelp": "Keep it shorter than your voicemail pick-up, usually 15–20 seconds."
+        "ringTimeoutHelp": "Keep it shorter than your voicemail pick-up, usually 15 to 20 seconds."
       },
       "forwarding": {
         "title": "Set up forwarding on your phone",
@@ -3650,20 +3357,25 @@
         "forbidden": "Only an owner or admin can change call handling.",
         "notLinked": "Your phone line is not linked yet. Contact support."
       }
+    },
+    "professionalOnly": {
+      "title": "Appointments come with Professional",
+      "body": "Your plan is Essential. It answers your calls and captures your customers. Professional adds appointment scheduling in your Google Calendar, confirmations and reminders by text, and a calendar in this account.",
+      "cta": "Compare the plans"
     }
   },
   "aiReceptionist": {
     "demo": {
       "eyebrow": "Try it",
       "title": "Talk to the receptionist yourself.",
-      "intro": "Say what a caller would say, out loud or typed. This is the same conversation engine that answers real calls, running on a fictional plumbing company. Watch it collect the details, answer a question, or bridge an emergency.",
+      "intro": "Say what a caller would say, out loud or typed. This is the same conversation engine that answers real calls, running on a fictional plumbing company. Watch it collect the details, answer a question, or flag an urgent call.",
       "badge": "Simulated call. Nothing is sent, no phone is dialed, nothing is saved.",
       "startHeading": "Pick a situation",
       "scenarios": [
         {
           "id": "open",
           "label": "During business hours",
-          "hint": "Wednesday, 10 a.m. Transfers to a department are possible."
+          "hint": "Wednesday, 10 a.m. The office is open."
         },
         {
           "id": "after_hours",
@@ -3681,7 +3393,7 @@
           "My kitchen sink has been leaking since yesterday",
           "I smell gas in my house",
           "What are your opening hours?",
-          "I need to talk to billing"
+          "Do you serve Laval?"
         ],
         "name": [
           "My name is Marie Tremblay"
@@ -3711,7 +3423,7 @@
       "agentLabel": "Receptionist",
       "callerLabel": "You",
       "systemLabel": "Demo",
-      "afterHoursNote": "Outside business hours the receptionist takes a message for a callback and never transfers to a department. A gas smell or fire is still bridged to the on-call line.",
+      "afterHoursNote": "Outside business hours the receptionist takes a message for a callback. A gas smell or fire is flagged as urgent and the caller is told to dial 9-1-1. Calls are never transferred.",
       "ended": "The call has ended.",
       "restart": "Start another call",
       "error": "The demo is unavailable right now. Please try again in a moment.",
@@ -3755,32 +3467,30 @@
       },
       "afterCall": {
         "title": "That was the demo. Now picture it on your own number.",
-        "body": "Every call like this reaches your workspace as a summary you can act on. In a free 20-minute audit we walk through the call flow for your trade: what it says, what it collects, and when it hands off to a person.",
-        "cta": "Book a free 20-minute audit"
+        "body": "Every call like this reaches your account as a summary you can act on. In a free 20-minute demo we walk through the call for your trade: what it says and what it collects.",
+        "cta": "Book a free 20-minute demo"
       }
     },
-    "eyebrow": "Receptionist · $1,999.99 setup, then $949.99/month",
-    "headline": "A bilingual front desk that answers every call, day or night.",
-    "intro": "Receptionist answers incoming calls in French or English, works out what the caller needs, takes the appointment request and transfers the calls that need a person. Missed-call recovery, quote follow-up and the Growth workspace stay on underneath.",
-    "metaDescription": "Receptionist for Québec contractors: bilingual call answering 24/7, call qualification, appointment requests by phone, human transfer and emergency routing, on top of TradeCatch missed-call recovery and quote follow-up.",
+    "eyebrow": "Receptionist",
+    "headline": "A bilingual receptionist that answers every call, day or night.",
+    "intro": "The TradeCatch receptionist answers your calls in French or English, finds out what the caller needs, takes their details and sends you the request. Professional also schedules the appointment.",
+    "metaDescription": "The TradeCatch receptionist for Québec contractors: bilingual call answering around the clock, caller details captured and sent to you, and with Professional, appointment scheduling.",
     "heroPointsLabel": "What changes on day one",
     "heroPoints": [
-      "Answers 24/7, including after hours and while your crews are on site",
+      "Answers day and night, including while your crew is on site",
       "French and English, offered at the start of every call",
-      "Includes everything in Starter and everything in Growth"
+      "Every request recorded with a summary you can read in seconds"
     ],
-    "planLabel": "The plan",
-    "planName": "Receptionist",
-    "planSetup": "$1,999.99 setup",
-    "planCadence": "$949.99 / month",
-    "planNote": "Calling usage is subject to plan allowance and applicable usage limits.",
-    "ctaPrimary": "Book a free 20-minute audit",
-    "ctaDemo": "Watch the receptionist demo",
+    "planLabel": "Two plans",
+    "planSetup": "{setup} setup, paid once",
+    "planNote": "Prices are in Canadian dollars. Call and text usage is subject to each plan’s monthly allowance.",
+    "ctaPrimary": "Book a free 20-minute demo",
+    "ctaDemo": "Watch the demo",
     "ctaSecondary": "See full pricing",
     "flow": {
       "eyebrow": "How a call runs",
-      "title": "From a ringing phone to a tracked job.",
-      "intro": "Every branch below is configured for your business before the line goes live.",
+      "title": "From a ringing phone to a captured customer.",
+      "intro": "Every step is set up for your business before the line goes live.",
       "steps": [
         {
           "title": "Someone calls",
@@ -3788,44 +3498,44 @@
         },
         {
           "title": "The receptionist answers",
-          "body": "It greets the caller as your business, in French or English, and lets them interrupt and speak normally."
+          "body": "It greets the caller under your business name, in French or English, and lets them interrupt and speak normally."
         },
         {
           "title": "It understands the request",
-          "body": "Service needed, problem described and how urgent it is."
+          "body": "Service needed, the problem described and how urgent it is."
         },
         {
-          "title": "It qualifies the lead",
-          "body": "Name, callback number, address, urgency and preferred timing, collected before anyone calls back."
+          "title": "It takes the details",
+          "body": "Name, callback number, address and preferred timing, collected before anyone calls back."
         }
       ],
       "branchLabel": "Then, depending on the call",
       "branches": [
         {
-          "title": "Take the appointment request",
-          "body": "It captures the preferred date and time and passes it to your team, who confirm the slot."
+          "title": "A service request",
+          "body": "The request is recorded with everything the caller said, and you are alerted."
         },
         {
-          "title": "Transfer to your team",
-          "body": "High-value, frustrated, complex or human-requested calls go to the person you configured."
+          "title": "An appointment request",
+          "body": "It captures the preferred date and time. On Essential you confirm the time. Professional schedules it in your Google Calendar once scheduling has been tested with you."
         },
         {
-          "title": "Emergency routing",
-          "body": "An emergency you defined collects the critical details and reaches your on-call technician first."
+          "title": "An urgent call",
+          "body": "It tells the caller to dial 9-1-1 if anyone is in danger, flags the call as urgent and alerts you first. It never transfers the call."
         }
       ],
       "outcomeLabel": "Every path ends the same way",
       "outcome": [
         {
           "title": "TradeCatch saves everything",
-          "body": "Lead, conversation and summary land in the workspace."
+          "body": "The request, the conversation and a summary land in your account."
         },
         {
           "title": "Follow-up continues",
-          "body": "Reminders, estimate chasing and no-response follow-up keep running on their own."
+          "body": "A text goes to the caller, and a reminder if they go quiet. It stops when they reply or say STOP."
         }
       ],
-      "note": "Illustrative workflow. Routing rules, emergency definitions and transfer targets are set per business."
+      "note": "Illustrative workflow. Service area, hours and urgent-call rules are set for each business."
     },
     "capabilities": {
       "eyebrow": "On the call",
@@ -3836,45 +3546,41 @@
           "title": "Inbound calls",
           "purpose": "Pick up when your team cannot.",
           "items": [
-            "Answers incoming business calls 24/7",
+            "Answers incoming business calls day and night",
             "Handles after-hours and overflow calls",
             "Offers French or English at the start of every call",
             "Natural conversation, interruptions handled",
             "Asks follow-up questions when an answer is incomplete",
-            "Answers frequently asked questions from approved content",
-            "Decides the next appropriate action"
+            "Answers frequently asked questions from approved content"
           ]
         },
         {
           "title": "Business knowledge",
-          "purpose": "Configured from what you give us, not from guesswork.",
+          "purpose": "Set up from what you give us, not from guesswork.",
           "items": [
             "Business name, services and hours",
             "Service areas and address",
-            "Minimum project size and emergency availability",
+            "Minimum project size",
             "Pricing guidance only where you authorise it",
-            "Financing, payment and promotion details when provided",
-            "Appointment types, booking and cancellation rules",
-            "Employees, departments and call-routing rules"
+            "Financing, payment and promotion details when provided"
           ]
         },
         {
-          "title": "Lead qualification",
-          "purpose": "Give your team enough to call back prepared.",
+          "title": "Request details",
+          "purpose": "Give you enough to call back prepared.",
           "items": [
             "Name and callback number",
             "Address",
             "Requested service and a description of the job",
             "Urgency level",
-            "Preferred date and time",
-            "A caller who already used your website form or phoned before is flagged for you"
+            "Preferred date and time"
           ]
         },
         {
           "title": "Urgency and request type",
           "purpose": "So the calls that cannot wait surface first.",
           "items": [
-            "Emergency (gas, fire, flooding, electrical hazard)",
+            "Urgent (gas, fire, flooding, electrical hazard)",
             "Priority",
             "Routine",
             "Service request",
@@ -3884,93 +3590,30 @@
           ]
         },
         {
-          "title": "Appointment requests",
-          "purpose": "The phone captures the request. Booking stays with your team.",
+          "title": "Appointments",
+          "purpose": "Essential records the request. Professional schedules it.",
           "items": [
-            "Captures the preferred date and time",
-            "Never promises a slot on the call: a team member confirms",
-            "Follows your business hours, and never transfers to a department after hours",
-            "Requests land in the workspace and the pipeline",
-            "Once your team books the visit in the workspace, SMS confirmation and reminders follow (Growth)"
-          ]
-        },
-        {
-          "title": "Human transfer",
-          "purpose": "It is not built to handle everything alone.",
-          "items": [
-            "The caller asks for a person",
-            "The caller names a department you configured",
-            "An emergency: the on-call line is bridged straight away",
-            "If the caller stays silent, it offers to take a voicemail",
-            "One of your own routing keywords is triggered",
-            "Routes to owner, sales, office, technician or on-call technician",
-            "If the transfer goes unanswered, it takes a message and contact details instead of losing the lead"
+            "Every plan captures the preferred date and time",
+            "Essential never promises a slot on the call: you confirm the time",
+            "Professional schedules into your Google Calendar once scheduling has been tested with you",
+            "Professional sends confirmations and reminders, and handles rescheduling and cancellation by text"
           ]
         }
       ]
     },
     "emergency": {
-      "eyebrow": "Emergencies",
+      "eyebrow": "Urgent calls",
       "title": "The calls that cannot wait until morning.",
-      "intro": "What counts as an emergency is defined by you: a burst pipe, a heating failure in January, an electrical hazard, water damage, or whatever your trade treats as urgent.",
+      "intro": "You decide what counts as urgent: a burst pipe, a heating failure in January, an electrical hazard, water damage, or whatever your trade treats as urgent.",
       "steps": [
         "Incoming call",
-        "Emergency keywords detected",
+        "Urgent keywords detected",
         "Caller told to dial 9-1-1 if anyone is in danger",
-        "Your on-call line is called straight away",
-        "Owner alerted by text",
-        "Call summary and conversation stored"
+        "Call flagged as urgent",
+        "You are alerted first",
+        "Details and conversation saved"
       ],
-      "note": "TradeCatch is not an emergency dispatch service. Configured routing reaches your own people. Licensed work and safety decisions stay with your team."
-    },
-    "stillIncluded": {
-      "eyebrow": "Nothing is removed",
-      "title": "Everything Starter and Growth do keeps running underneath.",
-      "intro": "Upgrading adds the phone layer. It does not take away missed-call recovery, follow-up sequences, quote chasing, booking or the workspace.",
-      "groups": [
-        {
-          "title": "Missed-call recovery",
-          "items": [
-            "Missed or unanswered calls still detected",
-            "Fast SMS back in the caller's language",
-            "Conversation continues by text",
-            "Service needed, details and contact information collected",
-            "Booking opportunity sent",
-            "Business notified, conversation stored"
-          ]
-        },
-        {
-          "title": "Automated follow-up",
-          "items": [
-            "New lead follow-up",
-            "Missed-call follow-up",
-            "Appointment reminders",
-            "No-response follow-up",
-            "Estimate and quote follow-up",
-            "Reactivation where configured"
-          ]
-        },
-        {
-          "title": "Quote and estimate follow-up",
-          "items": [
-            "Outstanding estimates detected",
-            "Personalised follow-up by SMS, and by email when configured",
-            "The sequence stops as soon as the customer replies",
-            "You are notified when a prospect becomes interested",
-            "Another appointment can be booked straight from the reply",
-            "Deposit, payment and e-signature workflows where configured (planned modules)"
-          ]
-        }
-      ],
-      "lifecycleLabel": "Lead lifecycle",
-      "lifecycle": [
-        "Call",
-        "Qualify",
-        "Book",
-        "Estimate",
-        "Follow up",
-        "Customer"
-      ]
+      "note": "TradeCatch is not an emergency dispatch service and does not transfer calls. Safety decisions and licensed work stay with your team and the emergency services."
     },
     "summary": {
       "eyebrow": "After the call",
@@ -4029,72 +3672,53 @@
         "Caller name and phone number",
         "Requested service",
         "Address or location",
-        "Outcome (message, appointment request, transfer…)",
+        "Outcome (message taken, appointment requested…)",
         "Urgency",
         "Important job details",
         "Preferred appointment time",
         "Next required action",
         "Call duration",
-        "Transcript when enabled",
-        "Voicemail recording when enabled"
+        "Transcript"
       ]
     },
     "notifications": {
       "title": "You get told the way you already get told.",
-      "intro": "Notifications use the TradeCatch channels your account already has: SMS, email and the workspace, depending on how it is configured.",
+      "intro": "Notifications use the channels your account already has: text, email and your account, depending on how it is set up.",
       "items": [
-        "New lead",
-        "Emergency",
+        "New request",
+        "Urgent call",
         "Appointment request",
-        "Human follow-up required",
-        "Transfer completed or unanswered",
-        "Quote response"
+        "A call that needs your follow-up",
+        "A text reply from a customer"
       ]
     },
     "dashboard": {
       "title": "One place for everything the phone produced.",
-      "intro": "The TradeCatch workspace stays the centre of the system. Receptionist adds calls to it.",
+      "intro": "Your TradeCatch account is the centre of the system. The receptionist adds every call to it.",
       "items": [
-        "Leads",
-        "Call history",
-        "SMS conversations",
-        "Appointments",
-        "Lead status and notes",
-        "Follow-ups",
+        "Call activity",
+        "Customer requests",
         "Call summaries",
-        "Transcripts when enabled",
-        "Voicemail recordings when enabled",
-        "Conversion information",
-        "Customer activity history"
-      ],
-      "stagesLabel": "Pipeline stages",
-      "stages": [
-        "New",
-        "Qualified",
-        "Appointment",
-        "Estimate",
-        "Won",
-        "Lost"
+        "Transcripts",
+        "Text messages",
+        "Appointments (Professional)",
+        "Notes on each request",
+        "Follow-ups"
       ]
     },
     "reporting": {
       "title": "Reporting on what the phone is actually doing.",
-      "intro": "Reporting covers the numbers a contractor can act on. Any figures shown in a demo interface are sample data, never another client's results.",
+      "intro": "Reports cover the numbers a contractor can act on. Any figures shown in a demo are sample data, never another client’s results.",
       "items": [
         "Incoming calls",
         "Calls answered by the receptionist",
         "After-hours calls",
         "Missed calls",
-        "Recovered missed calls",
-        "Qualified leads",
-        "Appointments booked",
-        "Human transfers",
-        "Emergency calls",
-        "Leads needing follow-up",
-        "Estimate responses",
-        "Conversion outcomes",
+        "Customer requests captured",
+        "Urgent calls",
+        "Appointment requests",
         "Call duration",
-        "Revenue attribution where a real value is recorded"
+        "Text messages sent and received"
       ],
       "note": "TradeCatch does not publish invented customer results. Your own numbers get reviewed with you after launch."
     },
@@ -4118,7 +3742,7 @@
       "escalationLabel": "When it is not sure",
       "escalation": [
         "It asks the caller to clarify",
-        "Silence or a technical error falls back to your fallback line or a voicemail",
+        "Silence or a technical error falls back to a voicemail",
         "If nobody is reachable, it takes a message and contact details",
         "It tells the caller a team member will confirm, rather than guessing"
       ],
@@ -4136,31 +3760,23 @@
         },
         {
           "when": "The receptionist hits a technical error",
-          "then": "It apologises and puts the caller through to your fallback line, or takes a voicemail."
-        },
-        {
-          "when": "A human transfer goes unanswered",
-          "then": "A message and contact details are taken."
+          "then": "It apologises and takes a voicemail so the caller is not lost."
         },
         {
           "when": "The caller gives a preferred time",
-          "then": "It is recorded as a request. A team member confirms, and nothing is booked automatically."
+          "then": "It is recorded as a request. A team member confirms, and nothing is booked automatically on Essential."
         },
         {
-          "when": "An SMS fails to deliver",
-          "then": "Delivery is retried, with fallback where configured."
+          "when": "A text fails to deliver",
+          "then": "Delivery is retried."
         },
         {
           "when": "The call drops",
-          "then": "The recovery workflow picks the conversation back up where configured."
-        },
-        {
-          "when": "An integration fails",
-          "then": "Lead information is preserved and flagged for review."
+          "then": "The missed-call text-back picks the conversation up again."
         },
         {
           "when": "The same caller comes in twice",
-          "then": "The existing lead is updated instead of duplicated."
+          "then": "The existing request is updated instead of duplicated."
         },
         {
           "when": "The caller says nothing",
@@ -4170,12 +3786,12 @@
     },
     "usage": {
       "title": "Usage and allowances",
-      "body": "The monthly fee is not presented as unlimited Calling. Your allowance, how overage is handled and any additional phone numbers are agreed in writing before launch.",
+      "body": "Your monthly fee is not presented as unlimited calling. Each plan includes a monthly allowance of call minutes and text messages, and you are told before you reach it.",
       "items": [
-        "Included Calling minutes agreed at onboarding",
-        "Overage handled by written agreement, never silently",
-        "Call and SMS usage tracked in the workspace",
-        "Additional phone numbers available on request"
+        "Call minutes and text messages included each month, by plan",
+        "You are told before you reach your allowance",
+        "Usage past the allowance is never charged without your confirmation",
+        "Call and text usage shown in your account"
       ]
     },
     "privacy": {
@@ -4190,16 +3806,27 @@
     },
     "finalCta": {
       "title": "See it answer a call before you decide.",
-      "body": "A free 20-minute audit walks through a real call flow for your trade: what it says, what it collects, when it transfers, and what lands in your workspace.",
-      "primary": "Book a free 20-minute audit",
+      "body": "A free 20-minute demo walks through a real call for your trade: what it says, what it collects and what lands in your account.",
+      "primary": "Book a free 20-minute demo",
       "secondary": "See full pricing",
-      "note": "20 minutes. No system access required. Configuration and onboarding happen before the line goes live."
+      "note": "20 minutes. No system access required. Setup and onboarding happen before the line goes live."
     },
-    "ctaTry": "Talk to it yourself"
+    "ctaTry": "Talk to it yourself",
+    "plans": {
+      "essential": {
+        "name": "Essential",
+        "line": "Answers calls and captures customers"
+      },
+      "professional": {
+        "name": "Professional",
+        "line": "Adds appointment scheduling"
+      }
+    },
+    "perMonth": "/ month"
   },
   "demoMode": {
     "badge": "Demo Mode",
-    "message": "Staging environment — fictional data only.",
+    "message": "Staging environment: fictional data only.",
     "hint": "No real customers are contacted. Production is untouched."
   },
   "admin": {
@@ -4291,7 +3918,7 @@
       "signups": "New registrations, 30 days",
       "cancellations": "Cancellations, 30 days",
       "churn": "Churn",
-      "growthShare": "Active accounts on Growth",
+      "growthShare": "Active accounts on Professional",
       "demos": "Demo accounts",
       "seriesSignups": "Registrations",
       "seriesCancellations": "Cancellations",
@@ -4303,7 +3930,7 @@
       "stripeOff": "Stripe is not configured.",
       "stripeNote": "Invoices stay in Stripe. TradeCatch shows the plan price and account status stored for each business. No card data is loaded here.",
       "billingHeadline": "Subscriptions",
-      "analyticsHeadline": "Growth and retention",
+      "analyticsHeadline": "New accounts and retention",
       "search": "Search",
       "status": "Status",
       "plan": "Plan",
@@ -4358,17 +3985,23 @@
     "names": {
       "starter": "Starter",
       "growth": "Growth",
-      "receptionist": "Receptionist Plus"
+      "receptionist": "Receptionist Plus",
+      "essential": "Essential",
+      "professional": "Professional"
     },
     "kind": {
       "starter": "SMS Receptionist",
       "growth": "Limited Receptionist",
-      "receptionist": "Complete Receptionist"
+      "receptionist": "Complete Receptionist",
+      "essential": "Answers calls and captures customers",
+      "professional": "Answers calls and manages appointments"
     },
     "channels": {
-      "sms": "Automated SMS on missed calls, website inquiries and quiet quotes. Does not answer the phone.",
-      "voice-essentials": "Answers calls in French or English, qualifies the job, answers from your approved information and sends your team a summary. Does not book on the call, transfer live or bridge emergencies.",
-      "voice-complete": "Full receptionist: answers, qualifies, books on the call, transfers to a person, bridges emergencies and keeps transcripts when enabled."
+      "voice-answering": "Answers calls day and night in French or English, and records every caller’s details and request.",
+      "voice-booking": "Does everything Essential does, and also books appointments straight into your Google Calendar.",
+      "sms": "Automated texts for missed calls, website inquiries and quotes that went quiet. Does not answer the phone.",
+      "voice-essentials": "Answers calls in French or English, qualifies the job, answers from your approved information and sends your team a summary.",
+      "voice-complete": "Full receptionist: answers, qualifies, books on the call and keeps transcripts when enabled."
     },
     "availability": {
       "included": "Included",
@@ -4377,158 +4010,100 @@
       "limited": "Limited"
     },
     "capabilities": {
-      "missedCallTextBack": {
-        "label": "Missed-call text-back",
-        "demoTitle": "Missed call, immediate text",
-        "demoBody": "A homeowner calls while your crew is on a job. TradeCatch texts them back in French or English with wording you approved, within moments."
+      "answersCalls": {
+        "label": "24/7 AI phone receptionist"
       },
-      "bilingualSms": {
-        "label": "Bilingual SMS (French and English)",
-        "demoTitle": "Customer chooses the language",
-        "demoBody": "The first reply offers French or English. The rest of the thread stays in the language they pick."
+      "frenchEnglish": {
+        "label": "Canadian French and English"
       },
-      "websiteReply": {
-        "label": "Website lead response",
-        "demoTitle": "Website inquiry answered",
-        "demoBody": "A form submission on your site gets the same approved reply path as a missed call, so web leads do not sit unanswered."
+      "naturalVoice": {
+        "label": "Natural, professional voice"
       },
-      "leadQualification": {
-        "label": "Lead qualification",
-        "demoTitle": "Job details collected by text",
-        "demoBody": "Address, service type and urgency are collected before anyone calls back, so the right technician already knows the job."
+      "captureDetails": {
+        "label": "Customer name and phone number"
       },
-      "quoteFollowUp": {
-        "label": "Quote follow-up",
-        "demoTitle": "Quiet quotes get followed up",
-        "demoBody": "When an estimate goes quiet, the Starter sequence sends approved follow-ups and stops the moment the customer replies."
+      "serviceRequests": {
+        "label": "Service and quote requests"
       },
-      "humanTakeover": {
-        "label": "Human takeover",
-        "demoTitle": "A person can take over",
-        "demoBody": "Any thread can be handed to your team. Automation never pretends a human is typing when a person has taken over."
+      "urgentRequests": {
+        "label": "Urgent requests flagged right away"
       },
-      "leadDashboard": {
-        "label": "Lead dashboard",
-        "demoTitle": "What came in, in one place",
-        "demoBody": "Recovered leads and outcomes show up in a simple report so you can see what the system caught."
+      "missedCalls": {
+        "label": "Missed-call follow-up"
       },
-      "appointmentBooking": {
-        "label": "Appointment booking in the workspace",
-        "demoTitle": "Book from the workspace",
-        "demoBody": "Once a lead is ready, Growth lets your team book the visit in the linked workspace and keep reminders moving."
+      "smsFollowUps": {
+        "label": "Text follow-ups on customer requests"
       },
-      "pipeline": {
-        "label": "Pipeline and revenue attribution",
-        "demoTitle": "Open work stays visible",
-        "demoBody": "Open jobs sit in a pipeline with the won values you record, so nothing soft-closes without a status."
+      "dashboard": {
+        "label": "Customer dashboard"
       },
-      "followUpSequences": {
-        "label": "Advanced follow-up sequences",
-        "demoTitle": "Follow-ups that stop on reply",
-        "demoBody": "Sequences keep chasing quiet work and stop the moment a customer answers or opts out."
+      "callHistory": {
+        "label": "Call activity and history"
       },
-      "reviewRequests": {
-        "label": "Google review requests",
-        "demoTitle": "Ask for the review after the job",
-        "demoBody": "After a completed job, Growth can send an approved review-request text so happy customers are not left to remember on their own."
+      "requestsList": {
+        "label": "Captured customer requests"
       },
-      "aiAnswersCalls": {
-        "label": "Phone answering (French and English)",
-        "demoTitle": "The line gets answered",
-        "demoBody": "An incoming call is answered in French or English. The receptionist greets the caller with your approved business name and asks how it can help."
+      "basicStats": {
+        "label": "Basic performance statistics"
       },
-      "callerDetails": {
-        "label": "Caller details captured live",
-        "demoTitle": "Who is calling, and for what",
-        "demoBody": "Name, callback number, service needed and address are captured during the conversation so your team is not starting from a blank voicemail."
+      "accountCenter": {
+        "label": "Secure Account Center"
       },
-      "businessAnswers": {
-        "label": "Answers from your approved information",
-        "demoTitle": "Answers you approved",
-        "demoBody": "Hours, service area and common questions are answered only from the business information you reviewed. Anything unsure is escalated to a person."
+      "billingManagement": {
+        "label": "Subscription and billing management"
       },
-      "appointmentRequests": {
-        "label": "Appointment requests by phone",
-        "demoTitle": "Preferred time captured",
-        "demoBody": "The caller shares a preferred time. On Growth the request is summarised for your team to confirm; on Receptionist Plus it can be booked on the call when enabled."
+      "businessInfo": {
+        "label": "Business information management"
       },
-      "callSummary": {
-        "label": "Call summary to your team",
-        "demoTitle": "Summary after the call",
-        "demoBody": "When the call ends, your team gets a structured summary and next action instead of a raw recording they have to re-listen to."
+      "autoScheduling": {
+        "label": "Automatic appointment scheduling"
       },
-      "phoneBooking": {
-        "label": "Appointment booking on the call",
-        "demoTitle": "Booked while they are still on the line",
-        "demoBody": "Receptionist Plus can reserve a calendar slot during the call when phone booking is enabled, then confirm the details with the caller."
+      "googleCalendar": {
+        "label": "Google Calendar integration"
       },
-      "callTransfer": {
-        "label": "Live call transfer",
-        "demoTitle": "Hand-off to a person",
-        "demoBody": "When the caller needs a human, the receptionist transfers the live call to the owner, office, sales or on-call technician you configured."
+      "availabilityCheck": {
+        "label": "Availability checking"
       },
-      "emergencyRouting": {
-        "label": "Emergency call routing",
-        "demoTitle": "Urgent calls reach on-call",
-        "demoBody": "Emergencies follow rules you defined: alert the team immediately and, on Receptionist Plus, bridge to your on-call line when configured."
+      "rescheduleCancel": {
+        "label": "Rescheduling and cancellation"
       },
-      "transcripts": {
-        "label": "Transcripts and recordings when enabled",
-        "demoTitle": "Transcript when you want it",
-        "demoBody": "Full transcripts and recordings stay off until you enable them. Retention follows the settings you approve."
+      "smsConfirmations": {
+        "label": "Text appointment confirmations"
       },
-      "customerRecords": {
-        "label": "Customer records",
-        "demoTitle": "Caller tied to a record",
-        "demoBody": "Caller details land against a customer record so the next contact is not starting from scratch."
+      "reminders": {
+        "label": "Automatic appointment reminders"
       },
-      "crewCalendars": {
-        "label": "Multi-crew calendars",
-        "demoTitle": "More than one calendar",
-        "demoBody": "Receptionist Plus can book across the crew calendars included in your allowance instead of a single shared book."
+      "appointmentFollowUps": {
+        "label": "Appointment follow-ups"
       },
-      "reactivation": {
-        "label": "Customer reactivation",
-        "demoTitle": "Quiet customers get a nudge",
-        "demoBody": "Past customers who went quiet can be brought back with approved reactivation sequences on Receptionist Plus."
+      "calendarView": {
+        "label": "Calendar in your dashboard"
       },
-      "outlookSync": {
-        "label": "Native Outlook calendar sync",
-        "demoTitle": "Outlook sync (planned)",
-        "demoBody": "Native two-way Outlook sync is planned and is never implied in a quote today."
+      "appointmentHistory": {
+        "label": "Upcoming appointments and history"
       },
-      "customVoice": {
-        "label": "Custom Voice Cloning (your own voice)",
-        "demoTitle": "Sounds like you",
-        "demoBody": "Make your receptionist sound like you. Record your voice once, and it answers customer calls in your voice. You preview it before it goes live, and you can switch back to a standard voice or delete yours at any time."
+      "appointmentStats": {
+        "label": "Appointment statistics"
+      },
+      "schedulingRules": {
+        "label": "Availability, scheduling rules and buffer times"
       }
-    },
-    "walkthrough": {
-      "eyebrow": "See each plan",
-      "title": "What each plan actually does.",
-      "intro": "Pick a plan. The walkthrough only shows what that plan includes. These scenes are illustrative product examples, not live customer footage.",
-      "illustrativeLabel": "Illustrative walkthrough",
-      "selectLabel": "Choose a plan to demonstrate",
-      "next": "Next",
-      "previous": "Previous",
-      "stepOf": "Step {current} of {total}"
     },
     "addOns": {
       "websiteService": {
         "eyebrow": "Optional add-on",
         "title": "Done-for-You Website Service",
-        "intro": "Need a website that actually brings in work? We build a new professional site for your business, or improve the one you already have, so it looks right on every phone, captures leads and works with TradeCatch.",
-        "price": "Starting at $349 CAD",
-        "priceNote": "A one-time project price, separate from your subscription. We confirm the scope and the final price with you in writing before you pay anything.",
-        "availableOn": "An optional add-on for Starter, Growth and Receptionist Plus.",
-        "neverIncluded": "Never added to your subscription automatically, and never billed monthly.",
+        "intro": "Need a better website? We can create or improve your website to help turn more visitors into customers.",
+        "price": "$349.99 CAD",
+        "priceNote": "One-time price. It is not part of your subscription, and you are only charged if you choose it.",
+        "availableOn": "Available with Essential or Professional.",
+        "neverIncluded": "Never added to your order automatically, and never billed monthly.",
         "includesTitle": "What we can do",
         "includes": [
           "A new professional website, or improvements to the one you have",
-          "Mobile optimization, so it looks right on every phone",
+          "A clean look on every phone",
           "Contact forms that reach you",
-          "Lead capture that lands in your TradeCatch inbox",
-          "TradeCatch integration: missed-call text-back and your receptionist, linked to your site"
+          "Requests from your site land in your TradeCatch inbox"
         ],
         "cta": "Get My Website Built"
       }
@@ -4540,13 +4115,13 @@
   "referrals": {
     "app": {
       "headline": "Referrals",
-      "intro": "Know a contractor who would use TradeCatch? Share your link. When they become a paying customer, you receive an Interac e-Transfer: $50 (Starter), $75 (Growth) or $125 (Receptionist Plus).",
+      "intro": "Know a contractor who would use TradeCatch? Share your link. When they become a paying customer you receive an Interac e-Transfer, and a bonus if they also order our website service. The amounts are below.",
       "restricted": "Referral rewards are managed by your account owner or an administrator.",
       "unavailable": "Referral details are temporarily unavailable. Please try again in a few minutes.",
       "notEligible": {
         "program_disabled": "The referral program is paused right now. Your link returns when it resumes.",
         "organization_inactive": "Referral links are available while your account is active.",
-        "no_paid_access": "Your referral link unlocks once your installation payment is complete."
+        "no_paid_access": "Your referral link unlocks once your setup payment is complete."
       },
       "linkTitle": "Your referral link",
       "linkHelp": "Anyone who books through this link is credited to you. Each business can be referred only once.",
@@ -4561,7 +4136,7 @@
       "shareSubject": "A tip for your business: TradeCatch",
       "shareMessage": "{business} uses TradeCatch to catch missed calls and keep jobs from slipping away. Take a look: {link}",
       "rewardsTitle": "What you earn",
-      "rewardsIntro": "The Interac amount depends on the plan your referral purchases, not on your own plan.",
+      "rewardsIntro": "The reward is the same for Essential and Professional. The website bonus is added when the business you referred also orders the website service and the work has started.",
       "whenTheyChoose": "When they choose {plan}",
       "giftCardAmount": "{amount} via Interac",
       "noReward": "No reward",
@@ -4602,24 +4177,27 @@
       },
       "rulesTitle": "Program rules",
       "rules": {
-        "payment": "You earn a reward only after the business you referred makes a successful installation payment.",
-        "plan": "The Interac amount depends on the plan they purchase, as shown above.",
-        "once": "Each business can earn one reward, however many times it is referred.",
+        "payment": "You earn a reward only after the business you referred makes a successful setup payment.",
+        "plan": "The plan reward is the same for Essential and Professional. The website bonus is added only after the referred business agrees to the website service and the work has started.",
+        "once": "Each business can earn one plan reward and at most one website bonus, however many times it is referred.",
         "review": "Rewards are confirmed about {days} days after the payment, once we have checked that the customer is still active and the payment was not refunded or disputed.",
         "excluded": "There is no reward for referring yourself, duplicate registrations, or purchases that are refunded, disputed or cancelled.",
         "privacy": "You see the name and status of the businesses you refer, and nothing else about them."
-      }
+      },
+      "websiteBonusLabel": "Website service bonus",
+      "websiteBonusHelp": "Extra, when they also order the website service",
+      "maxNote": "The most one referral can earn is {amount}."
     },
     "public": {
       "metaTitle": "Referral program",
-      "metaDescription": "Refer a contractor to TradeCatch and earn an Interac e-Transfer sized to the plan they choose.",
+      "metaDescription": "Refer a contractor to TradeCatch and earn {planReward} CAD when they sign up, plus {bonus} more if they add the website service.",
       "eyebrow": "Referral program",
-      "headline": "Refer a contractor. Earn an Interac e-Transfer when they subscribe.",
-      "intro": "Share your link. When the contractor you refer pays their installation fee, you receive an Interac e-Transfer: CAD $50 for Starter, $75 for Growth, $125 for Receptionist Plus.",
+      "headline": "Refer a contractor. Earn up to {max}.",
+      "intro": "Share your link. When the contractor you refer pays their setup fee, you earn {planReward} CAD by Interac e-Transfer. If they also order our website service, you earn {bonus} more.",
       "referredBanner": "A TradeCatch customer sent you here. Book your free audit, and if you become a customer they are credited automatically.",
       "paused": "The referral program is paused right now. Check back soon.",
       "rewardsTitle": "What you earn",
-      "rewardsIntro": "The Interac amount is based on the plan the person you refer purchases.",
+      "rewardsIntro": "You earn {planReward} for each business that becomes a customer on Essential or Professional. You earn {bonus} more when it also buys the website service.",
       "youEarn": "You earn",
       "giftCard": "via Interac e-Transfer",
       "noReward": "No reward",
@@ -4632,7 +4210,7 @@
         },
         "book": {
           "title": "They book a free audit",
-          "body": "They talk to us, choose a plan and pay the one-time installation fee."
+          "body": "They talk to us, choose Essential or Professional and pay the one-time setup fee."
         },
         "earn": {
           "title": "You get an Interac e-Transfer",
@@ -4643,14 +4221,18 @@
       "existingCustomer": "Already a customer? Get your link",
       "rulesTitle": "Program rules",
       "rules": {
-        "payment": "A reward is earned only after the referred business makes a successful installation payment.",
-        "plan": "The Interac amount depends on the plan that business purchases, not on your plan.",
-        "once": "One reward per referred business, however many times it is referred. Referring yourself, or registering the same business twice, does not qualify.",
+        "payment": "A reward is earned only after the referred business makes a successful setup payment.",
+        "plan": "The plan reward is the same for Essential and Professional. The website bonus is added only if the referred business also agrees to the website service and the work has started.",
+        "once": "One plan reward and at most one website bonus per referred business, however many times it is referred. Referring yourself, or registering the same business twice, does not qualify.",
         "review": "We confirm rewards about {days} days after the payment, once we have checked that the customer is still active and the payment was not refunded or disputed. Refunded, disputed, cancelled or invalid purchases do not earn a reward.",
         "excluded": "Rewards are for new customers only.",
         "delivery": "Interac e-Transfers are sent by TradeCatch after a reward is approved. TradeCatch may update or pause the program.",
         "storage": "When you open a referral link, a code is saved in this browser for up to 60 days so the right customer can be credited if you book. It is used for nothing else, and you can remove it by clearing this site’s data."
-      }
+      },
+      "bonusTitle": "Website service bonus",
+      "bonusLabel": "Added when they also order our website service",
+      "bonusPlus": "Extra",
+      "maxNote": "The most one referral can earn is {max} CAD."
     },
     "form": {
       "title": "Refer a contractor",
@@ -4695,16 +4277,16 @@
   "websiteRequest": {
     "meta": {
       "title": "Get My Website Built | TradeCatch",
-      "description": "Ask for a new professional website, or improvements to your current one. Starting at $349 CAD, with the scope and final price confirmed before you pay."
+      "description": "Ask for a new professional website, or improvements to your current one. $349.99 CAD, paid once, with the scope confirmed before you pay."
     },
     "page": {
       "eyebrow": "Done-for-You Website Service",
       "headline": "Tell us what your website needs",
-      "intro": "A short form, then a written scope and a firm price before you pay anything. Starting at $349 CAD, one time.",
+      "intro": "A short form, then a written scope before you pay anything. $349.99 CAD, paid once.",
       "stepsTitle": "What happens next",
       "steps": [
         "We review your request and, if you have one, your current website.",
-        "We write back with exactly what we will do and the final price.",
+        "We write back with exactly what we will do for $349.99.",
         "You approve it. Only then do we start and invoice you."
       ],
       "separate": "This is a separate project. It is not added to your TradeCatch subscription and does not change what you pay each month."
@@ -4735,7 +4317,7 @@
       },
       "notes": "Anything else we should know?",
       "optional": "(optional)",
-      "priceNote": "Starting at $349 CAD, one time. Separate from your subscription. We confirm the scope and final price with you before you pay.",
+      "priceNote": "$349.99 CAD, paid once. Separate from your subscription. We confirm the scope with you before you pay.",
       "submit": "Get My Website Built",
       "submitting": "Sending…",
       "errors": {
