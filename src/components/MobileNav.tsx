@@ -6,7 +6,6 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { BrandLockup } from "@/components/BrandLockup";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2";
@@ -14,13 +13,14 @@ const FOCUS_RING =
 export function MobileNav({
   links,
   ctaLabel,
-  phone,
-  phoneHref,
+  email,
+  emailLabel,
 }: {
   links: { href: string; label: string }[];
   ctaLabel: string;
-  phone: string;
-  phoneHref: string;
+  /** The public support and sales address. TradeCatch has no public phone line. */
+  email: string;
+  emailLabel: string;
 }) {
   const t = useTranslations("nav");
   const [open, setOpen] = useState(false);
@@ -120,18 +120,13 @@ export function MobileNav({
       <div className="px-[clamp(20px,4vw,40px)] pb-10 pt-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <LocaleSwitcher inverted />
-          <ThemeToggle
-            inverted
-            labelToDark={t("toggleThemeToDark")}
-            labelToLight={t("toggleThemeToLight")}
-          />
         </div>
         <a
-          href={`tel:${phoneHref}`}
+          href={`mailto:${email}`}
           onClick={close}
-          className={`mb-4 block font-mono text-[14px] text-[rgba(255,255,255,0.64)] ${FOCUS_RING}`}
+          className={`mb-4 block text-[15px] text-[rgba(255,255,255,0.8)] ${FOCUS_RING}`}
         >
-          {phone}
+          {emailLabel}: {email}
         </a>
         <Link
           href="/book-audit"
