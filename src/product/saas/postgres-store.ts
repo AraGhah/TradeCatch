@@ -116,7 +116,7 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
               orgId,
               input.name.trim(),
               slug,
-              input.plan ?? "starter",
+              input.plan ?? "essential",
               input.status ?? "active",
               input.missedCallClientId ?? null,
               input.accountType ?? "pilot",
