@@ -65,7 +65,7 @@ function makeWorld(options: { stripe?: boolean } = {}) {
         name: options.name ?? `Business ${id}`,
         status: options.status ?? "active",
         accountType: options.accountType ?? "client",
-        plan: options.plan ?? "growth",
+        plan: options.plan ?? "essential",
         phoneE164: options.phoneE164 ?? null,
       });
       // A domain per business: sharing one is (rightly) a review flag.
@@ -328,22 +328,22 @@ describe("attribution", () => {
 
 describe("reward calculation follows the plan the REFERRED customer bought", () => {
   const cases: [PlanId, number][] = [
-    ["starter", 5_000],
-    ["growth", 7_500],
-    ["receptionist", 12_500],
+    ["essential", 6_500],
+    ["professional", 6_500],
   ];
   for (const [plan, expected] of cases) {
     it(`${plan} earns CAD $${expected / 100}`, async () => {
       const w = makeWorld();
       await referredBusiness(w);
-      // The referrer is on Receptionist Plus; it must not change the amount.
-      w.orgs.get("org_ref")!.plan = "receptionist";
+      // The referrer is on Professional; it must not change the amount.
+      w.orgs.get("org_ref")!.plan = "professional";
       const result = await qualify(w, plan);
       assert.equal(result.qualified, true);
       assert.ok(result.qualified);
       assert.equal(result.reward.amountCents, expected);
       assert.equal(result.reward.currency, "CAD");
       assert.equal(result.reward.plan, plan);
+      assert.equal(result.reward.kind, "plan");
       assert.equal(result.reward.status, "pending");
     });
   }
@@ -351,20 +351,46 @@ describe("reward calculation follows the plan the REFERRED customer bought", () 
   it("uses the administrator's amounts when they change", async () => {
     const w = makeWorld();
     await referredBusiness(w);
-    await w.service.updateSettings(
-      { rewardsCents: { starter: 6_000, growth: 8_000, receptionist: 20_000 } },
+    const updated = await w.service.updateSettings(
+      { rewardsCents: { essential: 4_000, professional: 6_000 } },
       "admin",
     );
-    const result = await qualify(w, "growth");
+    assert.equal(updated.ok, true);
+    const result = await qualify(w, "professional");
     assert.ok(result.qualified);
-    assert.equal(result.reward.amountCents, 8_000);
+    assert.equal(result.reward.amountCents, 6_000);
+  });
+
+  it("refuses amounts that would let one referral earn more than $100", async () => {
+    const w = makeWorld();
+    // $80 for the plan plus the $35 website bonus is $115.
+    const tooMuch = await w.service.updateSettings(
+      { rewardsCents: { professional: 8_000 } },
+      "admin",
+    );
+    assert.deepEqual(tooMuch, { ok: false, error: "invalid_settings" });
+    assert.equal((await w.service.getSettings()).rewardsCents.professional, 6_500);
+    // Exactly $100 is allowed.
+    const exactly = await w.service.updateSettings(
+      { rewardsCents: { professional: 6_500 }, websiteBonusCents: 3_500 },
+      "admin",
+    );
+    assert.equal(exactly.ok, true);
   });
 
   it("pays nothing for a plan the administrator excluded", async () => {
     const w = makeWorld();
     await referredBusiness(w);
-    await w.service.updateSettings({ eligiblePlans: ["growth", "receptionist"] }, "admin");
-    const result = await qualify(w, "starter");
+    await w.service.updateSettings({ eligiblePlans: ["professional"] }, "admin");
+    const result = await qualify(w, "essential");
+    assert.deepEqual(result, { qualified: false, reason: "plan_not_eligible" });
+    assert.equal((await w.store.listRewards()).length, 0);
+  });
+
+  it("pays nothing for a retired plan, which is no longer sold", async () => {
+    const w = makeWorld();
+    await referredBusiness(w);
+    const result = await qualify(w, "growth");
     assert.deepEqual(result, { qualified: false, reason: "plan_not_eligible" });
     assert.equal((await w.store.listRewards()).length, 0);
   });
@@ -372,7 +398,7 @@ describe("reward calculation follows the plan the REFERRED customer bought", () 
   it("holds the reward for the hold period before it can be approved", async () => {
     const w = makeWorld();
     await referredBusiness(w);
-    const result = await qualify(w, "growth");
+    const result = await qualify(w, "essential");
     assert.ok(result.qualified);
     assert.equal(
       Date.parse(result.reward.eligibleAt) - START,
@@ -396,7 +422,7 @@ describe("a reward is created only after a qualifying payment, and only once", (
 
   it("ignores a payment from a business nobody referred", async () => {
     w.addOrg("org_walkin", { paidAccess: false });
-    assert.deepEqual(await qualify(w, "growth", "org_walkin"), {
+    assert.deepEqual(await qualify(w, "essential", "org_walkin"), {
       qualified: false,
       reason: "no_referral",
     });
@@ -404,7 +430,7 @@ describe("a reward is created only after a qualifying payment, and only once", (
 
   it("marks the referral as a paying customer once paid", async () => {
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     const referral = await w.store.getReferralByReferred("org_new");
     assert.equal(referral?.status, "qualified");
     assert.ok(referral?.qualifiedAt);
@@ -412,8 +438,8 @@ describe("a reward is created only after a qualifying payment, and only once", (
 
   it("replaying the same payment returns the same reward", async () => {
     await referredBusiness(w);
-    const first = await qualify(w, "growth");
-    const replay = await qualify(w, "growth");
+    const first = await qualify(w, "essential");
+    const replay = await qualify(w, "essential");
     assert.ok(first.qualified && replay.qualified);
     assert.equal(replay.duplicate, true);
     assert.equal(replay.reward.id, first.reward.id);
@@ -422,10 +448,12 @@ describe("a reward is created only after a qualifying payment, and only once", (
 
   it("a second payment (or upgrade) by the same business does not earn a second reward", async () => {
     await referredBusiness(w);
-    const first = await qualify(w, "starter");
+    // Different amounts per plan, so the assertion below can tell them apart.
+    await w.service.updateSettings({ rewardsCents: { essential: 5_000 } }, "admin");
+    const first = await qualify(w, "essential");
     const second = await w.service.qualifyReferral({
       organizationId: "org_new",
-      plan: "receptionist",
+      plan: "professional",
       checkoutSessionId: "cs_other_session",
       paymentIntentId: "pi_other",
       livemode: true,
@@ -439,7 +467,7 @@ describe("a reward is created only after a qualifying payment, and only once", (
   it("concurrent webhook deliveries still produce one reward", async () => {
     await referredBusiness(w);
     const results = await Promise.all(
-      Array.from({ length: 5 }, () => qualify(w, "growth")),
+      Array.from({ length: 5 }, () => qualify(w, "essential")),
     );
     assert.equal(results.filter((r) => r.qualified && !r.duplicate).length, 1);
     assert.equal((await w.store.listRewards()).length, 1);
@@ -453,7 +481,7 @@ describe("a reward is created only after a qualifying payment, and only once", (
       referredOrganizationId: "org_ref",
       actor: "ops",
     });
-    const result = await qualify(w, "growth", "org_ref");
+    const result = await qualify(w, "essential", "org_ref");
     assert.deepEqual(result, { qualified: false, reason: "referral_rejected" });
     assert.equal((await w.store.listRewards()).length, 0);
   });
@@ -461,7 +489,7 @@ describe("a reward is created only after a qualifying payment, and only once", (
   it("does not pay while the program is switched off", async () => {
     await referredBusiness(w);
     await w.service.updateSettings({ programEnabled: false }, "admin");
-    assert.deepEqual(await qualify(w, "growth"), {
+    assert.deepEqual(await qualify(w, "essential"), {
       qualified: false,
       reason: "program_disabled",
     });
@@ -469,11 +497,11 @@ describe("a reward is created only after a qualifying payment, and only once", (
 
   it("recovers a missed webhook from the billing records, once", async () => {
     await referredBusiness(w);
-    w.payInstallation("org_new", "receptionist");
+    w.payInstallation("org_new", "professional");
     assert.deepEqual(await w.service.reconcilePaidReferrals(), { qualified: 1 });
     assert.deepEqual(await w.service.reconcilePaidReferrals(), { qualified: 0 });
     const [reward] = await w.store.listRewards();
-    assert.equal(reward?.amountCents, 12_500);
+    assert.equal(reward?.amountCents, 6_500);
   });
 });
 
@@ -485,7 +513,7 @@ describe("refunds, chargebacks and cancellations", () => {
 
   it("a full refund rejects a reward that has not been issued", async () => {
     await referredBusiness(w);
-    const result = await qualify(w, "growth");
+    const result = await qualify(w, "essential");
     assert.ok(result.qualified);
     const outcome = await w.service.onPaymentReversed({
       paymentIntentId: "pi_org_new",
@@ -499,7 +527,7 @@ describe("refunds, chargebacks and cancellations", () => {
 
   it("a chargeback rejects the reward too", async () => {
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     await w.service.onPaymentReversed({ paymentIntentId: "pi_org_new", kind: "chargeback" });
     const [reward] = await w.store.listRewards();
     assert.equal(reward?.status, "rejected");
@@ -508,7 +536,7 @@ describe("refunds, chargebacks and cancellations", () => {
 
   it("a partial refund only flags the reward for a person to look at", async () => {
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     await w.service.onPaymentReversed({
       paymentIntentId: "pi_org_new",
       kind: "partially_refunded",
@@ -520,7 +548,7 @@ describe("refunds, chargebacks and cancellations", () => {
 
   it("a refund for an unrelated payment changes nothing", async () => {
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     const outcome = await w.service.onPaymentReversed({
       paymentIntentId: "pi_somebody_else",
       kind: "refunded",
@@ -531,7 +559,7 @@ describe("refunds, chargebacks and cancellations", () => {
 
   it("repeating a refund notification is harmless", async () => {
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     await w.service.onPaymentReversed({ paymentIntentId: "pi_org_new", kind: "refunded" });
     const again = await w.service.onPaymentReversed({
       paymentIntentId: "pi_org_new",
@@ -547,7 +575,7 @@ describe("refunds, chargebacks and cancellations", () => {
 
   it("cancelling the subscription rejects a pending or approved reward", async () => {
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     await w.service.onBillingStateChanged("org_new", "churned");
     const [reward] = await w.store.listRewards();
     assert.equal(reward?.status, "rejected");
@@ -556,7 +584,7 @@ describe("refunds, chargebacks and cancellations", () => {
 
   it("a suspended subscription flags the reward without rejecting it", async () => {
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     await w.service.onBillingStateChanged("org_new", "suspended");
     const [reward] = await w.store.listRewards();
     assert.equal(reward?.status, "pending");
@@ -566,7 +594,7 @@ describe("refunds, chargebacks and cancellations", () => {
   it("an issued gift card is never silently undone: it is flagged for a person", async () => {
     await referredBusiness(w);
     await w.service.updateSettings({ fulfillmentMethod: "manual", holdDays: 0 }, "admin");
-    const qualified = await qualify(w, "growth");
+    const qualified = await qualify(w, "essential");
     assert.ok(qualified.qualified);
     assert.equal((await w.service.approveReward(qualified.reward.id, "admin")).ok, true);
     assert.equal(
@@ -597,7 +625,7 @@ describe("administrator approval", () => {
   beforeEach(async () => {
     w = makeWorld();
     await referredBusiness(w);
-    const result = await qualify(w, "growth");
+    const result = await qualify(w, "essential");
     assert.ok(result.qualified);
     rewardId = result.reward.id;
   });
@@ -659,10 +687,10 @@ describe("administrator approval", () => {
   it("never approves a Stripe test-mode payment", async () => {
     const test = makeWorld();
     await referredBusiness(test);
-    const installation = test.payInstallation("org_new", "growth", { livemode: false });
+    const installation = test.payInstallation("org_new", "essential", { livemode: false });
     const result = await test.service.qualifyReferral({
       organizationId: "org_new",
-      plan: "growth",
+      plan: "essential",
       checkoutSessionId: installation.checkoutSessionId,
       paymentIntentId: installation.paymentIntentId,
       livemode: false,
@@ -704,7 +732,7 @@ describe("approval re-checks the payment with Stripe", () => {
   async function pendingReward() {
     const w = makeWorld({ stripe: true });
     await referredBusiness(w);
-    const result = await qualify(w, "growth");
+    const result = await qualify(w, "essential");
     assert.ok(result.qualified);
     w.advanceDays(31);
     return { w, rewardId: result.reward.id };
@@ -767,7 +795,7 @@ describe("gift cards are recorded, never sent automatically, and never twice", (
   beforeEach(async () => {
     w = makeWorld();
     await referredBusiness(w);
-    await qualify(w, "receptionist");
+    await qualify(w, "professional");
     rewardId = await approvedReward(w);
   });
 
@@ -806,7 +834,7 @@ describe("gift cards are recorded, never sent automatically, and never twice", (
   it("cannot be issued before it is approved", async () => {
     const other = makeWorld();
     await referredBusiness(other);
-    await qualify(other, "growth");
+    await qualify(other, "essential");
     await other.service.updateSettings({ fulfillmentMethod: "manual" }, "admin");
     const reward = await other.store.getRewardByReferredOrganization("org_new");
     const result = await other.service.markIssued(reward!.id, "admin", {
@@ -828,7 +856,7 @@ describe("gift cards are recorded, never sent automatically, and never twice", (
       referredOrganizationId: "org_new2",
       actor: "ops",
     });
-    await qualify(w, "growth", "org_new2");
+    await qualify(w, "essential", "org_new2");
     const secondId = await approvedReward(w, "org_new2");
 
     const result = await w.service.markIssued(secondId, "admin", {
@@ -873,7 +901,12 @@ describe("settings", () => {
   it("start with the agreed rewards and nothing automatic", async () => {
     const w = makeWorld();
     const settings = await w.service.getSettings();
-    assert.deepEqual(settings.rewardsCents, { starter: 5_000, growth: 7_500, receptionist: 12_500 });
+    // $65 for either launch plan; the retired plans carry the same figure but
+    // are not eligible, so they never pay out.
+    assert.equal(settings.rewardsCents.essential, 6_500);
+    assert.equal(settings.rewardsCents.professional, 6_500);
+    assert.equal(settings.websiteBonusCents, 3_500);
+    assert.deepEqual(settings.eligiblePlans, ["essential", "professional"]);
     assert.equal(settings.programEnabled, true);
     assert.equal(settings.fulfillmentMethod, "none");
   });
@@ -882,9 +915,11 @@ describe("settings", () => {
     const w = makeWorld();
     for (const bad of [
       { surprise: true },
-      { rewardsCents: { starter: -1, growth: 0, receptionist: 0 } },
-      { rewardsCents: { starter: 1.5, growth: 0, receptionist: 0 } },
-      { rewardsCents: { starter: 5_000_000, growth: 0, receptionist: 0 } },
+      { rewardsCents: { essential: -1, professional: 0 } },
+      { rewardsCents: { essential: 1.5, professional: 0 } },
+      { rewardsCents: { essential: 5_000_000, professional: 0 } },
+      // Nothing may push one referral past the $100 program maximum.
+      { websiteBonusCents: 5_000_000 },
       { holdDays: -3 },
       { holdDays: 5_000 },
       { fulfillmentMethod: "automatic" },
@@ -893,7 +928,7 @@ describe("settings", () => {
       const result = await w.service.updateSettings(bad, "admin");
       assert.deepEqual(result, { ok: false, error: "invalid_settings" }, JSON.stringify(bad));
     }
-    assert.equal((await w.service.getSettings()).rewardsCents.starter, 5_000);
+    assert.equal((await w.service.getSettings()).rewardsCents.essential, 6_500);
   });
 
   it("change only what was sent and record who changed it", async () => {
@@ -901,16 +936,16 @@ describe("settings", () => {
     const result = await w.service.updateSettings({ holdDays: 14 }, "admin@example.com");
     assert.ok(result.ok);
     assert.equal(result.settings.holdDays, 14);
-    assert.equal(result.settings.rewardsCents.growth, 7_500);
+    assert.equal(result.settings.rewardsCents.professional, 6_500);
     assert.equal(result.settings.updatedBy, "admin@example.com");
   });
 });
 
 describe("what the referring customer sees", () => {
-  it("shows their link, the three rewards, and progress without revealing review flags", async () => {
+  it("shows their link, the rewards, and progress without revealing review flags", async () => {
     const w = makeWorld();
     const { code } = await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
 
     const overview = await w.service.overview("org_ref");
     assert.equal(overview.code, code);
@@ -918,23 +953,24 @@ describe("what the referring customer sees", () => {
     assert.deepEqual(
       overview.rewards.map((r) => [r.plan, r.amountCents]),
       [
-        ["starter", 5_000],
-        ["growth", 7_500],
-        ["receptionist", 12_500],
+        ["essential", 6_500],
+        ["professional", 6_500],
       ],
     );
+    assert.equal(overview.websiteBonusCents, 3_500);
+    assert.equal(overview.maxRewardCents, 10_000);
     assert.equal(overview.referrals.length, 1);
     assert.equal(overview.referrals[0]?.businessName, "Toitures Gagnon");
     assert.equal(overview.referrals[0]?.status, "customer");
     assert.deepEqual(overview.referrals[0]?.reward, {
       status: "pending",
-      amountCents: 7_500,
-      plan: "growth",
+      amountCents: 6_500,
+      plan: "essential",
     });
     assert.deepEqual(overview.totals, {
       signedUp: 1,
       customers: 1,
-      pendingCents: 7_500,
+      pendingCents: 6_500,
       earnedCents: 0,
       issuedCents: 0,
     });
@@ -949,15 +985,15 @@ describe("what the referring customer sees", () => {
     const w = makeWorld();
     await referredBusiness(w);
     await w.service.updateSettings({ fulfillmentMethod: "manual", holdDays: 0 }, "admin");
-    const qualified = await qualify(w, "receptionist");
+    const qualified = await qualify(w, "professional");
     assert.ok(qualified.qualified);
     await w.service.approveReward(qualified.reward.id, "admin");
     let overview = await w.service.overview("org_ref");
-    assert.equal(overview.totals.earnedCents, 12_500);
+    assert.equal(overview.totals.earnedCents, 6_500);
     assert.equal(overview.totals.issuedCents, 0);
     await w.service.markIssued(qualified.reward.id, "admin", { giftCardReference: "ORDER-77" });
     overview = await w.service.overview("org_ref");
-    assert.equal(overview.totals.issuedCents, 12_500);
+    assert.equal(overview.totals.issuedCents, 6_500);
     assert.deepEqual(new Set(overview.history.map((h) => h.kind)), new Set([
       "reward_issued",
       "reward_approved",
@@ -970,7 +1006,7 @@ describe("what the referring customer sees", () => {
   it("shows a refunded referral as not eligible, with no earnings", async () => {
     const w = makeWorld();
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     await w.service.onPaymentReversed({ paymentIntentId: "pi_org_new", kind: "refunded" });
     const overview = await w.service.overview("org_ref");
     assert.equal(overview.totals.pendingCents, 0);
@@ -1000,12 +1036,112 @@ describe("administrator overview", () => {
   it("lists every referral with its reward and counts by status", async () => {
     const w = makeWorld();
     await referredBusiness(w);
-    await qualify(w, "growth");
+    await qualify(w, "essential");
     const overview = await w.service.adminOverview();
     assert.equal(overview.rows.length, 1);
     assert.equal(overview.rows[0]?.reward?.status, "pending");
     assert.equal(overview.counts.pending, 1);
     assert.equal(overview.counts.referrals, 1);
     assert.equal(overview.counts.issued, 0);
+  });
+});
+
+describe("website service bonus", () => {
+  let w: World;
+  beforeEach(() => {
+    w = makeWorld();
+  });
+
+  const bought = (requestId = "req_1") =>
+    w.service.onWebsiteServicePurchased({ organizationId: "org_new", requestId });
+
+  it("earns the extra $35 on top of the $65 plan reward, $100 in all", async () => {
+    await referredBusiness(w);
+    const plan = await qualify(w, "essential");
+    assert.ok(plan.qualified);
+    const bonus = await bought();
+    assert.ok(bonus.earned);
+    assert.equal(bonus.duplicate, false);
+    assert.equal(bonus.reward.kind, "website");
+    assert.equal(bonus.reward.amountCents, 3_500);
+    assert.equal(bonus.reward.currency, "CAD");
+    assert.equal(bonus.reward.status, "pending");
+    const total = (await w.store.listRewards()).reduce((sum, r) => sum + r.amountCents, 0);
+    assert.equal(total, 10_000);
+  });
+
+  it("is paid once, however often the website purchase is reported", async () => {
+    await referredBusiness(w);
+    await qualify(w, "professional");
+    const first = await bought("req_1");
+    const replay = await bought("req_1");
+    const secondOrder = await bought("req_2");
+    assert.ok(first.earned && replay.earned && secondOrder.earned);
+    assert.equal(replay.duplicate, true);
+    assert.equal(secondOrder.duplicate, true);
+    assert.equal(replay.reward.id, first.reward.id);
+    assert.equal(secondOrder.reward.id, first.reward.id);
+    assert.equal((await w.store.listRewards()).length, 2, "one plan reward, one bonus");
+  });
+
+  it("concurrent reports still produce one bonus", async () => {
+    await referredBusiness(w);
+    await qualify(w, "essential");
+    const results = await Promise.all(Array.from({ length: 5 }, () => bought()));
+    assert.equal(results.filter((r) => r.earned && !r.duplicate).length, 1);
+    assert.equal((await w.store.listRewards()).filter((r) => r.kind === "website").length, 1);
+  });
+
+  it("needs a referral that qualified through a paid plan first", async () => {
+    // Nobody referred this business.
+    w.addOrg("org_new");
+    assert.deepEqual(await bought(), { earned: false, reason: "no_referral" });
+    // Referred, but the plan has not been paid for.
+    const other = makeWorld();
+    await referredBusiness(other);
+    assert.deepEqual(
+      await other.service.onWebsiteServicePurchased({ organizationId: "org_new", requestId: "r" }),
+      { earned: false, reason: "not_qualified" },
+    );
+    assert.equal((await other.store.listRewards()).length, 0);
+  });
+
+  it("earns nothing when the plan payment was refunded", async () => {
+    await referredBusiness(w);
+    await qualify(w, "essential");
+    await w.service.onPaymentReversed({ paymentIntentId: "pi_org_new", kind: "refunded" });
+    assert.deepEqual(await bought(), { earned: false, reason: "plan_reward_rejected" });
+  });
+
+  it("is rejected together with the plan reward when the plan payment is refunded later", async () => {
+    await referredBusiness(w);
+    await qualify(w, "essential");
+    await bought();
+    await w.service.onPaymentReversed({ paymentIntentId: "pi_org_new", kind: "refunded" });
+    const rewards = await w.store.listRewards();
+    assert.equal(rewards.length, 2);
+    assert.ok(rewards.every((r) => r.status === "rejected"), "neither reward may stay payable");
+  });
+
+  it("is not offered when the program or the bonus is switched off", async () => {
+    await referredBusiness(w);
+    await qualify(w, "essential");
+    await w.service.updateSettings({ websiteBonusCents: 0 }, "admin");
+    assert.deepEqual(await bought(), { earned: false, reason: "bonus_not_offered" });
+    await w.service.updateSettings({ programEnabled: false }, "admin");
+    assert.deepEqual(await bought(), { earned: false, reason: "program_disabled" });
+    assert.equal((await w.store.listRewards()).length, 1, "only the plan reward exists");
+  });
+
+  it("is never approved while the plan reward it depends on is not standing", async () => {
+    await referredBusiness(w);
+    await qualify(w, "essential");
+    const bonus = await bought();
+    assert.ok(bonus.earned);
+    await w.service.updateSettings({ holdDays: 0 }, "admin");
+    const planReward = (await w.store.listRewards()).find((r) => r.kind === "plan")!;
+    await w.service.rejectReward(planReward.id, "admin", "Customer cancelled");
+    const approval = await w.service.approveReward(bonus.reward.id, "admin");
+    assert.equal(approval.ok, false);
   });
 });
