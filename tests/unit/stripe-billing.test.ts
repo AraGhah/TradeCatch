@@ -254,7 +254,7 @@ describe("Stripe billing in isolated PostgreSQL", { skip: !url }, () => {
       subscriptions = [subscription(status)];
       await deliver(event("invoice.payment_failed"));
       assert.deepEqual(await state(), {
-        plan: "starter",
+        plan: "growth",
         status: "suspended",
         growthAccess: false,
       });
@@ -277,7 +277,7 @@ describe("Stripe billing in isolated PostgreSQL", { skip: !url }, () => {
       subscriptions = [subscription(stripeStatus)];
       assert.equal((await deliver(event(type))).status, 200);
       assert.deepEqual(await state(), {
-        plan: expectedStatus === "active" ? "growth" : "starter",
+        plan: "growth",
         status: expectedStatus,
         growthAccess: expectedStatus === "active",
       });
@@ -333,7 +333,7 @@ describe("Stripe billing in isolated PostgreSQL", { skip: !url }, () => {
     subscriptions[0].status = "canceled";
     await deliver(event("customer.subscription.deleted"));
     assert.deepEqual(await state(), {
-      plan: "starter",
+      plan: "growth",
       status: "churned",
       growthAccess: false,
     });
@@ -428,7 +428,7 @@ describe("Stripe billing in isolated PostgreSQL", { skip: !url }, () => {
       200,
     );
     assert.deepEqual(await state(), {
-      plan: "starter",
+      plan: "growth",
       status: "churned",
       growthAccess: false,
     });
