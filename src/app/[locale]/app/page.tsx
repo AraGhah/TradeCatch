@@ -2,7 +2,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { GmailDashboardCard } from "@/components/app/GmailDashboardCard";
 import { DashboardView } from "@/components/app/dashboard/DashboardView";
 import { loadDashboardOverview } from "@/product/saas/dashboard-load";
-import { requireTenantContext } from "@/product/saas/tenant";
+import { requireTenantContext, tenantHasFeature } from "@/product/saas/tenant";
 
 export default async function AppDashboardPage({
   params,
@@ -17,6 +17,9 @@ export default async function AppDashboardPage({
   const t = await getTranslations("app.home");
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
+
+  // Appointments belong to Professional. Essential never sees the calendar blocks.
+  const appointmentsIncluded = tenantHasFeature(auth.ctx, "APPOINTMENT_BOOKING");
 
   let overview;
   try {
@@ -49,7 +52,8 @@ export default async function AppDashboardPage({
       pollQuery={poll.toString()}
       customFrom={query.from}
       customTo={query.to}
-      showGrowthUpsell={auth.ctx.organization.plan === "starter"}
+      showProfessionalUpsell={!appointmentsIncluded}
+      showAppointments={appointmentsIncluded}
       afterHeader={
         <GmailDashboardCard organizationId={auth.ctx.organization.id} userId={auth.ctx.user.id} />
       }
