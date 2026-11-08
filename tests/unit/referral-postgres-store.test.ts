@@ -135,8 +135,8 @@ describe("referral schema and Postgres store (real PostgreSQL via PGlite)", { sk
     const store = createPostgresReferralStore(poolOf(db));
     const defaults = await store.getSettings();
     assert.deepEqual(defaults.rewardsCents, {
-      essential: 6500,
-      professional: 6500,
+      essential: 5000,
+      professional: 7500,
       starter: 6500,
       growth: 6500,
       receptionist: 6500,
@@ -326,8 +326,8 @@ describe("referral schema and Postgres store (real PostgreSQL via PGlite)", { sk
     it("register -> pay -> hold -> approve -> issue, then a replayed payment adds nothing", async () => {
       const journeyDb = await freshDb();
       await journeyDb.exec("INSERT INTO tc_organizations (id) VALUES ('org_r'), ('org_n');");
-      orgs.set("org_r", { id: "org_r", name: "Plomberie Tremblay", status: "active", accountType: "pilot", plan: "receptionist", phoneE164: null });
-      orgs.set("org_n", { id: "org_n", name: "Toitures Gagnon", status: "active", accountType: "pilot", plan: "receptionist", phoneE164: null });
+      orgs.set("org_r", { id: "org_r", name: "Plomberie Tremblay", status: "active", accountType: "pilot", plan: "professional", phoneE164: null });
+      orgs.set("org_n", { id: "org_n", name: "Toitures Gagnon", status: "active", accountType: "pilot", plan: "professional", phoneE164: null });
       try {
         const service = makeService(journeyDb);
         await service.updateSettings({ fulfillmentMethod: "manual" }, "admin");
@@ -337,11 +337,11 @@ describe("referral schema and Postgres store (real PostgreSQL via PGlite)", { sk
         const registered = await service.registerReferral({ code, referredOrganizationId: "org_n", actor: "ops" });
         assert.equal(registered.ok, true);
 
-        const paid = { organizationId: "org_n", plan: "receptionist" as const, checkoutSessionId: "cs_j", paymentIntentId: "pi_j", livemode: true };
+        const paid = { organizationId: "org_n", plan: "professional" as const, checkoutSessionId: "cs_j", paymentIntentId: "pi_j", livemode: true };
         const first = await service.qualifyReferral(paid);
         const replay = await service.qualifyReferral(paid);
         assert.ok(first.qualified && replay.qualified);
-        assert.equal(first.reward.amountCents, 12500);
+        assert.equal(first.reward.amountCents, 7500);
         assert.equal(replay.duplicate, true);
 
         clock += 31 * 86_400_000;
@@ -351,7 +351,7 @@ describe("referral schema and Postgres store (real PostgreSQL via PGlite)", { sk
         assert.equal(issued.ok, true);
 
         const overview = await service.overview("org_r");
-        assert.deepEqual(overview.totals, { signedUp: 1, customers: 1, pendingCents: 0, earnedCents: 12500, issuedCents: 12500 });
+        assert.deepEqual(overview.totals, { signedUp: 1, customers: 1, pendingCents: 0, earnedCents: 7500, issuedCents: 7500 });
         const refund = await service.onPaymentReversed({ paymentIntentId: "pi_j", kind: "refunded" });
         assert.equal(refund.changed, true, "an issued card is flagged for a person, not undone");
         assert.ok((await journeyDb.query("SELECT review_flags FROM tc_referral_rewards")).rows[0]?.review_flags);
