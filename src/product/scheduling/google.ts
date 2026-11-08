@@ -243,7 +243,7 @@ export function createGoogleCalendarPort(input: {
         {
           method: "POST",
           body: JSON.stringify({
-            summary: `${appointment.serviceName} — ${appointment.customerName ?? "Customer"}`,
+            summary: `${appointment.serviceName} · ${appointment.customerName ?? "Customer"}`,
             description: appointment.serviceAddress ?? "",
             start: {
               dateTime: appointment.startAt,
