@@ -60,7 +60,12 @@ export function FallbackSettingsForm({
         {
           method: "PUT",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify(settings),
+          // Calls are never transferred: when the receptionist cannot answer, the caller leaves a message.
+          body: JSON.stringify({
+            ...settings,
+            aiUnavailable: "voicemail",
+            transferFailed: "voicemail",
+          }),
         },
       );
       setMessageError(!response.ok);
@@ -99,40 +104,9 @@ export function FallbackSettingsForm({
         void save();
       }}
     >
-      <label className="text-sm text-navy">
-        {t("fallbackAiUnavailable")}
-        <select
-          className="mt-1 block w-full rounded-md border border-navy/15 px-2 py-2"
-          value={settings.aiUnavailable}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              aiUnavailable: event.target.value as Settings["aiUnavailable"],
-            })
-          }
-        >
-          <option value="transfer">{t("fallbackTransfer")}</option>
-          <option value="voicemail">{t("fallbackVoicemail")}</option>
-        </select>
-      </label>
+      <p className="text-sm text-navy">{t("fallbackAiUnavailableNote")}</p>
       <p className="text-sm text-navy/70">{t("fallbackCalendarNote")}</p>
       <p className="text-sm text-navy/70">{t("fallbackDatabaseNote")}</p>
-      <label className="text-sm text-navy">
-        {t("fallbackTransferFailed")}
-        <select
-          className="mt-1 block w-full rounded-md border border-navy/15 px-2 py-2"
-          value={settings.transferFailed}
-          onChange={(event) =>
-            setSettings({
-              ...settings,
-              transferFailed: event.target.value as Settings["transferFailed"],
-            })
-          }
-        >
-          <option value="voicemail">{t("fallbackVoicemail")}</option>
-          <option value="backup">{t("fallbackBackupNumber")}</option>
-        </select>
-      </label>
       <button
         type="submit"
         disabled={busy}

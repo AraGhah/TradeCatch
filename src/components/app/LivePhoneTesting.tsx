@@ -88,9 +88,6 @@ export function LivePhoneTesting({
               <option value="human_first_missed_then_ai">
                 {t("scenarios.human_first_missed_then_ai")}
               </option>
-              <option value="transfer_request">
-                {t("scenarios.transfer_request")}
-              </option>
               <option value="appointment_request">
                 {t("scenarios.appointment_request")}
               </option>
@@ -165,7 +162,7 @@ export function LivePhoneTesting({
               {result.events.map((ev, i) => (
                 <li key={i}>
                   <span className="font-semibold">{ev.kind}</span>
-                  {ev.detail ? ` — ${ev.detail}` : ""}
+                  {ev.detail ? ` · ${ev.detail}` : ""}
                 </li>
               ))}
             </ol>
