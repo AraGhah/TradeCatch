@@ -27,6 +27,10 @@ import {
   type SmsReceptionistInput,
 } from "../../src/product/sms-receptionist/service";
 
+// The open-ended text assistant is off at launch (see src/lib/launch-flags.ts). These tests
+// exercise its behavior for the day it is switched on, so they turn the switch on explicitly.
+process.env.LAUNCH_ENABLE_SMS_CHATBOT = "1";
+
 // Wednesday 11:00 in Toronto; Wednesday 23:00 the night before for quiet hours.
 const OPEN = new Date("2026-10-28T15:00:00Z");
 const NIGHT = new Date("2026-10-28T03:00:00Z");
@@ -261,7 +265,7 @@ describe("sms receptionist — new customers", () => {
     );
     assert.match(
       llm.last!.system,
-      /Business hours: Mon, Tue, Wed, Thu, Fri 08:00–17:00/,
+      /Business hours: Mon, Tue, Wed, Thu, Fri 08:00-17:00/,
     );
     assert.match(llm.last!.system, /Service area: Montréal et Laval/);
     assert.match(llm.last!.system, /never invent/i);
