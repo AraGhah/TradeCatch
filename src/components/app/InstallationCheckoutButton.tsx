@@ -4,9 +4,16 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { isStripeCheckoutUrl } from "@/product/saas/billing-access";
 
-export function InstallationCheckoutButton() {
+export function InstallationCheckoutButton({
+  websitePrice,
+}: {
+  /** The formatted website service price. The option is shown only when it is passed. */
+  websitePrice?: string;
+}) {
   const t = useTranslations("app.account");
   const [opening, setOpening] = useState(false);
+  // Never ticked for the customer: the website service is charged only when this is chosen.
+  const [websiteService, setWebsiteService] = useState(false);
   const [error, setError] = useState<string | null>(null);
   async function start() {
     setOpening(true);
@@ -18,7 +25,7 @@ export function InstallationCheckoutButton() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: "{}",
+        body: JSON.stringify({ websiteService }),
       });
       const body = (await response.json()) as { url?: string; code?: string };
       if (!response.ok || !isStripeCheckoutUrl(body.url)) {
@@ -34,6 +41,23 @@ export function InstallationCheckoutButton() {
   }
   return (
     <div className="flex flex-col items-start gap-2">
+      {websitePrice ? (
+        <label className="flex max-w-md items-start gap-2 text-sm text-navy">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={websiteService}
+            disabled={opening}
+            onChange={(event) => setWebsiteService(event.target.checked)}
+          />
+          <span>
+            {t("checkoutWebsiteLabel", { price: websitePrice })}
+            <span className="mt-0.5 block text-xs text-navy/70">
+              {t("checkoutWebsiteNote")}
+            </span>
+          </span>
+        </label>
+      ) : null}
       <button
         type="button"
         disabled={opening}
