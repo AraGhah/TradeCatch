@@ -3,68 +3,34 @@
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
-import { GmailSyncBadge } from "@/components/app/GmailSyncBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
 
-const GROUPS = [
-  {
-    label: "groupHome",
-    items: [{ href: "/app", key: "dashboard" }],
-  },
-  {
-    label: "groupCustomers",
-    items: [
-      { href: "/app/leads", key: "customers" },
-      { href: "/app/mail", key: "gmail" },
-      { href: "/app/pipeline", key: "pipeline" },
-    ],
-  },
-  {
-    label: "groupReceptionist",
-    items: [
-      { href: "/app/receptionist", key: "receptionistConfig" },
-      { href: "/app/receptionist/voice", key: "receptionistVoice" },
-      { href: "/app/calls", key: "callHistory" },
-      { href: "/app/test-center", key: "testReceptionist" },
-    ],
-  },
-  {
-    label: "groupAppointments",
-    items: [
-      { href: "/app/bookings", key: "calendar" },
-      { href: "/app/bookings/availability", key: "availability" },
-    ],
-  },
-  {
-    label: "groupAutomations",
-    items: [
-      { href: "/app/automations/missed-call", key: "missedCall" },
-      { href: "/app/automations/quotes", key: "quoteFollowUps" },
-      { href: "/app/automations", key: "reminders" },
-    ],
-  },
-  {
-    label: "groupInsights",
-    items: [
-      { href: "/app/analytics", key: "analytics" },
-      { href: "/app/notifications", key: "notifications" },
-    ],
-  },
-  {
-    label: "groupAccount",
-    items: [
-      { href: "/app/settings/account", key: "account" },
-      { href: "/app/settings", key: "settings" },
-      { href: "/app/website-services", key: "websiteServices" },
-      { href: "/app/referrals", key: "referrals" },
-      { href: "/app/onboarding", key: "onboarding" },
-      { href: "/app/help", key: "help" },
-      { href: "/app/support", key: "support" },
-    ],
-  },
+/** The plan names an owner can see. Plans sold before launch keep their own label. */
+const KNOWN_PLANS = ["essential", "professional", "starter", "growth", "receptionist"];
+function planLabelKey(plan: string): string {
+  return KNOWN_PLANS.includes(plan) ? plan : "essential";
+}
+
+/**
+ * The Account Center menu, in the order owners use it. Appointments belong to
+ * Professional, so Essential accounts never see that entry. Everything else
+ * (receptionist rules, alerts, text follow-ups, the website service) is reached
+ * from Business settings so the menu stays short.
+ */
+const NAV_ITEMS = [
+  { href: "/app", key: "overview" },
+  { href: "/app/calls", key: "callActivity" },
+  { href: "/app/leads", key: "customerRequests" },
+  { href: "/app/bookings", key: "appointments", professionalOnly: true },
+  { href: "/app/conversations", key: "smsActivity" },
+  { href: "/app/settings", key: "businessSettings" },
+  { href: "/billing", key: "billing" },
+  { href: "/app/referrals", key: "referrals" },
+  { href: "/app/settings/account", key: "accountSettings" },
+  { href: "/app/support", key: "support" },
 ] as const;
 
-const ALL_HREFS = GROUPS.flatMap((group) => group.items.map((item) => item.href));
+const ALL_HREFS: string[] = NAV_ITEMS.map((item) => item.href);
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2";
@@ -90,7 +56,7 @@ export function AppShell({
   accountType,
   isPlatformAdmin,
   organizationId,
-  gmailEnabled = false,
+  appointmentsEnabled = false,
 }: {
   children: React.ReactNode;
   orgName: string;
@@ -100,8 +66,8 @@ export function AppShell({
   accountType?: string;
   isPlatformAdmin?: boolean;
   organizationId: string;
-  /** False when Google credentials are not configured: the Gmail entry would lead nowhere. */
-  gmailEnabled?: boolean;
+  /** True on Professional: the plan that includes appointments and the calendar. */
+  appointmentsEnabled?: boolean;
 }) {
   const t = useTranslations("app");
   const pathname = usePathname();
@@ -134,12 +100,7 @@ export function AppShell({
             </p>
             <p className="mt-1 text-lg font-semibold text-heading">{orgName}</p>
             <p className="text-sm text-muted">
-              {userName} ·{" "}
-              {plan === "receptionist"
-                ? t("plan.receptionist")
-                : plan === "growth"
-                  ? t("plan.growth")
-                  : t("plan.starter")}
+              {userName} · {t(`plan.${planLabelKey(plan)}`)}
             </p>
           </div>
           <button
@@ -166,36 +127,28 @@ export function AppShell({
                 {t("nav.admin")}
               </Link>
             ) : null}
-            {GROUPS.map((group) => (
-              <div key={group.label}>
-                <p className="px-3 font-mono text-[10px] tracking-[0.12em] text-muted uppercase">
-                  {t(`nav.${group.label}`)}
-                </p>
-                <ul className="mt-1 flex flex-col">
-                  {group.items
-                    .filter((item) => item.key !== "gmail" || gmailEnabled)
-                    .map((item) => {
-                    const active = itemIsActive(pathname, item.href);
-                    return (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          aria-current={active ? "page" : undefined}
-                          className={`block min-h-11 rounded-md px-3 py-2.5 text-sm ${FOCUS_RING} ${
-                            active
-                              ? "bg-navy text-white"
-                              : "text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
-                          }`}
-                        >
-                          {t(`nav.${item.key}`)}
-                          {item.key === "gmail" ? <GmailSyncBadge /> : null}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
+            <ul className="flex flex-col">
+              {NAV_ITEMS.filter(
+                (item) => !("professionalOnly" in item) || appointmentsEnabled,
+              ).map((item) => {
+                const active = itemIsActive(pathname, item.href);
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={`block min-h-11 rounded-md px-3 py-2.5 text-sm ${FOCUS_RING} ${
+                        active
+                          ? "bg-navy text-white"
+                          : "text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
+                      }`}
+                    >
+                      {t(`nav.${item.key}`)}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
           </nav>
           <button
             type="button"
