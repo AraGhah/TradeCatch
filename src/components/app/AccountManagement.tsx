@@ -357,7 +357,7 @@ export function AccountManagement({
             {requests.map((row) => (
               <li key={row.id}>
                 <p className="font-semibold">
-                  {t(`requestKinds.${row.kind}`)} —{" "}
+                  {t(`requestKinds.${row.kind}`)} ·{" "}
                   {t(`requestStatuses.${row.status}`)}
                 </p>
                 <p>{t("requestReference", { id: row.id })}</p>
