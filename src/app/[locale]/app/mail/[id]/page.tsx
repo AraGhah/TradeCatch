@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { GmailMessageActions } from "@/components/app/GmailMessageActions";
+import { GmailSyncBadge } from "@/components/app/GmailSyncBadge";
 import { Link } from "@/i18n/navigation";
 import { getGmailStore } from "@/product/gmail/runtime";
 import type { GmailMessage } from "@/product/gmail/types";
@@ -75,9 +76,12 @@ export default async function MailMessagePage({
 
   return (
     <article className="flex flex-col gap-6">
-      <Link href="/app/mail" className="w-fit text-sm font-semibold text-navy underline">
-        {t("back")}
-      </Link>
+      <div className="flex items-center">
+        <Link href="/app/mail" className="w-fit text-sm font-semibold text-navy underline">
+          {t("back")}
+        </Link>
+        <GmailSyncBadge />
+      </div>
       <header>
         <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
           {message.subject || t("noSubject")}
