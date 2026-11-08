@@ -57,8 +57,8 @@ for (const viewport of [
         await page
           .getByRole("button", {
             name: fr
-              ? "Voir la démo de 90 secondes"
-              : "Watch the 90-second demo",
+              ? "Voir la démo"
+              : "Watch the demo",
             exact: true,
           })
           .first()
