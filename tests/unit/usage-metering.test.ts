@@ -6,6 +6,20 @@ import { USAGE_ALLOWANCES } from "../../src/lib/plans";
 describe("usage metering", () => {
   it("matches the provisional allowances in the plan configuration", () => {
     assert.deepEqual(USAGE_ALLOWANCES, {
+      essential: {
+        smsSegmentsPerMonth: 1000,
+        voiceMinutesPerMonth: 500,
+        calendars: 1,
+        teamMembers: 3,
+        businessLocations: 1,
+      },
+      professional: {
+        smsSegmentsPerMonth: 2000,
+        voiceMinutesPerMonth: 750,
+        calendars: 1,
+        teamMembers: 5,
+        businessLocations: 1,
+      },
       starter: {
         smsSegmentsPerMonth: 500,
         voiceMinutesPerMonth: 0,
