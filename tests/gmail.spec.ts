@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { test, expect, request as playwrightRequest, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { FakeGoogle } from "./support/fake-google";
+import { waitForFormHydration } from "./support/hydration";
 import { startFakeGoogleServer } from "./support/fake-google-server";
 
 /**
@@ -52,9 +53,11 @@ async function signIn(page: Page, email: string) {
   await page
     .waitForFunction(() => Boolean(document.querySelector('div[style*="transform"]')), undefined, { timeout: 10_000 })
     .catch(() => undefined);
+  await waitForFormHydration(page);
   await page.getByLabel("Work email").fill(email);
+  await page.getByRole("button", { name: "Email me a sign-in link instead" }).click();
   const response = page.waitForResponse(r => r.url().endsWith("/api/auth/magic-link") && r.request().method() === "POST");
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await page.getByRole("button", { name: "Email me a sign-in link", exact: true }).click();
   expect((await response).status()).toBe(200);
   await page.getByRole("link", { name: "Open workspace" }).click();
   await page.getByRole("button", { name: "Confirm and sign in" }).click();
