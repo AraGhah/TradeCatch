@@ -15,7 +15,8 @@ type Snapshot = {
   counts: { pending: number; approved: number; issued: number; rejected: number; referrals: number };
 };
 
-const PLANS = ["starter", "growth", "receptionist"] as const;
+/** The plans sold at launch. Legacy plan ids keep their stored rewards untouched. */
+const PLANS = ["essential", "professional"] as const;
 
 const copy = {
   en: {
@@ -30,7 +31,16 @@ const copy = {
     settingsTitle: "Program settings",
     enabled: "Program enabled",
     rewards: "Interac e-Transfer by plan purchased (CAD)",
-    plans: { starter: "Starter", growth: "Growth", receptionist: "Receptionist Plus" },
+    websiteBonus: "Bonus when they also buy the website service (CAD)",
+    maxNote: (amount: string) => `The most one referral can earn is ${amount}.`,
+    rewardKind: { plan: "Plan reward", website: "Website bonus" },
+    plans: {
+      essential: "Essential",
+      professional: "Professional",
+      starter: "Starter",
+      growth: "Growth",
+      receptionist: "Receptionist Plus",
+    },
     eligible: "Plans that earn a reward",
     holdDays: "Days to hold a reward after payment",
     requireReferrer: "Referrer must still be an active customer",
@@ -98,7 +108,16 @@ const copy = {
     settingsTitle: "Paramètres du programme",
     enabled: "Programme activé",
     rewards: "Interac selon le forfait acheté (CAD)",
-    plans: { starter: "Starter", growth: "Growth", receptionist: "Réceptionniste Plus" },
+    websiteBonus: "Bonus quand il achète aussi le service de site web (CAD)",
+    maxNote: (amount: string) => `Le maximum qu’un parrainage peut rapporter est de ${amount}.`,
+    rewardKind: { plan: "Récompense du forfait", website: "Bonus du site web" },
+    plans: {
+      essential: "Essential",
+      professional: "Professional",
+      starter: "Starter",
+      growth: "Growth",
+      receptionist: "Réceptionniste Plus",
+    },
     eligible: "Forfaits qui donnent une récompense",
     holdDays: "Jours de rétention après le paiement",
     requireReferrer: "Le parrain doit rester un client actif",
@@ -246,6 +265,7 @@ export function ReferralAdmin() {
         settings: {
           programEnabled: draft.programEnabled,
           rewardsCents: draft.rewardsCents,
+          websiteBonusCents: draft.websiteBonusCents,
           eligiblePlans: draft.eligiblePlans,
           holdDays: draft.holdDays,
           requireReferrerActive: draft.requireReferrerActive,
@@ -312,7 +332,7 @@ export function ReferralAdmin() {
                 <input
                   type="number"
                   min={0}
-                  max={1000}
+                  max={100}
                   step="0.01"
                   className={INPUT}
                   value={dollars(draft.rewardsCents[plan])}
@@ -327,6 +347,28 @@ export function ReferralAdmin() {
             ))}
           </div>
         </fieldset>
+        <label className="flex max-w-xs flex-col gap-1 text-sm text-navy">
+          {t.websiteBonus}
+          <input
+            type="number"
+            min={0}
+            max={100}
+            step="0.01"
+            className={INPUT}
+            value={dollars(draft.websiteBonusCents)}
+            onChange={(e) =>
+              setDraft({ ...draft, websiteBonusCents: Math.round(Number(e.target.value) * 100) || 0 })
+            }
+          />
+          <span className="text-xs text-navy/60">
+            {t.maxNote(
+              money(
+                Math.max(0, ...PLANS.map((plan) => draft.rewardsCents[plan] ?? 0)) +
+                  draft.websiteBonusCents,
+              ),
+            )}
+          </span>
+        </label>
         <fieldset className="flex flex-col gap-2">
           <legend className="text-sm font-medium text-navy">{t.eligible}</legend>
           <div className="flex flex-wrap gap-4">
@@ -419,7 +461,7 @@ export function ReferralAdmin() {
                       <td className="py-2 pr-3">
                         {reward ? (
                           <>
-                            <strong>{money(reward.amountCents)}</strong> · {t.plans[reward.plan]}
+                            <strong>{money(reward.amountCents)}</strong> · {t.rewardKind[reward.kind ?? "plan"]} · {t.plans[reward.plan]}
                             <span className="block">{t.rewardStatus[reward.status]}{reward.livemode ? "" : " (test)"}</span>
                             {reward.status === "pending" ? <span className="block text-xs text-navy/60">{t.eligibleOn} {date(reward.eligibleAt)}</span> : null}
                             {reward.giftCardReference ? <span className="block font-mono text-xs">{reward.giftCardReference}</span> : null}
