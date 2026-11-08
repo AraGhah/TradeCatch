@@ -59,7 +59,7 @@ export default async function IndustriesPage({
         }
       />
 
-      <section className="bg-paper pt-[clamp(28px,4vw,40px)] pb-[clamp(64px,8vw,100px)]">
+      <section className="bg-paper pt-[clamp(24px,3vw,32px)] pb-[var(--section-y)]">
         <Container>
           {sections.map((section, i) => (
             <div
