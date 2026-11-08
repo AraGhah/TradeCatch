@@ -47,9 +47,6 @@ export default async function AppCallsPage({
   const stats = {
     total: calls.length,
     afterHours: calls.filter((c) => c.afterHours).length,
-    transfers: calls.filter(
-      (c) => c.outcome === "transferred" || c.outcome === "emergency_transferred",
-    ).length,
     emergencies: calls.filter((c) => c.urgency?.level === "critical").length,
     requests: calls.filter(
       (c) =>
@@ -94,9 +91,9 @@ export default async function AppCallsPage({
       ) : null}
 
       {calls.length > 0 ? (
-        <dl className="m-0 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <dl className="m-0 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {(
-            ["total", "afterHours", "transfers", "emergencies", "requests"] as const
+            ["total", "afterHours", "emergencies", "requests"] as const
           ).map((key) => (
             <div
               key={key}
