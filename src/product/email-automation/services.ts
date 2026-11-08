@@ -60,10 +60,10 @@ export function defaultTemplates(): Omit<
 >[] {
   return [
     {
-      name: "Relance soumission — 1",
+      name: "Relance soumission 1",
       locale: "fr",
       subject:
-        'Votre soumission {{ quote_ref | default:"" }} — {{ business_name }}',
+        'Votre soumission {{ quote_ref | default:"" }} de {{ business_name }}',
       body: [
         'Bonjour {{ first_name | default:"" }},',
         "",
@@ -75,7 +75,7 @@ export function defaultTemplates(): Omit<
       ].join("\n"),
     },
     {
-      name: "Relance soumission — 2",
+      name: "Relance soumission 2",
       locale: "fr",
       subject: "Toujours intéressé? {{ business_name }}",
       body: [
@@ -87,9 +87,9 @@ export function defaultTemplates(): Omit<
       ].join("\n"),
     },
     {
-      name: "Quote follow-up — 1",
+      name: "Quote follow-up 1",
       locale: "en",
-      subject: 'Your quote {{ quote_ref | default:"" }} — {{ business_name }}',
+      subject: 'Your quote {{ quote_ref | default:"" }} from {{ business_name }}',
       body: [
         'Hi {{ first_name | default:"there" }},',
         "",
@@ -101,7 +101,7 @@ export function defaultTemplates(): Omit<
       ].join("\n"),
     },
     {
-      name: "Quote follow-up — 2",
+      name: "Quote follow-up 2",
       locale: "en",
       subject: "Still interested? {{ business_name }}",
       body: [
@@ -190,7 +190,7 @@ export function createEmailAutomationServices(deps: EmailAutomationDeps) {
   async function assertSteps(organizationId: string, steps: SequenceStep[]) {
     if (steps.length === 0 || steps.length > 10) {
       throw new EmailAutomationError(
-        "A sequence needs 1–10 steps",
+        "A sequence needs 1 to 10 steps",
         "invalid_steps",
       );
     }
