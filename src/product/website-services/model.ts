@@ -137,7 +137,7 @@ export function canTransitionWebsiteStatus(
 /**
  * The price a request is allowed to be quoted at. For a "starting at" service
  * that is any amount from the starting price up; for a fixed-price service
- * (the launch website service, $349.99) it is exactly that price, so the team
+ * (the launch website service, $699.99) it is exactly that price, so the team
  * cannot quote a customer more than the price published on the site.
  */
 export function isValidQuotedPrice(
