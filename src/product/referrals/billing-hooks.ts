@@ -30,6 +30,22 @@ export async function referralInstallationPaid(input: {
   }
 }
 
+/**
+ * The referred business agreed to the website service and work started: the
+ * referrer may earn the website bonus. Best effort, never throws.
+ */
+export async function referralWebsiteServiceStarted(input: {
+  organizationId: string;
+  requestId: string;
+}): Promise<void> {
+  try {
+    const { getReferralService } = await import("./runtime");
+    await getReferralService().onWebsiteServicePurchased(input);
+  } catch (error) {
+    report("website bonus", error);
+  }
+}
+
 /** Stripe changed the organization's subscription state (cancelled, suspended, active). */
 export async function referralBillingStateChanged(
   organizationId: string,
