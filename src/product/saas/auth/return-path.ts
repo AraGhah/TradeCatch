@@ -38,3 +38,18 @@ export function safeReturnPath(raw: unknown): string | null {
   if (UNSAFE_CHARACTERS.test(decoded) || decoded.includes("//")) return null;
   return query ? `${path}?${query}` : path;
 }
+
+/**
+ * Where a signed-out visitor to a workspace page should be sent: the login page
+ * for their language, carrying the page they asked for so signing in returns
+ * them to it. Null for anything that is not a specific workspace page (the
+ * workspace home already is where login leads) or that is not safe to return
+ * to. Pure, so the proxy can use it before any page renders.
+ */
+export function signedOutLoginPath(pathname: string, search = ""): string | null {
+  if (!/^\/(?:fr\/)?app\/.+/.test(pathname)) return null;
+  const next = safeReturnPath(`${pathname}${search}`);
+  if (!next) return null;
+  const login = pathname.startsWith("/fr/") ? "/fr/connexion" : "/login";
+  return `${login}?next=${encodeURIComponent(next)}`;
+}
