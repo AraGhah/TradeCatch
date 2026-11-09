@@ -8,6 +8,7 @@ import {
 import { isDurableMissedCallStoreConfigured } from "@/lib/config";
 import { getMissedCallMaintenanceRuntime } from "@/product/missed-call/runtime";
 import { getPgPool } from "@/product/missed-call/postgres-store";
+import { safeDatabaseErrorCode } from "@/lib/postgres-pool";
 import {
   getSmsInbox,
   isSmsInboxAvailable,
@@ -33,6 +34,7 @@ async function drainInbound() {
       JSON.stringify({
         event: "tradecatch.sms.inbox_tick_failed",
         code: error instanceof Error ? error.name : "Error",
+        sqlState: safeDatabaseErrorCode(error),
       }),
     );
     return { processed: 0, failed: 1, skipped: false };

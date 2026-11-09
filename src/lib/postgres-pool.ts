@@ -10,6 +10,29 @@ const globalForPostgres = globalThis as unknown as {
 const requestPools = (globalForPostgres.__tradecatchPostgresRequestPools ??=
   new AsyncLocalStorage<RequestPools>());
 
+const SAFE_NETWORK_CODES = [
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ETIMEDOUT",
+  "EPIPE",
+  "ENOTFOUND",
+  "EHOSTUNREACH",
+];
+
+/**
+ * A database error's code, safe to log: a five-character Postgres SQLSTATE
+ * (`42P01` = table missing, `42703` = column missing, `28P01` = bad password)
+ * or a known network code. Never the driver message, which can quote
+ * connection strings or row values.
+ */
+export function safeDatabaseErrorCode(error: unknown): string | undefined {
+  const code = (error as { code?: unknown } | null)?.code;
+  if (typeof code !== "string") return undefined;
+  return /^[0-9A-Z]{5}$/.test(code) || SAFE_NETWORK_CODES.includes(code)
+    ? code
+    : undefined;
+}
+
 function managedPool(options: PoolConfig): Pool {
   const pool = new Pool(options);
   // pg forwards disconnected idle-client errors to the pool, after removing
@@ -17,24 +40,10 @@ function managedPool(options: PoolConfig): Pool {
   // which can surface as an unhandled CloudflareSocket rejection. Do not retry
   // writes here or persist diagnostics through the failed database itself.
   pool.on("error", (error: Error & { code?: string }) => {
-    const code = error.code;
-    const safeCode =
-      typeof code === "string" &&
-      (/^[0-9A-Z]{5}$/.test(code) ||
-        [
-          "ECONNRESET",
-          "ECONNREFUSED",
-          "ETIMEDOUT",
-          "EPIPE",
-          "ENOTFOUND",
-          "EHOSTUNREACH",
-        ].includes(code))
-        ? code
-        : "UNKNOWN";
     console.error(
       JSON.stringify({
         event: "tradecatch.postgres.idle_error",
-        code: safeCode,
+        code: safeDatabaseErrorCode(error) ?? "UNKNOWN",
       }),
     );
   });

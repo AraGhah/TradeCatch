@@ -42,6 +42,15 @@ export type ReceptionistStore = {
   ): Promise<CallSession[]>;
   /** Clear transcript + slot PII for finalized calls of a config ended before `beforeIso`. */
   purgeTranscripts(configId: string, beforeIso: string): Promise<number>;
+  /**
+   * Calls finalized since `sinceIso` with at least one owner notification that
+   * failed in a way a retry can fix (oldest first). The retry job decides which
+   * of them are still due.
+   */
+  listWithRetryableNotifications(
+    sinceIso: string,
+    limit: number,
+  ): Promise<CallSession[]>;
 };
 
 function clone<T>(v: T): T {
@@ -124,6 +133,19 @@ export function createMemoryReceptionistStore(): ReceptionistStore {
     async listStaleUnfinalized(beforeIso, limit) {
       return Array.from(byId.values())
         .filter((s) => !s.finalizedAt && s.updatedAt < beforeIso)
+        .slice(0, limit)
+        .map(clone);
+    },
+
+    async listWithRetryableNotifications(sinceIso, limit) {
+      return Array.from(byId.values())
+        .filter(
+          (s) =>
+            s.finalizedAt &&
+            s.finalizedAt >= sinceIso &&
+            s.notifications.some((n) => !n.ok && n.retryable === true),
+        )
+        .sort((a, b) => (a.finalizedAt ?? "").localeCompare(b.finalizedAt ?? ""))
         .slice(0, limit)
         .map(clone);
     },

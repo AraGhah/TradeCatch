@@ -46,6 +46,23 @@ function columns(s: CallSession) {
   ];
 }
 
+/** Parameters for the optimistic-concurrency UPDATE, in `$1..$9` order. */
+export function updateParams(s: CallSession): unknown[] {
+  const { version: _version, ...data } = s;
+  void _version;
+  return [
+    s.id,
+    s.status,
+    s.outcome ?? null,
+    s.endedAt ?? null,
+    s.finalizedAt ?? null,
+    s.transcriptPurgedAt ?? null,
+    JSON.stringify(data),
+    s.updatedAt,
+    s.version,
+  ];
+}
+
 export function createPostgresReceptionistStore(
   url: string,
 ): ReceptionistStore {
@@ -87,15 +104,18 @@ export function createPostgresReceptionistStore(
     },
 
     async saveSession(session) {
-      const c = columns(session);
+      // Bind exactly the values the statement references. Postgres rejects a
+      // prepared statement that skips a parameter number (42P18 "could not
+      // determine data type of parameter $2"), which is what happened when the
+      // immutable columns (call_sid, config_id, ...) were bound but not used.
       const res = await pool.query(
         `UPDATE rc_call_sessions SET
-           status = $6, outcome = $7, ended_at = $9, finalized_at = $10,
-           transcript_purged_at = $11, data = $12::jsonb, updated_at = $13,
+           status = $2, outcome = $3, ended_at = $4, finalized_at = $5,
+           transcript_purged_at = $6, data = $7::jsonb, updated_at = $8,
            version = version + 1
-         WHERE id = $1 AND version = $14
+         WHERE id = $1 AND version = $9
          RETURNING *`,
-        [...c, session.version],
+        updateParams(session),
       );
       if (!res.rows[0]) throw new ReceptionistConflictError(session.id);
       return mapRow(res.rows[0]);
@@ -121,6 +141,20 @@ export function createPostgresReceptionistStore(
          WHERE finalized_at IS NULL AND updated_at < $1
          ORDER BY updated_at ASC LIMIT $2`,
         [beforeIso, limit],
+      );
+      return res.rows.map(mapRow);
+    },
+
+    async listWithRetryableNotifications(sinceIso, limit) {
+      const res = await pool.query(
+        `SELECT * FROM rc_call_sessions
+         WHERE finalized_at IS NOT NULL AND finalized_at >= $1
+           AND jsonb_typeof(data->'notifications') = 'array'
+           AND EXISTS (
+             SELECT 1 FROM jsonb_array_elements(data->'notifications') n
+             WHERE n->>'ok' = 'false' AND n->>'retryable' = 'true')
+         ORDER BY finalized_at ASC LIMIT $2`,
+        [sinceIso, limit],
       );
       return res.rows.map(mapRow);
     },

@@ -16,9 +16,26 @@ import {
   missingOpsActorResponse,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
+import { safeDatabaseErrorCode } from "@/lib/postgres-pool";
 import { CALL_ID_PATTERN } from "./agent-calls";
 import { getReceptionistRuntime } from "./runtime";
 import type { ReceptionistConfig } from "./types";
+
+/** Connection-level SQLSTATEs / socket errors: worth retrying, not a code defect. */
+const TRANSIENT_DB_CODES = new Set([
+  "ECONNRESET",
+  "ECONNREFUSED",
+  "ETIMEDOUT",
+  "EPIPE",
+  "ENOTFOUND",
+  "EHOSTUNREACH",
+  "57P01", // admin_shutdown
+  "57P03", // cannot_connect_now
+  "53300", // too_many_connections
+  "08000",
+  "08003",
+  "08006", // connection failure
+]);
 
 /** A realistic report (200 transcript turns) is well under this. */
 const MAX_BODY_BYTES = 256 * 1024;
@@ -129,7 +146,7 @@ export async function handleAgentRequest<S extends z.ZodType>(
       { status: 400 },
     );
   }
-  const body = parsed.data as z.infer<S> & { number: string };
+  const body = parsed.data as z.infer<S> & { number: string; callId: string };
 
   const runtime = getReceptionistRuntime();
   await runtime.refresh(false);
@@ -148,7 +165,27 @@ export async function handleAgentRequest<S extends z.ZodType>(
     const result = await run({ config, body, runtime });
     return NextResponse.json({ ok: true, ...(result as object) });
   } catch (err) {
-    console.error(`[receptionist] agent ${operation} failed`, err);
-    return NextResponse.json({ error: "Internal error." }, { status: 500 });
+    // Structured and value-free: the driver message can quote row values or
+    // connection details, and the report body is caller speech.
+    const sqlState = safeDatabaseErrorCode(err);
+    console.error(
+      JSON.stringify({
+        event: "tradecatch.receptionist.agent_failed",
+        operation,
+        callId: body.callId,
+        code: err instanceof Error ? err.name : "Error",
+        sqlState,
+      }),
+    );
+    // A database that is unreachable or restarting heals itself; tell the
+    // agent so it keeps retrying. Anything else is a defect and stays a 500.
+    const transient = sqlState !== undefined && TRANSIENT_DB_CODES.has(sqlState);
+    return NextResponse.json(
+      { error: transient ? "Temporarily unavailable." : "Internal error." },
+      {
+        status: transient ? 503 : 500,
+        headers: transient ? { "Retry-After": "5" } : {},
+      },
+    );
   }
 }
