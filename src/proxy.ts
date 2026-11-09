@@ -5,6 +5,8 @@ import { isCrossSiteMutation } from "./lib/csrf";
 import { contentLengthExceeds } from "./lib/request-body";
 import { routing } from "./i18n/routing";
 import { enforceStagingAccess } from "./lib/staging-middleware";
+import { signedOutLoginPath } from "./product/saas/auth/return-path";
+import { SESSION_COOKIE } from "./product/saas/auth/session-token";
 
 const handleI18n = createMiddleware(routing);
 
@@ -74,6 +76,21 @@ export default function proxy(request: NextRequest) {
   }
   if (path === "/health" || path === "/ready") {
     return NextResponse.next();
+  }
+
+  // A signed-out visitor opening a specific workspace page (for example the
+  // referral page from "Get your link") goes to sign in and then comes back to
+  // it. A session cookie that exists but is no longer valid is still handled
+  // by the workspace layout, which sends them to the plain login page.
+  if (!request.cookies.has(SESSION_COOKIE)) {
+    const login = signedOutLoginPath(path, request.nextUrl.search);
+    if (login) {
+      const target = request.nextUrl.clone();
+      const [loginPath, loginQuery] = login.split("?");
+      target.pathname = loginPath;
+      target.search = `?${loginQuery}`;
+      return NextResponse.redirect(target);
+    }
   }
 
   return handleI18n(request);
