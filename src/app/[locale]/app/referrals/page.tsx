@@ -71,7 +71,6 @@ export default async function AppReferralsPage({
       new Date(iso),
     );
   const planName = (plan: string) => plans(`names.${plan}`);
-  const otherLang = lang === "fr" ? "en" : "fr";
   const initialLinks = overview.code
     ? { en: referralUrl(overview.code, "en"), fr: referralUrl(overview.code, "fr") }
     : null;
