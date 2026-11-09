@@ -3,6 +3,7 @@
 const { execFileSync } = require("node:child_process");
 
 const REPOSITORY = "AraGhah/TradeCatch";
+const PRODUCTION_BRANCH = "Ara";
 const REQUIRED_JOBS = ["quality", "e2e"];
 
 /** Select the newest run, including pending or failed reruns. Never reuse an older green run. */
@@ -52,7 +53,7 @@ function check({ staging = false } = {}) {
   const sha = command("git", ["rev-parse", "HEAD"]);
   const branch = staging
     ? command("git", ["branch", "--show-current"])
-    : "main";
+    : PRODUCTION_BRANCH;
   if (!branch)
     throw new Error("Staging releases require a named development branch.");
   const remote = command("git", [
@@ -113,4 +114,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { check, requireSuccessfulRun };
+module.exports = { check, requireSuccessfulRun, PRODUCTION_BRANCH };
