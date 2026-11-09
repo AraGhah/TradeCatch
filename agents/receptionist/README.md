@@ -7,7 +7,7 @@ settings from TradeCatch, books appointments against the real calendar, and can
 ```
 caller → Twilio number → SIP trunk → LiveKit → this agent
                                           │
-   GET  /api/receptionist/agent-config?number=<dialed number>   rendered prompt, language menu,
+   GET  /api/receptionist/agent-config?number=<dialed number>   rendered prompt, bilingual opening,
                                                                  silence wording, transfer lines
    POST /api/receptionist/agent/availability                    real open times
    POST /api/receptionist/agent/book                            reserves one (idempotent)
@@ -22,14 +22,32 @@ TradeCatch (`/app/receptionist`, or `/admin/businesses/<id>`), not in this folde
 
 ## How a call goes
 
-1. **Opening in the configured language.** For a French-default line: "Bonjour! Merci d'avoir appelé *Business*. Pour continuer
-   en français, restez en ligne. For English, press 1." The wording comes from the
-   business config; this agent only reads it out.
-2. **Language.** `1` → English, `2` → French, nothing within the menu timeout → the configured default.
-   Speech never picks the language (a cough or a TV in the background must not flip
-   the call), and the greeting is never repeated after a choice. Later in the call the
-   caller can ask out loud ("in English please"); the agent offers once in that language
-   and switches only if they accept.
+1. **Bilingual opening, no keypad.** Every call opens the same way, in two voices:
+   "Bonjour, ici *Business*." (French) and "How can I help you?" (English). The wording
+   comes from the business config (`languageSelect.detection`); this agent only reads it out.
+   A single-language line greets in its own language instead.
+2. **Language, from the caller's speech.** A text-only speech-to-text stream
+   (`language_listener.py`, Deepgram nova-3 in `multi` mode through LiveKit Inference)
+   listens to the caller beside the voice model and reports, per utterance, the language
+   it heard, a word count and a confidence. Only those three values are kept: the words are
+   counted and dropped, never stored or logged. `language.py` turns them into one decision:
+   * the first clear sentence (3+ words, confidence 0.6+) sets the language, in French
+     (`fr`, `fr-CA`) or English; one or two short words ("allô", "hello") only count if
+     two of them agree;
+   * once set, the other language must be spoken in two clear sentences in a row (three
+     right after the caller asked for a language out loud), or in one long confident one
+     (8+ words, confidence 0.85+); a borrowed word, a name or a short reply never flips the call;
+   * if two utterances do not settle it, the agent asks once, in both languages:
+     "Français ou anglais? French or English?". The caller's next answer decides, however
+     short. If that does not settle it either, the call stays in the line's start language;
+   * an explicit request ("in English please", the `set_language` tool) always wins.
+   The greeting is never repeated. When the language is set, the voice model gets one
+   standing `LANGUAGE UPDATE` rule; nothing extra is spoken. Every decision is logged
+   without any words: `language decision: set en [clear_speech] after 1 utterances, 0.84s
+   after the caller stopped`.
+   *If the listener cannot start or keeps failing*, the call carries on in the language it
+   has, the model is told to follow the caller itself and to ask when unsure, and a warning
+   is logged. `AGENT_LANGUAGE_DETECTION=off` does the same on purpose.
 3. **Conversation.** One question at a time, no re-asking of anything already said.
    Details are written to a per-call record as the caller gives them (`record_details`),
    not at the end, so a dropped call still leaves a usable lead.
@@ -55,7 +73,7 @@ The model has two transfer tools, `transfer_to_human(department?)` and
 `transfer_call`, which never claims a transfer worked because it was *started*.
 
 * **Announcement.** Before ringing, the caller hears one fixed sentence in the call's
-  current language (the language menu / `set_language` state), spoken word for word:
+  current language (the call's language state), spoken word for word:
   FR "Bien sûr, je vais vous transférer à un membre de notre équipe." / emergency
   "Je comprends, c'est urgent. Je vais vous transférer immédiatement à notre contact
   d'urgence."; EN "Of course. I'll connect you with someone from our team." /
@@ -163,7 +181,8 @@ business is a plan change or an owner decision, not agent configuration.
 | File | Job |
 | --- | --- |
 | `agent.py` | LiveKit entrypoint, tools, silence and error handling |
-| `language.py` | Language menu state (keys, timeout, switching) |
+| `language.py` | The call's language: decision rules, hysteresis, the "which language?" question (pure) |
+| `language_listener.py` | The text-only speech-to-text stream that reports the language of each caller utterance |
 | `phrases.py` | Exact greeting / language / silence instructions from config |
 | `policy.py` | Silence policy (check in once, then say goodbye) |
 | `call_record.py` | Per-call record, phone normalisation, report payload |
@@ -191,6 +210,8 @@ caller turn is logged as `reply gap <seconds> (<n> backend runs)`.
 that has no cloned voice with that ElevenLabs voice (speech-to-text -> LLM -> ElevenLabs),
 and `AGENT_ELEVENLABS_{SPEED,STABILITY,SIMILARITY,STYLE}` tune its delivery. Every call logs
 `voice for this call: ...`, which is the way to confirm the voice production loaded.
+Language: `AGENT_LANGUAGE_DETECTION=off` is the kill switch, `AGENT_LANGUAGE_STT` the model
+(it adds one speech-to-text stream per call to the LiveKit Inference bill).
 Transfers: `AGENT_TRANSFER_MODE`, `LIVEKIT_SIP_OUTBOUND_TRUNK`, `LIVEKIT_SIP_NUMBER`,
 `AGENT_TRANSFER_{RING,CONSULT,BUDGET}_SECONDS`.
 Out-of-range values are ignored (a typo cannot make the line cut callers off).
@@ -204,7 +225,7 @@ listen to on real calls, not as a guarantee.
 When TradeCatch says a business uses its owner's cloned voice (`cfg["voice"]` is
 `{"mode": "custom", ...}`), the call runs on **speech-to-text → LLM → ElevenLabs**
 instead of the speech-to-speech model, because that model cannot speak with a custom
-voice. Everything else (language menu, tools, booking, transfer, silence, report) is
+voice. Everything else (language detection, tools, booking, transfer, silence, report) is
 the same code. The ElevenLabs voice is wrapped in a fallback chain
 (`AGENT_FALLBACK_TTS`), and anything that stops the pipeline being built (missing
 key, missing plugin, kill switch, a voice id that does not validate) means the call
@@ -226,15 +247,16 @@ Follow [the production cutover procedure](CUTOVER.md) to replace the Builder age
 
 ```bash
 pip install -r requirements.txt
-python -m unittest discover -p "test_*.py"     # ~260 tests, no network, no real LiveKit room
+python -m unittest discover -p "test_*.py"     # ~440 tests, no network, no real LiveKit room
 ```
 
 Run it with the same Python that has `livekit-agents` installed: without it the agent
 tests are **skipped, not failed**, and the run still says OK.
 
-The suite covers the language menu and silence policy, the call record and its
+The suite covers the language decision rules and the listener (fake streams), the
+silence policy, the call record and its
 validation, the API client against a local HTTP server (timeouts, retries, 4xx vs 5xx),
-tool results, and the agent end to end with a fake session (opening, DTMF, silence,
+tool results, and the agent end to end with a fake session (opening, language, silence,
 booking confirmed / taken / failed, transfers, report-once, error recovery). The
 transfer tests drive LiveKit's real `WarmTransferTask` with a fake job, rooms and SIP
 API (busy, no answer, wrong number, voicemail, refusal, keypress, deadlines, the caller
@@ -248,9 +270,16 @@ endpoints and the Twilio `<Gather>` path, including 20 full-call scenarios in
 Automated tests cannot judge sound, recognition on a real line, or carrier behaviour.
 Before relying on a number, call it and check:
 
-- [ ] No key pressed on a French-default line: French greeting, French conversation, no repeated greeting.
-- [ ] Press `1` during the greeting and again right after it: English, once, no restart.
-- [ ] Press `2`; press a stray key (`5`); talk over the menu — language never flips by voice.
+- [ ] Greeting: "Bonjour, ici *Business*." then "How can I help you?" — no menu, no "press".
+- [ ] Answer in French: French conversation, no repeated greeting. Hang up, call again, answer in English: English.
+- [ ] Answer "oui" or "hello" only, then a full sentence: the language follows the sentence.
+- [ ] Say something unclear or in a third language twice: "Français ou anglais? French or English?" once, and
+      "English" / "français" settles it. Stay silent after the question: the call goes on in the start language.
+- [ ] Speak French with one English word ("le weekend", a brand name): the call stays French.
+- [ ] Switch language mid-call with two full sentences, then ask "in French please": both switch correctly.
+- [ ] Press digits during the greeting: nothing happens.
+- [ ] Read the log of each call: every `language decision` line shows a language, a reason and a delay, and
+      no line contains anything the caller said.
 - [ ] Speak with a Québec accent and background noise: names and street addresses come
       back right, or are confirmed once, never guessed silently.
 - [ ] Interrupt the agent mid-sentence: it stops and answers what you said.
@@ -267,4 +296,7 @@ Before relying on a number, call it and check:
 - [ ] The contractor's phone shows the number you expect, in French and in English.
 - [ ] Say nothing for the silence window: one check-in, then goodbye.
 - [ ] "Are you a robot?": honest, short, then back to the question.
+- [ ] To measure language detection, place at least 20 calls per language (and 10 mixed) with callers who
+      speak naturally, note what the caller spoke and compare it with the `language decision` log lines
+      and `reply gap`. Until that is done the thresholds in `language.py` are starting points, not tuned values.
 - [ ] Ear check of pace and pauses; adjust the `AGENT_*` delays if it feels hurried or slow.
