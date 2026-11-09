@@ -52,7 +52,23 @@ export const receptionistConfigSchema = z.object({
     .default("always"),
   inboundStrategy: z.enum(["ai_first", "human_first"]).default("ai_first"),
   humanRingTimeoutSeconds: z.number().int().min(10).max(60).default(25),
-  voiceEngine: z.enum(["gather", "conversation_relay"]).default("gather"),
+  voiceEngine: z
+    .enum(["gather", "conversation_relay", "livekit"])
+    .default("gather"),
+  /** Owner's AI Call Handling choice; unset on founder/env configs. */
+  aiCallMode: z.enum(["missed_calls_only", "ai_answers_all"]).optional(),
+  routingMethod: z.enum(["tradecatch_number", "carrier_forwarding"]).optional(),
+  /** The contractor's own phone, rung before the AI in missed-calls-only. */
+  ringFirstE164: e164.optional(),
+  /** Ask whoever answers the ring-first leg to press 1 (voicemail cannot). */
+  callScreening: z.boolean().default(false),
+  /** Callers who never reach the AI (E.164). Server-side only. */
+  personalContacts: z.array(e164).max(50).default([]),
+  personalCallPolicy: z.enum(["message", "transfer", "end"]).default("message"),
+  personalCallMessageFr: z.string().trim().min(1).max(300).optional(),
+  personalCallMessageEn: z.string().trim().min(1).max(300).optional(),
+  personalCallTransferE164: e164.optional(),
+  unknownCallerPolicy: z.enum(["ai", "message"]).default("ai"),
   timezone: z
     .string()
     .min(1)
@@ -86,6 +102,9 @@ export const receptionistConfigSchema = z.object({
   services: z.array(z.string().trim().min(1).max(80)).max(40).default([]),
   serviceAreas: z.array(z.string().trim().min(1).max(80)).max(40).default([]),
   pricingInfo: z.string().trim().max(500).optional(),
+  /** The business's public address and phone, as callers should receive them by text. */
+  businessAddress: z.string().trim().max(200).optional(),
+  businessPhone: z.string().trim().max(40).optional(),
   systemPrompt: z.string().max(40_000).optional(),
   routing: z
     .array(
@@ -100,6 +119,7 @@ export const receptionistConfigSchema = z.object({
     .default([]),
   emergencyTransferE164: e164.optional(),
   fallbackTransferE164: e164.optional(),
+  backupTransferE164: e164.optional(),
   /** Env/demo default keeps after-hours transfers off; profiles override. */
   transferHours: z.enum(["always", "business_hours"]).default("business_hours"),
   transferTimeoutSeconds: z.number().int().min(10).max(120).default(30),
@@ -151,13 +171,16 @@ export function defaultGreetings(
   businessName: string,
   receptionistName?: string,
 ) {
-  const identityFr = receptionistName ? ` Ici ${receptionistName}, à la réception.` : "";
-  const identityEn = receptionistName
-    ? ` This is ${receptionistName} at the front desk.`
-    : "";
+  // "Bonjour! Merci d'avoir appelé Plomberie Nord, Sophia à l'appareil."
+  const greetingFr = receptionistName
+    ? `Bonjour! Merci d'avoir appelé ${businessName}, ${receptionistName} à l'appareil.`
+    : `Bonjour! Merci d'avoir appelé ${businessName}.`;
+  const greetingEn = receptionistName
+    ? `Hi! Thanks for calling ${businessName}, this is ${receptionistName}.`
+    : `Thanks for calling ${businessName}!`;
   return {
-    greetingFr: `Bonjour! Merci d'avoir appelé ${businessName}.${identityFr}`,
-    greetingEn: `Thanks for calling ${businessName}!${identityEn}`,
+    greetingFr,
+    greetingEn,
     afterHoursMessageFr: `Nos bureaux sont présentement fermés, mais je peux prendre votre demande et l'équipe vous rappellera dès l'ouverture.`,
     afterHoursMessageEn: `Our office is currently closed, but I can take your request and the team will call you back when we open.`,
   };
@@ -212,6 +235,7 @@ export function validateReceptionistConfig(config: ReceptionistConfig): {
     ["phoneNumberE164", config.phoneNumberE164],
     ["emergencyTransferE164", config.emergencyTransferE164],
     ["fallbackTransferE164", config.fallbackTransferE164],
+    ["backupTransferE164", config.backupTransferE164],
     ["smsFromE164", config.smsFromE164],
     ...config.routing.map(
       (r) => [`routing.${r.id}`, r.phoneE164] as [string, string],

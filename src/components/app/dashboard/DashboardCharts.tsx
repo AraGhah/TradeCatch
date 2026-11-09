@@ -172,7 +172,7 @@ export function DashboardCharts({
             <ul className="sr-only">
               {points.map((point) => (
                 <li key={point.label}>
-                  {formatDay(point.label, locale)} — {t("chart.calls")} {point.calls ?? "—"},{" "}
+                  {formatDay(point.label, locale)} · {t("chart.calls")} {point.calls ?? "—"},{" "}
                   {t("chart.leads")} {point.leads ?? "—"}, {t("chart.appointments")}{" "}
                   {point.appointments ?? "—"}
                 </li>

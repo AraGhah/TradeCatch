@@ -33,10 +33,10 @@ const DEFAULT_WINDOW = {
 } as const;
 
 const ESCALATION_TEXT: Record<EscalationReason, string> = {
-  urgent: "Urgent customer text — the AI replied with safety guidance",
+  urgent: "Urgent customer text. The assistant replied with safety guidance",
   customer_request: "Customer text needs a person (AI handed it over)",
-  ai_unavailable: "Customer text the AI could not answer — please reply",
-  booking_unconfirmed: "Customer asked to book — the time was not confirmed",
+  ai_unavailable: "Customer text the assistant could not answer. Please reply",
+  booking_unconfirmed: "Customer asked to book. The time was not confirmed",
   quiet_hours: "Customer text received outside sending hours",
 };
 
@@ -155,10 +155,19 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
       return automation.isSuppressed(organizationId, phoneE164);
     },
 
-    async hasActiveWorkflow(clientId, phoneE164) {
-      return Boolean(
-        await store.findActiveWorkflowByCaller(clientId, phoneE164),
+    async activeWorkflow(clientId, phoneE164) {
+      const workflow = await store.findActiveWorkflowByCaller(
+        clientId,
+        phoneE164,
       );
+      if (!workflow) return null;
+      // Module A answers only while it is asking its intake questions. Once the
+      // job is with a technician or a person it returns "not handled", so the
+      // receptionist must answer or the customer's text gets no reply at all.
+      return workflow.status === "started" ||
+        workflow.status === "awaiting_customer"
+        ? "collecting"
+        : "with_team";
     },
 
     async quietHours(organizationId) {
@@ -287,7 +296,7 @@ async function buildDeps(profile: Profile): Promise<SmsReceptionistDeps> {
         if (staffPhone) {
           const id = `smsesc_${messageSid}`;
           const nowIso = new Date().toISOString();
-          const body = `${client.contractorDisplayName} — SMS à traiter / SMS needs attention. ${ESCALATION_TEXT[input.reason]}. ${customerE164}`;
+          const body = `${client.contractorDisplayName} : SMS à traiter / SMS needs attention. ${ESCALATION_TEXT[input.reason]}. ${customerE164}`;
           await store.enqueueOutbound({
             id,
             clientAccountId: client.id,

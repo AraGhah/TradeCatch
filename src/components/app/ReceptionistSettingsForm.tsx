@@ -533,7 +533,7 @@ export function ReceptionistSettingsForm({
         ) : (
           <p className="mt-2 text-xs text-navy/60">
             {t("hoursDefault", {
-              hours: `${defaultHours.start}–${defaultHours.end} (${defaultHours.days.map((i) => days[i]).join(", ")})`,
+              hours: `${defaultHours.start}-${defaultHours.end} (${defaultHours.days.map((i) => days[i]).join(", ")})`,
             })}
           </p>
         )}
@@ -824,158 +824,168 @@ export function ReceptionistSettingsForm({
         </button>
       </fieldset>
 
-      <fieldset className={CARD} disabled={dis || !canTransfer}>
-        <legend className="px-1 text-sm font-semibold text-navy">
-          {t("routingTitle")}
-        </legend>
-        <p className="mt-1 text-xs text-navy/60">{t("routingIntro")}</p>
-        {!canTransfer ? (
-          <p className="mt-2 rounded-md border border-navy/15 bg-navy/5 px-3 py-2 text-xs text-navy/80">
-            {t("plusOnlyTransfer")}
-          </p>
-        ) : null}
-        {routing.map((row, i) => (
-          <div
-            key={i}
-            className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1.4fr_auto] sm:items-end"
+      {/* Call transfer is not offered at launch. The sections stay in the code and
+          appear again only when the plan can transfer (see launch-flags.ts). */}
+      {canTransfer ? (
+        <>
+        <fieldset className={CARD} disabled={dis || !canTransfer}>
+          <legend className="px-1 text-sm font-semibold text-navy">
+            {t("routingTitle")}
+          </legend>
+          <p className="mt-1 text-xs text-navy/60">{t("routingIntro")}</p>
+          {!canTransfer ? (
+            <p className="mt-2 rounded-md border border-navy/15 bg-navy/5 px-3 py-2 text-xs text-navy/80">
+              {t("plusOnlyTransfer")}
+            </p>
+          ) : null}
+          {routing.map((row, i) => (
+            <div
+              key={i}
+              className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1.4fr_auto] sm:items-end"
+            >
+              <label className="text-xs text-navy/70">
+                {t("deptName")}
+                <input
+                  value={row.name}
+                  maxLength={60}
+                  onChange={(e) =>
+                    setRouting(
+                      routing.map((r, j) =>
+                        j === i ? { ...r, name: e.target.value } : r,
+                      ),
+                    )
+                  }
+                  className={INPUT}
+                />
+              </label>
+              <label className="text-xs text-navy/70">
+                {t("deptPhone")}
+                <input
+                  value={row.phoneE164}
+                  placeholder="+14385551234"
+                  onChange={(e) =>
+                    setRouting(
+                      routing.map((r, j) =>
+                        j === i ? { ...r, phoneE164: e.target.value } : r,
+                      ),
+                    )
+                  }
+                  className={INPUT}
+                />
+              </label>
+              <label className="text-xs text-navy/70">
+                {t("deptKeywords")}
+                <input
+                  value={row.keywords}
+                  onChange={(e) =>
+                    setRouting(
+                      routing.map((r, j) =>
+                        j === i ? { ...r, keywords: e.target.value } : r,
+                      ),
+                    )
+                  }
+                  className={INPUT}
+                />
+              </label>
+              <button
+                type="button"
+                className={BUTTON_GHOST}
+                onClick={() => setRouting(routing.filter((_, j) => j !== i))}
+              >
+                {t("removeRow")}
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className={`${BUTTON_GHOST} mt-3`}
+            disabled={routing.length >= 8}
+            onClick={() =>
+              setRouting([...routing, { name: "", phoneE164: "", keywords: "" }])
+            }
           >
-            <label className="text-xs text-navy/70">
-              {t("deptName")}
-              <input
-                value={row.name}
-                maxLength={60}
-                onChange={(e) =>
-                  setRouting(
-                    routing.map((r, j) =>
-                      j === i ? { ...r, name: e.target.value } : r,
-                    ),
-                  )
-                }
-                className={INPUT}
-              />
-            </label>
-            <label className="text-xs text-navy/70">
-              {t("deptPhone")}
-              <input
-                value={row.phoneE164}
-                placeholder="+14385551234"
-                onChange={(e) =>
-                  setRouting(
-                    routing.map((r, j) =>
-                      j === i ? { ...r, phoneE164: e.target.value } : r,
-                    ),
-                  )
-                }
-                className={INPUT}
-              />
-            </label>
-            <label className="text-xs text-navy/70">
-              {t("deptKeywords")}
-              <input
-                value={row.keywords}
-                onChange={(e) =>
-                  setRouting(
-                    routing.map((r, j) =>
-                      j === i ? { ...r, keywords: e.target.value } : r,
-                    ),
-                  )
-                }
-                className={INPUT}
-              />
-            </label>
-            <button
-              type="button"
-              className={BUTTON_GHOST}
-              onClick={() => setRouting(routing.filter((_, j) => j !== i))}
-            >
-              {t("removeRow")}
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          className={`${BUTTON_GHOST} mt-3`}
-          disabled={routing.length >= 8}
-          onClick={() =>
-            setRouting([...routing, { name: "", phoneE164: "", keywords: "" }])
-          }
-        >
-          {t("addDept")}
-        </button>
-      </fieldset>
+            {t("addDept")}
+          </button>
+        </fieldset>
+        </>
+      ) : null}
 
-      <fieldset className={CARD} disabled={dis || (!canTransfer && !canEmergencyRoute)}>
-        <legend className="px-1 text-sm font-semibold text-navy">
-          {t("transferTitle")}
-        </legend>
-        <p className="mt-1 text-xs text-navy/60">{t("transferIntro")}</p>
-        {!canTransfer || !canEmergencyRoute ? (
-          <p className="mt-2 rounded-md border border-navy/15 bg-navy/5 px-3 py-2 text-xs text-navy/80">
-            {t("plusOnlyTransfer")}
-          </p>
-        ) : null}
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-xs text-navy/70">
-            {t("primaryTransfer")}
-            <input
-              value={primaryTransfer}
-              placeholder="+14385551234"
-              onChange={(e) => setPrimaryTransfer(e.target.value)}
-              className={INPUT}
-              disabled={!canTransfer}
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("secondaryTransfer")}
-            <input
-              value={secondaryTransfer}
-              placeholder="+14385551234"
-              onChange={(e) => setSecondaryTransfer(e.target.value)}
-              className={INPUT}
-              disabled={!canTransfer}
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("emergencyPhone")}
-            <input
-              value={emergency}
-              placeholder="+14385551234"
-              onChange={(e) => setEmergency(e.target.value)}
-              className={INPUT}
-              disabled={!canEmergencyRoute}
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("transferTimeout")}
-            <input
-              type="number"
-              min={10}
-              max={120}
-              value={transferTimeout}
-              onChange={(e) => setTransferTimeout(Number(e.target.value) || 30)}
-              className={INPUT}
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("failedTransfer")}
-            <select
-              className={INPUT}
-              value={failedTransfer}
-              onChange={(e) =>
-                setFailedTransfer(
-                  e.target
-                    .value as ProfileSettings["transferSettings"]["failedAction"],
-                )
-              }
-            >
-              <option value="take_message">{t("failed.take_message")}</option>
-              <option value="urgent_lead">{t("failed.urgent_lead")}</option>
-              <option value="voicemail">{t("failed.voicemail")}</option>
-            </select>
-          </label>
-        </div>
-        <p className="mt-2 text-xs text-navy/70">{t("phoneHelp")}</p>
-      </fieldset>
+      {canTransfer || canEmergencyRoute ? (
+        <>
+        <fieldset className={CARD} disabled={dis || (!canTransfer && !canEmergencyRoute)}>
+          <legend className="px-1 text-sm font-semibold text-navy">
+            {t("transferTitle")}
+          </legend>
+          <p className="mt-1 text-xs text-navy/60">{t("transferIntro")}</p>
+          {!canTransfer || !canEmergencyRoute ? (
+            <p className="mt-2 rounded-md border border-navy/15 bg-navy/5 px-3 py-2 text-xs text-navy/80">
+              {t("plusOnlyTransfer")}
+            </p>
+          ) : null}
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <label className="text-xs text-navy/70">
+              {t("primaryTransfer")}
+              <input
+                value={primaryTransfer}
+                placeholder="+14385551234"
+                onChange={(e) => setPrimaryTransfer(e.target.value)}
+                className={INPUT}
+                disabled={!canTransfer}
+              />
+            </label>
+            <label className="text-xs text-navy/70">
+              {t("secondaryTransfer")}
+              <input
+                value={secondaryTransfer}
+                placeholder="+14385551234"
+                onChange={(e) => setSecondaryTransfer(e.target.value)}
+                className={INPUT}
+                disabled={!canTransfer}
+              />
+            </label>
+            <label className="text-xs text-navy/70">
+              {t("emergencyPhone")}
+              <input
+                value={emergency}
+                placeholder="+14385551234"
+                onChange={(e) => setEmergency(e.target.value)}
+                className={INPUT}
+                disabled={!canEmergencyRoute}
+              />
+            </label>
+            <label className="text-xs text-navy/70">
+              {t("transferTimeout")}
+              <input
+                type="number"
+                min={10}
+                max={120}
+                value={transferTimeout}
+                onChange={(e) => setTransferTimeout(Number(e.target.value) || 30)}
+                className={INPUT}
+              />
+            </label>
+            <label className="text-xs text-navy/70">
+              {t("failedTransfer")}
+              <select
+                className={INPUT}
+                value={failedTransfer}
+                onChange={(e) =>
+                  setFailedTransfer(
+                    e.target
+                      .value as ProfileSettings["transferSettings"]["failedAction"],
+                  )
+                }
+              >
+                <option value="take_message">{t("failed.take_message")}</option>
+                <option value="urgent_lead">{t("failed.urgent_lead")}</option>
+                <option value="voicemail">{t("failed.voicemail")}</option>
+              </select>
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-navy/70">{t("phoneHelp")}</p>
+        </fieldset>
+        </>
+      ) : null}
 
       <fieldset className={CARD} disabled={dis}>
         <legend className="px-1 text-sm font-semibold text-navy">

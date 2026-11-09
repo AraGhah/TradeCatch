@@ -72,6 +72,18 @@ class Offer:
     label: str
 
 
+@dataclass(frozen=True)
+class FoundAppointment:
+    """One of the caller's own appointments, as the server returned it (no address or phone)."""
+
+    appointment_id: str
+    label: str
+    service_name: str
+    technician: str | None = None
+    status: str = "confirmed"
+    started: bool = False
+
+
 @dataclass
 class CallRecord:
     call_id: str
@@ -88,6 +100,12 @@ class CallRecord:
     availability_checked: bool = False
     # Set only from a "confirmed" answer of the booking endpoint.
     booking: dict[str, str] | None = None
+    # The caller's own appointments, from find_appointment, in the order read out.
+    appointments: list[FoundAppointment] = field(default_factory=list)
+    # The appointment the current offers are new times for (None: offers are for a new booking).
+    offers_for: str | None = None
+    # What was really moved or canceled on this call, as the server confirmed it.
+    appointment_changes: list[dict[str, str]] = field(default_factory=list)
     transfer: dict[str, Any] | None = None
     emergency: bool = False
     end_reason: str | None = None
@@ -142,6 +160,12 @@ class CallRecord:
         self.service_name = service_name or self.service_name
         self.timezone = timezone or self.timezone
 
+    def found(self, number: int) -> FoundAppointment | None:
+        """Appointment numbers start at 1, as read to the model."""
+        if 1 <= number <= len(self.appointments):
+            return self.appointments[number - 1]
+        return None
+
     def offer(self, option: int) -> Offer | None:
         """Option numbers start at 1, as read to the model."""
         if 1 <= option <= len(self.offers):
@@ -168,7 +192,7 @@ class CallRecord:
     def _intent(self) -> str | None:
         if self.transfer and self.transfer.get("completed"):
             return "transfer"
-        if self.booked or self.availability_checked:
+        if self.booked or self.availability_checked or self.appointment_changes:
             return "appointment"
         if any(k in self.slots for k in ("issue", "service", "project")):
             return "service_request"
@@ -207,6 +231,14 @@ class CallRecord:
                 "targetName": str(self.transfer.get("targetName") or "")[:80],
                 "completed": bool(self.transfer.get("completed")),
             }
+            # Older servers drop unknown keys, so these are safe to send to any backend.
+            if "answerConfirmed" in self.transfer:
+                body["transfer"]["answerConfirmed"] = bool(
+                    self.transfer.get("completed") and self.transfer.get("answerConfirmed")
+                )
+            mechanism = self.transfer.get("mechanism")
+            if mechanism in ("warm", "blind", "bridge"):
+                body["transfer"]["mechanism"] = mechanism
         if self.end_reason:
             body["endReason"] = self.end_reason
         return body

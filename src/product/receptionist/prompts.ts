@@ -25,6 +25,28 @@ export const PHRASES = {
     fr: "For English, press 1.",
     en: "For English, press 1.",
   },
+  /**
+   * The pickup greeting of the LiveKit receptionist, which has no keypad menu:
+   * "Bonjour, ici {business}." in the French voice, then "How can I help you?"
+   * in the English voice. The caller's reply decides the language.
+   */
+  bilingualWelcome: {
+    fr: "Bonjour, ici {business}.",
+    en: "Bonjour, ici {business}.",
+  },
+  bilingualQuestion: {
+    fr: "How can I help you?",
+    en: "How can I help you?",
+  },
+  /** Asked once, in both voices, when the caller's language is still unclear. */
+  askLanguageFr: {
+    fr: "Français ou anglais?",
+    en: "Français ou anglais?",
+  },
+  askLanguageEn: {
+    fr: "French or English?",
+    en: "French or English?",
+  },
   languageSwitchedFr: {
     fr: "Bien sûr, je continue en français.",
     en: "Of course, I'll continue in French.",
@@ -287,10 +309,16 @@ export function acknowledgement(
  * The language menu, spoken right after the French greeting: the French half in
  * the French voice, the English half in the English voice.
  */
-export function languageMenuPrompts(): {
+export function languageMenuPrompts(start: ReceptionistLanguage = "fr"): {
   text: string;
   lang: ReceptionistLanguage;
 }[] {
+  if (start === "en") {
+    return [
+      { text: "To continue in English, stay on the line.", lang: "en" },
+      { text: "Pour le français, appuyez sur le 2.", lang: "fr" },
+    ];
+  }
   return [
     { text: PHRASES.stayForFrench.fr, lang: "fr" },
     { text: PHRASES.pressForEnglish.en, lang: "en" },

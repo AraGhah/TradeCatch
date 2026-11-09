@@ -3,6 +3,7 @@ import {
   loginConfirmationHeaders,
   loginConfirmationHtml,
 } from "./login-confirmation";
+import { safeReturnPath } from "./return-path";
 
 const noncePattern = /^[A-Za-z0-9_-]{43}$/;
 
@@ -37,7 +38,12 @@ export function loginPreview(request: Request, production: boolean): Response {
   const nonce = noncePattern.test(existing)
     ? existing
     : randomBytes(32).toString("base64url");
-  return new Response(loginConfirmationHtml({ token, nonce, locale }), {
+  return new Response(loginConfirmationHtml({
+      token,
+      nonce,
+      locale,
+      next: safeReturnPath(url.searchParams.get("next")),
+    }), {
     headers: {
       ...loginConfirmationHeaders,
       "Content-Type": "text/html; charset=utf-8",

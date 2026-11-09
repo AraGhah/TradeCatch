@@ -20,6 +20,8 @@ export function MarketingChrome({
   const pathname = usePathname();
   const isPilotShell =
     pathname === "/login" ||
+    pathname === "/forgot-password" ||
+    pathname === "/set-password" ||
     pathname === "/app" ||
     pathname.startsWith("/app/") ||
     pathname === "/admin" ||

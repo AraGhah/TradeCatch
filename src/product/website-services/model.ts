@@ -66,7 +66,7 @@ export type WebsiteRequest = {
   focusAreas: WebsiteFocusArea[];
   notes: string | null;
   language: "en" | "fr";
-  /** Set by the team when the scope is agreed. Always >= the starting price. */
+  /** Set when the scope is agreed. At launch always the fixed website service price. */
   quotedPriceCad: number | null;
   /** The scope the team wrote back, shown to the customer. */
   scopeSummary: string | null;
@@ -134,7 +134,20 @@ export function canTransitionWebsiteStatus(
   return from === to || TRANSITIONS[from].includes(to);
 }
 
-/** The price a request is allowed to be quoted at: never below the starting price. */
-export function isValidQuotedPrice(amountCad: number, startingPriceCad: number): boolean {
-  return Number.isFinite(amountCad) && amountCad >= startingPriceCad && amountCad <= 100_000;
+/**
+ * The price a request is allowed to be quoted at. For a "starting at" service
+ * that is any amount from the starting price up; for a fixed-price service
+ * (the launch website service, $699.99) it is exactly that price, so the team
+ * cannot quote a customer more than the price published on the site.
+ */
+export function isValidQuotedPrice(
+  amountCad: number,
+  priceCad: number,
+  priceIsStartingAt = true,
+): boolean {
+  if (!Number.isFinite(amountCad)) return false;
+  if (!priceIsStartingAt) {
+    return Math.round(amountCad * 100) === Math.round(priceCad * 100);
+  }
+  return amountCad >= priceCad && amountCad <= 100_000;
 }

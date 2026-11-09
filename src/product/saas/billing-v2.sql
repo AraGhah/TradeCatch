@@ -9,7 +9,7 @@
 CREATE TABLE IF NOT EXISTS tc_installation_checkouts (
   id TEXT PRIMARY KEY,
   organization_id TEXT NOT NULL REFERENCES tc_organizations(id) ON DELETE CASCADE,
-  plan TEXT NOT NULL CHECK (plan IN ('starter', 'growth', 'receptionist')),
+  plan TEXT NOT NULL CHECK (plan IN ('essential', 'professional', 'starter', 'growth', 'receptionist')),
   checkout_session_id TEXT UNIQUE,
   livemode BOOLEAN NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending'
@@ -49,14 +49,50 @@ CREATE TABLE IF NOT EXISTS tc_usage_counters (
   PRIMARY KEY (organization_id, metric, period_start)
 );
 
+-- Usage past the written allowance is only billable after the owner confirms
+-- it. One row per org per metric per month, opened when the allowance is
+-- first passed; `pending` bills nothing.
+CREATE TABLE IF NOT EXISTS tc_usage_overage_confirmations (
+  organization_id TEXT NOT NULL REFERENCES tc_organizations(id) ON DELETE CASCADE,
+  metric TEXT NOT NULL CHECK (metric IN ('sms_segments', 'voice_minutes')),
+  period_start DATE NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'declined')),
+  opened_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  used_at_open NUMERIC NOT NULL DEFAULT 0,
+  resolved_at TIMESTAMPTZ,
+  resolved_by_user_id TEXT,
+  PRIMARY KEY (organization_id, metric, period_start)
+);
+
+-- Overage billed to Stripe (see overage-invoicing.ts), one row per org per metric
+-- per closed month. The row is the claim that makes invoicing idempotent: units and
+-- price are frozen when it is claimed, and a month that has a row is never billed
+-- twice. Nothing here is written unless OVERAGE_INVOICING=1 and the owner confirmed
+-- the overage.
+CREATE TABLE IF NOT EXISTS tc_usage_overage_invoices (
+  organization_id TEXT NOT NULL REFERENCES tc_organizations(id) ON DELETE CASCADE,
+  metric TEXT NOT NULL CHECK (metric IN ('sms_segments', 'voice_minutes')),
+  period_start DATE NOT NULL,
+  units NUMERIC NOT NULL CHECK (units > 0),
+  rate_cents INTEGER NOT NULL CHECK (rate_cents > 0),
+  amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'created', 'needs_review')),
+  stripe_invoice_item_id TEXT,
+  claimed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_at TIMESTAMPTZ,
+  PRIMARY KEY (organization_id, metric, period_start)
+);
+
 ALTER TABLE tc_installation_checkouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tc_billing_deferrals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tc_usage_counters ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON tc_installation_checkouts, tc_billing_deferrals, tc_usage_counters FROM PUBLIC;
+ALTER TABLE tc_usage_overage_confirmations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tc_usage_overage_invoices ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON tc_installation_checkouts, tc_billing_deferrals, tc_usage_counters, tc_usage_overage_confirmations, tc_usage_overage_invoices FROM PUBLIC;
 DO $$
 DECLARE api_role TEXT;
 BEGIN
   FOR api_role IN SELECT rolname FROM pg_roles WHERE rolname IN ('anon', 'authenticated') LOOP
-    EXECUTE format('REVOKE ALL ON tc_installation_checkouts, tc_billing_deferrals, tc_usage_counters FROM %I', api_role);
+    EXECUTE format('REVOKE ALL ON tc_installation_checkouts, tc_billing_deferrals, tc_usage_counters, tc_usage_overage_confirmations, tc_usage_overage_invoices FROM %I', api_role);
   END LOOP;
 END $$;

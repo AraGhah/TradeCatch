@@ -58,7 +58,36 @@ export const availabilitySchema = agentBaseSchema.extend({
   preferredTime: short(200),
   issue: short(600),
   serviceAddress: short(300),
+  /** New times for this existing appointment (found earlier in the call). */
+  appointmentId: short(120),
+  /** The name the caller gave: required with appointmentId. */
+  callerName: short(80),
 });
+
+/**
+ * Existing appointments and texts. The caller is always `from` (the carrier's
+ * caller ID, sent by the agent from the SIP call), never a number the model chose.
+ */
+export const appointmentActionSchema = z.discriminatedUnion("action", [
+  agentBaseSchema.extend({ action: z.literal("find"), callerName: short(80) }),
+  agentBaseSchema.extend({
+    action: z.literal("move"),
+    callerName: short(80),
+    appointmentId: z.string().min(1).max(120),
+    startAt: z.string().min(10).max(40),
+  }),
+  agentBaseSchema.extend({
+    action: z.literal("cancel"),
+    callerName: short(80),
+    appointmentId: z.string().min(1).max(120),
+  }),
+  agentBaseSchema.extend({
+    action: z.literal("text"),
+    callerName: short(80),
+    kind: z.enum(["business_info", "appointment"]),
+    appointmentId: short(120),
+  }),
+]);
 
 export const bookSchema = agentBaseSchema.extend({
   startAt: z.string().min(10).max(40),
@@ -100,7 +129,17 @@ export const reportSchema = agentBaseSchema.extend({
     .max(400)
     .optional(),
   transfer: z
-    .object({ targetName: short(80), completed: z.boolean() })
+    .object({
+      targetName: short(80),
+      /** The call left the agent for a person's line. */
+      completed: z.boolean(),
+      /**
+       * A person was heard accepting (screened transfer). A SIP REFER the
+       * carrier accepted is `completed` but never `answerConfirmed`.
+       */
+      answerConfirmed: z.boolean().optional(),
+      mechanism: z.enum(["warm", "blind", "bridge"]).optional(),
+    })
     .optional(),
   emergency: z.boolean().optional(),
   durationSeconds: z.number().min(0).max(24 * 3600).optional(),

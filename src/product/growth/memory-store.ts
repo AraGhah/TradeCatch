@@ -149,6 +149,7 @@ export type GrowthStore = {
         | "crmWebhookUrl"
         | "qualificationQuestions"
         | "onboardingCompletedAt"
+        | "quoteFollowUpApprovedAt"
         | "localeDefault"
       >
     >,

@@ -14,7 +14,6 @@ type FeatureFlags = {
 const FEATURE_KEYS = [
   "aiReceptionist",
   "appointmentBooking",
-  "callTransfer",
   "missedCallRecovery",
   "quoteFollowups",
 ] as const;

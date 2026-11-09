@@ -298,6 +298,63 @@ describe("createInstallationCheckoutSession", () => {
     );
     assert.equal(checkouts[0]?.status, "failed");
   });
+
+  describe("optional website service price", () => {
+    function websitePriceIs(unitAmount: number, extra: Record<string, unknown> = {}) {
+      fetchOverride = (path) =>
+        path === "prices/price_website_service"
+          ? Response.json({ id: "price_website_service", unit_amount: unitAmount, currency: "cad", active: true, ...extra })
+          : null;
+    }
+
+    it("adds the website line only when the Stripe price is exactly the published $699.99 CAD", async () => {
+      process.env.STRIPE_TEST_PRICE_WEBSITE_SERVICE = "price_website_service";
+      websitePriceIs(69_999);
+      await createInstallationCheckoutSession(
+        { id: "org_1", plan: "starter", accountType: "demo" },
+        { websiteService: true },
+      );
+      const body = new URLSearchParams(requests.find((r) => r.path === "checkout/sessions")!.body);
+      assert.equal(body.get("line_items[1][price]"), "price_website_service");
+      assert.equal(body.get("metadata[website_service]"), "1");
+      delete process.env.STRIPE_TEST_PRICE_WEBSITE_SERVICE;
+    });
+
+    it("refuses to charge a Stripe price left at the old $349.99 amount", async () => {
+      process.env.STRIPE_TEST_PRICE_WEBSITE_SERVICE = "price_website_service";
+      websitePriceIs(34_999);
+      await assert.rejects(
+        () =>
+          createInstallationCheckoutSession(
+            { id: "org_1", plan: "starter", accountType: "demo" },
+            { websiteService: true },
+          ),
+        (err: unknown) => err instanceof CheckoutError && err.code === "misconfigured",
+      );
+      assert.equal(requests.some((r) => r.path === "checkout/sessions"), false);
+      assert.equal(checkouts[0]?.status, "failed");
+      delete process.env.STRIPE_TEST_PRICE_WEBSITE_SERVICE;
+    });
+
+    it("refuses a recurring or wrong-currency website price", async () => {
+      process.env.STRIPE_TEST_PRICE_WEBSITE_SERVICE = "price_website_service";
+      websitePriceIs(69_999, { recurring: { interval: "month" } });
+      await assert.rejects(
+        () =>
+          createInstallationCheckoutSession(
+            { id: "org_1", plan: "starter", accountType: "demo" },
+            { websiteService: true },
+          ),
+        (err: unknown) => err instanceof CheckoutError && err.code === "misconfigured",
+      );
+      delete process.env.STRIPE_TEST_PRICE_WEBSITE_SERVICE;
+    });
+
+    it("never looks up the website price when the box is not ticked", async () => {
+      await createInstallationCheckoutSession({ id: "org_1", plan: "starter", accountType: "demo" });
+      assert.equal(requests.some((r) => r.path.startsWith("prices/")), false);
+    });
+  });
 });
 
 describe("synchronizeInstallationCheckout", () => {

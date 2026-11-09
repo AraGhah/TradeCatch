@@ -52,21 +52,20 @@ export default async function BookAuditPage({
   );
 }
 
-/** Linkify a phone number when the reassurance string includes one. */
+/** Linkify the contact email when the reassurance string includes it. */
 function ReassuranceText({ text }: { text: string }) {
-  const match = text.match(/(\d{3}[·.]\d{3}[·.]\d{4})/);
+  const match = text.match(/[\w.+-]+@[\w-]+\.[\w.-]+/);
   if (!match || match.index === undefined) return <>{text}</>;
 
-  const phone = match[1];
-  const tel = phone.replace(/[·.]/g, "");
+  const email = match[0];
   const before = text.slice(0, match.index);
-  const after = text.slice(match.index + phone.length);
+  const after = text.slice(match.index + email.length);
 
   return (
     <>
       {before}
-      <a href={`tel:${tel}`} className="font-semibold text-muted hover:text-heading">
-        {phone}
+      <a href={`mailto:${email}`} className="font-semibold text-muted hover:text-heading">
+        {email}
       </a>
       {after}
     </>

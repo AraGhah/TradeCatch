@@ -528,6 +528,61 @@ describe("receptionist LLM brain guardrails", () => {
     assert.equal(s.turns.at(-1)!.brain, "llm");
   });
 
+  it("transfers a caller who asks for a person even when the model only asks another question", async () => {
+    let modelCalls = 0;
+    const llm: LlmClient = {
+      ...fakeLlm({ reply: "Bien sûr. Quel est votre nom?", action: "ask" }),
+      async generateJson() {
+        modelCalls += 1;
+        return { reply: "Bien sûr. Quel est votre nom?", action: "ask" };
+      },
+    };
+    const { engine, store } = setup({ brain: createLlmBrain(llm) });
+    let plan = await engine.startCall({ callSid: "CCH1", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    const before = modelCalls;
+    plan = await say(engine, plan, "je veux parler à une vraie personne");
+    const dial = plan.verbs.find((v) => v.verb === "dial");
+    assert.ok(dial, "the explicit request dials");
+    assert.equal((dial as { phoneE164: string }).phoneE164, "+15145550303");
+    assert.equal(modelCalls, before, "the model is not consulted for an explicit request");
+    const s = (await store.getSessionByCallSid("CCH1"))!;
+    assert.equal(s.status, "transferring");
+    assert.equal(s.transfers.at(-1)!.reason, "fallback");
+  });
+
+  it("an unanswered, busy or failed transfer requested through the model brain keeps the caller and takes a message", async () => {
+    const expected = { "no-answer": "no_answer", busy: "busy", failed: "failed" } as const;
+    for (const [dialStatus, recorded] of Object.entries(expected)) {
+      const llm = fakeLlm({ reply: "D'accord, quel est votre nom?", action: "ask" });
+      const { engine, store } = setup({ brain: createLlmBrain(llm) });
+      const callSid = `CCH2_${dialStatus}`;
+      let plan = await engine.startCall({ callSid, fromE164: CALLER, toE164: OFFICE });
+      plan = await say(engine, plan, "", "1");
+      plan = await say(engine, plan, "can I talk to a real person please");
+      assert.ok(plan.verbs.some((v) => v.verb === "dial"), dialStatus);
+      plan = await engine.handleDialResult({ sessionId: plan.sessionId!, dialStatus });
+      assert.equal(plan.verbs.some((v) => v.verb === "hangup"), false, `${dialStatus} keeps the caller`);
+      const after = (await store.getSessionByCallSid(callSid))!;
+      assert.equal(after.status, "in_progress", dialStatus);
+      assert.equal(after.transfers.at(-1)!.status, recorded);
+      assert.notEqual(after.outcome, "transferred");
+    }
+  });
+
+  it("never dials after hours on an explicit request when transfers keep business hours", async () => {
+    const llm = fakeLlm({ reply: "Je prends vos coordonnées.", action: "ask" });
+    const { engine } = setup({
+      at: AFTER_HOURS,
+      brain: createLlmBrain(llm),
+      config: makeConfig({ transferHours: "business_hours" }),
+    });
+    let plan = await engine.startCall({ callSid: "CCH3", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "je veux parler à une vraie personne");
+    assert.equal(plan.verbs.some((v) => v.verb === "dial"), false);
+  });
+
   it("rejects a hallucinated transfer target and keeps collecting", async () => {
     const llm = fakeLlm({ reply: "Je vous transfère.", action: "transfer", transferTargetId: "ceo" });
     const { engine } = setup({ brain: createLlmBrain(llm) });

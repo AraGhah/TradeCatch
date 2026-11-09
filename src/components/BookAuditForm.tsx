@@ -27,7 +27,7 @@ import { randomUUID } from "@/lib/id";
 import { referralCodeForThisVisit } from "@/lib/referral-capture";
 
 const DRAFT_STORAGE_KEY = "tradecatch-book-audit-draft";
-const PLAN_INTEREST_VALUES = ["starter", "growth", "receptionist"] as const;
+const PLAN_INTEREST_VALUES = ["essential", "professional"] as const;
 
 type PlanInterest = (typeof PLAN_INTEREST_VALUES)[number];
 
@@ -92,6 +92,21 @@ function emptyAnswers(): Answers {
 
 type Phase = "wizard" | "confirmed";
 type SubmitStatus = "idle" | "submitting" | "error";
+/**
+ * Why a request did not go through, so the visitor is told the truth:
+ * - invalid: the answers were refused (400), fix them and retry
+ * - unavailable: our storage is down (503); nothing was saved, retrying is safe
+ * - rateLimited: too many attempts (429); wait a little
+ * - network: the request never reached us
+ */
+type SubmitFailure = "generic" | "invalid" | "unavailable" | "rateLimited" | "network";
+
+function failureForStatus(status: number): SubmitFailure {
+  if (status === 503) return "unavailable";
+  if (status === 429) return "rateLimited";
+  if (status === 400 || status === 413) return "invalid";
+  return "generic";
+}
 
 type StepKind = "name" | "contact" | "text" | "choice" | "consent" | "review";
 
@@ -138,9 +153,12 @@ export function BookAuditForm() {
   const focusErrorSummary = useRef(false);
   const hydrated = useRef(false);
   const funnel = useRef<ReturnType<typeof createAuditFunnel> | null>(null);
-  const [submitError, setSubmitError] = useState<"generic" | "network" | null>(
-    null,
-  );
+  const [submitError, setSubmitError] = useState<SubmitFailure | null>(null);
+  // State updates are asynchronous, so a fast double click or Enter-then-click
+  // can start two requests before `submitStatus` disables the button. The ref
+  // closes that gap: one request in flight at a time.
+  const submitInFlight = useRef(false);
+  const submitErrorRef = useRef<HTMLDivElement>(null);
 
   const step = BOOK_AUDIT_STEPS[stepIndex];
   const onReview = step === "review";
@@ -227,6 +245,17 @@ export function BookAuditForm() {
     focusErrorSummary.current = false;
     errorSummaryRef.current?.focus();
   }, [errors]);
+
+  // A failed send must be seen: bring the message into view and announce it,
+  // rather than leaving it below the fold next to a re-armed button.
+  useEffect(() => {
+    if (submitStatus !== "error") return;
+    const box = submitErrorRef.current;
+    if (!box) return;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    box.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+    box.focus({ preventScroll: true });
+  }, [submitStatus, submitError]);
 
   function focusAuditField(field: string) {
     const id =
@@ -389,8 +418,14 @@ export function BookAuditForm() {
 
   async function submitAudit() {
     if (!turnstileToken || !answers.serviceConsent) return;
+    if (submitInFlight.current) return;
+    submitInFlight.current = true;
 
-    function failSubmission(kind: "generic" | "network") {
+    // The answers stay exactly as typed and the same idempotency key is kept:
+    // a retry after a failure is the same request, so the server can never
+    // store the demo request twice. A fresh bot check is the only thing needed.
+    function failSubmission(kind: SubmitFailure) {
+      submitInFlight.current = false;
       setSubmitStatus("error");
       setSubmitError(kind);
       setTurnstileToken("");
@@ -413,7 +448,7 @@ export function BookAuditForm() {
     };
     const parsed = bookAuditSchema.safeParse(payload);
     if (!parsed.success) {
-      failSubmission("generic");
+      failSubmission("invalid");
       return;
     }
     setSubmitStatus("submitting");
@@ -431,8 +466,9 @@ export function BookAuditForm() {
         ok?: boolean;
         leadSaved?: boolean;
       } | null;
+      // Confirmation is shown only when the server says the request was saved.
       if (!response.ok || result?.ok !== true || result?.leadSaved !== true) {
-        failSubmission("generic");
+        failSubmission(response.ok ? "generic" : failureForStatus(response.status));
         return;
       }
       trackEvent("audit_form_submitted", {
@@ -450,6 +486,7 @@ export function BookAuditForm() {
       } catch {
         // Nothing to clean up if storage was never available.
       }
+      submitInFlight.current = false;
       setSubmitStatus("idle");
       setSubmitError(null);
       setPhase("confirmed");
@@ -698,14 +735,16 @@ export function BookAuditForm() {
                   />
                 </div>
                 {submitStatus === "error" ? (
-                  <p
+                  <div
+                    ref={submitErrorRef}
                     role="alert"
-                    className="mt-3 text-sm font-medium text-red-600"
+                    id="audit-submit-error"
+                    tabIndex={-1}
+                    data-testid="audit-submit-error"
+                    className="mt-4 scroll-mt-28 rounded-[12px] border border-red-200 bg-red-50 px-4 py-3 text-[15px] leading-[1.55] font-medium wrap-anywhere text-red-800 outline-none focus:ring-2 focus:ring-red-400"
                   >
-                    {submitError === "network"
-                      ? t("wizard.networkError")
-                      : t("wizard.genericError")}
-                  </p>
+                    {t(`wizard.submitFailure.${submitError ?? "generic"}`)}
+                  </div>
                 ) : null}
               </div>
             ) : null}

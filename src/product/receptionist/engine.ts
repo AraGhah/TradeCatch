@@ -15,6 +15,12 @@ import { isAfterHours } from "@/product/missed-call/call-handling";
 import { shouldAnswerCall } from "./call-handling";
 import { decideInboundRouting } from "@/product/telephony/call-routing";
 import { defaultPhoneSettings } from "@/product/telephony/phone-settings";
+import { livekitHandoffReady } from "@/product/telephony/livekit-handoff";
+import {
+  callerPolicyFor,
+  personalCallMessage,
+  screeningPrompt,
+} from "@/product/telephony/caller-policy";
 import { classifyUrgency } from "@/product/missed-call/urgency";
 import type { Clock, UrgencyClassification } from "@/product/missed-call/types";
 import {
@@ -108,6 +114,11 @@ export type ReceptionistEngineDeps = {
   scheduler?: ReceptionistScheduler;
   /** Report an outage without delaying the live call. Delivery owns its lifetime. */
   onFailure?: (failure: ReceptionistFailure) => void;
+  /**
+   * Whether the LiveKit SIP hand-off is configured. Defaults to the
+   * environment check; tests inject it.
+   */
+  livekitHandoffReady?: () => boolean;
 };
 
 export type ReceptionistFailure = {
@@ -173,6 +184,17 @@ const URGENCY_RANK = { routine: 0, priority: 1, critical: 2 } as const;
 
 /** Schedules work after the response (Next `after`, Workers `waitUntil`). */
 export type DeferFn = (task: () => Promise<void>) => void;
+
+/** Drop unset keys so stored sessions stay small and comparable. */
+function compactRouting(
+  routing: NonNullable<CallSession["routing"]>,
+): CallSession["routing"] {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(routing)) if (v !== undefined) out[k] = v;
+  return Object.keys(out).length > 0
+    ? (out as NonNullable<CallSession["routing"]>)
+    : undefined;
+}
 
 export type ReceptionistEngine = ReturnType<typeof createReceptionistEngine>;
 
@@ -498,6 +520,99 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
 
   function hangupPlan(sessionId: string | null): VoicePlan {
     return { sessionId, verbs: [{ verb: "hangup" }] };
+  }
+
+  /** The LiveKit agent answers this call's AI leg (falls back when unset). */
+  function usesLivekit(config: ReceptionistConfig): boolean {
+    if (config.voiceEngine !== "livekit") return false;
+    return (deps.livekitHandoffReady ?? livekitHandoffReady)();
+  }
+
+  function sipHandoffPlan(
+    config: ReceptionistConfig,
+    session: CallSession,
+  ): VoicePlan {
+    return {
+      sessionId: session.id,
+      verbs: [
+        {
+          verb: "sip_handoff",
+          next: "dial",
+          target: "livekit",
+          calledE164: config.phoneNumberE164,
+          timeoutSeconds: 20,
+        },
+      ],
+    };
+  }
+
+  /** The words for a personal / withheld caller, then the end of the call. */
+  function policyMessagePlan(
+    config: ReceptionistConfig,
+    sessionId: string | null,
+    kind: "personal" | "unknown",
+  ): VoicePlan {
+    return {
+      sessionId,
+      verbs: [
+        ...personalCallMessage(config, kind).map((m) =>
+          say(config, m.lang, m.text),
+        ),
+        { verb: "hangup" },
+      ],
+    };
+  }
+
+  /**
+   * The AI answers after a missed ring or a failed hand-off: the LiveKit
+   * agent when it is configured, else the built-in receptionist.
+   */
+  function aiTakesOver(
+    config: ReceptionistConfig,
+    session: CallSession,
+    systemNote: string,
+    extra: Partial<CallSession>,
+  ): { session: CallSession; result: VoicePlan } {
+    const routing = { ...session.routing, ...extra.routing };
+    if (usesLivekit(config) && routing.handoff?.status !== "failed") {
+      const next: CallSession = {
+        ...session,
+        ...extra,
+        status: "in_progress",
+        routing: {
+          ...routing,
+          handoff: { target: "livekit", status: "dialing", at: nowIso() },
+        },
+        turns: [
+          ...session.turns,
+          turn("system", systemNote, { action: "missed" }),
+        ],
+      };
+      return { session: next, result: sipHandoffPlan(config, next) };
+    }
+    const opening = openingFor(config, session.afterHours);
+    const next: CallSession = {
+      ...session,
+      ...extra,
+      routing,
+      status: "in_progress",
+      language: opening.language,
+      step: opening.step,
+      turns: [
+        ...session.turns,
+        turn("system", systemNote, { action: "missed" }),
+        ...opening.prompts.map((p) =>
+          turn("agent", p.text, { action: "greet", brain: "rules" }),
+        ),
+      ],
+    };
+    return {
+      session: next,
+      result: {
+        sessionId: next.id,
+        verbs: [listen(config, next, opening.prompts)],
+      },
+    };
   }
 
   /**
@@ -1166,6 +1281,12 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     }
     if (!claimed) return null;
 
+    // Someone else owns this call's follow-up: the contractor answered it,
+    // the LiveKit agent reports its own conversation, or the caller is a
+    // personal contact. Sending a summary, a missed-call text or a CRM lead
+    // here would duplicate or invent one.
+    if (claimed.routing?.quiet) return claimed;
+
     const config = configFor(claimed);
     if (!config) {
       console.error(
@@ -1275,6 +1396,8 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       toE164: string;
       /** Skip human-first / overflow ring and go straight to the AI. */
       skipHumanRing?: boolean;
+      /** Twilio `ForwardedFrom`: the line the carrier forwarded from, if sent. */
+      forwardedFromE164?: string;
     }): Promise<VoicePlan> {
       const config = resolveConfig(input.toE164);
       if (!config) {
@@ -1301,17 +1424,26 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         return failSafePlan(null, null, undefined, { cause: "declined" });
       }
 
+      // A carrier-forwarded call already rang the contractor's phone, and
+      // ringing it again would forward right back here: never ring first.
+      const forwarded = config.routingMethod === "carrier_forwarding";
       const phone = {
         ...defaultPhoneSettings(),
         aiEnabled: config.enabled,
-        inboundStrategy: config.inboundStrategy ?? "ai_first",
+        inboundStrategy: forwarded
+          ? ("ai_first" as const)
+          : (config.inboundStrategy ?? "ai_first"),
         humanRingTimeoutSeconds: config.humanRingTimeoutSeconds ?? 25,
-        humanTransferE164: config.fallbackTransferE164,
-        ringHumanOnOverflow: true,
+        humanTransferE164: forwarded
+          ? undefined
+          : (config.ringFirstE164 ?? config.fallbackTransferE164),
+        ringHumanOnOverflow: !forwarded,
       };
-      const routing = input.skipHumanRing
-        ? ({ action: "ai", reason: "forced_ai", strategy: "ai_first" } as const)
-        : decideInboundRouting({ config, phone, now: at });
+      const policy = callerPolicyFor(config, input.fromE164);
+      const routing =
+        policy.kind !== "ai" || input.skipHumanRing
+          ? ({ action: "ai", reason: "forced_ai", strategy: "ai_first" } as const)
+          : decideInboundRouting({ config, phone, now: at });
 
       if (routing.action === "reject") {
         logReceptionistDiagnostic({
@@ -1335,15 +1467,34 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         // Every call starts in French when French is enabled; see language-select.ts.
         language: opening.language,
         status:
-          routing.action === "ring_human" ? "transferring" : "in_progress",
-        step: opening.step,
+          routing.action === "ring_human" || policy.kind === "personal_transfer"
+            ? "transferring"
+            : policy.kind !== "ai"
+              ? "completed"
+              : "in_progress",
+        step:
+          policy.kind !== "ai" && policy.kind !== "personal_transfer"
+            ? "done"
+            : opening.step,
         afterHours,
         slots: {},
         turns: [],
         silenceCount: 0,
         callerTurnCount: 0,
         transfers:
-          routing.action === "ring_human"
+          policy.kind === "personal_transfer"
+            ? [
+                {
+                  at: at.toISOString(),
+                  targetId: "personal",
+                  targetName:
+                    config.defaultLanguage === "fr" ? "l'équipe" : "the team",
+                  phoneE164: policy.transferE164,
+                  reason: "personal_contact",
+                  status: "dialing",
+                },
+              ]
+            : routing.action === "ring_human"
             ? [
                 {
                   at: at.toISOString(),
@@ -1361,6 +1512,25 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
               ]
             : [],
         notifications: [],
+        routing: compactRouting({
+          mode: config.aiCallMode,
+          method: config.routingMethod,
+          screened:
+            routing.action === "ring_human" && config.callScreening === true
+              ? true
+              : undefined,
+          handoff:
+            policy.kind === "ai" &&
+            routing.action !== "ring_human" &&
+            usesLivekit(config)
+              ? { target: "livekit", status: "dialing", at: at.toISOString() }
+              : undefined,
+          callerPolicy: policy.kind === "ai" ? undefined : policy.kind,
+          forwardedFrom: input.forwardedFromE164?.trim() || undefined,
+          // Personal / withheld callers are the owner's own business: no
+          // summary, no SMS recovery, no CRM lead.
+          quiet: policy.kind !== "ai" ? true : undefined,
+        }),
         startedAt: at.toISOString(),
         updatedAt: at.toISOString(),
         version: 1,
@@ -1368,6 +1538,18 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
 
       const { session, created } =
         await deps.store.insertSessionIfAbsent(draft);
+
+      // Twilio retries replay the same decision: the policy depends only on
+      // the caller ID and the saved config.
+      if (policy.kind === "personal_message") {
+        return policyMessagePlan(config, session.id, "personal");
+      }
+      if (policy.kind === "unknown_message") {
+        return policyMessagePlan(config, session.id, "unknown");
+      }
+      if (policy.kind === "personal_end") {
+        return hangupPlan(session.id);
+      }
 
       if (!created) {
         // Twilio retry of the same call: repeat the current question.
@@ -1383,10 +1565,14 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
                   phoneE164: last.phoneE164,
                   timeoutSeconds: config.humanRingTimeoutSeconds ?? 25,
                   callerIdE164: config.phoneNumberE164,
+                  screen: session.routing?.screened === true ? true : undefined,
                 },
               ],
             };
           }
+        }
+        if (session.routing?.handoff?.status === "dialing") {
+          return sipHandoffPlan(config, session);
         }
         // At the language menu a retry plays the menu again, not a question.
         const retryPrompts =
@@ -1414,6 +1600,21 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         };
       }
 
+      if (policy.kind === "personal_transfer") {
+        return {
+          sessionId: session.id,
+          verbs: [
+            {
+              verb: "dial",
+              next: "dial",
+              phoneE164: policy.transferE164,
+              timeoutSeconds: config.humanRingTimeoutSeconds ?? 25,
+              callerIdE164: config.phoneNumberE164,
+            },
+          ],
+        };
+      }
+
       if (routing.action === "ring_human") {
         return {
           sessionId: session.id,
@@ -1424,9 +1625,14 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
               phoneE164: routing.phoneE164,
               timeoutSeconds: routing.timeoutSeconds,
               callerIdE164: config.phoneNumberE164,
+              screen: session.routing?.screened === true ? true : undefined,
             },
           ],
         };
+      }
+
+      if (session.routing?.handoff?.status === "dialing") {
+        return sipHandoffPlan(config, session);
       }
 
       const prompts = opening.prompts;
@@ -1766,21 +1972,102 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       return plan ?? hangupPlan(null);
     },
 
+    /**
+     * Press-1 screening on the contractor's leg of a ring-first call.
+     * `prompt`: whoever answered hears the screening line. `result`: a 1
+     * records the acceptance and bridges the call (empty TwiML); anything
+     * else hangs up that leg, so the AI takes the caller.
+     */
+    async handleScreen(input: {
+      sessionId: string;
+      phase: "prompt" | "result";
+      digits?: string;
+      /** The caller's (parent) CallSid, when Twilio sends it. */
+      parentCallSid?: string;
+    }): Promise<VoicePlan> {
+      const plan = await withSession<VoicePlan>(
+        input.sessionId,
+        async (session) => {
+          const config = configFor(session);
+          const ringing =
+            !session.finalizedAt &&
+            session.status === "transferring" &&
+            session.routing?.screened === true &&
+            session.transfers.at(-1)?.status === "dialing";
+          if (!config || !ringing) {
+            return { session: null, result: hangupPlan(session.id) };
+          }
+          if (input.phase === "prompt") {
+            const line = screeningPrompt(config);
+            return {
+              session: null,
+              result: {
+                sessionId: session.id,
+                verbs: [
+                  {
+                    verb: "gather",
+                    next: "screen_result",
+                    language: line.lang,
+                    prompts: [
+                      {
+                        text: line.text,
+                        voice: voiceOf(config, line.lang),
+                        language: line.lang,
+                        speed: config.speakingSpeed,
+                      },
+                    ],
+                    input: ["dtmf"],
+                    timeoutSeconds: 6,
+                    numDigits: 1,
+                  },
+                  { verb: "hangup" },
+                ],
+              },
+            };
+          }
+          if ((input.digits ?? "").trim() !== "1") {
+            return { session: null, result: hangupPlan(session.id) };
+          }
+          const next: CallSession = {
+            ...session,
+            routing: { ...session.routing, acceptedAt: nowIso() },
+          };
+          // No verbs: the answered leg is bridged to the caller.
+          return { session: next, result: { sessionId: session.id, verbs: [] } };
+        },
+        input.parentCallSid,
+      );
+      return plan ?? hangupPlan(null);
+    },
+
     /** <Dial action> — result of a live transfer. */
     async handleDialResult(input: {
       sessionId: string;
       dialStatus: string;
       durationSeconds?: number;
       callSid?: string;
+      /**
+       * The caller's own leg status. "completed" here means the caller already
+       * hung up, so nothing may be spoken or dialed any more.
+       */
+      callStatus?: string;
     }): Promise<VoicePlan> {
       const plan = await withSession<VoicePlan>(
         input.sessionId,
         async (session) => {
           const config = configFor(session);
           if (!config) return { session: null, result: hangupPlan(session.id) };
+          // A late or repeated callback for a call that already ended (the
+          // status callback won the race) must not restart anything.
+          if (session.finalizedAt || session.status === "completed") {
+            return { session: null, result: hangupPlan(session.id) };
+          }
           const last = session.transfers.at(-1);
           const status = input.dialStatus.toLowerCase();
-          const mapped: TransferAttempt["status"] =
+          const callerGone = ["completed", "canceled"].includes(
+            (input.callStatus ?? "").toLowerCase(),
+          );
+          let mapped: TransferAttempt["status"] =
             status === "completed" || status === "answered"
               ? "completed"
               : status === "busy"
@@ -1789,9 +2076,92 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
                   ? "no_answer"
                   : "failed";
 
+          // 1) Hand-off to the LiveKit agent. LiveKit answering is the only
+          //    way this leg completes; the agent reports the conversation
+          //    itself, so this routing record stays quiet.
+          if (session.routing?.handoff?.status === "dialing") {
+            if (mapped === "completed") {
+              const next: CallSession = {
+                ...session,
+                status: "completed",
+                step: "done",
+                outcome: session.outcome ?? "transferred",
+                endedAt: nowIso(),
+                routing: {
+                  ...session.routing,
+                  handoff: { ...session.routing.handoff, status: "connected" },
+                  quiet: true,
+                },
+                turns: [...session.turns, turn("system", "livekit_handoff_connected")],
+              };
+              return { session: next, result: hangupPlan(session.id) };
+            }
+            logReceptionistDiagnostic({
+              event: "webhook_failed",
+              code: "LIVEKIT_HANDOFF_FAILED",
+              callSid: session.callSid,
+              step: `dial_${status.replace(/[^a-z-]/g, "").slice(0, 20)}`,
+            });
+            const failedRouting = {
+              ...session.routing,
+              handoff: { ...session.routing.handoff, status: "failed" as const },
+            };
+            if (callerGone) {
+              const next: CallSession = {
+                ...session,
+                step: "done",
+                outcome: session.outcome ?? "caller_hung_up",
+                routing: failedRouting,
+              };
+              return { session: next, result: hangupPlan(session.id) };
+            }
+            // LiveKit unreachable: the built-in receptionist answers instead.
+            return aiTakesOver(config, session, "livekit_handoff_failed", {
+              routing: failedRouting,
+            });
+          }
+
+          // 2) A ring-first leg that "completed" without the press-1 was a
+          //    voicemail or an unattended pick-up, not the contractor.
+          const ringFirst =
+            last?.reason === "human_first" || last?.reason === "overflow_ring";
+          let ringResult: NonNullable<CallSession["routing"]>["ringResult"];
+          if (ringFirst) {
+            if (mapped === "completed" && session.routing?.screened === true) {
+              if (session.routing.acceptedAt) ringResult = "accepted";
+              else {
+                ringResult = "voicemail_or_unscreened";
+                mapped = "no_answer";
+              }
+            } else if (mapped === "completed") ringResult = "accepted";
+            else ringResult = mapped === "busy" ? "busy" : mapped === "no_answer" ? "no_answer" : "failed";
+          }
+
           const transfers = last
             ? [...session.transfers.slice(0, -1), { ...last, status: mapped }]
             : session.transfers;
+          const routing = ringResult
+            ? { ...session.routing, ringResult }
+            : session.routing;
+
+          // 3) A personal contact sent to the owner's line: never the AI.
+          if (last?.reason === "personal_contact") {
+            const next: CallSession = {
+              ...session,
+              transfers,
+              status: "completed",
+              step: "done",
+              outcome: mapped === "completed" ? "transferred" : session.outcome,
+              endedAt: nowIso(),
+            };
+            if (mapped === "completed" || callerGone) {
+              return { session: next, result: hangupPlan(session.id) };
+            }
+            return {
+              session: next,
+              result: policyMessagePlan(config, session.id, "personal"),
+            };
+          }
 
           if (mapped === "completed") {
             const next: CallSession = {
@@ -1804,40 +2174,38 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
                   ? "emergency_transferred"
                   : "transferred",
               endedAt: nowIso(),
+              // In missed-calls-only the contractor took their own call: they
+              // need no summary of it, and it is not a lead to chase.
+              routing:
+                ringFirst && config.aiCallMode === "missed_calls_only"
+                  ? { ...routing, quiet: true }
+                  : routing,
+            };
+            return { session: next, result: hangupPlan(session.id) };
+          }
+
+          // The caller hung up while the contractor's phone was ringing: a
+          // missed call. Finalization owns the follow-up (missed-call text and
+          // owner summary); nothing can be said on a closed line.
+          if (callerGone) {
+            const next: CallSession = {
+              ...session,
+              transfers,
+              routing,
+              step: "done",
+              outcome: session.outcome ?? "caller_hung_up",
+              endedAt: session.endedAt ?? nowIso(),
             };
             return { session: next, result: hangupPlan(session.id) };
           }
 
           // Overflow / human-first ring failed → hand to the AI receptionist.
-          if (
-            last?.continueWithAi ||
-            last?.reason === "overflow_ring" ||
-            last?.reason === "human_first"
-          ) {
+          if (last?.continueWithAi || ringFirst) {
             // Nobody picked up: the AI answers, French first, like any other call.
-            const opening = openingFor(config, session.afterHours);
-            const prompts = opening.prompts;
-            const next: CallSession = {
-              ...session,
+            return aiTakesOver(config, session, `ring_${mapped}`, {
               transfers,
-              status: "in_progress",
-              language: opening.language,
-              step: opening.step,
-              turns: [
-                ...session.turns,
-                turn("system", `ring_${mapped}`, { action: "missed" }),
-                ...prompts.map((p) =>
-                  turn("agent", p.text, { action: "greet", brain: "rules" }),
-                ),
-              ],
-            };
-            return {
-              session: next,
-              result: {
-                sessionId: next.id,
-                verbs: [listen(config, next, prompts)],
-              },
-            };
+              routing,
+            });
           }
 
           // Nobody picked up on an explicit transfer: take the request instead.

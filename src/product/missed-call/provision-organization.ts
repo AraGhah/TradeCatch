@@ -143,7 +143,7 @@ export async function provisionOrganizationSmsNumber(
   const purchased = await purchaseNumber(
     {
       phoneNumberE164: chosen.phoneNumberE164,
-      friendlyName: `TradeCatch — ${organization.name}`,
+      friendlyName: `TradeCatch | ${organization.name}`,
     },
     env,
   );

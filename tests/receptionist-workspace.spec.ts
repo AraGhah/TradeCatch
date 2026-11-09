@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFile } from "node:fs/promises";
+import { waitForFormHydration } from "./support/hydration";
 import { readExportZip } from "./support/read-export-zip";
 
 /**
@@ -15,7 +16,7 @@ const OPS = {
   "X-Ops-Actor": "playwright-founder-gate",
 };
 
-async function signIn(page: Page, plan: "starter" | "growth") {
+async function signIn(page: Page, plan: "essential" | "starter" | "growth") {
   // The localhost-only harness trusts these synthetic documentation addresses.
   // Each retry worker gets its own client quota; production limits stay intact.
   await page.setExtraHTTPHeaders({
@@ -45,13 +46,19 @@ async function signIn(page: Page, plan: "starter" | "growth") {
       { timeout: 10_000 },
     )
     .catch(() => undefined);
+  await waitForFormHydration(page);
   await page.getByLabel("Work email").fill(email);
+  await page
+    .getByRole("button", { name: "Email me a sign-in link instead" })
+    .click();
   const response = page.waitForResponse(
     (r) =>
       r.url().endsWith("/api/auth/magic-link") &&
       r.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await page
+    .getByRole("button", { name: "Email me a sign-in link", exact: true })
+    .click();
   expect((await response).status()).toBe(200);
   await page.getByRole("link", { name: "Open workspace" }).click();
   await page.getByRole("button", { name: "Confirm and sign in" }).click();
@@ -59,10 +66,10 @@ async function signIn(page: Page, plan: "starter" | "growth") {
 }
 
 test.describe("receptionist workspace pages", () => {
-  test("Starter: receptionist settings show the unlinked state and pass axe; email is Growth-only", async ({
+  test("Essential: receptionist settings show the unlinked state and pass axe; email automation is not included", async ({
     page,
   }) => {
-    await signIn(page, "starter");
+    await signIn(page, "essential");
 
     await page.goto("/app/receptionist");
     await expect(
@@ -141,7 +148,7 @@ test.describe("receptionist workspace pages", () => {
 
     await page.goto("/app/email");
     await expect(
-      page.getByText("Email automation is available on the Growth plan."),
+      page.getByText("Email automation is not included in your plan."),
     ).toBeVisible();
   });
 
@@ -258,7 +265,7 @@ test.describe("receptionist workspace pages", () => {
   test("contractors cannot read TradeCatch sales leads or open its sales dashboard", async ({
     page,
   }) => {
-    await signIn(page, "starter");
+    await signIn(page, "essential");
     const response = await page.request.get("/api/admin/sales-leads");
     expect(response.status()).toBe(403);
     expect(response.headers()["cache-control"]).toContain("no-store");

@@ -39,13 +39,21 @@ export async function POST(request: NextRequest) {
   });
   if (limited) return limited;
   try {
+    // Only an explicit `websiteService: true` adds the website line. Anything else is ignored.
+    const body = (await request.json().catch(() => null)) as {
+      websiteService?: unknown;
+    } | null;
+    const websiteService = body?.websiteService === true;
     const url = await createInstallationCheckoutSession(
       access.ctx.organization,
+      { websiteService },
     );
     await recordSecurityEvent({
       organizationId: access.ctx.organization.id,
       actorUserId: access.ctx.user.id,
-      action: "installation_checkout_created",
+      action: websiteService
+        ? "installation_checkout_created_with_website_service"
+        : "installation_checkout_created",
       target: access.ctx.organization.id,
     });
     if (request.headers.get("accept")?.includes("application/json")) {

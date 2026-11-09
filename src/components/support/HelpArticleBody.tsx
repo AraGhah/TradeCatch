@@ -42,7 +42,7 @@ export function HelpArticleBody({
           className="h-auto w-full rounded-md border border-[rgb(var(--ink-rgb)/0.15)]"
         />
         <figcaption className="mt-2 text-xs leading-5 text-muted">
-          {fr ? "Exemple fictif — " : "Synthetic example — "}
+          {fr ? "Exemple fictif : " : "Synthetic example: "}
           {screenshot.caption}
         </figcaption>
       </figure>

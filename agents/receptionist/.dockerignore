@@ -1,0 +1,19 @@
+# Only these runtime inputs may be sent to the builder.
+*
+!Dockerfile
+!requirements.txt
+!requirements-linux.lock
+!agent.py
+!call_record.py
+!caller_policy.py
+!language.py
+!language_listener.py
+!phrases.py
+!policy.py
+!routing.py
+!tool_results.py
+!tradecatch_api.py
+!transfer.py
+!tuning.py
+!voice.py
+!warm_transfer.py

@@ -175,7 +175,11 @@ test("a broken SMS inbox is reported but never stops escalation timers", async (
   (globalThis as { __tradecatchSmsInbox?: unknown }).__tradecatchSmsInbox = {
     async enqueue() {},
     async claim() {
-      throw Error("inbox table missing: private customer detail");
+      // What node-postgres throws when the inbox migration never ran.
+      throw Object.assign(
+        Error('relation "mc_sms_inbox" does not exist: private customer detail'),
+        { name: "error", code: "42P01" },
+      );
     },
     async finish() {},
     async purge() {},
@@ -197,9 +201,20 @@ test("a broken SMS inbox is reported but never stops escalation timers", async (
       [started.workflow.id],
       "escalation timers still ran",
     );
-    assert.ok(
-      logged.some((line) => line.includes("inbox_tick_failed")),
-      "the failure is logged",
+    const failure = logged
+      .map((line) => {
+        try {
+          return JSON.parse(line) as Record<string, unknown>;
+        } catch {
+          return null;
+        }
+      })
+      .find((entry) => entry?.event === "tradecatch.sms.inbox_tick_failed");
+    assert.ok(failure, "the failure is logged");
+    assert.equal(
+      failure.sqlState,
+      "42P01",
+      "the Postgres code says which part of the database is broken",
     );
     assert.ok(
       logged.every((line) => !line.includes("private customer detail")),

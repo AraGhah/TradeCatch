@@ -63,7 +63,7 @@ export default async function AboutPage({
         }
       />
 
-      <section className="bg-paper pt-[clamp(36px,4vw,52px)] pb-[clamp(64px,7vw,100px)]">
+      <section className="bg-paper pt-[clamp(24px,3vw,36px)] pb-[var(--section-y)]">
         <Container>
           <div
             className="grid items-start"

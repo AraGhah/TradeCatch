@@ -1,3 +1,4 @@
+import { launchFlagEnabled, type LaunchFlag } from "@/lib/launch-flags";
 import { HELP_GUIDES } from "./help-guides";
 
 export type HelpArticle = {
@@ -5,16 +6,18 @@ export type HelpArticle = {
   category: string;
   title: { en: string; fr: string };
   body: { en: string; fr: string };
+  /** Hidden while this launch switch is off (the feature is not offered). */
+  flag?: LaunchFlag;
 };
 
-export const HELP_ARTICLES: HelpArticle[] = [
+const ALL_HELP_ARTICLES: HelpArticle[] = [
   {
     id: "getting-started",
     category: "getting_started",
-    title: { en: "Create your account", fr: "Créer votre compte" },
+    title: { en: "Sign in to your account", fr: "Se connecter à votre compte" },
     body: {
-      en: "Open the contractor dashboard, confirm your business, and finish onboarding before turning on the receptionist.",
-      fr: "Ouvrez le tableau de bord, confirmez l’entreprise, puis terminez le démarrage avant d’activer la réceptionniste.",
+      en: "TradeCatch creates your account and emails you a secure sign-in link. Open it, confirm your business, and finish setup before turning on the receptionist.",
+      fr: "TradeCatch crée votre compte et vous envoie un lien de connexion sécurisé. Ouvrez-le, confirmez votre entreprise, puis terminez la configuration avant d’activer la réceptionniste.",
     },
   },
   {
@@ -40,6 +43,7 @@ export const HELP_ARTICLES: HelpArticle[] = [
   },
   {
     id: "transfers",
+    flag: "callTransfer",
     category: "phone",
     title: {
       en: "Set up a human transfer",
@@ -58,8 +62,8 @@ export const HELP_ARTICLES: HelpArticle[] = [
       fr: "Comment connecter Google Agenda",
     },
     body: {
-      en: "Google Calendar is a separately enrolled Growth technical pilot, not general release or an automatic plan inclusion. Outlook is planned. Open Calendar settings to check your business’s availability.",
-      fr: "Google Calendar est un pilote technique Growth sur inscription distincte, pas une fonction généralement disponible ni incluse automatiquement. Outlook reste prévu. Ouvrez Calendrier pour vérifier l’accès de votre entreprise.",
+      en: "Google Calendar comes with the Professional plan. We switch it on for your business once it has been tested with your own calendar, so you cannot connect it yourself before then. Outlook is not available. Open Calendar settings to see where your business stands.",
+      fr: "Google Agenda est inclus avec le forfait Professional. Nous l’activons pour votre entreprise une fois qu’il a été testé avec votre propre calendrier; vous ne pouvez donc pas le connecter vous-même avant. Outlook n’est pas offert. Ouvrez les paramètres du calendrier pour voir où en est votre entreprise.",
     },
   },
   {
@@ -120,6 +124,11 @@ export const HELP_ARTICLES: HelpArticle[] = [
     },
   },
 ];
+
+/** The articles a customer can read: those whose feature is part of the launch offering. */
+export const HELP_ARTICLES: HelpArticle[] = ALL_HELP_ARTICLES.filter(
+  (article) => !article.flag || launchFlagEnabled(article.flag),
+);
 
 export function searchHelp(query: string, locale: "en" | "fr") {
   const needle = query.trim().toLowerCase();

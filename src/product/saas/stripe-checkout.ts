@@ -2,9 +2,13 @@ import { z } from "zod";
 import { stripeSecretKey } from "./stripe-key";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import { newId } from "./ids";
-import { referralInstallationPaid } from "@/product/referrals/billing-hooks";
+import {
+  referralInstallationPaid,
+  referralWebsiteServiceStarted,
+} from "@/product/referrals/billing-hooks";
 import type { PlanId } from "./entitlements";
 import { PLAN_IDS } from "./entitlements";
+import { ADD_ONS } from "./plan-catalog";
 import type { Organization } from "./types";
 
 export const CHECKOUT_COMPLETED_EVENT = "checkout.session.completed";
@@ -43,6 +47,14 @@ function requireDurableStore() {
 
 function installationPriceId(plan: PlanId, livemode: boolean): string {
   const name = `STRIPE_${livemode ? "" : "TEST_"}PRICE_INSTALL_${plan.toUpperCase()}`;
+  const id = process.env[name]?.trim();
+  if (!id) throw new CheckoutError("misconfigured");
+  return id;
+}
+
+/** The optional one-time website service (STRIPE_PRICE_WEBSITE_SERVICE). Only read when the owner ticks the box. */
+function websiteServicePriceId(livemode: boolean): string {
+  const name = `STRIPE_${livemode ? "" : "TEST_"}PRICE_WEBSITE_SERVICE`;
   const id = process.env[name]?.trim();
   if (!id) throw new CheckoutError("misconfigured");
   return id;
@@ -103,6 +115,47 @@ async function stripeGetJson(path: string, key: string): Promise<unknown> {
   return response.json();
 }
 
+const websitePriceSchema = z.object({
+  unit_amount: z.number().nullable(),
+  currency: z.string(),
+  active: z.boolean(),
+  type: z.string().optional(),
+  recurring: z.unknown().nullish(),
+});
+
+/**
+ * Stripe prices cannot be edited, so a catalog price change needs a new Stripe
+ * Price and a new environment variable. Refuse a configured price that is not
+ * exactly the published website price: the displayed amount and the charged
+ * amount must never differ. Fails closed (misconfigured), never silently charges.
+ */
+async function assertWebsitePriceMatchesCatalog(
+  priceId: string,
+  key: string,
+): Promise<void> {
+  let parsed: z.infer<typeof websitePriceSchema>;
+  try {
+    parsed = websitePriceSchema.parse(
+      await stripeGetJson(`prices/${encodeURIComponent(priceId)}`, key),
+    );
+  } catch {
+    throw new CheckoutError("unavailable");
+  }
+  const expectedCents = Math.round(ADD_ONS.websiteService.priceCad * 100);
+  if (
+    !parsed.active ||
+    parsed.currency.toLowerCase() !== "cad" ||
+    parsed.unit_amount !== expectedCents ||
+    parsed.recurring
+  ) {
+    console.error(
+      "[checkout] website service Stripe price does not match the catalog price",
+      { expectedCents, actualCents: parsed.unit_amount },
+    );
+    throw new CheckoutError("misconfigured");
+  }
+}
+
 const checkoutSessionResponseSchema = z.object({
   id: z.string().min(1),
   url: z.string().min(1).nullable(),
@@ -113,10 +166,15 @@ const checkoutSessionResponseSchema = z.object({
  * Starts a one-time installation-fee Checkout Session for the organization's
  * current plan, saving the card for the deferred subscription created once
  * the webhook confirms payment. Never charges the monthly price here.
+ *
+ * The website service is a separate line on the same payment and is added only
+ * when `options.websiteService` is explicitly true. It is never a default.
  */
 export async function createInstallationCheckoutSession(
   organization: Pick<Organization, "id" | "plan" | "accountType">,
+  options: { websiteService?: boolean } = {},
 ): Promise<string> {
+  const websiteService = options.websiteService === true;
   const url = requireDurableStore();
   if (!PLAN_IDS.includes(organization.plan)) throw new CheckoutError("misconfigured");
   const livemode = organization.accountType !== "demo";
@@ -173,12 +231,19 @@ export async function createInstallationCheckoutSession(
       "line_items[0][price]": installationPriceId(organization.plan, livemode),
       "line_items[0][quantity]": "1",
       "payment_intent_data[setup_future_usage]": "off_session",
-      success_url: `${origin}/app/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/app/billing?checkout=canceled`,
+      success_url: `${origin}/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/billing?checkout=canceled`,
       "metadata[organization_id]": organization.id,
       "metadata[plan]": organization.plan,
       "metadata[flow]": "installation",
     });
+    if (websiteService) {
+      const websitePrice = websiteServicePriceId(livemode);
+      await assertWebsitePriceMatchesCatalog(websitePrice, key);
+      body.set("line_items[1][price]", websitePrice);
+      body.set("line_items[1][quantity]", "1");
+      body.set("metadata[website_service]", "1");
+    }
     if (existingCustomer) body.set("customer", existingCustomer.customer_id);
     else body.set("customer_creation", "always");
 
@@ -222,6 +287,7 @@ export const checkoutSessionEventSchema = z.object({
           organization_id: z.string().optional(),
           plan: z.string().optional(),
           flow: z.string().optional(),
+          website_service: z.string().optional(),
         })
         .optional(),
     }),
@@ -260,6 +326,7 @@ export async function synchronizeInstallationCheckout(
   const client = await pool.connect();
   // Set only after COMMIT; read in `finally` once the connection is released.
   let paidInstallation: Parameters<typeof referralInstallationPaid>[0] | null = null;
+  let websiteChosen: { organizationId: string; requestId: string } | null = null;
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL statement_timeout = '25000'");
@@ -289,6 +356,9 @@ export async function synchronizeInstallationCheckout(
     if (checkout.status === "subscribed") {
       await client.query("COMMIT");
       paidInstallation = referralPayment(checkout, session.id, session.payment_intent, event);
+      if (session.metadata?.website_service === "1") {
+        websiteChosen = { organizationId: checkout.organization_id, requestId: session.id };
+      }
       return { handled: true };
     }
     if (session.payment_status !== "paid") {
@@ -387,6 +457,9 @@ export async function synchronizeInstallationCheckout(
 
     await client.query("COMMIT");
     paidInstallation = referralPayment(checkout, session.id, session.payment_intent, event);
+    if (session.metadata?.website_service === "1") {
+      websiteChosen = { organizationId: checkout.organization_id, requestId: session.id };
+    }
     return { handled: true };
   } catch (error) {
     await client.query("ROLLBACK");
@@ -396,6 +469,8 @@ export async function synchronizeInstallationCheckout(
     // Referral bookkeeping: best effort, never throws, never delays billing's answer
     // beyond one lookup. See src/product/referrals/billing-hooks.ts.
     if (paidInstallation) await referralInstallationPaid(paidInstallation);
+    // The website bonus needs the plan reward first, so it runs second. Also best effort.
+    if (websiteChosen) await referralWebsiteServiceStarted(websiteChosen);
   }
 }
 

@@ -2,9 +2,14 @@
  * Referral program: the shapes and the pure rules.
  *
  * An existing customer shares a link; a contractor who arrives through it and
- * pays their installation fee earns the referrer a gift card whose value
- * depends on the plan the REFERRED customer bought (not the referrer's plan).
- * Nothing here talks to Stripe, a database or a gift card provider.
+ * pays their setup fee earns the referrer a reward that follows the plan the
+ * referred customer bought ($50 CAD for Essential, $75 CAD for Professional).
+ * If the referred customer also buys the website service, the referrer earns a
+ * second reward of $35 CAD, so one referral can never earn more than $110 CAD.
+ * A reward keeps the amount it was created with, so changing the amounts never
+ * touches rewards already earned. Every reward waits for an administrator's
+ * approval.
+ * Nothing here talks to Stripe, a database or a payout provider.
  */
 import { z } from "zod";
 export {
@@ -15,7 +20,10 @@ export {
 } from "./code";
 import {
   DEFAULT_REFERRAL_REWARDS_CENTS,
+  PLAN_IDS,
   PLAN_ORDER,
+  REFERRAL_MAX_REWARD_CENTS,
+  REFERRAL_WEBSITE_BONUS_CENTS,
   type PlanId,
 } from "@/product/saas/plan-catalog";
 
@@ -66,9 +74,18 @@ export type ReferralRecord = {
   updatedAt: string;
 };
 
+/**
+ * `plan`: earned when the referred customer pays for a plan.
+ * `website`: the bonus earned when they also buy the website service.
+ * A referral has at most one reward of each kind.
+ */
+export type RewardKind = "plan" | "website";
+
 export type RewardRecord = {
   id: string;
   referralId: string;
+  /** `plan` for every record created before the website bonus existed. */
+  kind: RewardKind;
   referrerOrganizationId: string;
   referredOrganizationId: string;
   /** The plan the REFERRED customer purchased. */
@@ -127,6 +144,8 @@ export type ReferralSettings = {
   programEnabled: boolean;
   /** CAD cents per plan the REFERRED customer purchased. */
   rewardsCents: Record<PlanId, number>;
+  /** CAD cents added when the REFERRED customer also buys the website service. */
+  websiteBonusCents: number;
   /** Plans whose purchase earns a reward. */
   eligiblePlans: PlanId[];
   /** Days after the qualifying payment before a reward can be approved. */
@@ -143,30 +162,38 @@ export type ReferralSettings = {
   updatedAt?: string;
 };
 
-export const MAX_REWARD_CENTS = 100_000; // CAD $1,000: guards a typo, not a policy
+/** The most one referral may earn in total: the plan reward plus the website bonus. */
+export const MAX_COMBINED_REWARD_CENTS = REFERRAL_MAX_REWARD_CENTS;
+export const MAX_REWARD_CENTS = MAX_COMBINED_REWARD_CENTS;
 export const MAX_HOLD_DAYS = 120;
 
 export const DEFAULT_REFERRAL_SETTINGS: ReferralSettings = {
   programEnabled: true,
   rewardsCents: { ...DEFAULT_REFERRAL_REWARDS_CENTS },
+  websiteBonusCents: REFERRAL_WEBSITE_BONUS_CENTS,
   eligiblePlans: [...PLAN_ORDER],
   holdDays: 30,
   requireReferrerActive: true,
   fulfillmentMethod: "none",
 };
 
-const planId = z.enum(["starter", "growth", "receptionist"]);
+const planId = z.enum(PLAN_IDS);
 const cents = z.number().int().min(0).max(MAX_REWARD_CENTS);
 
 export const referralSettingsPatchSchema = z
   .object({
     programEnabled: z.boolean(),
-    rewardsCents: z.object({
-      starter: cents,
-      growth: cents,
-      receptionist: cents,
-    }),
-    eligiblePlans: z.array(planId).max(3),
+    rewardsCents: z
+      .object({
+        essential: cents,
+        professional: cents,
+        starter: cents,
+        growth: cents,
+        receptionist: cents,
+      })
+      .partial(),
+    websiteBonusCents: cents,
+    eligiblePlans: z.array(planId).max(PLAN_IDS.length),
     holdDays: z.number().int().min(0).max(MAX_HOLD_DAYS),
     requireReferrerActive: z.boolean(),
     fulfillmentMethod: z.enum(["none", "manual"]),
@@ -190,7 +217,25 @@ export function mergeSettings(
   };
 }
 
-/** The gift card, in cents, for a purchased plan. Zero = this plan earns nothing. */
+/**
+ * Whether these settings keep every referral at or under the program maximum
+ * (the largest plan reward that can be paid, plus the website bonus).
+ */
+export function settingsWithinProgramMaximum(settings: ReferralSettings): boolean {
+  const largestPlanReward = Math.max(
+    0,
+    ...settings.eligiblePlans.map((p) => settings.rewardsCents[p] ?? 0),
+  );
+  return largestPlanReward + settings.websiteBonusCents <= MAX_COMBINED_REWARD_CENTS;
+}
+
+/** The website-service bonus, in cents. Zero when the program is switched off. */
+export function websiteBonusAmountCents(settings: ReferralSettings): number {
+  if (!settings.programEnabled) return 0;
+  return Math.max(0, settings.websiteBonusCents);
+}
+
+/** The reward, in cents, for a purchased plan. Zero = this plan earns nothing. */
 export function rewardAmountCents(
   settings: ReferralSettings,
   purchasedPlan: PlanId,

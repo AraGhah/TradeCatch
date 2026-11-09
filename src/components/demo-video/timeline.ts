@@ -282,10 +282,9 @@ export const DEMO_DATA = {
   onCall: "Marc D.",
   secondaryCustomer: "Michael Turner",
   secondaryValue: "CA$4,800",
-  /** The closing card shows the domain and the phone only — no personal inbox. */
+  /** The closing card shows the domain only: no personal inbox and no public phone. */
   contact: {
     website: "tradecatch.ca",
-    phone: "438-993-6997",
   },
 } as const;
 
@@ -412,7 +411,7 @@ const BASE_UI = {
     closingHeadline: "Every call counts.",
     closingSupport: "Your receptionist. Your leads. Your business.",
     closingCtaLine: "See it on your own calls.",
-    bookDemo: "Book your free audit",
+    bookDemo: "Book a free demo",
   },
   fr: {
     playDemo: "Lancer la démo",
@@ -526,7 +525,7 @@ const BASE_UI = {
     closingHeadline: "Chaque appel compte.",
     closingSupport: "Votre réceptionniste. Vos demandes. Votre entreprise.",
     closingCtaLine: "Voyez-la sur vos propres appels.",
-    bookDemo: "Réserver votre audit gratuit",
+    bookDemo: "Réserver une démo gratuite",
   },
 } as const;
 

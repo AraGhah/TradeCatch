@@ -71,7 +71,7 @@ export default async function FaqPage({
         }
       />
 
-      <section className="bg-paper pt-8 pb-12 sm:pt-[clamp(28px,4vw,40px)] sm:pb-[clamp(64px,8vw,100px)]">
+      <section className="bg-paper pt-6 pb-9 sm:pt-[clamp(24px,3vw,32px)] sm:pb-[var(--section-y)]">
         <Container size="faq">
           <div
             data-reveal

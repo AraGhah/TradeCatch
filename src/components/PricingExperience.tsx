@@ -19,7 +19,7 @@ const TIER_HREFS = {
 type TierHref = keyof typeof TIER_HREFS;
 
 /** Plan ids accepted by the book-audit intake, so a lead stays attributable. */
-const TIER_PLAN_INTEREST = ["starter", "growth", "receptionist"] as const;
+const TIER_PLAN_INTEREST = ["essential", "professional"] as const;
 
 type TierPlanInterest = (typeof TIER_PLAN_INTEREST)[number];
 
@@ -94,9 +94,10 @@ export type PricingTier = {
 type Labels = {
   cta: string;
   setupLabel: string;
-  customTitle: string;
-  customBody: string;
-  customCta: string;
+  /** Optional block under the plans for work outside the two standard plans. */
+  customTitle?: string;
+  customBody?: string;
+  customCta?: string;
   includesTitle: string;
   includesItems: string[];
   details: { title: string; body: string }[];
@@ -135,11 +136,8 @@ export function PricingExperience({
 }) {
   return (
     <div className="w-full">
-      {/*
-        Two standard plans sit side by side from md; the premium plan spans the
-        full row there and only joins them as a third column at lg.
-      */}
-      <div className="relative z-[1] -mt-[clamp(24px,3vw,40px)] grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-5">
+      {/* Two plans: stacked on a phone, side by side from md. */}
+      <div className="relative z-[1] -mt-[clamp(24px,3vw,40px)] grid grid-cols-1 gap-4 md:grid-cols-2 lg:gap-5">
         {tiers.map((tier, i) => (
           <PlanCard
             key={tier.name}
@@ -155,15 +153,16 @@ export function PricingExperience({
       </div>
 
       {afterPlans ? (
-        <div className="mt-[clamp(40px,5vw,56px)]">{afterPlans}</div>
+        <div className="mt-[clamp(24px,3vw,36px)]">{afterPlans}</div>
       ) : null}
 
+      {labels.customTitle && labels.customBody && labels.customCta ? (
       <motion.section
         initial={{ y: 14 }}
         whileInView={{ y: 0 }}
         viewport={{ once: true, margin: "-40px" }}
         transition={{ duration: 0.5, ease }}
-        className="relative mt-[clamp(40px,5vw,56px)] overflow-hidden bg-navy px-[clamp(28px,4vw,48px)] py-[clamp(36px,4.5vw,52px)] text-white"
+        className="relative mt-[clamp(24px,3vw,36px)] overflow-hidden bg-navy px-[clamp(24px,3.2vw,36px)] py-[clamp(24px,3vw,36px)] text-white"
       >
         <div
           aria-hidden
@@ -195,6 +194,7 @@ export function PricingExperience({
           </CTAButton>
         </div>
       </motion.section>
+      ) : null}
 
       <motion.section
         initial="hidden"
@@ -204,9 +204,9 @@ export function PricingExperience({
           hidden: { y: 12 },
           visible: { y: 0, transition: { duration: 0.45, ease } },
         }}
-        className="mt-[clamp(48px,6vw,72px)]"
+        className="mt-[clamp(32px,4vw,48px)]"
       >
-        <div className="flex flex-col gap-6 border-t border-[rgb(var(--ink-rgb)/0.14)] pt-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+        <div className="flex flex-col gap-6 border-t border-[rgb(var(--ink-rgb)/0.14)] pt-6 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
           <h2 className="m-0 max-w-[10em] font-heading text-[clamp(24px,2.6vw,32px)] font-extrabold tracking-[-0.035em] text-heading">
             {labels.includesTitle}
           </h2>
@@ -223,7 +223,7 @@ export function PricingExperience({
               <motion.li
                 key={item}
                 variants={includesItem}
-                className="border-t border-[rgb(var(--ink-rgb)/0.1)] py-4 text-[15px] leading-[1.5] text-secondary"
+                className="border-t border-[rgb(var(--ink-rgb)/0.1)] py-3 text-[15px] leading-[1.5] text-secondary"
               >
                 {item}
               </motion.li>
@@ -231,7 +231,7 @@ export function PricingExperience({
           </motion.ul>
         </div>
 
-        <div className="mt-10 border-t border-[rgb(var(--ink-rgb)/0.14)]">
+        <div className="mt-6 border-t border-[rgb(var(--ink-rgb)/0.14)]">
           {labels.details.map((detail) => (
             <DetailAccordion
               key={detail.title}
@@ -269,7 +269,7 @@ function PlanCard({
   const featured = tier.emphasis === "featured";
 
   const shell = premium
-    ? "border-navy bg-navy text-white shadow-[0_36px_72px_-40px_rgb(var(--ink-rgb)/0.6)] md:col-span-2 lg:col-span-1"
+    ? "border-navy bg-navy text-white shadow-[0_36px_72px_-40px_rgb(var(--ink-rgb)/0.6)]"
     : featured
       ? "border-orange/55 bg-surface text-heading shadow-[0_32px_64px_-40px_rgba(228,118,43,0.45)] ring-1 ring-orange/20"
       : "border-[rgb(var(--ink-rgb)/0.1)] bg-surface text-heading shadow-[0_20px_48px_-40px_rgb(var(--ink-rgb)/0.28)]";
@@ -297,7 +297,7 @@ function PlanCard({
           transition: { duration: 0.55, delay: index * 0.08, ease },
         },
       }}
-      className={`relative flex flex-col border p-[clamp(28px,3.2vw,44px)] transition-[translate,box-shadow,border-color] duration-300 hover:-translate-y-1 ${shell}`}
+      className={`relative flex h-full flex-col border p-[clamp(20px,2.4vw,28px)] transition-[translate,box-shadow,border-color] duration-300 hover:-translate-y-1 ${shell}`}
     >
       {featured ? (
         <motion.div
@@ -334,7 +334,7 @@ function PlanCard({
             {tier.name}
           </h2>
           <p
-            className={`mt-2 text-[15px] font-semibold tracking-[-0.01em] ${premium ? "text-orange" : "text-orange"}`}
+            className={`mt-2 text-[15px] font-semibold tracking-[-0.01em] ${premium ? "text-orange" : "text-ember-text"}`}
           >
             {tier.tagline}
           </p>
@@ -353,7 +353,7 @@ function PlanCard({
       </div>
 
       <p
-        className={`relative mt-4 max-w-[32em] text-[16px] leading-[1.55] ${bodyText}`}
+        className={`relative mt-3 max-w-[32em] text-[16px] leading-[1.55] ${bodyText}`}
       >
         {tier.outcome}
       </p>
@@ -363,7 +363,7 @@ function PlanCard({
         {tier.idealFor}
       </p>
 
-      <div className={`relative mt-7 border-t pt-6 ${divider}`}>
+      <div className={`relative mt-5 border-t pt-4 ${divider}`}>
         <p className={`text-[12px] tracking-[0.08em] uppercase ${mutedText}`}>
           {monthlyEyebrow}
         </p>
@@ -380,7 +380,7 @@ function PlanCard({
               },
             },
           }}
-          className={`mt-1.5 origin-left font-heading text-[clamp(40px,4.2vw,56px)] font-extrabold leading-[0.95] tracking-[-0.045em] break-words ${premium ? "text-orange" : strongText}`}
+          className={`mt-1.5 origin-left font-heading text-[clamp(34px,3.4vw,46px)] font-extrabold leading-[0.95] tracking-[-0.045em] break-words ${premium ? "text-orange" : strongText}`}
         >
           {monthlyDisplay}
         </motion.p>

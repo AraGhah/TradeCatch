@@ -9,7 +9,7 @@ import { CTAButton } from "@/components/CTAButton";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNav } from "@/components/MobileNav";
 import { BrandLockup } from "@/components/BrandLockup";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { EmailContactLink } from "@/components/EmailContactLink";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
@@ -65,8 +65,6 @@ export function Header() {
     { href: "/login", label: t("login") },
   ];
 
-  const phoneDisplay = site("phone").replace(/-/g, "·");
-
   return (
     <header
       className={`sticky top-0 z-[60] transition-[background-color,border-color,box-shadow] duration-300 ${
@@ -106,17 +104,13 @@ export function Header() {
           </nav>
 
           <div className="hidden items-center gap-4 min-[1080px]:flex">
-            <a
-              href={`tel:${site("phoneHref")}`}
-              className={`flex items-center rounded-md px-1 py-2.5 font-mono text-[13px] font-medium text-heading transition-colors hover:text-ember-text ${FOCUS_RING}`}
+            <EmailContactLink
+              email={site("email")}
+              className={`flex items-center rounded-md px-1 py-2.5 text-[14px] font-medium text-heading transition-colors hover:text-ember-text ${FOCUS_RING}`}
             >
-              {phoneDisplay}
-            </a>
+              {t("emailUs")}
+            </EmailContactLink>
             <LocaleSwitcher />
-            <ThemeToggle
-              labelToDark={t("toggleThemeToDark")}
-              labelToLight={t("toggleThemeToLight")}
-            />
             <CTAButton href="/book-audit" variant="ink" size="sm">
               {cta("bookFreeDemo")}
             </CTAButton>
@@ -134,8 +128,8 @@ export function Header() {
             <MobileNav
               links={mobileLinks}
               ctaLabel={cta("bookFreeDemo")}
-              phone={phoneDisplay}
-              phoneHref={site("phoneHref")}
+              email={site("email")}
+              emailLabel={t("emailUs")}
             />
           </div>
         </div>

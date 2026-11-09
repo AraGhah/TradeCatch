@@ -1265,8 +1265,8 @@ export function createMissedCallEngine(deps: {
           await notifyHumanReview(workflow, client, "customer_distress");
           const handoff =
             workflow.collected.language === "en"
-              ? "I'm sorry about that — connecting you with our team right away."
-              : "Désolé pour ça — je vous mets en contact avec notre équipe tout de suite.";
+              ? "I'm sorry about that. Our team has been alerted and will follow up with you right away."
+              : "Désolé pour ça. Notre équipe a été avisée et vous répondra tout de suite.";
           await sendOutboundSms({
             workflow,
             client,

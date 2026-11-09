@@ -1,33 +1,37 @@
 /**
- * The three short "on the job" dramatizations (Under the sink, The ladder,
- * After hours). They are built from Videos/ads_v2 (see PRODUCTION_NOTES.md
- * there) and exported for the web at 720x900 (4:5) with sidecar WebVTT
- * captions generated from the real voice timings (Videos/ads_v2/_source/captions.py).
+ * The one public demo video: "Under the sink". It is built from
+ * Videos/ads_v2 (see PRODUCTION_NOTES.md there) and exported for the web at
+ * 720x900 (4:5) with sidecar WebVTT captions generated from the real voice
+ * timings (Videos/ads_v2/_source/captions.py). Captions are a separate track
+ * the viewer can switch off; nothing is burned into the picture.
  *
- * They are separate from the two scripted product cuts in cuts.ts: those are
- * 16:9 and feed the interactive /demo-video experience, these are portrait
- * and only play in the WatchDemoButton dialog.
+ * Why this one: it shows exactly what Essential does (the receptionist answers,
+ * takes the caller's details and sends the team an appointment request that
+ * the team confirms). It does not show a call transfer, voice cloning or any
+ * feature that is not part of the launch plans.
  *
- * Honesty rules shared with cuts.ts: fictional business, not a customer story,
- * and the receptionist / transfer / text-back features are a pilot. Every story
- * has a `disclosure` string in messages (demoVideo.<copyKey>.disclosure) that
- * the player shows under the video.
+ * "The ladder" and "After hours" (and the 16:9 platform and missed-call cuts in
+ * cuts.ts) stay in the repository but are not offered on the public site:
+ * "After hours" shows a call being transferred and the 16:9 platform cut shows
+ * a transfer scene, and TradeCatch must never present a transfer as something
+ * it does. To bring one back, add its id here and its copy under
+ * `demoVideo.<copyKey>` and `demoStories.cards.<copyKey>`.
+ *
+ * The video is a fictional business, not a customer story. The player shows
+ * `demoVideo.underTheSink.disclosure` under it.
  */
 import type { DemoLocale } from "@/components/demo-video/cuts";
 
-export type StoryId = "under-the-sink" | "the-ladder" | "after-hours";
+export type StoryId = "under-the-sink";
 
-export const STORY_IDS: readonly StoryId[] = [
-  "under-the-sink",
-  "the-ladder",
-  "after-hours",
-];
+export const STORY_IDS: readonly StoryId[] = ["under-the-sink"];
+
+/** The demo every "watch the demo" button opens. */
+export const DEFAULT_STORY_ID: StoryId = "under-the-sink";
 
 /** Namespace under `demoVideo` (player) and `demoStories.cards` (cards). */
 export const STORY_COPY_KEY = {
   "under-the-sink": "underTheSink",
-  "the-ladder": "theLadder",
-  "after-hours": "afterHours",
 } as const satisfies Record<StoryId, string>;
 
 export type StoryCopyKey = (typeof STORY_COPY_KEY)[StoryId];
@@ -55,9 +59,7 @@ function story(id: StoryId, seconds: Record<DemoLocale, number>): StoryMedia {
 }
 
 export const STORY_MEDIA: Record<StoryId, StoryMedia> = {
-  "under-the-sink": story("under-the-sink", { en: 44, fr: 49 }),
-  "the-ladder": story("the-ladder", { en: 30, fr: 32 }),
-  "after-hours": story("after-hours", { en: 31, fr: 33 }),
+  "under-the-sink": story("under-the-sink", { en: 53, fr: 56 }),
 };
 
 export function isStoryId(value: string): value is StoryId {

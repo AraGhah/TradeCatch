@@ -191,7 +191,7 @@ function hoursLine(context: BusinessContext, language: SmsLanguage): string {
     .sort()
     .map((d) => WEEKDAY_NAMES[language][d])
     .join(", ");
-  return `${days} ${context.hours.start}–${context.hours.end} (${context.timezone})`;
+  return `${days} ${context.hours.start}-${context.hours.end} (${context.timezone})`;
 }
 
 /** Fixed first-line wording; also how the duplicate-fallback guard recognises it. */
@@ -204,14 +204,47 @@ export function fallbackReply(
     : `Hello, this is the virtual assistant for ${context.name}. Thanks for your message, a team member will reply shortly. To speed things up, please send your name, address and what you need.`;
 }
 
+/**
+ * A short "we got it" for a customer who texts again after the first
+ * acknowledgement when there is nothing new to answer (the model is down, or
+ * the message is just "ok?" / "allo?"). Silence reads as a dead line; repeating
+ * the full introduction reads as a bot loop. `openRequest`: the team already
+ * holds this customer's request (from a missed call).
+ */
+export function followUpReply(
+  language: SmsLanguage,
+  context: Pick<BusinessContext, "name">,
+  openRequest = false,
+): string {
+  if (language === "fr") {
+    return openRequest
+      ? `Bien reçu, merci. L’équipe de ${context.name} a déjà votre demande et vous répondra ici dès que possible.`
+      : `Bien reçu, merci. J’ai transmis votre message à l’équipe de ${context.name}; quelqu’un vous répondra ici dès que possible.`;
+  }
+  return openRequest
+    ? `Got it, thanks. The ${context.name} team already has your request and will reply here as soon as possible.`
+    : `Got it, thanks. I’ve passed your message to the ${context.name} team; someone will reply here as soon as possible.`;
+}
+
+export function isFollowUpReply(
+  text: string,
+  context: Pick<BusinessContext, "name">,
+): boolean {
+  return (["fr", "en"] as const).some(
+    (lang) =>
+      text === followUpReply(lang, context) ||
+      text === followUpReply(lang, context, true),
+  );
+}
+
 export function afterHoursReply(
   language: SmsLanguage,
   context: BusinessContext,
 ): string {
   const hours = hoursLine(context, language);
   return language === "fr"
-    ? `Bonjour, ici l’assistant virtuel de ${context.name}. Nous sommes actuellement fermés (${hours}). Laissez votre nom, l’adresse et ce dont vous avez besoin — on vous répond dès l’ouverture.`
-    : `Hello, this is the virtual assistant for ${context.name}. We are currently closed (${hours}). Leave your name, address and what you need — we’ll reply when we open.`;
+    ? `Bonjour, ici l’assistant virtuel de ${context.name}. Nous sommes actuellement fermés (${hours}). Laissez votre nom, l’adresse et ce dont vous avez besoin, on vous répond dès l’ouverture.`
+    : `Hello, this is the virtual assistant for ${context.name}. We are currently closed (${hours}). Leave your name, address and what you need, we’ll reply when we open.`;
 }
 
 export function isFallbackReply(
@@ -298,8 +331,8 @@ export function rulesReply(input: {
   if (PERSON_HINT.test(body)) {
     return {
       reply: fr
-        ? `${intro} Je transmets votre message à l’équipe — quelqu’un vous répondra ici sous peu.`
-        : `${intro} I’m passing your message to the team — someone will reply here shortly.`,
+        ? `${intro} Je transmets votre message à l’équipe. Quelqu’un vous répondra ici sous peu.`
+        : `${intro} I’m passing your message to the team. Someone will reply here shortly.`,
       action: "escalate",
       language,
     };
@@ -539,10 +572,18 @@ export function buildUserPrompt(input: {
   language: SmsLanguage;
   slots: OpenSlot[];
   now?: Date;
+  /** The team already holds this customer's request (from a missed call). */
+  openRequest?: boolean;
 }): string {
   const lines: string[] = [];
   const nowLine = input.now ? describeNow(input.context, input.now) : null;
   if (nowLine) lines.push(nowLine, "");
+  if (input.openRequest) {
+    lines.push(
+      "OPEN REQUEST: this customer already called and their request was passed to the team, who will follow up. Do not ask again for details already given; answer their message, and say the team will follow up. Never promise when.",
+      "",
+    );
+  }
   if (input.history.length) {
     lines.push("CONVERSATION SO FAR");
     for (const turn of input.history) {

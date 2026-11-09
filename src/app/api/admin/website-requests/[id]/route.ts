@@ -4,6 +4,7 @@ import { readJsonBody } from "@/lib/request-body";
 import { websiteRequestUpdateSchema } from "@/lib/validation/website-request";
 import type { WebsiteRequestUpdateError } from "@/product/website-services/service";
 import { getWebsiteRequestService } from "@/product/website-services/runtime";
+import { referralWebsiteServiceStarted } from "@/product/referrals/billing-hooks";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,7 @@ const STATUS_FOR_ERROR: Record<WebsiteRequestUpdateError, number> = {
   locked: 409,
   conflict: 409,
   price_too_low: 400,
+  price_mismatch: 400,
   quote_required: 400,
 };
 
@@ -31,6 +33,7 @@ const MESSAGE_FOR_ERROR: Record<WebsiteRequestUpdateError, string> = {
   conflict:
     "The request changed while you were editing it. Reload and try again.",
   price_too_low: "The price cannot be below the starting price.",
+  price_mismatch: "The price must match the published website service price.",
   quote_required:
     "Add the written scope and the final price before quoting or starting work.",
 };
@@ -65,6 +68,19 @@ export async function PATCH(request: Request, { params }: Params) {
         { error: MESSAGE_FOR_ERROR[result.error], code: result.error },
         STATUS_FOR_ERROR[result.error],
       );
+    }
+    // Work has started, so the customer has agreed to buy the service: the
+    // customer who referred them may earn the website bonus (best effort,
+    // idempotent, and still needs an administrator's approval).
+    if (
+      result.request.organizationId &&
+      (result.request.status === "in_progress" ||
+        result.request.status === "delivered")
+    ) {
+      await referralWebsiteServiceStarted({
+        organizationId: result.request.organizationId,
+        requestId: result.request.id,
+      });
     }
     return reply({ ok: true, request: result.request });
   } catch (error) {

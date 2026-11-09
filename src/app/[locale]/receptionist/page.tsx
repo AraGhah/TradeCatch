@@ -9,7 +9,11 @@ import { CallSummaryCard } from "@/components/CallSummaryCard";
 import { CallDemo, type CallDemoCopy } from "@/components/CallDemo";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { StoryDemos } from "@/components/StoryDemos";
+import { formatPlanPrice, PLAN_PRICES } from "@/lib/plans";
 import { buildMetadata } from "@/lib/seo";
+
+/** The two launch plans, in the order they are sold. */
+const PLAN_ROWS = ["essential", "professional"] as const;
 
 export async function generateMetadata({
   params,
@@ -27,7 +31,6 @@ export async function generateMetadata({
 }
 
 type CapabilityGroup = { title: string; purpose: string; items: string[] };
-type ListGroup = { title: string; items: string[] };
 
 export default async function AiReceptionistPage({
   params,
@@ -41,8 +44,6 @@ export default async function AiReceptionistPage({
   const heroPoints = t.raw("heroPoints") as string[];
   const capabilityGroups = t.raw("capabilities.groups") as CapabilityGroup[];
   const emergencySteps = t.raw("emergency.steps") as string[];
-  const stillIncludedGroups = t.raw("stillIncluded.groups") as ListGroup[];
-  const lifecycle = t.raw("stillIncluded.lifecycle") as string[];
   const summaryFields = t.raw("summary.fields") as {
     label: string;
     value: string;
@@ -50,7 +51,6 @@ export default async function AiReceptionistPage({
   const summaryIncludes = t.raw("summary.includes") as string[];
   const notificationItems = t.raw("notifications.items") as string[];
   const dashboardItems = t.raw("dashboard.items") as string[];
-  const dashboardStages = t.raw("dashboard.stages") as string[];
   const reportingItems = t.raw("reporting.items") as string[];
   const willNot = t.raw("guardrails.willNot") as string[];
   const escalation = t.raw("guardrails.escalation") as string[];
@@ -69,13 +69,29 @@ export default async function AiReceptionistPage({
             <p className="font-mono text-[10.5px] tracking-[0.12em] text-[rgba(255,255,255,0.6)] uppercase">
               {t("planLabel")}
             </p>
-            <p className="mt-3 font-heading text-[22px] font-extrabold tracking-[-0.03em] text-white">
-              {t("planName")}
+            <ul className="m-0 mt-3 flex list-none flex-col gap-4 p-0">
+              {PLAN_ROWS.map((plan) => (
+                <li key={plan}>
+                  <p className="font-heading text-[20px] font-extrabold tracking-[-0.03em] text-white">
+                    {t(`plans.${plan}.name`)}
+                  </p>
+                  <p className="mt-1 font-heading text-[clamp(30px,3.4vw,40px)] font-extrabold leading-[0.95] tracking-[-0.045em] text-orange">
+                    {formatPlanPrice(PLAN_PRICES[plan].monthly, locale)}
+                    <span className="ml-1 text-[15px] font-semibold tracking-normal text-white/70">
+                      {t("perMonth")}
+                    </span>
+                  </p>
+                  <p className="mt-1 text-[14px] text-white/70">
+                    {t(`plans.${plan}.line`)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-[15px] text-white/70">
+              {t("planSetup", {
+                setup: formatPlanPrice(PLAN_PRICES.essential.setup, locale),
+              })}
             </p>
-            <p className="mt-3 font-heading text-[clamp(36px,4vw,48px)] font-extrabold leading-[0.95] tracking-[-0.045em] text-orange">
-              {t("planCadence")}
-            </p>
-            <p className="mt-2 text-[15px] text-white/70">{t("planSetup")}</p>
             <ul className="mt-5 flex list-none flex-col gap-2.5 border-t border-white/12 p-0 pt-5">
               {heroPoints.map((point) => (
                 <li
@@ -100,7 +116,7 @@ export default async function AiReceptionistPage({
                 {t("ctaTry")}
               </CTAButton>
             </div>
-            <p className="mt-4 text-[12.5px] leading-[1.5] text-white/45">
+            <p className="mt-4 text-[12.5px] leading-[1.5] text-white/60">
               {t("planNote")}{" "}
               <CTAButton
                 href="/pricing"
@@ -166,12 +182,8 @@ export default async function AiReceptionistPage({
         </Container>
       </section>
 
-      {/* The receptionist on the job: two short dramatizations */}
-      <StoryDemos
-        locale={locale}
-        ids={["under-the-sink", "after-hours"]}
-        id="on-the-job"
-      />
+      {/* The receptionist on the job: the one public demo video */}
+      <StoryDemos locale={locale} id="on-the-job" />
 
       {/* 2. What it handles on the call */}
       <section
@@ -253,72 +265,7 @@ export default async function AiReceptionistPage({
         </Container>
       </section>
 
-      {/* 4. Nothing is removed */}
-      <section
-        className="border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
-        style={{ padding: "var(--section-y) 0" }}
-      >
-        <Container>
-          <div data-reveal>
-            <SectionHeading
-              align="left"
-              eyebrow={t("stillIncluded.eyebrow")}
-              title={t("stillIncluded.title")}
-              intro={t("stillIncluded.intro")}
-              className="max-w-[46em]"
-            />
-          </div>
-
-          <div data-reveal className="mt-[clamp(28px,3.5vw,40px)]">
-            <p className="font-mono text-[10.5px] tracking-[0.12em] text-muted uppercase">
-              {t("stillIncluded.lifecycleLabel")}
-            </p>
-            <ol className="mt-3 flex list-none flex-wrap items-center gap-x-1.5 gap-y-2 p-0">
-              {lifecycle.map((stage, i) => (
-                <li key={stage} className="flex items-center gap-1.5">
-                  <span className="border border-[rgb(var(--ink-rgb)/0.12)] bg-paper px-3 py-1.5 text-[13.5px] font-medium text-heading">
-                    {stage}
-                  </span>
-                  {i < lifecycle.length - 1 ? (
-                    <span aria-hidden className="text-orange/80">
-                      →
-                    </span>
-                  ) : null}
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="mt-[clamp(28px,3.5vw,44px)] grid gap-4 md:grid-cols-3">
-            {stillIncludedGroups.map((group) => (
-              <div
-                key={group.title}
-                data-reveal
-                className="border border-[rgb(var(--ink-rgb)/0.1)] bg-paper p-[clamp(22px,2.6vw,30px)]"
-              >
-                <h3 className="font-heading text-[18.5px] font-bold tracking-[-0.028em] text-heading">
-                  {group.title}
-                </h3>
-                <ul className="mt-4 flex list-none flex-col p-0">
-                  {group.items.map((item) => (
-                    <li
-                      key={item}
-                      className="flex gap-2.5 border-t border-[rgb(var(--ink-rgb)/0.08)] py-2.5 text-[14.5px] leading-[1.5] text-secondary"
-                    >
-                      <span aria-hidden className="text-green">
-                        ✓
-                      </span>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      {/* 5. After the call */}
+      {/* 4. After the call */}
       <section className="bg-paper" style={{ padding: "var(--section-y) 0" }}>
         <Container>
           <div
@@ -397,29 +344,12 @@ export default async function AiReceptionistPage({
                   </li>
                 ))}
               </ul>
-              <p className="mt-5 font-mono text-[10.5px] tracking-[0.12em] text-muted uppercase">
-                {t("dashboard.stagesLabel")}
-              </p>
-              <ol className="mt-3 flex list-none flex-wrap items-center gap-x-1.5 gap-y-2 p-0">
-                {dashboardStages.map((stage, i) => (
-                  <li key={stage} className="flex items-center gap-1.5">
-                    <span className="border border-[rgb(var(--ink-rgb)/0.12)] bg-paper px-2.5 py-1 text-[13px] font-medium text-heading">
-                      {stage}
-                    </span>
-                    {i < dashboardStages.length - 1 ? (
-                      <span aria-hidden className="text-orange/80">
-                        →
-                      </span>
-                    ) : null}
-                  </li>
-                ))}
-              </ol>
             </div>
           </div>
         </Container>
       </section>
 
-      {/* 6. Reporting */}
+      {/* 5. Reporting */}
       <section
         className="border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
@@ -454,7 +384,7 @@ export default async function AiReceptionistPage({
         </Container>
       </section>
 
-      {/* 7. Guardrails and fallbacks */}
+      {/* 6. Guardrails and fallbacks */}
       <section className="bg-paper" style={{ padding: "var(--section-y) 0" }}>
         <Container>
           <div data-reveal>
@@ -563,7 +493,7 @@ export default async function AiReceptionistPage({
         </Container>
       </section>
 
-      {/* 8. Usage and privacy */}
+      {/* 7. Usage and privacy */}
       <section
         className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
         style={{ padding: "var(--section-y) 0" }}
@@ -620,7 +550,7 @@ export default async function AiReceptionistPage({
         </Container>
       </section>
 
-      {/* 9. Final CTA */}
+      {/* 8. Final CTA */}
       <section
         className="relative overflow-hidden bg-navy"
         style={{ padding: "var(--section-y) 0" }}

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { stripeSecretKey } from "./stripe-key";
 import { getPgPool } from "@/product/missed-call/postgres-store";
-import type { PlanId } from "./entitlements";
+import { PLAN_IDS, type PlanId } from "./entitlements";
 import { referralBillingStateChanged } from "@/product/referrals/billing-hooks";
 
 const reference = z.union([
@@ -78,7 +78,11 @@ function idOf(value: z.infer<typeof reference>) {
 function configuration(livemode: boolean) {
   const key = stripeSecretKey(livemode);
   const prices = new Map<string, PlanId>();
-  for (const plan of ["starter", "growth", "receptionist"] as const) {
+  // Every plan id, legacy ones included: an existing customer's subscription
+  // must keep mapping to the plan it was sold as, so keep their price ids in
+  // STRIPE_PRICE_STARTER / _GROWTH / _RECEPTIONIST alongside the new
+  // STRIPE_PRICE_ESSENTIAL / _PROFESSIONAL.
+  for (const plan of PLAN_IDS) {
     const name = `STRIPE_${livemode ? "" : "TEST_"}PRICE_${plan.toUpperCase()}`;
     for (const price of (process.env[name] || "")
       .split(",")
@@ -105,6 +109,44 @@ async function stripeGet(path: string, key: string): Promise<unknown> {
   if (!response.ok)
     throw new Error(`Stripe retrieval failed (${response.status}).`);
   return response.json();
+}
+
+/**
+ * When one customer holds several subscriptions, the most capable plan wins, so
+ * cancelling an old subscription can never revoke access an active replacement
+ * grants. Legacy Receptionist stays above Professional, so a customer who has
+ * both during a switch keeps everything they were sold until the old one ends.
+ */
+const PLAN_PRECEDENCE: readonly PlanId[] = [
+  "receptionist",
+  "professional",
+  "growth",
+  "essential",
+  "starter",
+];
+
+/**
+ * The plan to record for an organization from its current Stripe subscriptions.
+ * Entitled (active or trialing) subscriptions decide it; if none is entitled,
+ * the plan of a subscription that still exists (past due, paused, incomplete)
+ * is kept so a customer in payment recovery still sees the plan they bought.
+ * `null` means "no subscription left": leave the recorded plan untouched.
+ */
+export function resolveOrganizationPlan(
+  subscriptions: readonly { status: string; plan: PlanId }[],
+): PlanId | null {
+  const entitled = subscriptions.filter(
+    (s) => s.status === "active" || s.status === "trialing",
+  );
+  const pool = entitled.length
+    ? entitled
+    : subscriptions.filter(
+        (s) => !["canceled", "incomplete_expired"].includes(s.status),
+      );
+  for (const plan of PLAN_PRECEDENCE) {
+    if (pool.some((s) => s.plan === plan)) return plan;
+  }
+  return null;
 }
 
 /** Reconcile current Stripe state, never an old event snapshot or cookie plan. */
@@ -193,8 +235,10 @@ export async function synchronizeStripeBilling(event: BillingEvent) {
         "UPDATE tc_stripe_subscriptions SET status='canceled',synced_at=now() WHERE organization_id=$1",
         [organizationId],
       );
+      // Keep the recorded plan: a customer whose Stripe customer was removed
+      // is churned, not downgraded to a plan they never bought.
       await client.query(
-        "UPDATE tc_organizations SET plan='starter',status='churned',updated_at=now() WHERE id=$1",
+        "UPDATE tc_organizations SET status='churned',updated_at=now() WHERE id=$1",
         [organizationId],
       );
       await client.query("COMMIT");
@@ -282,11 +326,7 @@ export async function synchronizeStripeBilling(event: BillingEvent) {
     const entitled = mapped.filter(
       (s) => s.status === "active" || s.status === "trialing",
     );
-    const plan = entitled.some((s) => s.plan === "receptionist")
-      ? "receptionist"
-      : entitled.some((s) => s.plan === "growth")
-        ? "growth"
-        : "starter";
+    const plan = resolveOrganizationPlan(mapped);
     const status = entitled.length
       ? "active"
       : mapped.some(
@@ -295,7 +335,7 @@ export async function synchronizeStripeBilling(event: BillingEvent) {
         ? "suspended"
         : "churned";
     await client.query(
-      "UPDATE tc_organizations SET plan=$2,status=$3,updated_at=now() WHERE id=$1",
+      "UPDATE tc_organizations SET plan=COALESCE($2,plan),status=$3,updated_at=now() WHERE id=$1",
       [organizationId, plan, status],
     );
     await client.query("COMMIT");

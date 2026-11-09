@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from call_record import Offer
+from call_record import FoundAppointment, Offer
 
 MISSING_LABELS = {
     "name": "the caller's name",
@@ -80,7 +80,7 @@ def format_booking(
     """`result` is the `booking` object from the endpoint, or None if it failed."""
     if result is None:
         return (
-            "The booking system did not respond, so the appointment is NOT booked. "
+            "The booking system did not respond. The appointment is unconfirmed. "
             + NO_BOOKING_ADVICE
         )
     status = result.get("status")
@@ -116,3 +116,150 @@ def format_booking(
         "The appointment could not be booked online and is NOT booked. "
         + NO_BOOKING_ADVICE
     )
+
+
+# -- existing appointments and texts -------------------------------------
+
+NO_CHANGE_ADVICE = (
+    "Do NOT say anything was found, moved or canceled. Take the caller's name, the "
+    "address and what they want changed, call record_details with a message for the "
+    "team, and say the team will confirm."
+)
+
+
+def parse_appointments(items: Any) -> list[FoundAppointment]:
+    found: list[FoundAppointment] = []
+    if not isinstance(items, list):
+        return found
+    for item in items:
+        if not isinstance(item, Mapping):
+            continue
+        appointment_id, label = item.get("appointmentId"), item.get("label")
+        if not appointment_id or not label:
+            continue
+        found.append(
+            FoundAppointment(
+                appointment_id=str(appointment_id),
+                label=str(label),
+                service_name=str(item.get("serviceName") or ""),
+                technician=str(item["technicianName"]) if item.get("technicianName") else None,
+                status=str(item.get("status") or "confirmed"),
+                started=bool(item.get("started")),
+            )
+        )
+    return found
+
+
+def format_found(result: Mapping[str, Any] | None, found: list[FoundAppointment]) -> str:
+    """`result` is the find answer of the appointments endpoint, or None if it failed."""
+    if result is None:
+        return "The appointment system did not respond. " + NO_CHANGE_ADVICE
+    status = result.get("status")
+    if status == "found" and found:
+        lines = []
+        for i, a in enumerate(found, start=1):
+            parts = [a.label]
+            if a.service_name:
+                parts.append(a.service_name)
+            if a.technician:
+                parts.append(f"technician {a.technician}")
+            if a.status == "pending":
+                parts.append("requested, not yet confirmed by the team")
+            if a.started:
+                parts.append("start time already passed")
+            lines.append(f"{i}. " + ", ".join(parts))
+        return (
+            "The caller's own upcoming appointments:\n"
+            + "\n".join(lines)
+            + "\nYou may tell the caller these times. There is no live tracking of "
+            "technicians: never give an arrival estimate. If a start time has passed and "
+            "the technician is not there, apologize, call record_details with a message "
+            "for the team (the caller is waiting), and offer a transfer if one is "
+            "available. To move one, call check_availability with existing_appointment "
+            "set to its number, then move_appointment. To cancel one, confirm with the "
+            "caller first, then call cancel_appointment."
+        )
+    if status == "name_needed":
+        return (
+            "Ask for the name the appointment is under, call record_details with it, "
+            "then call find_appointment again."
+        )
+    if status == "caller_unknown":
+        return (
+            "The caller's number is hidden, so their appointments cannot be looked up "
+            "or changed on this call. " + NO_CHANGE_ADVICE
+        )
+    if status == "not_found":
+        return (
+            "No upcoming appointment matches this caller's phone number and name. Do NOT "
+            "reveal anything about other bookings. Ask once whether it could be under "
+            "another name; if they give one, record it and try again. Otherwise "
+            "the appointment may be under a different number. " + NO_CHANGE_ADVICE
+        )
+    if status == "disabled":
+        return "Appointments cannot be looked up on this line. " + NO_CHANGE_ADVICE
+    return "The appointment system is unavailable right now. " + NO_CHANGE_ADVICE
+
+
+def format_move(result: Mapping[str, Any] | None, offers_after: list[Offer], number: int) -> str:
+    if result is None:
+        return "The appointment system did not respond. It is NOT moved. " + NO_CHANGE_ADVICE
+    status = result.get("status")
+    if status == "moved":
+        return (
+            f"MOVED. Appointment {number} is now confirmed for {result.get('label')}. "
+            "Tell the caller it is moved and repeat the new date and time once."
+        )
+    if status == "taken":
+        if offers_after:
+            return (
+                "That time is no longer free, so the appointment is NOT moved. "
+                "Offer these instead:\n"
+                f"{format_offers(offers_after)}\n"
+                f"Then call move_appointment with appointment {number} and the option they pick."
+            )
+        return "That time is no longer free and nothing else is open. It is NOT moved. " + NO_CHANGE_ADVICE
+    if status == "not_found":
+        return "That appointment can no longer be changed on this call. It is NOT moved. " + NO_CHANGE_ADVICE
+    return "The appointment could not be moved. It is NOT moved. " + NO_CHANGE_ADVICE
+
+
+def format_cancel(result: Mapping[str, Any] | None) -> str:
+    if result is None:
+        return "The appointment system did not respond. It is NOT canceled. " + NO_CHANGE_ADVICE
+    status = result.get("status")
+    if status == "canceled":
+        return (
+            "CANCELED. Tell the caller the appointment is canceled. Mention a cancellation "
+            "policy only if one is in your approved facts. Offer to book another time."
+        )
+    if status == "not_found":
+        return "That appointment can no longer be changed on this call. It is NOT canceled. " + NO_CHANGE_ADVICE
+    return "The appointment could not be canceled. It is NOT canceled. " + NO_CHANGE_ADVICE
+
+
+def format_text(result: Mapping[str, Any] | None) -> str:
+    if result is None:
+        return "The text could not be sent. Say so honestly and offer to give the details now."
+    status = result.get("status")
+    if status in ("sent", "already_sent"):
+        return (
+            "SENT. The text went to the number the caller is calling from. Tell them they "
+            "should receive it in a moment. Do not send it again."
+        )
+    if status == "queued":
+        return (
+            "The text is queued and should arrive shortly, but it is not sent yet. Say it "
+            "should arrive in a few minutes; do not say it was sent."
+        )
+    if status == "opted_out":
+        return (
+            "This number has opted out of texts (STOP), so nothing was sent. Say so politely "
+            "and give the details by voice instead."
+        )
+    if status == "not_found":
+        return (
+            "That appointment cannot be texted on this call. Nothing was sent. Give the "
+            "details by voice instead."
+        )
+    return "Texts are not available on this call. Nothing was sent. Give the details by voice instead."

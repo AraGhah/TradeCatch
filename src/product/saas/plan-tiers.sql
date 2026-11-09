@@ -1,3 +1,7 @@
+-- NOTE: db:schema re-applies every file in order, so this constraint list must
+-- always include the launch plans (essential, professional) or a re-run would
+-- fail on a database that already holds one. 036_launch_plans widens it too.
+--
 -- N-006: the Receptionist tier is sold on the pricing page and priced in
 -- src/lib/plans.ts, but tc_organizations.plan and tc_stripe_subscriptions.plan
 -- only ever allowed 'starter'/'growth'. Widen both CHECK constraints so Stripe
@@ -6,9 +10,9 @@
 ALTER TABLE tc_organizations DROP CONSTRAINT IF EXISTS tc_organizations_plan_check;
 ALTER TABLE tc_organizations
   ADD CONSTRAINT tc_organizations_plan_check
-  CHECK (plan IN ('starter', 'growth', 'receptionist'));
+  CHECK (plan IN ('essential', 'professional', 'starter', 'growth', 'receptionist'));
 
 ALTER TABLE tc_stripe_subscriptions DROP CONSTRAINT IF EXISTS tc_stripe_subscriptions_plan_check;
 ALTER TABLE tc_stripe_subscriptions
   ADD CONSTRAINT tc_stripe_subscriptions_plan_check
-  CHECK (plan IN ('starter', 'growth', 'receptionist'));
+  CHECK (plan IN ('essential', 'professional', 'starter', 'growth', 'receptionist'));

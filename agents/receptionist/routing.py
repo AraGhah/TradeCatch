@@ -8,8 +8,52 @@ the line dial an arbitrary or premium-rate number.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from typing import Any, Mapping
+
+_E164 = re.compile(r"^\+[1-9]\d{9,14}$")
+# North American service codes (211-911) and premium-rate area codes.
+_NANP_SERVICE = re.compile(r"^[2-9]11$")
+_NANP_PREMIUM = {"900", "976"}
+# Emergency numbers around the world, in case one is written with a "+".
+_EMERGENCY_SHORT = {"911", "112", "999", "000", "110", "119"}
+
+
+def destination_problem(
+    number: object,
+    *,
+    business_number: str | None = None,
+    caller: str | None = None,
+) -> str | None:
+    """Why a configured transfer number must not be dialed, as a log-safe code.
+
+    None means it is safe. The numbers come from the TradeCatch profile, which
+    validates them too; this is the last check before the phone line rings, so a
+    bad saved value, a stale config or a mistake can never ring 911, a premium
+    line, the business's own number (a loop back into this agent) or the caller.
+    """
+    value = str(number or "").strip()
+    if not value:
+        return "missing"
+    if value.lstrip("+") in _EMERGENCY_SHORT:
+        return "emergency_service"
+    if not _E164.match(value):
+        return "invalid_format"
+    digits = value[1:]
+    if digits.startswith("1") and len(digits) == 11:
+        area, exchange = digits[1:4], digits[4:7]
+        if _NANP_SERVICE.match(area) or _NANP_SERVICE.match(exchange):
+            return "emergency_service" if "911" in (area, exchange) else "service_code"
+        if area[0] in "01" or exchange[0] in "01":
+            return "invalid_format"
+        if area in _NANP_PREMIUM:
+            return "premium_rate"
+    if business_number and value == business_number.strip():
+        return "business_line"
+    if caller and value == caller.strip():
+        return "caller_number"
+    return None
 
 
 @dataclass(frozen=True)
@@ -71,6 +115,8 @@ class TransferPlan:
 
     targets: tuple[TransferTarget, ...] = ()
     refusal: str | None = None
+    # Codes for configured lines that were skipped as unsafe (for the log; no numbers).
+    rejected: tuple[str, ...] = ()
 
 
 def _general_line_allowed(cfg: Mapping[str, Any]) -> bool:
@@ -82,13 +128,20 @@ def plan_transfer(
     cfg: Mapping[str, Any],
     reason: str,
     department: str | None = None,
+    *,
+    business_number: str | None = None,
+    caller: str | None = None,
 ) -> TransferPlan:
     """The ordered list of lines to try for a transfer.
 
-    The first line is exactly what `pick_transfer` chooses. A second line is added
-    only from numbers the owner already configured: the general line, when it is a
-    different number and the owner's hours rule lets it ring. Nothing the caller or
-    the model says can add a number.
+    The first line is what `pick_transfer` chooses. Further lines come only from
+    numbers the owner already configured, each when it is a different number:
+    the general line, then the backup line (the owner's secondary transfer
+    number), each only when the owner's hours rule lets it ring. An emergency is
+    the emergency line first, then (during hours, or with transferHours=always)
+    the general and backup lines; after that the agent takes an urgent callback
+    and TradeCatch alerts the owner. Nothing the caller or the model says can add
+    a number, and every line passes `destination_problem` before it is offered.
     """
     decision = pick_transfer(cfg, reason, department)
     if decision.number is None:
@@ -100,19 +153,43 @@ def plan_transfer(
         if d.get("phoneE164")
     }
     general = cfg.get("transferE164")
+    backup = cfg.get("backupTransferE164")
     emergency_line = cfg.get("emergencyTransferE164")
+    emergency = reason == "emergency"
 
     def label(number: str) -> str:
-        if reason == "emergency" and number == (emergency_line or general):
+        if emergency and number == (emergency_line or general):
             return "Emergency"
-        return departments.get(number) or (
-            "General line" if number == general else "Transfer line"
-        )
+        if number in departments:
+            return departments[number]
+        if number == general:
+            return "General line"
+        return "Backup line" if number == backup else "Transfer line"
 
-    targets = [TransferTarget(decision.number, label(decision.number))]
-    if general and general != decision.number and _general_line_allowed(cfg):
-        targets.append(TransferTarget(str(general), label(str(general))))
-    return TransferPlan(targets=tuple(targets))
+    candidates = [str(decision.number)]
+    if _general_line_allowed(cfg):
+        for extra in (general, backup):
+            if extra and str(extra) not in candidates:
+                candidates.append(str(extra))
+
+    targets: list[TransferTarget] = []
+    rejected: list[str] = []
+    for number in candidates:
+        problem = destination_problem(number, business_number=business_number, caller=caller)
+        if problem:
+            rejected.append(problem)
+        else:
+            targets.append(TransferTarget(number, label(number)))
+    if not targets:
+        refusal = (
+            "No emergency line can be dialed right now. Tell the caller to hang up and call "
+            "911 if anyone is in danger, and take their details for an urgent callback."
+            if emergency
+            else "No person can be reached by transfer right now. Take the caller's details "
+            "for a callback."
+        )
+        return TransferPlan(refusal=refusal, rejected=tuple(rejected))
+    return TransferPlan(targets=tuple(targets), rejected=tuple(rejected))
 
 
 def digits(value: str) -> str:

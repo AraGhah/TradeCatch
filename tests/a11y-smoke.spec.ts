@@ -50,7 +50,7 @@ test.describe("accessibility smoke", () => {
   for (const path of [
     "/",
     "/book-audit",
-    "/demo-video",
+    "/pricing",
     "/login",
     "/fr",
     "/fr/reserver-audit",
@@ -75,3 +75,101 @@ test.describe("accessibility smoke", () => {
     });
   }
 });
+
+/**
+ * The homepage below 1024px is a separate composition (HomeMobile), so the
+ * desktop-width checks above never see it. These cover phone and tablet width:
+ * AA text contrast, plus a keyboard pass that every tab stop shows a focus ring
+ * and that tappable rows are at least 24 CSS px tall (WCAG 2.2, 2.5.8).
+ */
+const SMALL_SCREENS = {
+  phone: { width: 375, height: 812 },
+  tablet: { width: 768, height: 1024 },
+} as const;
+
+for (const [device, viewport] of Object.entries(SMALL_SCREENS)) {
+  test.describe(`${device} width (${viewport.width}px)`, () => {
+    test.use({ viewport });
+
+    for (const path of ["/", "/fr", "/receptionist"]) {
+      test(`${path} text meets AA contrast`, async ({ page }) => {
+        await page.goto(path);
+        await page.evaluate(() =>
+          document
+            .querySelectorAll("[data-reveal]")
+            .forEach((el) => el.classList.add("is-visible")),
+        );
+        const results = await new AxeBuilder({ page })
+          .withRules(["color-contrast"])
+          .analyze();
+        expect(
+          results.violations.flatMap((violation) =>
+            violation.nodes.map(
+              (node) =>
+                `${node.target.join(" ")}: ${String(
+                  (node.any[0]?.data as { contrastRatio?: number } | undefined)
+                    ?.contrastRatio ?? "?",
+                )}`,
+            ),
+          ),
+        ).toEqual([]);
+      });
+    }
+
+    for (const path of ["/", "/fr"]) {
+      test(`${path} keyboard focus is visible and rows are tappable`, async ({
+        page,
+      }) => {
+        await page.goto(path);
+        await page.evaluate(() =>
+          document
+            .querySelectorAll("[data-reveal]")
+            .forEach((el) => el.classList.add("is-visible")),
+        );
+
+        // The desktop composition stays in the DOM (display: none) below lg.
+        const rows = page.locator("main details > summary:visible");
+        const rowCount = await rows.count();
+        expect(rowCount).toBeGreaterThan(0);
+        for (let i = 0; i < rowCount; i++) {
+          const box = await rows.nth(i).boundingBox();
+          expect(box?.height ?? 0, `row ${i} height`).toBeGreaterThanOrEqual(
+            24,
+          );
+        }
+
+        const withoutRing: string[] = [];
+        let stops = 0;
+        for (let i = 0; i < 80; i++) {
+          await page.keyboard.press("Tab");
+          const stop = await page.evaluate(() => {
+            const el = document.activeElement;
+            if (!el || el === document.body) return null;
+            const style = getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return {
+              label: (
+                el.getAttribute("aria-label") ||
+                el.textContent ||
+                el.tagName
+              )
+                .trim()
+                .replace(/\s+/g, " ")
+                .slice(0, 40),
+              visible: rect.width > 0 && rect.height > 0,
+              ring:
+                (style.outlineStyle !== "none" &&
+                  parseFloat(style.outlineWidth) > 0) ||
+                style.boxShadow !== "none",
+            };
+          });
+          if (!stop) break;
+          stops += 1;
+          if (!stop.visible || !stop.ring) withoutRing.push(stop.label);
+        }
+        expect(stops).toBeGreaterThan(15);
+        expect(withoutRing).toEqual([]);
+      });
+    }
+  });
+}

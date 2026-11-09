@@ -58,7 +58,6 @@ export default async function HomePage({
     title: string;
     body: string;
   }[];
-  const pilotPoints = t.raw("pilot.points") as string[];
 
   return (
     <>
@@ -69,7 +68,7 @@ export default async function HomePage({
         <section
           className="relative overflow-hidden bg-navy text-white"
           style={{
-            padding: "clamp(64px, 8vw, 112px) 0 clamp(72px, 9vw, 128px)",
+            padding: "clamp(40px, 5vw, 72px) 0 clamp(44px, 5.4vw, 80px)",
           }}
         >
           <div
@@ -91,15 +90,15 @@ export default async function HomePage({
                 {t("hero.eyebrow")}
               </span>
 
-              <h1 className="text-hero mt-[26px] text-white">
+              <h1 className="text-hero mt-5 text-white">
                 {accentHeadline(headline, accentWord)}
               </h1>
 
-              <p className="text-lede mx-auto mt-[26px] max-w-[36em] text-white/68">
+              <p className="text-lede mx-auto mt-4 max-w-[38em] text-white/72">
                 {t("hero.subheadline")}
               </p>
 
-              <div className="mt-[34px] flex flex-wrap justify-center gap-3">
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
                 <CTAButton href="/book-audit" variant="ember" size="lg">
                   {t("hero.ctaPrimary")}
                 </CTAButton>
@@ -111,12 +110,12 @@ export default async function HomePage({
               <CTAButton
                 href={tryHref}
                 variant="link-ink"
-                className="mt-6 text-[15.5px]"
+                className="mt-4 text-[15.5px]"
               >
                 {t("hero.ctaTry")} <span aria-hidden>→</span>
               </CTAButton>
 
-              <p className="mt-[22px] font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.64)] uppercase">
+              <p className="mt-4 font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.7)] uppercase">
                 {t("hero.reassurance")}
               </p>
             </div>
@@ -130,54 +129,35 @@ export default async function HomePage({
           data-reveal
         >
           <Container>
-            <div
-              className="grid items-start"
-              style={{
-                gap: "clamp(28px, 4vw, 64px)",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              }}
-            >
-              <div className="max-w-[34rem] lg:sticky lg:top-[120px]">
-                <SectionHeading
-                  align="left"
-                  eyebrow={t("leaks.eyebrow")}
-                  title={t("leaks.headline")}
-                  intro={t("leaks.intro")}
-                />
-                <CTAButton
-                  href="/book-audit"
-                  variant="ember"
-                  className="mt-[30px]"
-                >
-                  {t("leaks.cta")}
-                </CTAButton>
-              </div>
+            <SectionHeading
+              eyebrow={t("leaks.eyebrow")}
+              title={t("leaks.headline")}
+              intro={t("leaks.intro")}
+            />
 
-              <div className="flex flex-col">
-                {leakCards.map((card, i) => (
-                  <div
-                    key={card.title}
-                    className={`grid gap-[clamp(18px,3vw,34px)] py-[34px] ${
-                      i === leakCards.length - 1
-                        ? "border-y border-[rgb(var(--ink-rgb)/0.12)]"
-                        : "border-t border-[rgb(var(--ink-rgb)/0.12)]"
-                    }`}
-                    style={{ gridTemplateColumns: "auto 1fr" }}
-                  >
-                    <span className="pt-1.5 font-mono text-[12px] font-semibold tracking-[0.08em] text-ember-text">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <div>
-                      <h3 className="font-heading text-[clamp(21px,2.2vw,27px)] font-bold tracking-[-0.028em] text-heading">
-                        {card.title}
-                      </h3>
-                      <p className="mt-2.5 max-w-[44em] text-[16px] leading-[1.65] text-muted">
-                        {card.body}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <ol className="m-0 mt-[clamp(20px,2.4vw,28px)] grid list-none gap-5 p-0 lg:grid-cols-3">
+              {leakCards.map((card, i) => (
+                <li
+                  key={card.title}
+                  className="flex flex-col rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-paper p-6"
+                >
+                  <span className="font-mono text-[12px] font-semibold tracking-[0.08em] text-ember-text">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-2 font-heading text-[clamp(19px,1.7vw,22px)] leading-[1.2] font-bold tracking-[-0.028em] text-heading">
+                    {card.title}
+                  </h3>
+                  <p className="mt-2 text-[15px] leading-[1.6] text-muted">
+                    {card.body}
+                  </p>
+                </li>
+              ))}
+            </ol>
+
+            <div className="mt-6 flex justify-center">
+              <CTAButton href="/book-audit" variant="ember">
+                {t("leaks.cta")}
+              </CTAButton>
             </div>
           </Container>
         </section>
@@ -193,29 +173,34 @@ export default async function HomePage({
               />
             </div>
 
-            <div className="mt-[clamp(40px,5vw,56px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-[clamp(20px,2.4vw,28px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {systemSteps.map((step, i) => (
                 <div
                   key={step.title}
                   data-reveal
-                  className="border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(24px,3vw,32px)]"
+                  className={`rounded-[14px] p-5 ${
+                    i === systemSteps.length - 1
+                      ? "border border-orange/45 bg-[rgba(228,118,43,0.07)]"
+                      : "border border-[rgb(var(--ink-rgb)/0.1)] bg-surface"
+                  }`}
                 >
-                  <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="mt-4 font-heading text-[19.5px] font-bold tracking-[-0.028em] text-heading">
-                    {step.title}
-                  </h3>
-                  <p className="mt-2 text-[15px] leading-[1.6] text-muted">
+                  <div className="flex items-baseline gap-3">
+                    <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <h3 className="font-heading text-[18px] leading-[1.25] font-bold tracking-[-0.028em] text-heading">
+                      {step.title}
+                    </h3>
+                  </div>
+                  <p className="mt-1.5 text-[14.5px] leading-[1.55] text-muted">
                     {step.body}
                   </p>
                 </div>
               ))}
             </div>
 
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <WatchDemoButton
-                video="missed-call"
                 className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[translate,scale,background] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
               >
                 {t("proofExamples.demoCta")}
@@ -227,10 +212,10 @@ export default async function HomePage({
           </Container>
         </section>
 
-        {/* 3b. Three short dramatizations: the product on the job */}
+        {/* 3b. The one public demo video */}
         <StoryDemos locale={locale} id="on-the-job" />
 
-        {/* 4. Plan ladder (full detail lives on /pricing) */}
+        {/* 4. The two plans (full detail lives on /pricing) */}
         <section
           id="plans"
           className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
@@ -251,7 +236,7 @@ export default async function HomePage({
           </Container>
         </section>
 
-        {/* 5. Founder: the one trust signal a pilot-stage product has */}
+        {/* 5. Founder: who builds and runs the system */}
         <section
           className="bg-paper"
           style={{ padding: "var(--section-y) 0" }}
@@ -284,7 +269,7 @@ export default async function HomePage({
             <div
               className="grid items-start"
               style={{
-                gap: "clamp(28px, 4vw, 56px)",
+                gap: "clamp(20px, 3vw, 40px)",
                 gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
               }}
             >
@@ -294,7 +279,7 @@ export default async function HomePage({
                   eyebrow={t("faqTeaser.eyebrow")}
                   title={t("faqTeaser.headline")}
                 />
-                <CTAButton href="/faq" variant="secondary" className="mt-7">
+                <CTAButton href="/faq" variant="secondary" className="mt-5">
                   {t("faqTeaser.viewAll")}
                 </CTAButton>
               </div>
@@ -308,66 +293,29 @@ export default async function HomePage({
           </Container>
         </section>
 
-        {/* 7. The offer: founding pilot */}
+        {/* 7. Final call to action */}
         <section
-          id="pilot"
-          className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper"
+          className="bg-navy text-white"
           style={{ padding: "var(--section-y) 0" }}
         >
-          <Container>
-            <div
-              className="grid items-start"
-              style={{
-                gap: "clamp(32px, 5vw, 72px)",
-                gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-              }}
-            >
-              <div data-reveal>
-                <span className="inline-flex items-center gap-2 rounded-full bg-[rgba(228,118,43,0.13)] px-[13px] py-1.5 font-mono text-[10.5px] font-semibold tracking-[0.13em] text-ember-text uppercase">
-                  {t("pilot.badge")}
-                </span>
-                <h2 className="mt-[18px] font-heading text-[clamp(30px,3.6vw,46px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-heading">
-                  {t("pilot.headline")}
-                </h2>
-                <p className="text-lede mt-[18px] max-w-[34em] text-muted">
-                  {t("pilot.body")}
-                </p>
-                <p className="mt-4 max-w-[34em] text-[14px] leading-[1.55] text-muted">
-                  {t("pilot.landingNote")}
-                </p>
-              </div>
-
-              <div
-                data-reveal
-                className="rounded-[18px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-[clamp(28px,3.4vw,40px)]"
-              >
-                <p className="font-mono text-[11px] tracking-[0.14em] text-muted uppercase">
-                  {t("pilot.pointsLabel")}
-                </p>
-                <ul className="mt-[22px] flex flex-col">
-                  {pilotPoints.map((point) => (
-                    <li
-                      key={point}
-                      className="flex items-start gap-3.5 border-t border-[rgb(var(--ink-rgb)/0.08)] py-[15px] text-[15.5px] leading-[1.6] text-secondary"
-                    >
-                      <span
-                        className="mt-0.5 shrink-0 text-[14px] text-green"
-                        aria-hidden
-                      >
-                        ✓
-                      </span>
-                      {point}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-[22px] border-t border-[rgb(var(--ink-rgb)/0.08)] pt-5 text-[14px] leading-[1.6] text-muted">
-                  {t("pilot.guarantee")}
-                </p>
-                <CTAButton href="/book-audit" variant="ember" className="mt-6">
-                  {t("pilot.cta")}
-                </CTAButton>
-              </div>
+          <Container className="text-center">
+            <h2 className="font-heading text-[clamp(28px,3.2vw,40px)] font-extrabold leading-[1.08] tracking-[-0.04em] text-white">
+              {t("mobile.finalCta.headline")}
+            </h2>
+            <p className="text-lede mx-auto mt-3 max-w-[36em] text-white/75">
+              {t("mobile.finalCta.body")}
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <CTAButton href="/book-audit" variant="ember" size="lg">
+                {t("mobile.finalCta.primary")}
+              </CTAButton>
+              <CTAButton href="/pricing" variant="ghost-ink" size="lg">
+                {t("mobile.finalCta.secondary")}
+              </CTAButton>
             </div>
+            <p className="mt-4 text-[14px] text-white/65">
+              {t("mobile.finalCta.note")}
+            </p>
           </Container>
         </section>
       </div>
