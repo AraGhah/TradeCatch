@@ -89,6 +89,14 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
           ).rows[0];
         }
 
+        // The first free slug is chosen, then inserted. Two requests for the same
+        // business name at the same moment would pick the same one and the second
+        // insert would fail on tc_organizations_slug_key. A transaction-scoped
+        // advisory lock makes the choice and the insert one step; it is released
+        // at COMMIT/ROLLBACK and only provisioning ever takes it.
+        await client.query(
+          "SELECT pg_advisory_xact_lock(hashtext('tc_organizations.slug'))",
+        );
         let slug = slugify(input.slug || input.name);
         let suffix = 0;
         for (;;) {
