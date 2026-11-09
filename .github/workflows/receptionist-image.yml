@@ -1,5 +1,11 @@
 name: Python receptionist image
 on:
+  push:
+    branches: [Ara]
+    paths:
+      - "agents/receptionist/**"
+      - ".github/workflows/receptionist-image.yml"
+  workflow_dispatch:
   pull_request:
     paths:
       - "agents/receptionist/**"
