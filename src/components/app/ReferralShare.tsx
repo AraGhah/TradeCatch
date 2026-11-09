@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 type Labels = {
   linkLabel: string;
@@ -20,6 +20,12 @@ type Labels = {
 
 const BUTTON =
   "rounded-md border border-navy/20 bg-white px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2";
+
+const subscribeNever = () => () => {};
+// Read in the browser only; the server and the first client render both say "no",
+// so there is no mismatch and no state to set from an effect.
+const supportsShare = () =>
+  typeof navigator !== "undefined" && typeof navigator.share === "function";
 
 /** Last resort for browsers or frames that refuse the async clipboard API. */
 function copyWithSelection(input: HTMLInputElement | null): boolean {
@@ -45,15 +51,8 @@ export function ReferralShare({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
-  const [canShare, setCanShare] = useState(false);
+  const canShare = useSyncExternalStore(subscribeNever, supportsShare, () => false);
   const message = labels.shareMessage;
-
-  // Decided after mount so the server and first client render agree.
-  useEffect(() => {
-    setCanShare(
-      typeof navigator !== "undefined" && typeof navigator.share === "function",
-    );
-  }, []);
 
   // "Copied" is a confirmation, not a permanent state.
   useEffect(() => {
