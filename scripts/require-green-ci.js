@@ -3,7 +3,7 @@
 const { execFileSync } = require("node:child_process");
 
 const REPOSITORY = "AraGhah/TradeCatch";
-const PRODUCTION_BRANCH = "Ara";
+const PRODUCTION_BRANCH = "main";
 const REQUIRED_JOBS = ["quality", "e2e"];
 
 /** Select the newest run, including pending or failed reruns. Never reuse an older green run. */
