@@ -98,6 +98,45 @@ describe("quote follow-up wording approval", () => {
     assert.equal(result.awaitingApproval, 1);
   });
 
+  it("threads waiting for approval never hide an approved organization's due follow-up", async () => {
+    const store = createMemoryStarterStore();
+    const sms = createMemorySmsPort();
+    const growth = createMemoryGrowthStore();
+    const services = createStarterServices({ store, sms, growth });
+    // More held threads than one tick looks at, all due earlier than org_a's.
+    for (let i = 0; i < 60; i += 1) {
+      const held = await dueQuote(services, store, `org_held_${i}`);
+      await store.updateQuoteThread(held.id, `org_held_${i}`, {
+        nextRunAt: new Date(Date.now() - 3_600_000 - i * 1000).toISOString(),
+      });
+    }
+    await dueQuote(services, store, "org_a");
+    await growth.upsertOrgSettings("org_a", {
+      quoteFollowUpApprovedAt: new Date().toISOString(),
+    });
+    const result = await services.processDueQuotes(tickInput);
+    assert.equal(result.sent, 1, "the approved organization's follow-up was starved");
+    assert.equal(sms.sent.length, 1);
+    assert.ok(result.awaitingApproval >= 60);
+  });
+
+  it("still sends at most 50 follow-ups in one tick", async () => {
+    const store = createMemoryStarterStore();
+    const sms = createMemorySmsPort();
+    const growth = createMemoryGrowthStore();
+    const services = createStarterServices({ store, sms, growth });
+    for (let i = 0; i < 55; i += 1) {
+      await dueQuote(services, store, `org_ok_${i}`);
+      await growth.upsertOrgSettings(`org_ok_${i}`, {
+        quoteFollowUpApprovedAt: new Date().toISOString(),
+      });
+    }
+    const first = await services.processDueQuotes(tickInput);
+    assert.equal(first.sent, 50);
+    const second = await services.processDueQuotes(tickInput);
+    assert.equal(second.sent, 5);
+  });
+
   it("withdrawing approval stops further sends", async () => {
     const store = createMemoryStarterStore();
     const sms = createMemorySmsPort();
