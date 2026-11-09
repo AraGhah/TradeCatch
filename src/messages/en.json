@@ -252,14 +252,6 @@
       ]
     },
     "mobile": {
-      "demo": {
-        "eyebrow": "See it",
-        "headline": "Don’t just read about it. Hear it.",
-        "intro": "Hear how TradeCatch handles a real customer conversation.",
-        "watchVideo": "Watch the demo",
-        "tryLive": "Talk to the receptionist",
-        "note": "Sound plays only when you press play."
-      },
       "benefits": {
         "eyebrow": "The problem",
         "headline": "Every missed call could be a missed job.",
@@ -1488,7 +1480,7 @@
     },
     "underTheSink": {
       "playerTitle": "Under the sink: the Receptionist answers",
-      "transcript": "You’re under a sink. Your phone’s ringing. And you can’t answer. That caller isn’t leaving a voicemail. They’re calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi, my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What’s your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I’ve sent your request to the team. They’ll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca.",
+      "transcript": "You’re under a sink. Your phone’s ringing. And you can’t answer. That caller isn’t leaving a voicemail. They’re calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi, my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What’s your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I’ve sent your request to the team. They’ll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book a free demo at tradecatch.ca.",
       "disclosure": "A dramatization with a fictional business, not a customer story. The receptionist answers and takes the request. Your team confirms the appointment."
     }
   },
