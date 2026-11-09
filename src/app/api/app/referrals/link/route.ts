@@ -33,7 +33,11 @@ async function authorize() {
   const auth = await requireTenantContext();
   if (!auth.ok) return { response: unauthorizedTenantResponse(auth.error) };
   const { organization, membership, user, isPlatformAdmin } = auth.ctx;
-  const forbidden = forbiddenUnless(membership.role, "manage_billing", isPlatformAdmin);
+  const forbidden = forbiddenUnless(
+    membership.role,
+    "manage_billing",
+    isPlatformAdmin,
+  );
   if (forbidden) return { response: forbidden };
   return { organization, user };
 }
@@ -57,7 +61,9 @@ export async function GET() {
     if (!result.ok) {
       return reply({ error: result.reason }, REFUSAL_STATUS[result.reason]);
     }
-    return reply(result.code ? linkBody(result.code, false) : { ok: true, link: null });
+    return reply(
+      result.code ? linkBody(result.code, false) : { ok: true, link: null },
+    );
   } catch (error) {
     logReferralFailure("link lookup", error);
     return reply({ error: "storage_unavailable" }, 503);
@@ -88,7 +94,10 @@ export async function POST() {
     if (!result.ok) {
       return reply({ error: result.reason }, REFUSAL_STATUS[result.reason]);
     }
-    return reply(linkBody(result.code, result.created), result.created ? 201 : 200);
+    return reply(
+      linkBody(result.code, result.created),
+      result.created ? 201 : 200,
+    );
   } catch (error) {
     logReferralFailure("link creation", error);
     return reply({ error: "storage_unavailable" }, 503);
