@@ -136,6 +136,87 @@ test.describe("customer passwords", () => {
     ).toBeVisible();
   });
 
+  test("repeated wrong passwords lock sign-in with a clear message, even for the right password", async ({
+    page,
+  }) => {
+    const email = `lockout-owner-${Date.now()}@example.test`;
+    await provision(page, email);
+    await openResetLink(page, email);
+    await waitForFormHydration(page);
+    await page.getByLabel("New password").fill(PASSWORD);
+    await page.getByLabel("Confirm password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Save password and sign in" }).click();
+    await expect(page).toHaveURL(/\/app(?:\/)?$/);
+    await page.request.post("/api/auth/logout");
+    await page.context().clearCookies();
+
+    await page.goto("/login");
+    await waitForFormHydration(page);
+    await page.getByLabel("Work email").fill(email);
+    const password = page.getByLabel("Password", { exact: true });
+    const submit = page.getByRole("button", { name: "Sign in", exact: true });
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      await password.fill(`wrong-guess-${attempt}-xx`);
+      await submit.click();
+      await expect(page.locator("form").getByRole("alert")).toContainText(
+        "email and password do not match",
+      );
+    }
+    // The right password no longer works until the lock expires.
+    await password.fill(PASSWORD);
+    await submit.click();
+    await expect(page.locator("form").getByRole("alert")).toContainText(
+      "Too many attempts",
+    );
+    await expect(page).toHaveURL(/\/login/);
+  });
+
+  test("changing the password signs out the same account on another device", async ({
+    page,
+    browser,
+  }) => {
+    const email = `devices-owner-${Date.now()}@example.test`;
+    await provision(page, email);
+    await openResetLink(page, email);
+    await waitForFormHydration(page);
+    await page.getByLabel("New password").fill(PASSWORD);
+    await page.getByLabel("Confirm password").fill(PASSWORD);
+    await page.getByRole("button", { name: "Save password and sign in" }).click();
+    await expect(page).toHaveURL(/\/app(?:\/)?$/);
+
+    // A second device signs in with the password.
+    const other = await browser.newContext();
+    try {
+      const phone = await other.newPage();
+      await phone.goto("/login");
+      await rejectCookiesIfVisible(phone);
+      await waitForFormHydration(phone);
+      await phone.getByLabel("Work email").fill(email);
+      await phone.getByLabel("Password", { exact: true }).fill(PASSWORD);
+      await phone.getByRole("button", { name: "Sign in", exact: true }).click();
+      await expect(phone).toHaveURL(/\/app(?:\/)?$/);
+
+      // The first device changes the password.
+      await page.goto("/app/settings/security");
+      await waitForFormHydration(page);
+      await page.getByLabel("Current password").fill(PASSWORD);
+      await page.getByLabel("New password", { exact: true }).fill("Maple-Wrench-Lantern-47");
+      await page.getByLabel("Confirm new password").fill("Maple-Wrench-Lantern-47");
+      await page.getByRole("button", { name: "Change password" }).click();
+      await expect(
+        page.getByRole("status").filter({ hasText: "Password changed" }),
+      ).toBeVisible();
+
+      // This device stays signed in; the other one is signed out.
+      await page.goto("/app");
+      await expect(page).toHaveURL(/\/app(?:\/)?$/);
+      await phone.goto("/app");
+      await expect(phone).toHaveURL(/\/login/);
+    } finally {
+      await other.close();
+    }
+  });
+
   test("a used or invented link shows a clear message and offers a new one", async ({
     page,
   }) => {
