@@ -55,14 +55,14 @@ export async function StoryDemos({
     <section
       id={id}
       className={`scroll-mt-24 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-paper ${
-        compact ? "py-8 sm:py-10" : ""
+        compact ? "py-6 sm:py-8" : ""
       }`}
       style={compact ? undefined : { padding: "var(--section-y) 0" }}
     >
       <Container>
         <div
           data-reveal
-          className="grid items-center gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-[clamp(40px,6vw,88px)]"
+          className="grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,300px)] md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-[clamp(40px,6vw,88px)]"
         >
           <div className="max-w-[36rem] lg:max-w-none">
             <SectionHeading
@@ -73,7 +73,7 @@ export async function StoryDemos({
               className="max-w-none"
             />
 
-            <ul className="m-0 mt-5 flex list-none flex-col gap-2.5 p-0">
+            <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0">
               {benefits.map((benefit) => (
                 <li
                   key={benefit}
@@ -88,20 +88,20 @@ export async function StoryDemos({
               ))}
             </ul>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="mt-5 flex flex-wrap items-center gap-3">
               <CTAButton href="/book-audit" variant="ember">
                 {cta("bookFreeDemo")}
               </CTAButton>
               <WatchDemoButton
                 video={DEFAULT_STORY_ID}
-                className="inline-flex items-center justify-center gap-2 rounded-[11px] border-[1.5px] border-[rgb(var(--ink-rgb)/0.18)] px-[22px] py-[13px] text-[15px] font-semibold tracking-[-0.01em] text-heading transition-[translate,border-color] duration-200 hover:-translate-y-[2px] hover:border-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+                className="hidden items-center justify-center gap-2 rounded-[11px] border-[1.5px] lg:inline-flex border-[rgb(var(--ink-rgb)/0.18)] px-[22px] py-[13px] text-[15px] font-semibold tracking-[-0.01em] text-heading transition-[translate,border-color] duration-200 hover:-translate-y-[2px] hover:border-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
               >
                 {cta("watchDemo")}
               </WatchDemoButton>
             </div>
           </div>
 
-          <div className="mx-auto w-full max-w-[360px] lg:mx-0">
+          <div className="mx-auto w-full max-w-[264px] sm:max-w-[300px] md:mx-0 lg:max-w-[360px]">
             <WatchDemoButton
               video={DEFAULT_STORY_ID}
               ariaLabel={t("watchLabel", { title })}
