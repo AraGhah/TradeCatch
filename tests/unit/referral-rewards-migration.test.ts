@@ -45,6 +45,11 @@ async function freshDb(): Promise<Db> {
   const { PGlite } = (await import(specifier)) as { PGlite: new () => Db };
   const db = new PGlite();
   await db.exec("CREATE TABLE tc_organizations (id TEXT PRIMARY KEY);");
+  // The runner's record of applied migrations; production always has it, and
+  // 038 consults it so a repeated `npm run db:schema` never rewrites settings.
+  await db.exec(
+    "CREATE TABLE mc_schema_migrations (id TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now());",
+  );
   await db.exec(SCHEMA);
   await db.exec(LAUNCH_REFERRAL_SQL);
   await db.exec("INSERT INTO tc_organizations (id) VALUES ('org_ref'), ('org_new');");
@@ -111,6 +116,25 @@ describe("migration 038: referral rewards by plan (real PostgreSQL via PGlite)",
       const settings = await createPostgresReferralStore(poolOf(db)).getSettings();
       assert.equal(settings.rewardsCents.essential, 4000);
       assert.equal(settings.rewardsCents.professional, 6000);
+    } finally {
+      await db.close();
+    }
+  });
+
+  it("does not rewrite settings again once 038 is recorded (repeated db:schema runs)", async () => {
+    const db = await freshDb();
+    try {
+      await saveSettings(db, 6500, 6500);
+      await db.exec(MIGRATION_038); // first application: launch defaults -> $50 / $75
+      await db.exec("INSERT INTO mc_schema_migrations (id) VALUES ('038_referral_rewards_by_plan')");
+      // An administrator later chooses $65 / $65 on purpose.
+      await db.query(
+        "UPDATE tc_referral_settings SET reward_essential_cents = 6500, reward_professional_cents = 6500 WHERE id = 1",
+      );
+      await db.exec(MIGRATION_038); // the runner re-applies every file on each run
+      const settings = await createPostgresReferralStore(poolOf(db)).getSettings();
+      assert.equal(settings.rewardsCents.essential, 6500);
+      assert.equal(settings.rewardsCents.professional, 6500);
     } finally {
       await db.close();
     }
