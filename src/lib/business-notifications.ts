@@ -52,7 +52,11 @@ function plainText(input: BusinessNotifyInput): string {
   for (const s of input.sections ?? []) {
     const lines = s.lines.filter((l) => l.value).map(row);
     if (!lines.length && !s.body) continue;
-    parts.push([s.heading.toUpperCase(), ...lines, s.body ?? ""].filter(Boolean).join("\n"));
+    parts.push(
+      [s.heading.toUpperCase(), ...lines, s.body ?? ""]
+        .filter(Boolean)
+        .join("\n"),
+    );
   }
   if (input.ctaUrl) parts.push(`${input.ctaLabel ?? "Open"}: ${input.ctaUrl}`);
   return parts.join("\n\n");
