@@ -23,6 +23,9 @@ async function main() {
       "tc004_staging",
       "tc006_staging",
       "account_export_staging",
+      "quote_approval_staging",
+      "saas_provision_staging",
+      "usage_billing_staging",
     ]) {
       const found = await client.query(
         "SELECT 1 FROM pg_database WHERE datname=$1",
