@@ -11,6 +11,7 @@ import { normalizeEmail, type SaasStore } from "./store";
 import {
   mergeBusinessFeatures,
   type MagicLink,
+  type PasswordToken,
   type Membership,
   type Session,
 } from "./types";
@@ -88,6 +89,14 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
           ).rows[0];
         }
 
+        // The first free slug is chosen, then inserted. Two requests for the same
+        // business name at the same moment would pick the same one and the second
+        // insert would fail on tc_organizations_slug_key. A transaction-scoped
+        // advisory lock makes the choice and the insert one step; it is released
+        // at COMMIT/ROLLBACK and only provisioning ever takes it.
+        await client.query(
+          "SELECT pg_advisory_xact_lock(hashtext('tc_organizations.slug'))",
+        );
         let slug = slugify(input.slug || input.name);
         let suffix = 0;
         for (;;) {
@@ -527,6 +536,120 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
         `UPDATE tc_sessions SET revoked_at = $2::timestamptz
          WHERE user_id = $1 AND revoked_at IS NULL`,
         [userId, atIso],
+      );
+    },
+
+    async getPasswordCredential(userId) {
+      const { rows } = await query<{
+        user_id: string;
+        password_hash: string;
+        updated_at: Date;
+      }>(
+        `SELECT user_id, password_hash, updated_at
+           FROM tc_user_passwords WHERE user_id = $1`,
+        [userId],
+      );
+      const row = rows[0];
+      return row
+        ? {
+            userId: row.user_id,
+            hash: row.password_hash,
+            updatedAt: row.updated_at.toISOString(),
+          }
+        : null;
+    },
+
+    async setPasswordCredential(credential) {
+      await query(
+        `INSERT INTO tc_user_passwords (user_id, password_hash, updated_at)
+         VALUES ($1, $2, $3::timestamptz)
+         ON CONFLICT (user_id) DO UPDATE
+           SET password_hash = EXCLUDED.password_hash,
+               updated_at = EXCLUDED.updated_at`,
+        [credential.userId, credential.hash, credential.updatedAt],
+      );
+    },
+
+    async createPasswordToken(token) {
+      await query(
+        `INSERT INTO tc_password_tokens
+           (id, user_id, token_hash, kind, expires_at, consumed_at, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [
+          token.id,
+          token.userId,
+          token.tokenHash,
+          token.kind,
+          token.expiresAt,
+          token.consumedAt ?? null,
+          token.createdAt,
+        ],
+      );
+    },
+
+    async findPasswordToken(tokenHash) {
+      const { rows } = await query<{
+        id: string;
+        user_id: string;
+        token_hash: string;
+        kind: string;
+        expires_at: Date;
+        consumed_at: Date | null;
+        created_at: Date;
+      }>(`SELECT * FROM tc_password_tokens WHERE token_hash = $1`, [
+        tokenHash,
+      ]);
+      const row = rows[0];
+      if (!row) return null;
+      const token: PasswordToken = {
+        id: row.id,
+        userId: row.user_id,
+        tokenHash: row.token_hash,
+        kind: row.kind === "activation" ? "activation" : "reset",
+        expiresAt: row.expires_at.toISOString(),
+        consumedAt: row.consumed_at?.toISOString(),
+        createdAt: row.created_at.toISOString(),
+      };
+      return token;
+    },
+
+    async consumePasswordToken(tokenHash, at) {
+      const { rows } = await query<{
+        id: string;
+        user_id: string;
+        token_hash: string;
+        kind: string;
+        expires_at: Date;
+        consumed_at: Date | null;
+        created_at: Date;
+      }>(
+        `UPDATE tc_password_tokens
+         SET consumed_at = $2::timestamptz
+         WHERE token_hash = $1
+           AND consumed_at IS NULL
+           AND expires_at > $2::timestamptz
+         RETURNING *`,
+        [tokenHash, at],
+      );
+      const row = rows[0];
+      if (!row) return null;
+      const token: PasswordToken = {
+        id: row.id,
+        userId: row.user_id,
+        tokenHash: row.token_hash,
+        kind: row.kind === "activation" ? "activation" : "reset",
+        expiresAt: row.expires_at.toISOString(),
+        consumedAt: row.consumed_at?.toISOString(),
+        createdAt: row.created_at.toISOString(),
+      };
+      return token;
+    },
+
+    async invalidatePasswordTokens(userId, at) {
+      await query(
+        `UPDATE tc_password_tokens SET consumed_at = $2::timestamptz
+         WHERE user_id = $1 AND consumed_at IS NULL`,
+        [userId, at],
       );
     },
 

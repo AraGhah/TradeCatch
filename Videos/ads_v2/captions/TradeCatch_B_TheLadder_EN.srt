@@ -26,6 +26,6 @@ The request is already waiting.
 TradeCatch. Every call counts.
 
 7
-00:00:27,088 --> 00:00:29,399
-Book your free audit at tradecatch.ca.
+00:00:27,088 --> 00:00:29,227
+Book a free demo at tradecatch.ca.
 

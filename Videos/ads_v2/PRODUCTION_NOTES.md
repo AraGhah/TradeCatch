@@ -7,8 +7,8 @@ Three video ads (24 fps, H.264 + AAC, about -14 LUFS / -1.5 dBTP), each in Engli
 | Ad | Concept | EN | FR |
 |---|---|---|---|
 | A | **Under the Sink** - plumber, daytime. AI receptionist answers, answers questions, takes an appointment request | 44.0s | 49.1s |
-| B | **The Ladder** - electrician. A missed call gets an instant text back (SMS receptionist) | 30.3s | 31.5s |
-| C | **After Hours** - night. Emergency call is transferred to the on-call line; the rest waits as a morning summary | 31.2s | 33.4s |
+| B | **The Ladder** - electrician. A missed call gets an instant text back (SMS receptionist) | 30.17s | 31.54s |
+| C | **After Hours** - night. Emergency call is transferred to the on-call line; the rest waits as a morning summary | 31.00s | 33.42s |
 
 - `TradeCatch_<ad>_<name>_<LANG>_9x16.mp4` - masters (Instagram Reels, Facebook Reels/Stories, TikTok, YouTube Shorts)
 - `TradeCatch_<ad>_<name>_<LANG>_4x5.mp4` - 1080x1350 feed versions (Instagram feed, Facebook feed). Same cuts, same audio stream (copied bit-for-bit from the 9:16 master, so identical mix and loudness); the picture is re-laid out, not letterboxed - see "4:5 feed versions" below
@@ -162,6 +162,44 @@ The same ads play on the site as three short "on the job" stories (home page aft
 - Honesty: the dialog always shows the label under the video ("Dramatization with a fictional business, not a customer story. The Receptionist is a founder-configured pilot; ..." / the text-back pilot line for The Ladder) and repeats it in the transcript; the section also shows it next to the cards. The receptionist is never described as booking on its own: the request is sent to the team.
 - Accessibility: captions track on the video, transcript in a `<details>`, the dialog keeps the existing focus trap, Escape and focus return. The video never exceeds 68% of the viewport height.
 - Tests: `tests/demo-and-pilot.spec.ts` (EN and FR dialogs, label, 4:5 box fits the viewport, receptionist page, assets served).
+
+## Website demo: pacing and call to action (Nov 2026)
+
+The one public video ("Under the sink", 4:5) is built by `_source/build_site_demo.py`, not by the LinkedIn flow above:
+
+    cd Videos/ads_v2/_source
+    python gen_voice.py en fr CTA2     # only if a spoken line changed (cached otherwise; needs the ElevenLabs key)
+    python gen_words.py                # word timings for any new line (delete its key from words.json first)
+    python build_site_demo.py [en] [fr] [--no-render]
+
+It renders the 9:16 master and the 4:5 picture into the scratch folder (the LinkedIn masters in this folder are **not**
+touched), web-encodes with the command under "Website" plus a -2 dBFS peak limiter before AAC (without it the FR file re-encoded to
++1.4 dBTP; with it the files measure -1.6 / -1.3 dBTP at -14.4 / -14.1 LUFS), and writes the WebVTT captions straight from the mixer's cue times.
+
+What changed and why:
+
+- **Wording.** The narration, the end-card button and the captions no longer say "free audit". The narrator says "Book a free
+  demo at tradecatch.ca" / "Réserve ta démo gratuite sur tradecatch.ca"; the button reads "Book a Free Demo" / "Réserver une
+  démo gratuite" (`config.py` LINES CTA2 and BRAND). Only those two spoken lines were re-recorded (90 characters).
+- **Pacing.** The fast feel came from editing, not playback speed or the media: the source clips are 10 s long and the cuts were
+  derived from audio length, so a short line produced a short scene. `build_ads.py` now sets floors (`HOLD` in `build_A`): the
+  contractor at work 4.2 s, the call arriving 4.0 s, TradeCatch picking up 4.4 s, the phone notification 2.0 s, the request
+  card about 4.75 s. Everything is still cut from the same audio, so captions cannot drift; playback is 1.0x and the controls
+  are the browser's.
+- **Call to action.** The end card fades in its button, address and disclosure by 1.95 s, then holds 5.2 s (`CTA_MIN_VISIBLE`).
+- **Disclosure.** The on-screen line on the site version is "Dramatization with a fictional business." / "Mise en scène avec une
+  entreprise fictive." (the launch plans are not described as a pilot). The LinkedIn masters still carry the longer pilot line.
+- **No language-menu content.** Nothing in the video mentions a keypad or a language prompt; the receptionist greets in one
+  language as before. Automatic language detection is not shown, because it is not yet deployed to the live agent.
+
+Ads B and C were refreshed for the November release: both languages, 9:16 masters, 4:5 feed versions, web encodes,
+website copies and caption sidecars now use the recorded "free demo" / "démo gratuite" call to action. Their opening
+footage and posters are unchanged. The script tables above document the original recordings; the current B/C closing
+line is "Book a free demo at tradecatch.ca" / "Réserve ta démo gratuite sur tradecatch.ca".
+
+The archived ad A social masters and their sidecars still say "free audit"; the public Under the Sink website version
+uses the updated demo wording. Regenerate those archived A exports before reusing them. Ad C remains a dramatization
+of a transfer scenario; call transfer is disabled in this production release.
 
 ## Limitations - read before publishing
 

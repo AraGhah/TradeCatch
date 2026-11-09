@@ -23,6 +23,9 @@ async function main() {
       "tc004_staging",
       "tc006_staging",
       "account_export_staging",
+      "quote_approval_staging",
+      "saas_provision_staging",
+      "usage_billing_staging",
     ]) {
       const found = await client.query(
         "SELECT 1 FROM pg_database WHERE datname=$1",
@@ -48,11 +51,18 @@ async function main() {
   } finally {
     await gmail.end();
   }
-  url.pathname = "/account_export_staging";
-  execFileSync(process.execPath, ["scripts/apply-missed-call-schema.js"], {
-    env: { ...process.env, DATABASE_URL: url.href },
-    stdio: "inherit",
-  });
+  for (const name of [
+    "account_export_staging",
+    "quote_approval_staging",
+    "saas_provision_staging",
+    "usage_billing_staging",
+  ]) {
+    url.pathname = `/${name}`;
+    execFileSync(process.execPath, ["scripts/apply-missed-call-schema.js"], {
+      env: { ...process.env, DATABASE_URL: url.href },
+      stdio: "inherit",
+    });
+  }
 }
 main().catch((error) => {
   console.error(error.message);

@@ -104,13 +104,13 @@ function mapSettings(row: Row): ReferralSettings {
   return {
     programEnabled: Boolean(row.program_enabled),
     rewardsCents: {
-      essential: Number(row.reward_essential_cents ?? 6500),
-      professional: Number(row.reward_professional_cents ?? 6500),
+      essential: Number(row.reward_essential_cents ?? DEFAULT_REFERRAL_SETTINGS.rewardsCents.essential),
+      professional: Number(row.reward_professional_cents ?? DEFAULT_REFERRAL_SETTINGS.rewardsCents.professional),
       starter: Number(row.reward_starter_cents),
       growth: Number(row.reward_growth_cents),
       receptionist: Number(row.reward_receptionist_cents),
     },
-    websiteBonusCents: Number(row.reward_website_bonus_cents ?? 3500),
+    websiteBonusCents: Number(row.reward_website_bonus_cents ?? DEFAULT_REFERRAL_SETTINGS.websiteBonusCents),
     eligiblePlans: ((row.eligible_plans as string[]) ?? []) as PlanId[],
     holdDays: Number(row.hold_days),
     requireReferrerActive: Boolean(row.require_referrer_active),

@@ -249,10 +249,10 @@ describe("website request service", () => {
 
     result = await service.adminUpdate(id, {
       status: "quoted",
-      quotedPriceCad: 349.99,
+      quotedPriceCad: 699.99,
       scopeSummary: "  5-page site, mobile-ready, contact form  ",
     });
-    assert.equal(result.ok && result.request.quotedPriceCad, 349.99);
+    assert.equal(result.ok && result.request.quotedPriceCad, 699.99);
     assert.equal(
       result.ok && result.request.scopeSummary,
       "5-page site, mobile-ready, contact form",
@@ -272,20 +272,20 @@ describe("website request service", () => {
       error: "quote_required",
     });
     assert.deepEqual(
-      await service.adminUpdate(id, { status: "quoted", quotedPriceCad: 349.99 }),
+      await service.adminUpdate(id, { status: "quoted", quotedPriceCad: 699.99 }),
       { ok: false, error: "quote_required" },
     );
   });
 
-  it("fills in the published $349.99 itself when the scope is written", async () => {
+  it("fills in the published $699.99 itself when the scope is written", async () => {
     const service = setup();
     const { id } = await created(service);
     const result = await service.adminUpdate(id, { status: "quoted", scopeSummary: "scope" });
     assert.ok(result.ok);
-    assert.equal(result.request.quotedPriceCad, 349.99);
+    assert.equal(result.request.quotedPriceCad, 699.99);
   });
 
-  it("refuses any price other than the published $349.99, and any skipped step", async () => {
+  it("refuses any price other than the published $699.99, and any skipped step", async () => {
     const service = setup();
     const { id } = await created(service);
     for (const quotedPriceCad of [200, 500, 799]) {
@@ -314,7 +314,7 @@ describe("website request service", () => {
     const { id } = await created(service);
     await service.adminUpdate(id, {
       status: "quoted",
-      quotedPriceCad: 349.99,
+      quotedPriceCad: 699.99,
       scopeSummary: "scope",
     });
     await service.adminUpdate(id, { status: "in_progress" });

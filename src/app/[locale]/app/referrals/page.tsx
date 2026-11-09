@@ -1,9 +1,10 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { ReferralShare } from "@/components/app/ReferralShare";
+import { ReferralLinkCard } from "@/components/app/ReferralLinkCard";
+import { getPathname } from "@/i18n/pathname";
 import { formatPlanMoney } from "@/lib/plans";
 import { referralUrl } from "@/product/referrals/links";
 import { logReferralFailure } from "@/product/referrals/log";
-import { getReferralService } from "@/product/referrals/runtime";
+import { getReferralServiceReady } from "@/product/referrals/runtime";
 import type { ReferrerOverview } from "@/product/referrals/service";
 import { canManageBilling } from "@/product/saas/billing-access";
 import { requireTenantContext } from "@/product/saas/tenant";
@@ -48,7 +49,8 @@ export default async function AppReferralsPage({
 
   let overview: ReferrerOverview | null = null;
   try {
-    overview = await getReferralService().overview(auth.ctx.organization.id);
+    // The ready service waits for the database check, so this page never reads a memory-only store.
+    overview = await (await getReferralServiceReady()).overview(auth.ctx.organization.id);
   } catch (error) {
     logReferralFailure("overview", error);
   }
@@ -69,10 +71,14 @@ export default async function AppReferralsPage({
       new Date(iso),
     );
   const planName = (plan: string) => plans(`names.${plan}`);
-  const otherLang = lang === "fr" ? "en" : "fr";
-  const link = overview.code ? referralUrl(overview.code, lang) : null;
-  const otherLink = overview.code ? referralUrl(overview.code, otherLang) : null;
+  const initialLinks = overview.code
+    ? { en: referralUrl(overview.code, "en"), fr: referralUrl(overview.code, "fr") }
+    : null;
   const eligibility = overview.eligibility;
+  // Signing in again brings them straight back to this page.
+  const loginHref = `${getPathname({ href: "/login", locale: lang })}?next=${encodeURIComponent(
+    getPathname({ href: "/app/referrals", locale: lang }),
+  )}`;
 
   return (
     <div className="flex flex-col gap-8">
@@ -82,30 +88,49 @@ export default async function AppReferralsPage({
         <h2 id="ref-link" className={H2}>
           {t("linkTitle")}
         </h2>
-        {link && otherLink ? (
-          <div className="mt-3 flex flex-col gap-3">
-            <p className="text-sm text-navy/70">{t("linkHelp")}</p>
-            <ReferralShare
-              link={link}
-              otherLink={otherLink}
+        {eligibility.eligible ? (
+          <div className="mt-3">
+            <ReferralLinkCard
+              locale={lang}
+              initialLinks={initialLinks}
+              loginHref={loginHref}
               labels={{
-                linkLabel: t("linkLabel"),
-                copy: t("copy"),
-                copied: t("copied"),
-                copyFailed: t("copyFailed"),
-                share: t("share"),
-                email: t("shareEmail"),
-                sms: t("shareSms"),
-                otherLanguage: t("otherLanguage"),
-                shareMessage: t("shareMessage", { business: auth.ctx.organization.name, link }),
-                emailSubject: t("shareSubject"),
+                getLink: t("getLink"),
+                getLinkHelp: t("getLinkHelp"),
+                creating: t("creating"),
+                ready: t("linkReady"),
+                retry: t("retry"),
+                signIn: t("signIn"),
+                errors: {
+                  unauthorized: t("linkErrors.unauthorized"),
+                  forbidden: t("linkErrors.forbidden"),
+                  rateLimited: t("linkErrors.rateLimited"),
+                  unavailable: t("linkErrors.unavailable"),
+                  notEligible: t("linkErrors.notEligible"),
+                  invalid: t("linkErrors.invalid"),
+                },
+                share: {
+                  linkLabel: t("linkLabel"),
+                  copy: t("copy"),
+                  copied: t("copied"),
+                  copyFailed: t("copyFailed"),
+                  copiedStatus: t("copiedStatus"),
+                  share: t("share"),
+                  email: t("shareEmail"),
+                  sms: t("shareSms"),
+                  otherLanguage: t("otherLanguage"),
+                  emailSubject: t("shareSubject"),
+                  // {link} stays in the text: the card fills in the language chosen.
+                  shareMessageTemplate: t("shareMessage", {
+                    business: auth.ctx.organization.name,
+                    link: "{link}",
+                  }),
+                },
               }}
             />
           </div>
         ) : (
-          <p className="mt-3 text-sm text-navy/70">
-            {eligibility.eligible ? t("unavailable") : t(`notEligible.${eligibility.reason}`)}
-          </p>
+          <p className="mt-3 text-sm text-navy/70">{t(`notEligible.${eligibility.reason}`)}</p>
         )}
       </section>
 

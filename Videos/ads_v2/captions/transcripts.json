@@ -10,23 +10,23 @@
   "transcript": "Les mains sous l'évier. Le téléphone qui sonne. Et tu ne peux pas répondre. Ce client-là ne laissera pas de message. Il va appeler le prochain plombier. Client : [soupir] Ah, voyons donc… Même chantier. Cette fois, TradeCatch décroche. Réceptionniste : Merci d'avoir appelé Plomberie NorthStar. Comment puis-je vous aider? Client : Bonjour, l'évier de ma cuisine fuit. Vous desservez Laval? Réceptionniste : Oui, nous desservons Laval. Quelle est votre adresse, et quel moment vous conviendrait? Client : Au 45, avenue Laurier, à Laval. Demain matin, vers dix heures? Réceptionniste : Parfait. J'ai transmis votre demande à l'équipe. Elle vous écrira pour confirmer. Tu restes sur ton chantier. TradeCatch répond, et te remet les détails. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca."
  },
  "TradeCatch_B_TheLadder_EN": {
-  "seconds": 30.333,
+  "seconds": 30.167,
   "cues": 7,
-  "transcript": "You're an electrician. Not a receptionist. Plenty of callers won't leave a voicemail. They'll just call someone else. With TradeCatch, a missed call gets a text back right away, under your company's name. You wrap up the job. The request is already waiting. TradeCatch. Every call counts. Book your free audit at tradecatch.ca."
+  "transcript": "You're an electrician. Not a receptionist. Plenty of callers won't leave a voicemail. They'll just call someone else. With TradeCatch, a missed call gets a text back right away, under your company's name. You wrap up the job. The request is already waiting. TradeCatch. Every call counts. Book a free demo at tradecatch.ca."
  },
  "TradeCatch_B_TheLadder_FR": {
   "seconds": 31.542,
   "cues": 8,
-  "transcript": "Tu es électricien. Pas réceptionniste. Bien des gens ne laissent pas de message. Ils appellent quelqu'un d'autre. Avec TradeCatch, un appel manqué reçoit un texto tout de suite, au nom de ton entreprise. Tu termines ta job. La demande est déjà là. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca."
+  "transcript": "Tu es électricien. Pas réceptionniste. Bien des gens ne laissent pas de message. Ils appellent quelqu'un d'autre. Avec TradeCatch, un appel manqué reçoit un texto tout de suite, au nom de ton entreprise. Tu termines ta job. La demande est déjà là. TradeCatch. Chaque appel compte. Réserve ta démo gratuite sur tradecatch.ca."
  },
  "TradeCatch_C_AfterHours_EN": {
-  "seconds": 31.167,
+  "seconds": 31.0,
   "cues": 10,
-  "transcript": "Your customers don't stop calling at five. Receptionist: Thanks for calling NorthStar Plumbing. You've reached us after hours. How can I help? Caller: My basement is flooding! I need someone right now! Receptionist: I understand, this is urgent. I'm connecting you to the on-call technician right now. Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary. TradeCatch. Every call counts. Book your free audit at tradecatch.ca."
+  "transcript": "Your customers don't stop calling at five. Receptionist: Thanks for calling NorthStar Plumbing. You've reached us after hours. How can I help? Caller: My basement is flooding! I need someone right now! Receptionist: I understand, this is urgent. I'm connecting you to the on-call technician right now. Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary. TradeCatch. Every call counts. Book a free demo at tradecatch.ca."
  },
  "TradeCatch_C_AfterHours_FR": {
   "seconds": 33.417,
   "cues": 10,
-  "transcript": "Tes clients n'appellent pas seulement de neuf à cinq. Réceptionniste : Merci d'avoir appelé Plomberie NorthStar. Nous sommes fermés pour la soirée. Comment puis-je vous aider? Client : Mon sous-sol est inondé! J'ai besoin de quelqu'un tout de suite! Réceptionniste : Je comprends, c'est urgent. Je vous transfère immédiatement au technicien de garde. Les vraies urgences rejoignent ta ligne de garde. Le reste est là le matin, avec un résumé. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca."
+  "transcript": "Tes clients n'appellent pas seulement de neuf à cinq. Réceptionniste : Merci d'avoir appelé Plomberie NorthStar. Nous sommes fermés pour la soirée. Comment puis-je vous aider? Client : Mon sous-sol est inondé! J'ai besoin de quelqu'un tout de suite! Réceptionniste : Je comprends, c'est urgent. Je vous transfère immédiatement au technicien de garde. Les vraies urgences rejoignent ta ligne de garde. Le reste est là le matin, avec un résumé. TradeCatch. Chaque appel compte. Réserve ta démo gratuite sur tradecatch.ca."
  }
 }

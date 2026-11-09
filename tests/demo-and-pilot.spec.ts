@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { waitForFormHydration } from "./support/hydration";
 
 async function rejectCookiesIfVisible(page: import("@playwright/test").Page) {
   const reject = page.getByRole("button", { name: "Reject non-essential" });
@@ -202,7 +203,7 @@ test.describe("first-demo journeys", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "en");
   });
 
-  test("the public audit wizard shows a save error when durable storage is disabled", async ({
+  test("the demo request form says nothing was saved when durable storage is unavailable, keeps the answers and allows a safe retry", async ({
     page,
   }) => {
     await page.goto("/book-audit");
@@ -234,25 +235,52 @@ test.describe("first-demo journeys", () => {
       }),
     ).toBeVisible();
 
+    const bodies: { idempotencyKey: string; company: string; email: string }[] = [];
+    page.on("request", (request) => {
+      if (request.url().endsWith("/api/book-audit") && request.method() === "POST") {
+        bodies.push(request.postDataJSON());
+      }
+    });
+
     const submit = page.locator('button[type="submit"]');
     await expect(submit).not.toHaveAttribute("aria-disabled", "true");
     const response = page.waitForResponse("**/api/book-audit");
     await submit.click();
     expect((await response).status()).toBe(503);
+
+    // Never confirmed; the visitor is told plainly that nothing was saved.
     await expect(
-      page.getByRole("heading", { name: "Got it. Your audit request is in." }),
+      page.getByRole("heading", { name: "Got it. Your demo request is in." }),
     ).not.toBeVisible();
-    await expect(
-      page
-        .getByRole("alert")
-        .filter({ hasText: "We couldn’t submit your audit request" }),
-    ).toBeVisible();
+    const failure = page.getByTestId("audit-submit-error");
+    await expect(failure).toBeVisible();
+    await expect(failure).toContainText("your request was not saved");
+    await expect(failure).toContainText("Your answers are kept");
+    await expect(failure).toBeInViewport({ ratio: 1 });
+    await expect(failure).toBeFocused();
     await expect(submit).toHaveAttribute("aria-busy", "false");
+    await expect(submit).toBeEnabled();
+
+    // The message is complete: wraps inside its box instead of being cut off.
+    const fits = await failure.evaluate(
+      (node) => node.scrollWidth <= node.clientWidth + 1 && node.scrollHeight <= node.clientHeight + 1,
+    );
+    expect(fits).toBe(true);
+
+    // The answers are still there, and a retry is the same request.
     await expect(
       page.getByRole("heading", {
         name: "Check your answers, then send it over.",
       }),
     ).toBeVisible();
+    await expect(page.getByText("TradeCatch E2E Plumbing")).toBeVisible();
+    const retry = page.waitForResponse("**/api/book-audit");
+    await submit.click();
+    expect((await retry).status()).toBe(503);
+    expect(bodies).toHaveLength(2);
+    expect(bodies[1].idempotencyKey).toBe(bodies[0].idempotencyKey);
+    expect(bodies[1].company).toBe("TradeCatch E2E Plumbing");
+    expect(bodies[1].email).toBe("audit-wizard@example.test");
   });
 
   test("founder-provisioned magic-link login reaches an authenticated Essential workspace", async ({
@@ -288,9 +316,15 @@ test.describe("first-demo journeys", () => {
 
     await page.goto("/login");
     await rejectCookiesIfVisible(page);
+    await waitForFormHydration(page);
 
     await page.getByLabel("Work email").fill(email);
-    await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+    await page
+      .getByRole("button", { name: "Email me a sign-in link instead" })
+      .click();
+    await page
+      .getByRole("button", { name: "Email me a sign-in link", exact: true })
+      .click();
 
     const devLink = page.getByRole("link", { name: "Open workspace" });
     await expect(devLink).toBeVisible();

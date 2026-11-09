@@ -1,6 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { readFile } from "node:fs/promises";
+import { waitForFormHydration } from "./support/hydration";
 import { readExportZip } from "./support/read-export-zip";
 
 /**
@@ -45,13 +46,19 @@ async function signIn(page: Page, plan: "essential" | "starter" | "growth") {
       { timeout: 10_000 },
     )
     .catch(() => undefined);
+  await waitForFormHydration(page);
   await page.getByLabel("Work email").fill(email);
+  await page
+    .getByRole("button", { name: "Email me a sign-in link instead" })
+    .click();
   const response = page.waitForResponse(
     (r) =>
       r.url().endsWith("/api/auth/magic-link") &&
       r.request().method() === "POST",
   );
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await page
+    .getByRole("button", { name: "Email me a sign-in link", exact: true })
+    .click();
   expect((await response).status()).toBe(200);
   await page.getByRole("link", { name: "Open workspace" }).click();
   await page.getByRole("button", { name: "Confirm and sign in" }).click();

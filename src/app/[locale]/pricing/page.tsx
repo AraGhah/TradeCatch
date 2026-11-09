@@ -26,7 +26,8 @@ import { buildMetadata } from "@/lib/seo";
 import {
   PLAN_ORDER,
   REFERRAL_MAX_REWARD_CENTS,
-  REFERRAL_PLAN_REWARD_CENTS,
+  REFERRAL_ESSENTIAL_REWARD_CENTS,
+  REFERRAL_PROFESSIONAL_REWARD_CENTS,
   REFERRAL_WEBSITE_BONUS_CENTS,
   type PlanId,
 } from "@/product/saas/plan-catalog";
@@ -119,7 +120,8 @@ export default async function PricingPage({
   const referralT = await getTranslations("referrals.public");
   const money = (cents: number) => formatPlanMoney(cents / 100, lang, 0);
   const referralAmounts = {
-    planReward: money(REFERRAL_PLAN_REWARD_CENTS),
+    essentialReward: money(REFERRAL_ESSENTIAL_REWARD_CENTS),
+    professionalReward: money(REFERRAL_PROFESSIONAL_REWARD_CENTS),
     bonus: money(REFERRAL_WEBSITE_BONUS_CENTS),
     max: money(REFERRAL_MAX_REWARD_CENTS),
   };
@@ -148,7 +150,7 @@ export default async function PricingPage({
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
       />
 
-      <section className="relative overflow-hidden bg-navy pt-[clamp(80px,9vw,110px)] pb-[clamp(88px,10vw,120px)]">
+      <section className="relative overflow-hidden bg-navy pt-[clamp(44px,5.4vw,72px)] pb-[clamp(48px,6vw,80px)]">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"

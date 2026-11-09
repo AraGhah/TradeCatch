@@ -40,7 +40,7 @@ test("confirmation acknowledges storage while notifications are pending", async 
   await reviewRequest(page);
   await page.locator('button[type="submit"]').click();
   await expect(
-    page.getByRole("heading", { name: "Got it. Your audit request is in." }),
+    page.getByRole("heading", { name: "Got it. Your demo request is in." }),
   ).toBeVisible();
   await expect(page.getByText(/Your request is safely saved/)).toBeVisible();
   await expect(
@@ -60,10 +60,10 @@ for (const body of [{ ok: true }, { ok: true, leadSaved: false }]) {
     await expect(
       page
         .getByRole("alert")
-        .filter({ hasText: "We couldn’t submit your audit request" }),
+        .filter({ hasText: "We couldn't send your demo request" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Got it. Your audit request is in." }),
+      page.getByRole("heading", { name: "Got it. Your demo request is in." }),
     ).not.toBeVisible();
   });
 }

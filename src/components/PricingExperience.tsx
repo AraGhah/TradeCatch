@@ -153,7 +153,7 @@ export function PricingExperience({
       </div>
 
       {afterPlans ? (
-        <div className="mt-[clamp(40px,5vw,56px)]">{afterPlans}</div>
+        <div className="mt-[clamp(24px,3vw,36px)]">{afterPlans}</div>
       ) : null}
 
       {labels.customTitle && labels.customBody && labels.customCta ? (
@@ -162,7 +162,7 @@ export function PricingExperience({
         whileInView={{ y: 0 }}
         viewport={{ once: true, margin: "-40px" }}
         transition={{ duration: 0.5, ease }}
-        className="relative mt-[clamp(40px,5vw,56px)] overflow-hidden bg-navy px-[clamp(28px,4vw,48px)] py-[clamp(36px,4.5vw,52px)] text-white"
+        className="relative mt-[clamp(24px,3vw,36px)] overflow-hidden bg-navy px-[clamp(24px,3.2vw,36px)] py-[clamp(24px,3vw,36px)] text-white"
       >
         <div
           aria-hidden
@@ -204,9 +204,9 @@ export function PricingExperience({
           hidden: { y: 12 },
           visible: { y: 0, transition: { duration: 0.45, ease } },
         }}
-        className="mt-[clamp(48px,6vw,72px)]"
+        className="mt-[clamp(32px,4vw,48px)]"
       >
-        <div className="flex flex-col gap-6 border-t border-[rgb(var(--ink-rgb)/0.14)] pt-8 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
+        <div className="flex flex-col gap-6 border-t border-[rgb(var(--ink-rgb)/0.14)] pt-6 lg:flex-row lg:items-start lg:justify-between lg:gap-12">
           <h2 className="m-0 max-w-[10em] font-heading text-[clamp(24px,2.6vw,32px)] font-extrabold tracking-[-0.035em] text-heading">
             {labels.includesTitle}
           </h2>
@@ -223,7 +223,7 @@ export function PricingExperience({
               <motion.li
                 key={item}
                 variants={includesItem}
-                className="border-t border-[rgb(var(--ink-rgb)/0.1)] py-4 text-[15px] leading-[1.5] text-secondary"
+                className="border-t border-[rgb(var(--ink-rgb)/0.1)] py-3 text-[15px] leading-[1.5] text-secondary"
               >
                 {item}
               </motion.li>
@@ -231,7 +231,7 @@ export function PricingExperience({
           </motion.ul>
         </div>
 
-        <div className="mt-10 border-t border-[rgb(var(--ink-rgb)/0.14)]">
+        <div className="mt-6 border-t border-[rgb(var(--ink-rgb)/0.14)]">
           {labels.details.map((detail) => (
             <DetailAccordion
               key={detail.title}
@@ -297,7 +297,7 @@ function PlanCard({
           transition: { duration: 0.55, delay: index * 0.08, ease },
         },
       }}
-      className={`relative flex flex-col border p-[clamp(28px,3.2vw,44px)] transition-[translate,box-shadow,border-color] duration-300 hover:-translate-y-1 ${shell}`}
+      className={`relative flex h-full flex-col border p-[clamp(20px,2.4vw,28px)] transition-[translate,box-shadow,border-color] duration-300 hover:-translate-y-1 ${shell}`}
     >
       {featured ? (
         <motion.div
@@ -353,7 +353,7 @@ function PlanCard({
       </div>
 
       <p
-        className={`relative mt-4 max-w-[32em] text-[16px] leading-[1.55] ${bodyText}`}
+        className={`relative mt-3 max-w-[32em] text-[16px] leading-[1.55] ${bodyText}`}
       >
         {tier.outcome}
       </p>
@@ -363,7 +363,7 @@ function PlanCard({
         {tier.idealFor}
       </p>
 
-      <div className={`relative mt-7 border-t pt-6 ${divider}`}>
+      <div className={`relative mt-5 border-t pt-4 ${divider}`}>
         <p className={`text-[12px] tracking-[0.08em] uppercase ${mutedText}`}>
           {monthlyEyebrow}
         </p>
@@ -380,7 +380,7 @@ function PlanCard({
               },
             },
           }}
-          className={`mt-1.5 origin-left font-heading text-[clamp(40px,4.2vw,56px)] font-extrabold leading-[0.95] tracking-[-0.045em] break-words ${premium ? "text-orange" : strongText}`}
+          className={`mt-1.5 origin-left font-heading text-[clamp(34px,3.4vw,46px)] font-extrabold leading-[0.95] tracking-[-0.045em] break-words ${premium ? "text-orange" : strongText}`}
         >
           {monthlyDisplay}
         </motion.p>

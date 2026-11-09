@@ -54,7 +54,10 @@ export const TurnstileWidget = forwardRef<
       if (turnstile && widgetIdRef.current) {
         turnstile.reset(widgetIdRef.current);
       }
-      onTokenRef.current("");
+      // A configured widget issues a fresh token itself after a reset. With no
+      // site key there is no widget to do that, so the placeholder must be put
+      // back or a visitor whose send failed could never retry.
+      onTokenRef.current(SITE_KEY ? "" : "unconfigured");
     },
   }), []);
 

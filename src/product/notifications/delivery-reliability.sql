@@ -19,6 +19,10 @@ DO $$ BEGIN
   END IF;
 END $$;
 REVOKE ALL ON tc_notification_dispatches FROM PUBLIC;
+-- One-time data change. `npm run db:schema` re-applies every file on each run,
+-- so this must not touch preferences that owners set after the first run: it
+-- only runs while this migration has not been recorded yet.
 UPDATE tc_notification_preferences SET settings_json=jsonb_set(settings_json,'{dailySummary}','false'::jsonb)
-WHERE settings_json->>'dailySummary'='true';
+WHERE settings_json->>'dailySummary'='true'
+  AND NOT EXISTS (SELECT 1 FROM mc_schema_migrations WHERE id='023_notification_delivery_reliability');
 INSERT INTO mc_schema_migrations (id) VALUES ('023_notification_delivery_reliability') ON CONFLICT DO NOTHING;

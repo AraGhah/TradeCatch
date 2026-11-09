@@ -204,6 +204,19 @@ async function main() {
       ["src", "product", "saas", "launch-plans.sql"],
       "036_launch_plans",
     );
+    // Passwords and activation/reset links. Additive; email sign-in links are unchanged.
+    await applyFile(
+      client,
+      ["src", "product", "saas", "password-auth.sql"],
+      "037_password_auth",
+    );
+    // Referral rewards by plan ($50 Essential, $75 Professional). Prospective only:
+    // existing reward rows keep their amount. Must run after 036 added the columns.
+    await applyFile(
+      client,
+      ["src", "product", "referrals", "rewards-by-plan.sql"],
+      "038_referral_rewards_by_plan",
+    );
   } finally {
     await client.end();
   }
