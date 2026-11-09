@@ -120,8 +120,9 @@ export function LoginForm({
         return;
       }
       if (data.devToken) {
+        // The same address the emailed link has, return path included.
         setDevLink(
-          `/api/auth/callback?token=${encodeURIComponent(data.devToken)}&locale=${locale}`,
+          `/api/auth/callback?token=${encodeURIComponent(data.devToken)}&locale=${locale}${returnTo ? `&next=${encodeURIComponent(returnTo)}` : ""}`,
         );
       }
       setStatus("sent");
