@@ -26,14 +26,8 @@ export function Footer() {
           links Services, How it works, Industries, Pricing and Referral, so
           they are not repeated here.
         */}
-        <div
-          className="grid items-start"
-          style={{
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "clamp(28px, 4vw, 48px)",
-          }}
-        >
-          <div className="min-w-0 [grid-column:1/-1] min-[700px]:[grid-column:span_2]">
+        <div className="grid grid-cols-2 items-start gap-x-6 gap-y-6 min-[700px]:grid-cols-[1.3fr_1fr_1fr] min-[700px]:gap-[clamp(24px,4vw,48px)] lg:grid-cols-[2fr_1fr_1fr]">
+          <div className="min-w-0 [grid-column:1/-1] min-[700px]:[grid-column:auto]">
             <BrandLockup inverted />
             <p className="mt-4 max-w-[32em] text-[15px] leading-[1.6] text-[rgba(255,255,255,0.74)]">
               {t("description")}
@@ -51,11 +45,11 @@ export function Footer() {
             </div>
           </div>
 
-          <div className="min-w-0">
+          <div className="col-span-2 min-w-0 min-[700px]:col-span-1">
             <p className="m-0 font-mono text-[10.5px] font-medium tracking-[0.14em] text-[rgba(255,255,255,0.64)] uppercase">
               {t("company")}
             </p>
-            <ul className="mt-3 flex list-none flex-col items-start gap-0 p-0">
+            <ul className="mt-2 flex list-none flex-row flex-wrap items-start gap-x-5 gap-y-0 p-0 min-[700px]:mt-3 min-[700px]:flex-col min-[700px]:gap-x-0">
               <li>
                 <Link href="/receptionist" className={linkClass}>
                   {nav("aiReceptionist")}
@@ -79,11 +73,11 @@ export function Footer() {
             </ul>
           </div>
 
-          <div className="min-w-0">
+          <div className="col-span-2 min-w-0 min-[700px]:col-span-1">
             <p className="m-0 font-mono text-[10.5px] font-medium tracking-[0.14em] text-[rgba(255,255,255,0.64)] uppercase">
               {t("legal")}
             </p>
-            <ul className="mt-3 flex list-none flex-col items-start gap-0 p-0">
+            <ul className="mt-2 flex list-none flex-row flex-wrap items-start gap-x-5 gap-y-0 p-0 min-[700px]:mt-3 min-[700px]:flex-col min-[700px]:gap-x-0">
               <li>
                 <Link href="/privacy-policy" className={linkClass}>
                   {t("legalLinks.privacy")}
