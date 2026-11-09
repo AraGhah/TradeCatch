@@ -104,17 +104,24 @@ def phone_pulses(sample="phone_buzz_toolbox", limit=3.0):
 # =====================================================================================================
 # AD A  "Under the Sink"  - plumber, daytime, AI receptionist answers while he works
 # =====================================================================================================
+# Minimum on-screen time (seconds) of the beats of "Under the sink". The picture is cut from measured audio durations, so
+# a longer FR line still stretches its own scene; these floors only stop a beat from flashing by when the line is short.
+HOLD = dict(busy=4.2, call=4.0, pickup=4.4)
+END_CARD_FULL_AT = 1.95        # when the end card's button, address and disclosure have finished fading in
+CTA_MIN_VISIBLE = 5.0          # the call to action stays fully visible at least this long
+
 def build_A(lang):
     ad = Ad("A_UnderTheSink", lang); d = ad.d
     # S1  cold open: the problem (footage)
-    s1 = ad.footage("p_before", 0.0, 3.0, zoom=(1.07, 1.15), anchor=(0.5, 0.78), seed=1, a45=(0.5, 0.40, 0.90))
-    ad.sfx("wrench_work", s1 + 0.0, -9, ref=-27, off=0.5, dur=3.2)
+    # Pacing (website demo): every beat holds long enough to read, see HOLD in build_A. Normal playback speed; nothing is slowed.
+    s1 = ad.footage("p_before", 0.0, HOLD["busy"], zoom=(1.07, 1.15), anchor=(0.5, 0.78), seed=1, a45=(0.5, 0.40, 0.90))
+    ad.sfx("wrench_work", s1 + 0.0, -9, ref=-27, off=0.5, dur=HOLD["busy"] + 0.2)
     ad.sfx("fabric_kneel", s1 + 0.3, -8, ref=-30)
     ad.sfx("drip", s1 + 1.7, -12, ref=-30)
     ad.sfx("phone_buzz_tile", s1 + 1.0, -2, ref=-25)                 # phone lights up on screen at ~1.0 s
     vo1_end = ad.vo("A_vo1", s1 + 0.25)
     # S2  UI: the call comes in on the contractor's phone, then lapses into a missed call
-    s2 = ad.t; D2 = max(2.3, vo1_end + 0.25 - s2); miss = round(D2 - 0.85, 2)
+    s2 = ad.t; D2 = max(HOLD["call"], vo1_end + 0.25 - s2); miss = round(D2 - 0.85, 2)
     sp = U.spec_incoming(lang, D2, miss); sp["pulses"] = phone_pulses(limit=miss)
     ad.sfx("phone_buzz_toolbox", s2, -1, ref=-24, dur=miss + 0.2)
     ad.sfx("phone_ring_floor", s2, -10, ref=-26, dur=miss + 0.2)
@@ -131,7 +138,7 @@ def build_A(lang):
     ad.sfx("ui_tap", s3 + tap_at, -4, ref=-28)
     ad.ui(U.spec_calling(lang, D3, end_at, search_at, tap_at))
     # S4  the reset: same job, this time TradeCatch picks up
-    D4 = max(2.7, ad.d("A_vo3") + 0.25)
+    D4 = max(HOLD["pickup"], ad.d("A_vo3") + 0.25)
     s4 = ad.footage("p_after", 0.2, D4, zoom=(1.08, 1.14), anchor=(0.5, 0.78), seed=2, a45=(0.5, 0.45, 0.90))
     ad.sfx("whoosh_hit", s4 - 0.35, -9, ref=-26)
     ad.sfx("wrench_work", s4, -9, ref=-27, off=3.0, dur=D4)
@@ -156,15 +163,15 @@ def build_A(lang):
     ad.ui(live, sub=(cutA1, end5))
     # S6  payoff: he keeps working; the request lands on his phone with every detail
     s6 = ad.t
-    notif_at, tap_notif, card_at = 0.30, 1.25, 1.40
-    outcome_at = round(card_at + 0.50 + 5 * 0.22 + 0.15, 2); confirm_tap = round(outcome_at + 0.95, 2); D6 = round(confirm_tap + 0.80, 2)
+    notif_at, tap_notif, card_at = 0.60, 1.85, 2.00                    # the notification is readable ~1.3 s before the tap
+    outcome_at = round(card_at + 0.50 + 5 * 0.22 + 0.15, 2); confirm_tap = round(outcome_at + 1.80, 2); D6 = round(confirm_tap + 1.20, 2)
     lead = U.spec_lead(lang, D6, notif_at, tap_notif, card_at, outcome_at, confirm_tap, "A", "2:19")
     ad.sfx("notif_lead", s6 + notif_at, -4, ref=-25); ad.sfx("phone_buzz_tile", s6 + notif_at - 0.05, -9, ref=-25, dur=0.8)
     ad.sfx("ui_tap", s6 + tap_notif, -4, ref=-28)
     ad.ui(lead, sub=(0.0, card_at))
     sm = ad.t
-    ad.footage("p_after", 8.1, 1.45, zoom=(1.12, 1.18), anchor=(0.5, 0.55), seed=4, region_gain=+3.0, a45=(0.5, 0.5))
-    ad.sfx("wrench_work", sm, -6, ref=-27, off=5.0, dur=1.5)
+    ad.footage("p_after", 7.7, 2.2, zoom=(1.12, 1.18), anchor=(0.5, 0.55), seed=4, region_gain=+3.0, a45=(0.5, 0.5))
+    ad.sfx("wrench_work", sm, -6, ref=-27, off=5.0, dur=2.3)
     vo4_end = ad.vo("A_vo4", sm + 0.05)
     ad.ui(lead, sub=(card_at, D6))
     s6b = ad.t - (D6 - card_at)                                    # absolute start of the card half
@@ -174,7 +181,8 @@ def build_A(lang):
     s7 = ad.t
     c1 = max(vo4_end + 0.20, s7 - 0.35); c1_end = ad.vo("CTA1", c1)
     c2 = c1_end + 0.22; c2_end = ad.vo("CTA2", c2)
-    D7 = round(c2_end - s7 + 0.95, 2)
+    # The button, address and disclosure are fully drawn 1.95 s into the end card (ui.html SC.end); hold them 5+ s.
+    D7 = max(round(c2_end - s7 + 0.95, 2), round(END_CARD_FULL_AT + CTA_MIN_VISIBLE + 0.2, 2))
     ad.mix.place("music", M.music("sting"), s7 - 0.05, -2.5)
     ad.ui(U.spec_end(lang, D7), region_gain=-14.0)
     return ad
