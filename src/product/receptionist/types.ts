@@ -181,6 +181,10 @@ export type ReceptionistConfig = {
   /** Hard cap on caller turns before the agent wraps up with a message. */
   maxTurns: number;
   notifications: NotificationChannel[];
+  /** When true, ordinary calls send no summary; emergencies still alert immediately. */
+  emergencyOnlyAlerts?: boolean;
+  /** Owner-muted channels: kept in `notifications` but never sent to. */
+  mutedNotificationChannels?: ("sms" | "email")[];
   /** SMS "from" number for owner notifications (defaults to phoneNumberE164). */
   smsFromE164?: string;
   /**
@@ -356,6 +360,18 @@ export type NotificationDelivery = {
   channel: NotificationChannel["type"];
   ok: boolean;
   detail?: string;
+  /** Masked recipient (never the full number/address): tells recipients apart. */
+  to?: string;
+  /** 1 for the first delivery, counting up for each retry. */
+  attempt?: number;
+  /** False when resending cannot help or could duplicate (invalid number, unknown outcome). */
+  retryable?: boolean;
+};
+
+/** Bookkeeping for the notification retry job; one claim per attempt. */
+export type NotificationRetryState = {
+  attempts: number;
+  lastAttemptAt: string;
 };
 
 /**
@@ -454,6 +470,7 @@ export type CallSession = {
   summary?: CallSummary;
   context?: CallContext;
   notifications: NotificationDelivery[];
+  notificationRetry?: NotificationRetryState;
   finalizedAt?: string;
   /** Set once Module A SMS recovery was handed this call. */
   smsRecoveryTriggeredAt?: string;

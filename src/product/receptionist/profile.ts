@@ -280,6 +280,15 @@ export const profileSettingsSchema = z.object({
     .transform((v) => (v === "" ? undefined : v))
     .optional(),
   notifySmsE164: optionalPhone,
+  /**
+   * Owner switches for the after-call summary. Turning a channel off mutes it;
+   * the destination stays saved, and the profile stays valid, so the line keeps
+   * answering and every call is still recorded in Call History.
+   */
+  notifySmsEnabled: z.boolean().default(true),
+  notifyEmailEnabled: z.boolean().default(true),
+  /** Only emergencies produce a summary; routine calls stay in Call History. */
+  notifyEmergencyOnly: z.boolean().default(false),
   collectPreferredTime: z.boolean().default(true),
 });
 
@@ -570,6 +579,11 @@ export function buildProfileConfig(
       s.collectPreferredTime !== false && collect.preferredDate !== false,
     phoneBooking,
     notifications,
+    mutedNotificationChannels: [
+      ...(s.notifySmsEnabled === false ? ["sms"] : []),
+      ...(s.notifyEmailEnabled === false ? ["email"] : []),
+    ],
+    emergencyOnlyAlerts: s.notifyEmergencyOnly === true,
     smsFromE164: client.smsFromNumber,
   };
   for (const k of Object.keys(raw)) if (raw[k] === undefined) delete raw[k];

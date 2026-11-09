@@ -149,6 +149,10 @@ export const receptionistConfigSchema = z.object({
   phoneBooking: z.boolean().default(false),
   maxTurns: z.number().int().min(3).max(30).default(12),
   notifications: z.array(notificationChannelSchema).default([]),
+  /** Owner choice: only emergency calls produce a summary SMS/email. */
+  emergencyOnlyAlerts: z.boolean().default(false),
+  /** Channels the owner switched off. They stay configured (and the profile valid) but send nothing. */
+  mutedNotificationChannels: z.array(z.enum(["sms", "email"])).default([]),
   smsFromE164: e164.optional(),
   smsRecoveryOnIncomplete: z.boolean().default(true),
   transcriptRetentionDays: z.number().int().min(1).max(730).default(90),
