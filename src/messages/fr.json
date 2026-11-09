@@ -252,14 +252,6 @@
       ]
     },
     "mobile": {
-      "demo": {
-        "eyebrow": "Voir en action",
-        "headline": "Ne vous contentez pas de lire. Écoutez.",
-        "intro": "Entendez comment TradeCatch gère une vraie conversation client.",
-        "watchVideo": "Voir la démo",
-        "tryLive": "Parler à la réceptionniste",
-        "note": "Le son démarre seulement quand vous appuyez sur lecture."
-      },
       "benefits": {
         "eyebrow": "Le problème",
         "headline": "Chaque appel manqué peut être un chantier perdu.",
@@ -1488,7 +1480,7 @@
     },
     "underTheSink": {
       "playerTitle": "Sous l'évier : la réceptionniste répond",
-      "transcript": "Les mains sous l’évier. Le téléphone qui sonne. Et tu ne peux pas répondre. Ce client-là ne laissera pas de message. Il va appeler le prochain plombier. Client : [soupir] Ah, voyons donc… Même chantier. Cette fois, TradeCatch décroche. Réceptionniste : Merci d’avoir appelé Plomberie NorthStar. Comment puis-je vous aider? Client : Bonjour, l’évier de ma cuisine fuit. Vous desservez Laval? Réceptionniste : Oui, nous desservons Laval. Quelle est votre adresse, et quel moment vous conviendrait? Client : Au 45, avenue Laurier, à Laval. Demain matin, vers dix heures? Réceptionniste : Parfait. J’ai transmis votre demande à l’équipe. Elle vous écrira pour confirmer. Tu restes sur ton chantier. TradeCatch répond, et te remet les détails. TradeCatch. Chaque appel compte. Réserve ton audit gratuit sur tradecatch.ca.",
+      "transcript": "Les mains sous l’évier. Le téléphone qui sonne. Et tu ne peux pas répondre. Ce client-là ne laissera pas de message. Il va appeler le prochain plombier. Client : [soupir] Ah, voyons donc… Même chantier. Cette fois, TradeCatch décroche. Réceptionniste : Merci d’avoir appelé Plomberie NorthStar. Comment puis-je vous aider? Client : Bonjour, l’évier de ma cuisine fuit. Vous desservez Laval? Réceptionniste : Oui, nous desservons Laval. Quelle est votre adresse, et quel moment vous conviendrait? Client : Au 45, avenue Laurier, à Laval. Demain matin, vers dix heures? Réceptionniste : Parfait. J’ai transmis votre demande à l’équipe. Elle vous écrira pour confirmer. Tu restes sur ton chantier. TradeCatch répond, et te remet les détails. TradeCatch. Chaque appel compte. Réserve ta démo gratuite sur tradecatch.ca.",
       "disclosure": "Une mise en scène avec une entreprise fictive, pas un témoignage de client. La réceptionniste répond et prend la demande. Votre équipe confirme le rendez-vous."
     }
   },
