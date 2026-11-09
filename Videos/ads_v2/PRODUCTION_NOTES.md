@@ -7,8 +7,8 @@ Three video ads (24 fps, H.264 + AAC, about -14 LUFS / -1.5 dBTP), each in Engli
 | Ad | Concept | EN | FR |
 |---|---|---|---|
 | A | **Under the Sink** - plumber, daytime. AI receptionist answers, answers questions, takes an appointment request | 44.0s | 49.1s |
-| B | **The Ladder** - electrician. A missed call gets an instant text back (SMS receptionist) | 30.3s | 31.5s |
-| C | **After Hours** - night. Emergency call is transferred to the on-call line; the rest waits as a morning summary | 31.2s | 33.4s |
+| B | **The Ladder** - electrician. A missed call gets an instant text back (SMS receptionist) | 30.17s | 31.54s |
+| C | **After Hours** - night. Emergency call is transferred to the on-call line; the rest waits as a morning summary | 31.00s | 33.42s |
 
 - `TradeCatch_<ad>_<name>_<LANG>_9x16.mp4` - masters (Instagram Reels, Facebook Reels/Stories, TikTok, YouTube Shorts)
 - `TradeCatch_<ad>_<name>_<LANG>_4x5.mp4` - 1080x1350 feed versions (Instagram feed, Facebook feed). Same cuts, same audio stream (copied bit-for-bit from the 9:16 master, so identical mix and loudness); the picture is re-laid out, not letterboxed - see "4:5 feed versions" below
@@ -192,9 +192,14 @@ What changed and why:
 - **No language-menu content.** Nothing in the video mentions a keypad or a language prompt; the receptionist greets in one
   language as before. Automatic language detection is not shown, because it is not yet deployed to the live agent.
 
-Not changed, and still saying "free audit": the LinkedIn masters and 4:5 feed files in this folder, their sidecar captions in
-`captions/`, and ads B and C (plus the `the-ladder` and `after-hours` files under `public/demo-video/stories/`, which the site
-does not offer). Rebuild them from the same sources before reusing them.
+Ads B and C were refreshed for the November release: both languages, 9:16 masters, 4:5 feed versions, web encodes,
+website copies and caption sidecars now use the recorded "free demo" / "démo gratuite" call to action. Their opening
+footage and posters are unchanged. The script tables above document the original recordings; the current B/C closing
+line is "Book a free demo at tradecatch.ca" / "Réserve ta démo gratuite sur tradecatch.ca".
+
+The archived ad A social masters and their sidecars still say "free audit"; the public Under the Sink website version
+uses the updated demo wording. Regenerate those archived A exports before reusing them. Ad C remains a dramatization
+of a transfer scenario; call transfer is disabled in this production release.
 
 ## Limitations - read before publishing
 
