@@ -46,10 +46,24 @@ export type AgentLanguageSelect = {
   timeoutSeconds: number;
   /** Keypad → language. Only these two keys mean anything. */
   keys: Record<string, ReceptionistLanguage>;
-  /** The welcome, then the menu lines, each in the language it must be spoken in. */
+  /**
+   * The French-first welcome and keypad menu of the earlier agent, and the
+   * Twilio engine's. Agents that detect the language from speech ignore this and
+   * `keys`/`timeoutSeconds`, and use `detection`. Kept so an agent deployed before
+   * `detection` existed keeps working while the new one rolls out.
+   */
   opening: {
     statement: { text: string; lang: ReceptionistLanguage };
     menu: { text: string; lang: ReceptionistLanguage }[];
+  };
+  /**
+   * Automatic spoken-language detection: no keypad. `opening` is said once at
+   * pickup, each line in its own voice; `ask` is said once if the caller's language
+   * is still unclear after two utterances. A line with one language has no `ask`.
+   */
+  detection: {
+    opening: { text: string; lang: ReceptionistLanguage }[];
+    ask: { text: string; lang: ReceptionistLanguage }[];
   };
   /** After the menu closes: an acknowledgement (only if a key was pressed) and the first question. */
   afterChoice: Record<
@@ -279,6 +293,26 @@ function languageSelectFor(
       menu: bilingual ? languageMenuPrompts(start).map((p) => ({ text: p.text, lang: p.lang })) : [],
     },
     afterChoice: { fr: forLanguage("fr"), en: forLanguage("en") },
+    detection: {
+      opening: bilingual
+        ? [
+            {
+              text: phrase("bilingualWelcome", "fr", { business: config.businessName }),
+              lang: "fr",
+            },
+            { text: phrase("bilingualQuestion", "en"), lang: "en" },
+          ]
+        : [
+            { text: greetingStatement(config, start), lang: start },
+            { text: openingQuestion(config, start), lang: start },
+          ],
+      ask: bilingual
+        ? [
+            { text: phrase("askLanguageFr", "fr"), lang: "fr" },
+            { text: phrase("askLanguageEn", "en"), lang: "en" },
+          ]
+        : [],
+    },
   };
 }
 
