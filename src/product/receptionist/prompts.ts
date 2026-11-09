@@ -25,6 +25,28 @@ export const PHRASES = {
     fr: "For English, press 1.",
     en: "For English, press 1.",
   },
+  /**
+   * The pickup greeting of the LiveKit receptionist, which has no keypad menu:
+   * "Bonjour, ici {business}." in the French voice, then "How can I help you?"
+   * in the English voice. The caller's reply decides the language.
+   */
+  bilingualWelcome: {
+    fr: "Bonjour, ici {business}.",
+    en: "Bonjour, ici {business}.",
+  },
+  bilingualQuestion: {
+    fr: "How can I help you?",
+    en: "How can I help you?",
+  },
+  /** Asked once, in both voices, when the caller's language is still unclear. */
+  askLanguageFr: {
+    fr: "Français ou anglais?",
+    en: "Français ou anglais?",
+  },
+  askLanguageEn: {
+    fr: "French or English?",
+    en: "French or English?",
+  },
   languageSwitchedFr: {
     fr: "Bien sûr, je continue en français.",
     en: "Of course, I'll continue in French.",
