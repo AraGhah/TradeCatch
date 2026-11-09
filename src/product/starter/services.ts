@@ -59,6 +59,11 @@ export type StarterServices = {
      * Whether the owner has approved the quote follow-up wording. Defaults to
      * the organization's saved approval (growth settings); with neither, no
      * text is sent — approval fails closed.
+     *
+     * Policy: the approval is one stored timestamp per business, not tied to a
+     * wording version. Later edits to the follow-up templates (or to unrelated
+     * settings) do not invalidate it; the owner withdraws it explicitly from the
+     * Quotes page, which stops the next message. See docs/QUOTE_FOLLOW_UP.md.
      */
     wordingApprovedForOrg?: (organizationId: string) => Promise<boolean>;
   }): Promise<{
@@ -119,6 +124,10 @@ async function handQuoteOff(thread: QuoteThread): Promise<void> {
     console.warn("[sms-automation] quote schedule skipped", err);
   }
 }
+
+/** Follow-ups sent per scheduler tick, and how far a tick may look past held threads. */
+const QUOTE_TICK_BATCH = 50;
+const QUOTE_TICK_MAX_WINDOW = 1000;
 
 export function createStarterServices(deps: {
   store: StarterStore;
@@ -366,7 +375,6 @@ export function createStarterServices(deps: {
 
     async processDueQuotes(input) {
       const now = new Date().toISOString();
-      const due = await store.listDueQuoteThreads(now, 50);
       let sent = 0;
       let stopped = 0;
       let failed = 0;
@@ -392,6 +400,30 @@ export function createStarterServices(deps: {
         return approved;
       };
 
+      // Threads of an organization that has not approved the wording stay due
+      // and the oldest come first, so enough of them would fill a fixed window
+      // and hide every approved organization's follow-ups. Look further ahead
+      // while the window holds fewer than a tick's worth of sendable threads.
+      let due = await store.listDueQuoteThreads(now, QUOTE_TICK_BATCH);
+      for (
+        let window = QUOTE_TICK_BATCH;
+        due.length >= window && window < QUOTE_TICK_MAX_WINDOW;
+        window *= 4
+      ) {
+        let sendable = 0;
+        for (const thread of due) {
+          if (
+            thread.conversationMode === "auto" &&
+            (await isApproved(thread.organizationId))
+          ) {
+            sendable += 1;
+          }
+        }
+        if (sendable >= QUOTE_TICK_BATCH) break;
+        due = await store.listDueQuoteThreads(now, window * 4);
+      }
+
+      let processed = 0;
       for (const thread of due) {
         if (thread.conversationMode !== "auto") continue;
         // The owner signs off on the wording before anything is sent. Held
@@ -400,6 +432,8 @@ export function createStarterServices(deps: {
           awaitingApproval += 1;
           continue;
         }
+        if (processed >= QUOTE_TICK_BATCH) break;
+        processed += 1;
         try {
           const { quoteAutomationHasJob } = await import(
             "@/product/sms-automation/hooks"
