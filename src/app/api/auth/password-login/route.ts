@@ -48,7 +48,11 @@ export async function POST(request: NextRequest) {
             : 401;
       return authJson({ error: result.error }, status);
     }
-    return signedInResponse(result.session, parsed.data.locale, parsed.data.next);
+    return signedInResponse(
+      result.session,
+      parsed.data.locale,
+      parsed.data.next,
+    );
   } catch {
     console.error("[auth/password-login] sign-in unavailable");
     return authJson({ error: "unavailable" }, 503);
