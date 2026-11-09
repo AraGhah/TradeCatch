@@ -5,6 +5,7 @@ import { POST as passwordLoginRoute } from "../../src/app/api/auth/password-logi
 import {
   changePassword,
   completePassword,
+  hasPassword,
   inspectPasswordToken,
   issuePasswordToken,
   passwordLogin,
@@ -276,6 +277,47 @@ describe("account activation and password reset", () => {
       assert.deepEqual(result, { ok: false, error: "Email is not configured." });
     } finally {
       store.createPasswordToken = original;
+    }
+  });
+
+  it("before migration 037 the Security page leaves the password section out instead of failing", async () => {
+    const account = await newAccount();
+    const store = getSaasStore();
+    const original = store.getPasswordCredential;
+    store.getPasswordCredential = async () => {
+      throw new Error('relation "tc_user_passwords" does not exist');
+    };
+    try {
+      assert.equal(await hasPassword(account.user.id), null);
+    } finally {
+      store.getPasswordCredential = original;
+    }
+    assert.equal(await hasPassword(account.user.id), false);
+  });
+
+  it("before migration 037 password sign-in answers 503 without database details, and is never a wrong-password result", async () => {
+    const account = await newAccount();
+    const store = getSaasStore();
+    const original = store.getPasswordCredential;
+    store.getPasswordCredential = async () => {
+      throw new Error('relation "tc_user_passwords" does not exist');
+    };
+    try {
+      await assert.rejects(passwordLogin({ email: account.email, password: GOOD }));
+      const response = await passwordLoginRoute(
+        new NextRequest("http://localhost/api/auth/password-login", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-forwarded-for": "198.51.100.41" },
+          body: JSON.stringify({ email: account.email, password: GOOD, locale: "en" }),
+        }),
+      );
+      assert.equal(response.status, 503);
+      const text = await response.text();
+      assert.deepEqual(JSON.parse(text), { error: "unavailable" });
+      assert.equal(text.includes("tc_user_passwords"), false);
+      assert.equal(response.cookies.get("tc_session"), undefined);
+    } finally {
+      store.getPasswordCredential = original;
     }
   });
 
