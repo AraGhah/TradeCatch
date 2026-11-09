@@ -59,7 +59,7 @@ function story(id: StoryId, seconds: Record<DemoLocale, number>): StoryMedia {
 }
 
 export const STORY_MEDIA: Record<StoryId, StoryMedia> = {
-  "under-the-sink": story("under-the-sink", { en: 44, fr: 49 }),
+  "under-the-sink": story("under-the-sink", { en: 53, fr: 56 }),
 };
 
 export function isStoryId(value: string): value is StoryId {
