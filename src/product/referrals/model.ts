@@ -2,10 +2,13 @@
  * Referral program: the shapes and the pure rules.
  *
  * An existing customer shares a link; a contractor who arrives through it and
- * pays their setup fee earns the referrer a reward ($65 CAD for Essential or
- * Professional). If the referred customer also buys the website service, the
- * referrer earns a second reward of $35 CAD, so one referral can never earn
- * more than $100 CAD. Every reward waits for an administrator's approval.
+ * pays their setup fee earns the referrer a reward that follows the plan the
+ * referred customer bought ($50 CAD for Essential, $75 CAD for Professional).
+ * If the referred customer also buys the website service, the referrer earns a
+ * second reward of $35 CAD, so one referral can never earn more than $110 CAD.
+ * A reward keeps the amount it was created with, so changing the amounts never
+ * touches rewards already earned. Every reward waits for an administrator's
+ * approval.
  * Nothing here talks to Stripe, a database or a payout provider.
  */
 import { z } from "zod";

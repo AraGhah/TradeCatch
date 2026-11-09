@@ -167,7 +167,9 @@ describe("profile → config prompt", () => {
     assert.doesNotMatch(config.personality ?? "", /Identify yourself as a virtual receptionist/);
     assert.match(config.personality ?? "", /Never claim to be a person/);
     assert.match(DEFAULT_SYSTEM_PROMPT, /Canadian French/);
-    assert.match(DEFAULT_SYSTEM_PROMPT, /press 1 for English/);
+    assert.match(DEFAULT_SYSTEM_PROMPT, /greets in French and English/);
+    assert.match(DEFAULT_SYSTEM_PROMPT, /never tell a caller to press a key for a language/);
+    assert.doesNotMatch(DEFAULT_SYSTEM_PROMPT, /press 1 for English/);
     assert.match(DEFAULT_SYSTEM_PROMPT, /answer truthfully and briefly/);
     assert.match(DEFAULT_SYSTEM_PROMPT, /never state, estimate or hint at a price/i);
     assert.doesNotMatch(DEFAULT_SYSTEM_PROMPT, /Let me confirm your details/);

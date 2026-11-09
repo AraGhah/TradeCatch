@@ -5,7 +5,9 @@ Calls arrive from the Twilio SIP trunk. For each call this agent:
   2. fetches that business's rendered instructions, opening words and transfer
      lines from TradeCatch (so every company is configured in the TradeCatch UI,
      not here),
-  3. opens in the configured language with a menu (1 = English, 2 = French) and keeps the chosen language for the whole call,
+  3. greets in French and English at once ("Bonjour, ici <business>. How can I help
+     you?"), then follows the language the caller speaks (language.py decides from
+     what a speech-to-text stream hears; there is no keypad menu),
   4. talks to the caller, books only through TradeCatch's calendar, and can
      really transfer the call,
   5. reports the finished call to TradeCatch, which sends the owner the usual
@@ -53,7 +55,8 @@ from livekit.plugins import ai_coustics
 import phrases
 from call_record import CallRecord, FoundAppointment, is_e164
 from caller_policy import CallerPolicy, parse_caller_policy, say_exactly_instruction
-from language import LanguageChoice, LanguageMenu
+from language import CallLanguage, Heard, Verdict, detection_enabled
+from language_listener import start_listener
 from policy import SilencePolicy
 from routing import (
     TransferPlan,
@@ -140,6 +143,9 @@ BETWEEN_ATTEMPTS_SECONDS = 1.5
 # After a successful warm transfer this process stays only to hang up the second
 # leg when either person leaves; this is the backstop if that never happens.
 CONNECTED_JOB_MAX_SECONDS = 4 * 3600.0
+# The agent will not ask "French or English?" again while its own question (or the
+# model's) is this recent: the caller is still answering it.
+ASK_REPEAT_SECONDS = 20.0
 
 
 class ReceptionistAgent(Agent):
@@ -165,22 +171,23 @@ class ReceptionistAgent(Agent):
         # the call when either side leaves.
         self._keep_job_alive = False
 
-        self._menu = LanguageMenu(
+        self._lang = CallLanguage(
             phrases.enabled_languages(cfg),
             phrases.start_language(cfg),
-            phrases.menu_keys(cfg),
+            detect=detection_enabled(os.environ),
         )
-        call.language = self._menu.language
-        # The language the voice model was last told to speak.
-        self._model_language = self._menu.language
+        call.language = self._lang.language
+        # The language the voice model was last told to speak; None = "whichever the caller speaks".
+        self._model_language: str | None = self._lang.language if self._lang.decided else None
+        self._listener: asyncio.Task[Any] | None = None
+        # When the caller last stopped talking, for the language-decision timing in the log.
+        self._speech_ended_at: float | None = None
+        self._ask_spoken_at: float | None = None
         self.check_in_seconds, max_check_ins = phrases.silence_settings(cfg)
         self._silence = SilencePolicy(max_check_ins)
 
         self._ctx: JobContext | None = None
-        self._opened = False
-        self._pending_choice: LanguageChoice | None = None
         self._language_lock = asyncio.Lock()
-        self._menu_task: asyncio.Task[None] | None = None
         self._tasks: set[asyncio.Task[Any]] = set()
         self._busy = 0
         self._book_lock = asyncio.Lock()
@@ -193,7 +200,7 @@ class ReceptionistAgent(Agent):
         self._caller_stopped_at: float | None = None
         self._backend_runs = 0
 
-        super().__init__(instructions=self._instructions_for(self._menu.language))
+        super().__init__(instructions=self._instructions_for(self._model_language))
 
     # -- wiring ---------------------------------------------------------
 
@@ -205,14 +212,13 @@ class ReceptionistAgent(Agent):
         session.on("conversation_item_added", self._on_item)
         session.on("close", self._on_close)
         session.on("error", lambda ev: logger.error("session error: %s", type(ev.error).__name__))
-        ctx.room.on("sip_dtmf_received", self._on_dtmf)
         self._ctx = ctx
 
-    def _instructions_for(self, language: str) -> str:
+    def _instructions_for(self, language: str | None) -> str:
         parts = [self._base_instructions]
         if self._has_config:
             parts.append(TRANSFER_POLICY)
-        parts.append(phrases.language_directive(language))
+        parts.append(phrases.language_directive(language, detecting=self._lang.detecting))
         return "\n\n".join(parts)
 
     def _spawn(self, work: Coroutine[Any, Any, Any]) -> asyncio.Task[Any]:
@@ -241,94 +247,127 @@ class ReceptionistAgent(Agent):
     # -- opening and language ------------------------------------------
 
     async def on_enter(self) -> None:
-        self._opened = True
-        if self._pending_choice is not None:
-            # The caller pressed a key before the greeting started.
-            await self._apply_choice(self._pending_choice)
-            return
-        opening = self.session.generate_reply(
+        """Greet in French and English at once; the caller's answer picks the language."""
+        self.session.generate_reply(
             instructions=phrases.opening_instruction(self._cfg or None),
             allow_interruptions=True,
         )
-        if self._menu.is_open:
-            self._menu_task = self._spawn(self._run_menu(opening))
 
-    async def _run_menu(self, opening: Any) -> None:
-        """After the menu is spoken, wait a moment for a key; no key keeps the configured language."""
-        await opening.wait_for_playout()
-        await asyncio.sleep(phrases.menu_timeout_seconds(self._cfg or None))
-        choice = self._menu.on_timeout()
-        if choice is not None:
-            await self._apply_choice(choice)
+    def start_language_detection(self, participant: Any) -> None:
+        """Listen to the caller for the language they speak. Never raises; the call goes on without it."""
+        if not self._lang.detecting:
+            logger.info("automatic language detection is off for this call")
+            return
+        self._listener = start_listener(
+            participant=participant,
+            on_heard=self._on_heard,
+            on_failed=self._on_listener_failed,
+            environ=os.environ,
+            spawn=self._spawn,
+        )
 
-    def _close_menu(self) -> None:
-        if self._menu_task is not None and self._menu_task is not asyncio.current_task():
-            self._menu_task.cancel()
-        self._menu_task = None
-
-    def _on_dtmf(self, ev: rtc.SipDTMF) -> None:
+    def _on_heard(self, heard: Heard) -> None:
+        """One utterance of the caller, as a language and a size. Never the words."""
         if self._transferring or self._keep_job_alive or self._closing:
             return
-        if ev.participant is not None and self._sip_identity:
-            if ev.participant.identity != self._sip_identity:
-                return
-        during_opening = self._menu.is_open
-        choice = self._menu.on_digit(ev.digit or str(ev.code))
-        if choice is None:
+        verdict = self._lang.observe(heard)
+        logger.info(
+            "caller language heard: %s (%d words, confidence %s)%s",
+            heard.language or "unknown",
+            heard.words,
+            "n/a" if heard.confidence is None else f"{heard.confidence:.2f}",
+            f" -> {verdict.action} {verdict.language or ''} [{verdict.reason}]" if verdict else "",
+        )
+        if verdict is not None:
+            self._spawn(self._apply_verdict(verdict))
+        elif (
+            self._lang.detecting
+            and self._lang.decided
+            and self._model_language != self._lang.language
+        ):
+            # The voice model refused the last language rule: try again with this utterance.
+            self._spawn(self._set_language(self._lang.language))
+
+    def _on_listener_failed(self, why: str) -> None:
+        logger.warning("automatic language detection stopped: %s", why)
+        verdict = self._lang.fail()
+        if verdict is not None:
+            self._spawn(self._apply_verdict(verdict))
+
+    async def _apply_verdict(self, verdict: Verdict) -> None:
+        if self._closing:
             return
-        logger.info("language key pressed: %s", choice.language)
-        self._close_menu()
-        if not self._opened:
-            self._pending_choice = choice
-            return
-        self._spawn(self._apply_choice(choice, during_opening=during_opening))
+        since = (
+            f"{time.monotonic() - self._speech_ended_at:.2f}s after the caller stopped"
+            if self._speech_ended_at is not None
+            else "timing unknown"
+        )
+        logger.info(
+            "language decision: %s %s [%s] after %d utterances, %s",
+            verdict.action,
+            verdict.language or "-",
+            verdict.reason,
+            verdict.heard,
+            since,
+        )
+        if verdict.action in ("set", "switch") and verdict.language:
+            await self._set_language(verdict.language)
+        elif verdict.action == "ask":
+            self._silence.on_activity()
+            if self._asked_recently():
+                return  # the model already asked "French or English?" itself
+            self.session.generate_reply(
+                instructions=phrases.ask_instruction(self._cfg or None),
+                allow_interruptions=True,
+            )
+        elif verdict.action == "fallback":
+            if verdict.reason == "no_answer" and verdict.language:
+                await self._set_language(verdict.language)
+            else:
+                await self._tell_model(
+                    phrases.detection_unavailable_update(),
+                    self._instructions_for(self._model_language),
+                )
+
+    def _asked_recently(self) -> bool:
+        return (
+            self._ask_spoken_at is not None
+            and time.monotonic() - self._ask_spoken_at < ASK_REPEAT_SECONDS
+        )
 
     def _instructions_are_fixed(self) -> bool:
         """gpt-live refuses new instructions once the session has started."""
         capabilities = getattr(getattr(self.session, "llm", None), "capabilities", None)
         return getattr(capabilities, "mutable_instructions", True) is False
 
+    async def _tell_model(self, rule: str, instructions: str) -> bool:
+        """Give the voice model a standing rule: as a system message when its
+        instructions are fixed, else by replacing them. True if it went through."""
+        try:
+            if self._instructions_are_fixed():
+                # A system message reaches gpt-live as a standing rule (append_instructions).
+                chat_ctx = self.chat_ctx.copy()
+                chat_ctx.add_message(role="system", content=rule)
+                await self.update_chat_ctx(chat_ctx)
+            else:
+                await self.update_instructions(instructions)
+            return True
+        except Exception:
+            logger.exception("could not update the voice model's language rule")
+            return False
+
     async def _set_language(self, language: str) -> None:
         async with self._language_lock:
-            if language != self._menu.language:
+            if language != self._lang.language:
                 return
             self._call.language = language
             if language == self._model_language:
                 return
-            try:
-                if self._instructions_are_fixed():
-                    # A system message reaches gpt-live as a standing rule (append_instructions).
-                    chat_ctx = self.chat_ctx.copy()
-                    chat_ctx.add_message(role="system", content=phrases.language_update(language))
-                    await self.update_chat_ctx(chat_ctx)
-                else:
-                    await self.update_instructions(self._instructions_for(language))
+            if await self._tell_model(
+                phrases.language_update(language), self._instructions_for(language)
+            ):
                 self._model_language = language
                 logger.info("language rule sent to the voice model: %s", language)
-            except Exception:
-                logger.exception("could not update instructions for the new language")
-
-    async def _apply_choice(self, choice: LanguageChoice, *, during_opening: bool = True) -> None:
-        self._silence.on_activity()
-        await self._set_language(choice.language)
-        if choice.language != self._menu.language:
-            return
-        if choice.chosen:
-            with contextlib.suppress(Exception):
-                await self.session.interrupt(force=True)
-        if choice.language != self._menu.language:
-            return
-        if during_opening:
-            instructions = phrases.after_choice_instruction(self._cfg or None, choice.language, choice.chosen)
-        else:
-            instructions = (
-                f"Continue the current conversation in {phrases.LANGUAGE_NAMES[choice.language]}. "
-                "Briefly acknowledge the change. Do not restart the greeting or menu."
-            )
-        self.session.generate_reply(
-            instructions=instructions,
-            allow_interruptions=True,
-        )
 
     # -- session events -------------------------------------------------
 
@@ -353,32 +392,30 @@ class ReceptionistAgent(Agent):
     def _on_user_state(self, ev: Any) -> None:
         if getattr(ev, "old_state", None) == "speaking" and ev.new_state != "speaking":
             self._caller_stopped_at = time.monotonic()
+            self._speech_ended_at = self._caller_stopped_at
             self._backend_runs = 0
         if ev.new_state == "speaking":
             self._caller_stopped_at = None
-            # Speech never picks the language; it only ends the wait for a key.
-            self._menu.on_speech()
-            self._close_menu()
             self._silence.on_activity()
         elif ev.new_state == "away" and not self._closing:
             self._spawn(self._on_quiet())
 
     async def _on_quiet(self) -> None:
-        if self._transferring or self._busy > 0 or self._menu.is_open:
+        if self._transferring or self._busy > 0:
             self.session.reset_away_timer()
             return
-        language = self._call.language
-        check_in, goodbye = phrases.silence_texts(self._cfg or None, language)
+        # Before the caller's language is known the line is spoken in both.
+        language = self._lang.language if self._lang.decided else None
         if self._silence.on_quiet() == "check_in":
             self.session.generate_reply(
-                instructions=phrases.say_instruction(language, check_in),
+                instructions=phrases.quiet_instruction(self._cfg or None, language, "check_in"),
                 allow_interruptions=True,
             )
             return
         self._closing = True
         self._call.end_reason = "silence"
         speech = self.session.generate_reply(
-            instructions=phrases.say_instruction(language, goodbye),
+            instructions=phrases.quiet_instruction(self._cfg or None, language, "goodbye"),
             allow_interruptions=False,
         )
         await speech.wait_for_playout()
@@ -391,8 +428,18 @@ class ReceptionistAgent(Agent):
         speaker = {"user": "caller", "assistant": "agent"}.get(item.role)
         if speaker:
             self._call.add_turn(speaker, item.text_content)
+        if speaker == "agent" and phrases.spoken_ask(item.text_content):
+            # Whoever asked "French or English?", the caller's next words answer it.
+            self._ask_spoken_at = time.monotonic()
+            self._lang.note_asked()
+
+    def _stop_language_detection(self) -> None:
+        listener, self._listener = self._listener, None
+        if listener is not None:
+            listener.cancel()
 
     def _on_close(self, ev: Any) -> None:
+        self._stop_language_detection()
         pending = self._active_transfer
         if pending is not None and not pending.done():
             # The caller left (or the model died) while a contractor's phone was ringing:
@@ -582,14 +629,15 @@ class ReceptionistAgent(Agent):
         borrowed word or a name."""
         if language not in phrases.enabled_languages(self._cfg or None):
             return "That language is not available on this line. Say so politely."
-        if not self._menu.switch(language):
+        already = self._model_language == language and self._lang.language == language
+        self._lang.switch(language)
+        if already:
             return "The call is already in that language. Carry on."
-        self._close_menu()
         await self._set_language(language)
         name = phrases.LANGUAGE_NAMES.get(language, language)
         return (
-            f"Switched. From now on speak only {name}. Do not greet again or repeat the "
-            "menu. Acknowledge with one short word and carry on with the question you were on."
+            f"Switched. From now on speak only {name}. Do not greet again. "
+            "Acknowledge with one short word and carry on with the question you were on."
         )
 
     @function_tool()
@@ -1190,6 +1238,7 @@ class ReceptionistAgent(Agent):
         into the room does not.
         """
         self._keep_job_alive = True
+        self._stop_language_detection()
         ctx = self._ctx
         if ctx is None:
             return
@@ -1430,6 +1479,9 @@ async def entrypoint(ctx: JobContext) -> None:
             ),
         ),
     )
+    # After the greeting is on its way: listening for the caller's language must
+    # never delay the answer, and the call carries on without it if it cannot start.
+    agent.start_language_detection(participant)
 
 
 if __name__ == "__main__":

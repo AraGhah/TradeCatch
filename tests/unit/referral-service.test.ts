@@ -328,8 +328,8 @@ describe("attribution", () => {
 
 describe("reward calculation follows the plan the REFERRED customer bought", () => {
   const cases: [PlanId, number][] = [
-    ["essential", 6_500],
-    ["professional", 6_500],
+    ["essential", 5_000],
+    ["professional", 7_500],
   ];
   for (const [plan, expected] of cases) {
     it(`${plan} earns CAD $${expected / 100}`, async () => {
@@ -361,7 +361,7 @@ describe("reward calculation follows the plan the REFERRED customer bought", () 
     assert.equal(result.reward.amountCents, 6_000);
   });
 
-  it("refuses amounts that would let one referral earn more than $100", async () => {
+  it("refuses amounts that would let one referral earn more than $110", async () => {
     const w = makeWorld();
     // $80 for the plan plus the $35 website bonus is $115.
     const tooMuch = await w.service.updateSettings(
@@ -369,10 +369,10 @@ describe("reward calculation follows the plan the REFERRED customer bought", () 
       "admin",
     );
     assert.deepEqual(tooMuch, { ok: false, error: "invalid_settings" });
-    assert.equal((await w.service.getSettings()).rewardsCents.professional, 6_500);
-    // Exactly $100 is allowed.
+    assert.equal((await w.service.getSettings()).rewardsCents.professional, 7_500);
+    // Exactly $110 ($75 + $35) is allowed.
     const exactly = await w.service.updateSettings(
-      { rewardsCents: { professional: 6_500 }, websiteBonusCents: 3_500 },
+      { rewardsCents: { professional: 7_500 }, websiteBonusCents: 3_500 },
       "admin",
     );
     assert.equal(exactly.ok, true);
@@ -501,7 +501,8 @@ describe("a reward is created only after a qualifying payment, and only once", (
     assert.deepEqual(await w.service.reconcilePaidReferrals(), { qualified: 1 });
     assert.deepEqual(await w.service.reconcilePaidReferrals(), { qualified: 0 });
     const [reward] = await w.store.listRewards();
-    assert.equal(reward?.amountCents, 6_500);
+    // Professional was bought, so the Professional reward applies.
+    assert.equal(reward?.amountCents, 7_500);
   });
 });
 
@@ -901,10 +902,11 @@ describe("settings", () => {
   it("start with the agreed rewards and nothing automatic", async () => {
     const w = makeWorld();
     const settings = await w.service.getSettings();
-    // $65 for either launch plan; the retired plans carry the same figure but
-    // are not eligible, so they never pay out.
-    assert.equal(settings.rewardsCents.essential, 6_500);
-    assert.equal(settings.rewardsCents.professional, 6_500);
+    // $50 for Essential and $75 for Professional; the retired plans keep their
+    // old figure but are not eligible, so they never pay out.
+    assert.equal(settings.rewardsCents.essential, 5_000);
+    assert.equal(settings.rewardsCents.professional, 7_500);
+    assert.equal(settings.rewardsCents.starter, 6_500);
     assert.equal(settings.websiteBonusCents, 3_500);
     assert.deepEqual(settings.eligiblePlans, ["essential", "professional"]);
     assert.equal(settings.programEnabled, true);
@@ -918,7 +920,7 @@ describe("settings", () => {
       { rewardsCents: { essential: -1, professional: 0 } },
       { rewardsCents: { essential: 1.5, professional: 0 } },
       { rewardsCents: { essential: 5_000_000, professional: 0 } },
-      // Nothing may push one referral past the $100 program maximum.
+      // Nothing may push one referral past the $110 program maximum.
       { websiteBonusCents: 5_000_000 },
       { holdDays: -3 },
       { holdDays: 5_000 },
@@ -928,7 +930,7 @@ describe("settings", () => {
       const result = await w.service.updateSettings(bad, "admin");
       assert.deepEqual(result, { ok: false, error: "invalid_settings" }, JSON.stringify(bad));
     }
-    assert.equal((await w.service.getSettings()).rewardsCents.essential, 6_500);
+    assert.equal((await w.service.getSettings()).rewardsCents.essential, 5_000);
   });
 
   it("change only what was sent and record who changed it", async () => {
@@ -936,7 +938,7 @@ describe("settings", () => {
     const result = await w.service.updateSettings({ holdDays: 14 }, "admin@example.com");
     assert.ok(result.ok);
     assert.equal(result.settings.holdDays, 14);
-    assert.equal(result.settings.rewardsCents.professional, 6_500);
+    assert.equal(result.settings.rewardsCents.professional, 7_500);
     assert.equal(result.settings.updatedBy, "admin@example.com");
   });
 });
@@ -953,24 +955,24 @@ describe("what the referring customer sees", () => {
     assert.deepEqual(
       overview.rewards.map((r) => [r.plan, r.amountCents]),
       [
-        ["essential", 6_500],
-        ["professional", 6_500],
+        ["essential", 5_000],
+        ["professional", 7_500],
       ],
     );
     assert.equal(overview.websiteBonusCents, 3_500);
-    assert.equal(overview.maxRewardCents, 10_000);
+    assert.equal(overview.maxRewardCents, 11_000);
     assert.equal(overview.referrals.length, 1);
     assert.equal(overview.referrals[0]?.businessName, "Toitures Gagnon");
     assert.equal(overview.referrals[0]?.status, "customer");
     assert.deepEqual(overview.referrals[0]?.reward, {
       status: "pending",
-      amountCents: 6_500,
+      amountCents: 5_000,
       plan: "essential",
     });
     assert.deepEqual(overview.totals, {
       signedUp: 1,
       customers: 1,
-      pendingCents: 6_500,
+      pendingCents: 5_000,
       earnedCents: 0,
       issuedCents: 0,
     });
@@ -989,11 +991,11 @@ describe("what the referring customer sees", () => {
     assert.ok(qualified.qualified);
     await w.service.approveReward(qualified.reward.id, "admin");
     let overview = await w.service.overview("org_ref");
-    assert.equal(overview.totals.earnedCents, 6_500);
+    assert.equal(overview.totals.earnedCents, 7_500);
     assert.equal(overview.totals.issuedCents, 0);
     await w.service.markIssued(qualified.reward.id, "admin", { giftCardReference: "ORDER-77" });
     overview = await w.service.overview("org_ref");
-    assert.equal(overview.totals.issuedCents, 6_500);
+    assert.equal(overview.totals.issuedCents, 7_500);
     assert.deepEqual(new Set(overview.history.map((h) => h.kind)), new Set([
       "reward_issued",
       "reward_approved",
@@ -1020,7 +1022,13 @@ describe("what the referring customer sees", () => {
     w.addOrg("org_other");
     const overview = await w.service.overview("org_other");
     assert.equal(overview.referrals.length, 0);
-    assert.notEqual(overview.code, undefined);
+    // Looking at the page never creates a link; asking for one does, and it is their own.
+    assert.equal(overview.code, undefined);
+    assert.equal(overview.eligibility.eligible, true);
+    const mine = await w.service.ensureLink("org_other");
+    assert.ok(mine.ok);
+    assert.equal((await w.service.overview("org_other")).code, mine.ok ? mine.code : "");
+    assert.notEqual(mine.ok && mine.code, (await w.service.getLink("org_ref")).ok && (await w.service.getLink("org_ref") as { code: string | null }).code);
   });
 
   it("explains why a customer without paid access has no link yet", async () => {
@@ -1055,7 +1063,7 @@ describe("website service bonus", () => {
   const bought = (requestId = "req_1") =>
     w.service.onWebsiteServicePurchased({ organizationId: "org_new", requestId });
 
-  it("earns the extra $35 on top of the $65 plan reward, $100 in all", async () => {
+  it("earns the extra $35 on top of the $50 Essential reward, $85 in all", async () => {
     await referredBusiness(w);
     const plan = await qualify(w, "essential");
     assert.ok(plan.qualified);
@@ -1067,7 +1075,7 @@ describe("website service bonus", () => {
     assert.equal(bonus.reward.currency, "CAD");
     assert.equal(bonus.reward.status, "pending");
     const total = (await w.store.listRewards()).reduce((sum, r) => sum + r.amountCents, 0);
-    assert.equal(total, 10_000);
+    assert.equal(total, 8_500);
   });
 
   it("is paid once, however often the website purchase is reported", async () => {

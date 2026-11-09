@@ -116,7 +116,7 @@ export default async function AiReceptionistPage({
                 {t("ctaTry")}
               </CTAButton>
             </div>
-            <p className="mt-4 text-[12.5px] leading-[1.5] text-white/45">
+            <p className="mt-4 text-[12.5px] leading-[1.5] text-white/60">
               {t("planNote")}{" "}
               <CTAButton
                 href="/pricing"

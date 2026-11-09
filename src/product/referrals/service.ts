@@ -9,7 +9,7 @@
  *  - The website-service bonus is a second reward of its own kind, created only
  *    for a referral that already qualified and whose plan reward still stands,
  *    at most once per referral, so one referral can never earn more than the
- *    plan reward plus one website bonus ($100 CAD at launch).
+ *    plan reward plus one website bonus ($110 CAD at most).
  *  - Replaying the same payment returns the same reward (unique session id).
  *  - Refund, chargeback or cancellation before the gift card is issued rejects
  *    the reward; after issue it is flagged for a person, never silently undone.
@@ -93,7 +93,33 @@ export type ReferralServiceDeps = {
   now?: () => Date;
   newId?: (prefix: string) => string;
   randomBytes?: (n: number) => Uint8Array;
+  /**
+   * Set when the rest of the platform is on durable storage. A referral link
+   * is a promise to credit someone later, so while this is set the service
+   * refuses to hand one out unless `store` is the durable one too.
+   * Absent in development and tests, where memory is the only store.
+   */
+  durability?: { expected: boolean; ready: boolean };
 };
+
+/** The referral tables cannot be reached, so no link can be promised right now. */
+export class ReferralStorageUnavailableError extends Error {
+  constructor() {
+    super("Referral storage is not available.");
+    this.name = "ReferralStorageUnavailableError";
+  }
+}
+
+export type EnsureLinkResult =
+  | { ok: true; code: string; created: boolean }
+  | {
+      ok: false;
+      reason:
+        | "program_disabled"
+        | "organization_inactive"
+        | "no_paid_access"
+        | "storage_unavailable";
+    };
 
 /* -------------------------------------------------------------------------- */
 /* Result types                                                               */
@@ -152,6 +178,7 @@ export type DecisionResult =
 export type ReferrerOverview = {
   eligibility: ReferrerEligibility;
   programEnabled: boolean;
+  /** The organization's own code, if it has asked for one. Never created by viewing. */
   code?: string;
   holdDays: number;
   rewards: { plan: PlanId; amountCents: number; earns: boolean }[];
@@ -271,22 +298,61 @@ export function createReferralService(deps: ReferralServiceDeps) {
     return { eligible: true };
   }
 
-  /** The organization's own code, created on first use. Null if not eligible. */
-  async function ensureCode(organizationId: string): Promise<string | null> {
+  /** A change that cannot be stored for real must not be accepted at all. */
+  function requireStorage(): void {
+    if (!storageReady()) throw new ReferralStorageUnavailableError();
+  }
+
+  function storageReady(): boolean {
+    const durability = deps.durability;
+    return !durability?.expected || durability.ready;
+  }
+
+  /**
+   * The organization's own code, created on the first request and the same
+   * afterwards. Two simultaneous requests end with the same code: the store
+   * keeps one row per organization, and the loser reads the winner's.
+   */
+  async function ensureLink(organizationId: string): Promise<EnsureLinkResult> {
+    // Check storage before eligibility: a link made in memory while the real
+    // database is down would be shown, shared and then never credited.
+    if (!storageReady()) return { ok: false, reason: "storage_unavailable" };
     const eligibility = await referrerEligibility(organizationId);
-    if (!eligibility.eligible) return null;
+    if (!eligibility.eligible) return { ok: false, reason: eligibility.reason };
     const existing = await store.getCodeForOrganization(organizationId);
-    if (existing) return existing;
+    if (existing) return { ok: true, code: existing, created: false };
     for (let attempt = 0; attempt < 5; attempt++) {
       const candidate = generateReferralCode(deps.randomBytes ?? defaultRandomBytes);
       try {
-        return (await store.createCode(organizationId, candidate, iso())).code;
+        const saved = await store.createCode(organizationId, candidate, iso());
+        return { ok: true, code: saved.code, created: saved.created };
       } catch (err) {
         if (isReferralConflict(err, "code")) continue;
         throw err;
       }
     }
     throw new Error("Could not allocate a referral code.");
+  }
+
+  /** The organization's existing code. Read-only: never creates one. */
+  async function getLink(
+    organizationId: string,
+  ): Promise<
+    | { ok: true; code: string | null }
+    | { ok: false; reason: Extract<EnsureLinkResult, { ok: false }>["reason"] }
+  > {
+    if (!storageReady()) return { ok: false, reason: "storage_unavailable" };
+    const eligibility = await referrerEligibility(organizationId);
+    if (!eligibility.eligible) return { ok: false, reason: eligibility.reason };
+    return { ok: true, code: await store.getCodeForOrganization(organizationId) };
+  }
+
+  /** The organization's own code, created on first use. Null if not eligible. */
+  async function ensureCode(organizationId: string): Promise<string | null> {
+    const result = await ensureLink(organizationId);
+    if (result.ok) return result.code;
+    if (result.reason === "storage_unavailable") throw new ReferralStorageUnavailableError();
+    return null;
   }
 
   /** Public check used by the landing page: is this a live code? Reveals nothing else. */
@@ -299,11 +365,16 @@ export function createReferralService(deps: ReferralServiceDeps) {
   }
 
   async function overview(organizationId: string): Promise<ReferrerOverview> {
+    // Never show an empty memory-backed overview as if it were the real one.
+    if (!storageReady()) throw new ReferralStorageUnavailableError();
     const [settings, eligibility] = await Promise.all([
       store.getSettings(),
       referrerEligibility(organizationId),
     ]);
-    const code = eligibility.eligible ? await ensureCode(organizationId) : null;
+    // Viewing the page is read-only: a link is created only when asked for (ensureLink).
+    const code = eligibility.eligible
+      ? await store.getCodeForOrganization(organizationId)
+      : null;
     const [referrals, rewards] = await Promise.all([
       store.listReferralsForReferrer(organizationId),
       store.listRewardsForReferrer(organizationId),
@@ -429,6 +500,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     referredOrganizationId: string;
     actor: string;
   }): Promise<RegisterResult> {
+    requireStorage();
     const settings = await store.getSettings();
     if (!settings.programEnabled) return { ok: false, reason: "program_disabled" };
     const code = normalizeReferralCode(input.code);
@@ -494,6 +566,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     livemode: boolean;
     paidAt?: string;
   }): Promise<QualifyResult> {
+    requireStorage();
     const referral = await store.getReferralByReferred(input.organizationId);
     if (!referral) return { qualified: false, reason: "no_referral" };
 
@@ -583,6 +656,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
           | "bonus_not_offered";
       }
   > {
+    requireStorage();
     const referral = await store.getReferralByReferred(input.organizationId);
     if (!referral) return { earned: false, reason: "no_referral" };
     if (referral.status !== "qualified") return { earned: false, reason: "not_qualified" };
@@ -647,6 +721,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
    * billing transaction commits and must never fail billing). Idempotent.
    */
   async function reconcilePaidReferrals(): Promise<{ qualified: number }> {
+    requireStorage();
     let qualified = 0;
     for (const referral of await store.listReferrals({ status: "registered", limit: 500 })) {
       const paid = await directory.getPaidInstallation(referral.referredOrganizationId);
@@ -784,6 +859,9 @@ export function createReferralService(deps: ReferralServiceDeps) {
     actor: string,
     options: { acknowledgeFlags?: boolean; note?: string } = {},
   ): Promise<DecisionResult> {
+    requireStorage();
+    requireStorage();
+    requireStorage();
     const reward = await store.getReward(rewardId);
     if (!reward) return { ok: false, error: "not_found" };
     if (reward.status !== "pending") return { ok: false, error: "not_pending" };
@@ -868,6 +946,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     actor: string,
     note: string | undefined,
   ): Promise<DecisionResult> {
+    requireStorage();
     const trimmed = validNote(note);
     if (!trimmed) return { ok: false, error: "invalid_note" };
     const reward = await store.getReward(rewardId);
@@ -904,6 +983,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     actor: string,
     input: { giftCardReference: string },
   ): Promise<DecisionResult> {
+    requireStorage();
     const settings = await store.getSettings();
     if (settings.fulfillmentMethod === "none") {
       return { ok: false, error: "fulfillment_not_configured" };
@@ -952,6 +1032,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
   ): Promise<
     { ok: true; settings: ReferralSettings } | { ok: false; error: "invalid_settings" }
   > {
+    requireStorage();
     const parsed = referralSettingsPatchSchema.safeParse(patch);
     if (!parsed.success) return { ok: false, error: "invalid_settings" };
     const current = await store.getSettings();
@@ -1000,6 +1081,8 @@ export function createReferralService(deps: ReferralServiceDeps) {
 
   return {
     referrerEligibility,
+    ensureLink,
+    getLink,
     ensureCode,
     isCodeValid,
     overview,

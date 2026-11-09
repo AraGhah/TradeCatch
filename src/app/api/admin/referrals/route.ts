@@ -6,7 +6,7 @@ import { enforceRateLimit } from "@/lib/rate-limit-response";
 import { readJsonBody } from "@/lib/request-body";
 import { REFERRAL_CODE_PATTERN } from "@/product/referrals/code";
 import { logReferralFailure } from "@/product/referrals/log";
-import { getReferralService } from "@/product/referrals/runtime";
+import { getReferralServiceReady } from "@/product/referrals/runtime";
 import type { DecisionError } from "@/product/referrals/service";
 
 export const dynamic = "force-dynamic";
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
   const auth = await access(request);
   if (auth.response) return auth.response;
   try {
-    const service = getReferralService();
+    const service = await getReferralServiceReady();
     const rewardId = new URL(request.url).searchParams.get("rewardId");
     if (rewardId) {
       return reply({
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
   const command = parsed.data;
   const actor = auth.actor!;
   try {
-    const service = getReferralService();
+    const service = await getReferralServiceReady();
     switch (command.action) {
       case "approve": {
         const result = await service.approveReward(command.rewardId, actor, {

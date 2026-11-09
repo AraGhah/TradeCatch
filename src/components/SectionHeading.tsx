@@ -31,7 +31,7 @@ export function SectionHeading({
     >
       {eyebrow ? (
         <p
-          className={`mb-3 text-[13px] font-medium tracking-[-0.01em] ${
+          className={`mb-2 text-[13px] font-medium tracking-[-0.01em] ${
             light ? "text-[rgba(255,255,255,0.64)]" : "text-ember-text"
           }`}
         >
@@ -43,7 +43,7 @@ export function SectionHeading({
       </Heading>
       {intro ? (
         <p
-          className={`text-lede mt-5 ${
+          className={`text-lede mt-3.5 ${
             light ? "text-white/70" : "text-muted"
           }`}
         >

@@ -141,11 +141,11 @@ describe("plan catalog", () => {
     }
   });
 
-  it("Website Service is $349.99, one-time, optional and never included free", () => {
+  it("Website Service is $699.99, one-time, optional and never included free", () => {
     const addOn = websiteServiceAddOn();
-    assert.equal(addOn.priceCad, 349.99);
+    assert.equal(addOn.priceCad, 699.99);
     assert.equal(addOn.priceIsStartingAt, false);
-    assert.equal(ADD_ONS.websiteService.priceCad, 349.99);
+    assert.equal(ADD_ONS.websiteService.priceCad, 699.99);
     assert.deepEqual([...addOn.includedInPlans], []);
     assert.deepEqual([...addOn.availableOn], [...PLAN_ORDER]);
     // A one-time project, not a recurring subscription charge.
@@ -159,12 +159,13 @@ describe("plan catalog", () => {
     assert.equal(PLAN_PRICES.professional.setup, 1999.99);
   });
 
-  it("referrals pay $65 per plan and $35 more for the website service, $100 at most", () => {
-    assert.equal(REFERRAL_PLAN_REWARD_CENTS, 6_500);
+  it("referrals pay $50 for Essential or $75 for Professional, and $35 more for the website service, $110 at most", () => {
+    // Rewards follow the plan the referred customer buys: $50 Essential, $75 Professional.
+    assert.equal(REFERRAL_PLAN_REWARD_CENTS, 7_500);
     assert.equal(REFERRAL_WEBSITE_BONUS_CENTS, 3_500);
-    assert.equal(REFERRAL_MAX_REWARD_CENTS, 10_000);
-    assert.equal(DEFAULT_REFERRAL_REWARDS_CENTS.essential, 6_500);
-    assert.equal(DEFAULT_REFERRAL_REWARDS_CENTS.professional, 6_500);
+    assert.equal(REFERRAL_MAX_REWARD_CENTS, 11_000);
+    assert.equal(DEFAULT_REFERRAL_REWARDS_CENTS.essential, 5_000);
+    assert.equal(DEFAULT_REFERRAL_REWARDS_CENTS.professional, 7_500);
   });
 
   it("step-up from Essential to Professional is $100 a month with no extra setup", () => {

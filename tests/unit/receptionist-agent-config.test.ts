@@ -225,6 +225,49 @@ describe("agent config", () => {
     assert.equal(menu.keys["2"], "fr");
   });
 
+  it("gives the agent a bilingual pickup greeting and a language question, with no keypad in them", () => {
+    const { languageSelect } = buildAgentConfig(
+      config({ languages: ["en", "fr"], defaultLanguage: "fr" }),
+      OPEN,
+    );
+    const { opening, ask } = languageSelect.detection;
+    assert.deepEqual(
+      opening.map((line) => [line.lang, line.text]),
+      [
+        ["fr", "Bonjour, ici Nord Plomberie."],
+        ["en", "How can I help you?"],
+      ],
+    );
+    assert.deepEqual(
+      ask.map((line) => [line.lang, line.text]),
+      [
+        ["fr", "Français ou anglais?"],
+        ["en", "French or English?"],
+      ],
+    );
+    const spoken = JSON.stringify(languageSelect.detection).toLowerCase();
+    assert.ok(!/press|appuyez|restez en ligne|touche/.test(spoken), spoken);
+  });
+
+  it("greets the same way whichever language the line defaults to: the caller decides", () => {
+    const en = buildAgentConfig(config({ languages: ["en", "fr"], defaultLanguage: "en" }), OPEN);
+    const fr = buildAgentConfig(config({ languages: ["en", "fr"], defaultLanguage: "fr" }), OPEN);
+    assert.deepEqual(en.languageSelect.detection, fr.languageSelect.detection);
+  });
+
+  it("greets a single-language line in its own language and never asks which language", () => {
+    const single = buildAgentConfig(config({ languages: ["en"], defaultLanguage: "en" }), OPEN);
+    assert.deepEqual(single.languageSelect.detection.ask, []);
+    assert.ok(single.languageSelect.detection.opening.every((line) => line.lang === "en"));
+    assert.ok(single.languageSelect.detection.opening.length >= 1);
+  });
+
+  it("still sends the earlier menu fields so an agent deployed before detection keeps working", () => {
+    const { languageSelect } = buildAgentConfig(config({ languages: ["en", "fr"] }), OPEN);
+    assert.deepEqual(languageSelect.keys, { "1": "en", "2": "fr" });
+    assert.equal(languageSelect.opening.menu.length, 2);
+  });
+
   it("says nothing about a menu on a single-language line, and carries the after-hours notice", () => {
     const single = buildAgentConfig(config({ languages: ["fr"], defaultLanguage: "fr" }), CLOSED);
     assert.deepEqual(single.languageSelect.opening.menu, []);

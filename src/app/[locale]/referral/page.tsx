@@ -4,6 +4,7 @@ import { Container } from "@/components/Container";
 import { ReferralCapture } from "@/components/ReferralCapture";
 import { ReferralForm } from "@/components/ReferralForm";
 import { Link } from "@/i18n/navigation";
+import { getPathname } from "@/i18n/pathname";
 import { formatPlanMoney } from "@/lib/plans";
 import { buildMetadata } from "@/lib/seo";
 import { normalizeReferralCode } from "@/product/referrals/code";
@@ -16,6 +17,7 @@ import {
 } from "@/product/referrals/model";
 import { getReferralServiceReady } from "@/product/referrals/runtime";
 import { PLAN_ORDER } from "@/product/saas/plan-catalog";
+import { requireTenantContext } from "@/product/saas/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +30,9 @@ function referralAmounts(settings: ReferralSettings, locale: string) {
   );
   const bonusCents = websiteBonusAmountCents(settings);
   return {
-    planReward: money(planCents),
+    // The reward follows the plan the referred business chooses.
+    essentialReward: money(rewardAmountCents(settings, "essential")),
+    professionalReward: money(rewardAmountCents(settings, "professional")),
     bonus: money(bonusCents),
     max: money(planCents + bonusCents),
   };
@@ -82,6 +86,19 @@ export default async function ReferralPage({
     codeIsLive = false;
   }
 
+  // "Get your link": straight to the dashboard when signed in, otherwise through
+  // sign-in, which brings them back to it. The link itself is made there.
+  let signedIn = false;
+  try {
+    signedIn = (await requireTenantContext()).ok;
+  } catch {
+    signedIn = false;
+  }
+  const dashboardPath = getPathname({ href: "/app/referrals", locale: lang });
+  const getLinkHref = signedIn
+    ? dashboardPath
+    : `${getPathname({ href: "/login", locale: lang })}?next=${encodeURIComponent(dashboardPath)}`;
+
   const money = (cents: number) => formatPlanMoney(cents / 100, lang, 0);
   const amounts = referralAmounts(settings, lang);
   const bonusCents = websiteBonusAmountCents(settings);
@@ -90,7 +107,7 @@ export default async function ReferralPage({
     <>
       <ReferralCapture code={codeIsLive ? code : null} />
 
-      <section className="relative overflow-hidden bg-navy pt-[clamp(72px,8vw,104px)] pb-[clamp(64px,8vw,96px)]">
+      <section className="relative overflow-hidden bg-navy pt-[clamp(44px,5.4vw,72px)] pb-[clamp(40px,5vw,64px)]">
         <Container className="relative">
           <p className="text-[13px] font-medium text-orange">{t("eyebrow")}</p>
           <h1
@@ -115,12 +132,21 @@ export default async function ReferralPage({
             </p>
           ) : null}
           {settings.programEnabled ? (
-            <a
-              href="#refer"
-              className="mt-8 inline-flex items-center justify-center rounded-[12px] bg-orange px-6 py-3.5 text-[16px] font-bold tracking-[-0.01em] text-navy shadow-cta transition-colors hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-            >
-              {form("title")} ↓
-            </a>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <a
+                href={getLinkHref}
+                data-testid="referral-get-link-cta"
+                className="inline-flex items-center justify-center rounded-[12px] bg-orange px-6 py-3.5 text-[16px] font-bold tracking-[-0.01em] text-navy shadow-cta transition-colors hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                {t("getLink")}
+              </a>
+              <a
+                href="#refer"
+                className="inline-flex items-center justify-center rounded-[12px] border border-white/25 px-6 py-3.5 text-[16px] font-semibold tracking-[-0.01em] text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              >
+                {form("title")} ↓
+              </a>
+            </div>
           ) : null}
         </Container>
       </section>
@@ -239,12 +265,12 @@ export default async function ReferralPage({
             >
               {t("cta")}
             </Link>
-            <Link
-              href="/app/referrals"
+            <a
+              href={getLinkHref}
               className="text-sm font-medium text-heading underline underline-offset-2"
             >
               {t("existingCustomer")}
-            </Link>
+            </a>
           </div>
         </Container>
       </section>
@@ -266,7 +292,9 @@ export default async function ReferralPage({
                 "storage",
               ] as const
             ).map((rule) => (
-              <li key={rule}>{t(`rules.${rule}`, { days: settings.holdDays })}</li>
+              <li key={rule}>
+                {t(`rules.${rule}`, { days: settings.holdDays, ...amounts })}
+              </li>
             ))}
           </ul>
         </Container>

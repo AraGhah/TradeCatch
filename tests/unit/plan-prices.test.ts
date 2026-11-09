@@ -30,7 +30,35 @@ describe("plan prices", () => {
   it("uses the agreed launch prices", () => {
     assert.deepEqual(PLAN_PRICES.essential, { setup: 1999.99, monthly: 249 });
     assert.deepEqual(PLAN_PRICES.professional, { setup: 1999.99, monthly: 349 });
-    assert.equal(ADD_ONS.websiteService.priceCad, 349.99);
+    assert.equal(ADD_ONS.websiteService.priceCad, 699.99);
+  });
+
+  it("quotes the website service at exactly the catalog price in every message, and never the retired $349.99", () => {
+    const strings = (value: unknown): string[] =>
+      typeof value === "string"
+        ? [value]
+        : value && typeof value === "object"
+          ? Object.values(value).flatMap(strings)
+          : [];
+    const price = ADD_ONS.websiteService.priceCad;
+    assert.equal(price, 699.99);
+    for (const [code, messages] of [
+      ["en", en],
+      ["fr", fr],
+    ] as const) {
+      const all = strings(messages);
+      const quoted = formatPlanMoney(price, code);
+      assert.ok(
+        all.some((s) => s.includes(quoted)),
+        `${code} must quote ${quoted}`,
+      );
+      // Any other website-service amount would put a displayed price ahead of the charged one.
+      assert.deepEqual(
+        all.filter((s) => /349[.,]99/.test(s)),
+        [],
+        `${code} still quotes the retired website price`,
+      );
+    }
   });
 
   it("charges the same one-time setup on both launch plans", () => {

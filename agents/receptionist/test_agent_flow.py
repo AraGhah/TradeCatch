@@ -1,13 +1,14 @@
 """Call-flow tests for the voice agent, with a fake LiveKit session and fake TradeCatch.
 
-They exercise the real ReceptionistAgent (language menu, silence, tools, report)
+They exercise the real ReceptionistAgent (language detection, silence, tools, report)
 without a network. What they cannot show is how the realtime model *sounds* or
-whether Twilio delivers the keypress: that needs a live call.
+how well speech-to-text labels real callers' language: that needs a live call.
 """
 
 import asyncio
 import contextlib
 import copy
+import os
 import time
 import unittest
 from types import SimpleNamespace
@@ -16,6 +17,7 @@ try:
     import agent as A
     import warm_transfer as W
     from call_record import CallRecord
+    from language import Heard
     from livekit import api
     from livekit.agents.llm import RealtimeError, ToolError
     from transfer import TransferFailure, TransferSettings
@@ -44,6 +46,16 @@ CFG = {
         "afterChoice": {
             "fr": {"chosen": "Très bien, en français.", "afterHoursNotice": "", "question": "Comment puis-je vous aider?"},
             "en": {"chosen": "Sure, English.", "afterHoursNotice": "", "question": "How can I help?"},
+        },
+        "detection": {
+            "opening": [
+                {"text": "Bonjour, ici Acme.", "lang": "fr"},
+                {"text": "How can I help you?", "lang": "en"},
+            ],
+            "ask": [
+                {"text": "Français ou anglais?", "lang": "fr"},
+                {"text": "French or English?", "lang": "en"},
+            ],
         },
     },
     "silence": {
@@ -259,10 +271,6 @@ class Harness(A.ReceptionistAgent):
     session = property(lambda self: self.fake_session)
 
 
-def dtmf(digit):
-    return SimpleNamespace(digit=digit, participant=None)
-
-
 def state(new_state):
     return SimpleNamespace(new_state=new_state)
 
@@ -316,101 +324,152 @@ class FlowCase(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait(pending, timeout=1)
 
 
+def heard(language, words=6, confidence=0.9):
+    return Heard(language, words, confidence)
+
+
+class FakeListener:
+    """Stands in for the speech-to-text language listener task."""
+
+    def __init__(self):
+        self.cancelled = False
+
+    def cancel(self):
+        self.cancelled = True
+
+
 class OpeningAndLanguageTests(FlowCase):
-    async def test_every_call_opens_in_french_with_the_menu(self):
+    async def test_the_call_opens_in_french_and_english_at_once_with_no_menu(self):
         await self.agent.on_enter()
+        await self.settle()
+        self.assertEqual(len(self.session.replies), 1)
         opening = self.session.replies[0]
-        self.assertLess(opening.index("Bonjour! Merci d'avoir appelé Acme."), opening.index("For English, press 1."))
+        self.assertLess(opening.index("Bonjour, ici Acme."), opening.index("How can I help you?"))
+        self.assertIn('[Canadian French (Québec)] "Bonjour, ici Acme."', opening)
+        self.assertIn('[North American English] "How can I help you?"', opening)
+        for banned in ("press", "restez en ligne", "appuyez"):
+            self.assertNotIn(banned, opening.lower())
+
+    async def test_the_voice_model_starts_with_the_language_not_known_yet(self):
+        self.assertIn("not known yet", self.agent.instructions)
+        self.assertNotIn("The call is in Canadian French", self.agent.instructions)
+        self.assertEqual(self.call.language, "fr")
+
+    async def test_no_keypad_handler_is_attached(self):
+        self.assertFalse(hasattr(self.agent, "_on_dtmf"))
+        session = SimpleNamespace(on=lambda *a, **k: None)
+        room = FakeRoom()
+        self.agent.attach(session, SimpleNamespace(room=room))
+        self.assertNotIn("sip_dtmf_received", room.handlers)
+
+    async def test_an_english_caller_makes_the_call_english_without_a_second_greeting(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        self.assertEqual(self.call.language, "en")
+        self.assertIn("North American English", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
+
+    async def test_a_french_caller_makes_the_call_french(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("fr-CA"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
         self.assertIn("Canadian French", self.agent.instructions)
-        self.assertEqual(self.call.language, "fr")
+        self.assertNotIn("not known yet", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
 
-    async def test_no_key_stays_in_french_and_asks_the_question_once(self):
+    async def test_a_one_word_hello_decides_nothing(self):
         await self.agent.on_enter()
+        self.agent._on_heard(heard("en", words=1))
+        await self.settle()
+        self.assertIn("not known yet", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
+
+    async def test_an_unclear_caller_is_asked_once_in_both_languages(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("es"))
+        self.agent._on_heard(heard("es"))
         await self.settle()
         self.assertEqual(len(self.session.replies), 2)
-        self.assertIn("Comment puis-je vous aider?", self.session.replies[1])
-        self.assertNotIn("Très bien", self.session.replies[1])
-        self.assertEqual(self.call.language, "fr")
+        question = self.session.replies[1]
+        self.assertLess(question.index("Français ou anglais?"), question.index("French or English?"))
+        # Still talking in a language the line does not offer: it does not ask again.
+        self.agent._on_heard(heard("es"))
+        await self.settle()
+        self.assertEqual(len(self.session.replies), 2)
 
-    async def test_key_1_switches_to_english_without_replaying_the_greeting(self):
+    async def test_the_answer_to_the_question_decides_even_when_it_is_one_word(self):
         await self.agent.on_enter()
-        self.agent._on_dtmf(dtmf("1"))
+        self.agent._on_heard(heard("es"))
+        self.agent._on_heard(heard("es"))
+        await self.settle()
+        self.agent._on_heard(heard("en", words=1))
         await self.settle()
         self.assertEqual(self.call.language, "en")
         self.assertIn("North American English", self.agent.instructions)
-        self.assertEqual(self.session.interrupts, 1)
-        # opening + one English reply; the French timeout must not fire afterwards.
         self.assertEqual(len(self.session.replies), 2)
-        self.assertIn("Sure, English.", self.session.replies[1])
-        self.assertIn("How can I help?", self.session.replies[1])
-        self.assertNotIn("Bonjour", self.session.replies[1])
 
-    async def test_key_2_confirms_french(self):
+    async def test_no_usable_answer_keeps_the_start_language(self):
         await self.agent.on_enter()
-        self.agent._on_dtmf(dtmf("2"))
+        for _ in range(4):
+            self.agent._on_heard(heard("es"))
         await self.settle()
         self.assertEqual(self.call.language, "fr")
+        self.assertIn("Canadian French", self.agent.instructions)
         self.assertEqual(len(self.session.replies), 2)
-        self.assertIn("Très bien, en français.", self.session.replies[1])
 
-    async def test_other_keys_are_ignored(self):
+    async def test_it_does_not_ask_again_when_the_model_already_asked(self):
         await self.agent.on_enter()
-        self.agent._on_dtmf(dtmf("7"))
-        self.agent._on_dtmf(dtmf("#"))
+        self.agent._on_item(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    type="message", role="assistant", text_content="Français ou anglais? French or English?"
+                )
+            )
+        )
+        self.agent._on_heard(heard("es"))
+        self.agent._on_heard(heard("es"))
+        await self.settle()
+        self.assertEqual(len(self.session.replies), 1)
+
+    async def test_a_borrowed_word_in_a_french_call_does_not_change_the_language(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("fr"))
+        for _ in range(5):
+            self.agent._on_heard(heard("en", words=1))
+        self.agent._on_heard(heard("en", words=4))
         await self.settle()
         self.assertEqual(self.call.language, "fr")
-        self.assertEqual(self.session.interrupts, 0)
+        self.assertIn("Canadian French", self.agent.instructions)
 
-    async def test_key_1_after_timeout_continues_in_english_without_restarting(self):
+    async def test_sustained_english_in_a_french_call_switches_it(self):
         await self.agent.on_enter()
-        await self.settle()
-        before = len(self.session.replies)
-        self.agent._on_dtmf(dtmf("1"))
-        await self.settle()
-        self.assertEqual(len(self.session.replies), before + 1)
-        self.assertEqual(self.call.language, "en")
-        self.assertIn("North American English", self.session.replies[-1])
-        self.assertNotIn("How can I help?", self.session.replies[-1])
-
-    async def test_key_code_switches_fallback_to_english_after_noise(self):
-        self.agent = Harness(cfg=None, call=self.call, client=None, sip_identity="sip_1")
-        self.agent.fake_session = self.session
-        await self.agent.on_enter()
-        self.agent._on_user_state(state("speaking"))
-        self.agent._on_dtmf(SimpleNamespace(code=1, digit="", participant=SimpleNamespace(identity="sip_1")))
+        self.agent._on_heard(heard("fr"))
+        self.agent._on_heard(heard("en", words=5))
+        self.agent._on_heard(heard("en", words=5))
         await self.settle()
         self.assertEqual(self.call.language, "en")
         self.assertIn("North American English", self.agent.instructions)
-        self.assertIn("technical difficulties", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
 
-    async def test_key_during_transfer_is_ignored(self):
+    async def test_speech_heard_during_a_transfer_is_ignored(self):
         await self.agent.on_enter()
         self.agent._transferring = True
-        self.agent._on_dtmf(dtmf("1"))
-        self.assertEqual(self.agent._menu.language, "fr")
-
-    async def test_speech_at_the_menu_does_not_pick_a_language_or_trigger_a_second_greeting(self):
-        await self.agent.on_enter()
-        self.agent._on_user_state(state("speaking"))
+        self.agent._on_heard(heard("en"))
         await self.settle()
         self.assertEqual(self.call.language, "fr")
-        self.assertEqual(len(self.session.replies), 1)
+        self.assertIn("not known yet", self.agent.instructions)
 
-    async def test_a_key_pressed_before_the_greeting_starts_skips_the_greeting(self):
-        self.agent._on_dtmf(dtmf("1"))
-        await self.agent.on_enter()
-        await self.settle()
-        self.assertEqual(self.call.language, "en")
-        self.assertEqual(len(self.session.replies), 1)
-        self.assertNotIn("Bonjour", self.session.replies[0])
+    async def test_what_is_logged_has_a_language_and_a_size_but_never_words(self):
+        with self.assertLogs("agent-tradecatch-receptionist", level="INFO") as logs:
+            self.agent._on_heard(Heard("en", 6, 0.93))
+            await self.settle()
+        text = "\n".join(logs.output)
+        self.assertIn("caller language heard: en (6 words, confidence 0.93)", text)
+        self.assertIn("language decision: set en [clear_speech] after 1 utterances", text)
 
-    async def test_dtmf_from_another_participant_is_ignored(self):
-        await self.agent.on_enter()
-        self.agent._on_dtmf(SimpleNamespace(digit="1", participant=SimpleNamespace(identity="someone-else")))
-        await self.settle()
-        self.assertEqual(self.call.language, "fr")
-
-    async def test_the_caller_can_switch_language_mid_call(self):
+    async def test_the_caller_can_still_ask_out_loud_for_another_language(self):
         await self.agent.on_enter()
         await self.settle()
         reply = await self.agent.set_language(None, "en")
@@ -418,31 +477,59 @@ class OpeningAndLanguageTests(FlowCase):
         self.assertEqual(self.call.language, "en")
         self.assertIn("North American English", self.agent.instructions)
         self.assertIn("Do not greet again", reply)
+        self.assertNotIn("menu", reply.lower())
         # Asking for the same language again changes nothing.
         self.assertIn("already", (await self.agent.set_language(None, "en")).lower())
+
+    async def test_a_spoken_request_is_not_overruled_by_one_or_two_sentences(self):
+        await self.agent.on_enter()
+        await self.agent.set_language(None, "en")
+        self.agent._on_heard(heard("fr"))
+        self.agent._on_heard(heard("fr"))
+        await self.settle()
+        self.assertEqual(self.call.language, "en")
+        self.agent._on_heard(heard("fr"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
 
     async def test_a_language_the_line_does_not_offer_is_refused(self):
         cfg = copy.deepcopy(CFG)
         cfg["languageSelect"]["languages"] = ["fr"]
-        cfg["languageSelect"]["opening"]["menu"] = []
         self.make_agent(cfg)
         self.assertIn("not available", await self.agent.set_language(None, "en"))
         self.assertEqual(self.call.language, "fr")
 
-    async def test_a_single_language_line_has_no_menu_wait(self):
+    async def test_a_single_language_line_has_nothing_to_detect(self):
         cfg = copy.deepcopy(CFG)
         cfg["languageSelect"].update(startLanguage="en", languages=["en"])
-        cfg["languageSelect"]["opening"] = {"statement": {"text": "Hello, Acme.", "lang": "en"}, "menu": []}
+        cfg["languageSelect"]["detection"] = {
+            "opening": [
+                {"text": "Hello, Acme.", "lang": "en"},
+                {"text": "How can I help?", "lang": "en"},
+            ],
+            "ask": [],
+        }
         self.make_agent(cfg)
+        self.assertIn("The call is in North American English", self.agent.instructions)
         await self.agent.on_enter()
         await self.settle()
         self.assertEqual(len(self.session.replies), 1)
         self.assertIn("How can I help?", self.session.replies[0])
+        calls = []
+        original = A.start_listener
+        A.start_listener = lambda **kw: calls.append(kw)
+        try:
+            self.agent.start_language_detection(SimpleNamespace(identity="sip_1"))
+        finally:
+            A.start_listener = original
+        self.assertEqual(calls, [])
 
-    async def test_an_older_server_without_language_settings_still_opens_french_first(self):
-        self.make_agent({"instructions": "Base prompt."})
+    async def test_an_older_server_without_language_settings_still_greets_in_both(self):
+        self.make_agent({"instructions": "Base prompt.", "businessName": "Acme"})
         await self.agent.on_enter()
-        self.assertIn("restez en ligne", self.session.replies[0])
+        self.assertIn("Bonjour, ici Acme.", self.session.replies[0])
+        self.assertIn("How can I help you?", self.session.replies[0])
+        self.assertNotIn("press 1", self.session.replies[0])
         self.assertEqual(self.call.language, "fr")
 
     async def test_no_config_at_all_uses_the_safe_fallback(self):
@@ -455,6 +542,90 @@ class OpeningAndLanguageTests(FlowCase):
         self.assertIn("Bonjour", self.session.replies[0])
         self.assertIn("no transfer is available", self.agent.instructions)
         self.assertIn("Transfers are unavailable", await self.agent.transfer_call(None, "caller_request"))
+
+    async def test_the_check_in_before_the_language_is_known_is_bilingual(self):
+        await self.agent.on_enter()
+        await self.agent._on_quiet()
+        check_in = self.session.replies[-1]
+        self.assertIn("Êtes-vous toujours là?", check_in)
+        self.assertIn("Are you still there?", check_in)
+
+    async def test_the_check_in_after_the_language_is_known_is_in_that_language_only(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        await self.agent._on_quiet()
+        check_in = self.session.replies[-1]
+        self.assertIn("Are you still there?", check_in)
+        self.assertNotIn("Êtes-vous", check_in)
+
+
+class LanguageListenerWiringTests(FlowCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.started = []
+        self.listener = FakeListener()
+        self._start_listener = A.start_listener
+
+        def fake_start(**kwargs):
+            self.started.append(kwargs)
+            return self.listener
+
+        A.start_listener = fake_start
+
+    async def asyncTearDown(self):
+        A.start_listener = self._start_listener
+        await super().asyncTearDown()
+
+    async def test_the_listener_starts_for_the_caller_and_reports_to_the_agent(self):
+        participant = SimpleNamespace(identity="sip_1")
+        self.agent.start_language_detection(participant)
+        self.assertEqual(len(self.started), 1)
+        self.assertIs(self.started[0]["participant"], participant)
+        self.assertEqual(self.started[0]["on_heard"], self.agent._on_heard)
+        self.assertEqual(self.started[0]["on_failed"], self.agent._on_listener_failed)
+
+    async def test_the_kill_switch_starts_no_listener_and_leaves_switching_to_the_model(self):
+        original = os.environ.get("AGENT_LANGUAGE_DETECTION")
+        os.environ["AGENT_LANGUAGE_DETECTION"] = "off"
+        try:
+            self.make_agent()
+        finally:
+            if original is None:
+                os.environ.pop("AGENT_LANGUAGE_DETECTION")
+            else:
+                os.environ["AGENT_LANGUAGE_DETECTION"] = original
+        self.agent.start_language_detection(SimpleNamespace(identity="sip_1"))
+        self.assertEqual(self.started, [])
+        self.assertIn("clearly talks to you in full sentences", self.agent.instructions)
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+
+    async def test_the_listener_stops_when_the_session_closes(self):
+        self.agent.start_language_detection(SimpleNamespace(identity="sip_1"))
+        self.agent._on_close(SimpleNamespace(reason=A.CloseReason.USER_INITIATED, error=None))
+        self.assertTrue(self.listener.cancelled)
+
+    async def test_when_the_listener_fails_the_call_keeps_going_in_its_language(self):
+        await self.agent.on_enter()
+        self.agent.start_language_detection(SimpleNamespace(identity="sip_1"))
+        self.agent._on_listener_failed("stopped: ConnectionError")
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+        # The model is told to follow full sentences itself, and to ask when unsure.
+        self.assertIn("clearly talks to you in full sentences", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
+        # Later utterances (if any slip through) decide nothing.
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+
+    async def test_a_second_failure_report_changes_nothing(self):
+        self.agent._on_listener_failed("a")
+        self.agent._on_listener_failed("b")
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
 
 
 class GptLiveHarness(Harness):
@@ -487,7 +658,7 @@ class GptLiveHarness(Harness):
 
 
 class GptLiveLanguageTests(FlowCase):
-    """Regression: key 1 was logged, but gpt-live kept its French rule and answered in French."""
+    """Regression: a language change was logged, but gpt-live kept its first rule and answered in it."""
 
     def make_agent(self, cfg=None, client="default", transfers=None):
         self.agent = GptLiveHarness(
@@ -515,29 +686,37 @@ class GptLiveLanguageTests(FlowCase):
         # The starting rule says a later update wins, so the two do not compete.
         self.assertIn("A later LANGUAGE UPDATE replaces this section.", self.agent.rules[0])
 
-    async def test_key_1_tells_the_voice_model_to_answer_in_english(self):
+    async def test_the_starting_rule_follows_the_caller(self):
+        self.assertIn("not known yet", self.agent.rules[0])
+        self.assertIn("Reply in the language the caller speaks", self.agent.rules[0])
+
+    async def test_an_english_caller_tells_the_voice_model_to_answer_in_english(self):
         await self.agent.on_enter()
         with self.assertNoLogs("agent-tradecatch-receptionist", level="ERROR"):
-            self.agent._on_dtmf(dtmf("1"))
+            self.agent._on_heard(heard("en"))
             await self.settle()
         self.assert_model_speaks_english_from_now_on(1)
-        # What the caller hears right after the key: the English acknowledgement and question.
-        self.assertEqual(len(self.session.replies), 2)
-        self.assertIn('[North American English] "Sure, English. How can I help?"', self.session.replies[1])
+        # Nothing else is spoken: the model already hears the caller and answers.
+        self.assertEqual(len(self.session.replies), 1)
         self.assertEqual(self.call.language, "en")
 
-    async def test_key_1_on_the_fallback_prompt_also_reaches_the_voice_model(self):
+    async def test_a_french_caller_also_gets_a_standing_rule(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("fr"))
+        await self.settle()
+        self.assertEqual(len(self.agent.rules), 2)
+        self.assertIn("speak only Canadian French", self.agent.rules[-1])
+
+    async def test_english_on_the_fallback_prompt_also_reaches_the_voice_model(self):
         self.agent = GptLiveHarness(cfg=None, call=self.call, client=None, sip_identity="sip_1")
         self.agent.fake_session = self.session
         self.agent.start_voice_model()
         self.assertIn("technical difficulties", self.agent.rules[0])
         await self.agent.on_enter()
-        self.agent._on_user_state(state("speaking"))  # noise closed the menu window first
         with self.assertNoLogs("agent-tradecatch-receptionist", level="ERROR"):
-            self.agent._on_dtmf(dtmf("1"))
+            self.agent._on_heard(heard("en"))
             await self.settle()
         self.assert_model_speaks_english_from_now_on(1)
-        self.assertIn("North American English", self.session.replies[-1])
 
     async def test_asking_out_loud_for_english_reaches_the_voice_model(self):
         await self.agent.on_enter()
@@ -547,11 +726,40 @@ class GptLiveLanguageTests(FlowCase):
 
     async def test_switching_back_to_french_adds_a_newer_french_rule(self):
         await self.agent.on_enter()
-        self.agent._on_dtmf(dtmf("1"))
+        self.agent._on_heard(heard("en"))
         await self.settle()
         await self.agent.set_language(None, "fr")
         self.assertIn("speak only Canadian French", self.agent.rules[-1])
         self.assertEqual(self.call.language, "fr")
+
+    async def test_a_listener_failure_adds_one_rule_and_does_not_change_the_language(self):
+        await self.agent.on_enter()
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="ERROR"):
+            self.agent._on_listener_failed("stopped: TimeoutError")
+            await self.settle()
+        self.assertEqual(len(self.agent.rules), 2)
+        self.assertIn("Automatic language detection is not available", self.agent.rules[-1])
+        self.assertEqual(self.call.language, "fr")
+
+    async def test_a_voice_model_that_refuses_the_rule_does_not_break_the_call_and_is_asked_again(self):
+        accept = GptLiveHarness.update_chat_ctx
+
+        async def refuse(chat_ctx, **kwargs):
+            raise RealtimeError("refused")
+
+        self.agent.update_chat_ctx = refuse
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        # The language is recorded for the report; the model still follows the caller on its own.
+        self.assertEqual(self.call.language, "en")
+        self.assertIsNone(self.agent._model_language)
+        self.assertEqual(len(self.agent.rules), 1)
+        # The model accepts rules again: the caller's next utterance delivers the one it missed.
+        self.agent.update_chat_ctx = lambda chat_ctx, **kw: accept(self.agent, chat_ctx, **kw)
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        self.assert_model_speaks_english_from_now_on(1)
 
 
 class ReplyGapTests(FlowCase):

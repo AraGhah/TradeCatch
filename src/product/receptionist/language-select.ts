@@ -13,8 +13,11 @@
  * - Later in the call a caller can still ask out loud ("in English please");
  *   that is an explicit request, detected by `detectLanguageSwitch`.
  *
- * The same rules are mirrored by the LiveKit agent (agents/receptionist/language.py)
- * from the values `buildLanguageSelect` returns, so both voice paths agree.
+ * This keypad flow is the Twilio engine's. The LiveKit agent (agents/receptionist)
+ * no longer uses a menu: it greets in French and English at once and decides the
+ * language from what the caller says (agents/receptionist/language.py, wired from
+ * `languageSelect.detection` in agent-config.ts). It still receives the fields
+ * above so an agent deployed before that change keeps working.
  */
 
 import { normalizeSpeech } from "./nlu";

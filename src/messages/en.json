@@ -41,7 +41,7 @@
   "cta": {
     "primary": "Book a Free Demo",
     "secondary": "Watch the demo",
-    "tertiary": "Book a free 20-minute audit",
+    "tertiary": "Book a Free Demo",
     "watchDemo": "Watch the demo",
     "seeWorkflow": "See the full workflow",
     "viewMissedCall": "View missed-call workflow",
@@ -50,17 +50,17 @@
     "bookAudit": "Book a Free Demo",
     "bookAuditShort": "Book demo",
     "bookAuditFree": "Book a Free Demo",
-    "findMyLeaks": "Book a free 20-minute audit",
-    "talkWithAra": "Book a free 20-minute audit",
+    "findMyLeaks": "Book a Free Demo",
+    "talkWithAra": "Book a Free Demo",
     "emailDirect": "Email direct",
     "emailAra": "Email Ara",
-    "mapToBusiness": "Book a free 20-minute audit",
-    "seeWhichYouNeed": "Book a free 20-minute audit",
-    "bookForTrade": "Book a free 20-minute audit",
+    "mapToBusiness": "Book a Free Demo",
+    "seeWhichYouNeed": "Book a Free Demo",
+    "bookForTrade": "Book a Free Demo",
     "allQuestions": "All questions",
     "backToSite": "Back to the site",
     "submitAnother": "Submit another",
-    "bookAuditDescriptive": "Book a free 20-minute audit",
+    "bookAuditDescriptive": "Book a Free Demo",
     "bookFreeDemo": "Book a Free Demo",
     "hearReceptionist": "Hear the Receptionist",
     "seePricing": "See Pricing",
@@ -100,7 +100,7 @@
       "eyebrow": "The problem",
       "headline": "Three places jobs slip away.",
       "intro": "None of it ever shows up as a lost sale. It shows up as a quiet drop in booked jobs that nobody can trace back to a cause.",
-      "cta": "Book a free 20-minute audit",
+      "cta": "Book a Free Demo",
       "cards": [
         {
           "title": "The call nobody answers",
@@ -171,7 +171,7 @@
       ],
       "cta": "See full pricing",
       "receptionistCta": "How the receptionist works",
-      "note": "Need a website too? Add it for $349.99, only if you choose it.",
+      "note": "Need a website too? Add it for $699.99, only if you choose it.",
       "billingNote": "You pay the setup fee at checkout. Your first monthly charge comes one month later."
     },
     "founder": {
@@ -190,7 +190,7 @@
       ],
       "emailLabel": "Email",
       "statement": "I sit down with your team, map how calls and quotes actually move through your business, write every message with you, and test every scenario before a single customer sees it. Then I keep watching it after launch.",
-      "talkCta": "Book a free 20-minute audit",
+      "talkCta": "Book a Free Demo",
       "emailCta": "Email direct",
       "workLabel": "How the work actually happens",
       "work": [
@@ -243,7 +243,7 @@
         },
         {
           "q": "Can you build my website too?",
-          "a": "Yes, as an optional extra for $349.99 CAD, paid once. It is never added unless you choose it."
+          "a": "Yes, as an optional extra for $699.99 CAD, paid once. It is never added unless you choose it."
         },
         {
           "q": "How long does setup take?",
@@ -252,14 +252,6 @@
       ]
     },
     "mobile": {
-      "demo": {
-        "eyebrow": "See it",
-        "headline": "Don’t just read about it. Hear it.",
-        "intro": "Hear how TradeCatch handles a real customer conversation.",
-        "watchVideo": "Watch the demo",
-        "tryLive": "Talk to the receptionist",
-        "note": "Sound plays only when you press play."
-      },
       "benefits": {
         "eyebrow": "The problem",
         "headline": "Every missed call could be a missed job.",
@@ -437,14 +429,14 @@
       }
     ],
     "laterTitle": "Optional extra: a website",
-    "laterIntro": "Need a website that brings in work? We build a new professional site or improve the one you have for $349.99 CAD, paid once. It is never added unless you choose it.",
+    "laterIntro": "Need a website that brings in work? We build a new professional site or improve the one you have for $699.99 CAD, paid once. It is never added unless you choose it.",
     "later": [
       "A new professional website, or improvements to your current one",
       "Mobile-friendly, with an easy way for customers to reach you",
       "Scope confirmed with you before you pay",
       "Separate from your subscription"
     ],
-    "cta": "Book a free 20-minute demo",
+    "cta": "Book a Free Demo",
     "heroHighlights": [
       "Call answering, day and night",
       "Customer requests captured",
@@ -502,7 +494,7 @@
         ]
       }
     ],
-    "cta": "Book a free 20-minute audit",
+    "cta": "Book a Free Demo",
     "heroSteps": [
       "A call comes in",
       "The receptionist answers",
@@ -591,7 +583,7 @@
         ]
       }
     ],
-    "cta": "Book a free 20-minute audit",
+    "cta": "Book a Free Demo",
     "selectLabel": "Select your trade"
   },
   "pricing": {
@@ -599,7 +591,7 @@
     "headline": "Two plans. One simple choice.",
     "intro": "Essential answers your calls and captures your customers. Professional also books your appointments. All prices are in Canadian dollars.",
     "reassurance": "Month to month after setup. Cancel with notice.",
-    "metaDescription": "TradeCatch pricing in CAD: Essential at $249 a month and Professional at $349 a month, each with a one-time $1,999.99 setup fee. Optional website service for $349.99.",
+    "metaDescription": "TradeCatch pricing in CAD: Essential at $249 a month and Professional at $349 a month, each with a one-time $1,999.99 setup fee. Optional website service for $699.99.",
     "principles": [
       "Essential: we answer your calls and capture your customers",
       "Professional: we answer your calls and book your appointments",
@@ -746,7 +738,7 @@
         "body": "Customer records and conversation logs belong to your business. We do not sell them or reuse them for other clients."
       }
     ],
-    "cta": "Book a free 20-minute audit",
+    "cta": "Book a Free Demo",
     "setupLabel": "Setup",
     "monthlyLabel": "month",
     "thenLabel": "then",
@@ -763,7 +755,7 @@
     },
     "onceLabel": "paid once",
     "monthlyEyebrow": "Each month",
-    "websiteMention": "Need a website? Add our website service for $349.99.",
+    "websiteMention": "Need a website? Add our website service for $699.99.",
     "billingBanner": "At checkout you pay the one-time setup fee. Your first monthly charge comes one month later.",
     "schedulingNote": "Appointment scheduling is switched on for your business once it has been tested with your Google Calendar during setup."
   },
@@ -789,7 +781,7 @@
       "Important decisions stay human, always.",
       "The goal is practical revenue recovery, not experimental technology."
     ],
-    "cta": "Book a free 20-minute audit",
+    "cta": "Book a Free Demo",
     "emailCta": "Email Ara",
     "founderTitle": "Founder",
     "founderBody": "TradeCatch is built and operated directly by its founder, a software developer with an automation background who works alongside each contractor to design, install and manage the system. No call centre, no outsourced support: you work with the person who built it.",
@@ -829,7 +821,7 @@
     "snapshotNote": "Setup, testing and monitoring are handled directly. Nothing is outsourced to a call centre."
   },
   "bookAudit": {
-    "headline": "Book a free 20-minute revenue leak audit",
+    "headline": "Book a Free Demo",
     "intro": "A short form: name, company, trade, and how to reach you. About one minute. No commitment.",
     "fields": {
       "firstName": "First name",
@@ -928,7 +920,7 @@
     "consentRequired": "Please agree to be contacted so we can follow up on your request.",
     "submit": "Request My Demo",
     "confirmation": {
-      "headline": "Got it. Your audit request is in.",
+      "headline": "Got it. Your demo request is in.",
       "body": "Your request is safely saved. Ara will follow up to confirm a time. Email confirmation may arrive later. Have your recent call volume, your open quote list and any software you currently run handy for the call.",
       "backToSite": "Back to the site",
       "submitAnother": "Submit another",
@@ -963,8 +955,6 @@
       "agreed": "Agreed",
       "notYet": "Not yet",
       "verifyingHuman": "Verifying you're human…",
-      "genericError": "We couldn’t submit your audit request. Check your answers and try again. If it keeps failing, email contact@tradecatch.ca.",
-      "networkError": "We couldn't reach the server. Check your connection and try again.",
       "errorSummary": "Please fix the following before continuing:",
       "fixField": "Go to {field}",
       "turnstileRequired": "Complete the security check before submitting.",
@@ -975,7 +965,7 @@
           "id": "contact",
           "label": "Contact details",
           "title": "Where can we reach you?",
-          "help": "Your work email and the best phone number for your audit. No payment details needed."
+          "help": "Your work email and the best phone number for your demo. No payment details needed."
         },
         "name": {
           "id": "name",
@@ -1039,7 +1029,7 @@
           "id": "missed",
           "label": "Missed / week",
           "title": "How many of those go unanswered in a week?",
-          "help": "A rough guess is fine. The audit is where we get the real number.",
+          "help": "A rough guess is fine. We look at the real number together on the demo call.",
           "optionsKey": "missed"
         },
         "afterHours": {
@@ -1117,6 +1107,13 @@
         "required": "This field is required.",
         "email": "Enter a valid email address.",
         "phone": "Enter a valid phone number."
+      },
+      "submitFailure": {
+        "generic": "We couldn't send your demo request. Your answers are still here. Try again, and if it keeps failing email contact@tradecatch.ca.",
+        "invalid": "We couldn't accept this request. The security check or one of your answers was refused. Complete the security check again, check your answers and try again.",
+        "unavailable": "We can't save demo requests right now, so your request was not saved. Your answers are kept. Try again in a few minutes, or email contact@tradecatch.ca.",
+        "rateLimited": "Too many attempts from this connection. Wait a few minutes, then try again. Your answers are kept.",
+        "network": "We couldn't confirm that your request went through. Check your connection and try again. Sending it again will not create a duplicate."
       }
     }
   },
@@ -1151,7 +1148,7 @@
       },
       {
         "q": "Can you build my website too?",
-        "a": "Yes, as an optional extra for $349.99 CAD, paid once. It is never added to your order unless you choose it."
+        "a": "Yes, as an optional extra for $699.99 CAD, paid once. It is never added to your order unless you choose it."
       },
       {
         "q": "Does it connect to other software?",
@@ -1189,7 +1186,7 @@
     "stillHave": {
       "headline": "Still have a question?",
       "body": "Ask it on the demo call. Twenty minutes, no commitment, and you will get a straight answer either way.",
-      "cta": "Book a free 20-minute demo"
+      "cta": "Book a Free Demo"
     },
     "reassurance": {
       "title": "What stays under your control",
@@ -1223,15 +1220,15 @@
         },
         {
           "heading": "Information we collect",
-          "body": "We collect information you provide directly when you request a demo or audit: name, company, trade, email, phone number, city, and qualification answers. Once you are a customer, we also process, within the agreed scope, names, phone numbers, addresses, service-request details and photos; call and text content and metadata; the contact details of the people who receive your alerts; appointments and calendar availability when scheduling is switched on; and activity in your account. We also collect technical data and, with your consent, analytics data as explained in our Cookie Policy."
+          "body": "We collect information you provide directly when you request a demo: name, company, trade, email, phone number, city, and qualification answers. Once you are a customer, we also process, within the agreed scope, names, phone numbers, addresses, service-request details and photos; call and text content and metadata; the contact details of the people who receive your alerts; appointments and calendar availability when scheduling is switched on; and activity in your account. We also collect technical data and, with your consent, analytics data as explained in our Cookie Policy."
         },
         {
           "heading": "Purposes and legal basis for collection",
-          "body": "We use this information to respond to demo and audit requests, schedule calls and prepare proposals and, once you are a customer, to answer calls, collect and route requests, run text follow-ups, manage appointments and show everything in your account. The applicable basis depends on context, including consent, pre-contractual steps, the service agreement, and legal obligations. We do not sell personal information."
+          "body": "We use this information to respond to demo requests, schedule calls and prepare proposals and, once you are a customer, to answer calls, collect and route requests, run text follow-ups, manage appointments and show everything in your account. The applicable basis depends on context, including consent, pre-contractual steps, the service agreement, and legal obligations. We do not sell personal information."
         },
         {
           "heading": "SMS and email communication consent",
-          "body": "Contacting you about your specific audit request (by phone, email, or text) is a necessary service communication, not optional marketing. It is covered by the required consent checkbox on our forms. Marketing emails (tips, offers, updates) are separate, optional, opt-in, and never pre-checked, consistent with Canada's Anti-Spam Legislation (CASL). Message and data rates may apply to SMS. We record the exact wording, source form, and timestamp of each consent given, and honour opt-out or unsubscribe requests without delay."
+          "body": "Contacting you about your specific demo request (by phone, email, or text) is a necessary service communication, not optional marketing. It is covered by the required consent checkbox on our forms. Marketing emails (tips, offers, updates) are separate, optional, opt-in, and never pre-checked, consistent with Canada's Anti-Spam Legislation (CASL). Message and data rates may apply to SMS. We record the exact wording, source form, and timestamp of each consent given, and honour opt-out or unsubscribe requests without delay."
         },
         {
           "heading": "Data sharing and service providers",
@@ -1243,7 +1240,7 @@
         },
         {
           "heading": "Data retention schedule",
-          "body": "We target retention of up to 24 months after the last interaction for demo and audit requests and call and text records, unless the law, an earlier deletion request, or a client agreement requires otherwise. Automated purging for those categories depends on durable storage and the scheduled task; until deployment is verified, it is performed manually. Other customer data, such as website leads, quotes, appointments and related logs, follows the retention term in the client agreement and is deleted manually until full lifecycle automation is in place. Analytics data follows Google Analytics’ retention settings."
+          "body": "We target retention of up to 24 months after the last interaction for demo requests and call and text records, unless the law, an earlier deletion request, or a client agreement requires otherwise. Automated purging for those categories depends on durable storage and the scheduled task; until deployment is verified, it is performed manually. Other customer data, such as website leads, quotes, appointments and related logs, follows the retention term in the client agreement and is deleted manually until full lifecycle automation is in place. Analytics data follows Google Analytics’ retention settings."
         },
         {
           "heading": "Your privacy rights",
@@ -1355,7 +1352,7 @@
         },
         {
           "heading": "Accessibility features implemented",
-          "body": "Semantic landmarks and heading structure on every page; a skip-to-main-content link; full keyboard operability for the navigation, mobile menu, forms, and the audit-booking wizard, including a focus trap and Escape-to-close in the mobile menu and returning focus to the trigger on close; visible focus indicators on all interactive elements; support for the prefers-reduced-motion setting; form fields with programmatic labels, required-state and error messaging that is announced to assistive technology and linked to the relevant field; and alt text on informative images with decorative graphics hidden from assistive technology."
+          "body": "Semantic landmarks and heading structure on every page; a skip-to-main-content link; full keyboard operability for the navigation, mobile menu, forms, and the demo-booking wizard, including a focus trap and Escape-to-close in the mobile menu and returning focus to the trigger on close; visible focus indicators on all interactive elements; support for the prefers-reduced-motion setting; form fields with programmatic labels, required-state and error messaging that is announced to assistive technology and linked to the relevant field; and alt text on informative images with decorative graphics hidden from assistive technology."
         },
         {
           "heading": "Known limitations",
@@ -1454,7 +1451,7 @@
       "We watch the launch and look after it every month"
     ],
     "pricingTitle": "Prices",
-    "pricing": "Essential: $1,999.99 setup, then $249 / month. Answers your calls and captures your customers. Professional: $1,999.99 setup, then $349 / month. Everything in Essential plus appointment scheduling. Optional website service: $349.99, paid once, only if you choose it. All prices are in Canadian dollars. Call and text usage is subject to each plan’s monthly allowance.",
+    "pricing": "Essential: $1,999.99 setup, then $249 / month. Answers your calls and captures your customers. Professional: $1,999.99 setup, then $349 / month. Everything in Essential plus appointment scheduling. Optional website service: $699.99, paid once, only if you choose it. All prices are in Canadian dollars. Call and text usage is subject to each plan’s monthly allowance.",
     "ctaTitle": "Next step",
     "cta": "Book a free 20-minute demo. No system access required.",
     "contact": "contact@tradecatch.ca · tradecatch.ca",
@@ -1464,7 +1461,7 @@
   },
   "demoVideo": {
     "auditCta": "Find the jobs you could recover",
-    "auditHint": "Free 20-minute audit. A short request, no payment details and no commitment.",
+    "auditHint": "Free demo. A short request, no payment details and no commitment.",
     "title": "Product demos",
     "description": "Animated walkthroughs of the TradeCatch Receptionist, missed-call recovery and quote follow-up, using a fictional business. All conversations and figures are illustrative.",
     "close": "Close",
@@ -1483,7 +1480,7 @@
     },
     "underTheSink": {
       "playerTitle": "Under the sink: the Receptionist answers",
-      "transcript": "You’re under a sink. Your phone’s ringing. And you can’t answer. That caller isn’t leaving a voicemail. They’re calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi, my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What’s your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I’ve sent your request to the team. They’ll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book your free audit at tradecatch.ca.",
+      "transcript": "You’re under a sink. Your phone’s ringing. And you can’t answer. That caller isn’t leaving a voicemail. They’re calling the next plumber. Caller: [sighs] Come on… Same job. This time, TradeCatch picks up. Receptionist: Thanks for calling NorthStar Plumbing. How can I help? Caller: Hi, my kitchen sink is leaking. Do you cover Laval? Receptionist: We do. What’s your address, and when works best? Caller: 45 Laurier, in Laval. Tomorrow morning, around ten? Receptionist: Perfect. I’ve sent your request to the team. They’ll text you to confirm. You stay on the job. TradeCatch answers, and hands you the details. TradeCatch. Every call counts. Book a free demo at tradecatch.ca.",
       "disclosure": "A dramatization with a fictional business, not a customer story. The receptionist answers and takes the request. Your team confirms the appointment."
     }
   },
@@ -1499,7 +1496,12 @@
         "title": "Under the sink",
         "blurb": "Your hands are full. The receptionist answers, takes the caller’s details and sends your team the request."
       }
-    }
+    },
+    "benefits": [
+      "Answers in French or English, under your business name.",
+      "Captures the name, address, service needed and how urgent it is.",
+      "Sends you the request so you can call back when you are free."
+    ]
   },
   "errors": {
     "eyebrow": "Something went wrong",
@@ -1511,7 +1513,7 @@
   "login": {
     "eyebrow": "Account Center",
     "headline": "Sign in to your TradeCatch account",
-    "intro": "Enter your work email and we will send you a one-time sign-in link. Accounts are created by TradeCatch when you become a customer, so there is no public sign-up.",
+    "intro": "Sign in with your email and password. Accounts are created by TradeCatch when you become a customer, so there is no public sign-up.",
     "email": "Work email",
     "submit": "Email me a sign-in link",
     "sending": "Sending…",
@@ -1519,7 +1521,21 @@
     "devLink": "Local/dev sign-in link:",
     "devLinkCta": "Open workspace",
     "errorGeneric": "Something went wrong. Try again.",
-    "preferAudit": "Not a customer yet? Book a free demo instead."
+    "preferAudit": "Not a customer yet? Book a free demo instead.",
+    "password": "Password",
+    "passwordSubmit": "Sign in",
+    "passwordSending": "Signing in…",
+    "forgot": "Forgot your password?",
+    "useLink": "Email me a sign-in link instead",
+    "usePassword": "Use my password instead",
+    "linkIntro": "We will email you a one-time link that works once.",
+    "errorInvalid": "That email and password do not match. If you have not chosen a password yet, use Forgot your password.",
+    "errorRateLimited": "Too many attempts. Wait 15 minutes, or ask for a sign-in link instead.",
+    "errorUnavailable": "Your account is not available right now. Email contact@tradecatch.ca.",
+    "linkInvalid": "That sign-in link is invalid or has already been used. Request a new one.",
+    "linkRateLimited": "Too many attempts. Try again in a few minutes.",
+    "passwordSaved": "Your password is saved. Sign in below.",
+    "errorOutage": "Sign-in is temporarily unavailable. This is not a problem with your email or password. Try again in a few minutes, or email contact@tradecatch.ca."
   },
   "app": {
     "demoAccountBadge": "Demo account",
@@ -3030,7 +3046,7 @@
     "websiteServices": {
       "headline": "Website Services",
       "intro": "Ask TradeCatch to build a new website for your business or improve your current one. It is a separate one-time project, not part of your subscription.",
-      "priceNote": "$349.99 CAD, paid once. We confirm the scope with you in writing before you pay anything, and it is never added to your plan unless you choose it.",
+      "priceNote": "$699.99 CAD, paid once. We confirm the scope with you in writing before you pay anything, and it is never added to your plan unless you choose it.",
       "restricted": "Only an owner or administrator can request this service. You can still follow the requests below.",
       "unavailable": "Website requests are unavailable right now. Please try again shortly.",
       "requestsTitle": "Your requests",
@@ -3362,6 +3378,27 @@
       "title": "Appointments come with Professional",
       "body": "Your plan is Essential. It answers your calls and captures your customers. Professional adds appointment scheduling in your Google Calendar, confirmations and reminders by text, and a calendar in this account.",
       "cta": "Compare the plans"
+    },
+    "passwordSettings": {
+      "headline": "Password",
+      "intro": "Use a strong password only you know. Changing it signs out your other devices.",
+      "current": "Current password",
+      "new": "New password",
+      "confirm": "Confirm new password",
+      "rules": "At least 10 characters. Avoid common passwords and your email address.",
+      "submit": "Change password",
+      "saving": "Saving…",
+      "saved": "Password changed. Your other devices were signed out.",
+      "wrong": "Your current password is not correct.",
+      "same": "Choose a password different from the current one.",
+      "rateLimited": "Too many attempts. Try again in a few minutes.",
+      "mismatch": "The two passwords do not match.",
+      "generic": "Something went wrong. Try again.",
+      "noneTitle": "You have not chosen a password yet",
+      "noneBody": "You sign in with links sent by email. To choose a password, we will email a link to your address.",
+      "sendLink": "Email me a link to choose a password",
+      "linkSending": "Sending…",
+      "linkSent": "A link is on its way to your email."
     }
   },
   "aiReceptionist": {
@@ -3468,7 +3505,7 @@
       "afterCall": {
         "title": "That was the demo. Now picture it on your own number.",
         "body": "Every call like this reaches your account as a summary you can act on. In a free 20-minute demo we walk through the call for your trade: what it says and what it collects.",
-        "cta": "Book a free 20-minute demo"
+        "cta": "Book a Free Demo"
       }
     },
     "eyebrow": "Receptionist",
@@ -3484,7 +3521,7 @@
     "planLabel": "Two plans",
     "planSetup": "{setup} setup, paid once",
     "planNote": "Prices are in Canadian dollars. Call and text usage is subject to each plan’s monthly allowance.",
-    "ctaPrimary": "Book a free 20-minute demo",
+    "ctaPrimary": "Book a Free Demo",
     "ctaDemo": "Watch the demo",
     "ctaSecondary": "See full pricing",
     "flow": {
@@ -3807,7 +3844,7 @@
     "finalCta": {
       "title": "See it answer a call before you decide.",
       "body": "A free 20-minute demo walks through a real call for your trade: what it says, what it collects and what lands in your account.",
-      "primary": "Book a free 20-minute demo",
+      "primary": "Book a Free Demo",
       "secondary": "See full pricing",
       "note": "20 minutes. No system access required. Setup and onboarding happen before the line goes live."
     },
@@ -3832,7 +3869,7 @@
   "admin": {
     "sales": {
       "title": "TradeCatch sales leads",
-      "intro": "Audit requests for TradeCatch. These are separate from contractor customer leads.",
+      "intro": "Demo requests for TradeCatch. These are separate from contractor customer leads.",
       "company": "Business",
       "contact": "Contact",
       "request": "Request",
@@ -4094,7 +4131,7 @@
         "eyebrow": "Optional add-on",
         "title": "Done-for-You Website Service",
         "intro": "Need a better website? We can create or improve your website to help turn more visitors into customers.",
-        "price": "$349.99 CAD",
+        "price": "$699.99 CAD",
         "priceNote": "One-time price. It is not part of your subscription, and you are only charged if you choose it.",
         "availableOn": "Available with Essential or Professional.",
         "neverIncluded": "Never added to your order automatically, and never billed monthly.",
@@ -4136,7 +4173,7 @@
       "shareSubject": "A tip for your business: TradeCatch",
       "shareMessage": "{business} uses TradeCatch to catch missed calls and keep jobs from slipping away. Take a look: {link}",
       "rewardsTitle": "What you earn",
-      "rewardsIntro": "The reward is the same for Essential and Professional. The website bonus is added when the business you referred also orders the website service and the work has started.",
+      "rewardsIntro": "The reward matches the plan the business you referred chooses. The website bonus is added when that business also orders the website service and the work has started.",
       "whenTheyChoose": "When they choose {plan}",
       "giftCardAmount": "{amount} via Interac",
       "noReward": "No reward",
@@ -4178,7 +4215,7 @@
       "rulesTitle": "Program rules",
       "rules": {
         "payment": "You earn a reward only after the business you referred makes a successful setup payment.",
-        "plan": "The plan reward is the same for Essential and Professional. The website bonus is added only after the referred business agrees to the website service and the work has started.",
+        "plan": "The reward depends on the plan the referred business chooses. The website bonus is added only after the referred business agrees to the website service and the work has started.",
         "once": "Each business can earn one plan reward and at most one website bonus, however many times it is referred.",
         "review": "Rewards are confirmed about {days} days after the payment, once we have checked that the customer is still active and the payment was not refunded or disputed.",
         "excluded": "There is no reward for referring yourself, duplicate registrations, or purchases that are refunded, disputed or cancelled.",
@@ -4186,18 +4223,33 @@
       },
       "websiteBonusLabel": "Website service bonus",
       "websiteBonusHelp": "Extra, when they also order the website service",
-      "maxNote": "The most one referral can earn is {amount}."
+      "maxNote": "The most one referral can earn is {amount}.",
+      "getLink": "Get your link",
+      "getLinkHelp": "Your personal link is created once and never changes. Anyone who books a demo through it is credited to you.",
+      "creating": "Creating your link…",
+      "linkReady": "Your link is ready. Copy it and share it.",
+      "retry": "Try again",
+      "signIn": "Sign in",
+      "copiedStatus": "Link copied to your clipboard.",
+      "linkErrors": {
+        "unauthorized": "Your session ended. Sign in again to get your link.",
+        "forbidden": "Only an account owner or administrator can create the referral link.",
+        "rateLimited": "Too many tries. Wait a minute, then try again.",
+        "unavailable": "We could not create your link, and nothing was saved. Try again in a moment.",
+        "notEligible": "Your referral link is not available for this account right now.",
+        "invalid": "We did not get a valid link back, so none is shown. Try again."
+      }
     },
     "public": {
       "metaTitle": "Referral program",
-      "metaDescription": "Refer a contractor to TradeCatch and earn {planReward} CAD when they sign up, plus {bonus} more if they add the website service.",
+      "metaDescription": "Refer a business to TradeCatch and earn {essentialReward} CAD when it chooses Essential or {professionalReward} CAD when it chooses Professional, plus {bonus} more if it adds the website service.",
       "eyebrow": "Referral program",
-      "headline": "Refer a contractor. Earn up to {max}.",
-      "intro": "Share your link. When the contractor you refer pays their setup fee, you earn {planReward} CAD by Interac e-Transfer. If they also order our website service, you earn {bonus} more.",
-      "referredBanner": "A TradeCatch customer sent you here. Book your free audit, and if you become a customer they are credited automatically.",
+      "headline": "Refer a business. Earn {essentialReward} with Essential or {professionalReward} with Professional.",
+      "intro": "Share your link. When the business you refer pays its setup fee, you earn an Interac e-Transfer: {essentialReward} CAD if it chooses Essential, {professionalReward} CAD if it chooses Professional. If it also orders our website service, you earn {bonus} more.",
+      "referredBanner": "A TradeCatch customer sent you here. Book your free demo, and if you become a customer they are credited automatically.",
       "paused": "The referral program is paused right now. Check back soon.",
       "rewardsTitle": "What you earn",
-      "rewardsIntro": "You earn {planReward} for each business that becomes a customer on Essential or Professional. You earn {bonus} more when it also buys the website service.",
+      "rewardsIntro": "The reward matches the plan the business you refer chooses: {essentialReward} for Essential, {professionalReward} for Professional. You earn {bonus} more when it also buys the website service.",
       "youEarn": "You earn",
       "giftCard": "via Interac e-Transfer",
       "noReward": "No reward",
@@ -4209,7 +4261,7 @@
           "body": "Customers find their personal link in the TradeCatch dashboard, under Referrals."
         },
         "book": {
-          "title": "They book a free audit",
+          "title": "They book a free demo",
           "body": "They talk to us, choose Essential or Professional and pay the one-time setup fee."
         },
         "earn": {
@@ -4217,12 +4269,12 @@
           "body": "Once their payment is confirmed and the review period has passed, we send you the Interac e-Transfer."
         }
       },
-      "cta": "Book a free audit",
-      "existingCustomer": "Already a customer? Get your link",
+      "cta": "Book a free demo",
+      "existingCustomer": "Already a customer? Sign in to get your personal referral link.",
       "rulesTitle": "Program rules",
       "rules": {
         "payment": "A reward is earned only after the referred business makes a successful setup payment.",
-        "plan": "The plan reward is the same for Essential and Professional. The website bonus is added only if the referred business also agrees to the website service and the work has started.",
+        "plan": "The reward depends on the plan the referred business chooses: {essentialReward} for Essential, {professionalReward} for Professional. The website bonus is added only if the referred business also agrees to the website service and the work has started.",
         "once": "One plan reward and at most one website bonus per referred business, however many times it is referred. Referring yourself, or registering the same business twice, does not qualify.",
         "review": "We confirm rewards about {days} days after the payment, once we have checked that the customer is still active and the payment was not refunded or disputed. Refunded, disputed, cancelled or invalid purchases do not earn a reward.",
         "excluded": "Rewards are for new customers only.",
@@ -4232,7 +4284,8 @@
       "bonusTitle": "Website service bonus",
       "bonusLabel": "Added when they also order our website service",
       "bonusPlus": "Extra",
-      "maxNote": "The most one referral can earn is {max} CAD."
+      "maxNote": "The most one referral can earn is {max} CAD.",
+      "getLink": "Get your link"
     },
     "form": {
       "title": "Refer a contractor",
@@ -4277,16 +4330,16 @@
   "websiteRequest": {
     "meta": {
       "title": "Get My Website Built | TradeCatch",
-      "description": "Ask for a new professional website, or improvements to your current one. $349.99 CAD, paid once, with the scope confirmed before you pay."
+      "description": "Ask for a new professional website, or improvements to your current one. $699.99 CAD, paid once, with the scope confirmed before you pay."
     },
     "page": {
       "eyebrow": "Done-for-You Website Service",
       "headline": "Tell us what your website needs",
-      "intro": "A short form, then a written scope before you pay anything. $349.99 CAD, paid once.",
+      "intro": "A short form, then a written scope before you pay anything. $699.99 CAD, paid once.",
       "stepsTitle": "What happens next",
       "steps": [
         "We review your request and, if you have one, your current website.",
-        "We write back with exactly what we will do for $349.99.",
+        "We write back with exactly what we will do for $699.99.",
         "You approve it. Only then do we start and invoice you."
       ],
       "separate": "This is a separate project. It is not added to your TradeCatch subscription and does not change what you pay each month."
@@ -4317,7 +4370,7 @@
       },
       "notes": "Anything else we should know?",
       "optional": "(optional)",
-      "priceNote": "$349.99 CAD, paid once. Separate from your subscription. We confirm the scope with you before you pay.",
+      "priceNote": "$699.99 CAD, paid once. Separate from your subscription. We confirm the scope with you before you pay.",
       "submit": "Get My Website Built",
       "submitting": "Sending…",
       "errors": {
@@ -4336,5 +4389,42 @@
         "another": "Send another request"
       }
     }
+  },
+  "forgotPassword": {
+    "eyebrow": "Account Center",
+    "headline": "Reset your password",
+    "intro": "Enter the email on your TradeCatch account. If it matches an account, we will email you a link to choose a new password. The link works once and expires in 30 minutes.",
+    "email": "Work email",
+    "submit": "Email me a reset link",
+    "sending": "Sending…",
+    "sent": "If that email has an account, a reset link is on its way. Check your inbox.",
+    "devLink": "Local/dev reset link:",
+    "devLinkCta": "Choose a new password",
+    "errorGeneric": "Something went wrong. Try again.",
+    "rateLimited": "Too many requests. Try again in a few minutes.",
+    "back": "Back to sign in"
+  },
+  "setPassword": {
+    "eyebrow": "Account Center",
+    "headlineActivation": "Welcome to TradeCatch: choose your password",
+    "headlineReset": "Choose a new password",
+    "introActivation": "Choose a password to activate your account. You will be signed in right after.",
+    "introReset": "Choose a new password. Other devices signed in to your account will be signed out.",
+    "password": "New password",
+    "confirm": "Confirm password",
+    "rules": "At least 10 characters. Avoid common passwords and your email address.",
+    "submit": "Save password and sign in",
+    "saving": "Saving…",
+    "mismatch": "The two passwords do not match.",
+    "invalidLink": "This link is invalid, expired, or already used.",
+    "requestNew": "Request a new link",
+    "errorGeneric": "Something went wrong. Try again.",
+    "rateLimited": "Too many attempts. Try again in a few minutes."
+  },
+  "passwordProblems": {
+    "too_short": "Use at least 10 characters.",
+    "too_long": "Use 128 characters or fewer.",
+    "common": "That password is too easy to guess. Choose another.",
+    "contains_email": "Do not use your email address in your password."
   }
 }

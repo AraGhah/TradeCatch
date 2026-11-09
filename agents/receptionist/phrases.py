@@ -1,8 +1,9 @@
 """What the agent is told to say at fixed moments (pure, no LiveKit imports).
 
 The words come from TradeCatch (`languageSelect` and `silence` in the agent
-config), which builds them from the same prompts as the Twilio engine. The
-fallbacks below only apply when an older server does not send those blocks.
+config). The fallbacks below only apply when an older server does not send those
+blocks. The opening is bilingual and has no keypad menu: the caller's own speech
+picks the language (see language.py).
 
 A realtime model speaks in its own voice, so these are *instructions to say
 exact text*, with the language each line must be spoken in.
@@ -14,11 +15,6 @@ from typing import Any, Mapping
 
 LANGUAGE_NAMES = {"fr": "Canadian French (Québec)", "en": "North American English"}
 
-_FALLBACK_OPENING = "Bonjour! Merci d'avoir appelé."
-_FALLBACK_MENU = (
-    {"lang": "fr", "text": "Pour continuer en français, restez en ligne."},
-    {"lang": "en", "text": "For English, press 1."},
-)
 _FALLBACK_QUESTION = {
     "fr": "Comment puis-je vous aider aujourd'hui?",
     "en": "How can I help you today?",
@@ -28,6 +24,13 @@ _FALLBACK_GOODBYE = {
     "fr": "Je n'entends plus rien, alors je vais vous laisser. N'hésitez pas à rappeler. Au revoir!",
     "en": "I'm not hearing anything, so I'll let you go. Feel free to call back. Goodbye!",
 }
+# Spoken when the caller's language is still unclear after two utterances.
+_FALLBACK_ASK = (
+    {"lang": "fr", "text": "Français ou anglais?"},
+    {"lang": "en", "text": "French or English?"},
+)
+# The one question both the system and the model may ask. Matches what either said.
+ASK_MARKERS = ("french or english", "français ou anglais", "francais ou anglais")
 
 
 def _select(cfg: Mapping[str, Any] | None) -> Mapping[str, Any]:
@@ -42,14 +45,8 @@ def enabled_languages(cfg: Mapping[str, Any] | None) -> list[str]:
     return list(_select(cfg).get("languages") or ["fr", "en"])
 
 
-def menu_timeout_seconds(cfg: Mapping[str, Any] | None) -> float:
-    value = _select(cfg).get("timeoutSeconds")
-    return float(value) if isinstance(value, (int, float)) and value > 0 else 3.0
-
-
-def menu_keys(cfg: Mapping[str, Any] | None) -> Mapping[str, str] | None:
-    keys = _select(cfg).get("keys")
-    return keys if isinstance(keys, dict) and keys else None
+def _detection(cfg: Mapping[str, Any] | None) -> Mapping[str, Any]:
+    return _select(cfg).get("detection") or {}
 
 
 def _say_exactly(lines: list[tuple[str, str]]) -> str:
@@ -69,54 +66,101 @@ def say_instruction(language: str, text: str) -> str:
     return _say_exactly([(language, text)])
 
 
+def _lines(raw: Any) -> list[tuple[str, str]]:
+    """[{"lang": ..., "text": ...}] from the server, ignoring anything malformed."""
+    if not isinstance(raw, list):
+        return []
+    return [
+        (str(item.get("lang") or "fr"), item["text"])
+        for item in raw
+        if isinstance(item, dict) and isinstance(item.get("text"), str) and item["text"].strip()
+    ]
+
+
+def opening_lines(cfg: Mapping[str, Any] | None) -> list[tuple[str, str]]:
+    """What the caller hears at pickup: French and English at once, no menu.
+
+    "Bonjour, ici <business>." in French, then "How can I help you?" in English.
+    A single-language line greets in that language and asks its question. An older
+    server that sends no `detection` block gets the same words from the business name.
+    """
+    lines = _lines(_detection(cfg).get("opening"))
+    if lines:
+        return lines
+    language = start_language(cfg)
+    if len(enabled_languages(cfg)) <= 1:
+        name = (cfg or {}).get("businessName") or ""
+        welcome = (
+            f"Hello, this is {name}." if language == "en" else f"Bonjour, ici {name}."
+        ).replace(" ,", ",").replace("  ", " ")
+        return [(language, welcome), (language, _FALLBACK_QUESTION[language])]
+    name = ((cfg or {}).get("businessName") or "").strip()
+    greeting = f"Bonjour, ici {name}." if name else "Bonjour!"
+    return [("fr", greeting), ("en", "How can I help you?")]
+
+
 def opening_instruction(cfg: Mapping[str, Any] | None) -> str:
-    """The greeting plus the language menu, spoken French-first."""
-    select = _select(cfg)
-    opening = select.get("opening") or {}
-    statement = opening.get("statement") or {}
-    menu = opening.get("menu")
-    if menu is None:
-        menu = list(_FALLBACK_MENU)
-    lines = [(statement.get("lang") or "fr", statement.get("text") or _FALLBACK_OPENING)]
-    lines += [(m.get("lang") or "fr", m.get("text") or "") for m in menu]
-    if not menu:
-        # A one-language line goes straight from the welcome to the question.
-        lines.append((start_language(cfg), after_choice(cfg, start_language(cfg), chosen=False)))
-    return _say_exactly(lines)
+    """The bilingual greeting, spoken once. The caller's answer decides the language."""
+    return _say_exactly(opening_lines(cfg))
 
 
-def after_choice(cfg: Mapping[str, Any] | None, language: str, chosen: bool) -> str:
-    """Acknowledgement (only after a key press), after-hours notice, then the first question."""
-    block = (_select(cfg).get("afterChoice") or {}).get(language) or {}
-    parts = []
-    if chosen and block.get("chosen"):
-        parts.append(block["chosen"])
-    if block.get("afterHoursNotice"):
-        parts.append(block["afterHoursNotice"])
-    parts.append(block.get("question") or _FALLBACK_QUESTION.get(language, _FALLBACK_QUESTION["fr"]))
-    return " ".join(parts)
+def ask_lines(cfg: Mapping[str, Any] | None) -> list[tuple[str, str]]:
+    return _lines(_detection(cfg).get("ask")) or [(i["lang"], i["text"]) for i in _FALLBACK_ASK]
 
 
-def after_choice_instruction(
-    cfg: Mapping[str, Any] | None, language: str, chosen: bool
-) -> str:
-    return _say_exactly([(language, after_choice(cfg, language, chosen))])
+def ask_instruction(cfg: Mapping[str, Any] | None) -> str:
+    """"Français ou anglais? French or English?" when the caller's language is unclear."""
+    return _say_exactly(ask_lines(cfg))
 
 
-def language_directive(language: str) -> str:
-    """Appended to the business instructions; replaced when the language changes."""
+def spoken_ask(text: str | None) -> bool:
+    """Did this agent turn already ask which language the caller prefers?"""
+    lowered = (text or "").lower()
+    return any(marker in lowered for marker in ASK_MARKERS)
+
+
+def language_directive(language: str | None, *, detecting: bool = True) -> str:
+    """Appended to the business instructions; replaced when the language changes.
+
+    `language` is None until the caller's speech has decided it: the greeting was
+    bilingual, so the model answers in whichever language the caller used.
+    """
+    if language is None:
+        return (
+            "# LANGUAGE OF THIS CALL\n"
+            "The caller's language is not known yet. Your opening was spoken in French and in "
+            "English. Reply in the language the caller speaks to you: Canadian French (Québec) "
+            "for French, North American English for English. Do not switch because of an "
+            "accent, a borrowed word or a name. If you cannot tell which of the two they "
+            'speak, say exactly "Français ou anglais? French or English?" once and wait. '
+            "Never repeat the greeting. "
+            + _tool_rule(detecting)
+            + "A later LANGUAGE UPDATE replaces this section."
+        )
     name = LANGUAGE_NAMES.get(language, language)
     return (
         "# LANGUAGE OF THIS CALL\n"
         f"The call is in {name}. This current selection overrides any starting language "
-        f"in the business prompt. Speak only {name}, except for the bilingual opening menu. "
-        "Do not switch because of an accent, a borrowed word or a name. Switch, by calling "
-        "set_language, when the caller asks for the other language or clearly talks to you "
-        "in full sentences of it; then carry on with what you were doing. If the caller "
-        "speaks a language this line does not offer, say in French and in English that you "
-        "can help in either, and ask which they prefer. "
-        "Never repeat the greeting or the language menu. "
+        f"in the business prompt. Speak only {name}. "
+        "Do not switch because of an accent, a borrowed word or a name. "
+        + _tool_rule(detecting)
+        + "If the caller speaks a language this line does not offer, say in French and in "
+        "English that you can help in either, and ask which they prefer. "
+        "Never repeat the greeting. "
         "A later LANGUAGE UPDATE replaces this section."
+    )
+
+
+def _tool_rule(detecting: bool) -> str:
+    if detecting:
+        return (
+            "TradeCatch listens to the caller and sends a LANGUAGE UPDATE when the language "
+            "changes. Call set_language yourself only when the caller asks, out loud, for "
+            "the other language. "
+        )
+    return (
+        "Switch, by calling set_language, when the caller asks for the other language or "
+        "clearly talks to you in full sentences of it; then carry on with what you were doing. "
     )
 
 
@@ -128,7 +172,18 @@ def language_update(language: str) -> str:
         f"The call is now in {name}. This replaces the LANGUAGE OF THIS CALL section, any "
         "earlier language update and any starting language in the business prompt. "
         f"From now on speak only {name}, in every reply, including the business details "
-        "you read from your instructions. Do not greet again or repeat the language menu."
+        "you read from your instructions. Do not greet again."
+    )
+
+
+def detection_unavailable_update() -> str:
+    """A standing rule added mid-call when automatic language detection stops working."""
+    return (
+        "# LANGUAGE UPDATE\n"
+        "Automatic language detection is not available on this call. Keep the language the "
+        "call is in. Switch, by calling set_language, when the caller asks for the other "
+        "language or clearly talks to you in full sentences of it. If you cannot tell which "
+        'language they speak, say exactly "Français ou anglais? French or English?" once.'
     )
 
 
@@ -138,6 +193,19 @@ def silence_texts(cfg: Mapping[str, Any] | None, language: str) -> tuple[str, st
     check_in = (silence.get("checkIn") or {}).get(language) or _FALLBACK_CHECK_IN.get(language, _FALLBACK_CHECK_IN["fr"])
     goodbye = (silence.get("goodbye") or {}).get(language) or _FALLBACK_GOODBYE.get(language, _FALLBACK_GOODBYE["fr"])
     return check_in, goodbye
+
+
+def quiet_instruction(cfg: Mapping[str, Any] | None, language: str | None, kind: str) -> str:
+    """The check-in or goodbye ("check_in" / "goodbye"), in the call's language.
+
+    Before the language is known the line is spoken in both languages, start language first.
+    """
+    index = 0 if kind == "check_in" else 1
+    if language:
+        return say_instruction(language, silence_texts(cfg, language)[index])
+    first = start_language(cfg)
+    order = [first] + [lang for lang in enabled_languages(cfg) if lang != first]
+    return _say_exactly([(lang, silence_texts(cfg, lang)[index]) for lang in order[:2]])
 
 
 def silence_settings(cfg: Mapping[str, Any] | None) -> tuple[float, int]:

@@ -1,12 +1,14 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 
 type Labels = {
   linkLabel: string;
   copy: string;
   copied: string;
   copyFailed: string;
+  /** Shown and announced after a successful copy, e.g. "Link copied to your clipboard." */
+  copiedStatus: string;
   share: string;
   email: string;
   sms: string;
@@ -19,6 +21,25 @@ type Labels = {
 const BUTTON =
   "rounded-md border border-navy/20 bg-white px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2";
 
+const subscribeNever = () => () => {};
+// Read in the browser only; the server and the first client render both say "no",
+// so there is no mismatch and no state to set from an effect.
+const supportsShare = () =>
+  typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+/** Last resort for browsers or frames that refuse the async clipboard API. */
+function copyWithSelection(input: HTMLInputElement | null): boolean {
+  if (!input) return false;
+  try {
+    input.focus();
+    input.select();
+    input.setSelectionRange(0, input.value.length);
+    return document.execCommand("copy");
+  } catch {
+    return false;
+  }
+}
+
 export function ReferralShare({
   link,
   otherLink,
@@ -30,23 +51,40 @@ export function ReferralShare({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const canShare = useSyncExternalStore(subscribeNever, supportsShare, () => false);
   const message = labels.shareMessage;
-  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+  // "Copied" is a confirmation, not a permanent state.
+  useEffect(() => {
+    if (status !== "copied") return;
+    const timer = window.setTimeout(() => setStatus("idle"), 4000);
+    return () => window.clearTimeout(timer);
+  }, [status]);
 
   async function copy() {
     try {
       await navigator.clipboard.writeText(link);
       setStatus("copied");
+      return;
     } catch {
-      // Clipboard blocked: select the text so Ctrl/Cmd+C works.
-      inputRef.current?.select();
-      setStatus("failed");
+      // Blocked or unavailable: try the selection route before giving up.
     }
+    if (copyWithSelection(inputRef.current)) {
+      setStatus("copied");
+      return;
+    }
+    // Nothing worked: leave the link selected so Ctrl/Cmd+C does.
+    inputRef.current?.select();
+    setStatus("failed");
   }
 
   async function share() {
     try {
-      await navigator.share({ title: labels.emailSubject, text: message, url: link });
+      await navigator.share({
+        title: labels.emailSubject,
+        text: message,
+        url: link,
+      });
     } catch {
       // Dismissed by the person: nothing to do.
     }
@@ -54,7 +92,10 @@ export function ReferralShare({
 
   return (
     <div className="flex flex-col gap-3">
-      <label className="flex flex-col gap-1 text-sm font-medium text-navy" htmlFor="referral-link">
+      <label
+        className="flex flex-col gap-1 text-sm font-medium text-navy"
+        htmlFor="referral-link"
+      >
         {labels.linkLabel}
         <input
           id="referral-link"
@@ -66,8 +107,13 @@ export function ReferralShare({
         />
       </label>
       <div className="flex flex-wrap gap-2">
-        <button type="button" onClick={copy} className={BUTTON}>
-          {status === "copied" ? labels.copied : labels.copy}
+        <button
+          type="button"
+          onClick={copy}
+          className={BUTTON}
+          data-testid="referral-copy"
+        >
+          {status === "copied" ? `✓ ${labels.copied}` : labels.copy}
         </button>
         {canShare ? (
           <button type="button" onClick={share} className={BUTTON}>
@@ -84,8 +130,19 @@ export function ReferralShare({
           {labels.sms}
         </a>
       </div>
-      <p className="text-sm text-navy/70" role="status" aria-live="polite">
-        {status === "failed" ? labels.copyFailed : " "}
+      <p
+        className={`min-h-[1.25rem] text-sm ${
+          status === "failed" ? "text-red-700" : "text-signal-text"
+        }`}
+        role="status"
+        aria-live="polite"
+        data-testid="referral-copy-status"
+      >
+        {status === "copied"
+          ? labels.copiedStatus
+          : status === "failed"
+            ? labels.copyFailed
+            : ""}
       </p>
       <p className="text-xs text-navy/60">
         <a className="underline" href={otherLink}>
