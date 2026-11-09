@@ -174,6 +174,15 @@ export function ReceptionistSettingsForm({
   );
   const [notifyEmail, setNotifyEmail] = useState(initial.notifyEmail ?? "");
   const [notifySms, setNotifySms] = useState(initial.notifySmsE164 ?? "");
+  const [notifySmsOn, setNotifySmsOn] = useState(
+    initial.notifySmsEnabled !== false,
+  );
+  const [notifyEmailOn, setNotifyEmailOn] = useState(
+    initial.notifyEmailEnabled !== false,
+  );
+  const [emergencyOnly, setEmergencyOnly] = useState(
+    initial.notifyEmergencyOnly === true,
+  );
   const [collectTime, setCollectTime] = useState(initial.collectPreferredTime);
 
   const [busy, setBusy] = useState(false);
@@ -277,6 +286,9 @@ export function ReceptionistSettingsForm({
       },
       notifyEmail: notifyEmail.trim(),
       notifySmsE164: notifySms.trim(),
+      notifySmsEnabled: notifySmsOn,
+      notifyEmailEnabled: notifyEmailOn,
+      notifyEmergencyOnly: emergencyOnly,
       collectPreferredTime: collectTime,
     };
     try {
@@ -1097,6 +1109,38 @@ export function ReceptionistSettingsForm({
               className={INPUT}
             />
           </label>
+        </div>
+        <div className="mt-3 flex flex-col gap-2 text-sm text-navy">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={notifySmsOn}
+              onChange={(e) => setNotifySmsOn(e.target.checked)}
+            />
+            {t("notifySmsEnabled")}
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={notifyEmailOn}
+              onChange={(e) => setNotifyEmailOn(e.target.checked)}
+            />
+            {t("notifyEmailEnabled")}
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={emergencyOnly}
+              onChange={(e) => setEmergencyOnly(e.target.checked)}
+            />
+            {t("notifyEmergencyOnly")}
+          </label>
+          {notifyEmailOn && !notifyEmail.trim() ? (
+            <p role="note" className="text-xs text-amber-800">
+              {t("notifyEmailMissing")}
+            </p>
+          ) : null}
+          <p className="text-xs text-navy/60">{t("notifyHint")}</p>
         </div>
       </fieldset>
 

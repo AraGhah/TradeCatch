@@ -28,10 +28,39 @@ export type BusinessNotifyInput = {
   subject: string;
   title: string;
   lines: { label: string; value?: string | null }[];
+  /**
+   * Optional headed groups rendered after `lines`. Rows with no value are left
+   * out: a section never shows a placeholder for something nobody collected.
+   */
+  sections?: {
+    heading: string;
+    lines: { label: string; value?: string | null }[];
+    /** Free paragraph text (e.g. a call summary), rendered under the rows. */
+    body?: string;
+  }[];
   ctaUrl?: string;
   ctaLabel?: string;
   idempotencyKey?: string;
 };
+
+function plainText(input: BusinessNotifyInput): string {
+  const row = (l: { label: string; value?: string | null }) =>
+    `${l.label}: ${l.value}`;
+  const parts = [input.title];
+  const own = input.lines.filter((l) => l.value).map(row);
+  if (own.length) parts.push(own.join("\n"));
+  for (const s of input.sections ?? []) {
+    const lines = s.lines.filter((l) => l.value).map(row);
+    if (!lines.length && !s.body) continue;
+    parts.push(
+      [s.heading.toUpperCase(), ...lines, s.body ?? ""]
+        .filter(Boolean)
+        .join("\n"),
+    );
+  }
+  if (input.ctaUrl) parts.push(`${input.ctaLabel ?? "Open"}: ${input.ctaUrl}`);
+  return parts.join("\n\n");
+}
 
 export async function sendBusinessNotifyEmail(
   input: BusinessNotifyInput,
@@ -52,6 +81,23 @@ export async function sendBusinessNotifyEmail(
     )
     .join("");
 
+  const sectionHtml = (input.sections ?? [])
+    .map((s) => {
+      const filled = s.lines.filter((l) => l.value);
+      if (!filled.length && !s.body) return "";
+      const body = filled
+        .map(
+          (l) =>
+            `<tr><td style="padding:4px 12px 4px 0;color:#5C6875;vertical-align:top;">${escapeHtml(l.label)}</td><td style="padding:4px 0;color:#1A2430;">${escapeHtml(l.value ?? "")}</td></tr>`,
+        )
+        .join("");
+      const paragraph = s.body
+        ? `<p style="margin:8px 0 0;font-size:14px;line-height:1.5;color:#1A2430;white-space:pre-line;">${escapeHtml(s.body)}</p>`
+        : "";
+      return `<h2 style="margin:24px 0 4px;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:#5C6875;">${escapeHtml(s.heading)}</h2><table style="border-collapse:collapse;width:100%;font-size:14px;">${body}</table>${paragraph}`;
+    })
+    .join("");
+
   const cta =
     input.ctaUrl && input.ctaLabel
       ? `<p style="margin:24px 0 0;"><a href="${escapeHtml(input.ctaUrl)}" style="display:inline-block;background:#0C141E;color:#fff;text-decoration:none;padding:10px 16px;border-radius:4px;font-size:14px;">${escapeHtml(input.ctaLabel)}</a></p>`
@@ -61,7 +107,8 @@ export async function sendBusinessNotifyEmail(
   <div style="max-width:560px;margin:32px auto;background:#ffffff;border:1px solid rgba(12,20,30,0.1);padding:32px;">
     <p style="margin:0;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#5C6875;">TradeCatch</p>
     <h1 style="margin:12px 0 0;font-size:22px;color:#0C141E;">${escapeHtml(input.title)}</h1>
-    <table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:16px;">${rows}</table>
+    ${rows ? `<table style="border-collapse:collapse;width:100%;font-size:14px;margin-top:16px;">${rows}</table>` : ""}
+    ${sectionHtml}
     ${cta}
   </div></body></html>`;
 
@@ -72,6 +119,7 @@ export async function sendBusinessNotifyEmail(
         to: input.toEmail,
         subject: input.subject,
         html,
+        text: plainText(input),
       },
       input.idempotencyKey
         ? { idempotencyKey: input.idempotencyKey }
