@@ -292,7 +292,9 @@ export default async function ReferralPage({
                 "storage",
               ] as const
             ).map((rule) => (
-              <li key={rule}>{t(`rules.${rule}`, { days: settings.holdDays })}</li>
+              <li key={rule}>
+                {t(`rules.${rule}`, { days: settings.holdDays, ...amounts })}
+              </li>
             ))}
           </ul>
         </Container>
