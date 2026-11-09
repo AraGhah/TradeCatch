@@ -20,6 +20,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Verify the image source allowlist
+        working-directory: agents/receptionist
+        run: python3 -m unittest test_packaging.py
       - name: Build the Linux worker and load its runtime as the service user
         working-directory: agents/receptionist
         run: |
@@ -30,6 +33,12 @@ jobs:
         working-directory: agents/receptionist
         run: |
           mkdir "$RUNNER_TEMP/agent-tests"
-          cp test_*.py "$RUNNER_TEMP/agent-tests/"
+          # Packaging tests inspect repository files and run above. Keep runtime
+          # tests separate so their imports resolve to the built image in /app.
+          for test in test_*.py; do
+            if [ "$test" != "test_packaging.py" ]; then
+              cp "$test" "$RUNNER_TEMP/agent-tests/"
+            fi
+          done
           cp transfer_testing.py "$RUNNER_TEMP/agent-tests/"
           docker run --rm --network none -e PYTHONPATH=/app -v "$RUNNER_TEMP/agent-tests:/checks:ro" receptionist:check python -m unittest discover -s /checks -p 'test_*.py'
