@@ -22,6 +22,9 @@ SET reward_essential_cents = 5000,
     updated_by = COALESCE(updated_by, 'migration 038'),
     updated_at = now()
 WHERE reward_essential_cents = 6500
-  AND reward_professional_cents = 6500;
+  AND reward_professional_cents = 6500
+  -- One-time: an administrator who later sets $65 / $65 on purpose must not be
+  -- reset by a repeated `npm run db:schema`.
+  AND NOT EXISTS (SELECT 1 FROM mc_schema_migrations WHERE id = '038_referral_rewards_by_plan');
 
 COMMIT;
