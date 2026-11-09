@@ -3,6 +3,7 @@ import { afterEach, mock, test } from "node:test";
 import { Pool, Client } from "pg";
 import {
   createPostgresPool,
+  safeDatabaseErrorCode,
   withPostgresRequestScope,
 } from "../../src/lib/postgres-pool";
 
@@ -27,6 +28,14 @@ const failure = () =>
     { code: "ECONNRESET" },
   );
 
+test("only Postgres SQLSTATEs and known network codes are safe to log", () => {
+  assert.equal(safeDatabaseErrorCode(Object.assign(Error("x"), { code: "42P01" })), "42P01");
+  assert.equal(safeDatabaseErrorCode(Object.assign(Error("x"), { code: "ETIMEDOUT" })), "ETIMEDOUT");
+  assert.equal(safeDatabaseErrorCode(Object.assign(Error("x"), { code: "postgres://u:p@h" })), undefined);
+  assert.equal(safeDatabaseErrorCode(Error("no code")), undefined);
+  assert.equal(safeDatabaseErrorCode("not an error"), undefined);
+  assert.equal(safeDatabaseErrorCode(null), undefined);
+});
 test("Node pool idle errors are handled and logged without credentials or driver messages", async () => {
   const lines: string[] = [];
   mock.method(console, "error", (line: string) => {

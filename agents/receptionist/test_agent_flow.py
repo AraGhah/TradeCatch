@@ -1,13 +1,14 @@
 """Call-flow tests for the voice agent, with a fake LiveKit session and fake TradeCatch.
 
-They exercise the real ReceptionistAgent (language menu, silence, tools, report)
+They exercise the real ReceptionistAgent (language detection, silence, tools, report)
 without a network. What they cannot show is how the realtime model *sounds* or
-whether Twilio delivers the keypress: that needs a live call.
+how well speech-to-text labels real callers' language: that needs a live call.
 """
 
 import asyncio
 import contextlib
 import copy
+import os
 import time
 import unittest
 from types import SimpleNamespace
@@ -16,8 +17,9 @@ try:
     import agent as A
     import warm_transfer as W
     from call_record import CallRecord
+    from language import Heard
     from livekit import api
-    from livekit.agents.llm import ToolError
+    from livekit.agents.llm import RealtimeError, ToolError
     from transfer import TransferFailure, TransferSettings
 except ImportError as err:  # livekit-agents is not installed here
     raise unittest.SkipTest(f"livekit-agents unavailable: {err}")
@@ -44,6 +46,16 @@ CFG = {
         "afterChoice": {
             "fr": {"chosen": "Très bien, en français.", "afterHoursNotice": "", "question": "Comment puis-je vous aider?"},
             "en": {"chosen": "Sure, English.", "afterHoursNotice": "", "question": "How can I help?"},
+        },
+        "detection": {
+            "opening": [
+                {"text": "Bonjour, ici Acme.", "lang": "fr"},
+                {"text": "How can I help you?", "lang": "en"},
+            ],
+            "ask": [
+                {"text": "Français ou anglais?", "lang": "fr"},
+                {"text": "French or English?", "lang": "en"},
+            ],
         },
     },
     "silence": {
@@ -141,6 +153,34 @@ class FakeClient:
         self.book_calls.append(body)
         return self.book_result
 
+    # find / move / cancel / text, answered per action.
+    appointment_calls: list[dict]
+    appointment_results: dict
+
+    async def appointments(self, body):
+        if not hasattr(self, "appointment_calls"):
+            self.appointment_calls = []
+        self.appointment_calls.append(body)
+        results = getattr(self, "appointment_results", None) or {
+            "find": {
+                "status": "found",
+                "appointments": [
+                    {
+                        "appointmentId": "appt_1",
+                        "label": "jeudi à 10 h",
+                        "serviceName": "Débouchage",
+                        "technicianName": "Marc",
+                        "status": "confirmed",
+                        "started": False,
+                    }
+                ],
+            },
+            "move": {"status": "moved", "label": "mardi à 9 h", "startAt": OFFERS[0]["startAt"]},
+            "cancel": {"status": "canceled"},
+            "text": {"status": "sent"},
+        }
+        return results.get(body.get("action"))
+
     async def report(self, body):
         self.reports.append(body)
         return True
@@ -231,10 +271,6 @@ class Harness(A.ReceptionistAgent):
     session = property(lambda self: self.fake_session)
 
 
-def dtmf(digit):
-    return SimpleNamespace(digit=digit, participant=None)
-
-
 def state(new_state):
     return SimpleNamespace(new_state=new_state)
 
@@ -274,6 +310,11 @@ class FlowCase(unittest.IsolatedAsyncioTestCase):
         self.session = self.agent.fake_session
         return self.agent
 
+    def assertTransfer(self, actual, expected):
+        """The transfer record has at least these fields, with these values."""
+        self.assertIsNotNone(actual)
+        self.assertEqual({k: actual.get(k) for k in expected}, expected)
+
     async def settle(self):
         """Let spawned tasks (timers, replies) run to completion."""
         for _ in range(5):
@@ -283,82 +324,152 @@ class FlowCase(unittest.IsolatedAsyncioTestCase):
             await asyncio.wait(pending, timeout=1)
 
 
-class OpeningAndLanguageTests(FlowCase):
-    async def test_every_call_opens_in_french_with_the_menu(self):
-        await self.agent.on_enter()
-        opening = self.session.replies[0]
-        self.assertLess(opening.index("Bonjour! Merci d'avoir appelé Acme."), opening.index("For English, press 1."))
-        self.assertIn("Canadian French", self.agent.instructions)
-        self.assertEqual(self.call.language, "fr")
+def heard(language, words=6, confidence=0.9):
+    return Heard(language, words, confidence)
 
-    async def test_no_key_stays_in_french_and_asks_the_question_once(self):
+
+class FakeListener:
+    """Stands in for the speech-to-text language listener task."""
+
+    def __init__(self):
+        self.cancelled = False
+
+    def cancel(self):
+        self.cancelled = True
+
+
+class OpeningAndLanguageTests(FlowCase):
+    async def test_the_call_opens_in_french_and_english_at_once_with_no_menu(self):
         await self.agent.on_enter()
         await self.settle()
-        self.assertEqual(len(self.session.replies), 2)
-        self.assertIn("Comment puis-je vous aider?", self.session.replies[1])
-        self.assertNotIn("Très bien", self.session.replies[1])
+        self.assertEqual(len(self.session.replies), 1)
+        opening = self.session.replies[0]
+        self.assertLess(opening.index("Bonjour, ici Acme."), opening.index("How can I help you?"))
+        self.assertIn('[Canadian French (Québec)] "Bonjour, ici Acme."', opening)
+        self.assertIn('[North American English] "How can I help you?"', opening)
+        for banned in ("press", "restez en ligne", "appuyez"):
+            self.assertNotIn(banned, opening.lower())
+
+    async def test_the_voice_model_starts_with_the_language_not_known_yet(self):
+        self.assertIn("not known yet", self.agent.instructions)
+        self.assertNotIn("The call is in Canadian French", self.agent.instructions)
         self.assertEqual(self.call.language, "fr")
 
-    async def test_key_1_switches_to_english_without_replaying_the_greeting(self):
+    async def test_no_keypad_handler_is_attached(self):
+        self.assertFalse(hasattr(self.agent, "_on_dtmf"))
+        session = SimpleNamespace(on=lambda *a, **k: None)
+        room = FakeRoom()
+        self.agent.attach(session, SimpleNamespace(room=room))
+        self.assertNotIn("sip_dtmf_received", room.handlers)
+
+    async def test_an_english_caller_makes_the_call_english_without_a_second_greeting(self):
         await self.agent.on_enter()
-        self.agent._on_dtmf(dtmf("1"))
+        self.agent._on_heard(heard("en"))
         await self.settle()
         self.assertEqual(self.call.language, "en")
         self.assertIn("North American English", self.agent.instructions)
-        self.assertEqual(self.session.interrupts, 1)
-        # opening + one English reply; the French timeout must not fire afterwards.
-        self.assertEqual(len(self.session.replies), 2)
-        self.assertIn("Sure, English.", self.session.replies[1])
-        self.assertIn("How can I help?", self.session.replies[1])
-        self.assertNotIn("Bonjour", self.session.replies[1])
-
-    async def test_key_2_confirms_french(self):
-        await self.agent.on_enter()
-        self.agent._on_dtmf(dtmf("2"))
-        await self.settle()
-        self.assertEqual(self.call.language, "fr")
-        self.assertEqual(len(self.session.replies), 2)
-        self.assertIn("Très bien, en français.", self.session.replies[1])
-
-    async def test_other_keys_are_ignored(self):
-        await self.agent.on_enter()
-        self.agent._on_dtmf(dtmf("7"))
-        self.agent._on_dtmf(dtmf("#"))
-        await self.settle()
-        self.assertEqual(self.call.language, "fr")
-        self.assertEqual(self.session.interrupts, 0)
-
-    async def test_a_key_after_the_menu_closed_does_nothing(self):
-        await self.agent.on_enter()
-        await self.settle()
-        before = len(self.session.replies)
-        self.agent._on_dtmf(dtmf("1"))
-        await self.settle()
-        self.assertEqual(len(self.session.replies), before)
-        self.assertEqual(self.call.language, "fr")
-
-    async def test_speech_at_the_menu_does_not_pick_a_language_or_trigger_a_second_greeting(self):
-        await self.agent.on_enter()
-        self.agent._on_user_state(state("speaking"))
-        await self.settle()
-        self.assertEqual(self.call.language, "fr")
         self.assertEqual(len(self.session.replies), 1)
 
-    async def test_a_key_pressed_before_the_greeting_starts_skips_the_greeting(self):
-        self.agent._on_dtmf(dtmf("1"))
+    async def test_a_french_caller_makes_the_call_french(self):
         await self.agent.on_enter()
+        self.agent._on_heard(heard("fr-CA"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+        self.assertIn("Canadian French", self.agent.instructions)
+        self.assertNotIn("not known yet", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
+
+    async def test_a_one_word_hello_decides_nothing(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("en", words=1))
+        await self.settle()
+        self.assertIn("not known yet", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
+
+    async def test_an_unclear_caller_is_asked_once_in_both_languages(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("es"))
+        self.agent._on_heard(heard("es"))
+        await self.settle()
+        self.assertEqual(len(self.session.replies), 2)
+        question = self.session.replies[1]
+        self.assertLess(question.index("Français ou anglais?"), question.index("French or English?"))
+        # Still talking in a language the line does not offer: it does not ask again.
+        self.agent._on_heard(heard("es"))
+        await self.settle()
+        self.assertEqual(len(self.session.replies), 2)
+
+    async def test_the_answer_to_the_question_decides_even_when_it_is_one_word(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("es"))
+        self.agent._on_heard(heard("es"))
+        await self.settle()
+        self.agent._on_heard(heard("en", words=1))
         await self.settle()
         self.assertEqual(self.call.language, "en")
-        self.assertEqual(len(self.session.replies), 1)
-        self.assertNotIn("Bonjour", self.session.replies[0])
+        self.assertIn("North American English", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 2)
 
-    async def test_dtmf_from_another_participant_is_ignored(self):
+    async def test_no_usable_answer_keeps_the_start_language(self):
         await self.agent.on_enter()
-        self.agent._on_dtmf(SimpleNamespace(digit="1", participant=SimpleNamespace(identity="someone-else")))
+        for _ in range(4):
+            self.agent._on_heard(heard("es"))
         await self.settle()
         self.assertEqual(self.call.language, "fr")
+        self.assertIn("Canadian French", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 2)
 
-    async def test_the_caller_can_switch_language_mid_call(self):
+    async def test_it_does_not_ask_again_when_the_model_already_asked(self):
+        await self.agent.on_enter()
+        self.agent._on_item(
+            SimpleNamespace(
+                item=SimpleNamespace(
+                    type="message", role="assistant", text_content="Français ou anglais? French or English?"
+                )
+            )
+        )
+        self.agent._on_heard(heard("es"))
+        self.agent._on_heard(heard("es"))
+        await self.settle()
+        self.assertEqual(len(self.session.replies), 1)
+
+    async def test_a_borrowed_word_in_a_french_call_does_not_change_the_language(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("fr"))
+        for _ in range(5):
+            self.agent._on_heard(heard("en", words=1))
+        self.agent._on_heard(heard("en", words=4))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+        self.assertIn("Canadian French", self.agent.instructions)
+
+    async def test_sustained_english_in_a_french_call_switches_it(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("fr"))
+        self.agent._on_heard(heard("en", words=5))
+        self.agent._on_heard(heard("en", words=5))
+        await self.settle()
+        self.assertEqual(self.call.language, "en")
+        self.assertIn("North American English", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
+
+    async def test_speech_heard_during_a_transfer_is_ignored(self):
+        await self.agent.on_enter()
+        self.agent._transferring = True
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+        self.assertIn("not known yet", self.agent.instructions)
+
+    async def test_what_is_logged_has_a_language_and_a_size_but_never_words(self):
+        with self.assertLogs("agent-tradecatch-receptionist", level="INFO") as logs:
+            self.agent._on_heard(Heard("en", 6, 0.93))
+            await self.settle()
+        text = "\n".join(logs.output)
+        self.assertIn("caller language heard: en (6 words, confidence 0.93)", text)
+        self.assertIn("language decision: set en [clear_speech] after 1 utterances", text)
+
+    async def test_the_caller_can_still_ask_out_loud_for_another_language(self):
         await self.agent.on_enter()
         await self.settle()
         reply = await self.agent.set_language(None, "en")
@@ -366,31 +477,59 @@ class OpeningAndLanguageTests(FlowCase):
         self.assertEqual(self.call.language, "en")
         self.assertIn("North American English", self.agent.instructions)
         self.assertIn("Do not greet again", reply)
+        self.assertNotIn("menu", reply.lower())
         # Asking for the same language again changes nothing.
         self.assertIn("already", (await self.agent.set_language(None, "en")).lower())
+
+    async def test_a_spoken_request_is_not_overruled_by_one_or_two_sentences(self):
+        await self.agent.on_enter()
+        await self.agent.set_language(None, "en")
+        self.agent._on_heard(heard("fr"))
+        self.agent._on_heard(heard("fr"))
+        await self.settle()
+        self.assertEqual(self.call.language, "en")
+        self.agent._on_heard(heard("fr"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
 
     async def test_a_language_the_line_does_not_offer_is_refused(self):
         cfg = copy.deepcopy(CFG)
         cfg["languageSelect"]["languages"] = ["fr"]
-        cfg["languageSelect"]["opening"]["menu"] = []
         self.make_agent(cfg)
         self.assertIn("not available", await self.agent.set_language(None, "en"))
         self.assertEqual(self.call.language, "fr")
 
-    async def test_a_single_language_line_has_no_menu_wait(self):
+    async def test_a_single_language_line_has_nothing_to_detect(self):
         cfg = copy.deepcopy(CFG)
         cfg["languageSelect"].update(startLanguage="en", languages=["en"])
-        cfg["languageSelect"]["opening"] = {"statement": {"text": "Hello, Acme.", "lang": "en"}, "menu": []}
+        cfg["languageSelect"]["detection"] = {
+            "opening": [
+                {"text": "Hello, Acme.", "lang": "en"},
+                {"text": "How can I help?", "lang": "en"},
+            ],
+            "ask": [],
+        }
         self.make_agent(cfg)
+        self.assertIn("The call is in North American English", self.agent.instructions)
         await self.agent.on_enter()
         await self.settle()
         self.assertEqual(len(self.session.replies), 1)
         self.assertIn("How can I help?", self.session.replies[0])
+        calls = []
+        original = A.start_listener
+        A.start_listener = lambda **kw: calls.append(kw)
+        try:
+            self.agent.start_language_detection(SimpleNamespace(identity="sip_1"))
+        finally:
+            A.start_listener = original
+        self.assertEqual(calls, [])
 
-    async def test_an_older_server_without_language_settings_still_opens_french_first(self):
-        self.make_agent({"instructions": "Base prompt."})
+    async def test_an_older_server_without_language_settings_still_greets_in_both(self):
+        self.make_agent({"instructions": "Base prompt.", "businessName": "Acme"})
         await self.agent.on_enter()
-        self.assertIn("restez en ligne", self.session.replies[0])
+        self.assertIn("Bonjour, ici Acme.", self.session.replies[0])
+        self.assertIn("How can I help you?", self.session.replies[0])
+        self.assertNotIn("press 1", self.session.replies[0])
         self.assertEqual(self.call.language, "fr")
 
     async def test_no_config_at_all_uses_the_safe_fallback(self):
@@ -403,6 +542,257 @@ class OpeningAndLanguageTests(FlowCase):
         self.assertIn("Bonjour", self.session.replies[0])
         self.assertIn("no transfer is available", self.agent.instructions)
         self.assertIn("Transfers are unavailable", await self.agent.transfer_call(None, "caller_request"))
+
+    async def test_the_check_in_before_the_language_is_known_is_bilingual(self):
+        await self.agent.on_enter()
+        await self.agent._on_quiet()
+        check_in = self.session.replies[-1]
+        self.assertIn("Êtes-vous toujours là?", check_in)
+        self.assertIn("Are you still there?", check_in)
+
+    async def test_the_check_in_after_the_language_is_known_is_in_that_language_only(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        await self.agent._on_quiet()
+        check_in = self.session.replies[-1]
+        self.assertIn("Are you still there?", check_in)
+        self.assertNotIn("Êtes-vous", check_in)
+
+
+class LanguageListenerWiringTests(FlowCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.started = []
+        self.listener = FakeListener()
+        self._start_listener = A.start_listener
+
+        def fake_start(**kwargs):
+            self.started.append(kwargs)
+            return self.listener
+
+        A.start_listener = fake_start
+
+    async def asyncTearDown(self):
+        A.start_listener = self._start_listener
+        await super().asyncTearDown()
+
+    async def test_the_listener_starts_for_the_caller_and_reports_to_the_agent(self):
+        participant = SimpleNamespace(identity="sip_1")
+        self.agent.start_language_detection(participant)
+        self.assertEqual(len(self.started), 1)
+        self.assertIs(self.started[0]["participant"], participant)
+        self.assertEqual(self.started[0]["on_heard"], self.agent._on_heard)
+        self.assertEqual(self.started[0]["on_failed"], self.agent._on_listener_failed)
+
+    async def test_the_kill_switch_starts_no_listener_and_leaves_switching_to_the_model(self):
+        original = os.environ.get("AGENT_LANGUAGE_DETECTION")
+        os.environ["AGENT_LANGUAGE_DETECTION"] = "off"
+        try:
+            self.make_agent()
+        finally:
+            if original is None:
+                os.environ.pop("AGENT_LANGUAGE_DETECTION")
+            else:
+                os.environ["AGENT_LANGUAGE_DETECTION"] = original
+        self.agent.start_language_detection(SimpleNamespace(identity="sip_1"))
+        self.assertEqual(self.started, [])
+        self.assertIn("clearly talks to you in full sentences", self.agent.instructions)
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+
+    async def test_the_listener_stops_when_the_session_closes(self):
+        self.agent.start_language_detection(SimpleNamespace(identity="sip_1"))
+        self.agent._on_close(SimpleNamespace(reason=A.CloseReason.USER_INITIATED, error=None))
+        self.assertTrue(self.listener.cancelled)
+
+    async def test_when_the_listener_fails_the_call_keeps_going_in_its_language(self):
+        await self.agent.on_enter()
+        self.agent.start_language_detection(SimpleNamespace(identity="sip_1"))
+        self.agent._on_listener_failed("stopped: ConnectionError")
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+        # The model is told to follow full sentences itself, and to ask when unsure.
+        self.assertIn("clearly talks to you in full sentences", self.agent.instructions)
+        self.assertEqual(len(self.session.replies), 1)
+        # Later utterances (if any slip through) decide nothing.
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+
+    async def test_a_second_failure_report_changes_nothing(self):
+        self.agent._on_listener_failed("a")
+        self.agent._on_listener_failed("b")
+        await self.settle()
+        self.assertEqual(self.call.language, "fr")
+
+
+class GptLiveHarness(Harness):
+    """The agent on gpt-live, the production voice model, as LiveKit 1.8.10 drives it.
+
+    Its starting instructions cannot change once the session runs (update_instructions
+    raises), and a new system message in the chat context reaches the model as a
+    standing rule (append_instructions). `rules` is everything the model was told to
+    follow, oldest first.
+    """
+
+    def start_voice_model(self):
+        self.fake_session.llm = SimpleNamespace(
+            capabilities=SimpleNamespace(mutable_instructions=False)
+        )
+        self.rules = [self.instructions]
+
+    async def update_instructions(self, instructions):
+        raise RealtimeError(
+            "gpt-live voice instructions are immutable after session start; use "
+            "append_instructions for a standing rule"
+        )
+
+    async def update_chat_ctx(self, chat_ctx, **kwargs):
+        known = {item.id for item in self.chat_ctx.items}
+        for item in chat_ctx.items:
+            if item.id not in known and getattr(item, "role", None) in ("system", "developer"):
+                self.rules.append(item.text_content)
+        await super().update_chat_ctx(chat_ctx, **kwargs)
+
+
+class GptLiveLanguageTests(FlowCase):
+    """Regression: a language change was logged, but gpt-live kept its first rule and answered in it."""
+
+    def make_agent(self, cfg=None, client="default", transfers=None):
+        self.agent = GptLiveHarness(
+            cfg=copy.deepcopy(self.cfg if cfg is None else cfg),
+            call=self.call,
+            client=self.client if client == "default" else client,
+            sip_identity="sip_1",
+            transfers=transfers or self.transfers,
+        )
+        self.agent.fake_session = FakeSession()
+        self.agent._ctx = self.job
+        self.agent.start_voice_model()
+        self.session = self.agent.fake_session
+        return self.agent
+
+    def assert_model_speaks_english_from_now_on(self, rules_before):
+        # The caller's next questions get model replies with no per-reply instruction,
+        # so the newest standing rule is what decides their language.
+        self.assertEqual(len(self.agent.rules), rules_before + 1)
+        rule = self.agent.rules[-1]
+        self.assertIn("LANGUAGE UPDATE", rule)
+        self.assertIn("speak only North American English", rule)
+        self.assertIn("replaces the LANGUAGE OF THIS CALL section", rule)
+        self.assertNotIn("Canadian French", rule)
+        # The starting rule says a later update wins, so the two do not compete.
+        self.assertIn("A later LANGUAGE UPDATE replaces this section.", self.agent.rules[0])
+
+    async def test_the_starting_rule_follows_the_caller(self):
+        self.assertIn("not known yet", self.agent.rules[0])
+        self.assertIn("Reply in the language the caller speaks", self.agent.rules[0])
+
+    async def test_an_english_caller_tells_the_voice_model_to_answer_in_english(self):
+        await self.agent.on_enter()
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="ERROR"):
+            self.agent._on_heard(heard("en"))
+            await self.settle()
+        self.assert_model_speaks_english_from_now_on(1)
+        # Nothing else is spoken: the model already hears the caller and answers.
+        self.assertEqual(len(self.session.replies), 1)
+        self.assertEqual(self.call.language, "en")
+
+    async def test_a_french_caller_also_gets_a_standing_rule(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("fr"))
+        await self.settle()
+        self.assertEqual(len(self.agent.rules), 2)
+        self.assertIn("speak only Canadian French", self.agent.rules[-1])
+
+    async def test_english_on_the_fallback_prompt_also_reaches_the_voice_model(self):
+        self.agent = GptLiveHarness(cfg=None, call=self.call, client=None, sip_identity="sip_1")
+        self.agent.fake_session = self.session
+        self.agent.start_voice_model()
+        self.assertIn("technical difficulties", self.agent.rules[0])
+        await self.agent.on_enter()
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="ERROR"):
+            self.agent._on_heard(heard("en"))
+            await self.settle()
+        self.assert_model_speaks_english_from_now_on(1)
+
+    async def test_asking_out_loud_for_english_reaches_the_voice_model(self):
+        await self.agent.on_enter()
+        await self.settle()
+        self.assertIn("Switched", await self.agent.set_language(None, "en"))
+        self.assert_model_speaks_english_from_now_on(1)
+
+    async def test_switching_back_to_french_adds_a_newer_french_rule(self):
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        await self.agent.set_language(None, "fr")
+        self.assertIn("speak only Canadian French", self.agent.rules[-1])
+        self.assertEqual(self.call.language, "fr")
+
+    async def test_a_listener_failure_adds_one_rule_and_does_not_change_the_language(self):
+        await self.agent.on_enter()
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="ERROR"):
+            self.agent._on_listener_failed("stopped: TimeoutError")
+            await self.settle()
+        self.assertEqual(len(self.agent.rules), 2)
+        self.assertIn("Automatic language detection is not available", self.agent.rules[-1])
+        self.assertEqual(self.call.language, "fr")
+
+    async def test_a_voice_model_that_refuses_the_rule_does_not_break_the_call_and_is_asked_again(self):
+        accept = GptLiveHarness.update_chat_ctx
+
+        async def refuse(chat_ctx, **kwargs):
+            raise RealtimeError("refused")
+
+        self.agent.update_chat_ctx = refuse
+        await self.agent.on_enter()
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        # The language is recorded for the report; the model still follows the caller on its own.
+        self.assertEqual(self.call.language, "en")
+        self.assertIsNone(self.agent._model_language)
+        self.assertEqual(len(self.agent.rules), 1)
+        # The model accepts rules again: the caller's next utterance delivers the one it missed.
+        self.agent.update_chat_ctx = lambda chat_ctx, **kw: accept(self.agent, chat_ctx, **kw)
+        self.agent._on_heard(heard("en"))
+        await self.settle()
+        self.assert_model_speaks_english_from_now_on(1)
+
+
+class ReplyGapTests(FlowCase):
+    def caller_stops(self):
+        self.agent._on_user_state(state("speaking"))
+        self.agent._on_user_state(SimpleNamespace(old_state="speaking", new_state="listening"))
+
+    async def test_logs_how_long_the_caller_waits_for_an_answer(self):
+        self.caller_stops()
+        self.agent._on_metrics(
+            SimpleNamespace(metrics=SimpleNamespace(type="llm_metrics", reasoning_tokens=40, completion_tokens=12))
+        )
+        with self.assertLogs("agent-tradecatch-receptionist", level="INFO") as logs:
+            self.agent._on_agent_state(SimpleNamespace(old_state="thinking", new_state="speaking"))
+        line = logs.output[-1]
+        self.assertRegex(line, r"reply gap \d+\.\d\ds \(1 backend runs\)")
+
+    async def test_agent_speech_without_a_caller_turn_logs_no_gap(self):
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="INFO"):
+            self.agent._on_agent_state(SimpleNamespace(old_state="listening", new_state="speaking"))
+
+    async def test_each_caller_turn_is_measured_once(self):
+        self.caller_stops()
+        self.agent._on_agent_state(SimpleNamespace(old_state="thinking", new_state="speaking"))
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="INFO"):
+            self.agent._on_agent_state(SimpleNamespace(old_state="listening", new_state="speaking"))
+
+    async def test_backend_runs_log_token_counts_only(self):
+        with self.assertLogs("agent-tradecatch-receptionist", level="INFO") as logs:
+            self.agent._on_metrics(
+                SimpleNamespace(metrics=SimpleNamespace(type="llm_metrics", reasoning_tokens=40, completion_tokens=12))
+            )
+        self.assertIn("backend run: 40 reasoning tokens, 12 output tokens", logs.output[-1])
 
 
 class SilenceTests(FlowCase):
@@ -564,7 +954,7 @@ class BookingTests(FlowCase):
         await self.agent.check_availability(None)
         self.client.book_result = None
         text = await self.agent.book_appointment(None, 1)
-        self.assertIn("NOT booked", text)
+        self.assertIn("unconfirmed", text)
         self.assertNotIn("BOOKED", text)
         self.assertFalse(self.call.booked)
         self.assertNotEqual(self.call.payload().get("intent"), None)
@@ -579,6 +969,143 @@ class BookingTests(FlowCase):
         with self.assertRaises(RuntimeError):
             await self.agent.check_availability(None)
         self.assertEqual(self.agent._busy, 0)
+
+
+class ExistingAppointmentTests(FlowCase):
+    async def find(self, name="Hélène Tremblay"):
+        return await self.agent.find_appointment(None, caller_name=name)
+
+    async def test_find_needs_a_name_and_sends_the_carrier_caller_id_not_a_model_number(self):
+        text = await self.agent.find_appointment(None)
+        self.assertIn("Ask for the name", text)
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+        text = await self.find()
+        self.assertIn("1. jeudi à 10 h, Débouchage, technician Marc", text)
+        self.assertIn("never give an arrival estimate", text)
+        body = self.client.appointment_calls[0]
+        self.assertEqual(body["action"], "find")
+        self.assertEqual(body["from"], "+15145550142")
+        self.assertEqual(body["callerName"], "Hélène Tremblay")
+
+    async def test_a_hidden_number_cannot_look_up_anything(self):
+        self.call.from_e164 = None
+        text = await self.find()
+        self.assertIn("number is hidden", text)
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+
+    async def test_nothing_found_reveals_nothing(self):
+        self.client.appointment_results = {"find": {"status": "not_found"}}
+        text = await self.find()
+        self.assertIn("Do NOT reveal anything about other bookings", text)
+        self.assertEqual(self.call.appointments, [])
+
+    async def test_moving_uses_new_times_for_that_appointment_and_only_says_moved_when_moved(self):
+        await self.find()
+        text = await self.agent.check_availability(None, preferred_time="mardi", existing_appointment=1)
+        self.assertIn("call move_appointment with appointment 1", text)
+        self.assertNotIn("call book_appointment", text)
+        body = self.client.availability_calls[-1]
+        self.assertEqual(body["appointmentId"], "appt_1")
+        self.assertEqual(body["callerName"], "Hélène Tremblay")
+        self.assertNotIn("serviceAddress", body)
+
+        refused = await self.agent.book_appointment(None, 1)
+        self.assertIn("for moving an existing appointment", refused)
+        self.assertEqual(self.client.book_calls, [])
+
+        text = await self.agent.move_appointment(None, 1, 1)
+        self.assertTrue(text.startswith("MOVED."))
+        move = self.client.appointment_calls[-1]
+        self.assertEqual(move["action"], "move")
+        self.assertEqual(move["startAt"], OFFERS[0]["startAt"])
+        self.assertEqual(self.call.found(1).label, "mardi à 9 h")
+        self.assertEqual(self.call.appointment_changes, [{"change": "moved", "label": "mardi à 9 h"}])
+        self.assertEqual(self.call.payload().get("intent"), "appointment")
+
+    async def test_move_needs_times_for_that_appointment_first(self):
+        await self.find()
+        await self.agent.check_availability(None)  # times for a NEW booking
+        text = await self.agent.move_appointment(None, 1, 1)
+        self.assertIn("Call check_availability", text)
+        self.assertEqual([c["action"] for c in self.client.appointment_calls], ["find"])
+
+    async def test_a_failed_move_is_never_reported_as_moved(self):
+        await self.find()
+        await self.agent.check_availability(None, existing_appointment=1)
+        self.client.appointment_results = {"move": None}
+        text = await self.agent.move_appointment(None, 1, 1)
+        self.assertIn("NOT moved", text)
+        self.assertEqual(self.call.appointment_changes, [])
+
+    async def test_cancel_waits_for_a_clear_yes(self):
+        await self.find()
+        text = await self.agent.cancel_appointment(None, 1, caller_confirmed=False)
+        self.assertIn("Not canceled", text)
+        self.assertIn("jeudi à 10 h", text)
+        self.assertNotIn("cancel", [c["action"] for c in self.client.appointment_calls])
+        text = await self.agent.cancel_appointment(None, 1, caller_confirmed=True)
+        self.assertTrue(text.startswith("CANCELED."))
+        self.assertEqual(self.call.appointments, [])
+
+    async def test_unknown_appointment_numbers_never_reach_the_server(self):
+        for tool in (
+            self.agent.move_appointment(None, 3, 1),
+            self.agent.cancel_appointment(None, 3, caller_confirmed=True),
+            self.agent.check_availability(None, existing_appointment=3),
+        ):
+            self.assertIn("not in the list", await tool)
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+
+    async def test_appointment_tools_are_off_without_phone_booking(self):
+        cfg = copy.deepcopy(CFG)
+        cfg["bookingEnabled"] = False
+        self.make_agent(cfg)
+        self.assertIn("cannot be looked up", await self.find())
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+
+
+class CallerTextTests(FlowCase):
+    def texts_on(self):
+        cfg = copy.deepcopy(CFG)
+        cfg["callerTexts"] = True
+        self.make_agent(cfg)
+
+    async def test_texts_are_off_unless_the_business_has_an_sms_number(self):
+        text = await self.agent.text_caller(None, "business_info")
+        self.assertIn("not available", text)
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
+
+    async def test_business_info_goes_to_the_caller_id_and_is_written_by_the_server(self):
+        self.texts_on()
+        text = await self.agent.text_caller(None, "business_info")
+        self.assertTrue(text.startswith("SENT."))
+        body = self.client.appointment_calls[0]
+        self.assertEqual(body["action"], "text")
+        self.assertEqual(body["kind"], "business_info")
+        self.assertEqual(body["from"], "+15145550142")
+        self.assertNotIn("body", body, "the model never supplies the words")
+
+    async def test_an_appointment_text_needs_a_found_appointment(self):
+        self.texts_on()
+        self.assertIn("Call find_appointment first", await self.agent.text_caller(None, "appointment"))
+        await self.agent.find_appointment(None, caller_name="Hélène")
+        self.assertTrue((await self.agent.text_caller(None, "appointment", 1)).startswith("SENT."))
+        self.assertEqual(self.client.appointment_calls[-1]["appointmentId"], "appt_1")
+
+    async def test_opted_out_and_queued_texts_are_never_called_sent(self):
+        self.texts_on()
+        self.client.appointment_results = {"text": {"status": "opted_out"}}
+        self.assertIn("opted out", await self.agent.text_caller(None, "business_info"))
+        self.client.appointment_results = {"text": {"status": "queued"}}
+        self.assertIn("do not say it was sent", await self.agent.text_caller(None, "business_info"))
+        self.client.appointment_results = {"text": None}
+        self.assertIn("could not be sent", await self.agent.text_caller(None, "business_info"))
+
+    async def test_a_hidden_number_is_never_texted(self):
+        self.texts_on()
+        self.call.from_e164 = None
+        self.assertIn("not available", await self.agent.text_caller(None, "business_info"))
+        self.assertFalse(getattr(self.client, "appointment_calls", []))
 
 
 class RecordDetailsTests(FlowCase):
@@ -618,9 +1145,9 @@ class TransferTests(FlowCase):
     async def test_a_completed_handoff_connects_the_call_and_the_agent_leaves(self):
         ctx = ctx_for(self.session)
         reply = await self.agent.transfer_call(ctx, "caller_request")
-        self.assertIn("now connected", reply)
+        self.assertIn("handed to the team's phone line", reply)  # a REFER never proves a person answered
         self.assertEqual(self.job.transfers, ["tel:+14389957350"])
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": True})
         self.assertEqual(self.call.end_reason, "completed")
         self.assertEqual(self.session.shutdowns, [False])
         self.assertEqual(self.job.deleted, 0)
@@ -667,7 +1194,7 @@ class TransferTests(FlowCase):
         reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
         self.assertIn("did NOT connect", reply)
         self.assertIn("nobody answered", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": False})
         self.assertNotEqual(self.call.payload().get("intent"), "transfer")
         self.assertEqual(self.session.shutdowns, [])
         self.assertFalse(self.agent._closing)
@@ -690,7 +1217,7 @@ class TransferTests(FlowCase):
         reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
         self.assertIn("did NOT connect", reply)
         self.assertIn("callback", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": False})
         self.assertFalse(self.agent._transferring)
 
         await self.agent.transfer_call(ctx_for(self.session), "caller_request")
@@ -700,8 +1227,16 @@ class TransferTests(FlowCase):
         self.job.transfer_queue = [refer_response("STS_TRANSFER_FAILED", "STR_REJECTED", sip=486)]
         reply = await self.agent.transfer_call(ctx_for(self.session), "emergency")
         self.assertEqual(self.job.transfers, ["tel:+14385550001", "tel:+14389957350"])
-        self.assertIn("now connected", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertIn("handed to the team's phone line", reply)  # a REFER never proves a person answered
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": True})
+
+    async def test_a_refer_to_a_busy_operator_rolls_over_to_the_backup_line(self):
+        self.make_agent(cfg={**CFG, "backupTransferE164": "+14385550003"})
+        self.job.transfer_queue = [refer_response("STS_TRANSFER_FAILED", "STR_REJECTED", sip=486)]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertEqual(self.job.transfers, ["tel:+14389957350", "tel:+14385550003"])
+        self.assertIn("handed to the team's phone line", reply)  # a REFER never proves a person answered
+        self.assertTransfer(self.call.transfer, {"targetName": "Backup line", "completed": True})
 
     async def test_a_second_transfer_while_one_runs_is_ignored(self):
         self.agent._transferring = True
@@ -813,7 +1348,7 @@ class WarmTransferFlowTests(FlowCase):
         reply = await self.agent.transfer_call(ctx, "caller_request")
 
         self.assertIn("now connected", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": True})
         self.assertEqual(self.call.end_reason, "completed")
         self.assertEqual(self.session.shutdowns, [False])
         self.assertFalse(self.session.input.enabled)
@@ -832,7 +1367,7 @@ class WarmTransferFlowTests(FlowCase):
         self.assertEqual(len(self.client.reports), 1)
         report = self.client.reports[0]
         self.assertEqual(report["intent"], "transfer")
-        self.assertEqual(report["transfer"], {"targetName": "Emergency", "completed": True})
+        self.assertTransfer(report["transfer"], {"targetName": "Emergency", "completed": True})
         self.assertTrue(report["emergency"])
         self.assertEqual(self.job.shutdowns, [])  # job must outlive the model session
         self.assertEqual(self.job.deleted, 0)
@@ -872,7 +1407,7 @@ class WarmTransferFlowTests(FlowCase):
             [m.target.number for m in FakeScreened.made], ["+14385550001", "+14389957350"]
         )
         self.assertIn("now connected", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": True})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": True})
 
     async def test_nobody_reachable_returns_the_caller_to_the_agent_with_safety_advice(self):
         FakeScreened.script = ["no_answer", "busy"]
@@ -881,7 +1416,7 @@ class WarmTransferFlowTests(FlowCase):
         self.assertIn("did NOT connect", reply)
         self.assertIn("911", reply)
         self.assertIn("alerted", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "General line", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "General line", "completed": False})
         self.assertFalse(self.agent._transferring)
         self.assertFalse(self.agent._closing)
         self.assertFalse(self.agent._keep_job_alive)
@@ -892,6 +1427,28 @@ class WarmTransferFlowTests(FlowCase):
         self.assertTrue(payload["emergency"])
         self.assertEqual(payload["transfer"]["completed"], False)
         self.assertNotEqual(payload.get("intent"), "transfer")
+
+    async def test_an_unavailable_operator_rolls_over_to_the_owners_backup_line(self):
+        self.make_agent(cfg={**CFG, "backupTransferE164": "+14385550003"})
+        FakeScreened.script = ["no_answer", "connected"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertEqual(
+            [m.target.number for m in FakeScreened.made], ["+14389957350", "+14385550003"]
+        )
+        self.assertIn("now connected", reply)
+        self.assertTransfer(self.call.transfer, {"targetName": "Backup line", "completed": True})
+
+    async def test_when_every_operator_is_unavailable_the_caller_is_offered_a_callback(self):
+        self.make_agent(cfg={**CFG, "backupTransferE164": "+14385550003"})
+        FakeScreened.script = ["busy", "declined"]
+        reply = await self.agent.transfer_call(ctx_for(self.session), "caller_request")
+        self.assertEqual(len(FakeScreened.made), 2)
+        self.assertIn("did NOT connect", reply)
+        self.assertIn("all the available lines", reply)
+        self.assertIn("callback", reply)
+        self.assertTransfer(self.call.transfer, {"targetName": "Backup line", "completed": False})
+        self.assertFalse(self.agent._transferring)
+        self.assertFalse(self.agent._keep_job_alive)
 
     async def test_voicemail_is_not_a_transfer(self):
         FakeScreened.script = ["voicemail"]
@@ -929,6 +1486,7 @@ class WarmTransferFlowTests(FlowCase):
         await self.agent.transfer_call(ctx_for(self.session), "emergency")
         self.assertEqual(len(FakeScreened.made), 1)
         self.assertFalse(self.call.transfer["completed"])
+        self.assertEqual(self.call.transfer["targetName"], "Emergency")
 
     async def test_an_unexpected_error_in_the_transfer_is_a_failure_not_a_crash(self):
         FakeScreened.script = ["boom"]
@@ -1002,7 +1560,7 @@ class TransfersOffTests(FlowCase):
         self.assertIn("did NOT connect", reply)
         self.assertIn("not available", reply)
         self.assertIn("911", reply)
-        self.assertEqual(self.call.transfer, {"targetName": "Emergency", "completed": False})
+        self.assertTransfer(self.call.transfer, {"targetName": "Emergency", "completed": False})
         self.assertEqual(self.job.transfers, [])
         self.assertEqual(self.job.bridges, [])
         self.assertEqual(self.session.shutdowns, [])

@@ -302,7 +302,7 @@ class ToolResultTests(unittest.TestCase):
 
     def test_a_dead_booking_system_never_leaves_the_model_without_a_next_step(self):
         text = format_booking(None, [])
-        self.assertIn("NOT booked", text)
+        self.assertIn("unconfirmed", text)
         self.assertIn("team will confirm", text)
 
 

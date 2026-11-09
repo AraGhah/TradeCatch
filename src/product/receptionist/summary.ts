@@ -61,8 +61,8 @@ function nextStepText(
         : `URGENT: confirm ${lastTransfer?.targetName ?? "the on-call team"} handled the call.`;
     case "transferred":
       return fr
-        ? `Appel transféré à ${lastTransfer?.targetName ?? "l'équipe"} — aucun suivi sauf si l'appel a coupé.`
-        : `Call transferred to ${lastTransfer?.targetName ?? "the team"} — no follow-up unless it dropped.`;
+        ? `Appel transféré à ${lastTransfer?.targetName ?? "l'équipe"}. Aucun suivi sauf si l'appel a coupé.`
+        : `Call transferred to ${lastTransfer?.targetName ?? "the team"}. No follow-up unless it dropped.`;
     case "voicemail":
       return fr
         ? "Écouter le message vocal et rappeler."
@@ -72,11 +72,11 @@ function nextStepText(
     case "caller_hung_up":
       return session.smsRecoveryTriggeredAt
         ? fr
-          ? "Raccroché avant les détails — relance SMS automatique lancée."
-          : "Hung up before details — automatic SMS follow-up started."
+          ? "Raccroché avant les détails. Relance SMS automatique lancée."
+          : "Hung up before details. Automatic SMS follow-up started."
         : fr
-          ? `Raccroché avant les détails — rappeler le ${callback}.`
-          : `Hung up before details — call back ${callback}.`;
+          ? `Raccroché avant les détails. Rappeler le ${callback}.`
+          : `Hung up before details. Call back ${callback}.`;
     case "failed":
       return fr
         ? `Rappeler le ${callback} (échec technique).`
@@ -151,7 +151,7 @@ export function buildCallSummary(
           ? "Rendez-vous"
           : "Appointment"
         : INTENT_LABEL[intent][lang]
-    } — ${who} (${OUTCOME_LABEL[outcome][lang]})`,
+    } · ${who} (${OUTCOME_LABEL[outcome][lang]})`,
     language: session.language,
     intent,
     outcome,

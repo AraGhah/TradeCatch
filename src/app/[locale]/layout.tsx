@@ -9,6 +9,7 @@ import {
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { PUBLIC_CONTACT_EMAIL } from "@/lib/contact";
 import {
   PUBLIC_CLIENT_NAMESPACES,
   pickMessages,
@@ -41,8 +42,8 @@ export async function generateMetadata({
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      default: `${site("name")} — ${site("tagline")}`,
-      template: `%s — ${site("name")}`,
+      default: `${site("name")} | ${site("tagline")}`,
+      template: `%s | ${site("name")}`,
     },
   };
 }
@@ -74,7 +75,7 @@ export default async function LocaleLayout({
     "@type": "ProfessionalService",
     name: "TradeCatch",
     url: siteUrl,
-    telephone: "+1-438-993-6997",
+    email: PUBLIC_CONTACT_EMAIL,
     areaServed: [
       { "@type": "City", name: "Montréal" },
       { "@type": "City", name: "Laval" },
@@ -88,11 +89,6 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       data-scroll-behavior="smooth"
-      // The theme-init inline script (HeadInlineScripts) may add "dark" to
-      // this element before hydration to avoid a light-then-dark flash —
-      // that intentional client/server className mismatch is exactly what
-      // suppressHydrationWarning exists for.
-      suppressHydrationWarning
       className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">

@@ -99,7 +99,7 @@ function cardTitle(session: CallSession): string {
   const what = (session.slots.issue ?? session.slots.message ?? "").trim();
   const short = what.length > 60 ? `${what.slice(0, 57)}…` : what;
   const prefix = session.urgency?.level === "critical" ? "🚨 " : "";
-  return `${prefix}Appel de la réceptionniste · ${who}${short ? ` — ${short}` : ""}`;
+  return `${prefix}Appel de la réceptionniste · ${who}${short ? ` · ${short}` : ""}`;
 }
 
 const OPEN_STAGES = new Set([

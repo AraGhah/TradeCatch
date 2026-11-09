@@ -52,8 +52,11 @@ export default async function AdminBusinessesPage({
         </select>
         <select name="plan" defaultValue={query.plan ?? ""} className="rounded-md border border-navy/15 px-2 py-1.5 text-sm">
           <option value="">{t("all")}</option>
-          <option value="starter">Starter</option>
-          <option value="growth">Growth</option>
+          <option value="essential">Essential</option>
+          <option value="professional">Professional</option>
+          <option value="starter">Starter (earlier plan)</option>
+          <option value="growth">Growth (earlier plan)</option>
+          <option value="receptionist">Receptionist Plus (earlier plan)</option>
         </select>
         <button type="submit" className="rounded-md bg-navy px-3 py-1.5 text-sm font-semibold text-white">{t("filter")}</button>
       </form>

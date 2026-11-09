@@ -78,8 +78,29 @@ export type ReceptionistConfig = {
   inboundStrategy: "ai_first" | "human_first";
   /** Seconds to ring the human on overflow / human_first. */
   humanRingTimeoutSeconds: number;
-  /** gather (TwiML) or conversation_relay (Twilio ConversationRelay). */
-  voiceEngine: "gather" | "conversation_relay";
+  /**
+   * gather (TwiML), conversation_relay (Twilio ConversationRelay), or livekit
+   * (SIP hand-off to the LiveKit voice agent).
+   */
+  voiceEngine: "gather" | "conversation_relay" | "livekit";
+  /** Owner's AI Call Handling choice. Unset for founder/env configs. */
+  aiCallMode?: "missed_calls_only" | "ai_answers_all";
+  routingMethod?: "tradecatch_number" | "carrier_forwarding";
+  /**
+   * The contractor's own phone, rung before the AI in missed-calls-only. It
+   * is the owner's phone, not an AI transfer, so plan limits keep it.
+   */
+  ringFirstE164?: string;
+  /** Whoever answers the ring-first leg must press 1 (voicemail cannot). */
+  callScreening?: boolean;
+  /** Personal callers who never reach the AI. Never sent to the voice agent. */
+  personalContacts?: string[];
+  personalCallPolicy?: "message" | "transfer" | "end";
+  personalCallMessageFr?: string;
+  personalCallMessageEn?: string;
+  personalCallTransferE164?: string;
+  /** Withheld / blocked caller IDs. */
+  unknownCallerPolicy?: "ai" | "message";
   timezone: string;
   businessHours: { start: string; end: string; days: number[] };
   languages: ReceptionistLanguage[];
@@ -110,6 +131,10 @@ export type ReceptionistConfig = {
    * calls from $89"). Unset = no price may be stated.
    */
   pricingInfo?: string;
+  /** The business's public address, as owners entered it. */
+  businessAddress?: string;
+  /** The business's public phone, as callers should hear or receive it. */
+  businessPhone?: string;
   /**
    * The business's rendered system prompt (template + its own details). Set
    * for tenant profiles; unset for founder env configs, which keep the
@@ -121,6 +146,11 @@ export type ReceptionistConfig = {
   emergencyTransferE164?: string;
   /** Human fallback when the agent fails or the caller asks for a person. */
   fallbackTransferE164?: string;
+  /**
+   * Second person to try when the fallback line is busy, unanswered or
+   * declines (owner's "secondary transfer number"). Never dialed first.
+   */
+  backupTransferE164?: string;
   /**
    * When normal transfers may ring. `business_hours` (default for env configs)
    * refuses after hours; `always` keeps transferring when a number exists.
@@ -279,10 +309,50 @@ export type TransferAttempt = {
     | "emergency"
     | "fallback"
     | "overflow_ring"
-    | "human_first";
+    | "human_first"
+    /** An excluded personal contact sent to the owner's chosen line. */
+    | "personal_contact";
   status: "dialing" | "completed" | "no_answer" | "busy" | "failed";
   /** After a failed overflow/human_first ring, continue into the AI. */
   continueWithAi?: boolean;
+  /**
+   * Voice agent only: a person was heard accepting the call (screened
+   * transfer). A completed SIP REFER leaves this false: the carrier took the
+   * call, but a voicemail could have answered it.
+   */
+  answerConfirmed?: boolean;
+  /** Voice agent only: how the call was handed over. */
+  mechanism?: "warm" | "blind" | "bridge";
+};
+
+/**
+ * Routing facts for one call. `quiet` means another part of the system
+ * already owns the follow-up (the contractor took the call, the LiveKit agent
+ * reports its own conversation, or the caller is a personal contact), so
+ * finalization sends no summary, no SMS recovery and no CRM sync.
+ */
+export type CallRouting = {
+  mode?: "missed_calls_only" | "ai_answers_all";
+  method?: "tradecatch_number" | "carrier_forwarding";
+  /** The ring-first leg asked whoever answered to press 1. */
+  screened?: boolean;
+  /** The contractor pressed 1 on the ring-first leg. */
+  acceptedAt?: string;
+  /** Why a completed ring-first leg was not treated as answered. */
+  ringResult?: "accepted" | "voicemail_or_unscreened" | "no_answer" | "busy" | "failed";
+  handoff?: {
+    target: "livekit";
+    status: "dialing" | "connected" | "failed";
+    at: string;
+  };
+  callerPolicy?:
+    | "personal_message"
+    | "personal_transfer"
+    | "personal_end"
+    | "unknown_message";
+  /** Carrier-supplied original destination, when Twilio passes it. */
+  forwardedFrom?: string;
+  quiet?: boolean;
 };
 
 export type NotificationDelivery = {
@@ -394,6 +464,8 @@ export type CallSession = {
   /** Conversation bookkeeping that keeps the receptionist from repeating itself. */
   flags?: CallFlags;
   transfers: TransferAttempt[];
+  /** How this call was routed (ring-first, hand-off, personal-contact policy). */
+  routing?: CallRouting;
   recordingUrl?: string;
   summary?: CallSummary;
   context?: CallContext;
@@ -416,7 +488,13 @@ export type CallSession = {
 /* ------------------------------------------------------------------------- */
 
 /** Logical callback targets; renderers map them to URLs or in-process hooks. */
-export type VoiceCallbackStep = "gather" | "dial" | "voicemail";
+export type VoiceCallbackStep =
+  | "gather"
+  | "dial"
+  | "voicemail"
+  /** TwiML run on the contractor's leg when they answer (press-1 screening). */
+  | "screen"
+  | "screen_result";
 
 export type VoiceVerb =
   | {
@@ -429,7 +507,7 @@ export type VoiceVerb =
     }
   | {
       verb: "gather";
-      next: "gather";
+      next: "gather" | "screen_result";
       language: ReceptionistLanguage;
       /** Prompts spoken while listening (barge-in allowed), in order. */
       prompts: {
@@ -448,6 +526,21 @@ export type VoiceVerb =
       next: "dial";
       phoneE164: string;
       callerIdE164?: string;
+      timeoutSeconds: number;
+      /** Run press-1 screening on the answered leg before bridging. */
+      screen?: boolean;
+    }
+  | {
+      /**
+       * Hand the call to the LiveKit voice agent over SIP. The renderer
+       * resolves the SIP host and credentials from the environment, so no
+       * secret ever sits in a plan.
+       */
+      verb: "sip_handoff";
+      next: "dial";
+      target: "livekit";
+      /** The business number the caller dialed (the agent looks it up). */
+      calledE164: string;
       timeoutSeconds: number;
     }
   | {

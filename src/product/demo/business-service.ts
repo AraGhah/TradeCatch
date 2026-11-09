@@ -16,6 +16,7 @@ import {
   type DemoBusinessProfile,
   type DemoSeedSummary,
 } from "./types";
+import { PLAN_IDS } from "@/product/saas/entitlements";
 
 export const createDemoBusinessSchema = z
   .object({
@@ -35,9 +36,9 @@ export const createDemoBusinessSchema = z
     timezone: z.string().trim().min(3).max(64).optional(),
     accountType: z.literal("demo").optional().default("demo"),
     subscriptionPlan: z
-      .enum(["starter", "growth", "receptionist"])
+      .enum(PLAN_IDS)
       .optional()
-      .default("growth"),
+      .default("professional"),
     accountStatus: z
       .enum(["active", "suspended"])
       .optional()
@@ -171,7 +172,7 @@ export async function createDemoBusiness(
 
   const created = await saas.createOrganizationWithOwner({
     name: input.businessName,
-    plan: input.subscriptionPlan ?? "growth",
+    plan: input.subscriptionPlan ?? "professional",
     ownerEmail: email,
     ownerName: input.ownerName?.trim() || email.split("@")[0] || "Demo Owner",
     locale: input.language,
@@ -407,7 +408,7 @@ export async function seedDemoBusiness(
     await growth.upsertPipelineCard({
       organizationId,
       stage: i % 2 === 0 ? "new" : "contacted",
-      title: `[SIMULATED] ${c.name} — ${org.industry || "job"}`,
+      title: `[SIMULATED] ${c.name} · ${org.industry || "job"}`,
       source: "manual",
       customerPhoneE164: c.phone,
       estimatedValue: 150 + i * 75,
@@ -422,13 +423,13 @@ export async function seedDemoBusiness(
       customerName: c.name,
       customerPhoneE164: c.phone,
       customerEmail: undefined,
-      title: `[SIMULATED] Visit — ${c.city}`,
+      title: `[SIMULATED] Visit · ${c.city}`,
       startsAt: starts.toISOString(),
       endsAt: new Date(starts.getTime() + 90 * 60 * 1000).toISOString(),
       status: "scheduled",
       source: "manual",
       sourceRefId: undefined,
-      notes: "Simulated demo appointment — no real customer contact.",
+      notes: "Simulated demo appointment. No real customer contact.",
     });
   }
 
@@ -462,7 +463,7 @@ export async function seedDemoBusiness(
       kind: "website_lead",
       refId: `demo-sms-${stamp}-${i}`,
       title: `[SIMULATED] SMS with ${c.name}`,
-      reason: "Simulated conversation — dry-run only",
+      reason: "Simulated conversation, dry-run only",
       status: "open",
     });
   }
@@ -474,8 +475,8 @@ export async function seedDemoBusiness(
       title: `[SIMULATED] Incoming call #${i + 1}`,
       detail:
         i < DEMO_SEED_TARGETS.missedCalls
-          ? "Missed — recovery workflow (simulated)"
-          : "Answered — receptionist (simulated)",
+          ? "Missed call, recovery workflow (simulated)"
+          : "Answered by the receptionist (simulated)",
       actor: "demo_seed",
       at: new Date(now - i * 45 * 60_000).toISOString(),
     });

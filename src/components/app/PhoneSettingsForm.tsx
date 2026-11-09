@@ -29,11 +29,12 @@ export function PhoneSettingsForm({
     initial.tradecatchNumberE164 ?? "",
   );
   const [aiEnabled, setAiEnabled] = useState(initial.aiEnabled);
-  const [strategy, setStrategy] = useState(initial.inboundStrategy);
-  const [voiceEngine, setVoiceEngine] = useState(initial.voiceEngine);
-  const [human, setHuman] = useState(initial.humanTransferE164 ?? "");
-  const [backup, setBackup] = useState(initial.backupTransferE164 ?? "");
-  const [timeout, setTimeoutSec] = useState(initial.humanRingTimeoutSeconds);
+  // Call transfer is withheld at launch: these are kept as saved, never edited here.
+  const strategy = initial.inboundStrategy;
+  const voiceEngine = initial.voiceEngine;
+  const human = initial.humanTransferE164 ?? "";
+  const backup = initial.backupTransferE164 ?? "";
+  const timeout = initial.humanRingTimeoutSeconds;
   const [recording, setRecording] = useState(initial.callRecordingEnabled);
   const [forwardAck, setForwardAck] = useState(
     initial.forwardingInstructionsAck,
@@ -102,11 +103,6 @@ export function PhoneSettingsForm({
         {initial.connectionDetail ? (
           <p className="mt-1 text-xs opacity-90">{initial.connectionDetail}</p>
         ) : null}
-        {initial.webhookVoiceUrl ? (
-          <p className="mt-2 break-all font-mono text-[11px] opacity-80">
-            {t("webhook")}: {initial.webhookVoiceUrl}
-          </p>
-        ) : null}
       </div>
 
       <fieldset className={CARD} disabled={dis}>
@@ -156,78 +152,8 @@ export function PhoneSettingsForm({
           />
           {t("aiEnabled")}
         </label>
-        <label className="mt-3 block text-xs text-navy/70">
-          {t("inboundStrategy")}
-          <select
-            className={INPUT}
-            value={strategy}
-            onChange={(e) =>
-              setStrategy(
-                e.target.value === "human_first" ? "human_first" : "ai_first",
-              )
-            }
-          >
-            <option value="ai_first">{t("strategy.ai_first")}</option>
-            <option value="human_first">{t("strategy.human_first")}</option>
-          </select>
-        </label>
-        <label className="mt-3 block text-xs text-navy/70">
-          {t("voiceEngine")}
-          <select
-            className={INPUT}
-            value={voiceEngine}
-            onChange={(e) =>
-              setVoiceEngine(
-                e.target.value === "conversation_relay"
-                  ? "conversation_relay"
-                  : "gather",
-              )
-            }
-          >
-            <option value="gather">{t("engine.gather")}</option>
-            <option value="conversation_relay">
-              {t("engine.conversation_relay")}
-            </option>
-          </select>
-        </label>
-        <p className="mt-1 text-xs text-navy/50">{t("engineHelp")}</p>
-      </fieldset>
-
-      <fieldset className={CARD} disabled={dis}>
-        <legend className="px-1 text-sm font-semibold text-navy">
-          {t("transferTitle")}
-        </legend>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-xs text-navy/70">
-            {t("humanTransfer")}
-            <input
-              value={human}
-              onChange={(e) => setHuman(e.target.value)}
-              className={INPUT}
-              placeholder="+14385551234"
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("backupTransfer")}
-            <input
-              value={backup}
-              onChange={(e) => setBackup(e.target.value)}
-              className={INPUT}
-              placeholder="+14385551235"
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("ringTimeout")}
-            <input
-              type="number"
-              min={10}
-              max={60}
-              value={timeout}
-              onChange={(e) => setTimeoutSec(Number(e.target.value) || 25)}
-              className={INPUT}
-            />
-          </label>
-        </div>
+        {/* The answering engine and the answer-by-a-person-first strategy are set by TradeCatch
+            during installation. Call transfer is not offered, so neither is shown here. */}
       </fieldset>
 
       <fieldset className={CARD} disabled={dis}>

@@ -74,7 +74,7 @@ LINES = {
         "C_vo3":  ("narr",  "Real emergencies reach your on-call line. Everything else is waiting in the morning, with a summary."),
         # shared CTA
         "CTA1":   ("narr",  "TradeCatch. Every call counts."),
-        "CTA2":   ("narr",  "Book your free audit at trade catch dot C A."),
+        "CTA2":   ("narr",  "Book a free demo at trade catch dot C A."),
     },
     "fr": {
         "A_vo1":  ("narr",  "Les mains sous l'évier. Le téléphone qui sonne. Et tu ne peux pas répondre."),
@@ -97,14 +97,14 @@ LINES = {
         "C_r2":   ("recep", "Je comprends, c'est urgent. Je vous transfère immédiatement au technicien de garde."),
         "C_vo3":  ("narr",  "Les vraies urgences rejoignent ta ligne de garde. Le reste est là le matin, avec un résumé."),
         "CTA1":   ("narr",  "Tréïd Catch. Chaque appel compte."),
-        "CTA2":   ("narr",  "Réserve ton audit gratuit sur tradecatch point C A."),
+        "CTA2":   ("narr",  "Réserve ta démo gratuite sur tradecatch point C A."),
     },
 }
 
 # ---- on-screen copy (product UI, not subtitles) ---------------------------------------
 BRAND = {
-    "en": {"tag": "Every call counts.", "cta": "Book a free 20-minute audit", "url": "tradecatch.ca",
+    "en": {"tag": "Every call counts.", "cta": "Book a Free Demo", "url": "tradecatch.ca",
            "legal": "Dramatization with a fictional business. Receptionist is a founder-configured pilot."},
-    "fr": {"tag": "Chaque appel compte.", "cta": "Réserver un audit gratuit", "url": "tradecatch.ca",
+    "fr": {"tag": "Chaque appel compte.", "cta": "Réserver une démo gratuite", "url": "tradecatch.ca",
            "legal": "Dramatisation avec une entreprise fictive. La réceptionniste est un pilote configuré par le fondateur."},
 }

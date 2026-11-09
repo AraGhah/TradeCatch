@@ -16,7 +16,7 @@ export function gmailReplyEvent(message: GmailMessage): OutboxEvent {
     payload: {
       recipientUserId: message.userId,
       message:
-        `${message.fromName || message.fromEmail}${message.subject.trim() ? ` — ${message.subject.trim()}` : ""}`.slice(
+        `${message.fromName || message.fromEmail}${message.subject.trim() ? `: ${message.subject.trim()}` : ""}`.slice(
           0,
           200,
         ),

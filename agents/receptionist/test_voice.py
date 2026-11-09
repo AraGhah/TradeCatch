@@ -87,5 +87,57 @@ class CascadeSettingsTest(unittest.TestCase):
         self.assertEqual(s.stt, voice.DEFAULT_STT)
 
 
+STANDARD = {
+    **KEY,
+    "AGENT_STANDARD_VOICE": "elevenlabs",
+    "AGENT_ELEVENLABS_VOICE_ID": "j9RedbMRSNQ74PyikQwD",
+}
+
+
+class StandardVoiceTest(unittest.TestCase):
+    def test_off_unless_the_operator_turns_it_on(self):
+        env = {k: v for k, v in STANDARD.items() if k != "AGENT_STANDARD_VOICE"}
+        self.assertIsNone(voice.standard_voice(env))
+
+    def test_on_with_a_key_and_a_voice_id(self):
+        got = voice.standard_voice(STANDARD)
+        self.assertEqual((got.voice_id, got.model, got.source), ("j9RedbMRSNQ74PyikQwD", voice.DEFAULT_MODEL, "standard"))
+        self.assertIn("j9RedbMRSNQ74PyikQwD", got.describe())
+
+    def test_needs_the_key_a_valid_id_and_no_kill_switch(self):
+        for broken in (
+            {"ELEVENLABS_API_KEY": ""},
+            {"AGENT_ELEVENLABS_VOICE_ID": ""},
+            {"AGENT_ELEVENLABS_VOICE_ID": "not a voice id!"},
+            {"AGENT_CUSTOM_VOICE": "false"},
+        ):
+            self.assertIsNone(voice.standard_voice({**STANDARD, **broken}), broken)
+
+    def test_an_unknown_model_falls_back_to_the_fast_default(self):
+        got = voice.standard_voice({**STANDARD, "AGENT_ELEVENLABS_MODEL": "eleven_imaginary"})
+        self.assertEqual(got.model, voice.DEFAULT_MODEL)
+        got = voice.standard_voice({**STANDARD, "AGENT_ELEVENLABS_MODEL": "eleven_v3_conversational"})
+        self.assertEqual(got.model, "eleven_v3_conversational")
+
+    def test_a_business_clone_wins_over_the_standard_voice(self):
+        got = voice.call_voice(cfg(), STANDARD)
+        self.assertEqual((got.voice_id, got.source), ("abcDEF1234567890", "cloned"))
+        self.assertNotIn("abcDEF1234567890", got.describe())
+        self.assertEqual(voice.call_voice({"instructions": "x"}, STANDARD).source, "standard")
+        self.assertIsNone(voice.call_voice({"instructions": "x"}, KEY))
+
+
+class DeliverySettingsTest(unittest.TestCase):
+    def test_unset_keeps_the_voice_own_settings(self):
+        self.assertIsNone(voice.delivery_settings({}))
+
+    def test_values_are_read_clamped_and_completed(self):
+        got = voice.delivery_settings({"AGENT_ELEVENLABS_SPEED": "2", "AGENT_ELEVENLABS_STYLE": "0"})
+        self.assertEqual(got, {"speed": 1.2, "style": 0.0, "stability": 0.5, "similarity_boost": 0.75})
+
+    def test_garbage_is_ignored(self):
+        self.assertIsNone(voice.delivery_settings({"AGENT_ELEVENLABS_SPEED": "fast"}))
+
+
 if __name__ == "__main__":
     unittest.main()

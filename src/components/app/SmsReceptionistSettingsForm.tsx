@@ -29,10 +29,13 @@ export function SmsReceptionistSettingsForm({
   smsFromNumber,
   initial,
   canEdit,
+  chatbotAvailable = false,
 }: {
   smsFromNumber: string;
   initial: SmsReceptionistSettingsValue;
   canEdit: boolean;
+  /** Open-ended text replies are off at launch, so the switch is not offered. */
+  chatbotAvailable?: boolean;
 }) {
   const t = useTranslations("app.smsReceptionist");
   const [value, setValue] = useState(initial);
@@ -229,23 +232,25 @@ export function SmsReceptionistSettingsForm({
         />
       </label>
 
-      <label className="flex items-start gap-2 text-sm text-navy">
-        <input
-          type="checkbox"
-          className="mt-1"
-          disabled={!canEdit}
-          checked={value.aiSmsReplies}
-          onChange={(e) =>
-            setValue((prev) => ({ ...prev, aiSmsReplies: e.target.checked }))
-          }
-        />
-        <span>
-          {t("aiSmsReplies")}
-          <span className="mt-0.5 block text-xs text-navy/50">
-            {t("aiSmsRepliesNote")}
+      {chatbotAvailable ? (
+        <label className="flex items-start gap-2 text-sm text-navy">
+          <input
+            type="checkbox"
+            className="mt-1"
+            disabled={!canEdit}
+            checked={value.aiSmsReplies}
+            onChange={(e) =>
+              setValue((prev) => ({ ...prev, aiSmsReplies: e.target.checked }))
+            }
+          />
+          <span>
+            {t("aiSmsReplies")}
+            <span className="mt-0.5 block text-xs text-navy/50">
+              {t("aiSmsRepliesNote")}
+            </span>
           </span>
-        </span>
-      </label>
+        </label>
+      ) : null}
 
       <div>
         <p className="mb-2 text-sm text-navy">{t("roster")}</p>

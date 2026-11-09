@@ -26,6 +26,8 @@ BOOK_TIMEOUT_SECONDS = 9.0
 REPORT_TIMEOUT_SECONDS = 10.0
 
 REPORT_ATTEMPTS = 3
+# One retry: the caller hears ringing meanwhile, so the total stays a few seconds.
+CONFIG_ATTEMPTS = 2
 BOOK_ATTEMPTS = 2
 RETRY_PAUSE_SECONDS = 1.0
 
@@ -83,6 +85,7 @@ class TradeCatchClient:
                 params=params,
                 json=json,
                 headers=self._headers,
+                allow_redirects=False,
                 timeout=aiohttp.ClientTimeout(total=timeout),
             ) as res:
                 try:
@@ -108,7 +111,6 @@ class TradeCatchClient:
         attempts: int,
     ) -> dict[str, Any] | None:
         """POST with retries on network errors and 5xx. A 4xx is final."""
-        call_id = body.get("callId")
         for attempt in range(1, attempts + 1):
             answer = await self._request("POST", path, timeout=timeout, json=body)
             if answer is not None:
@@ -116,30 +118,45 @@ class TradeCatchClient:
                 if status == 200 and data.get("ok") is True:
                     return data
                 if status < 500:
-                    logger.error("%s returned %s (call %s)", path, status, call_id)
+                    logger.error("%s returned %s", path, status)
                     return None
-                logger.warning("%s returned %s (call %s)", path, status, call_id)
+                logger.warning("%s returned %s", path, status)
             if attempt < attempts:
                 await asyncio.sleep(self._retry_pause * attempt)
         return None
 
     # -- endpoints ------------------------------------------------------
 
-    async def fetch_business_config(self, number: str) -> dict[str, Any] | None:
-        answer = await self._request(
-            "GET",
-            "/api/receptionist/agent-config",
-            timeout=_seconds("AGENT_CONFIG_TIMEOUT_SECONDS", CONFIG_TIMEOUT_SECONDS),
-            params={"number": number},
-        )
-        if answer is None:
-            return None
-        status, data = answer
-        if status != 200:
-            logger.error("agent-config returned %s for %s", status, number)
-            return None
-        config = data.get("config")
-        return config if isinstance(config, dict) else None
+    async def fetch_business_config(
+        self, number: str, caller: str | None = None
+    ) -> dict[str, Any] | None:
+        """The business's config, or None. Without it the call gets the safe fallback
+        prompt with no transfers and no booking, so a network error or a 5xx (a cold
+        server, a slow database) is retried once. A 4xx is final: an unknown number
+        must not be answered as anyone else."""
+        timeout = _seconds("AGENT_CONFIG_TIMEOUT_SECONDS", CONFIG_TIMEOUT_SECONDS)
+        for attempt in range(1, CONFIG_ATTEMPTS + 1):
+            answer = await self._request(
+                "GET",
+                "/api/receptionist/agent-config",
+                timeout=timeout,
+                # The caller ID lets TradeCatch apply the owner's personal-contacts
+                # policy server-side; only the decision comes back, never the list.
+                params={"number": number, **({"from": caller} if caller else {})},
+            )
+            if answer is not None:
+                status, data = answer
+                if status == 200:
+                    config = data.get("config")
+                    return config if isinstance(config, dict) else None
+                if status < 500:
+                    logger.error("agent-config returned %s", status)
+                    return None
+                logger.warning("agent-config returned %s (attempt %d)", status, attempt)
+            if attempt < CONFIG_ATTEMPTS:
+                await asyncio.sleep(self._retry_pause * attempt)
+        logger.error("agent-config unavailable after %d attempts", CONFIG_ATTEMPTS)
+        return None
 
     async def availability(self, body: Mapping[str, Any]) -> dict[str, Any] | None:
         data = await self._post(
@@ -160,6 +177,20 @@ class TradeCatchClient:
             attempts=BOOK_ATTEMPTS,
         )
         result = data.get("booking") if data else None
+        return result if isinstance(result, dict) else None
+
+    async def appointments(self, body: Mapping[str, Any]) -> dict[str, Any] | None:
+        """find / move / cancel an existing appointment, or text the caller.
+
+        A retry is safe: moving to the same time again is a no-op, a canceled
+        appointment stays canceled, and each text has a fixed id on the server."""
+        data = await self._post(
+            "/api/receptionist/agent/appointments",
+            body,
+            timeout=_seconds("AGENT_BOOK_TIMEOUT_SECONDS", BOOK_TIMEOUT_SECONDS),
+            attempts=BOOK_ATTEMPTS,
+        )
+        result = data.get("result") if data else None
         return result if isinstance(result, dict) else None
 
     async def report(self, body: Mapping[str, Any]) -> bool:

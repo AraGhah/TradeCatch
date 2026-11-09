@@ -237,7 +237,7 @@ export function LeadWorkspace({
                 {event.at.slice(0, 16).replace("T", " ")}
               </span>{" "}
               {event.kind}
-              {event.detail ? ` — ${event.detail}` : ""}
+              {event.detail ? ` · ${event.detail}` : ""}
             </li>
           ))}
         </ul>

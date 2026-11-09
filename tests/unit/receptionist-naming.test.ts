@@ -6,18 +6,18 @@ import { PLAN_DISPLAY_NAMES } from "../../src/product/saas/entitlements";
 
 /**
  * Product name (nav, feature, dashboard) stays "Receptionist" /
- * "Réceptionniste". The paid tier is "Receptionist Plus" /
- * "Réceptionniste Plus". Customer-facing copy must never use the obsolete
- * "AI receptionist" / "réceptionniste IA" product branding.
+ * "Réceptionniste". The two plans that are sold are "Essential" and
+ * "Professional" in both languages. Customer-facing copy must never use the
+ * obsolete "AI receptionist" / "réceptionniste IA" product branding.
  */
-for (const [locale, messages, productName, planName] of [
-  ["en", en, "Receptionist", "Receptionist Plus"],
-  ["fr", fr, "Réceptionniste", "Réceptionniste Plus"],
+for (const [locale, messages, productName] of [
+  ["en", en, "Receptionist"],
+  ["fr", fr, "Réceptionniste"],
 ] as const) {
   test(`${locale}: product surfaces use the Receptionist feature name`, () => {
     const labels = [
       messages.nav.aiReceptionist,
-      messages.aiReceptionist.planName,
+      messages.aiReceptionist.eyebrow,
       messages.app.nav.receptionist,
       messages.app.nav.groupReceptionist,
       messages.app.receptionist.headline,
@@ -28,12 +28,35 @@ for (const [locale, messages, productName, planName] of [
     for (const label of labels) assert.equal(label, productName);
   });
 
-  test(`${locale}: paid tier is named Receptionist Plus on pricing and plans`, () => {
-    assert.equal(messages.plans.names.receptionist, planName);
-    assert.equal(PLAN_DISPLAY_NAMES.receptionist, "Receptionist Plus");
-    assert.equal(messages.pricing.tiers[2].name, planName);
-    assert.equal(messages.pricing.comparison.columns[2], planName);
-    assert.equal(messages.home.pricingPreview.tiers[2].name, planName);
+  test(`${locale}: the two plans are named Essential and Professional everywhere they are sold`, () => {
+    assert.equal(messages.plans.names.essential, "Essential");
+    assert.equal(messages.plans.names.professional, "Professional");
+    assert.equal(PLAN_DISPLAY_NAMES.essential, "Essential");
+    assert.equal(PLAN_DISPLAY_NAMES.professional, "Professional");
+    assert.deepEqual(
+      messages.pricing.tiers.map((tier) => tier.name),
+      ["Essential", "Professional"],
+    );
+    assert.deepEqual(
+      messages.home.pricingPreview.tiers.map((tier) => tier.name),
+      ["Essential", "Professional"],
+    );
+    assert.equal(messages.aiReceptionist.plans.essential.name, "Essential");
+    assert.equal(messages.aiReceptionist.plans.professional.name, "Professional");
+  });
+
+  test(`${locale}: retired plan names remain only for existing customers`, () => {
+    // Legacy ids stay valid so existing subscribers keep their plan, but none of
+    // the public marketing namespaces may sell them.
+    const marketing = JSON.stringify([
+      messages.home,
+      messages.pricing,
+      messages.aiReceptionist,
+      messages.onePager,
+      messages.howItWorks,
+      messages.faq,
+    ]);
+    assert.doesNotMatch(marketing, /\b(Starter|Growth|Receptionist Plus|Réceptionniste Plus)\b/);
   });
 
   test(`${locale}: customer-facing copy has no obsolete AI-prefixed product name`, () => {

@@ -1,3 +1,4 @@
+import { ownerVisibleCalls } from "@/product/receptionist/call-history";
 import { NextRequest, NextResponse } from "next/server";
 import {
   filterCalls,
@@ -44,10 +45,12 @@ export async function GET(request: NextRequest, { params }: Params) {
   );
   const runtime = getReceptionistRuntime();
   // The store query is scoped to this business; nothing below widens it.
-  const sessions = await runtime.store.listSessions({
-    clientAccountId: client.id,
-    limit: SCAN_LIMIT,
-  });
+  const sessions = ownerVisibleCalls(
+    await runtime.store.listSessions({
+      clientAccountId: client.id,
+      limit: SCAN_LIMIT,
+    }),
+  );
 
   return NextResponse.json({
     ok: true,

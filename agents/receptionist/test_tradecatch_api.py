@@ -51,6 +51,18 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(sent["actor"], "livekit-agent")
         self.assertEqual(sent["body"], BODY)
 
+    async def test_config_lookup_sends_the_caller_for_the_contacts_policy(self):
+        self.payload = {"ok": True, "config": {"configId": "rc_1"}}
+        self.assertEqual(
+            await self.client.fetch_business_config("+14382314700", "+15145551111"),
+            {"configId": "rc_1"},
+        )
+        self.assertEqual(
+            self.requests[0]["query"], {"number": "+14382314700", "from": "+15145551111"}
+        )
+        await self.client.fetch_business_config("+14382314700")
+        self.assertEqual(self.requests[1]["query"], {"number": "+14382314700"})
+
     async def test_report_retries_a_server_error_then_succeeds(self):
         self.statuses = [500, 502]
         self.payload = {"ok": True, "recorded": True}
@@ -101,6 +113,22 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
     async def test_config_for_an_unknown_number_is_none(self):
         self.statuses = [404]
         self.assertIsNone(await self.client.fetch_business_config("+19995550000"))
+        # Final: an unknown number is never retried into some other answer.
+        self.assertEqual(len(self.requests), 1)
+
+    async def test_config_survives_one_server_error(self):
+        # Without a config the call has no transfers and no booking at all.
+        self.statuses = [503]
+        self.payload = {"config": {"instructions": "hi", "transferE164": "+14389957350"}}
+        config = await self.client.fetch_business_config("+14382314700")
+        self.assertEqual(config["transferE164"], "+14389957350")
+        self.assertEqual(len(self.requests), 2)
+
+    async def test_config_gives_up_after_two_server_errors(self):
+        self.statuses = [500, 502, 200]
+        self.payload = {"config": {"instructions": "hi"}}
+        self.assertIsNone(await self.client.fetch_business_config("+14382314700"))
+        self.assertEqual(len(self.requests), 2)
 
     async def test_an_unreachable_server_returns_none_instead_of_raising(self):
         client = TradeCatchClient("http://127.0.0.1:1", "s3cret", retry_pause=0)

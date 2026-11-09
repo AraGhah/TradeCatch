@@ -43,6 +43,6 @@ export async function GET() {
     linked: true,
     plan: auth.ctx.organization.plan,
     metrics,
-    growthAvailable: auth.ctx.organization.plan === "starter",
+    growthAvailable: auth.ctx.organization.plan === "essential",
   });
 }

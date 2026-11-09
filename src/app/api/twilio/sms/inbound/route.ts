@@ -4,7 +4,10 @@ import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { getSaasStore } from "@/product/saas/runtime";
 import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
 import { runAfterResponse } from "@/lib/after-response";
-import { withPostgresRequestScope } from "@/lib/postgres-pool";
+import {
+  safeDatabaseErrorCode,
+  withPostgresRequestScope,
+} from "@/lib/postgres-pool";
 import {
   getSmsInbox,
   processSmsInbox,
@@ -116,6 +119,7 @@ export async function POST(request: NextRequest) {
         event: "tradecatch.sms.receipt_failed",
         messageSid: id,
         code: error instanceof Error ? error.name : "Error",
+        sqlState: safeDatabaseErrorCode(error),
       }),
     );
     return NextResponse.json(

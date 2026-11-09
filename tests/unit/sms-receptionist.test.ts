@@ -13,6 +13,7 @@ import {
   afterHoursReply,
   detectLanguage,
   fallbackReply,
+  followUpReply,
   parseModelReply,
   sanitizeReply,
   MAX_REPLY_CHARS,
@@ -25,6 +26,10 @@ import {
   type SmsReceptionistDeps,
   type SmsReceptionistInput,
 } from "../../src/product/sms-receptionist/service";
+
+// The open-ended text assistant is off at launch (see src/lib/launch-flags.ts). These tests
+// exercise its behavior for the day it is switched on, so they turn the switch on explicitly.
+process.env.LAUNCH_ENABLE_SMS_CHATBOT = "1";
 
 // Wednesday 11:00 in Toronto; Wednesday 23:00 the night before for quiet hours.
 const OPEN = new Date("2026-10-28T15:00:00Z");
@@ -58,7 +63,7 @@ type Overrides = {
   history?: HistoryMessage[];
   org?: { status: string; entitled: boolean } | null;
   suppressed?: boolean;
-  activeWorkflow?: boolean;
+  activeWorkflow?: boolean | "collecting" | "with_team";
   enqueueFails?: boolean;
   sendFails?: boolean;
 };
@@ -134,8 +139,10 @@ function harness(overrides: Overrides = {}) {
     async isSuppressed() {
       return overrides.suppressed ?? false;
     },
-    async hasActiveWorkflow() {
-      return overrides.activeWorkflow ?? false;
+    async activeWorkflow() {
+      const workflow = overrides.activeWorkflow ?? false;
+      if (workflow === true) return "collecting";
+      return workflow || null;
     },
     async quietHours() {
       return { windowStartHour: 8, windowEndHour: 20, weekendSending: true };
@@ -258,7 +265,7 @@ describe("sms receptionist — new customers", () => {
     );
     assert.match(
       llm.last!.system,
-      /Business hours: Mon, Tue, Wed, Thu, Fri 08:00–17:00/,
+      /Business hours: Mon, Tue, Wed, Thu, Fri 08:00-17:00/,
     );
     assert.match(llm.last!.system, /Service area: Montréal et Laval/);
     assert.match(llm.last!.system, /never invent/i);
@@ -319,7 +326,7 @@ describe("sms receptionist — AI failure", () => {
     assert.equal(result.status === "replied" && result.source, "fallback");
   });
 
-  it("does not repeat the acknowledgement to a short follow-up with nothing to answer", async () => {
+  it("answers a short follow-up with a brief acknowledgement instead of silence", async () => {
     const h = harness({
       history: [
         {
@@ -333,11 +340,76 @@ describe("sms receptionist — AI failure", () => {
     const result = await h.service.handleCustomerSms(
       h.input("Allo?", { messageSid: "SM_in_2" }),
     );
-    assert.deepEqual(result, {
-      status: "skipped",
-      reason: "fallback_already_sent",
-    });
+    assert.equal(result.status, "replied");
+    assert.equal(h.sent.length, 1);
+    assert.equal(
+      h.sent[0]!.body,
+      followUpReply("fr", { name: "Nord Plomberie" }),
+    );
+    // Not the full introduction again.
+    assert.doesNotMatch(h.sent[0]!.body, /assistant virtuel/);
+    assert.deepEqual(h.crm, [{ body: h.sent[0]!.body, sent: true }]);
+    // A person sees the conversation, without a wake-up text for every "allo?".
+    assert.equal(h.escalations[0]?.reason, "ai_unavailable");
+    assert.equal(h.escalations[0]?.alertStaff, false);
+  });
+
+  it("goes quiet only after two acknowledgements in a row, and still escalates", async () => {
+    const follow = followUpReply("fr", { name: "Nord Plomberie" });
+    const history: HistoryMessage[] = [
+      { direction: "outbound", body: fallbackReply("fr", { name: "Nord Plomberie" }), at: "2026-10-28T14:40:00Z", automated: true },
+      { direction: "inbound", body: "allo?", at: "2026-10-28T14:41:00Z" },
+      { direction: "outbound", body: follow, at: "2026-10-28T14:41:05Z", automated: true },
+      { direction: "inbound", body: "??", at: "2026-10-28T14:42:00Z" },
+      { direction: "outbound", body: follow, at: "2026-10-28T14:42:05Z", automated: true },
+    ];
+    const h = harness({ history });
+    const result = await h.service.handleCustomerSms(
+      h.input("???", { messageSid: "SM_in_4" }),
+    );
+    assert.deepEqual(result, { status: "skipped", reason: "fallback_already_sent" });
     assert.equal(h.sent.length, 0);
+    assert.equal(h.escalations.length, 1);
+    assert.equal(h.escalations[0]!.alertStaff, false);
+  });
+
+  it("answers every text of a conversation while the model is down", async () => {
+    const turns: HistoryMessage[] = [];
+    const texts = ["Bonjour", "ok", "allo?", "Mon chauffe-eau fuit"];
+    for (const [i, body] of texts.entries()) {
+      const h = harness({
+        llm: llmReturning(new Error("timeout")),
+        history: [...turns],
+      });
+      const result = await h.service.handleCustomerSms(
+        h.input(body, { messageSid: `SM_conv_${i}` }),
+      );
+      assert.equal(result.status, "replied", `"${body}" got a reply`);
+      turns.push(
+        { direction: "inbound", body, at: OPEN.toISOString(), providerMessageSid: `SM_conv_${i}` },
+        { direction: "outbound", body: h.sent[0]!.body, at: OPEN.toISOString(), automated: true },
+      );
+    }
+  });
+
+  it("replies after hours to a customer who was already acknowledged", async () => {
+    const h = harness({
+      now: NIGHT,
+      history: [
+        {
+          direction: "outbound",
+          body: afterHoursReply("fr", context),
+          at: "2026-10-28T02:50:00Z",
+          automated: true,
+        },
+      ],
+    });
+    const result = await h.service.handleCustomerSms(
+      h.input("Allo?", { messageSid: "SM_in_5" }),
+    );
+    assert.equal(result.status, "replied");
+    assert.equal(h.sent[0]!.body, followUpReply("fr", { name: "Nord Plomberie" }));
+    assert.equal(h.escalations[0]?.reason, "quiet_hours");
     assert.equal(h.escalations[0]?.alertStaff, false);
   });
 
@@ -842,5 +914,55 @@ describe("sms receptionist — what the AI is told", () => {
       "oldest first, so the thread reads in order",
     );
     assert.match(prompt, /NEW MESSAGE FROM CUSTOMER[^\n]*\nEt pour jeudi\?/);
+  });
+});
+
+describe("sms receptionist — customer with a missed-call job already with the team", () => {
+  it("still waits for the missed-call flow while it is asking its questions", async () => {
+    const h = harness({ activeWorkflow: "collecting" });
+    const result = await h.service.handleCustomerSms(h.input("Bonjour"));
+    assert.deepEqual(result, { status: "skipped", reason: "active_workflow" });
+    assert.equal(h.sent.length, 0);
+  });
+
+  it("answers with the model, told the team already has the request", async () => {
+    const llm = llmReturning({
+      reply: "Bien reçu! L’équipe a votre demande et vous recontactera.",
+      action: "reply",
+      language: "fr",
+    });
+    const h = harness({ activeWorkflow: "with_team", llm });
+    const result = await h.service.handleCustomerSms(
+      h.input("Est-ce que quelqu'un s'en vient?"),
+    );
+    assert.equal(result.status === "replied" && result.source, "model");
+    assert.equal(h.sent.length, 1);
+    assert.match(llm.last!.user, /OPEN REQUEST/);
+  });
+
+  it("acknowledges without re-asking for details when the model is down", async () => {
+    const h = harness({
+      activeWorkflow: "with_team",
+      llm: llmReturning(new Error("timeout")),
+    });
+    const result = await h.service.handleCustomerSms(
+      h.input("Mon évier coule encore, vous venez quand?"),
+    );
+    assert.equal(result.status, "replied");
+    assert.equal(
+      h.sent[0]!.body,
+      followUpReply("fr", { name: "Nord Plomberie" }, true),
+    );
+    assert.doesNotMatch(h.sent[0]!.body, /adresse/);
+    assert.equal(h.escalations[0]?.reason, "customer_request");
+  });
+
+  it("still sends safety guidance first for a dangerous situation", async () => {
+    const h = harness({ activeWorkflow: "with_team" });
+    const result = await h.service.handleCustomerSms(
+      h.input("Ça sent le gaz dans la maison"),
+    );
+    assert.equal(result.status === "replied" && result.source, "safety");
+    assert.match(h.sent[0]!.body, /911/);
   });
 });

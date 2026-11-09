@@ -118,10 +118,10 @@ export function OnePagerContent() {
             </div>
             <div>
               <h2 className="font-heading text-[18px] font-bold text-heading">
-                {t("pilotTitle")}
+                {t("billingTitle")}
               </h2>
               <p className="mt-2 text-[14.5px] leading-[1.55] text-secondary">
-                {t("pilot")}
+                {t("billing")}
               </p>
             </div>
           </section>

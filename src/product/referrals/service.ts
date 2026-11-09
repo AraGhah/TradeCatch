@@ -5,7 +5,11 @@
  *
  * Money safety, in one place:
  *  - A reward exists only after a successful qualifying payment (a paid
- *    installation Checkout Session), and only one per referred business.
+ *    setup-fee Checkout Session), and only one per referred business.
+ *  - The website-service bonus is a second reward of its own kind, created only
+ *    for a referral that already qualified and whose plan reward still stands,
+ *    at most once per referral, so one referral can never earn more than the
+ *    plan reward plus one website bonus ($110 CAD at most).
  *  - Replaying the same payment returns the same reward (unique session id).
  *  - Refund, chargeback or cancellation before the gift card is issued rejects
  *    the reward; after issue it is flagged for a person, never silently undone.
@@ -13,7 +17,7 @@
  *    no unacknowledged review flags. Issuing needs a configured fulfillment
  *    method and a unique gift card reference. Nothing here sends a gift card.
  */
-import type { PlanId } from "@/product/saas/plan-catalog";
+import { PLAN_ORDER, type PlanId } from "@/product/saas/plan-catalog";
 import {
   addDays,
   evaluateReferralRisk,
@@ -23,6 +27,8 @@ import {
   normalizeReferralCode,
   referralSettingsPatchSchema,
   rewardAmountCents,
+  settingsWithinProgramMaximum,
+  websiteBonusAmountCents,
   type PartyFacts,
   type ReferralEvent,
   type ReferralEventAction,
@@ -87,7 +93,33 @@ export type ReferralServiceDeps = {
   now?: () => Date;
   newId?: (prefix: string) => string;
   randomBytes?: (n: number) => Uint8Array;
+  /**
+   * Set when the rest of the platform is on durable storage. A referral link
+   * is a promise to credit someone later, so while this is set the service
+   * refuses to hand one out unless `store` is the durable one too.
+   * Absent in development and tests, where memory is the only store.
+   */
+  durability?: { expected: boolean; ready: boolean };
 };
+
+/** The referral tables cannot be reached, so no link can be promised right now. */
+export class ReferralStorageUnavailableError extends Error {
+  constructor() {
+    super("Referral storage is not available.");
+    this.name = "ReferralStorageUnavailableError";
+  }
+}
+
+export type EnsureLinkResult =
+  | { ok: true; code: string; created: boolean }
+  | {
+      ok: false;
+      reason:
+        | "program_disabled"
+        | "organization_inactive"
+        | "no_paid_access"
+        | "storage_unavailable";
+    };
 
 /* -------------------------------------------------------------------------- */
 /* Result types                                                               */
@@ -146,9 +178,14 @@ export type DecisionResult =
 export type ReferrerOverview = {
   eligibility: ReferrerEligibility;
   programEnabled: boolean;
+  /** The organization's own code, if it has asked for one. Never created by viewing. */
   code?: string;
   holdDays: number;
   rewards: { plan: PlanId; amountCents: number; earns: boolean }[];
+  /** Extra reward when a referred customer also buys the website service. */
+  websiteBonusCents: number;
+  /** The most one referral can earn: the plan reward plus the website bonus. */
+  maxRewardCents: number;
   referrals: {
     id: string;
     businessName: string;
@@ -156,6 +193,8 @@ export type ReferrerOverview = {
     registeredAt: string;
     qualifiedAt?: string;
     reward?: { status: RewardStatus; amountCents: number; plan: PlanId };
+    /** The website-service bonus for this referral, once earned. */
+    bonus?: { status: RewardStatus; amountCents: number };
   }[];
   totals: {
     signedUp: number;
@@ -259,22 +298,61 @@ export function createReferralService(deps: ReferralServiceDeps) {
     return { eligible: true };
   }
 
-  /** The organization's own code, created on first use. Null if not eligible. */
-  async function ensureCode(organizationId: string): Promise<string | null> {
+  /** A change that cannot be stored for real must not be accepted at all. */
+  function requireStorage(): void {
+    if (!storageReady()) throw new ReferralStorageUnavailableError();
+  }
+
+  function storageReady(): boolean {
+    const durability = deps.durability;
+    return !durability?.expected || durability.ready;
+  }
+
+  /**
+   * The organization's own code, created on the first request and the same
+   * afterwards. Two simultaneous requests end with the same code: the store
+   * keeps one row per organization, and the loser reads the winner's.
+   */
+  async function ensureLink(organizationId: string): Promise<EnsureLinkResult> {
+    // Check storage before eligibility: a link made in memory while the real
+    // database is down would be shown, shared and then never credited.
+    if (!storageReady()) return { ok: false, reason: "storage_unavailable" };
     const eligibility = await referrerEligibility(organizationId);
-    if (!eligibility.eligible) return null;
+    if (!eligibility.eligible) return { ok: false, reason: eligibility.reason };
     const existing = await store.getCodeForOrganization(organizationId);
-    if (existing) return existing;
+    if (existing) return { ok: true, code: existing, created: false };
     for (let attempt = 0; attempt < 5; attempt++) {
       const candidate = generateReferralCode(deps.randomBytes ?? defaultRandomBytes);
       try {
-        return (await store.createCode(organizationId, candidate, iso())).code;
+        const saved = await store.createCode(organizationId, candidate, iso());
+        return { ok: true, code: saved.code, created: saved.created };
       } catch (err) {
         if (isReferralConflict(err, "code")) continue;
         throw err;
       }
     }
     throw new Error("Could not allocate a referral code.");
+  }
+
+  /** The organization's existing code. Read-only: never creates one. */
+  async function getLink(
+    organizationId: string,
+  ): Promise<
+    | { ok: true; code: string | null }
+    | { ok: false; reason: Extract<EnsureLinkResult, { ok: false }>["reason"] }
+  > {
+    if (!storageReady()) return { ok: false, reason: "storage_unavailable" };
+    const eligibility = await referrerEligibility(organizationId);
+    if (!eligibility.eligible) return { ok: false, reason: eligibility.reason };
+    return { ok: true, code: await store.getCodeForOrganization(organizationId) };
+  }
+
+  /** The organization's own code, created on first use. Null if not eligible. */
+  async function ensureCode(organizationId: string): Promise<string | null> {
+    const result = await ensureLink(organizationId);
+    if (result.ok) return result.code;
+    if (result.reason === "storage_unavailable") throw new ReferralStorageUnavailableError();
+    return null;
   }
 
   /** Public check used by the landing page: is this a live code? Reveals nothing else. */
@@ -287,19 +365,30 @@ export function createReferralService(deps: ReferralServiceDeps) {
   }
 
   async function overview(organizationId: string): Promise<ReferrerOverview> {
+    // Never show an empty memory-backed overview as if it were the real one.
+    if (!storageReady()) throw new ReferralStorageUnavailableError();
     const [settings, eligibility] = await Promise.all([
       store.getSettings(),
       referrerEligibility(organizationId),
     ]);
-    const code = eligibility.eligible ? await ensureCode(organizationId) : null;
+    // Viewing the page is read-only: a link is created only when asked for (ensureLink).
+    const code = eligibility.eligible
+      ? await store.getCodeForOrganization(organizationId)
+      : null;
     const [referrals, rewards] = await Promise.all([
       store.listReferralsForReferrer(organizationId),
       store.listRewardsForReferrer(organizationId),
     ]);
-    const rewardByReferral = new Map(rewards.map((r) => [r.referralId, r]));
+    const rewardByReferral = new Map(
+      rewards.filter((r) => r.kind === "plan").map((r) => [r.referralId, r]),
+    );
+    const bonusByReferral = new Map(
+      rewards.filter((r) => r.kind === "website").map((r) => [r.referralId, r]),
+    );
 
     const rows: ReferrerOverview["referrals"] = referrals.map((referral) => {
       const reward = rewardByReferral.get(referral.id);
+      const bonus = bonusByReferral.get(referral.id);
       return {
         id: referral.id,
         businessName: referral.referredBusinessName,
@@ -314,6 +403,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
         reward: reward
           ? { status: reward.status, amountCents: reward.amountCents, plan: reward.plan }
           : undefined,
+        bonus: bonus ? { status: bonus.status, amountCents: bonus.amountCents } : undefined,
       };
     });
 
@@ -378,11 +468,15 @@ export function createReferralService(deps: ReferralServiceDeps) {
       programEnabled: settings.programEnabled,
       code: code ?? undefined,
       holdDays: settings.holdDays,
-      rewards: (["starter", "growth", "receptionist"] as const).map((plan) => ({
+      rewards: PLAN_ORDER.map((plan) => ({
         plan,
         amountCents: rewardAmountCents(settings, plan),
         earns: rewardAmountCents(settings, plan) > 0,
       })),
+      websiteBonusCents: websiteBonusAmountCents(settings),
+      maxRewardCents:
+        Math.max(0, ...PLAN_ORDER.map((plan) => rewardAmountCents(settings, plan))) +
+        websiteBonusAmountCents(settings),
       referrals: rows,
       totals: {
         signedUp: referrals.length,
@@ -406,6 +500,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     referredOrganizationId: string;
     actor: string;
   }): Promise<RegisterResult> {
+    requireStorage();
     const settings = await store.getSettings();
     if (!settings.programEnabled) return { ok: false, reason: "program_disabled" };
     const code = normalizeReferralCode(input.code);
@@ -471,6 +566,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     livemode: boolean;
     paidAt?: string;
   }): Promise<QualifyResult> {
+    requireStorage();
     const referral = await store.getReferralByReferred(input.organizationId);
     if (!referral) return { qualified: false, reason: "no_referral" };
 
@@ -503,6 +599,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     const inserted = await store.insertReward({
       id: newId("rwd"),
       referralId: referral.id,
+      kind: "plan",
       referrerOrganizationId: referral.referrerOrganizationId,
       referredOrganizationId: referral.referredOrganizationId,
       plan: input.plan,
@@ -536,10 +633,95 @@ export function createReferralService(deps: ReferralServiceDeps) {
   }
 
   /**
+   * The referred business also bought the website service: earn the referrer
+   * the website bonus. Never pays anything by itself (an administrator still
+   * approves it), and creates nothing unless the referral qualified through a
+   * plan reward that still stands. At most one bonus per referral, so replaying
+   * the same call, or a second website purchase, returns the same bonus.
+   */
+  async function onWebsiteServicePurchased(input: {
+    organizationId: string;
+    requestId: string;
+    purchasedAt?: string;
+  }): Promise<
+    | { earned: true; reward: RewardRecord; duplicate: boolean }
+    | {
+        earned: false;
+        reason:
+          | "no_referral"
+          | "not_qualified"
+          | "plan_reward_missing"
+          | "plan_reward_rejected"
+          | "program_disabled"
+          | "bonus_not_offered";
+      }
+  > {
+    requireStorage();
+    const referral = await store.getReferralByReferred(input.organizationId);
+    if (!referral) return { earned: false, reason: "no_referral" };
+    if (referral.status !== "qualified") return { earned: false, reason: "not_qualified" };
+
+    const existing = await store.getWebsiteBonusByReferral(referral.id);
+    if (existing) return { earned: true, reward: existing, duplicate: true };
+
+    const planReward = await store.getRewardByReferral(referral.id);
+    if (!planReward) return { earned: false, reason: "plan_reward_missing" };
+    // A refunded, charged-back or cancelled plan purchase earns no bonus.
+    if (planReward.status === "rejected") {
+      return { earned: false, reason: "plan_reward_rejected" };
+    }
+
+    const settings = await store.getSettings();
+    if (!settings.programEnabled) return { earned: false, reason: "program_disabled" };
+    const amountCents = websiteBonusAmountCents(settings);
+    if (amountCents <= 0) {
+      await record(
+        "no_reward",
+        "system",
+        { referralId: referral.id },
+        "the website bonus is switched off",
+      );
+      return { earned: false, reason: "bonus_not_offered" };
+    }
+
+    const purchasedAt = input.purchasedAt ?? iso();
+    const at = iso();
+    const inserted = await store.insertReward({
+      id: newId("rwd"),
+      referralId: referral.id,
+      kind: "website",
+      referrerOrganizationId: referral.referrerOrganizationId,
+      referredOrganizationId: referral.referredOrganizationId,
+      plan: planReward.plan,
+      amountCents,
+      currency: "CAD",
+      status: "pending",
+      livemode: planReward.livemode,
+      // Not a Stripe session: the request id anchors idempotency.
+      qualifyingSessionId: `website:${input.requestId}`,
+      eligibleAt: addDays(purchasedAt, settings.holdDays),
+      reviewFlags: [...planReward.reviewFlags],
+      createdAt: at,
+      updatedAt: at,
+    });
+    if (!inserted.created) {
+      return { earned: true, reward: inserted.reward, duplicate: true };
+    }
+    await record(
+      "reward_created",
+      "system",
+      { referralId: referral.id, rewardId: inserted.reward.id },
+      `website bonus ${amountCents} cents CAD`,
+    );
+    return { earned: true, reward: inserted.reward, duplicate: false };
+  }
+
+  /**
    * Recovers a qualification the webhook hook missed (it runs after the
    * billing transaction commits and must never fail billing). Idempotent.
    */
   async function reconcilePaidReferrals(): Promise<{ qualified: number }> {
+    requireStorage();
     let qualified = 0;
     for (const referral of await store.listReferrals({ status: "registered", limit: 500 })) {
       const paid = await directory.getPaidInstallation(referral.referredOrganizationId);
@@ -602,6 +784,20 @@ export function createReferralService(deps: ReferralServiceDeps) {
     return { changed: !!rejected, reward: rejected ?? reward };
   }
 
+  /**
+   * The plan purchase behind a referral was reversed: the website bonus that
+   * rode on it goes with it. A bonus that was already issued is flagged for a
+   * person, exactly like an issued plan reward.
+   */
+  async function reverseWebsiteBonus(
+    referralId: string,
+    reason: Extract<RejectionReason, "refunded" | "chargeback" | "subscription_cancelled">,
+    actor: string,
+  ) {
+    const bonus = await store.getWebsiteBonusByReferral(referralId);
+    if (bonus) await reverseReward(bonus, reason, actor);
+  }
+
   /** Stripe refunded the qualifying payment (fully) or the customer disputed it. */
   async function onPaymentReversed(input: {
     paymentIntentId: string;
@@ -622,11 +818,10 @@ export function createReferralService(deps: ReferralServiceDeps) {
       );
       return { changed: true, reward: flagged };
     }
-    return reverseReward(
-      reward,
-      input.kind === "chargeback" ? "chargeback" : "refunded",
-      "stripe",
-    );
+    const reason = input.kind === "chargeback" ? "chargeback" : "refunded";
+    const result = await reverseReward(reward, reason, "stripe");
+    await reverseWebsiteBonus(reward.referralId, reason, "stripe");
+    return result;
   }
 
   /** The referred business's subscription changed state in Stripe. */
@@ -635,6 +830,12 @@ export function createReferralService(deps: ReferralServiceDeps) {
     status: "active" | "suspended" | "churned",
   ) {
     const reward = await store.getRewardByReferredOrganization(organizationId);
+    // A cancelled customer has not earned the website bonus either, whether or
+    // not the plan reward was already issued. Nothing here pays anything: it
+    // only rejects a bonus that is still waiting for approval.
+    if (status === "churned" && reward) {
+      await reverseWebsiteBonus(reward.referralId, "subscription_cancelled", "stripe");
+    }
     // An issued card was earned after a verified hold period; a later
     // cancellation does not undo it (only returned money does: see
     // onPaymentReversed). A rejected reward has nothing left to change.
@@ -658,6 +859,9 @@ export function createReferralService(deps: ReferralServiceDeps) {
     actor: string,
     options: { acknowledgeFlags?: boolean; note?: string } = {},
   ): Promise<DecisionResult> {
+    requireStorage();
+    requireStorage();
+    requireStorage();
     const reward = await store.getReward(rewardId);
     if (!reward) return { ok: false, error: "not_found" };
     if (reward.status !== "pending") return { ok: false, error: "not_pending" };
@@ -684,10 +888,18 @@ export function createReferralService(deps: ReferralServiceDeps) {
     // Ask Stripe now, not at qualification: money is about to be committed, and
     // this also covers a refund or dispute whose webhook never arrived.
     let flags = reward.reviewFlags.filter((f) => f !== "test_payment");
-    if (directory.verifyPayment) {
+    // The website bonus has no payment of its own in Stripe: it stands only
+    // while the plan payment it rides on still stands.
+    const paymentSource =
+      reward.kind === "website" ? await store.getRewardByReferral(reward.referralId) : reward;
+    if (reward.kind === "website" && (!paymentSource || paymentSource.status === "rejected")) {
+      await reverseReward(reward, "refunded", actor);
+      return { ok: false, error: "payment_reversed" };
+    }
+    if (directory.verifyPayment && paymentSource) {
       const check = await directory.verifyPayment({
-        checkoutSessionId: reward.qualifyingSessionId,
-        paymentIntentId: reward.qualifyingPaymentIntentId,
+        checkoutSessionId: paymentSource.qualifyingSessionId,
+        paymentIntentId: paymentSource.qualifyingPaymentIntentId,
         livemode: reward.livemode,
       });
       if (!check.ok) {
@@ -734,6 +946,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     actor: string,
     note: string | undefined,
   ): Promise<DecisionResult> {
+    requireStorage();
     const trimmed = validNote(note);
     if (!trimmed) return { ok: false, error: "invalid_note" };
     const reward = await store.getReward(rewardId);
@@ -770,6 +983,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
     actor: string,
     input: { giftCardReference: string },
   ): Promise<DecisionResult> {
+    requireStorage();
     const settings = await store.getSettings();
     if (settings.fulfillmentMethod === "none") {
       return { ok: false, error: "fulfillment_not_configured" };
@@ -818,6 +1032,7 @@ export function createReferralService(deps: ReferralServiceDeps) {
   ): Promise<
     { ok: true; settings: ReferralSettings } | { ok: false; error: "invalid_settings" }
   > {
+    requireStorage();
     const parsed = referralSettingsPatchSchema.safeParse(patch);
     if (!parsed.success) return { ok: false, error: "invalid_settings" };
     const current = await store.getSettings();
@@ -826,6 +1041,8 @@ export function createReferralService(deps: ReferralServiceDeps) {
       updatedBy: actor,
       updatedAt: iso(),
     };
+    // The program promises at most the plan reward plus the website bonus.
+    if (!settingsWithinProgramMaximum(next)) return { ok: false, error: "invalid_settings" };
     const saved = await store.saveSettings(next);
     await record("settings_changed", actor, {}, Object.keys(parsed.data).join(","));
     return { ok: true, settings: saved };
@@ -864,11 +1081,14 @@ export function createReferralService(deps: ReferralServiceDeps) {
 
   return {
     referrerEligibility,
+    ensureLink,
+    getLink,
     ensureCode,
     isCodeValid,
     overview,
     registerReferral,
     qualifyReferral,
+    onWebsiteServicePurchased,
     reconcilePaidReferrals,
     onPaymentReversed,
     onBillingStateChanged,

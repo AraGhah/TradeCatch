@@ -100,6 +100,63 @@ References: [subscription webhooks](https://docs.stripe.com/billing/subscription
 [event ordering and retries](https://docs.stripe.com/webhooks), and
 [Stripe test PaymentMethods](https://docs.stripe.com/testing).
 
+## Overage invoicing (built, switched off)
+
+Usage past a plan's written allowance is metered (`tc_usage_counters`) and, the
+first time an allowance is passed in a month, a `pending` confirmation is opened
+and the owner is emailed (`tc_usage_overage_confirmations`). A pending or declined
+overage bills nothing. Allowances in `src/lib/plans.ts` are still marked
+provisional.
+
+`POST|GET /api/billing/overage-invoices/tick` (ops bearer, same as the other
+ticks) turns last month's **owner-confirmed** overage into one pending Stripe
+invoice item per business and metric, which Stripe rolls into the customer's next
+subscription invoice. It is **not scheduled**: nothing calls it until someone does.
+
+It does nothing unless every one of these is set:
+
+| Variable                          | Meaning                                              |
+| --------------------------------- | ---------------------------------------------------- |
+| `OVERAGE_INVOICING`               | must be exactly `1`                                  |
+| `OVERAGE_RATE_SMS_SEGMENT_CENTS`  | whole cents per SMS segment past the allowance (CAD) |
+| `OVERAGE_RATE_VOICE_MINUTE_CENTS` | whole cents per call minute past the allowance (CAD) |
+
+There are deliberately no default rates. With the flag off or a rate missing the
+route answers `{ ok: true, enabled: false, reason }` without reading the database
+or calling Stripe.
+
+How it stays safe:
+
+- **Only confirmed units.** Units come from `confirmedOverageUnits()`, which is 0
+  for a pending, declined or never-opened overage. A confirmed or declined answer
+  cannot be changed afterwards.
+- **Closed months only.** The month before "now" is billed; the month still
+  accruing never is.
+- **Claim, then send.** A row in `tc_usage_overage_invoices` (primary key
+  organization + metric + month) is inserted first with the units, rate and amount
+  frozen. A month with a row is never recalculated, so usage that arrives after
+  the month closed is not billed on top.
+- **Idempotent Stripe call.** The invoice item is created with the idempotency
+  key `overage:{organization}:{sms_segments|voice_minutes}:{YYYY-MM-01}`, so a
+  retry after a crash or a timeout cannot create a second charge.
+- **Stale claims go to a person.** A claim still `pending` after 20 hours (inside
+  Stripe's 24-hour idempotency window) is marked `needs_review` instead of being
+  retried blindly. Resolve it in Stripe, then update the row by hand.
+- **No Stripe customer, no claim.** A business without a customer row is skipped
+  and picked up on a later run once it has one.
+- **Test and live stay separate.** The invoice item uses the key matching the
+  customer's stored `livemode`.
+
+Before enabling: the owner must approve the allowances, the per-unit rates and the
+customer-facing overage terms; apply the schema (`npm run db:schema` creates the
+table); then set the three variables and call the tick once for the month. Check
+the pending items in Stripe before the next invoice finalizes.
+
+Verified with a fake Stripe in `tests/unit/overage-invoicing.test.ts` and with the
+real SQL (concurrent counters, single overage open, claims, retries, constraints)
+in `tests/unit/usage-billing-postgres.test.ts`, which needs a disposable `*_staging`
+database in `USAGE_BILLING_TEST_DATABASE_URL`. No real Stripe call has been made.
+
 ## TC-009 / TC-010 — Subscription checks and customer billing portal
 
 TC-009 repeats the subscription-sync finding originally fixed as Problem 3.

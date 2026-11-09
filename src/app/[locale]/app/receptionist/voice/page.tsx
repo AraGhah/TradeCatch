@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ReceptionistVoicePanel } from "@/components/app/ReceptionistVoicePanel";
 import { Link } from "@/i18n/navigation";
@@ -20,6 +21,10 @@ export default async function AppReceptionistVoicePage({
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
   const { organization, membership, user } = auth.ctx;
+
+  // Voice cloning is not offered at launch: for every plan the page does not exist.
+  // The code and the server-side checks stay, so it can return behind LAUNCH_ENABLE_CUSTOM_VOICE.
+  if (!orgHasFeature(organization.plan, "AI_CUSTOM_VOICE")) notFound();
 
   // Same gate as the rest of the Receptionist section.
   if (!orgHasFeature(organization.plan, "MISSED_CALL_RECOVERY")) {

@@ -6,7 +6,7 @@ import {
 } from "@/product/saas/tenant";
 import { AppShell } from "@/components/app/AppShell";
 import { FullMessagesProvider } from "@/components/FullMessagesProvider";
-import { gmailConfigured } from "@/product/gmail/oauth";
+import { orgHasFeature } from "@/product/saas/entitlements";
 
 export default async function AppLayout({
   children,
@@ -39,7 +39,10 @@ export default async function AppLayout({
         accountType={auth.ctx.organization.accountType}
         isPlatformAdmin={auth.ctx.isPlatformAdminIdentity}
         organizationId={auth.ctx.organization.id}
-        gmailEnabled={gmailConfigured()}
+        appointmentsEnabled={orgHasFeature(
+          auth.ctx.organization.plan,
+          "APPOINTMENT_BOOKING",
+        )}
       >
         {children}
       </AppShell>

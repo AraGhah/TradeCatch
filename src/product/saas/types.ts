@@ -124,3 +124,24 @@ export function mergeBusinessFeatures(
 ): BusinessFeatureFlags {
   return { ...DEFAULT_DEMO_FEATURES, ...(partial ?? {}) };
 }
+
+/** A person's password, stored only as a salted slow hash (never the password). */
+export type PasswordCredential = {
+  userId: string;
+  hash: string;
+  updatedAt: string;
+};
+
+/**
+ * A single-use link that lets someone choose a password: sent when TradeCatch
+ * activates an account ("activation") or when they forget it ("reset").
+ */
+export type PasswordToken = {
+  id: string;
+  userId: string;
+  tokenHash: string;
+  kind: "activation" | "reset";
+  expiresAt: string;
+  consumedAt?: string;
+  createdAt: string;
+};

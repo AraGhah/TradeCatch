@@ -23,10 +23,26 @@ export async function referralInstallationPaid(input: {
   livemode: boolean;
 }): Promise<void> {
   try {
-    const { getReferralService } = await import("./runtime");
-    await getReferralService().qualifyReferral(input);
+    const { getReferralServiceReady } = await import("./runtime");
+    await (await getReferralServiceReady()).qualifyReferral(input);
   } catch (error) {
     report("qualification", error);
+  }
+}
+
+/**
+ * The referred business agreed to the website service and work started: the
+ * referrer may earn the website bonus. Best effort, never throws.
+ */
+export async function referralWebsiteServiceStarted(input: {
+  organizationId: string;
+  requestId: string;
+}): Promise<void> {
+  try {
+    const { getReferralServiceReady } = await import("./runtime");
+    await (await getReferralServiceReady()).onWebsiteServicePurchased(input);
+  } catch (error) {
+    report("website bonus", error);
   }
 }
 
@@ -36,8 +52,8 @@ export async function referralBillingStateChanged(
   status: "active" | "suspended" | "churned",
 ): Promise<void> {
   try {
-    const { getReferralService } = await import("./runtime");
-    await getReferralService().onBillingStateChanged(organizationId, status);
+    const { getReferralServiceReady } = await import("./runtime");
+    await (await getReferralServiceReady()).onBillingStateChanged(organizationId, status);
   } catch (error) {
     report("billing state update", error);
   }
@@ -53,8 +69,8 @@ export async function referralRegisterOrganization(input: {
   actor: string;
 }): Promise<{ linked: boolean; reason?: string }> {
   try {
-    const { getReferralService } = await import("./runtime");
-    const result = await getReferralService().registerReferral({
+    const { getReferralServiceReady } = await import("./runtime");
+    const result = await (await getReferralServiceReady()).registerReferral({
       code: input.code,
       referredOrganizationId: input.organizationId,
       actor: input.actor,
@@ -107,8 +123,8 @@ export async function referralPaymentReversed(event: unknown): Promise<void> {
           ? "refunded"
           : "partially_refunded";
 
-    const { getReferralService } = await import("./runtime");
-    await getReferralService().onPaymentReversed({ paymentIntentId, kind });
+    const { getReferralServiceReady } = await import("./runtime");
+    await (await getReferralServiceReady()).onPaymentReversed({ paymentIntentId, kind });
   } catch (error) {
     report("payment reversal", error);
   }

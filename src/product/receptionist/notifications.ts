@@ -244,8 +244,8 @@ export function createReceptionistNotifier(
             ? "Transfert vers la ligne de garde en cours."
             : "Transferring to the on-call line now."
           : fr
-            ? "Aucune ligne de garde configurée — rappeler immédiatement."
-            : "No on-call line configured — call back immediately.",
+            ? "Aucune ligne de garde configurée. Rappeler immédiatement."
+            : "No on-call line configured. Call back immediately.",
       ].join("\n");
       const results: NotificationDelivery[] = [];
       for (const channel of activeChannels(config)) {

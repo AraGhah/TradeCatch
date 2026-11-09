@@ -16,6 +16,7 @@ import {
   type OpenSlot,
   type ReceptionistScheduler,
 } from "@/product/receptionist/booking";
+import { launchFlagEnabled } from "@/lib/launch-flags";
 import type { LlmClient } from "@/product/receptionist/llm";
 import type { ReceptionistConfig } from "@/product/receptionist/types";
 import { classifyUrgency } from "@/product/missed-call/urgency";
@@ -34,7 +35,9 @@ import {
   conversationLanguage,
   criticalSafetyReply,
   fallbackReply,
+  followUpReply,
   isFallbackReply,
+  isFollowUpReply,
   parseModelReply,
   replyIsSendable,
   requestReply,
@@ -52,6 +55,12 @@ export const SMS_RECEPTIONIST_EVENT_PREFIX = "tradecatch.sms_receptionist.";
 
 /** Automated replies to one customer within a rolling hour, to stop loops. */
 export const MAX_AUTO_REPLIES_PER_HOUR = 20;
+/**
+ * "We got it" replies in a row before the line goes quiet (the team is still
+ * alerted). Enough that a customer never meets a dead line, few enough that
+ * "??" "???" cannot ping-pong with an automated loop.
+ */
+export const MAX_CONSECUTIVE_FOLLOW_UPS = 2;
 const HISTORY_LIMIT = 60;
 const PROMPT_HISTORY_LIMIT = 40;
 const OPENINGS_TIMEOUT_MS = 3_500;
@@ -130,7 +139,16 @@ export type SmsReceptionistDeps = {
     clientId: string;
     phoneE164: string;
   }): Promise<boolean>;
-  hasActiveWorkflow(clientId: string, phoneE164: string): Promise<boolean>;
+  /**
+   * The customer's open missed-call workflow, if any. "collecting": Module A is
+   * asking this customer its intake questions and owns the reply. "with_team":
+   * the intake is done and the request is with a technician or a person, so
+   * nobody else will answer a new text.
+   */
+  activeWorkflow(
+    clientId: string,
+    phoneE164: string,
+  ): Promise<"collecting" | "with_team" | null>;
   quietHours(organizationId: string): Promise<{
     windowStartHour: number;
     windowEndHour: number;
@@ -238,6 +256,9 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
       const org = await deps.getOrganization(input.organizationId);
       if (!org || org.status !== "active") return skip("organization_inactive");
       if (!org.entitled) return skip("not_entitled");
+      // Texting is for follow-ups and reminders at launch. A customer who texts first is not
+      // answered by an open-ended assistant; the message is stored and shown to the owner.
+      if (!launchFlagEnabled("smsChatbot")) return skip("disabled");
       if (input.client.aiSmsReplies === false) return skip("disabled");
       if (input.paused) return skip("paused");
 
@@ -259,9 +280,9 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
       ) {
         return skip("suppressed");
       }
-      if (await deps.hasActiveWorkflow(client.id, input.fromE164)) {
-        return skip("active_workflow");
-      }
+      const workflow = await deps.activeWorkflow(client.id, input.fromE164);
+      if (workflow === "collecting") return skip("active_workflow");
+      const openRequest = workflow === "with_team";
       if (input.quoteThreadActive) return skip("quote_thread");
 
       const now = deps.now();
@@ -335,13 +356,20 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
       });
 
       const alreadyAcknowledged = turns.some(
-        (t) => t.role === "assistant" && isFallbackReply(t.text, context),
+        (t) =>
+          t.role === "assistant" &&
+          (isFallbackReply(t.text, context) ||
+            isFollowUpReply(t.text, context)),
       );
+      // Nothing new to say: a short "we got it" rather than silence.
+      const followUp = (reason: EscalationReason) =>
+        sendFollowUp(input, { context, language, turns, openRequest, reason });
 
       // Outside the owner's sending window: still answer (customers text
       // after hours expecting a reply) with a closed-hours script or rules
       // brain — never go fully silent. Staff get an inbox item, not a wake-up SMS.
       if (!insideWindow && !deps.llm) {
+        if (openRequest) return await followUp("quiet_hours");
         const specific = rulesReply({
           body: input.body,
           language,
@@ -359,10 +387,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
                 action: "escalate" as const,
                 language,
               };
-        if (!afterHoursDraft) {
-          await safeEscalate(input, "quiet_hours", false, false);
-          return skip("fallback_already_sent");
-        }
+        if (!afterHoursDraft) return await followUp("quiet_hours");
         deps.log("reply_generated", {
           ...base,
           action: afterHoursDraft.action,
@@ -400,6 +425,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
                 language,
                 slots: openings.offered,
                 now,
+                openRequest,
               }),
               schema: REPLY_SCHEMA as unknown as Record<string, unknown>,
               maxTokens: 500,
@@ -412,6 +438,11 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
         }
       }
 
+      if (!draft && openRequest) {
+        // The rules brain would ask again for the name and address the team
+        // already has; acknowledge instead and leave the answer to a person.
+        return await followUp("customer_request");
+      }
       if (!draft) {
         draft = rulesReply({
           body: input.body,
@@ -429,8 +460,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
 
       if (!draft) {
         // Rules brain had nothing new to say (generic ack already sent).
-        await safeEscalate(input, "ai_unavailable", false, false);
-        return skip("fallback_already_sent");
+        return await followUp("ai_unavailable");
       }
 
       deps.log("reply_generated", {
@@ -466,10 +496,7 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
           history: turns,
           alreadyAcknowledged,
         });
-        if (!rules) {
-          await safeEscalate(input, "ai_unavailable", false, false);
-          return skip("fallback_already_sent");
-        }
+        if (!rules) return await followUp("ai_unavailable");
         const rulesText =
           sanitizeReply(rules.reply) ?? fallbackReply(replyLanguage, context);
         const rulesSource = isFallbackReply(rulesText, context)
@@ -684,6 +711,52 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
         alertStaff: true,
         handOff: false,
       },
+    });
+  }
+
+  async function sendFollowUp(
+    input: SmsReceptionistInput,
+    args: {
+      context: BusinessContext;
+      language: SmsLanguage;
+      turns: HistoryTurn[];
+      openRequest: boolean;
+      reason: EscalationReason;
+    },
+  ): Promise<SmsReceptionistResult> {
+    let streak = 0;
+    for (let i = args.turns.length - 1; i >= 0; i -= 1) {
+      const turn = args.turns[i]!;
+      if (turn.role !== "assistant") continue;
+      if (!isFollowUpReply(turn.text, args.context)) break;
+      streak += 1;
+    }
+    if (streak >= MAX_CONSECUTIVE_FOLLOW_UPS) {
+      // Still never lost: the team gets the conversation in its inbox.
+      await safeEscalate(input, args.reason, false, false);
+      deps.log("skipped", {
+        organizationId: input.organizationId,
+        clientId: input.client.id,
+        messageSid: input.messageSid,
+        reason: "fallback_already_sent",
+      });
+      return { status: "skipped", reason: "fallback_already_sent" };
+    }
+    deps.log("reply_generated", {
+      organizationId: input.organizationId,
+      clientId: input.client.id,
+      messageSid: input.messageSid,
+      action: "escalate",
+      language: args.language,
+      source: "rules",
+      followUp: true,
+    });
+    return deliver(input, {
+      body: followUpReply(args.language, args.context, args.openRequest),
+      action: "escalate",
+      source: "rules",
+      language: args.language,
+      escalate: { reason: args.reason, alertStaff: false, handOff: false },
     });
   }
 

@@ -104,6 +104,13 @@ export async function PATCH(request: NextRequest) {
               : parsed.data.onboardingCompletedAt,
         }
       : {}),
+    ...(parsed.data.quoteFollowUpApproved !== undefined
+      ? {
+          quoteFollowUpApprovedAt: parsed.data.quoteFollowUpApproved
+            ? new Date().toISOString()
+            : undefined,
+        }
+      : {}),
     ...(parsed.data.localeDefault !== undefined
       ? { localeDefault: parsed.data.localeDefault }
       : {}),

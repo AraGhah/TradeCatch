@@ -5,8 +5,9 @@ Calls arrive from the Twilio SIP trunk. For each call this agent:
   2. fetches that business's rendered instructions, opening words and transfer
      lines from TradeCatch (so every company is configured in the TradeCatch UI,
      not here),
-  3. opens in Canadian French with a language menu (key 1 = English, key 2 =
-     French, no key = French) and keeps the chosen language for the whole call,
+  3. greets in French and English at once ("Bonjour, ici <business>. How can I help
+     you?"), then follows the language the caller speaks (language.py decides from
+     what a speech-to-text stream hears; there is no keypad menu),
   4. talks to the caller, books only through TradeCatch's calendar, and can
      really transfer the call,
   5. reports the finished call to TradeCatch, which sends the owner the usual
@@ -31,7 +32,7 @@ import contextlib
 import logging
 import os
 import time
-from typing import Any, Coroutine, Literal
+from typing import Any, Coroutine, Literal, Mapping
 
 from dotenv import load_dotenv
 from livekit import rtc
@@ -52,8 +53,10 @@ from livekit.agents.voice.events import CloseReason
 from livekit.plugins import ai_coustics
 
 import phrases
-from call_record import CallRecord, is_e164
-from language import LanguageChoice, LanguageMenu
+from call_record import CallRecord, FoundAppointment, is_e164
+from caller_policy import CallerPolicy, parse_caller_policy, say_exactly_instruction
+from language import CallLanguage, Heard, Verdict, detection_enabled
+from language_listener import start_listener
 from policy import SilencePolicy
 from routing import (
     TransferPlan,
@@ -63,18 +66,29 @@ from routing import (
     dialed_number,
     plan_transfer,
 )
-from tool_results import format_availability, format_booking, parse_offers
+from tool_results import (
+    format_availability,
+    format_booking,
+    format_cancel,
+    format_found,
+    format_move,
+    format_text,
+    parse_appointments,
+    parse_offers,
+)
 from tradecatch_api import TradeCatchClient
 from transfer import (
     TransferFailure,
     TransferOutcome,
     TransferSettings,
     failure_message,
+    format_event,
     hold_line,
+    transfer_event,
     transfer_settings,
 )
-from tuning import turn_handling_from_env, voice_settings
-from voice import CustomVoice, cascade_settings, parse_custom_voice
+from tuning import delegation_options, turn_handling_from_env, voice_settings
+from voice import CustomVoice, call_voice, cascade_settings, delivery_settings
 from warm_transfer import (
     ScreenedTransfer,
     bridge_without_screening,
@@ -82,7 +96,7 @@ from warm_transfer import (
     refer_transfer,
 )
 
-logger = logging.getLogger("agent-tradecatch-receptionnist")
+logger = logging.getLogger("agent-tradecatch-receptionist")
 
 load_dotenv(".env.local")
 
@@ -91,10 +105,31 @@ load_dotenv(".env.local")
 FALLBACK_INSTRUCTIONS = """You are the phone receptionist for a home-services contractor.
 You are having technical difficulties and cannot look up the business's details.
 Be brief, warm and polite. Collect the caller's name, callback number, address and the
-reason for the call, repeat them back, and say you have noted the request and the team
-will call back. Never state prices, availability or hours, and never say anything is
+reason for the call. Explain that delivery is unconfirmed and ask them to try again.
+Never state prices, availability or hours, and never say anything is
 booked or confirmed. If anyone is in danger, tell the caller to hang up and call 911.
 Never say you will transfer the call: no transfer is available."""
+
+# Appended to every business's instructions, after the backend's text, so the
+# tool names and the rules are right even before the backend is redeployed.
+TRANSFER_POLICY = """# HUMAN TRANSFERS (these rules override anything above about transfers)
+* When the caller asks for a person (a human, the owner, a manager, a technician, someone from \
+the team, or a department), call transfer_to_human. Pass the department only if the caller named \
+one that is offered.
+* For an emergency (gas smell, fire or smoke, carbon-monoxide alarm, flooding, sparking or \
+burning electrical, no heat in freezing weather, injury), call transfer_emergency.
+* If there is any danger to life (gas, fire, smoke, carbon monoxide, injury), first tell the \
+caller to hang up and call 911 now, then call transfer_emergency. 911 is never a transfer \
+destination: you cannot transfer anyone to 911.
+* Never say or ask for a phone number to transfer to. The tools only ring the business's own \
+configured lines; you cannot dial any other number.
+* Saying you will transfer without calling the tool does nothing. The tool speaks the transfer \
+announcement itself: after calling it, say nothing more unless it returns a failure.
+* A transfer is only done when the tool says so. If it fails, the caller is still with you: \
+never hang up on them. Say briefly that nobody could be reached, offer a callback, and make sure \
+you have their name, callback number and the reason (and the address for an emergency). The team \
+is notified automatically.
+* Keep speaking the caller's current language for every word, including after a failed transfer."""
 
 # A caller can ask again after a failed transfer, but not forever: each round holds
 # the caller for up to the whole transfer budget.
@@ -108,6 +143,9 @@ BETWEEN_ATTEMPTS_SECONDS = 1.5
 # After a successful warm transfer this process stays only to hang up the second
 # leg when either person leaves; this is the backstop if that never happens.
 CONNECTED_JOB_MAX_SECONDS = 4 * 3600.0
+# The agent will not ask "French or English?" again while its own question (or the
+# model's) is this recent: the caller is still answering it.
+ASK_REPEAT_SECONDS = 20.0
 
 
 class ReceptionistAgent(Agent):
@@ -133,19 +171,23 @@ class ReceptionistAgent(Agent):
         # the call when either side leaves.
         self._keep_job_alive = False
 
-        self._menu = LanguageMenu(
+        self._lang = CallLanguage(
             phrases.enabled_languages(cfg),
             phrases.start_language(cfg),
-            phrases.menu_keys(cfg),
+            detect=detection_enabled(os.environ),
         )
-        call.language = self._menu.language
+        call.language = self._lang.language
+        # The language the voice model was last told to speak; None = "whichever the caller speaks".
+        self._model_language: str | None = self._lang.language if self._lang.decided else None
+        self._listener: asyncio.Task[Any] | None = None
+        # When the caller last stopped talking, for the language-decision timing in the log.
+        self._speech_ended_at: float | None = None
+        self._ask_spoken_at: float | None = None
         self.check_in_seconds, max_check_ins = phrases.silence_settings(cfg)
         self._silence = SilencePolicy(max_check_ins)
 
         self._ctx: JobContext | None = None
-        self._opened = False
-        self._pending_choice: LanguageChoice | None = None
-        self._menu_task: asyncio.Task[None] | None = None
+        self._language_lock = asyncio.Lock()
         self._tasks: set[asyncio.Task[Any]] = set()
         self._busy = 0
         self._book_lock = asyncio.Lock()
@@ -153,22 +195,31 @@ class ReceptionistAgent(Agent):
         self._closing = False
         self._reported = False
         self._report_lock = asyncio.Lock()
+        # When the caller last stopped talking, and the backend runs since: the reply
+        # gap the caller hears, logged without any of their words.
+        self._caller_stopped_at: float | None = None
+        self._backend_runs = 0
 
-        super().__init__(instructions=self._instructions_for(self._menu.language))
+        super().__init__(instructions=self._instructions_for(self._model_language))
 
     # -- wiring ---------------------------------------------------------
 
     def attach(self, session: AgentSession, ctx: JobContext) -> None:
         """Subscribe to the call's events. Call before session.start()."""
         session.on("user_state_changed", self._on_user_state)
+        session.on("agent_state_changed", self._on_agent_state)
+        session.on("metrics_collected", self._on_metrics)
         session.on("conversation_item_added", self._on_item)
         session.on("close", self._on_close)
         session.on("error", lambda ev: logger.error("session error: %s", type(ev.error).__name__))
-        ctx.room.on("sip_dtmf_received", self._on_dtmf)
         self._ctx = ctx
 
-    def _instructions_for(self, language: str) -> str:
-        return f"{self._base_instructions}\n\n{phrases.language_directive(language)}"
+    def _instructions_for(self, language: str | None) -> str:
+        parts = [self._base_instructions]
+        if self._has_config:
+            parts.append(TRANSFER_POLICY)
+        parts.append(phrases.language_directive(language, detecting=self._lang.detecting))
+        return "\n\n".join(parts)
 
     def _spawn(self, work: Coroutine[Any, Any, Any]) -> asyncio.Task[Any]:
         task = asyncio.create_task(work)
@@ -196,97 +247,175 @@ class ReceptionistAgent(Agent):
     # -- opening and language ------------------------------------------
 
     async def on_enter(self) -> None:
-        self._opened = True
-        if self._pending_choice is not None:
-            # The caller pressed a key before the greeting started.
-            await self._apply_choice(self._pending_choice)
-            return
-        opening = self.session.generate_reply(
+        """Greet in French and English at once; the caller's answer picks the language."""
+        self.session.generate_reply(
             instructions=phrases.opening_instruction(self._cfg or None),
             allow_interruptions=True,
         )
-        if self._menu.is_open:
-            self._menu_task = self._spawn(self._run_menu(opening))
 
-    async def _run_menu(self, opening: Any) -> None:
-        """After the menu is spoken, wait a moment for a key; no key means French."""
-        await opening.wait_for_playout()
-        await asyncio.sleep(phrases.menu_timeout_seconds(self._cfg or None))
-        choice = self._menu.on_timeout()
-        if choice is not None:
-            # The greeting has finished playing; there is nothing to cut.
-            await self._apply_choice(choice, cut_greeting=False)
-
-    def _close_menu(self) -> None:
-        if self._menu_task is not None and self._menu_task is not asyncio.current_task():
-            self._menu_task.cancel()
-        self._menu_task = None
-
-    def _on_dtmf(self, ev: rtc.SipDTMF) -> None:
-        if ev.participant is not None and self._sip_identity:
-            if ev.participant.identity != self._sip_identity:
-                return
-        choice = self._menu.on_digit(ev.digit)
-        if choice is None:
+    def start_language_detection(self, participant: Any) -> None:
+        """Listen to the caller for the language they speak. Never raises; the call goes on without it."""
+        if not self._lang.detecting:
+            logger.info("automatic language detection is off for this call")
             return
-        logger.info("language key pressed: %s", choice.language)
-        self._close_menu()
-        if not self._opened:
-            self._pending_choice = choice
+        self._listener = start_listener(
+            participant=participant,
+            on_heard=self._on_heard,
+            on_failed=self._on_listener_failed,
+            environ=os.environ,
+            spawn=self._spawn,
+        )
+
+    def _on_heard(self, heard: Heard) -> None:
+        """One utterance of the caller, as a language and a size. Never the words."""
+        if self._transferring or self._keep_job_alive or self._closing:
             return
-        self._spawn(self._apply_choice(choice))
+        verdict = self._lang.observe(heard)
+        logger.info(
+            "caller language heard: %s (%d words, confidence %s)%s",
+            heard.language or "unknown",
+            heard.words,
+            "n/a" if heard.confidence is None else f"{heard.confidence:.2f}",
+            f" -> {verdict.action} {verdict.language or ''} [{verdict.reason}]" if verdict else "",
+        )
+        if verdict is not None:
+            self._spawn(self._apply_verdict(verdict))
+        elif (
+            self._lang.detecting
+            and self._lang.decided
+            and self._model_language != self._lang.language
+        ):
+            # The voice model refused the last language rule: try again with this utterance.
+            self._spawn(self._set_language(self._lang.language))
+
+    def _on_listener_failed(self, why: str) -> None:
+        logger.warning("automatic language detection stopped: %s", why)
+        verdict = self._lang.fail()
+        if verdict is not None:
+            self._spawn(self._apply_verdict(verdict))
+
+    async def _apply_verdict(self, verdict: Verdict) -> None:
+        if self._closing:
+            return
+        since = (
+            f"{time.monotonic() - self._speech_ended_at:.2f}s after the caller stopped"
+            if self._speech_ended_at is not None
+            else "timing unknown"
+        )
+        logger.info(
+            "language decision: %s %s [%s] after %d utterances, %s",
+            verdict.action,
+            verdict.language or "-",
+            verdict.reason,
+            verdict.heard,
+            since,
+        )
+        if verdict.action in ("set", "switch") and verdict.language:
+            await self._set_language(verdict.language)
+        elif verdict.action == "ask":
+            self._silence.on_activity()
+            if self._asked_recently():
+                return  # the model already asked "French or English?" itself
+            self.session.generate_reply(
+                instructions=phrases.ask_instruction(self._cfg or None),
+                allow_interruptions=True,
+            )
+        elif verdict.action == "fallback":
+            if verdict.reason == "no_answer" and verdict.language:
+                await self._set_language(verdict.language)
+            else:
+                await self._tell_model(
+                    phrases.detection_unavailable_update(),
+                    self._instructions_for(self._model_language),
+                )
+
+    def _asked_recently(self) -> bool:
+        return (
+            self._ask_spoken_at is not None
+            and time.monotonic() - self._ask_spoken_at < ASK_REPEAT_SECONDS
+        )
+
+    def _instructions_are_fixed(self) -> bool:
+        """gpt-live refuses new instructions once the session has started."""
+        capabilities = getattr(getattr(self.session, "llm", None), "capabilities", None)
+        return getattr(capabilities, "mutable_instructions", True) is False
+
+    async def _tell_model(self, rule: str, instructions: str) -> bool:
+        """Give the voice model a standing rule: as a system message when its
+        instructions are fixed, else by replacing them. True if it went through."""
+        try:
+            if self._instructions_are_fixed():
+                # A system message reaches gpt-live as a standing rule (append_instructions).
+                chat_ctx = self.chat_ctx.copy()
+                chat_ctx.add_message(role="system", content=rule)
+                await self.update_chat_ctx(chat_ctx)
+            else:
+                await self.update_instructions(instructions)
+            return True
+        except Exception:
+            logger.exception("could not update the voice model's language rule")
+            return False
 
     async def _set_language(self, language: str) -> None:
-        self._call.language = language
-        try:
-            await self.update_instructions(self._instructions_for(language))
-        except Exception:
-            # The next reply is still told its language explicitly.
-            logger.exception("could not update instructions for the new language")
-
-    async def _apply_choice(
-        self, choice: LanguageChoice, *, cut_greeting: bool = True
-    ) -> None:
-        self._silence.on_activity()
-        await self._set_language(choice.language)
-        if cut_greeting:
-            with contextlib.suppress(Exception):
-                # A key press while the greeting plays: the caller already knows the menu.
-                await self.session.interrupt(force=True)
-        self.session.generate_reply(
-            instructions=phrases.after_choice_instruction(
-                self._cfg or None, choice.language, choice.chosen
-            ),
-            allow_interruptions=True,
-        )
+        async with self._language_lock:
+            if language != self._lang.language:
+                return
+            self._call.language = language
+            if language == self._model_language:
+                return
+            if await self._tell_model(
+                phrases.language_update(language), self._instructions_for(language)
+            ):
+                self._model_language = language
+                logger.info("language rule sent to the voice model: %s", language)
 
     # -- session events -------------------------------------------------
 
+    def _on_agent_state(self, ev: Any) -> None:
+        if ev.new_state != "speaking" or self._caller_stopped_at is None:
+            return
+        gap = time.monotonic() - self._caller_stopped_at
+        logger.info("reply gap %.2fs (%d backend runs)", gap, self._backend_runs)
+        self._caller_stopped_at = None
+
+    def _on_metrics(self, ev: Any) -> None:
+        metrics = getattr(ev, "metrics", None)
+        if getattr(metrics, "type", None) != "llm_metrics":
+            return
+        self._backend_runs += 1
+        logger.info(
+            "backend run: %s reasoning tokens, %s output tokens",
+            getattr(metrics, "reasoning_tokens", "?"),
+            getattr(metrics, "completion_tokens", "?"),
+        )
+
     def _on_user_state(self, ev: Any) -> None:
+        if getattr(ev, "old_state", None) == "speaking" and ev.new_state != "speaking":
+            self._caller_stopped_at = time.monotonic()
+            self._speech_ended_at = self._caller_stopped_at
+            self._backend_runs = 0
         if ev.new_state == "speaking":
-            # Speech never picks the language; it only ends the wait for a key.
-            self._menu.on_speech()
-            self._close_menu()
+            self._caller_stopped_at = None
             self._silence.on_activity()
         elif ev.new_state == "away" and not self._closing:
             self._spawn(self._on_quiet())
 
     async def _on_quiet(self) -> None:
-        if self._transferring or self._busy > 0 or self._menu.is_open:
+        if self._transferring or self._busy > 0:
             self.session.reset_away_timer()
             return
-        language = self._call.language
-        check_in, goodbye = phrases.silence_texts(self._cfg or None, language)
+        # Before the caller's language is known the line is spoken in both.
+        language = self._lang.language if self._lang.decided else None
         if self._silence.on_quiet() == "check_in":
             self.session.generate_reply(
-                instructions=phrases.say_instruction(language, check_in),
+                instructions=phrases.quiet_instruction(self._cfg or None, language, "check_in"),
                 allow_interruptions=True,
             )
             return
         self._closing = True
         self._call.end_reason = "silence"
         speech = self.session.generate_reply(
-            instructions=phrases.say_instruction(language, goodbye),
+            instructions=phrases.quiet_instruction(self._cfg or None, language, "goodbye"),
             allow_interruptions=False,
         )
         await speech.wait_for_playout()
@@ -299,14 +428,27 @@ class ReceptionistAgent(Agent):
         speaker = {"user": "caller", "assistant": "agent"}.get(item.role)
         if speaker:
             self._call.add_turn(speaker, item.text_content)
+        if speaker == "agent" and phrases.spoken_ask(item.text_content):
+            # Whoever asked "French or English?", the caller's next words answer it.
+            self._ask_spoken_at = time.monotonic()
+            self._lang.note_asked()
+
+    def _stop_language_detection(self) -> None:
+        listener, self._listener = self._listener, None
+        if listener is not None:
+            listener.cancel()
 
     def _on_close(self, ev: Any) -> None:
+        self._stop_language_detection()
         pending = self._active_transfer
         if pending is not None and not pending.done():
             # The caller left (or the model died) while a contractor's phone was ringing:
             # drop that second leg now, and report that no one was connected.
             pending.abort("caller_left")
-            self._call.transfer = {"targetName": pending.target.name, "completed": False}
+            self._call.transfer = _transfer_record(pending.target.name, False, "warm")
+            self._log_transfer(
+                "transfer_failed", failure="caller_left", mechanism="warm", target=pending.target.name
+            )
         if ev.reason == CloseReason.ERROR:
             logger.error("session closed with an error: %s", type(ev.error).__name__)
             self._call.end_reason = "error"
@@ -343,7 +485,10 @@ class ReceptionistAgent(Agent):
             return  # a person already has the call; the model failing no longer matters
         settings = self._transfer_settings
         plan = plan_transfer(
-            self._cfg, "emergency" if self._call.emergency else "caller_request"
+            self._cfg,
+            "emergency" if self._call.emergency else "caller_request",
+            business_number=self._call.number,
+            caller=self._call.from_e164,
         )
         if not plan.targets or settings.mode == "off" or not self._sip_identity:
             await self._hang_up()
@@ -358,7 +503,8 @@ class ReceptionistAgent(Agent):
             outcome = await refer_transfer(
                 identity=self._sip_identity, number=target.number, settings=settings
             )
-        self._call.transfer = {"targetName": target.name, "completed": outcome.connected}
+        # Nobody screened this answer, so it is never a confirmed human answer.
+        self._call.transfer = _transfer_record(target.name, outcome.connected, outcome.mechanism)
         if not outcome.connected:
             logger.error("recovery transfer failed (%s)", _why(outcome))
             await self._hang_up()
@@ -394,6 +540,11 @@ class ReceptionistAgent(Agent):
     def _booking_enabled(self) -> bool:
         return bool(
             self._has_config and self._client is not None and self._cfg.get("bookingEnabled")
+        )
+
+    def _texts_enabled(self) -> bool:
+        return bool(
+            self._has_config and self._client is not None and self._cfg.get("callerTexts")
         )
 
     def _body(self, **fields: Any) -> dict[str, Any]:
@@ -473,18 +624,20 @@ class ReceptionistAgent(Agent):
     async def set_language(
         self, context: RunContext, language: Literal["fr", "en"]
     ) -> str:
-        """Switch the call's language. Only when the caller clearly asks to continue in
-        the other language (or accepts your offer to). Never because of an accent."""
+        """Switch the call's language: when the caller asks for the other language, or
+        clearly talks to you in full sentences of it. Never because of an accent, a
+        borrowed word or a name."""
         if language not in phrases.enabled_languages(self._cfg or None):
             return "That language is not available on this line. Say so politely."
-        if not self._menu.switch(language):
+        already = self._model_language == language and self._lang.language == language
+        self._lang.switch(language)
+        if already:
             return "The call is already in that language. Carry on."
-        self._close_menu()
         await self._set_language(language)
         name = phrases.LANGUAGE_NAMES.get(language, language)
         return (
-            f"Switched. From now on speak only {name}. Do not greet again or repeat the "
-            "menu. Acknowledge with one short word and carry on with the question you were on."
+            f"Switched. From now on speak only {name}. Do not greet again. "
+            "Acknowledge with one short word and carry on with the question you were on."
         )
 
     @function_tool()
@@ -493,6 +646,7 @@ class ReceptionistAgent(Agent):
         context: RunContext,
         preferred_time: str | None = None,
         reason: str | None = None,
+        existing_appointment: int | None = None,
     ) -> str:
         """Look up real appointment openings in the calendar. Say a short phrase such as
         "one moment, I'm checking the calendar" first. Use it for any appointment or
@@ -501,23 +655,47 @@ class ReceptionistAgent(Agent):
         Args:
             preferred_time: The day and time the caller prefers, in their words, if any.
             reason: A short description of the job, if you have not recorded it yet.
+            existing_appointment: To move one of the caller's appointments: its number
+                from find_appointment. Leave empty for a new booking.
         """
         if not self._booking_enabled():
             return format_availability({"ok": False, "reason": "booking_disabled"}, [])
-        self._call.update(preferred_time=preferred_time, reason=reason)
+        moving = None
+        if existing_appointment is not None:
+            moving = self._call.found(existing_appointment)
+            if moving is None:
+                return (
+                    "That appointment number is not in the list. Call find_appointment "
+                    "first, then use one of its numbers."
+                )
+        else:
+            self._call.update(preferred_time=preferred_time, reason=reason)
         slots = self._call.report_slots()
         async with self._working():
             result = await self._client.availability(  # type: ignore[union-attr]
                 self._body(
-                    preferredTime=slots.get("preferredTime"),
-                    issue=slots.get("issue"),
-                    serviceAddress=slots.get("serviceAddress"),
+                    preferredTime=preferred_time if moving else slots.get("preferredTime"),
+                    issue=None if moving else slots.get("issue"),
+                    serviceAddress=None if moving else slots.get("serviceAddress"),
+                    appointmentId=moving.appointment_id if moving else None,
+                    callerName=slots.get("callerName") if moving else None,
                 )
             )
         offers = parse_offers(result.get("offers")) if result and result.get("ok") else []
         if result and result.get("ok") and not offers:
             result = {"ok": False, "reason": "no_openings"}
+        if offers and result and moving:
+            # New times for an existing appointment: book_appointment must not use them.
+            self._call.offers = list(offers)
+            self._call.timezone = result.get("timezone") or self._call.timezone
+            self._call.offers_for = moving.appointment_id
+            return format_availability(result, offers).replace(
+                "call book_appointment with that option number",
+                f"call move_appointment with appointment {existing_appointment} and that "
+                "option number",
+            )
         if offers and result:
+            self._call.offers_for = None
             self._call.set_offers(
                 offers, result.get("serviceId"), result.get("serviceName"), result.get("timezone")
             )
@@ -538,6 +716,11 @@ class ReceptionistAgent(Agent):
             return (
                 f"Already booked for {self._call.booking.get('label')}. "
                 "Do not book again; just confirm it."
+            )
+        if self._call.offers_for:
+            return (
+                "These times are for moving an existing appointment. Use move_appointment, "
+                "or call check_availability without existing_appointment for a new booking."
             )
         offer = self._call.offer(option)
         if offer is None:
@@ -587,46 +770,265 @@ class ReceptionistAgent(Agent):
             self._call.set_offers(alternatives, None, None, result.get("timezone"))
         return format_booking(result, alternatives)
 
+    # -- existing appointments and texts ------------------------------
+
     @function_tool()
+    async def find_appointment(self, context: RunContext, caller_name: str | None = None) -> str:
+        """Find the caller's own upcoming appointments: when, which service, which
+        technician. Use it when they ask about, want to move or cancel an appointment, or
+        ask where the technician is. Only appointments booked under the number they are
+        calling from and the name they give are found. Say "one moment" first.
+
+        Args:
+            caller_name: The name the appointment is under, if you have not recorded it.
+        """
+        if not self._booking_enabled():
+            return format_found({"status": "disabled"}, [])
+        self._call.update(caller_name=caller_name)
+        if not self._call.slots.get("callerName"):
+            return format_found({"status": "name_needed"}, [])
+        if not is_e164(self._call.from_e164):
+            return format_found({"status": "caller_unknown"}, [])
+        async with self._working():
+            result = await self._client.appointments(  # type: ignore[union-attr]
+                self._body(action="find", callerName=self._call.slots.get("callerName"))
+            )
+        found = parse_appointments(result.get("appointments")) if result else []
+        if result and result.get("status") == "found" and not found:
+            result = {"status": "not_found"}
+        self._call.appointments = found
+        self._call.offers_for = None
+        return format_found(result, found)
+
+    @function_tool()
+    async def move_appointment(self, context: RunContext, appointment: int, option: int) -> str:
+        """Move one of the caller's appointments to a new time. First call
+        check_availability with existing_appointment, read out the times, and let the
+        caller choose. Say it is moved only when this tool says MOVED.
+
+        Args:
+            appointment: The appointment number from find_appointment.
+            option: The number of the new time the caller chose.
+        """
+        found = self._call.found(appointment)
+        if found is None:
+            return "That appointment number is not in the list. Call find_appointment first."
+        if self._call.offers_for != found.appointment_id:
+            return (
+                "There are no new times for this appointment yet. Call check_availability "
+                f"with existing_appointment={appointment} first."
+            )
+        offer = self._call.offer(option)
+        if offer is None:
+            return "That option number is not in the list of new times. Ask which one they want."
+        if not self._booking_enabled():
+            return format_move({"status": "disabled"}, [], appointment)
+        async with self._book_lock, self._working():
+            result = await self._client.appointments(  # type: ignore[union-attr]
+                self._body(
+                    action="move",
+                    callerName=self._call.slots.get("callerName"),
+                    appointmentId=found.appointment_id,
+                    startAt=offer.start_at,
+                )
+            )
+        alternatives: list = []
+        status = result.get("status") if result else None
+        if status == "moved" and result:
+            label = str(result.get("label") or offer.label)
+            self._call.appointments[appointment - 1] = FoundAppointment(
+                found.appointment_id, label, found.service_name, found.technician, found.status
+            )
+            self._call.appointment_changes.append({"change": "moved", "label": label})
+            self._call.offers, self._call.offers_for = [], None
+        elif status == "taken" and result:
+            alternatives = parse_offers(result.get("offers"))
+            self._call.offers = alternatives
+        return format_move(result, alternatives, appointment)
+
+    @function_tool()
+    async def cancel_appointment(
+        self, context: RunContext, appointment: int, caller_confirmed: bool
+    ) -> str:
+        """Cancel one of the caller's appointments. Before calling it, say which
+        appointment (date and time) will be canceled and get a clear yes. Say it is
+        canceled only when this tool says CANCELED.
+
+        Args:
+            appointment: The appointment number from find_appointment.
+            caller_confirmed: True only after the caller clearly said yes to canceling it.
+        """
+        found = self._call.found(appointment)
+        if found is None:
+            return "That appointment number is not in the list. Call find_appointment first."
+        if not caller_confirmed:
+            return (
+                "Not canceled. First ask the caller to confirm canceling the appointment of "
+                f"{found.label}, then call this again with caller_confirmed true."
+            )
+        if not self._booking_enabled():
+            return format_cancel({"status": "disabled"})
+        async with self._book_lock, self._working():
+            result = await self._client.appointments(  # type: ignore[union-attr]
+                self._body(
+                    action="cancel",
+                    callerName=self._call.slots.get("callerName"),
+                    appointmentId=found.appointment_id,
+                )
+            )
+        if result and result.get("status") == "canceled":
+            self._call.appointment_changes.append({"change": "canceled", "label": found.label})
+            del self._call.appointments[appointment - 1]
+            self._call.offers, self._call.offers_for = [], None
+        return format_cancel(result)
+
+    @function_tool()
+    async def text_caller(
+        self,
+        context: RunContext,
+        what: Literal["business_info", "appointment"],
+        appointment: int | None = None,
+    ) -> str:
+        """Text the caller, at the number they are calling from, when they ask for it.
+        "business_info": the business's address, phone and hours. "appointment": the date
+        and time of one of their appointments from find_appointment. The system writes the
+        words; you cannot add anything. Say it was sent only when this tool says SENT.
+
+        Args:
+            what: "business_info" or "appointment".
+            appointment: For "appointment": its number from find_appointment.
+        """
+        if not self._texts_enabled() or not is_e164(self._call.from_e164):
+            return format_text({"status": "unavailable"})
+        appointment_id = None
+        if what == "appointment":
+            found = self._call.found(appointment) if appointment is not None else None
+            if found is None:
+                return (
+                    "Call find_appointment first, then text_caller with that appointment's "
+                    "number."
+                )
+            appointment_id = found.appointment_id
+        async with self._working():
+            result = await self._client.appointments(  # type: ignore[union-attr]
+                self._body(
+                    action="text",
+                    kind=what,
+                    appointmentId=appointment_id,
+                    callerName=self._call.slots.get("callerName"),
+                )
+            )
+        return format_text(result)
+
+    def _log_transfer(self, event: str, *, level: int = logging.INFO, **fields: Any) -> None:
+        """One structured transfer event. Never a phone number, a key or caller speech."""
+        safe = transfer_event(event, call_id=self._call.call_id, **fields)
+        logger.log(level, format_event(safe), extra={"transfer": safe})
+
+    def _caller_present(self) -> bool:
+        """False only when the room is known and the caller's SIP participant has left."""
+        room = getattr(self._ctx, "room", None) if self._ctx is not None else None
+        participants = getattr(room, "remote_participants", None)
+        if not isinstance(participants, Mapping):
+            return True  # unknown: never block a transfer on a missing attribute
+        return self._sip_identity in participants
+
+    @function_tool()
+    async def transfer_to_human(
+        self, context: RunContext, department: str | None = None
+    ) -> str:
+        """Connect the caller with a person from the business's team. Call this whenever
+        the caller asks for a human, the owner, a manager, a technician, someone from the
+        team, or a department. Saying you will transfer without calling this tool does
+        nothing. The tool says the transfer announcement itself, rings the business's own
+        configured line while the caller waits, and returns what really happened.
+
+        Args:
+            department: Optional name of a department the caller asked for, exactly as
+                offered. Never a phone number.
+        """
+        return await self.transfer_call(context, "caller_request", department)
+
+    @function_tool()
+    async def transfer_emergency(self, context: RunContext) -> str:
+        """Connect the caller with the business's emergency contact. Call this for an
+        emergency: gas smell, fire or smoke, carbon-monoxide alarm, flooding, sparking or
+        burning electrical, no heat in freezing weather, or an injury. If anyone is in
+        danger, first tell the caller to hang up and call 911, then call this tool. 911
+        is never a transfer destination. The tool says the announcement itself and
+        returns what really happened; if nobody answers, the caller stays with you.
+        """
+        return await self.transfer_call(context, "emergency")
+
     async def transfer_call(
         self,
         context: RunContext,
         reason: Literal["caller_request", "emergency"],
         department: str | None = None,
     ) -> str:
-        """Connect the caller to a real person. Call this tool whenever the caller
-        asks for a person, or in an emergency. Saying you will transfer without
-        calling this tool does nothing. It rings the person while the caller waits
-        on the line, and only connects them if the person accepts; the tool result
-        says what really happened.
+        """The transfer itself, shared by transfer_to_human and transfer_emergency.
 
-        Args:
-            reason: "emergency" for gas leaks, flooding, fire, injury or anything
-                dangerous; otherwise "caller_request".
-            department: Optional department name to offer, if the caller asked for one.
+        Not a tool: the model reaches it only through those two, and neither can
+        pass a phone number. A transfer counts as connected only when LiveKit says
+        so, and only a screened (warm) transfer confirms that a person answered.
         """
         emergency = reason == "emergency"
         if emergency:
             self._call.emergency = True
+        self._log_transfer(
+            "transfer_requested",
+            reason=reason,
+            emergency=emergency,
+            language=self._call.language,
+            mechanism=self._transfer_settings.mode,
+        )
         if not self._has_config or not self._sip_identity:
+            self._log_transfer("transfer_failed", level=logging.ERROR, failure="no_config")
             return (
                 "Transfers are unavailable on this call. Apologize briefly and "
                 "take the caller's details for a callback."
+                + (" Tell them to hang up and call 911 if anyone is in danger." if emergency else "")
             )
         if self._keep_job_alive:
             return "The caller is already connected to a person. Say nothing more."
         if self._transferring:
             return "A transfer is already in progress. Say nothing more."
+        if not self._caller_present():
+            self._log_transfer("transfer_failed", failure="caller_left")
+            return "The caller has already left the call. Say nothing more."
 
-        plan = plan_transfer(self._cfg, reason, department)
+        plan = plan_transfer(
+            self._cfg,
+            reason,
+            department,
+            business_number=self._call.number,
+            caller=self._call.from_e164,
+        )
+        if plan.rejected:
+            # A saved line that must never ring (a loop, 911, a premium number...).
+            logger.error("transfer lines skipped as unsafe: %s", ",".join(plan.rejected))
         if not plan.targets:
+            if plan.rejected:
+                self._call.transfer = _transfer_record("", False, "")
+            self._log_transfer(
+                "transfer_failed",
+                level=logging.WARNING,
+                failure="invalid_destination" if plan.rejected else "no_destination",
+                rejected=",".join(plan.rejected) or None,
+                emergency=emergency,
+            )
+            self._log_fallback(emergency)
             return plan.refusal or "No transfer is possible. Offer a callback."
 
         settings = self._transfer_settings
         if settings.mode == "off":
             # A configuration problem, not a business rule: make it loud in the logs.
             logger.error("transfer requested but unavailable: %s", settings.problem)
-            self._call.transfer = {"targetName": plan.targets[0].name, "completed": False}
+            self._call.transfer = _transfer_record(plan.targets[0].name, False, "")
+            self._log_transfer(
+                "transfer_failed", level=logging.ERROR, failure="unavailable", emergency=emergency
+            )
+            self._log_fallback(emergency)
             return failure_message(
                 TransferFailure("unavailable"),
                 emergency=emergency,
@@ -634,6 +1036,7 @@ class ReceptionistAgent(Agent):
                 can_retry=False,
             )
         if self._transfer_rounds >= MAX_TRANSFER_ROUNDS:
+            self._log_fallback(emergency)
             return failure_message(
                 TransferFailure("no_answer"),
                 emergency=emergency,
@@ -650,26 +1053,62 @@ class ReceptionistAgent(Agent):
         finally:
             self._active_transfer = None
         if outcome.connected:
-            self._call.transfer = {"targetName": target.name, "completed": True}
+            # Only a screened transfer heard the person say yes (or press 1). A REFER
+            # that LiveKit reports successful may still have reached a voicemail.
+            confirmed = outcome.mechanism == "warm"
+            self._call.transfer = _transfer_record(target.name, True, outcome.mechanism, confirmed)
             self._call.end_reason = "completed"
             self._closing = True
-            logger.info("transfer connected (%s, %s)", outcome.mechanism, target.name)
+            if confirmed:
+                logger.info("HUMAN ANSWER CONFIRMED (%s, %s)", outcome.mechanism, target.name)
+            else:
+                logger.info(
+                    "TRANSFER REQUEST ACCEPTED (%s, %s); human answer not confirmed",
+                    outcome.mechanism,
+                    target.name,
+                )
+            self._log_transfer(
+                "transfer_accepted",
+                mechanism=outcome.mechanism,
+                target=target.name,
+                attempt=attempts,
+                answer_confirmed=confirmed,
+                emergency=emergency,
+            )
+            if attempts > 1:
+                self._log_transfer(
+                    "transfer_fallback_completed", result="connected", attempts=attempts
+                )
             if outcome.mechanism != "blind":
                 # LiveKit's task has already installed the "either side left" hook.
                 self._stay_until_call_ends(watch_room=False)
             self._leave_call()
-            return "The caller is now connected to a person. Say nothing more."
+            if confirmed:
+                return "The caller is now connected to a person. Say nothing more."
+            return "The call has been handed to the team's phone line. Say nothing more."
 
         self._transferring = False
-        self._call.transfer = {"targetName": target.name, "completed": False}
+        self._call.transfer = _transfer_record(target.name, False, outcome.mechanism)
         failure = outcome.failure or TransferFailure("provider_error")
         logger.warning("transfer did not connect (%s)", _why(outcome))
+        if failure.kind != "caller_left":
+            self._log_fallback(emergency)
         return failure_message(
             failure,
             emergency=emergency,
             attempts=attempts,
             can_retry=self._transfer_rounds < MAX_TRANSFER_ROUNDS,
         )
+
+    def _log_fallback(self, emergency: bool) -> None:
+        """No line connected: the caller stays with the agent for a callback.
+
+        The owner's alert is sent by TradeCatch when the call report arrives with a
+        failed transfer (and, for an emergency, as an urgent call).
+        """
+        result = "urgent_callback" if emergency else "callback_offered"
+        self._log_transfer("transfer_fallback_started", next=result, emergency=emergency)
+        self._log_transfer("transfer_fallback_completed", result=result, emergency=emergency)
 
     async def _run_transfer(
         self,
@@ -678,7 +1117,7 @@ class ReceptionistAgent(Agent):
         settings: TransferSettings,
         emergency: bool,
     ) -> tuple[TransferOutcome, int, TransferTarget]:
-        """Try each line in the plan until a person accepts. Never raises."""
+        """Try each line in the plan until one connects. Never raises."""
         language = phrases.LANGUAGE_NAMES.get(self._call.language, self._call.language)
         started = time.monotonic()
         attempts = 0
@@ -687,18 +1126,22 @@ class ReceptionistAgent(Agent):
         try:
             # Hold the floor so nothing else is said while the person is being reached.
             async with context.foreground():
-                await self._say_hold_line(context, hold_line(language, emergency))
-                for target in plan.targets:
+                await self._say_hold_line(context, hold_line(self._call.language, emergency))
+                for candidate in plan.targets:
                     spent = time.monotonic() - started
                     if attempts and spent + settings.ring_seconds > settings.budget_seconds:
                         break
                     if attempts:
+                        self._log_transfer(
+                            "transfer_fallback_started", next=candidate.name, attempt=attempts + 1
+                        )
                         await asyncio.sleep(BETWEEN_ATTEMPTS_SECONDS)
+                    target = candidate
                     attempts += 1
                     outcome = await self._attempt(target, settings, language, emergency)
                     if outcome.connected:
                         break
-                    logger.info("transfer attempt %d failed (%s)", attempts, _why(outcome))
+                    self._log_attempt_failure(outcome, target, attempts)
                     if outcome.failure is None or not outcome.failure.try_next:
                         break
         except asyncio.CancelledError:
@@ -707,6 +1150,22 @@ class ReceptionistAgent(Agent):
             logger.exception("transfer failed unexpectedly")
             outcome = TransferOutcome(False, TransferFailure("provider_error"))
         return outcome, attempts, target
+
+    def _log_attempt_failure(
+        self, outcome: TransferOutcome, target: TransferTarget, attempt: int
+    ) -> None:
+        failure = outcome.failure or TransferFailure("provider_error")
+        logger.info("transfer attempt %d failed (%s)", attempt, _why(outcome))
+        fields: dict[str, Any] = {
+            "failure": failure.kind,
+            "sip_status": failure.sip_status,
+            "mechanism": outcome.mechanism,
+            "target": target.name,
+            "attempt": attempt,
+        }
+        self._log_transfer("transfer_failed", level=logging.WARNING, **fields)
+        if failure.kind in ("no_answer", "timeout"):
+            self._log_transfer("transfer_timeout", level=logging.WARNING, **fields)
 
     async def _say_hold_line(self, context: RunContext, instructions: str) -> None:
         """Tell the caller to hold. A slow or failed announcement never blocks ringing."""
@@ -779,6 +1238,7 @@ class ReceptionistAgent(Agent):
         into the room does not.
         """
         self._keep_job_alive = True
+        self._stop_language_detection()
         ctx = self._ctx
         if ctx is None:
             return
@@ -804,6 +1264,22 @@ class ReceptionistAgent(Agent):
         return "Call ended."
 
 
+def _transfer_record(
+    target_name: str, completed: bool, mechanism: str, answer_confirmed: bool = False
+) -> dict[str, Any]:
+    """What the call report says about the transfer.
+
+    `completed` means the call left the agent for a person's line; only
+    `answerConfirmed` means a person was heard accepting it.
+    """
+    return {
+        "targetName": target_name,
+        "completed": completed,
+        "answerConfirmed": bool(completed and answer_confirmed),
+        "mechanism": mechanism,
+    }
+
+
 def _why(outcome: TransferOutcome) -> str:
     """A log-safe reason (no phone numbers, no caller speech)."""
     failure = outcome.failure
@@ -821,7 +1297,13 @@ def prewarm(proc: Any) -> None:
 
     Only the cloned-voice pipeline needs it; if the plugin is missing or fails
     to load, those calls use the standard voice and nothing else is affected.
+    The standard voice's model code is imported here too: loading it on the first
+    use blocked each call's event loop for about a second before the greeting.
     """
+    try:
+        import livekit.agents.inference.realtime  # noqa: F401
+    except Exception:
+        logger.warning("realtime voice model not preloaded", exc_info=True)
     try:
         from livekit.plugins import silero
 
@@ -836,7 +1318,7 @@ server.setup_fnc = prewarm
 def build_custom_voice_session(
     custom: CustomVoice, vad: Any, options: dict[str, Any]
 ) -> AgentSession:
-    """Speech-to-text -> LLM -> the owner's cloned ElevenLabs voice.
+    """Speech-to-text -> LLM -> an ElevenLabs voice (the owner's clone or the standard one).
 
     The text-to-speech is wrapped in a fallback chain: if ElevenLabs errors or
     times out mid-call, the same sentence is spoken by a standard voice instead
@@ -847,10 +1329,12 @@ def build_custom_voice_session(
     from livekit.plugins import elevenlabs
 
     settings = cascade_settings(os.environ)
+    delivery = delivery_settings(os.environ)
     cloned = elevenlabs.TTS(
         voice_id=custom.voice_id,
         model=custom.model,
         api_key=os.environ["ELEVENLABS_API_KEY"],
+        **({"voice_settings": elevenlabs.VoiceSettings(**delivery)} if delivery else {}),
     )
     return AgentSession(
         stt=inference.STT(settings.stt, language=settings.stt_language),
@@ -864,42 +1348,106 @@ def build_custom_voice_session(
 def build_session(
     cfg: dict[str, Any] | None, vad: Any, options: dict[str, Any]
 ) -> AgentSession:
-    """The session for this call: the owner's cloned voice when TradeCatch says so
-    and it can be built, otherwise the standard realtime voice."""
-    custom = parse_custom_voice(cfg, os.environ)
+    """The session for this call: the business's cloned voice, else the operator's
+    standard ElevenLabs voice, else the realtime voice. Logs which one answers, so
+    a live call shows the voice production really loaded."""
+    custom = call_voice(cfg, os.environ)
     if custom is not None and vad is not None:
         try:
             session = build_custom_voice_session(custom, vad, options)
-            logger.info("answering with the business's custom voice (model %s)", custom.model)
+            logger.info("voice for this call: %s", custom.describe())
             return session
         except Exception:
             # Never let a voice problem stop the call from being answered.
-            logger.exception("custom voice unavailable; answering with the standard voice")
+            logger.exception("ElevenLabs voice unavailable; answering with the realtime voice")
     elif custom is not None:
-        logger.warning("custom voice requested but no voice-activity model; using standard voice")
+        logger.warning("ElevenLabs voice requested but no voice-activity model; using the realtime voice")
     model, voice = voice_settings(os.environ)
-    return AgentSession(llm=inference.DuplexModel(model=model, voice=voice), **options)
+    extra = delegation_options(os.environ)
+    duplex = (
+        inference.DuplexModel(model=model, voice=voice, extra_kwargs=extra)
+        if extra
+        else inference.DuplexModel(model=model, voice=voice)
+    )
+    logger.info("voice for this call: realtime %s, voice %s", model, voice)
+    return AgentSession(llm=duplex, **options)
 
 
-@server.rtc_session(agent_name="tradecatch-receptionnist")
+class PolicyAgent(Agent):
+    """A caller the owner keeps away from the receptionist (or a withheld number).
+
+    Reads the owner's short message, or hands the call to the owner's approved line,
+    then ends the call. Nothing is reported: these calls are not leads.
+    """
+
+    def __init__(self, policy: CallerPolicy, sip_identity: str | None) -> None:
+        super().__init__(instructions=say_exactly_instruction(policy))
+        self._policy = policy
+        self._sip_identity = sip_identity
+
+    async def on_enter(self) -> None:
+        policy = self._policy
+        if policy.kind == "personal_transfer" and policy.transfer_e164 and self._sip_identity:
+            outcome = await refer_transfer(
+                identity=self._sip_identity,
+                number=policy.transfer_e164,
+                settings=transfer_settings(os.environ),
+            )
+            if outcome.connected:
+                logger.info("caller policy: handed to the owner's line")
+                return
+            logger.warning("caller policy: hand-off failed (%s)", _why(outcome))
+        if policy.messages:
+            handle = self.session.generate_reply(
+                instructions=say_exactly_instruction(policy), allow_interruptions=False
+            )
+            with contextlib.suppress(Exception):
+                await handle.wait_for_playout()
+        await _end_room()
+
+
+async def _end_room() -> None:
+    try:
+        await get_job_context().delete_room()
+    except Exception:
+        logger.exception("could not end the call")
+
+
+@server.rtc_session(agent_name="tradecatch-receptionist")
 async def entrypoint(ctx: JobContext) -> None:
     await ctx.connect()
     participant = await ctx.wait_for_participant(
         kind=rtc.ParticipantKind.PARTICIPANT_KIND_SIP
     )
 
-    number = dialed_number(participant.attributes) or os.environ.get(
-        "DEFAULT_BUSINESS_NUMBER"
-    )
+    number = dialed_number(participant.attributes)
     client = TradeCatchClient.from_env()
-    cfg = await client.fetch_business_config(number) if client and number else None
+    caller = caller_number(participant.attributes)
+    cfg = (
+        # "anonymous" tells TradeCatch the caller ID was withheld, so the owner's
+        # withheld-number policy applies; a real number is matched server-side.
+        await client.fetch_business_config(number, caller or "anonymous")
+        if client and number
+        else None
+    )
     if cfg is None:
         logger.error("no TradeCatch config for dialed number; using safe fallback")
+
+    policy = parse_caller_policy(cfg)
+    if policy is not None:
+        logger.info("caller policy applies: %s", policy.kind)
+        if policy.kind == "personal_end":
+            await _end_room()
+            return
+        options = {"user_away_timeout": 30.0}
+        session = build_session(cfg, ctx.proc.userdata.get("vad"), options)
+        await session.start(agent=PolicyAgent(policy, participant.identity), room=ctx.room)
+        return
 
     call = CallRecord(
         call_id=call_id_from_room(ctx.room.name, ctx.job.id),
         number=number or "",
-        from_e164=caller_number(participant.attributes),
+        from_e164=caller,
     )
     agent = ReceptionistAgent(
         cfg=cfg, call=call, client=client, sip_identity=participant.identity
@@ -931,6 +1479,9 @@ async def entrypoint(ctx: JobContext) -> None:
             ),
         ),
     )
+    # After the greeting is on its way: listening for the caller's language must
+    # never delay the answer, and the call carries on without it if it cannot start.
+    agent.start_language_detection(participant)
 
 
 if __name__ == "__main__":

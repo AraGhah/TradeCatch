@@ -10,6 +10,7 @@ const bodySchema = z
   .object({
     email: z.string().trim().email().max(200),
     locale: z.enum(["en", "fr"]).default("en"),
+    next: z.string().max(300).optional(),
   })
   .strict();
 
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
       email: parsed.data.email,
       locale: parsed.data.locale,
       origin,
+      next: parsed.data.next,
     });
   } catch (err) {
     console.error("[auth/magic-link] request failed", err);

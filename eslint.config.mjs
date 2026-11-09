@@ -9,6 +9,9 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Agent checkouts are linted in their own workspace, not recursively here.
     ".claude/worktrees/**",
+    ".worktrees/**",
+    // Video production assets include generated scripts, not application code.
+    "Videos/**",
     // Default ignores of eslint-config-next:
     ".artifacts/**",
     "test-results/**",

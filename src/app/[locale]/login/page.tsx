@@ -1,16 +1,43 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { LoginForm } from "@/components/app/LoginForm";
+import { LoginForm, type LoginNotice } from "@/components/app/LoginForm";
 import { Container } from "@/components/Container";
 import { FullMessagesProvider } from "@/components/FullMessagesProvider";
+import { safeReturnPath } from "@/product/saas/auth/return-path";
+
+/** Turns the code a sign-in route put in the address into one of our own messages. */
+function noticeFrom(
+  error: string | undefined,
+  notice: string | undefined,
+): LoginNotice | null {
+  if (notice === "password_saved") return "passwordSaved";
+  if (!error) return null;
+  return error === "rate_limited" ? "linkRateLimited" : "linkInvalid";
+}
 
 export default async function LoginPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{
+    error?: string | string[];
+    notice?: string | string[];
+    next?: string | string[];
+  }>;
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("login");
+  const query = await searchParams;
+  const notice = noticeFrom(
+    typeof query.error === "string" ? query.error : undefined,
+    typeof query.notice === "string" ? query.notice : undefined,
+  );
+
+  // Where to go after signing in. Only our own workspace pages are accepted.
+  const returnTo = safeReturnPath(
+    typeof query.next === "string" ? query.next : undefined,
+  );
 
   return (
     <section className="border-b border-navy/10 bg-[var(--color-surface)] py-16 md:py-24">
@@ -26,7 +53,7 @@ export default async function LoginPage({
         </div>
         <div className="mt-10">
           <FullMessagesProvider>
-            <LoginForm />
+            <LoginForm notice={notice} returnTo={returnTo} />
           </FullMessagesProvider>
         </div>
       </Container>

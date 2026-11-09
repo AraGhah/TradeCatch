@@ -9,8 +9,8 @@ test("Google Calendar enrollment fails closed and cannot be unlocked by a plan o
   const org = {
     id: "pilot-a",
     status: "active" as const,
-    accountType: "pilot" as const,
-    plan: "growth" as const,
+    accountType: "production" as const,
+    plan: "professional" as const,
     features: DEFAULT_DEMO_FEATURES,
   };
   assert.equal(googleCalendarPilotAllowed(org, "pilot-a, pilot-b"), true);
@@ -19,7 +19,7 @@ test("Google Calendar enrollment fails closed and cannot be unlocked by a plan o
   for (const patch of [
     { status: "suspended" as const },
     { plan: "starter" as const },
-    { accountType: "production" as const },
+    { plan: "essential" as const },
     { accountType: "demo" as const },
     { features: { ...DEFAULT_DEMO_FEATURES, appointmentBooking: false } },
   ]) {
@@ -29,6 +29,11 @@ test("Google Calendar enrollment fails closed and cannot be unlocked by a plan o
     );
   }
   assert.equal(googleCalendarPilotAllowed(null, "pilot-a"), false);
+  // Customers sold the earlier Growth plan keep appointments and stay eligible.
+  assert.equal(
+    googleCalendarPilotAllowed({ ...org, plan: "growth" as const }, "pilot-a"),
+    true,
+  );
 });
 
 test("Google adapter implements free/busy and event create, update and delete contracts (mock provider, not live proof)", async () => {
