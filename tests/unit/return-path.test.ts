@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { safeReturnPath } from "../../src/product/saas/auth/return-path";
+import { getPathname } from "../../src/i18n/pathname";
+import { safeReturnPath, signedOutLoginPath } from "../../src/product/saas/auth/return-path";
 import { signedInResponse } from "../../src/product/saas/auth/route-helpers";
 
 describe("safeReturnPath", () => {
@@ -71,5 +72,30 @@ describe("signing in returns to the page they were heading to", () => {
   it("keeps a billing-only session on billing whatever was asked for", async () => {
     const billing = { ...session, billingOnly: true } as typeof session;
     assert.deepEqual(await signedInResponse(billing, "en", "/app/referrals").json(), { ok: true, next: "/billing" });
+  });
+});
+
+describe("signedOutLoginPath", () => {
+  it("sends a signed-out visitor to the login page of their language, carrying the page they asked for", () => {
+    assert.equal(signedOutLoginPath("/app/referrals"), "/login?next=%2Fapp%2Freferrals");
+    assert.equal(
+      signedOutLoginPath("/fr/app/parrainage"),
+      "/fr/connexion?next=%2Ffr%2Fapp%2Fparrainage",
+    );
+    assert.equal(
+      signedOutLoginPath("/app/leads", "?status=new"),
+      "/login?next=%2Fapp%2Fleads%3Fstatus%3Dnew",
+    );
+  });
+
+  it("uses the same login addresses as the rest of the site", () => {
+    assert.equal(signedOutLoginPath("/app/x")?.split("?")[0], getPathname({ href: "/login", locale: "en" }));
+    assert.equal(signedOutLoginPath("/fr/app/x")?.split("?")[0], getPathname({ href: "/login", locale: "fr" }));
+  });
+
+  it("leaves the workspace home, other pages and unsafe paths to the normal handling", () => {
+    for (const path of ["/app", "/fr/app", "/pricing", "/login", "/application/x", "/app//evil.example", "/app/%2e%2e/admin"]) {
+      assert.equal(signedOutLoginPath(path), null, path);
+    }
   });
 });
