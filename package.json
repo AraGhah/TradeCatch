@@ -46,7 +46,7 @@
     "@emnapi/runtime": "1.11.3",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@swc/helpers": "0.5.23",
-    "framer-motion": "^12.42.2",
+    "framer-motion": "^14.10.1",
     "jose": "^6.2.13",
     "next": "^16.4.0",
     "next-intl": "^4.13.2",
