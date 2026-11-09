@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { Container } from "@/components/Container";
 import { CTAButton } from "@/components/CTAButton";
@@ -23,7 +24,63 @@ function accentHeadline(headline: string, accentWord: string) {
 }
 
 const SECTION =
-  "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-8 sm:py-10";
+  "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-6 sm:py-8";
+
+const EYEBROW =
+  "font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase";
+const H2 =
+  "mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold leading-[1.12] tracking-[-0.035em] text-heading md:text-[1.65rem]";
+
+/**
+ * Heading block, content and an optional action. On a phone they stack in that
+ * order. From `md` the heading and action share a narrow left column and the
+ * content takes the wider right one, so a tablet uses its width instead of
+ * scrolling one narrow column. The DOM order never changes, so reading and tab
+ * order are the same at every width.
+ */
+function SplitSection({
+  id,
+  className,
+  eyebrow,
+  title,
+  intro,
+  action,
+  children,
+}: {
+  id?: string;
+  className: string;
+  eyebrow: string;
+  title: string;
+  intro?: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section id={id} className={`${SECTION} ${className}`}>
+      <Container>
+        <div className="md:grid md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:grid-rows-[auto_1fr] md:gap-x-8">
+          <div className="md:col-start-1 md:row-start-1">
+            <p className={EYEBROW}>{eyebrow}</p>
+            <h2 className={H2}>{title}</h2>
+            {intro ? (
+              <p className="mt-2 text-[15px] leading-[1.55] text-muted">
+                {intro}
+              </p>
+            ) : null}
+          </div>
+          <div className="mt-4 md:col-start-2 md:row-span-2 md:row-start-1 md:mt-0">
+            {children}
+          </div>
+          {action ? (
+            <div className="mt-4 md:col-start-1 md:row-start-2 md:mt-5 md:self-start">
+              {action}
+            </div>
+          ) : null}
+        </div>
+      </Container>
+    </section>
+  );
+}
 
 /**
  * Mobile-first homepage composition. Hidden from `lg` up so desktop keeps
@@ -73,7 +130,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
   return (
     <div className="lg:hidden">
       {/* 1. Hero */}
-      <section className="relative overflow-hidden bg-navy px-0 py-9 text-white sm:py-11">
+      <section className="relative overflow-hidden bg-navy px-0 py-8 text-white sm:py-9">
         <div
           aria-hidden
           className="bg-grid-ink pointer-events-none absolute inset-0"
@@ -83,56 +140,35 @@ export async function HomeMobile({ locale }: { locale: string }) {
             <span className="block h-1.5 w-1.5 rounded-full bg-green" />
             {t("hero.eyebrow")}
           </span>
-          <h1 className="mt-4 font-heading text-[clamp(1.85rem,7.2vw,2.45rem)] font-extrabold leading-[1.08] tracking-[-0.04em] text-white">
+          <h1 className="mt-3 font-heading text-[clamp(1.85rem,7.2vw,2.45rem)] font-extrabold leading-[1.08] tracking-[-0.04em] text-white">
             {accentHeadline(headline, accentWord)}
           </h1>
-          <p className="mt-4 max-w-[34em] text-[15.5px] leading-[1.55] text-white/70">
+          <p className="mt-3 max-w-[34em] text-[15.5px] leading-[1.55] text-white/70">
             {t("hero.subheadline")}
           </p>
-          <div className="mt-7 flex flex-col gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <CTAButton
               href="/book-audit"
               variant="ember"
               size="lg"
-              className="w-full justify-center"
+              className="w-full justify-center sm:w-auto"
             >
               {t("hero.ctaPrimary")}
             </CTAButton>
-            <WatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-transparent px-5 py-3.5 text-[15px] font-semibold text-white">
+            <WatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-transparent px-5 py-3.5 text-[15px] font-semibold text-white sm:w-auto">
               {cta("watchDemo")}
-            </WatchDemoButton>
-          </div>
-          <p className="mt-5 text-[12.5px] leading-[1.45] text-white/55">
-            {t("hero.reassurance")}
-          </p>
-        </Container>
-      </section>
-
-      {/* 2. Demo */}
-      <section id="demo" className={`${SECTION} scroll-mt-24 bg-surface`}>
-        <Container>
-          <p className="font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase">
-            {t("mobile.demo.eyebrow")}
-          </p>
-          <h2 className="mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold tracking-[-0.035em] text-heading">
-            {t("mobile.demo.headline")}
-          </h2>
-          <p className="mt-2 text-[15px] leading-[1.55] text-muted">
-            {t("mobile.demo.intro")}
-          </p>
-          <div className="mt-6 flex flex-col gap-3">
-            <WatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-[11px] bg-orange px-5 py-3.5 text-[15px] font-semibold text-navy shadow-cta">
-              {t("mobile.demo.watchVideo")}
             </WatchDemoButton>
             <CTAButton
               href={tryHref}
-              variant="secondary"
-              className="w-full justify-center"
+              variant="link-ink"
+              className="justify-center text-[15px]"
             >
-              {t("mobile.demo.tryLive")}
+              {t("hero.ctaTry")} <span aria-hidden>→</span>
             </CTAButton>
           </div>
-          <p className="mt-3 text-[13px] text-muted">{t("mobile.demo.note")}</p>
+          <p className="mt-3 text-[12.5px] leading-[1.45] text-white/65">
+            {t("hero.reassurance")}
+          </p>
         </Container>
       </section>
 
@@ -140,158 +176,142 @@ export async function HomeMobile({ locale }: { locale: string }) {
       <StoryDemos locale={locale} compact />
 
       {/* 3. Benefits */}
-      <section className={`${SECTION} bg-paper`}>
-        <Container>
-          <p className="font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase">
-            {t("mobile.benefits.eyebrow")}
-          </p>
-          <h2 className="mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold tracking-[-0.035em] text-heading">
-            {t("mobile.benefits.headline")}
-          </h2>
-          <p className="mt-2 text-[15px] leading-[1.55] text-muted">
-            {t("mobile.benefits.intro")}
-          </p>
-          <ul className="mt-6 grid grid-cols-2 gap-3">
-            {benefits.map((item) => (
-              <li
-                key={item.title}
-                className="rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-3.5"
-              >
-                <h3 className="font-heading text-[14.5px] font-bold leading-snug tracking-[-0.02em] text-heading">
-                  {item.title}
-                </h3>
-                <p className="mt-1.5 text-[12.5px] leading-[1.45] text-muted">
-                  {item.body}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </Container>
-      </section>
+      <SplitSection
+        className="bg-paper"
+        eyebrow={t("mobile.benefits.eyebrow")}
+        title={t("mobile.benefits.headline")}
+        intro={t("mobile.benefits.intro")}
+      >
+        <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0">
+          {benefits.map((item) => (
+            <li
+              key={item.title}
+              className="rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-3"
+            >
+              <h3 className="font-heading text-[14.5px] font-bold leading-snug tracking-[-0.02em] text-heading">
+                {item.title}
+              </h3>
+              <p className="mt-1 text-[12.5px] leading-[1.45] text-muted">
+                {item.body}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </SplitSection>
 
       {/* 4. How it works */}
-      <section className={`${SECTION} bg-surface`}>
-        <Container>
-          <p className="font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase">
-            {t("mobile.howItWorks.eyebrow")}
-          </p>
-          <h2 className="mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold tracking-[-0.035em] text-heading">
-            {t("mobile.howItWorks.headline")}
-          </h2>
-          <p className="mt-2 text-[15px] leading-[1.55] text-muted">
-            {t("mobile.howItWorks.intro")}
-          </p>
-          <ol className="mt-6 m-0 flex list-none flex-col gap-3 p-0">
-            {steps.map((step, i) => (
-              <li
-                key={step.title}
-                className="flex gap-3 rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-paper p-4"
-              >
-                <span className="font-mono text-[12px] font-semibold text-ember-text">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <div>
-                  <h3 className="font-heading text-[16px] font-bold tracking-[-0.025em] text-heading">
-                    {step.title}
-                  </h3>
-                  <p className="mt-1 text-[14px] leading-[1.5] text-muted">
-                    {step.body}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ol>
+      <SplitSection
+        className="bg-surface"
+        eyebrow={t("mobile.howItWorks.eyebrow")}
+        title={t("mobile.howItWorks.headline")}
+        intro={t("mobile.howItWorks.intro")}
+        action={
           <CTAButton
             href="/how-it-works"
             variant="secondary"
-            className="mt-6 w-full justify-center"
+            className="w-full justify-center md:w-auto"
           >
             {t("mobile.howItWorks.cta")}
           </CTAButton>
-        </Container>
-      </section>
+        }
+      >
+        <ol className="m-0 flex list-none flex-col gap-2 p-0">
+          {steps.map((step, i) => (
+            <li
+              key={step.title}
+              className="flex gap-3 rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-paper px-3.5 py-2.5"
+            >
+              <span className="font-mono text-[12px] font-semibold text-ember-text">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h3 className="font-heading text-[16px] font-bold tracking-[-0.025em] text-heading">
+                  {step.title}
+                </h3>
+                <p className="mt-0.5 text-[14px] leading-[1.45] text-muted">
+                  {step.body}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </SplitSection>
 
       {/* 5. Use cases */}
-      <section className={`${SECTION} bg-paper`}>
-        <Container>
-          <p className="font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase">
-            {t("mobile.useCases.eyebrow")}
-          </p>
-          <h2 className="mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold tracking-[-0.035em] text-heading">
-            {t("mobile.useCases.headline")}
-          </h2>
-          <p className="mt-2 text-[15px] leading-[1.55] text-muted">
-            {t("mobile.useCases.intro")}
-          </p>
-          <div className="mt-5 flex flex-col gap-2">
-            {useCases.map((item) => (
-              <details
-                key={item.problem}
-                className="group rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface px-4 py-3"
-              >
-                <summary className="cursor-pointer list-none font-heading text-[15px] font-bold tracking-[-0.02em] text-heading marker:content-none [&::-webkit-details-marker]:hidden">
-                  <span className="flex items-start justify-between gap-3">
-                    {item.problem}
-                    <span
-                      className="text-muted transition group-open:rotate-45"
-                      aria-hidden
-                    >
-                      +
-                    </span>
-                  </span>
-                </summary>
-                <p className="mt-2 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-2 text-[14px] leading-[1.5] text-muted">
-                  {item.response}
-                </p>
-              </details>
-            ))}
-          </div>
-          <CTAButton href="/industries" variant="link-ink" className="mt-5">
+      <SplitSection
+        className="bg-paper"
+        eyebrow={t("mobile.useCases.eyebrow")}
+        title={t("mobile.useCases.headline")}
+        intro={t("mobile.useCases.intro")}
+        action={
+          <CTAButton href="/industries" variant="link">
             {t("mobile.useCases.cta")} →
           </CTAButton>
-        </Container>
-      </section>
+        }
+      >
+        <div className="flex flex-col gap-2">
+          {useCases.map((item) => (
+            <details
+              key={item.problem}
+              className="group rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface"
+            >
+              <summary className="cursor-pointer list-none rounded-[14px] px-4 py-3 font-heading text-[15px] font-bold tracking-[-0.02em] text-heading marker:content-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange [&::-webkit-details-marker]:hidden">
+                <span className="flex items-start justify-between gap-3">
+                  {item.problem}
+                  <span
+                    className="text-muted transition group-open:rotate-45"
+                    aria-hidden
+                  >
+                    +
+                  </span>
+                </span>
+              </summary>
+              <p className="mx-4 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-2 pb-3 text-[14px] leading-[1.5] text-muted">
+                {item.response}
+              </p>
+            </details>
+          ))}
+        </div>
+      </SplitSection>
 
       {/* 6. Pricing */}
       <section id="plans" className={`${SECTION} scroll-mt-24 bg-surface`}>
         <Container>
-          <p className="font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase">
-            {t("mobile.pricing.eyebrow")}
-          </p>
-          <h2 className="mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold tracking-[-0.035em] text-heading">
-            {t("mobile.pricing.headline")}
-          </h2>
+          <p className={EYEBROW}>{t("mobile.pricing.eyebrow")}</p>
+          <h2 className={H2}>{t("mobile.pricing.headline")}</h2>
           <p className="mt-2 text-[15px] leading-[1.55] text-muted">
             {t("mobile.pricing.intro")}
           </p>
           <p className="mt-3 rounded-[12px] border border-orange/30 bg-[rgba(228,118,43,0.08)] px-3.5 py-2.5 text-[13.5px] leading-[1.45] text-heading">
             {t("mobile.pricing.billingNote")}
           </p>
-          <ol className="mt-6 m-0 flex list-none flex-col gap-3 p-0">
+          <ol className="m-0 mt-4 grid list-none grid-cols-2 gap-3 p-0">
             {planIds.map((id, i) => {
               const prices = PLAN_PRICES[id];
               const recommended = id === "professional";
               return (
                 <li
                   key={id}
-                  className={`rounded-[16px] border p-4 ${
+                  className={`flex flex-col rounded-[16px] border p-4 ${
                     recommended
                       ? "border-orange/45 bg-paper ring-1 ring-orange/15"
                       : "border-[rgb(var(--ink-rgb)/0.1)] bg-paper"
                   }`}
                 >
-                  {recommended ? (
-                    <p className="mb-2 font-mono text-[10px] tracking-[0.1em] text-ember-text uppercase">
-                      {t("mobile.pricing.recommended")}
-                    </p>
-                  ) : null}
+                  {/* Same height in both cards, so names and prices line up. */}
+                  <p
+                    aria-hidden={recommended ? undefined : true}
+                    className="mb-2 min-h-[2.6em] font-mono text-[10px] leading-[1.3] tracking-[0.1em] text-ember-text uppercase"
+                  >
+                    {recommended ? t("mobile.pricing.recommended") : null}
+                  </p>
                   <h3 className="font-heading text-[20px] font-extrabold tracking-[-0.03em] text-heading">
                     {planNames[i]}
                   </h3>
                   <p className="mt-1 text-[14px] leading-[1.45] text-secondary">
                     {tags[i]}
                   </p>
-                  <dl className="mt-4 grid grid-cols-2 gap-3">
+                  <dl className="mt-auto grid grid-cols-1 gap-2 pt-3">
                     <div>
                       <dt className="text-[11px] tracking-[0.06em] text-muted uppercase">
                         {t("mobile.pricing.setupLabel")}
@@ -304,7 +324,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
                       <dt className="text-[11px] tracking-[0.06em] text-muted uppercase">
                         {t("mobile.pricing.monthlyLabel")}
                       </dt>
-                      <dd className="mt-0.5 font-heading text-[18px] font-bold text-orange">
+                      <dd className="mt-0.5 font-heading text-[18px] font-bold text-ember-text">
                         {formatPlanPrice(prices.monthly, locale)}
                       </dd>
                     </div>
@@ -313,18 +333,18 @@ export async function HomeMobile({ locale }: { locale: string }) {
               );
             })}
           </ol>
-          <div className="mt-6 flex flex-col gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
             <CTAButton
               href="/pricing"
               variant="ink"
-              className="w-full justify-center"
+              className="w-full justify-center sm:flex-1"
             >
               {t("mobile.pricing.seeAll")}
             </CTAButton>
             <CTAButton
               href="/receptionist"
               variant="secondary"
-              className="w-full justify-center"
+              className="w-full justify-center sm:flex-1"
             >
               {t("pricingPreview.receptionistCta")}
             </CTAButton>
@@ -343,57 +363,59 @@ export async function HomeMobile({ locale }: { locale: string }) {
       </section>
 
       {/* 8. FAQ */}
-      <section className={`${SECTION} bg-surface`}>
-        <Container>
-          <p className="font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase">
-            {t("mobile.faq.eyebrow")}
-          </p>
-          <h2 className="mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold tracking-[-0.035em] text-heading">
-            {t("mobile.faq.headline")}
-          </h2>
-          <div className="mt-5 border-t border-[rgb(var(--ink-rgb)/0.12)]">
-            <FaqAccordion items={faqItems} />
-          </div>
+      <SplitSection
+        className="bg-surface"
+        eyebrow={t("mobile.faq.eyebrow")}
+        title={t("mobile.faq.headline")}
+        action={
           <CTAButton
             href="/faq"
             variant="secondary"
-            className="mt-6 w-full justify-center"
+            className="w-full justify-center md:w-auto"
           >
             {t("mobile.faq.viewAll")}
           </CTAButton>
-        </Container>
-      </section>
+        }
+      >
+        <div className="border-t border-[rgb(var(--ink-rgb)/0.12)]">
+          <FaqAccordion items={faqItems.slice(0, 5)} compact />
+        </div>
+      </SplitSection>
 
       {/* 9. Final CTA */}
-      <section className="bg-navy px-0 py-9 text-white">
+      <section className="bg-navy px-0 py-8 text-white">
         <Container>
-          <h2 className="font-heading text-[clamp(1.55rem,6vw,2.1rem)] font-extrabold tracking-[-0.04em] text-white">
-            {t("mobile.finalCta.headline")}
-          </h2>
-          <p className="mt-3 max-w-[34em] text-[15px] leading-[1.55] text-white/70">
-            {t("mobile.finalCta.body")}
-          </p>
-          <div className="mt-7 flex flex-col gap-3">
-            <CTAButton
-              href="/book-audit"
-              variant="ember"
-              size="lg"
-              className="w-full justify-center"
-            >
-              {t("mobile.finalCta.primary")}
-            </CTAButton>
-            <CTAButton
-              href="/pricing"
-              variant="secondary"
-              className="w-full justify-center !border-white/25 !text-white hover:!bg-white/10"
-            >
-              {t("mobile.finalCta.secondary")}
-            </CTAButton>
+          <div className="md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,300px)] md:items-center md:gap-x-10">
+            <div>
+              <h2 className="font-heading text-[clamp(1.55rem,6vw,2.1rem)] font-extrabold leading-[1.1] tracking-[-0.04em] text-white">
+                {t("mobile.finalCta.headline")}
+              </h2>
+              <p className="mt-2 max-w-[34em] text-[15px] leading-[1.55] text-white/70">
+                {t("mobile.finalCta.body")}
+              </p>
+            </div>
+            <div className="mt-4 flex flex-col gap-3 md:mt-0">
+              <CTAButton
+                href="/book-audit"
+                variant="ember"
+                size="lg"
+                className="w-full justify-center"
+              >
+                {t("mobile.finalCta.primary")}
+              </CTAButton>
+              <CTAButton
+                href="/pricing"
+                variant="ghost-ink"
+                className="w-full justify-center"
+              >
+                {t("mobile.finalCta.secondary")}
+              </CTAButton>
+            </div>
           </div>
-          <p className="mt-5 text-[13px] text-white/55">
+          <p className="mt-4 text-[13px] text-white/65">
             {t("mobile.finalCta.note")}
           </p>
-          <p className="mt-4 text-[13px] text-white/45">
+          <p className="mt-3 text-[13px] text-white/60">
             {cta("bookFreeDemo")} · TradeCatch
           </p>
         </Container>
