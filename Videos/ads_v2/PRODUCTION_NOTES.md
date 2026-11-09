@@ -163,6 +163,39 @@ The same ads play on the site as three short "on the job" stories (home page aft
 - Accessibility: captions track on the video, transcript in a `<details>`, the dialog keeps the existing focus trap, Escape and focus return. The video never exceeds 68% of the viewport height.
 - Tests: `tests/demo-and-pilot.spec.ts` (EN and FR dialogs, label, 4:5 box fits the viewport, receptionist page, assets served).
 
+## Website demo: pacing and call to action (Nov 2026)
+
+The one public video ("Under the sink", 4:5) is built by `_source/build_site_demo.py`, not by the LinkedIn flow above:
+
+    cd Videos/ads_v2/_source
+    python gen_voice.py en fr CTA2     # only if a spoken line changed (cached otherwise; needs the ElevenLabs key)
+    python gen_words.py                # word timings for any new line (delete its key from words.json first)
+    python build_site_demo.py [en] [fr] [--no-render]
+
+It renders the 9:16 master and the 4:5 picture into the scratch folder (the LinkedIn masters in this folder are **not**
+touched), web-encodes with the command under "Website" plus a -2 dBFS peak limiter before AAC (without it the FR file re-encoded to
++1.4 dBTP; with it the files measure -1.6 / -1.3 dBTP at -14.4 / -14.1 LUFS), and writes the WebVTT captions straight from the mixer's cue times.
+
+What changed and why:
+
+- **Wording.** The narration, the end-card button and the captions no longer say "free audit". The narrator says "Book a free
+  demo at tradecatch.ca" / "Réserve ta démo gratuite sur tradecatch.ca"; the button reads "Book a Free Demo" / "Réserver une
+  démo gratuite" (`config.py` LINES CTA2 and BRAND). Only those two spoken lines were re-recorded (90 characters).
+- **Pacing.** The fast feel came from editing, not playback speed or the media: the source clips are 10 s long and the cuts were
+  derived from audio length, so a short line produced a short scene. `build_ads.py` now sets floors (`HOLD` in `build_A`): the
+  contractor at work 4.2 s, the call arriving 4.0 s, TradeCatch picking up 4.4 s, the phone notification 2.0 s, the request
+  card about 4.75 s. Everything is still cut from the same audio, so captions cannot drift; playback is 1.0x and the controls
+  are the browser's.
+- **Call to action.** The end card fades in its button, address and disclosure by 1.95 s, then holds 5.2 s (`CTA_MIN_VISIBLE`).
+- **Disclosure.** The on-screen line on the site version is "Dramatization with a fictional business." / "Mise en scène avec une
+  entreprise fictive." (the launch plans are not described as a pilot). The LinkedIn masters still carry the longer pilot line.
+- **No language-menu content.** Nothing in the video mentions a keypad or a language prompt; the receptionist greets in one
+  language as before. Automatic language detection is not shown, because it is not yet deployed to the live agent.
+
+Not changed, and still saying "free audit": the LinkedIn masters and 4:5 feed files in this folder, their sidecar captions in
+`captions/`, and ads B and C (plus the `the-ladder` and `after-hours` files under `public/demo-video/stories/`, which the site
+does not offer). Rebuild them from the same sources before reusing them.
+
 ## Limitations - read before publishing
 
 1. **No generative video model was available** (no video-generation API key in the environment). I could not create new photoreal footage. The people shown are the existing AI-generated clips from `Videos/`, re-edited and upscaled from 720p to 1080p. I designed every shot so nobody on camera needs lip-sync, and avoided the clips' worst frames (morphing hands, odd reaches), but it is still AI footage. For truly cinematic shots, supply a video-generation key (Sora/Veo/Kling/Runway) or real footage and re-run the pipeline.
