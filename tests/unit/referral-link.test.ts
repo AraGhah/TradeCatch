@@ -17,10 +17,7 @@ import type { PlanId } from "../../src/product/saas/plan-catalog";
 
 const START = Date.parse("2026-11-08T12:00:00.000Z");
 
-function makeWorld(
-  durability?: { expected: boolean; ready: boolean },
-  options: { holdDays?: number } = {},
-) {
+function makeWorld(durability?: { expected: boolean; ready: boolean }) {
   let counter = 0;
   const orgs = new Map<string, OrganizationFacts>();
   const paid = new Set<string>();
