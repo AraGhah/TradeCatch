@@ -3,8 +3,8 @@ import { createRequire } from "node:module";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
-const { requireSuccessfulRun } = require("../../scripts/require-green-ci.js");
-const revision = { sha: "a".repeat(40), branch: "main" };
+const { requireSuccessfulRun, PRODUCTION_BRANCH } = require("../../scripts/require-green-ci.js");
+const revision = { sha: "a".repeat(40), branch: PRODUCTION_BRANCH };
 const run = {
   id: 1,
   head_sha: revision.sha,
@@ -23,6 +23,7 @@ const jobs = ["quality", "e2e"].map((name) => ({
 }));
 
 test("release gate accepts both completed jobs for the exact revision", () => {
+  assert.equal(PRODUCTION_BRANCH, "Ara");
   assert.equal(requireSuccessfulRun([run], jobs, revision), run);
 });
 test("release gate rejects missing runs, other commits, branches, workflows and PR runs", () => {
@@ -30,6 +31,7 @@ test("release gate rejects missing runs, other commits, branches, workflows and 
     [],
     [{ ...run, head_sha: "b".repeat(40) }],
     [{ ...run, head_branch: "feature" }],
+    [{ ...run, head_branch: "main" }],
     [{ ...run, path: ".github/workflows/untrusted.yml" }],
     [{ ...run, event: "pull_request" }],
   ])
