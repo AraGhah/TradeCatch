@@ -5,20 +5,27 @@
  */
 
 import type { BusinessNotifyInput } from "@/lib/business-notifications";
+import { smsFailureDisposition } from "@/product/missed-call/twilio";
 import type { SmsPort } from "@/product/missed-call/types";
-import { OUTCOME_LABEL } from "./summary";
+import { ownerCallEmail, ownerCallSms } from "./owner-call-alert";
 import type {
   CallSession,
   CallSummary,
+  NotificationChannel,
   NotificationDelivery,
   ReceptionistConfig,
 } from "./types";
 
 export type ReceptionistNotifier = {
+  /**
+   * `attempt` is 1 for the first delivery and counts up for retries; it is
+   * recorded on every delivery so the dashboard and the retry job agree.
+   */
   deliverSummary(
     config: ReceptionistConfig,
     session: CallSession,
     summary: CallSummary,
+    options?: { attempt?: number },
   ): Promise<NotificationDelivery[]>;
   /** Immediate SMS to every SMS channel when a critical call comes in. */
   alertEmergency(
@@ -37,107 +44,39 @@ export type NotifierDeps = {
   clock?: () => Date;
 };
 
-function smsBody(config: ReceptionistConfig, summary: CallSummary): string {
-  const fr = config.defaultLanguage === "fr";
-  const parts = [
-    `[${config.businessName}] ${fr ? "Appel de la réceptionniste" : "Receptionist call"}: ${summary.headline}`,
-    summary.callbackE164
-      ? `${fr ? "Rappel" : "Callback"}: ${summary.callbackE164}`
-      : `${fr ? "De" : "From"}: ${summary.callerE164}`,
-    summary.serviceAddress
-      ? `${fr ? "Adresse" : "Address"}: ${summary.serviceAddress}`
-      : "",
-    summary.issue ? `${fr ? "Demande" : "Request"}: ${summary.issue}` : "",
-    summary.appointment?.status === "booked" && summary.appointment.label
-      ? `${fr ? "Rendez-vous confirmé" : "Appointment confirmed"}: ${summary.appointment.label}`
-      : "",
-    summary.preferredTime
-      ? `${fr ? "Moment" : "Time"}: ${summary.preferredTime}`
-      : "",
-    summary.message ? `${fr ? "Note" : "Note"}: ${summary.message}` : "",
-    summary.knownContact
-      ? `${fr ? "Contact connu" : "Known contact"}: ${summary.knownContact}`
-      : "",
-    `→ ${summary.nextStep}`,
-  ].filter(Boolean);
-  return parts.join("\n").slice(0, 900);
+/** Configured channels minus the ones the owner switched off. */
+export function activeChannels(config: ReceptionistConfig): NotificationChannel[] {
+  const muted = config.mutedNotificationChannels ?? [];
+  return config.notifications.filter(
+    (channel) => channel.type === "webhook" || !muted.includes(channel.type),
+  );
 }
 
-function emailInput(
-  config: ReceptionistConfig,
-  session: CallSession,
-  summary: CallSummary,
-  to: string,
-): BusinessNotifyInput {
-  const fr = config.defaultLanguage === "fr";
-  const transcript = session.turns
-    .filter((t) => t.speaker !== "system")
-    .map(
-      (t) =>
-        `${t.speaker === "agent" ? (fr ? "Réception" : "Receptionist") : fr ? "Appelant" : "Caller"}: ${t.text}`,
-    )
-    .join("\n");
-  return {
-    toEmail: to,
-    subject: `${summary.headline} · ${config.businessName}`,
-    title: summary.headline,
-    lines: [
-      {
-        label: fr ? "Résultat" : "Outcome",
-        value: OUTCOME_LABEL[summary.outcome][config.defaultLanguage],
-      },
-      { label: fr ? "Prochaine étape" : "Next step", value: summary.nextStep },
-      { label: fr ? "Nom" : "Name", value: summary.callerName },
-      {
-        label: fr ? "Numéro appelant" : "Caller ID",
-        value: summary.callerE164,
-      },
-      { label: fr ? "Rappel" : "Callback", value: summary.callbackE164 },
-      { label: fr ? "Adresse" : "Address", value: summary.serviceAddress },
-      { label: fr ? "Demande" : "Request", value: summary.issue },
-      {
-        label: fr ? "Rendez-vous réservé" : "Appointment booked",
-        value:
-          summary.appointment?.status === "booked"
-            ? summary.appointment.label
-            : undefined,
-      },
-      {
-        label: fr ? "Moment souhaité" : "Preferred time",
-        value: summary.preferredTime,
-      },
-      { label: "Note", value: summary.message },
-      {
-        label: fr ? "Contact connu" : "Known contact",
-        value: summary.knownContact,
-      },
-      { label: fr ? "Urgence" : "Urgency", value: summary.urgency },
-      {
-        label: fr ? "Transféré à" : "Transferred to",
-        value: summary.transferredTo,
-      },
-      {
-        label: fr ? "Hors heures" : "After hours",
-        value: summary.afterHours ? (fr ? "oui" : "yes") : fr ? "non" : "no",
-      },
-      {
-        label: fr ? "Durée (s)" : "Duration (s)",
-        value: summary.durationSeconds?.toString(),
-      },
-      { label: fr ? "Résumé de l’appel" : "Call summary", value: summary.aiSummary },
-      {
-        label: fr ? "Message vocal" : "Voicemail",
-        value: session.recordingUrl,
-      },
-      {
-        label: "Transcript",
-        value:
-          config.transcriptsEnabled === false
-            ? undefined
-            : transcript.slice(0, 6000) || undefined,
-      },
-    ],
-  };
+/** Enough to tell recipients apart in the delivery log without storing the full address. */
+export function maskDestination(
+  channel: "sms" | "email" | "webhook",
+  value: string,
+): string {
+  if (channel === "sms") return `•••${value.replace(/\D/g, "").slice(-4)}`;
+  if (channel === "email") {
+    const [local = "", domain = ""] = value.split("@");
+    return `${local.slice(0, 1)}•••@${domain}`;
+  }
+  try {
+    return new URL(value).hostname;
+  } catch {
+    return "webhook";
+  }
+}
+
+/** A short, value-free reason for a failed send (provider code when there is one). */
+function failureCode(err: unknown, fallback: string): string {
+  const code = (err as { code?: unknown } | null)?.code;
+  if (typeof code === "number" || (typeof code === "string" && /^[\w.-]{1,40}$/.test(code)))
+    return `provider_${code}`;
+  if (err instanceof Error && err.name && err.name !== "Error")
+    return err.name.slice(0, 60);
+  return fallback;
 }
 
 export function createReceptionistNotifier(
@@ -146,7 +85,12 @@ export function createReceptionistNotifier(
   const now = () => (deps.clock ? deps.clock() : new Date()).toISOString();
   const doFetch = deps.fetchImpl ?? fetch;
 
-  async function sendSms(config: ReceptionistConfig, to: string, body: string) {
+  async function sendSms(
+    config: ReceptionistConfig,
+    to: string,
+    body: string,
+    attempt = 1,
+  ): Promise<NotificationDelivery> {
     const from = config.smsFromE164 ?? config.phoneNumberE164;
     try {
       // Always an owner/staff notification channel (config.notifications),
@@ -157,43 +101,78 @@ export function createReceptionistNotifier(
         body,
         internal: true,
       });
-      return { at: now(), channel: "sms" as const, ok: true, detail: sid };
-    } catch (err) {
       return {
         at: now(),
-        channel: "sms" as const,
+        channel: "sms",
+        ok: true,
+        detail: sid,
+        to: maskDestination("sms", to),
+        attempt,
+      };
+    } catch (err) {
+      // "uncertain" means the provider may already have delivered it; resending
+      // would risk a duplicate text, so only a clear "retry" is retryable.
+      const disposition = smsFailureDisposition(err);
+      return {
+        at: now(),
+        channel: "sms",
         ok: false,
-        detail: err instanceof Error ? err.message.slice(0, 200) : "sms_failed",
+        // A provider code, never the message (it can quote the number).
+        detail: failureCode(err, "sms_failed"),
+        to: maskDestination("sms", to),
+        attempt,
+        retryable: disposition === "retry",
       };
     }
   }
 
   return {
-    async deliverSummary(config, session, summary) {
+    async deliverSummary(config, session, summary, options = {}) {
+      const attempt = options.attempt ?? 1;
       const results: NotificationDelivery[] = [];
-      for (const channel of config.notifications) {
+      // The owner asked for emergencies only: say nothing about routine calls.
+      if (
+        config.emergencyOnlyAlerts &&
+        summary.urgency !== "critical" &&
+        summary.outcome !== "emergency_transferred"
+      )
+        return results;
+      for (const channel of activeChannels(config)) {
         if (channel.type === "sms") {
           results.push(
-            await sendSms(config, channel.toE164, smsBody(config, summary)),
+            await sendSms(
+              config,
+              channel.toE164,
+              ownerCallSms(config, session, summary),
+              attempt,
+            ),
           );
         } else if (channel.type === "email") {
+          const to = maskDestination("email", channel.to);
           if (!deps.sendEmail) {
             results.push({
               at: now(),
               channel: "email",
               ok: false,
               detail: "email_not_wired",
+              to,
+              attempt,
+              retryable: false,
             });
             continue;
           }
-          const r = await deps.sendEmail(
-            emailInput(config, session, summary, channel.to),
-          );
+          const r = await deps
+            .sendEmail(ownerCallEmail(config, session, summary, channel.to))
+            .catch(() => ({ sent: false, reason: "send_failed" }));
           results.push({
             at: now(),
             channel: "email",
             ok: r.sent,
             detail: r.reason,
+            to,
+            attempt,
+            // The email carries an idempotency key, so a retry cannot double-send.
+            retryable: !r.sent && r.reason === "send_failed",
           });
         } else {
           const headers: Record<string, string> = {
@@ -230,6 +209,10 @@ export function createReceptionistNotifier(
               channel: "webhook",
               ok: res.ok,
               detail: res.ok ? undefined : `http_${res.status}`,
+              to: maskDestination("webhook", channel.url),
+              attempt,
+              // A 4xx is the receiver refusing the payload; retrying cannot help.
+              retryable: !res.ok && (res.status >= 500 || res.status === 429),
             });
           } catch (err) {
             results.push({
@@ -240,6 +223,9 @@ export function createReceptionistNotifier(
                 err instanceof Error
                   ? err.message.slice(0, 200)
                   : "webhook_failed",
+              to: maskDestination("webhook", channel.url),
+              attempt,
+              retryable: true,
             });
           }
         }
@@ -262,7 +248,7 @@ export function createReceptionistNotifier(
             : "No on-call line configured — call back immediately.",
       ].join("\n");
       const results: NotificationDelivery[] = [];
-      for (const channel of config.notifications) {
+      for (const channel of activeChannels(config)) {
         if (channel.type === "sms")
           results.push(await sendSms(config, channel.toE164, body));
       }
