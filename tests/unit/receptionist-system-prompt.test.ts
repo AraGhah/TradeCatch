@@ -177,14 +177,24 @@ describe("profile → config prompt", () => {
     assert.ok(DEFAULT_SYSTEM_PROMPT.length < MAX_SYSTEM_PROMPT_CHARS - 3_000, "leaves owners room to edit");
   });
 
-  it("introduces the receptionist by the business's chosen name, and never by a guessed one", () => {
+  it("introduces the receptionist by the business's chosen name", () => {
     const named = buildProfileConfig(profile({ receptionistName: "Sophia" }), { client });
     assert.match(named.systemPrompt ?? "", /Your name: Sophia\./);
-    assert.match(named.greetingFr, /^Bonjour! Merci d'avoir appelé .+, Sophia à l'appareil\.$/);
-    assert.match(named.greetingEn, /this is Sophia\.$/);
+    assert.match(named.greetingFr, /^Bonjour, ici Sophia de .+\.$/);
+    assert.match(named.greetingEn, /^Hello, this is Sophia from .+\.$/);
+  });
+
+  it("a business that has not chosen a name is answered by Lucie, in the exact greetings", () => {
     const unnamed = buildProfileConfig(profile({}), { client });
-    assert.match(unnamed.systemPrompt ?? "", /Your name: Not provided/);
-    assert.doesNotMatch(unnamed.greetingFr, /à l'appareil/);
+    assert.match(unnamed.systemPrompt ?? "", /Your name: Lucie\./);
+    assert.match(unnamed.greetingFr, /^Bonjour, ici Lucie de .+\.$/);
+    assert.match(unnamed.greetingEn, /^Hello, this is Lucie from .+\.$/);
+    assert.doesNotMatch(`${unnamed.greetingFr} ${unnamed.greetingEn}`, /Merci d'avoir appelé|Thanks for calling|Sophia/);
+  });
+
+  it("a blank name counts as no name", () => {
+    const blank = buildProfileConfig(profile({ receptionistName: "   " }), { client });
+    assert.match(blank.systemPrompt ?? "", /Your name: Lucie\./);
   });
 
   it("covers the conversation playbook's safety, honesty and security rules", () => {

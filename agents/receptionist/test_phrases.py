@@ -53,7 +53,7 @@ class OpeningTests(unittest.TestCase):
     def test_an_older_server_gets_the_same_greeting_from_the_business_name(self):
         older = {"businessName": "Acme", "languageSelect": {"opening": CFG["languageSelect"]["opening"]}}
         text = phrases.opening_instruction(older)
-        self.assertIn('"Bonjour, ici Acme."', text)
+        self.assertIn('"Bonjour, ici Lucie de Acme."', text)
         self.assertIn('"How can I help you?"', text)
         self.assertNotIn("press 1", text)
 
@@ -69,12 +69,32 @@ class OpeningTests(unittest.TestCase):
         }
         lines = phrases.opening_lines(cfg)
         self.assertTrue(all(lang == "en" for lang, _ in lines))
-        self.assertIn("Acme", lines[0][1])
-        self.assertIn("How can I help you today?", phrases.opening_instruction(cfg))
+        self.assertEqual(
+            [text for _, text in lines],
+            ["Hello, this is Lucie from Acme.", "How can I help you?"],
+        )
+
+    def test_a_french_line_greets_with_the_exact_french_words(self):
+        cfg = {
+            "businessName": "Acme Plomberie",
+            "languageSelect": {"startLanguage": "fr", "languages": ["fr"]},
+        }
+        self.assertEqual(
+            [text for _, text in phrases.opening_lines(cfg)],
+            ["Bonjour, ici Lucie de Acme Plomberie.", "Comment puis-je vous aider ?"],
+        )
+
+    def test_the_name_is_the_one_the_business_chose(self):
+        cfg = {"businessName": "Acme", "receptionistName": "Sophie", "languageSelect": {"languages": ["en"], "startLanguage": "en"}}
+        self.assertEqual(phrases.opening_lines(cfg)[0][1], "Hello, this is Sophie from Acme.")
+
+    def test_no_business_name_still_introduces_her(self):
+        self.assertEqual(phrases.introduction("fr", "Lucie", ""), "Bonjour, ici Lucie.")
+        self.assertEqual(phrases.introduction("en", "Lucie", ""), "Hello, this is Lucie.")
 
     def test_malformed_server_lines_are_ignored(self):
         cfg = {"businessName": "Acme", "languageSelect": {"detection": {"opening": [{"text": 5}, "x", {"text": " "}]}}}
-        self.assertIn("Bonjour, ici Acme.", phrases.opening_instruction(cfg))
+        self.assertIn("Bonjour, ici Lucie de Acme.", phrases.opening_instruction(cfg))
 
     def test_the_model_is_told_to_add_nothing(self):
         self.assertIn("Add nothing else", phrases.opening_instruction(CFG))

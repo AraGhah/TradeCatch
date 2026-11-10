@@ -527,7 +527,7 @@ class OpeningAndLanguageTests(FlowCase):
     async def test_an_older_server_without_language_settings_still_greets_in_both(self):
         self.make_agent({"instructions": "Base prompt.", "businessName": "Acme"})
         await self.agent.on_enter()
-        self.assertIn("Bonjour, ici Acme.", self.session.replies[0])
+        self.assertIn("Bonjour, ici Lucie de Acme.", self.session.replies[0])
         self.assertIn("How can I help you?", self.session.replies[0])
         self.assertNotIn("press 1", self.session.replies[0])
         self.assertEqual(self.call.language, "fr")
@@ -793,6 +793,54 @@ class ReplyGapTests(FlowCase):
                 SimpleNamespace(metrics=SimpleNamespace(type="llm_metrics", reasoning_tokens=40, completion_tokens=12))
             )
         self.assertIn("backend run: 40 reasoning tokens, 12 output tokens", logs.output[-1])
+
+    async def test_the_gap_line_also_lists_the_stages_the_pipeline_reported(self):
+        self.caller_stops()
+        self.agent._on_metrics(
+            SimpleNamespace(metrics=SimpleNamespace(type="llm_metrics", ttft=0.4, duration=0.9, reasoning_tokens=5, completion_tokens=3))
+        )
+        with self.assertLogs("agent-tradecatch-receptionist", level="INFO") as logs:
+            self.agent._on_agent_state(SimpleNamespace(old_state="thinking", new_state="speaking"))
+        self.assertRegex(
+            logs.output[-1],
+            r"reply gap \d+\.\d\ds \(1 backend runs\) \[model first token 0\.40s, model total 0\.90s\]",
+        )
+
+    async def test_the_end_of_the_call_logs_one_summary_of_every_turn(self):
+        for _ in range(3):
+            self.caller_stops()
+            self.agent._on_agent_state(SimpleNamespace(old_state="thinking", new_state="speaking"))
+        with self.assertLogs("agent-tradecatch-receptionist", level="INFO") as logs:
+            self.agent._on_close(SimpleNamespace(reason=A.CloseReason.USER_INITIATED, error=None))
+        summaries = [line for line in logs.output if "reply latency summary" in line]
+        self.assertEqual(len(summaries), 1)
+        self.assertRegex(summaries[0], r"reply latency summary: 3 turns, avg \d+\.\d\ds, p50 .*p95 .*max ")
+
+    async def test_a_call_with_no_caller_turn_logs_no_summary(self):
+        with self.assertNoLogs("agent-tradecatch-receptionist", level="INFO"):
+            self.agent._stop_language_detection()
+            self.assertIsNone(self.agent._latency.summary())
+
+
+class PersonaInTheCallTests(FlowCase):
+    async def test_an_unnamed_receptionist_is_lucie(self):
+        self.assertIn("You are Lucie", self.agent.instructions)
+
+    async def test_the_business_name_for_her_is_used_when_one_is_set(self):
+        cfg = copy.deepcopy(CFG)
+        cfg["receptionistName"] = "Sophie"
+        self.make_agent(cfg)
+        self.assertIn("You are Sophie", self.agent.instructions)
+        self.assertNotIn("You are Lucie", self.agent.instructions)
+
+    async def test_the_identity_rules_come_after_the_business_prompt(self):
+        text = self.agent.instructions
+        self.assertGreater(text.index("# YOUR IDENTITY AND VOICE"), text.index("Base prompt."))
+
+    async def test_the_identity_rules_survive_a_language_change(self):
+        text = self.agent._instructions_for("en")
+        self.assertIn("You are Lucie", text)
+        self.assertEqual(text.count("# YOUR IDENTITY AND VOICE"), 1)
 
 
 class SilenceTests(FlowCase):

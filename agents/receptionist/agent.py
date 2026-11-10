@@ -57,6 +57,8 @@ from call_record import CallRecord, FoundAppointment, is_e164
 from caller_policy import CallerPolicy, parse_caller_policy, say_exactly_instruction
 from language import CallLanguage, Heard, Verdict, detection_enabled
 from language_listener import start_listener
+from latency import CallLatency, TurnTimer
+from persona import persona_policy, receptionist_name
 from policy import SilencePolicy
 from routing import (
     TransferPlan,
@@ -160,6 +162,7 @@ class ReceptionistAgent(Agent):
     ) -> None:
         self._cfg: dict[str, Any] = cfg or {}
         self._has_config = cfg is not None
+        self._name = receptionist_name(cfg)
         self._base_instructions = cfg["instructions"] if cfg else FALLBACK_INSTRUCTIONS
         self._call = call
         self._client = client
@@ -195,10 +198,10 @@ class ReceptionistAgent(Agent):
         self._closing = False
         self._reported = False
         self._report_lock = asyncio.Lock()
-        # When the caller last stopped talking, and the backend runs since: the reply
-        # gap the caller hears, logged without any of their words.
-        self._caller_stopped_at: float | None = None
-        self._backend_runs = 0
+        # The reply gap the caller hears (stop talking -> first sound) and where the time
+        # went, logged per turn without any of their words (latency.py).
+        self._turn = TurnTimer()
+        self._latency = CallLatency()
 
         super().__init__(instructions=self._instructions_for(self._model_language))
 
@@ -218,6 +221,7 @@ class ReceptionistAgent(Agent):
         parts = [self._base_instructions]
         if self._has_config:
             parts.append(TRANSFER_POLICY)
+        parts.append(persona_policy(self._name))
         parts.append(phrases.language_directive(language, detecting=self._lang.detecting))
         return "\n\n".join(parts)
 
@@ -372,17 +376,18 @@ class ReceptionistAgent(Agent):
     # -- session events -------------------------------------------------
 
     def _on_agent_state(self, ev: Any) -> None:
-        if ev.new_state != "speaking" or self._caller_stopped_at is None:
+        if ev.new_state != "speaking":
             return
-        gap = time.monotonic() - self._caller_stopped_at
-        logger.info("reply gap %.2fs (%d backend runs)", gap, self._backend_runs)
-        self._caller_stopped_at = None
+        record = self._turn.agent_spoke(time.monotonic())
+        if record is None:
+            return
+        self._latency.add(record)
+        logger.info(record.line())
 
     def _on_metrics(self, ev: Any) -> None:
         metrics = getattr(ev, "metrics", None)
-        if getattr(metrics, "type", None) != "llm_metrics":
+        if self._turn.add(metrics) is None:
             return
-        self._backend_runs += 1
         logger.info(
             "backend run: %s reasoning tokens, %s output tokens",
             getattr(metrics, "reasoning_tokens", "?"),
@@ -391,11 +396,11 @@ class ReceptionistAgent(Agent):
 
     def _on_user_state(self, ev: Any) -> None:
         if getattr(ev, "old_state", None) == "speaking" and ev.new_state != "speaking":
-            self._caller_stopped_at = time.monotonic()
-            self._speech_ended_at = self._caller_stopped_at
-            self._backend_runs = 0
+            now = time.monotonic()
+            self._turn.caller_stopped(now)
+            self._speech_ended_at = now
         if ev.new_state == "speaking":
-            self._caller_stopped_at = None
+            self._turn.caller_spoke()
             self._silence.on_activity()
         elif ev.new_state == "away" and not self._closing:
             self._spawn(self._on_quiet())
@@ -440,6 +445,9 @@ class ReceptionistAgent(Agent):
 
     def _on_close(self, ev: Any) -> None:
         self._stop_language_detection()
+        summary = self._latency.summary()
+        if summary is not None:
+            logger.info(summary.line())
         pending = self._active_transfer
         if pending is not None and not pending.done():
             # The caller left (or the model died) while a contractor's phone was ringing:
@@ -575,9 +583,11 @@ class ReceptionistAgent(Agent):
         message: str | None = None,
         emergency: bool = False,
     ) -> str:
-        """Quietly save what the caller told you. Call it as soon as you learn a detail
-        and again whenever they correct one. Never mention that you are saving it.
-        Only send the fields you just learned.
+        """Quietly save what the caller told you. Each call makes the caller wait, so save
+        in batches: once you have a few details together (the name and number, then the
+        address and the service...), not after every answer, and again when they correct
+        one. Save whatever is still unsaved before you say goodbye. Never mention that you
+        are saving it. Only send the fields you have not saved yet.
 
         Args:
             caller_name: The caller's name.

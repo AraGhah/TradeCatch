@@ -65,18 +65,34 @@ class TurnHandlingTests(unittest.TestCase):
 
 
 class DelegationOptionsTests(unittest.TestCase):
-    def test_nothing_set_keeps_the_service_defaults(self):
-        self.assertEqual(delegation_options({}), {})
+    QUICK = {"responses_options": {"reasoning": {"effort": "low"}, "text": {"verbosity": "low"}}}
+
+    def test_nothing_set_asks_the_backend_for_quick_answers(self):
+        self.assertEqual(delegation_options({}), self.QUICK)
 
     def test_reads_effort_and_verbosity(self):
-        env = {"AGENT_DELEGATION_REASONING": " Low ", "AGENT_DELEGATION_VERBOSITY": "low"}
+        env = {"AGENT_DELEGATION_REASONING": " MINIMAL ", "AGENT_DELEGATION_VERBOSITY": "Medium"}
         self.assertEqual(
             delegation_options(env),
-            {"responses_options": {"reasoning": {"effort": "low"}, "text": {"verbosity": "low"}}},
+            {"responses_options": {"reasoning": {"effort": "minimal"}, "text": {"verbosity": "medium"}}},
         )
 
-    def test_unknown_values_are_ignored_so_tools_keep_working(self):
+    def test_unknown_values_fall_back_to_the_quick_defaults_so_tools_keep_working(self):
         env = {"AGENT_DELEGATION_REASONING": "turbo", "AGENT_DELEGATION_VERBOSITY": "none"}
+        self.assertEqual(delegation_options(env), self.QUICK)
+
+    def test_default_gives_one_setting_back_to_the_service(self):
+        self.assertEqual(
+            delegation_options({"AGENT_DELEGATION_REASONING": "default"}),
+            {"responses_options": {"text": {"verbosity": "low"}}},
+        )
+        self.assertEqual(
+            delegation_options({"AGENT_DELEGATION_VERBOSITY": " Default "}),
+            {"responses_options": {"reasoning": {"effort": "low"}}},
+        )
+
+    def test_default_for_both_sends_nothing(self):
+        env = {"AGENT_DELEGATION_REASONING": "default", "AGENT_DELEGATION_VERBOSITY": "default"}
         self.assertEqual(delegation_options(env), {})
 
 

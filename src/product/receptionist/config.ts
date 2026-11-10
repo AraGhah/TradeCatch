@@ -2,6 +2,7 @@ import { z } from "zod";
 import { isReservedDemoPhone } from "@/product/missed-call/client-config";
 import type { ClientAccount } from "@/product/missed-call/types";
 import { defaultUrgencyRubric } from "@/product/missed-call/urgency";
+import { receptionistNameOrDefault } from "./persona";
 import type { ReceptionistConfig } from "./types";
 
 const E164_PHONE = /^\+[1-9]\d{7,14}$/;
@@ -171,13 +172,12 @@ export function defaultGreetings(
   businessName: string,
   receptionistName?: string,
 ) {
-  // "Bonjour! Merci d'avoir appelé Plomberie Nord, Sophia à l'appareil."
-  const greetingFr = receptionistName
-    ? `Bonjour! Merci d'avoir appelé ${businessName}, ${receptionistName} à l'appareil.`
-    : `Bonjour! Merci d'avoir appelé ${businessName}.`;
-  const greetingEn = receptionistName
-    ? `Hi! Thanks for calling ${businessName}, this is ${receptionistName}.`
-    : `Thanks for calling ${businessName}!`;
+  const name = receptionistNameOrDefault(receptionistName);
+  // "Bonjour, ici Lucie de Plomberie Nord." + the opening question
+  // "Comment puis-je vous aider ?" (see openingQuestion in prompts.ts).
+  const greetingFr = `Bonjour, ici ${name} de ${businessName}.`;
+  // "Hello, this is Lucie from Nord Plumbing." + "How can I help you?"
+  const greetingEn = `Hello, this is ${name} from ${businessName}.`;
   return {
     greetingFr,
     greetingEn,
