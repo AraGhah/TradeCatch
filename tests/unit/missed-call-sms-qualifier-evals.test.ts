@@ -111,7 +111,12 @@ describe("SMS qualifier — opt-in preferred contact time", () => {
       toE164,
       body: "NON",
     });
-    assert.match(beforePhoto.replies[0] ?? "", /best time to call you back/i);
+    // The engine sends its own prompts; none is left for the webhook to resend.
+    assert.deepEqual(beforePhoto.replies, []);
+    assert.match(
+      beforePhoto.sentReplies?.[0] ?? "",
+      /best time to call you back/i,
+    );
 
     await engine.handleInboundSms({
       fromE164,
