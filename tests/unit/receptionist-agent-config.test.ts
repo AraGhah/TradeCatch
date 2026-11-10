@@ -234,7 +234,7 @@ describe("agent config", () => {
     assert.deepEqual(
       opening.map((line) => [line.lang, line.text]),
       [
-        ["fr", "Bonjour, ici Nord Plomberie."],
+        ["fr", "Bonjour, ici Lucie de Nord Plomberie."],
         ["en", "How can I help you?"],
       ],
     );
@@ -260,6 +260,48 @@ describe("agent config", () => {
     assert.deepEqual(single.languageSelect.detection.ask, []);
     assert.ok(single.languageSelect.detection.opening.every((line) => line.lang === "en"));
     assert.ok(single.languageSelect.detection.opening.length >= 1);
+  });
+
+  it("answers as Lucie unless the business chose another name", () => {
+    assert.equal(buildAgentConfig(config(), OPEN).receptionistName, "Lucie");
+    assert.equal(buildAgentConfig(config({ receptionistName: "  " }), OPEN).receptionistName, "Lucie");
+    assert.equal(buildAgentConfig(config({ receptionistName: "Sophie" }), OPEN).receptionistName, "Sophie");
+    const named = buildAgentConfig(config({ receptionistName: "Sophie", languages: ["en", "fr"] }), OPEN);
+    assert.equal(named.languageSelect.detection.opening[0]?.text, "Bonjour, ici Sophie de Nord Plomberie.");
+  });
+
+  it("opens a French line with the exact French greeting and question, and an English line with the exact English ones", () => {
+    const fr = buildAgentConfig(config({ languages: ["fr"], defaultLanguage: "fr" }), OPEN);
+    assert.deepEqual(
+      fr.languageSelect.detection.opening.map((line) => line.text),
+      ["Bonjour, ici Lucie de Nord Plomberie.", "Comment puis-je vous aider ?"],
+    );
+    const en = buildAgentConfig(config({ languages: ["en"], defaultLanguage: "en" }), OPEN);
+    assert.deepEqual(
+      en.languageSelect.detection.opening.map((line) => line.text),
+      ["Hello, this is Lucie from Nord Plomberie.", "How can I help you?"],
+    );
+  });
+
+  it("leaves a greeting the owner wrote alone", () => {
+    const own = buildAgentConfig(
+      config({
+        languages: ["fr"],
+        defaultLanguage: "fr",
+        greetingFr: "Allô! Plomberie Nord, que puis-je faire pour vous?",
+      }),
+      OPEN,
+    );
+    const opening = own.languageSelect.detection.opening.map((line) => line.text).join(" ");
+    assert.doesNotMatch(opening, /Lucie/);
+    assert.match(opening, /Plomberie Nord, que puis-je faire pour vous/);
+  });
+
+  it("asks the model to save details in batches rather than after every answer", () => {
+    const { instructions } = buildAgentConfig(config(), OPEN);
+    assert.match(instructions, /record_details: .*save in batches/);
+    assert.match(instructions, /save whatever is still unsaved before you say goodbye/);
+    assert.doesNotMatch(instructions, /as soon as you learn/);
   });
 
   it("still sends the earlier menu fields so an agent deployed before detection keeps working", () => {
