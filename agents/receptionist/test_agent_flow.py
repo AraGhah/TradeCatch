@@ -1182,6 +1182,82 @@ class RecordDetailsTests(FlowCase):
         await self.agent.record_details(None, reason="fuite de gaz", emergency=True)
         self.assertTrue(self.call.payload()["emergency"])
 
+    async def test_saving_a_request_says_what_is_still_to_ask(self):
+        text = await self.agent.record_details(
+            None, caller_name="Marie", callback_same_as_caller_id=True, service="plomberie"
+        )
+        self.assertTrue(text.startswith("Saved."))
+        self.assertIn("Still to ask before you wrap up", text)
+        self.assertIn("street address", text)
+        self.assertIn("day and time", text)
+        self.assertNotIn("the caller's name", text)  # already saved
+
+    async def test_nothing_more_is_asked_once_the_request_is_complete(self):
+        text = await self.agent.record_details(
+            None,
+            caller_name="Marie",
+            callback_same_as_caller_id=True,
+            address="12 rue des Pins, Laval",
+            reason="Le chauffe-eau de la cave fuit depuis hier.",
+            preferred_time="jeudi matin",
+        )
+        self.assertEqual(text, "Saved.")
+
+
+class EndCallChecksTests(FlowCase):
+    """The receptionist does not wave goodbye while the team still lacks what it needs."""
+
+    async def hang_up(self):
+        async def wait_for_playout():
+            return None
+
+        return await self.agent.end_call(SimpleNamespace(wait_for_playout=wait_for_playout))
+
+    async def test_the_first_hang_up_is_refused_while_the_address_and_time_are_missing(self):
+        await self.agent.record_details(
+            None, caller_name="Marie", callback_same_as_caller_id=True,
+            reason="Le chauffe-eau de la cave fuit depuis hier.",
+        )
+        reply = await self.hang_up()
+        self.assertIn("Do not hang up yet", reply)
+        self.assertIn("street address", reply)
+        self.assertIn("day and time", reply)
+        self.assertEqual(self.job.deleted, 0)
+        self.assertFalse(self.agent._closing)
+
+    async def test_a_caller_who_will_not_say_is_let_go_on_the_second_try(self):
+        await self.agent.record_details(None, service="plomberie")
+        self.assertIn("Do not hang up yet", await self.hang_up())
+        self.assertEqual(await self.hang_up(), "Call ended.")
+        self.assertEqual(self.job.deleted, 1)
+
+    async def test_a_complete_request_hangs_up_at_once(self):
+        await self.agent.record_details(
+            None,
+            caller_name="Marie",
+            callback_same_as_caller_id=True,
+            address="12 rue des Pins, Laval",
+            reason="Le chauffe-eau de la cave fuit depuis hier.",
+            preferred_time="jeudi matin",
+        )
+        self.assertEqual(await self.hang_up(), "Call ended.")
+
+    async def test_a_conversation_with_nothing_saved_is_sent_back_to_record_it(self):
+        for text in ("Bonjour", "J'ai une fuite", "Dans ma cave"):
+            self.call.add_turn("caller", text)
+        reply = await self.hang_up()
+        self.assertIn("Nothing from this call is saved yet", reply)
+        self.assertEqual(await self.hang_up(), "Call ended.")
+
+    async def test_a_short_call_with_nothing_to_save_ends_normally(self):
+        self.call.add_turn("caller", "Mauvais numéro")
+        self.assertEqual(await self.hang_up(), "Call ended.")
+
+    async def test_a_completed_transfer_is_never_held_up(self):
+        await self.agent.record_details(None, service="plomberie")
+        self.call.transfer = {"targetName": "Billing", "completed": True}
+        self.assertEqual(await self.hang_up(), "Call ended.")
+
 
 def ctx_for(session):
     return FakeContext(session)

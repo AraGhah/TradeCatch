@@ -274,8 +274,11 @@ export async function HomeMobile({ locale }: { locale: string }) {
         </div>
       </SplitSection>
 
-      {/* 6. Pricing */}
-      <section id="plans" className={`${SECTION} scroll-mt-24 bg-surface`}>
+      {/* 6. Pricing. page.tsx renders this layout and the desktop one in the
+          same HTML (CSS hides one), so the id must differ from the desktop
+          `plans` section: duplicate ids are invalid and `#plans` would
+          resolve to the hidden copy. */}
+      <section id="plans-mobile" className={`${SECTION} scroll-mt-24 bg-surface`}>
         <Container>
           <p className={EYEBROW}>{t("mobile.pricing.eyebrow")}</p>
           <h2 className={H2}>{t("mobile.pricing.headline")}</h2>
@@ -352,15 +355,16 @@ export async function HomeMobile({ locale }: { locale: string }) {
         </Container>
       </section>
 
-      {/* 7. Add-on */}
-      <section className={`${SECTION} bg-paper`}>
+      {/* 7. Add-on. WebsiteServiceAddOn is itself a labelled <section>, so this
+          wrapper is a div: an outer <section> would have no heading of its own. */}
+      <div className={`${SECTION} bg-paper`}>
         <Container>
           <WebsiteServiceAddOn copy={websiteServiceCopy} />
           <p className="sr-only">
             {addOn.priceCad} CAD optional website service
           </p>
         </Container>
-      </section>
+      </div>
 
       {/* 8. FAQ */}
       <SplitSection
