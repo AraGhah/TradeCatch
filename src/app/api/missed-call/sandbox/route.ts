@@ -93,7 +93,8 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     ok: true,
     handled: result.handled,
-    replies: result.replies,
+    // Everything the customer was told: already-sent prompts first, then guidance.
+    replies: [...(result.sentReplies ?? []), ...result.replies],
     workflow: wf
       ? {
           id: wf.id,
