@@ -23,6 +23,8 @@ import {
   isEnglishRequest,
   isFrenchRequest,
   isOptOut,
+  isPhotoDecline,
+  isPhotoPromise,
   isPhotoSkip,
   nextCollectionStep,
   openingSms,
@@ -85,17 +87,26 @@ function normalizePhoneKey(n: string): string {
   return n.replace(/[^\d+]/g, "");
 }
 
-/** Deterministic outbox id so Twilio retries cannot enqueue duplicate purposes. */
+/**
+ * Deterministic outbox id so Twilio retries cannot enqueue duplicate purposes.
+ * `inReplyTo` (the inbound MessageSid) scopes a reply to ONE customer text: a
+ * redelivery of that text maps to the same row, while a later text with the same
+ * wording gets its own reply.
+ */
 function outboxPurposeId(
   workflowId: string,
   toE164: string,
   detail: string | undefined,
+  inReplyTo?: string,
 ): string {
-  const purpose = (detail ?? "sms")
-    .toLowerCase()
-    .replace(/[^a-z0-9:_-]+/g, "_")
-    .slice(0, 80);
-  return `sms_${workflowId}_${normalizePhoneKey(toE164)}_${purpose || "sms"}`;
+  const clean = (value: string, max: number) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9:_-]+/g, "_")
+      .slice(0, max);
+  const purpose = clean(detail ?? "sms", 80) || "sms";
+  const reply = inReplyTo ? `_re_${clean(inReplyTo, 64)}` : "";
+  return `sms_${workflowId}_${normalizePhoneKey(toE164)}_${purpose}${reply}`;
 }
 
 function pushEvent(
@@ -125,13 +136,19 @@ export type MissedCallEngine = {
     suppressedReason?: string;
   }>;
 
+  /**
+   * `replies` are texts the CALLER must still deliver (technician guidance, stale
+   * alert notices). `sentReplies` were already sent through the outbox by the
+   * engine itself (customer prompts and corrections): show them, never resend them.
+   * Delivering both is what used to text every customer twice.
+   */
   handleInboundSms(input: {
     fromE164: string;
     toE164: string;
     body: string;
     mediaUrls?: string[];
     messageSid?: string;
-  }): Promise<{ handled: boolean; replies: string[] }>;
+  }): Promise<{ handled: boolean; replies: string[]; sentReplies?: string[] }>;
 
   processEscalations(): Promise<{
     escalated: string[];
@@ -198,6 +215,15 @@ export function createMissedCallEngine(deps: {
     body: string;
     detail?: string;
     allowWhenSuppressed?: boolean;
+    /** The inbound MessageSid this text answers (see outboxPurposeId). */
+    inReplyTo?: string;
+    /**
+     * Answering a customer's text: the workflow has already moved on and the text
+     * is queued in the outbox, so a provider failure must not fail the inbound
+     * (a retry would replay the customer's answer against the next question).
+     * The outbox flush retries delivery.
+     */
+    deferDeliveryFailure?: boolean;
   }): Promise<boolean> {
     const rosterPhones = new Set(
       input.client.technicianRoster.map((t) => normalizePhoneKey(t.phone)),
@@ -220,6 +246,7 @@ export function createMissedCallEngine(deps: {
       input.workflow.id,
       input.toE164,
       input.detail,
+      input.inReplyTo,
     );
 
     pushEvent(input.workflow, "sms_queued", input.detail, clock);
@@ -251,13 +278,25 @@ export function createMissedCallEngine(deps: {
         toE164: input.toE164,
         fromE164: input.client.smsFromNumber,
         body: input.body,
+        // Lets Twilio's status callback find this row even if this request
+        // dies before markOutboundSent, so the stale-send sweep never resends it.
+        outboxId: outbox.id,
         internal: sendingToStaff,
       });
       await deps.store.markOutboundSent(outbox.id, result.sid);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       await deps.store.markOutboundFailed(outbox.id, message, "retry");
-      throw err;
+      if (!input.deferDeliveryFailure) throw err;
+      console.warn(
+        JSON.stringify({
+          event: "tradecatch.sms.reply_delivery_deferred",
+          outboxId: outbox.id,
+          code: err instanceof Error ? err.name : "Error",
+        }),
+      );
+      // The outbox owns delivery now; the caller must not send it again.
+      return true;
     }
 
     pushEvent(input.workflow, "sms_sent", input.detail, clock);
@@ -333,10 +372,17 @@ export function createMissedCallEngine(deps: {
     return { sent, failed };
   }
 
+  /**
+   * Ask the customer the next question. A step is asked once per workflow (the
+   * outbox id is per step), so a retried or repeated inbound never repeats it.
+   * `answering` marks the customer's inbound text: a failed send is then left to
+   * the outbox flush instead of failing the inbound.
+   */
   async function sendPrompt(
     workflow: MissedCallWorkflow,
     clientId: string,
     step: CollectionStep,
+    answering = false,
   ): Promise<string | null> {
     const client = await deps.store.getClient(clientId);
     if (!client) return null;
@@ -348,6 +394,7 @@ export function createMissedCallEngine(deps: {
       toE164: workflow.callerE164,
       body,
       detail: step,
+      deferDeliveryFailure: answering,
     });
     return sent ? body : null;
   }
@@ -1090,7 +1137,13 @@ export function createMissedCallEngine(deps: {
     },
 
     async handleInboundSms(input) {
+      // Texts the caller still has to deliver (technician guidance).
       const replies: string[] = [];
+      // Texts this engine already sent through the outbox (customer prompts).
+      const sentReplies: string[] = [];
+      // Scopes each correction to this one inbound text. Without a MessageSid
+      // (sandbox, tests) there is no redelivery to guard against, so it is unique.
+      const replyKey = input.messageSid ?? id("inbound");
       let claimedSid: string | undefined;
 
       try {
@@ -1267,16 +1320,21 @@ export function createMissedCallEngine(deps: {
             workflow.collected.language === "en"
               ? "I'm sorry about that. Our team has been alerted and will follow up with you right away."
               : "Désolé pour ça. Notre équipe a été avisée et vous répondra tout de suite.";
-          await sendOutboundSms({
-            workflow,
-            client,
-            toE164: input.fromE164,
-            body: handoff,
-            detail: "distress_handoff",
-          });
-          replies.push(handoff);
+          if (
+            await sendOutboundSms({
+              workflow,
+              client,
+              toE164: input.fromE164,
+              body: handoff,
+              detail: "distress_handoff",
+              inReplyTo: replyKey,
+              deferDeliveryFailure: true,
+            })
+          ) {
+            sentReplies.push(handoff);
+          }
           await deps.store.saveWorkflow(workflow);
-          return { handled: true, replies };
+          return { handled: true, replies, sentReplies };
         }
 
         if (workflow.currentStep === "language") {
@@ -1301,46 +1359,109 @@ export function createMissedCallEngine(deps: {
           );
           if (next === "done") {
             await finalizeAndDispatch(workflow);
-            return { handled: true, replies };
+            return { handled: true, replies, sentReplies };
           }
-          const prompt = await sendPrompt(workflow, client.id, next);
-          if (prompt) replies.push(prompt);
+          const prompt = await sendPrompt(workflow, client.id, next, true);
+          if (prompt) sentReplies.push(prompt);
           await deps.store.saveWorkflow(workflow);
-          return { handled: true, replies };
+          return { handled: true, replies, sentReplies };
         }
 
         const step = workflow.currentStep;
         const media = input.mediaUrls ?? [];
         const question = enabledQuestions(client).find((x) => x.id === step);
 
-        if (step === "photo" && media.length === 0 && isPhotoSkip(input.body)) {
-          if (question?.required) {
-            const message =
-              workflow.collected.language === "en"
-                ? "A photo is required. Please send an MMS image."
-                : "Une photo est requise. Envoyez une image en MMS.";
+        /** One text to this customer, answering this inbound message only. */
+        const answer = async (body: string, detail: string) => {
+          if (
             await sendOutboundSms({
               workflow,
               client,
               toE164: input.fromE164,
-              body: message,
-              detail: "photo_required",
-            });
-            replies.push(message);
-            await deps.store.saveWorkflow(workflow);
-            return { handled: true, replies };
+              body,
+              detail,
+              inReplyTo: replyKey,
+              deferDeliveryFailure: true,
+            })
+          ) {
+            sentReplies.push(body);
           }
-          const next = nextCollectionStep(client, workflow.collected, "photo");
+          await deps.store.saveWorkflow(workflow);
+          return { handled: true, replies, sentReplies };
+        };
+        /** Move past `from` (answered or skipped) and ask what comes next. */
+        const advance = async (from: CollectionStep) => {
+          const next = nextCollectionStep(client, workflow.collected, from);
           workflow.currentStep = next;
-          pushEvent(workflow, "photo_skipped", undefined, clock);
           if (next === "done") {
             await finalizeAndDispatch(workflow);
-            return { handled: true, replies };
+            return { handled: true, replies, sentReplies };
           }
-          const prompt = await sendPrompt(workflow, client.id, next);
-          if (prompt) replies.push(prompt);
+          const prompt = await sendPrompt(workflow, client.id, next, true);
+          if (prompt) sentReplies.push(prompt);
           await deps.store.saveWorkflow(workflow);
-          return { handled: true, replies };
+          return { handled: true, replies, sentReplies };
+        };
+
+        // A photo can arrive at any step (customers send one with their address,
+        // or alone). Keep it, and do not treat the missing text as a bad answer.
+        const photosAtOtherStep = step !== "photo" ? media : [];
+        if (photosAtOtherStep.length) {
+          for (const url of photosAtOtherStep) {
+            if (!workflow.collected.photoUrls.includes(url))
+              workflow.collected.photoUrls.push(url);
+          }
+          pushEvent(workflow, "photo_received", step, clock);
+          if (!input.body.trim()) {
+            const again = promptForStep(
+              client,
+              step,
+              workflow.collected.language,
+            );
+            return again ? answer(again, `${step}_again`) : advance(step);
+          }
+        }
+
+        if (step === "photo" && media.length === 0) {
+          const fr = workflow.collected.language !== "en";
+          if (question?.required) {
+            // The contractor made the photo mandatory: say so (any text, not only "no").
+            return answer(
+              fr
+                ? "Une photo est requise. Envoyez une image en MMS."
+                : "A photo is required. Please send an MMS image.",
+              "photo_required",
+            );
+          }
+          // The photo is optional, and an ordinary text is a complete answer: "no",
+          // "no thanks", "I don't have one". A plain "yes" gets one reminder so a
+          // photo about to arrive is not skipped.
+          const reminded = workflow.events.some(
+            (e) => e.type === "photo_reminded",
+          );
+          if (isPhotoPromise(input.body) && !reminded) {
+            pushEvent(workflow, "photo_reminded", undefined, clock);
+            return answer(
+              fr
+                ? "Parfait, envoyez-la quand vous voulez, ou répondez NON pour passer."
+                : "Great, send it whenever you're ready, or reply NO to skip.",
+              "photo_reminder",
+            );
+          }
+          pushEvent(workflow, "photo_skipped", undefined, clock);
+          const extra = input.body.trim();
+          if (extra && !isPhotoSkip(extra) && !isPhotoDecline(extra)) {
+            // Real information typed instead of a photo is kept, not dropped.
+            workflow.collected.issueDescription = [
+              workflow.collected.issueDescription,
+              extra,
+            ]
+              .filter(Boolean)
+              .join(" — ")
+              .slice(0, 500);
+            await applyUrgency(workflow, client);
+          }
+          return advance("photo");
         }
 
         // Any other optional step (e.g. preferred_time) can also be skipped
@@ -1351,17 +1472,8 @@ export function createMissedCallEngine(deps: {
           !question.required &&
           isPhotoSkip(input.body)
         ) {
-          const next = nextCollectionStep(client, workflow.collected, step);
-          workflow.currentStep = next;
           pushEvent(workflow, `${step}_skipped`, undefined, clock);
-          if (next === "done") {
-            await finalizeAndDispatch(workflow);
-            return { handled: true, replies };
-          }
-          const prompt = await sendPrompt(workflow, client.id, next);
-          if (prompt) replies.push(prompt);
-          await deps.store.saveWorkflow(workflow);
-          return { handled: true, replies };
+          return advance(step);
         }
 
         const validation = validateCollectionAnswer({
@@ -1372,16 +1484,7 @@ export function createMissedCallEngine(deps: {
           lang: workflow.collected.language,
         });
         if (!validation.ok) {
-          await sendOutboundSms({
-            workflow,
-            client,
-            toE164: input.fromE164,
-            body: validation.message,
-            detail: `validation_failed:${step}`,
-          });
-          replies.push(validation.message);
-          await deps.store.saveWorkflow(workflow);
-          return { handled: true, replies };
+          return answer(validation.message, `validation_failed:${step}`);
         }
 
         workflow.collected = applyAnswer(
@@ -1395,18 +1498,7 @@ export function createMissedCallEngine(deps: {
         if (step === "address") applyServiceArea(workflow, client);
         if (step === "description") await applyUrgency(workflow, client);
 
-        const next = nextCollectionStep(client, workflow.collected, step);
-        workflow.currentStep = next;
-
-        if (next === "done") {
-          await finalizeAndDispatch(workflow);
-          return { handled: true, replies };
-        }
-
-        const prompt = await sendPrompt(workflow, client.id, next);
-        if (prompt) replies.push(prompt);
-        await deps.store.saveWorkflow(workflow);
-        return { handled: true, replies };
+        return advance(step);
       } catch (err) {
         if (claimedSid) {
           await deps.store.releaseInboundMessageSid(claimedSid);

@@ -14,6 +14,8 @@
  * as examples of wording for the model to fill in from the conversation.
  */
 
+import { receptionistNameOrDefault } from "./persona";
+
 export const PROMPT_PLACEHOLDERS = [
   "Company",
   "ReceptionistName",
@@ -228,7 +230,7 @@ export function formatBusinessHours(hours: {
 /** The plain data the placeholders are derived from (no server-only types). */
 export type PromptValueSource = {
   businessName: string;
-  /** What the receptionist calls itself ("Sophia"). Optional: unnamed receptionists just say "the receptionist". */
+  /** What the receptionist calls herself. Optional: without one she is Lucie (persona.ts). */
   receptionistName?: string;
   services: string[];
   serviceAreas: string[];
@@ -253,7 +255,7 @@ export function buildPromptValues(source: PromptValueSource): PromptValues {
       : "The receptionist takes a preferred time; the team confirms the appointment.");
   return {
     Company: source.businessName,
-    ReceptionistName: source.receptionistName,
+    ReceptionistName: receptionistNameOrDefault(source.receptionistName),
     Services: source.services.join(", "),
     BusinessHours: formatBusinessHours(source.businessHours),
     ServiceArea: source.serviceAreas.join(", "),

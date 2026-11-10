@@ -17,20 +17,26 @@ describe("P0 durability fixes", () => {
     await store.saveClient(client);
     const now = wednesdayBusinessHours();
 
-    let calls = 0;
-    const sms = {
-      async send() {
-        calls += 1;
-        // Opening SMS succeeds; first customer prompt fails once.
-        if (calls === 2) {
-          throw new Error("twilio down");
-        }
-        return { sid: `SM_${calls}` };
+    const sms = createMemorySmsPort();
+    // The database fails once while the customer's answer is being saved: that
+    // is a real handler failure (nothing was recorded), unlike a failed send.
+    let failures = 1;
+    const flakyStore = new Proxy(store, {
+      get(target, prop, receiver) {
+        const value = Reflect.get(target, prop, receiver);
+        if (prop !== "saveWorkflowAndEnqueueOutbound") return value;
+        return async (...args: Parameters<typeof value>) => {
+          if (failures > 0 && target === store && sms.sent.length > 0) {
+            failures -= 1;
+            throw new Error("database down");
+          }
+          return value.apply(target, args);
+        };
       },
-    };
+    });
 
     const engine = createMissedCallEngine({
-      store,
+      store: flakyStore,
       sms,
       clock: { now: () => now },
     });
@@ -58,7 +64,61 @@ describe("P0 durability fixes", () => {
       messageSid: "SM_retry_me",
     });
     assert.equal(again.handled, true);
-    assert.ok(again.replies.length > 0);
+    assert.ok(
+      (again.sentReplies ?? []).length > 0,
+      "the retry answers the customer",
+    );
+    assert.deepEqual(again.replies, [], "and nothing is left for the caller to resend");
+  });
+
+  it("a failed send does not fail the inbound text: the outbox retries it", async () => {
+    const store = createMemoryStore();
+    const client = demoClientAccount();
+    await store.saveClient(client);
+    const now = wednesdayBusinessHours();
+
+    let calls = 0;
+    const sms = {
+      async send() {
+        calls += 1;
+        // Opening SMS succeeds; first customer prompt fails once.
+        if (calls === 2) {
+          throw new Error("twilio down");
+        }
+        return { sid: `SM_${calls}` };
+      },
+    };
+
+    const engine = createMissedCallEngine({
+      store,
+      sms,
+      clock: { now: () => now },
+    });
+    const start = await engine.handleCallEvent({
+      clientAccountId: client.id,
+      callerE164: "+15145551111",
+      answered: false,
+      abandoned: false,
+      calledAt: now,
+    });
+
+    const first = await engine.handleInboundSms({
+      fromE164: "+15145551111",
+      toE164: client.smsFromNumber,
+      body: "FR",
+      messageSid: "SM_send_failed",
+    });
+    assert.equal(first.handled, true);
+    assert.deepEqual(first.replies, []);
+    assert.equal((await store.getOutboundQueueStats()).retry, 1);
+    assert.equal(
+      (await store.getWorkflow(start.workflow!.id))?.currentStep,
+      "name",
+      "the answer was applied once",
+    );
+
+    assert.equal((await engine.processEscalations()).outboxSent, 1);
+    assert.equal((await store.getOutboundQueueStats()).retry, 0);
   });
 
   it("reclaims stale sending outbox rows", async () => {

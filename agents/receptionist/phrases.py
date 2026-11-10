@@ -13,11 +13,13 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from persona import receptionist_name
+
 LANGUAGE_NAMES = {"fr": "Canadian French (Québec)", "en": "North American English"}
 
 _FALLBACK_QUESTION = {
-    "fr": "Comment puis-je vous aider aujourd'hui?",
-    "en": "How can I help you today?",
+    "fr": "Comment puis-je vous aider ?",
+    "en": "How can I help you?",
 }
 _FALLBACK_CHECK_IN = {"fr": "Êtes-vous toujours là?", "en": "Are you still there?"}
 _FALLBACK_GOODBYE = {
@@ -88,15 +90,19 @@ def opening_lines(cfg: Mapping[str, Any] | None) -> list[tuple[str, str]]:
     if lines:
         return lines
     language = start_language(cfg)
+    business = ((cfg or {}).get("businessName") or "").strip()
+    who = receptionist_name(cfg)
     if len(enabled_languages(cfg)) <= 1:
-        name = (cfg or {}).get("businessName") or ""
-        welcome = (
-            f"Hello, this is {name}." if language == "en" else f"Bonjour, ici {name}."
-        ).replace(" ,", ",").replace("  ", " ")
+        welcome = introduction(language, who, business)
         return [(language, welcome), (language, _FALLBACK_QUESTION[language])]
-    name = ((cfg or {}).get("businessName") or "").strip()
-    greeting = f"Bonjour, ici {name}." if name else "Bonjour!"
-    return [("fr", greeting), ("en", "How can I help you?")]
+    return [("fr", introduction("fr", who, business)), ("en", "How can I help you?")]
+
+
+def introduction(language: str, who: str, business: str) -> str:
+    """"Bonjour, ici Lucie de <business>." / "Hello, this is Lucie from <business>." """
+    if language == "en":
+        return f"Hello, this is {who} from {business}." if business else f"Hello, this is {who}."
+    return f"Bonjour, ici {who} de {business}." if business else f"Bonjour, ici {who}."
 
 
 def opening_instruction(cfg: Mapping[str, Any] | None) -> str:

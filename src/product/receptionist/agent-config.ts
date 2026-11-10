@@ -22,6 +22,7 @@ import {
   firstLanguage,
   languageSelectTimeoutSeconds,
 } from "./language-select";
+import { receptionistNameOrDefault } from "./persona";
 import {
   afterHoursFor,
   greetingStatement,
@@ -84,7 +85,8 @@ export type AgentSilence = {
 export type AgentConfig = {
   configId: string;
   businessName: string;
-  receptionistName: string | null;
+  /** The business's own name for her, else "Lucie" (persona.ts). Never empty. */
+  receptionistName: string;
   /** Instructions for the model: the business's prompt plus this call's real capabilities. */
   instructions: string;
   /** Full greetings, kept for agents that predate `languageSelect`. */
@@ -211,7 +213,7 @@ export function voiceAgentContext(input: {
       (input.callerTexts
         ? ". You have nothing else: no email or other notification system."
         : ". You have nothing else: no messaging, email or notification system."),
-    "* record_details: call it quietly, without mentioning it, as soon as you learn the caller's name, callback number, address or city, the service, the project, the preferred time or an email, and again whenever they correct something. What you record is delivered to the team when the call ends.",
+    "* record_details: call it quietly, without mentioning it, to save the caller's name, callback number, address or city, the service, the project, the preferred time or an email. Each call makes the caller wait, so save in batches (the name and number together, then the address and service together), not after every answer; save again whenever they correct something, and save whatever is still unsaved before you say goodbye. What you record is delivered to the team when the call ends.",
     "* set_language: call it when the caller asks for the other language, or clearly talks to you in full sentences of it (an accent, a borrowed word or a name is not enough). Switch at once, without comment, and carry on with the question you were on.",
     "* end_call: call it after you have said goodbye, to hang up: when the request is handled, after a wrong number, or when insults continue after one calm warning. Never hang up while something is still in progress.",
     input.callerTexts
@@ -297,7 +299,10 @@ function languageSelectFor(
       opening: bilingual
         ? [
             {
-              text: phrase("bilingualWelcome", "fr", { business: config.businessName }),
+              text: phrase("bilingualWelcome", "fr", {
+                name: receptionistNameOrDefault(config.receptionistName),
+                business: config.businessName,
+              }),
               lang: "fr",
             },
             { text: phrase("bilingualQuestion", "en"), lang: "en" },
@@ -348,7 +353,7 @@ export function buildAgentConfig(
   return {
     configId: config.id,
     businessName: config.businessName,
-    receptionistName: config.receptionistName ?? null,
+    receptionistName: receptionistNameOrDefault(config.receptionistName),
     instructions: `${base}\n\n${voiceAgentContext({
       afterHours,
       canTransfer: canTransferNow,

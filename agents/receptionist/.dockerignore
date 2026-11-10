@@ -8,6 +8,8 @@
 !caller_policy.py
 !language.py
 !language_listener.py
+!latency.py
+!persona.py
 !phrases.py
 !policy.py
 !routing.py
