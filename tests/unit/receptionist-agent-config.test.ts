@@ -194,6 +194,50 @@ describe("agent config", () => {
     assert.ok(!out.instructions.includes("no calendar or booking system"));
   });
 
+  describe("taking a request", () => {
+    it("makes the receptionist ask for the problem, the full address and the appointment before she wraps up", () => {
+      const { instructions } = buildAgentConfig(config(), OPEN);
+      assert.match(instructions, /# TAKING A REQUEST/);
+      assert.match(instructions, /ask for each of these, one question at a time/);
+      // The problem: a clear description, not a word.
+      assert.match(instructions, /described clearly: what is wrong or what is wanted, where in the home, since when/);
+      assert.match(instructions, /Save it as reason, in your own words/);
+      // The address: a city alone is not enough.
+      assert.match(instructions, /number, street and city\. A city or neighbourhood alone is not enough/);
+      // The appointment is always asked for, and never called booked without a calendar.
+      assert.match(instructions, /Always ask, even if they did not mention one: which day and time of day suit them, saved as preferred_time/);
+      assert.match(instructions, /never say it is booked/);
+      assert.match(instructions, /Read back the problem, the address and the time/);
+    });
+
+    it("offers the appointment through the booking tools when phone booking is on", () => {
+      const { instructions } = buildAgentConfig(
+        config({ appointmentSettings: { phoneBooking: true } }),
+        OPEN,
+      );
+      assert.match(instructions, /Always offer one, even if they did not ask/);
+      assert.match(instructions, /follow the booking steps above/);
+      assert.ok(!instructions.includes("saved as preferred_time"));
+    });
+
+    it("comes last, so it overrides a business prompt that only asked for the city", () => {
+      const { instructions } = buildAgentConfig(
+        config({ systemPrompt: "Take the caller's name and at least the city." }),
+        OPEN,
+      );
+      assert.ok(
+        instructions.indexOf("Take the caller's name and at least the city.") <
+          instructions.indexOf("# TAKING A REQUEST"),
+      );
+      assert.match(instructions, /overrides any shorter checklist above/);
+    });
+
+    it("lets an emergency skip everything but safety, the address and a callback number", () => {
+      const { instructions } = buildAgentConfig(config(), OPEN);
+      assert.match(instructions, /An emergency skips the name and the appointment: safety first/);
+    });
+  });
+
   it("opens a French-default line in French with one key for English and a short wait", () => {
     const out = buildAgentConfig(
       config({ languages: ["en", "fr"], defaultLanguage: "fr" }),

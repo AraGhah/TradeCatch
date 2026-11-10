@@ -197,6 +197,46 @@ test("failed owner alerts stay pending and canceled appointments are not retried
   });
 });
 
+test("the owner's appointment notices carry the service, the address and the time", async () => {
+  const notified: {
+    reason: string;
+    serviceName?: string;
+    serviceAddress?: string;
+    whenLabel?: string;
+  }[] = [];
+  const service = createSchedulingService({
+    store: createMemorySchedulingStore(),
+    now: () => new Date("2026-10-16T12:00:00Z"),
+    calendar: async () => createSimulatedCalendar(),
+    notify: async (input) => {
+      notified.push({
+        reason: input.reason,
+        serviceName: input.serviceName,
+        serviceAddress: input.serviceAddress,
+        whenLabel: input.whenLabel,
+      });
+    },
+  });
+  const booked = await service.book({
+    organizationId: "org_notice_details",
+    startAt: "2026-10-19T14:00:00Z",
+    source: "ai_receptionist",
+    customerName: "Marie Tremblay",
+    serviceAddress: "12 Rue des Pins, Laval",
+  });
+  assert.equal(booked.confirmed, true);
+  const confirmed = notified.find((n) => /confirmed/i.test(n.reason));
+  assert.ok(confirmed, "a confirmation notice went out");
+  assert.equal(confirmed.serviceAddress, "12 Rue des Pins, Laval");
+  assert.ok(confirmed.serviceName, "the notice names the service");
+  // 14:00Z on 2026-10-19 is 10:00 in Toronto: the owner reads local time.
+  assert.equal(confirmed.whenLabel, "2026-10-19 10:00");
+
+  await service.cancel("org_notice_details", booked.appointment!.id);
+  const canceled = notified.find((n) => /canceled/i.test(n.reason));
+  assert.equal(canceled?.serviceAddress, "12 Rue des Pins, Laval");
+});
+
 test(
   "PostgreSQL atomically reserves one slot across concurrent workers and replays",
   { skip: !database },

@@ -62,6 +62,11 @@ export type SchedulingDeps = {
     title: string;
     reason: string;
     refId: string;
+    /** What the notice says about the job; without these it reads "—". */
+    serviceName?: string;
+    serviceAddress?: string;
+    /** Local date and time of the appointment, e.g. "2026-11-12 14:30". */
+    whenLabel?: string;
   }) => Promise<void>;
   onDisconnected?: (organizationId: string) => Promise<void>;
   linkLead?: (input: {
@@ -162,6 +167,22 @@ function localParts(iso: string, timeZone: string) {
   }).format(new Date(iso));
 }
 
+/** What an owner notice says about one appointment: the job, where, and when. */
+function noticeDetails(
+  row: Pick<
+    ScheduleAppointment,
+    "serviceName" | "serviceAddress" | "startAt" | "timezone"
+  >,
+  timeZone: string = row.timezone,
+) {
+  return {
+    serviceName: row.serviceName,
+    serviceAddress: row.serviceAddress,
+    // "2026-11-12, 14:30" -> "2026-11-12 14:30"
+    whenLabel: localParts(row.startAt, timeZone).replace(", ", " "),
+  };
+}
+
 export function createSimulatedCalendar(fail = false): CalendarPort {
   const events = new Map<string, ScheduleAppointment>();
   return {
@@ -221,6 +242,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
         title: row.customerName || row.serviceName,
         reason: "New appointment confirmed",
         refId: row.id,
+        ...noticeDetails(row),
       });
       await deps.store.completeConfirmation(
         row.organizationId,
@@ -626,6 +648,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
               ? "Appointment needs contractor approval"
               : "Appointment request saved for review",
             refId: appointment.id,
+            ...noticeDetails(appointment, rules.timezone),
           });
           return {
             ok: Boolean(saved) || needsReview || calendarBlocksConfirmation,
@@ -868,6 +891,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
           title: current.customerName || current.serviceName,
           reason: "Appointment rescheduled",
           refId: current.id,
+          ...noticeDetails(current, rules.timezone),
         });
         await deps.cancelNotices?.(organizationId, current.id, "rescheduled");
         if (current.customerPhoneE164 && current.status === "confirmed") {
@@ -934,6 +958,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
         title: current.customerName || current.serviceName,
         reason: "Appointment canceled",
         refId: current.id,
+        ...noticeDetails(current),
       });
       return { ok: true as const, appointment: current };
     },

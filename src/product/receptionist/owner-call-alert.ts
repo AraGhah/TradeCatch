@@ -94,6 +94,23 @@ function line(label: string, value?: string): string {
   return value ? `${label}: ${value}` : "";
 }
 
+/**
+ * Where the work is. The street address, plus the city when the caller gave it
+ * separately; the city alone when that is all there is, so the owner never sees
+ * an empty address for a call that named a place.
+ */
+export function jobAddress(summary: {
+  serviceAddress?: string;
+  location?: string;
+}): string | undefined {
+  const street = summary.serviceAddress?.trim();
+  const place = summary.location?.trim();
+  if (street && place && !street.toLowerCase().includes(place.toLowerCase())) {
+    return `${street}, ${place}`;
+  }
+  return street || place || undefined;
+}
+
 /** The owner SMS. The owner's language is the profile's default language. */
 export function ownerCallSms(
   config: ReceptionistConfig,
@@ -195,11 +212,17 @@ export function ownerCallEmail(
             label: fr ? "Numéro de rappel" : "Callback number",
             value: formatPhone(summary.callbackE164),
           },
+          { label: fr ? "Courriel" : "Email", value: summary.email },
           { label: fr ? "Service demandé" : "Requested service", value: service(session) },
           { label: fr ? "Description du problème" : "Problem description", value: summary.issue },
-          { label: fr ? "Adresse" : "Address", value: summary.serviceAddress },
           {
-            label: fr ? "Moment de rappel souhaité" : "Preferred callback time",
+            label: fr ? "Détails du projet" : "Project details",
+            // The service line already shows the project when there is no service name.
+            value: session.slots.service ? session.slots.project : undefined,
+          },
+          { label: fr ? "Adresse" : "Address", value: jobAddress(summary) },
+          {
+            label: fr ? "Moment souhaité pour le rendez-vous" : "Preferred appointment time",
             value: summary.preferredTime,
           },
           { label: fr ? "Message" : "Message", value: summary.message },

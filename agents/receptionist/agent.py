@@ -196,6 +196,8 @@ class ReceptionistAgent(Agent):
         self._book_lock = asyncio.Lock()
         self._transferring = False
         self._closing = False
+        # end_call refuses once while a request is incomplete, then lets the caller go.
+        self._end_checked = False
         self._reported = False
         self._report_lock = asyncio.Lock()
         # The reply gap the caller hears (stop talking -> first sound) and where the time
@@ -587,18 +589,21 @@ class ReceptionistAgent(Agent):
         in batches: once you have a few details together (the name and number, then the
         address and the service...), not after every answer, and again when they correct
         one. Save whatever is still unsaved before you say goodbye. Never mention that you
-        are saving it. Only send the fields you have not saved yet.
+        are saving it. Only send the fields you have not saved yet. The answer lists
+        anything the team still needs from this caller: ask for it before you wrap up.
 
         Args:
             caller_name: The caller's name.
             callback_number: Their callback number, as digits.
             callback_same_as_caller_id: True when they say to use the number they are calling from.
-            address: Street address where the work is.
+            address: Street address where the work is (number, street, city). Not just a city.
             city: City or neighbourhood.
             service: The service wanted (painting, plumbing...).
             project: What exactly needs doing, with size or rooms if given.
-            reason: A one-line summary of why they called.
-            preferred_time: The day and time they prefer, in their words.
+            reason: The problem or the work, in one or two clear sentences a technician could
+                act on: what is wrong or wanted, where in the home, since when, anything
+                urgent. Your own words, never a single word or the caller's filler.
+            preferred_time: The day and time they would like the visit, in their words.
             email: Their email address, only if they offered it.
             message: A message for the team, if they left one.
             emergency: True only when someone is in danger (gas, fire, flooding, injury).
@@ -628,7 +633,18 @@ class ReceptionistAgent(Agent):
             return "The caller's own number is not available. Ask for a callback number."
         if "email" in rejected:
             return "Saved, except the email, which is not valid. Ask them to spell it."
-        return "Saved."
+        return "Saved." + self._still_to_ask()
+
+    def _still_to_ask(self) -> str:
+        """The rest of a request, for the model: what to ask next, one question at a time."""
+        needed = self._call.still_needed()
+        if not needed:
+            return ""
+        return (
+            " Still to ask before you wrap up (one question at a time, never as a list): "
+            + "; ".join(needed)
+            + "."
+        )
 
     @function_tool()
     async def set_language(
@@ -1266,12 +1282,42 @@ class ReceptionistAgent(Agent):
         nothing left to ask. Never while a booking or transfer is in progress."""
         if self._transferring or self._busy > 0:
             return "Something is still in progress. Do not hang up yet."
+        # One check, never a trap: a caller who cannot or will not give a detail is let go
+        # on the second try. The point is that the model does not wave goodbye while the
+        # address, the time or the problem is still missing.
+        if not self._end_checked:
+            self._end_checked = True
+            gap = self._incomplete_request()
+            if gap:
+                return gap
         self._closing = True
         if self._call.end_reason is None:
             self._call.end_reason = "completed"
         await context.wait_for_playout()
         await self._hang_up()
         return "Call ended."
+
+    def _incomplete_request(self) -> str | None:
+        """Why the call should not end yet, or None when nothing the team needs is missing."""
+        if self._call.transfer and self._call.transfer.get("completed"):
+            return None
+        needed = self._call.still_needed()
+        if needed:
+            return (
+                "Do not hang up yet: the team still needs "
+                + "; ".join(needed)
+                + ". Ask for it now, one question at a time, save it with record_details, "
+                "then say goodbye and call end_call again. If the caller cannot or will not "
+                "give it, say the team will follow up and call end_call again."
+            )
+        callers = sum(1 for t in self._call.transcript if t.get("speaker") == "caller")
+        if not self._call.slots and callers >= 3:
+            return (
+                "Nothing from this call is saved yet. If the caller wanted anything (work, a "
+                "visit, a quote, a message), call record_details now with what they told you "
+                "and ask for what is missing; otherwise call end_call again."
+            )
+        return None
 
 
 def _transfer_record(
