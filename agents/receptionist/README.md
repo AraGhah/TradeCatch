@@ -23,9 +23,13 @@ TradeCatch (`/app/receptionist`, or `/admin/businesses/<id>`), not in this folde
 ## How a call goes
 
 1. **Bilingual opening, no keypad.** Every call opens the same way, in two voices:
-   "Bonjour, ici *Business*." (French) and "How can I help you?" (English). The wording
-   comes from the business config (`languageSelect.detection`); this agent only reads it out.
-   A single-language line greets in its own language instead.
+   "Bonjour, ici *Lucie* de *Business*." (French) and "How can I help you?" (English). The
+   wording comes from the business config (`languageSelect.detection`); this agent only reads
+   it out. A single-language line greets in its own language instead, with the full greeting:
+   French "Bonjour, ici Lucie de *Business*. Comment puis-je vous aider ?", English "Hello,
+   this is Lucie from *Business*. How can I help you?". A greeting the owner wrote is used
+   as written. There is no keypad on this path: the keypad menu (`languageSelect.keys`) belongs
+   to the older TwiML `<Gather>` receptionist, not to this agent.
 2. **Language, from the caller's speech.** A text-only speech-to-text stream
    (`language_listener.py`, Deepgram nova-3 in `multi` mode through LiveKit Inference)
    listens to the caller beside the voice model and reports, per utterance, the language
@@ -184,6 +188,8 @@ business is a plan change or an owner decision, not agent configuration.
 | `language.py` | The call's language: decision rules, hysteresis, the "which language?" question (pure) |
 | `language_listener.py` | The text-only speech-to-text stream that reports the language of each caller utterance |
 | `phrases.py` | Exact greeting / language / silence instructions from config |
+| `persona.py` | Who answers: the name (Lucie unless the business set one) and how she presents herself |
+| `latency.py` | Reply-gap timing per caller turn, the end-of-call summary, and the log comparison tool |
 | `policy.py` | Silence policy (check in once, then say goodbye) |
 | `call_record.py` | Per-call record, phone normalisation, report payload |
 | `tool_results.py` | What each tool tells the model (never "booked" unless confirmed) |
@@ -203,9 +209,10 @@ ranges: `AGENT_VOICE`, `AGENT_REALTIME_MODEL`, `AGENT_ENDPOINTING_MODE`,
 `AGENT_INTERRUPTION_MIN_DURATION`, `AGENT_INTERRUPTION_MIN_WORDS`,
 `AGENT_PREEMPTIVE_GENERATION`, and `AGENT_{CONFIG,AVAILABILITY,BOOK}_TIMEOUT_SECONDS`.
 The standard gpt-live voice takes its own turns, so the endpointing, interruption and
-preemptive settings only affect cloned-voice calls. For gpt-live, `AGENT_DELEGATION_REASONING`
-and `AGENT_DELEGATION_VERBOSITY` speed up the backend model behind every tool call, and each
-caller turn is logged as `reply gap <seconds> (<n> backend runs)`.
+preemptive settings only affect ElevenLabs-voice calls (cloned, or `AGENT_STANDARD_VOICE=elevenlabs`).
+For gpt-live, `AGENT_DELEGATION_REASONING` and `AGENT_DELEGATION_VERBOSITY` set how hard the
+backend model behind every tool call thinks and how much it writes. They default to `low`
+(`default` hands one back to the service; `minimal` is the fastest where the model accepts it).
 `AGENT_STANDARD_VOICE=elevenlabs` with `AGENT_ELEVENLABS_VOICE_ID` answers every business
 that has no cloned voice with that ElevenLabs voice (speech-to-text -> LLM -> ElevenLabs),
 and `AGENT_ELEVENLABS_{SPEED,STABILITY,SIMILARITY,STYLE}` tune its delivery. Every call logs
@@ -219,6 +226,61 @@ Out-of-range values are ignored (a typo cannot make the line cut callers off).
 The speech-to-speech model has no speaking-rate setting, so pacing (calm, slower for
 numbers and addresses) is requested in the instructions. Treat it as something to
 listen to on real calls, not as a guarantee.
+
+## Lucie: name, voice and manner
+
+The receptionist is **Lucie** unless the business set another `receptionistName` in
+TradeCatch (no new setting was added; the existing name field is the override). The name
+reaches the call three ways: the greeting wording from TradeCatch, `{ReceptionistName}`
+in the business prompt, and `persona.py`, which appends the identity rules to every
+call's instructions (so an owner who rewrote the whole prompt still gets them): introduce
+herself once, never keep calling herself an AI, but never claim to be a person and answer
+truthfully in one sentence if asked. Calm, warm and professional; Québec French, North
+American English.
+
+The voice is the `AGENT_VOICE` of the realtime model, `marin` by default. Which voice
+sounds natural and female enough in French and English is something to decide by
+**listening to a call**: it cannot be judged from the code. Two ways to change it, neither
+needing a code change:
+
+* another realtime voice: `AGENT_VOICE` (`beacon`, `cedar`, `cinder`, `marin`, `stone`, `vesper`);
+* one ElevenLabs voice for everyone: `AGENT_STANDARD_VOICE=elevenlabs` plus
+  `AGENT_ELEVENLABS_VOICE_ID` and the `ELEVENLABS_API_KEY` secret (tune with
+  `AGENT_ELEVENLABS_{SPEED,STABILITY,SIMILARITY,STYLE}`). This path is
+  speech-to-text → LLM → ElevenLabs, so it adds latency; compare before adopting it.
+
+No voice cloning is involved: a cloned voice is still only used for a business that
+uploaded its own (Receptionist Plus), as before.
+
+## Measuring how long callers wait
+
+Every caller turn logs one line, with no caller words in it:
+
+```
+reply gap 1.42s (2 backend runs) [end of turn 0.50s, model first token 0.40s, model total 0.90s]
+```
+
+`gap` is the time from the caller going quiet to the first sound of the answer, `backend
+runs` is how many tool calls ran on the backend model in between (each one is a pause), and the
+bracketed stages are whatever LiveKit reported for the turn (a stage the pipeline in use does
+not report is left out, never guessed). The end of each call logs
+`reply latency summary: N turns, avg …, p50 …, p95 …, max …`.
+
+To compare two settings, collect the agent logs of real calls with each (`lk agent logs`,
+saved to a file) and run:
+
+```bash
+python latency.py before.log after.log     # turns, avg, p50, p95, max per file
+```
+
+Nothing in this repository claims a measured improvement: the changes to the defaults
+(`low` backend reasoning and verbosity, saving details in batches) are expected to shorten
+tool-call pauses and still have to be confirmed with this tool on real calls. The agent
+can show "Sleeping" in `lk agent status` when idle, so the first call after a quiet period may also pay
+a cold start; check the agent's scaling settings in the LiveKit Cloud dashboard (the `lk agent`
+commands do not expose a minimum-replica option) and keep one worker running if that matters.
+Environment overrides such as `AGENT_VOICE` are set as agent secrets
+(`lk agent update --secrets "AGENT_VOICE=cedar"`), which restarts the agent.
 
 ## Custom voice (Receptionist Plus)
 
@@ -247,7 +309,7 @@ Follow [the production cutover procedure](CUTOVER.md) to replace the Builder age
 
 ```bash
 pip install -r requirements.txt
-python -m unittest discover -p "test_*.py"     # ~440 tests, no network, no real LiveKit room
+python -m unittest discover -p "test_*.py"     # ~490 tests, no network, no real LiveKit room
 ```
 
 Run it with the same Python that has `livekit-agents` installed: without it the agent
