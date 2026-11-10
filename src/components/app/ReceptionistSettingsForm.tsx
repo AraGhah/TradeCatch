@@ -354,7 +354,7 @@ export function ReceptionistSettingsForm({
               value={receptionistName}
               onChange={(e) => setReceptionistName(e.target.value)}
               className={INPUT}
-              placeholder="Sophie"
+              placeholder="Lucie"
             />
           </label>
           <label className="text-xs text-navy/70">
