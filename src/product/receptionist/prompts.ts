@@ -9,6 +9,7 @@
  * word is not said on every turn.
  */
 
+import { defaultGreetings } from "./config";
 import { splitGreeting } from "./language-select";
 import type { ReceptionistConfig, ReceptionistLanguage } from "./types";
 
@@ -27,12 +28,17 @@ export const PHRASES = {
   },
   /**
    * The pickup greeting of the LiveKit receptionist, which has no keypad menu:
-   * "Bonjour, ici {business}." in the French voice, then "How can I help you?"
-   * in the English voice. The caller's reply decides the language.
+   * "Bonjour, ici {name} de {business}." in the French voice, then "How can I
+   * help you?" in the English voice. The caller's reply decides the language.
    */
   bilingualWelcome: {
-    fr: "Bonjour, ici {business}.",
-    en: "Bonjour, ici {business}.",
+    fr: "Bonjour, ici {name} de {business}.",
+    en: "Bonjour, ici {name} de {business}.",
+  },
+  /** The opening question once the greeting has introduced her. Not "today": it is the first thing asked. */
+  askHelp: {
+    fr: "Comment puis-je vous aider ?",
+    en: "How can I help you?",
   },
   bilingualQuestion: {
     fr: "How can I help you?",
@@ -343,19 +349,22 @@ export function greetingStatement(
 ): string {
   const { statement } = splitGreeting(greetingFor(config, language));
   if (statement) return statement;
-  return language === "fr"
-    ? `Bonjour! Merci d'avoir appelé ${config.businessName}.`
-    : `Thanks for calling ${config.businessName}!`;
+  const greetings = defaultGreetings(config.businessName, config.receptionistName);
+  return language === "fr" ? greetings.greetingFr : greetings.greetingEn;
 }
 
-/** The opening question: the owner's own if the greeting ended in one, else the default. */
+/**
+ * The opening question: the owner's own if the greeting ended in one, else
+ * "Comment puis-je vous aider ?" / "How can I help you?". Read straight from
+ * PHRASES: phrase() would tidy the space before the French question mark.
+ */
 export function openingQuestion(
   config: ReceptionistConfig,
   language: ReceptionistLanguage,
 ): string {
   return (
     splitGreeting(greetingFor(config, language)).question ??
-    phrase("askReason", language)
+    PHRASES.askHelp[language]
   );
 }
 
