@@ -8,6 +8,9 @@ import { getStarterServices } from "@/product/starter/org-context";
 import { handleCustomerSms } from "./runtime";
 import type { SmsInboxJob } from "./inbox";
 
+/** What history and the assistant see for an MMS that arrived without any text. */
+export const PHOTO_ONLY_BODY = "[photo]";
+
 /** Work runs under a durable, per-conversation inbox claim. */
 export async function processInboundSms(job: SmsInboxJob): Promise<void> {
   const { store, engine } = await ensureMissedCallReady();
@@ -31,6 +34,15 @@ export async function processInboundSms(job: SmsInboxJob): Promise<void> {
   }
   const { fromE164: from, toE164: to, params } = job;
   const body = params.Body ?? "";
+  // A standard text has NumMedia=0 and no MediaUrl fields; an MMS lists its
+  // attachments (and may have no text at all).
+  const mediaCount = Math.min(10, Math.max(0, Number(params.NumMedia) || 0));
+  const mediaUrls = Array.from(
+    { length: mediaCount },
+    (_, i) => params[`MediaUrl${i}`],
+  ).filter(Boolean);
+  // History and the assistant need something to show for a picture sent alone.
+  const visibleBody = body.trim() || (mediaUrls.length ? PHOTO_ONLY_BODY : body);
   const crm = getCrmService();
   const paused = await crm.isAutomationPaused(org.id, from);
   const stop = isOptOut(body, client) || params.OptOutType === "STOP";
@@ -46,7 +58,7 @@ export async function processInboundSms(job: SmsInboxJob): Promise<void> {
     actor: "sms",
     message: {
       direction: "inbound",
-      body,
+      body: visibleBody,
       fromE164: from,
       toE164: to,
       automated: false,
@@ -54,11 +66,6 @@ export async function processInboundSms(job: SmsInboxJob): Promise<void> {
       deliveryStatus: "delivered",
     },
   });
-  const mediaCount = Math.min(10, Math.max(0, Number(params.NumMedia) || 0));
-  const mediaUrls = Array.from(
-    { length: mediaCount },
-    (_, i) => params[`MediaUrl${i}`],
-  ).filter(Boolean);
   const result =
     paused && !technicianCommand && !stop
       ? { handled: true, replies: [] }
@@ -110,13 +117,13 @@ export async function processInboundSms(job: SmsInboxJob): Promise<void> {
       );
     });
   }
-  if (!result.handled && body.trim()) {
+  if (!result.handled && visibleBody.trim()) {
     const outcome = await handleCustomerSms({
       organizationId: org.id,
       client,
       fromE164: from,
       toE164: to,
-      body,
+      body: visibleBody,
       messageSid: job.id,
       paused,
       quoteThreadActive,
