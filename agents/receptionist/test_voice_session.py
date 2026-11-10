@@ -66,9 +66,21 @@ class BuildSessionTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(responses["reasoning"], {"effort": "low"})
         self.assertEqual(responses["text"], {"verbosity": "low"})
 
-    async def test_without_speed_settings_the_backend_keeps_its_defaults(self):
+    async def test_without_settings_the_backend_answers_quickly_by_default(self):
+        for name in ("AGENT_DELEGATION_REASONING", "AGENT_DELEGATION_VERBOSITY"):
+            os.environ.pop(name, None)
         session = A.build_session({"instructions": "x"}, object(), {})
-        self.assertNotIn("reasoning", session.llm.duplex_model._opts.responses)
+        responses = session.llm.duplex_model._opts.responses
+        self.assertEqual(responses["reasoning"], {"effort": "low"})
+        self.assertEqual(responses["text"], {"verbosity": "low"})
+
+    async def test_default_hands_the_backend_settings_back_to_the_service(self):
+        env = {"AGENT_DELEGATION_REASONING": "default", "AGENT_DELEGATION_VERBOSITY": "default"}
+        with mock.patch.dict(os.environ, env):
+            session = A.build_session({"instructions": "x"}, object(), {})
+        responses = session.llm.duplex_model._opts.responses
+        self.assertNotIn("reasoning", responses)
+        self.assertNotIn("text", responses)
 
     async def test_prewarm_loads_the_standard_voice_model_before_any_call(self):
         real_import = __import__
