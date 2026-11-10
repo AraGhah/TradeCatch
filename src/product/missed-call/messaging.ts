@@ -142,20 +142,15 @@ export function validateCollectionAnswer(input: {
 
   if (input.step === "photo") {
     if (input.mediaUrls.length > 0) return { ok: true };
-    if (!required && isPhotoSkip(input.body)) return { ok: true };
-    if (required) {
-      return {
-        ok: false,
-        message: fr
-          ? "Une photo est requise. Envoyez une image en MMS."
-          : "A photo is required. Please send an MMS image.",
-      };
-    }
+    // Only a photo the contractor made mandatory needs an MMS. Otherwise an
+    // ordinary text is a complete answer ("no", "no thanks", "I'll send it later"):
+    // texting without a picture must never trap a customer in this step.
+    if (!required) return { ok: true };
     return {
       ok: false,
       message: fr
-        ? "Envoyez une photo en MMS, ou répondez NON pour passer."
-        : "Please send a photo as an MMS image, or reply NO to skip.",
+        ? "Une photo est requise. Envoyez une image en MMS."
+        : "A photo is required. Please send an MMS image.",
     };
   }
 
@@ -218,6 +213,30 @@ export function isDistressSignal(body: string): boolean {
 
 export function isPhotoSkip(body: string): boolean {
   return /^(pass|skip|non|no|plus tard|later|aucune|none)$/i.test(body.trim());
+}
+
+const wordCount = (body: string) => body.trim().split(/\s+/).filter(Boolean).length;
+
+/** A short, plain refusal of the photo: "no thanks", "non merci", "I don't have one". */
+export function isPhotoDecline(body: string): boolean {
+  const text = body.trim();
+  return (
+    wordCount(text) <= 6 &&
+    /^(no|non|nope|nah|nan|pas|aucun|aucune|none|n\/?a|nothing|skip|pass|later|plus tard|not now|not right now|maybe later|peut[- ]être|i don['’]?t|i do not|i can['’]?t|i cannot|je n['’ ]|je ne|j['’]en ai pas|sans photo)/i.test(
+      text,
+    )
+  );
+}
+
+/** A short "yes" to the photo question: the picture is probably about to arrive. */
+export function isPhotoPromise(body: string): boolean {
+  const text = body.trim();
+  return (
+    wordCount(text) <= 8 &&
+    /^(yes|yeah|yep|yup|sure|ok|okay|oui|ouais|d['’]accord|bien s[ûu]r|will do|i will|i['’]ll|je vais|je l['’]envoie|one sec|un instant)/i.test(
+      text,
+    )
+  );
 }
 
 export function technicianAlertBody(
