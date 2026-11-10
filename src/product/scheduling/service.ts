@@ -1,10 +1,17 @@
 import { createId } from "@/lib/id";
-import { defaultDays, listSlots, slotIsFree } from "./slots";
+import {
+  defaultDays,
+  listSlots,
+  localKey,
+  localTime,
+  slotIsFree,
+} from "./slots";
 import { withOrgLock, type SchedulingStore } from "./store";
 import type {
   AvailabilityRules,
   BusyBlock,
   CalendarConnectionPublic,
+  MonthAvailability,
   ScheduleAppointment,
   ServiceType,
   Slot,
@@ -299,7 +306,10 @@ export function createSchedulingService(deps: SchedulingDeps) {
     serviceAddress?: string;
     technicianId?: string;
     excludeAppointmentId?: string;
+    /** Most slots to return (default 48). A month view asks for them all. */
+    limit?: number;
   }): Promise<Slot[]> {
+    const limit = input.limit ?? 48;
     const rules = await ensure(input.organizationId);
     const [appointments, externalBusy, technicians] = await Promise.all([
       deps.store.listAppointments(input.organizationId),
@@ -335,12 +345,22 @@ export function createSchedulingService(deps: SchedulingDeps) {
           technicianId: person?.id,
           technicianName: person?.name,
           excludeAppointmentId: input.excludeAppointmentId,
+          maxSlots: limit,
         }),
       );
     }
+    // One entry per start time: with several technicians the same time was
+    // listed once each, which showed duplicates and used up the cap. The first
+    // technician free at that time is kept, which is the one `book` assigns.
+    const seen = new Set<string>();
     return slots
       .sort((a, b) => a.startAt.localeCompare(b.startAt))
-      .slice(0, 48);
+      .filter((slot) => {
+        if (seen.has(slot.startAt)) return false;
+        seen.add(slot.startAt);
+        return true;
+      })
+      .slice(0, limit);
   }
 
   async function record(
@@ -466,6 +486,81 @@ export function createSchedulingService(deps: SchedulingDeps) {
         technicianId: input.technicianId,
       });
       return { slots, service };
+    },
+
+    /**
+     * Every free start time in one calendar month, grouped by day in the
+     * business's own timezone: what a calendar picker needs. It is the same
+     * engine as `availability` and `book` (hours, holidays, existing
+     * appointments, buffers, notice, advance limit, Google busy blocks), so a
+     * day shown here is a day `book` can actually confirm.
+     */
+    async availabilityMonth(input: {
+      organizationId: string;
+      /** "YYYY-MM" in the business timezone; defaults to the current month. */
+      month?: string;
+      serviceId?: string;
+      serviceAddress?: string;
+      technicianId?: string;
+      excludeAppointmentId?: string;
+    }): Promise<MonthAvailability> {
+      const rules = await ensure(input.organizationId);
+      const tz = rules.timezone || "America/Toronto";
+      const now = deps.now();
+      const today = localKey(now, tz);
+      const month = input.month ?? today.slice(0, 7);
+      const match = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(month);
+      if (!match) throw new SchedulingError("Invalid month.");
+      const year = Number(match[1]);
+      const monthIndex = Number(match[2]) - 1;
+      const currentMonths =
+        Number(today.slice(0, 4)) * 12 + Number(today.slice(5, 7)) - 1;
+      const distance = year * 12 + monthIndex - currentMonths;
+      if (distance < -1 || distance > 24)
+        throw new SchedulingError("That month is out of range.");
+
+      // Like `availability`: an unknown or since-deactivated service falls back
+      // to the business defaults, so an existing appointment can still be moved.
+      const services = await deps.store.listServices(input.organizationId);
+      const service = input.serviceId
+        ? services.find((row) => row.id === input.serviceId)
+        : undefined;
+
+      // Timezones run from UTC-12 to UTC+14: pad the range, then keep only
+      // the days whose local date is in the requested month.
+      const pad = 14 * 60 * 60 * 1000;
+      const monthStart = Date.UTC(year, monthIndex, 1) - pad;
+      const monthEnd = Date.UTC(year, monthIndex + 1, 1) + pad;
+      const slots = await slotsFor({
+        organizationId: input.organizationId,
+        service,
+        from: new Date(Math.max(monthStart, now.getTime())),
+        until: new Date(monthEnd),
+        serviceAddress: input.serviceAddress,
+        technicianId: input.technicianId,
+        excludeAppointmentId: input.excludeAppointmentId,
+        limit: 10_000,
+      });
+      const days: MonthAvailability["days"] = {};
+      for (const slot of slots) {
+        const at = new Date(slot.startAt);
+        const day = localKey(at, tz);
+        if (!day.startsWith(`${month}-`)) continue;
+        (days[day] ??= []).push({
+          startAt: slot.startAt,
+          time: localTime(at, tz),
+        });
+      }
+      const horizon = new Date(
+        now.getTime() + rules.maxAdvanceDays * 24 * 60 * 60 * 1000,
+      );
+      return {
+        timezone: tz,
+        month,
+        today,
+        lastBookableDate: localKey(horizon, tz),
+        days,
+      };
     },
 
     async list(

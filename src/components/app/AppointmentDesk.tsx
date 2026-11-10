@@ -1,12 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { SchedulePicker, SlotConfirmPanel } from "./SchedulePicker";
+import {
+  formatSlotDate,
+  formatSlotTime,
+  pickerLocale,
+} from "./schedule-picker-utils";
 
 type Appointment = {
   id: string;
   customerName?: string;
   customerPhoneE164?: string;
+  serviceId?: string;
   serviceName: string;
   serviceAddress?: string;
   technicianId?: string;
@@ -18,7 +25,6 @@ type Appointment = {
   appointmentKind: string;
 };
 
-type Slot = { startAt: string; endAt: string; localLabel: string };
 type Service = { id: string; name: string; bookingMode: string };
 type Technician = { id: string; name: string };
 
@@ -28,17 +34,22 @@ export function AppointmentDesk({
   organizationId: string;
 }) {
   const t = useTranslations("app.schedule");
+  const locale = pickerLocale(useLocale());
   const [rows, setRows] = useState<Appointment[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [services, setServices] = useState<Service[]>([]);
-  const [slots, setSlots] = useState<Slot[]>([]);
   const [status, setStatus] = useState("");
   const [technicianId, setTechnicianId] = useState("");
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"day" | "week" | "month">("week");
   const [selected, setSelected] = useState<Appointment | null>(null);
   const [serviceId, setServiceId] = useState("");
-  const [slot, setSlot] = useState("");
+  // The time chosen in the calendar: for a NEW appointment, and for a reschedule.
+  const [startAt, setStartAt] = useState("");
+  const [newStart, setNewStart] = useState("");
+  const [rescheduling, setRescheduling] = useState(false);
+  const [timezone, setTimezone] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
@@ -47,6 +58,8 @@ export function AppointmentDesk({
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const inFlight = useRef(false);
+  const attemptKey = useRef("");
 
   const load = useCallback(
     () =>
@@ -79,15 +92,6 @@ export function AppointmentDesk({
       )
       .catch(() => setServices([]));
   }, [load, organizationId]);
-
-  useEffect(() => {
-    const params = new URLSearchParams({ slots: "1" });
-    if (serviceId) params.set("serviceId", serviceId);
-    void fetch(`/api/businesses/${organizationId}/availability?${params}`)
-      .then((res) => res.json())
-      .then((data) => setSlots((data as { slots?: Slot[] }).slots ?? []))
-      .catch(() => setSlots([]));
-  }, [organizationId, serviceId]);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -141,8 +145,31 @@ export function AppointmentDesk({
     pending: rows.filter((row) => row.status === "pending").length,
   };
 
+  // Until the first availability arrives the browser's zone is only a label fallback.
+  const zone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const whenLabel = (iso: string) =>
+    `${formatSlotDate(iso, zone, locale)}, ${formatSlotTime(iso, zone, locale)}`;
+
+  /** A new time was picked: each attempt has its own key, so a double click or a retry books once. */
+  function pickNewTime(iso: string) {
+    attemptKey.current =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    setStartAt(iso);
+    setMessage(null);
+  }
+
+  /** The time was taken (or stopped being free): say so and show fresh availability. */
+  function timeTaken() {
+    setMessageError(true);
+    setMessage(t("slotTaken"));
+    setReloadKey((n) => n + 1);
+  }
+
   async function book() {
-    if (busy) return;
+    if (inFlight.current || !startAt || !name.trim()) return;
+    inFlight.current = true;
     setBusy(true);
     setMessage(null);
     setMessageError(false);
@@ -154,37 +181,56 @@ export function AppointmentDesk({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             serviceId: serviceId || undefined,
-            startAt: slot,
-            customerName: name,
-            customerPhoneE164: phone || undefined,
-            serviceAddress: address || undefined,
+            startAt,
+            customerName: name.trim(),
+            customerPhoneE164: phone.trim() || undefined,
+            serviceAddress: address.trim() || undefined,
+            idempotencyKey: attemptKey.current || undefined,
           }),
         },
       );
-      const data = (await res.json()) as {
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
         confirmed?: boolean;
+        reason?: string;
         error?: string;
       };
-      setMessageError(!data.confirmed);
-      setMessage(data.confirmed ? t("saved") : data.error || t("notConfirmed"));
-      if (data.confirmed) {
+      if (res.status === 409 || data.reason === "conflict") {
+        setStartAt("");
+        timeTaken();
+      } else if (data.confirmed || data.ok) {
+        setMessageError(false);
+        setMessage(
+          data.confirmed
+            ? t("confirmedFor", { when: whenLabel(startAt) })
+            : t("requestSaved"),
+        );
         setServiceId("");
-        setSlot("");
+        setStartAt("");
         setName("");
         setPhone("");
         setAddress("");
+        setReloadKey((n) => n + 1);
+      } else {
+        setMessageError(true);
+        setMessage(data.error || t("notConfirmed"));
+        setStartAt("");
+        setReloadKey((n) => n + 1);
       }
       await load();
     } catch {
       setMessageError(true);
       setMessage(t("error"));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
 
   async function act(path: "reschedule" | "cancel" | "complete") {
-    if (!selected || busy) return;
+    if (!selected || inFlight.current) return;
+    if (path === "reschedule" && !newStart) return;
+    inFlight.current = true;
     setBusy(true);
     setMessage(null);
     setMessageError(false);
@@ -201,21 +247,51 @@ export function AppointmentDesk({
             ? { status: "completed" }
             : path === "cancel"
               ? { reason }
-              : { startAt: slot },
+              : { startAt: newStart },
         ),
       });
-      const data = (await res.json()) as { ok?: boolean; error?: string };
-      setMessageError(!data.ok);
-      setMessage(data.ok ? t("saved") : data.error || t("error"));
-      setSelected(null);
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        reason?: string;
+        error?: string;
+      };
+      if (
+        path === "reschedule" &&
+        (data.reason === "unavailable" || data.reason === "conflict")
+      ) {
+        setNewStart("");
+        timeTaken();
+      } else if (data.ok) {
+        setMessageError(false);
+        setMessage(
+          path === "reschedule"
+            ? t("rescheduledTo", { when: whenLabel(newStart) })
+            : t("saved"),
+        );
+        setSelected(null);
+        setRescheduling(false);
+        setNewStart("");
+      } else {
+        setMessageError(true);
+        setMessage(data.error || t("error"));
+      }
       await load();
     } catch {
       setMessageError(true);
       setMessage(t("error"));
     } finally {
+      inFlight.current = false;
       setBusy(false);
     }
   }
+
+  function openAppointment(row: Appointment | null) {
+    setSelected(row);
+    setRescheduling(false);
+    setNewStart("");
+  }
+
+  const chosenService = services.find((item) => item.id === serviceId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -305,7 +381,7 @@ export function AppointmentDesk({
             <li key={row.id}>
               <button
                 type="button"
-                onClick={() => setSelected(row)}
+                onClick={() => openAppointment(row)}
                 className="flex w-full flex-wrap items-baseline justify-between gap-2 px-4 py-4 text-left hover:bg-navy/5"
               >
                 <span>
@@ -328,14 +404,16 @@ export function AppointmentDesk({
         </ul>
       )}
 
-      <form
+      <section
         className="grid gap-3 rounded-md border border-navy/10 bg-white p-4 sm:grid-cols-2"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void book();
-        }}
+        aria-labelledby="add-appointment-title"
       >
-        <h2 className="sm:col-span-2 font-semibold text-navy">{t("add")}</h2>
+        <h2
+          id="add-appointment-title"
+          className="sm:col-span-2 font-semibold text-navy"
+        >
+          {t("add")}
+        </h2>
         <label className="text-sm text-navy">
           {t("service")}
           <select
@@ -351,49 +429,70 @@ export function AppointmentDesk({
             ))}
           </select>
         </label>
-        <label className="text-sm text-navy">
-          {t("slot")}
-          <select
-            required
-            value={slot}
-            onChange={(event) => setSlot(event.target.value)}
-            className="mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5"
-          >
-            <option value="">{t("slot")}</option>
-            {slots.map((item) => (
-              <option key={item.startAt} value={item.startAt}>
-                {item.localLabel}
-              </option>
-            ))}
-          </select>
-        </label>
         <input
           required
+          aria-label={t("customer")}
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder={t("customer")}
           className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
         />
         <input
+          aria-label={t("phone")}
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
           placeholder={t("phone")}
           className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
         />
         <input
+          aria-label={t("address")}
           value={address}
           onChange={(event) => setAddress(event.target.value)}
           placeholder={t("address")}
-          className="rounded-md border border-navy/15 px-2 py-1.5 text-sm sm:col-span-2"
+          className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
         />
-        <button
-          type="submit"
-          disabled={busy}
-          className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white sm:col-span-2 disabled:opacity-50"
-        >
-          {t("book")}
-        </button>
-      </form>
+
+        <div className="flex flex-col gap-3 sm:col-span-2">
+          {/* Stays mounted while the confirm panel shows, so "Change Date or Time" returns to the same month and day. */}
+          <div hidden={Boolean(startAt)}>
+            <SchedulePicker
+              organizationId={organizationId}
+              serviceId={serviceId || undefined}
+              serviceAddress={address}
+              value={startAt}
+              onChange={pickNewTime}
+              onLost={() => {
+                setStartAt("");
+                timeTaken();
+              }}
+              onTimezone={setTimezone}
+              reloadKey={reloadKey}
+            />
+          </div>
+          {startAt ? (
+            <SlotConfirmPanel
+              title={t("confirmTitle")}
+              rows={[
+                [t("customer"), name.trim() || undefined],
+                [t("phone"), phone.trim() || undefined],
+                [t("service"), chosenService?.name],
+                [t("date"), formatSlotDate(startAt, zone, locale)],
+                [t("time"), formatSlotTime(startAt, zone, locale)],
+                [t("address"), address.trim() || undefined],
+              ]}
+              confirmLabel={t("confirmAppointment")}
+              busy={busy}
+              busyLabel={t("saving")}
+              disabled={!name.trim()}
+              hint={name.trim() ? undefined : t("customerRequired")}
+              onConfirm={() => void book()}
+              onChange={() => setStartAt("")}
+            />
+          ) : (
+            <p className="m-0 text-sm text-navy/60">{t("noTimeSelected")}</p>
+          )}
+        </div>
+      </section>
 
       {selected ? (
         <section className="rounded-md border border-navy/10 bg-white p-4">
@@ -406,7 +505,11 @@ export function AppointmentDesk({
             <button
               type="button"
               disabled={busy}
-              onClick={() => void act("reschedule")}
+              aria-expanded={rescheduling}
+              onClick={() => {
+                setRescheduling((open) => !open);
+                setNewStart("");
+              }}
               className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
             >
               {t("reschedule")}
@@ -436,12 +539,53 @@ export function AppointmentDesk({
             <button
               type="button"
               disabled={busy}
-              onClick={() => setSelected(null)}
+              onClick={() => openAppointment(null)}
               className="text-sm text-navy/60 disabled:opacity-50"
             >
               {t("close")}
             </button>
           </div>
+          {rescheduling ? (
+            <div className="mt-4 flex flex-col gap-3">
+              <h3 className="m-0 text-sm font-semibold text-navy">
+                {t("rescheduleTitle")}
+              </h3>
+              <div hidden={Boolean(newStart)}>
+                <SchedulePicker
+                  key={selected.id}
+                  organizationId={organizationId}
+                  serviceId={selected.serviceId}
+                  serviceAddress={selected.serviceAddress}
+                  excludeAppointmentId={selected.id}
+                  value={newStart}
+                  onChange={setNewStart}
+                  onLost={() => {
+                    setNewStart("");
+                    timeTaken();
+                  }}
+                  onTimezone={setTimezone}
+                  reloadKey={reloadKey}
+                />
+              </div>
+              {newStart ? (
+                <SlotConfirmPanel
+                  title={t("confirmTitle")}
+                  rows={[
+                    [t("customer"), selected.customerName],
+                    [t("service"), selected.serviceName],
+                    [t("date"), formatSlotDate(newStart, zone, locale)],
+                    [t("time"), formatSlotTime(newStart, zone, locale)],
+                    [t("address"), selected.serviceAddress],
+                  ]}
+                  confirmLabel={t("confirmReschedule")}
+                  busy={busy}
+                  busyLabel={t("saving")}
+                  onConfirm={() => void act("reschedule")}
+                  onChange={() => setNewStart("")}
+                />
+              ) : null}
+            </div>
+          ) : null}
         </section>
       ) : null}
       {message ? (

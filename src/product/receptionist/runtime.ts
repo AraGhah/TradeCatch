@@ -18,6 +18,7 @@ import { loadReceptionistConfigsFromEnv } from "./config";
 import { createReceptionistEngine, type ReceptionistEngine } from "./engine";
 import { createLlmClientFromEnv, type LlmClient } from "./llm";
 import { createReceptionistNotifier } from "./notifications";
+import { inactiveLineNotice, type InactiveNoticeLine, type InactiveReason } from "./inactive-line";
 import { handleReceptionistFailure } from "./outage";
 import { createAgentCallService, type AgentCallService } from "./agent-calls";
 import {
@@ -229,6 +230,49 @@ function callerTextPort(
   };
 }
 
+/**
+ * Authoritative "is this tenant line still switched on?", read from the
+ * database every time (never the ~30 s profile cache). Founder env configs are
+ * not switched from the dashboard and stay as loaded. A database error keeps
+ * the last good answer: one slow query must not drop a customer's call.
+ */
+async function confirmLineActive(
+  profileStore: ProfileStore,
+  config: ReceptionistConfig,
+): Promise<boolean> {
+  if (config.source !== "profile") return true;
+  try {
+    const profile = await profileStore.getProfile(
+      config.id.replace(/^rc_org_/, ""),
+    );
+    return Boolean(
+      profile?.activated && profile.settings.callHandlingMode !== "disabled",
+    );
+  } catch (err) {
+    logReceptionistDiagnostic({ event: "activation_check_failed", error: err });
+    return true;
+  }
+}
+
+/** A line whose owner switched the receptionist off: what to tell the caller. */
+async function describeInactiveLine(
+  profileStore: ProfileStore,
+  numberE164: string,
+): Promise<{ reason: InactiveReason; notice: InactiveNoticeLine[] } | null> {
+  const profile = await profileStore.findProfileByNumber(numberE164);
+  if (!profile) return null;
+  const mode = profile.settings.callHandlingMode;
+  if (profile.activated && mode !== "disabled") return null;
+  return {
+    reason: profile.activated ? "disabled" : "deactivated",
+    notice: inactiveLineNotice({
+      businessName: profile.settings.knowledge?.companyName ?? "",
+      languages: profile.settings.languages,
+      defaultLanguage: profile.settings.defaultLanguage,
+    }),
+  };
+}
+
 function bootstrap(): RuntimeState {
   const { store, profileStore, durable } = createStores();
   const envConfigs = loadEnvConfigs();
@@ -268,6 +312,7 @@ function bootstrap(): RuntimeState {
     configs: () => [...state.envConfigs, ...state.profileConfigs],
     brain: llm ? createLlmBrain(llm) : createRuleBrain(),
     llm,
+    confirmActive: (config) => confirmLineActive(profileStore, config),
     notifier: createReceptionistNotifier({
       sms,
       sendEmail: sendBusinessNotifyEmail,
@@ -366,6 +411,12 @@ export function getReceptionistRuntime() {
     agentAppointments: s.agentAppointments,
     llm: s.llm,
     durable: s.durable,
+    /** Uncached check that a tenant line is still switched on (see confirmLineActive). */
+    confirmLineActive: (config: ReceptionistConfig) =>
+      confirmLineActive(s.profileStore, config),
+    /** Set when the number belongs to a business that switched its receptionist off. */
+    describeInactiveLine: (numberE164: string) =>
+      describeInactiveLine(s.profileStore, numberE164),
     get profileLoadError(): string | undefined {
       return s.profileLoadError;
     },

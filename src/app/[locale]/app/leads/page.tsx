@@ -1,7 +1,16 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { NewLeadForm } from "@/components/app/NewLeadForm";
+import { CustomerRecordCard } from "@/components/app/CustomerRecordCard";
+import { phoneKey } from "@/product/crm/phone";
+import {
+  cleanProblemText,
+  formatPhoneDisplay,
+  isIntentCode,
+} from "@/product/crm/record-quality";
 import { getCrmService } from "@/product/crm/runtime";
+import { getSchedulingStore } from "@/product/scheduling/runtime";
+import type { ScheduleAppointment } from "@/product/scheduling/types";
 import {
   LEAD_PRIORITIES,
   LEAD_SOURCES,
@@ -12,6 +21,36 @@ import {
 } from "@/product/crm/types";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import { requireTenantContext } from "@/product/saas/tenant";
+
+/** The first two sentences of the problem: the list shows a summary, not a paragraph. */
+function shortProblem(text: string | undefined): string | undefined {
+  const clean = cleanProblemText(text);
+  if (!clean) return undefined;
+  const sentences = clean.match(/[^.!?]+[.!?]+/g) ?? [clean];
+  const short = sentences.slice(0, 2).join(" ").trim();
+  return short.length > 220 ? `${short.slice(0, 217)}…` : short;
+}
+
+/** Upcoming visits (booked or requested), soonest first. Professional plan only; never writes. */
+async function upcomingAppointments(
+  organizationId: string,
+  plan: Parameters<typeof orgHasFeature>[0],
+): Promise<ScheduleAppointment[]> {
+  if (!orgHasFeature(plan, "APPOINTMENT_BOOKING")) return [];
+  try {
+    const now = Date.now();
+    const rows = await getSchedulingStore().listAppointments(organizationId);
+    return rows
+      .filter(
+        (row) =>
+          (row.status === "confirmed" || row.status === "pending") &&
+          Date.parse(row.endAt) > now,
+      )
+      .sort((a, b) => a.startAt.localeCompare(b.startAt));
+  } catch {
+    return [];
+  }
+}
 
 export default async function AppLeadsPage({
   params,
@@ -58,6 +97,31 @@ export default async function AppLeadsPage({
   } catch {
     leads = [];
   }
+
+  const appointments = await upcomingAppointments(
+    auth.ctx.organization.id,
+    auth.ctx.organization.plan,
+  );
+  const tr = await getTranslations("app.record");
+  const when = (row: ScheduleAppointment) =>
+    new Intl.DateTimeFormat(locale, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: row.timezone,
+    }).format(new Date(row.startAt));
+  const recordLabels = {
+    service: tr("service"),
+    problem: tr("problem"),
+    address: tr("address"),
+    appointment: tr("appointment"),
+    notes: tr("notes"),
+    notProvided: tr("notProvided"),
+    moreDetails: tr("moreDetails"),
+    lessDetails: tr("lessDetails"),
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -140,34 +204,77 @@ export default async function AppLeadsPage({
         </p>
       ) : (
         <ul className="divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white">
-          {leads.map((lead) => (
-            <li key={lead.id}>
-              <Link
-                href={{ pathname: "/app/leads/[id]", params: { id: lead.id } }}
-                className="block px-4 py-4 hover:bg-navy/5"
-              >
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="font-semibold text-navy">
-                    {lead.customer.displayName || lead.customer.phoneE164}
-                  </p>
-                  <p className="text-xs uppercase tracking-wide text-navy/50">
-                    {t(`statuses.${lead.status}`)} · {t(`priorities.${lead.priority}`)}
-                  </p>
-                </div>
-                <p className="mt-1 text-sm text-navy/70">
-                  {lead.customer.phoneE164}
-                  {lead.service ? ` · ${lead.service}` : ""}
-                  {" · "}
-                  {t(`sources.${lead.source}`)}
-                </p>
-                {lead.description ? (
-                  <p className="mt-2 line-clamp-2 text-sm text-navy/80">
-                    {lead.description}
-                  </p>
-                ) : null}
-              </Link>
-            </li>
-          ))}
+          {leads.map((lead) => {
+            const visit = appointments.find(
+              (row) =>
+                row.leadId === lead.id ||
+                (phoneKey(row.customerPhoneE164).length >= 10 &&
+                  phoneKey(row.customerPhoneE164) ===
+                    phoneKey(lead.customer.phoneE164)),
+            );
+            const fullProblem = cleanProblemText(lead.description);
+            const problem = shortProblem(lead.description);
+            const service = isIntentCode(lead.service)
+              ? lead.service === "service_request"
+                ? tr("legacyService")
+                : undefined
+              : lead.service;
+            return (
+              <li key={lead.id}>
+                <CustomerRecordCard
+                  name={
+                    <Link
+                      href={{
+                        pathname: "/app/leads/[id]",
+                        params: { id: lead.id },
+                      }}
+                      className="hover:underline"
+                    >
+                      {lead.customer.displayName ||
+                        formatPhoneDisplay(lead.customer.phoneE164)}
+                    </Link>
+                  }
+                  phone={formatPhoneDisplay(lead.customer.phoneE164)}
+                  service={service}
+                  problem={problem}
+                  address={lead.location ?? lead.customer.serviceAddress}
+                  appointment={
+                    visit
+                      ? visit.status === "pending"
+                        ? tr("requested", { time: when(visit) })
+                        : when(visit)
+                      : tr("notScheduled")
+                  }
+                  priority={lead.priority}
+                  priorityLabel={tr(`priority.${lead.priority}`)}
+                  meta={`${t(`statuses.${lead.status}`)} · ${t(`sources.${lead.source}`)}`}
+                  labels={recordLabels}
+                  details={
+                    <>
+                      {fullProblem && fullProblem !== problem ? (
+                        <p className="m-0">{fullProblem}</p>
+                      ) : null}
+                      {lead.customer.notes ? (
+                        <p className="m-0">
+                          <span className="font-semibold">{tr("notes")}: </span>
+                          {lead.customer.notes}
+                        </p>
+                      ) : null}
+                      <Link
+                        href={{
+                          pathname: "/app/leads/[id]",
+                          params: { id: lead.id },
+                        }}
+                        className="font-semibold underline"
+                      >
+                        {tr("conversation")}
+                      </Link>
+                    </>
+                  }
+                />
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

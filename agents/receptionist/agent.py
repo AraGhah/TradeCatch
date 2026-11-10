@@ -1491,7 +1491,12 @@ async def entrypoint(ctx: JobContext) -> None:
 
     policy = parse_caller_policy(cfg)
     if policy is not None:
-        logger.info("caller policy applies: %s", policy.kind)
+        if policy.kind == "receptionist_off":
+            # Switched off by the owner: a short fixed notice, no greeting, no questions,
+            # nothing saved, no report. The call is never left in silence.
+            logger.info("receptionist is switched off for this number; reading the notice only")
+        else:
+            logger.info("caller policy applies: %s", policy.kind)
         if policy.kind == "personal_end":
             await _end_room()
             return

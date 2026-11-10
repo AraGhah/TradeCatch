@@ -18,9 +18,33 @@ function parseMinutes(hhmm: string): number {
   return (h ?? 0) * 60 + (m ?? 0);
 }
 
-function localKey(date: Date, timeZone: string): string {
+/** The calendar day ("YYYY-MM-DD") an instant falls on in the business's own timezone. */
+export function localKey(date: Date, timeZone: string): string {
   const p = zonedParts(date, timeZone);
   return `${p.year}-${String(p.month).padStart(2, "0")}-${String(p.day).padStart(2, "0")}`;
+}
+
+/** The wall-clock time ("HH:MM", 24 h) of an instant in the business's timezone. */
+export function localTime(date: Date, timeZone: string): string {
+  const p = zonedParts(date, timeZone);
+  return `${String(p.hour).padStart(2, "0")}:${String(p.minute).padStart(2, "0")}`;
+}
+
+const labelFormatters = new Map<string, Intl.DateTimeFormat>();
+function labelFormatter(timeZone: string): Intl.DateTimeFormat {
+  let fmt = labelFormatters.get(timeZone);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    labelFormatters.set(timeZone, fmt);
+  }
+  return fmt;
 }
 
 export function overlaps(
@@ -55,8 +79,11 @@ export function listSlots(input: {
   technicianId?: string;
   technicianName?: string;
   excludeAppointmentId?: string;
+  /** Stop after this many slots (default 48: enough for "what else is free?"). */
+  maxSlots?: number;
 }): Slot[] {
   const rules = input.rules;
+  const maxSlots = input.maxSlots ?? 48;
   const tz = rules.timezone || "America/Toronto";
   const step = 30;
   const duration = input.durationMinutes;
@@ -84,7 +111,11 @@ export function listSlots(input: {
     })),
   ];
   const slots: Slot[] = [];
-  let cursor = input.from.getTime();
+  // Start on a whole minute: slot instants must not carry the seconds and
+  // milliseconds of whenever the request happened to arrive, or the same
+  // opening would have a different `startAt` on every call and could never be
+  // matched again when it is booked.
+  let cursor = Math.ceil(input.from.getTime() / 60_000) * 60_000;
   for (let i = 0; i < step; i += 1) {
     const parts = zonedParts(new Date(cursor), tz);
     if (parts.minute % step === 0) break;
@@ -130,14 +161,7 @@ export function listSlots(input: {
       const count = occupied.filter((block) => block.counts && block.day === day).length;
       if (count >= rules.maxDailyBookings) continue;
     }
-    const label = new Intl.DateTimeFormat("en-CA", {
-      timeZone: tz,
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    }).format(start);
+    const label = labelFormatter(tz).format(start);
     slots.push({
       startAt: start.toISOString(),
       endAt: new Date(end).toISOString(),
@@ -145,7 +169,7 @@ export function listSlots(input: {
       technicianName: input.technicianName,
       localLabel: label,
     });
-    if (slots.length >= 48) break;
+    if (slots.length >= maxSlots) break;
   }
   return slots;
 }

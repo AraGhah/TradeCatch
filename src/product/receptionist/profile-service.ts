@@ -186,6 +186,16 @@ export async function ownerToggleActivation(
     };
   }
 
+  // Switching off never goes through the activation checks (a linked client,
+  // a plan with voice, a number): an owner can always turn their receptionist
+  // off, and nothing is invented to make that possible.
+  if (!input.activated) {
+    return deactivateProfile(deps, {
+      organizationId: input.organization.id,
+      actor: input.userEmail,
+    });
+  }
+
   const existing = await deps.profiles.getProfile(input.organization.id);
   let phone =
     input.phoneNumberE164?.trim() ||
@@ -198,7 +208,7 @@ export async function ownerToggleActivation(
     phone = client?.smsFromNumber;
   }
 
-  if (input.activated && !phone) {
+  if (!phone) {
     return {
       status: 409,
       body: {
@@ -208,17 +218,73 @@ export async function ownerToggleActivation(
     };
   }
 
-  // Deactivate without a number: keep any existing number, just flip the flag.
-  if (!input.activated) {
-    phone = existing?.phoneNumberE164 || phone || "+15145550100";
-  }
-
-  return activateProfile(deps, {
+  const result = await activateProfile(deps, {
     organizationId: input.organization.id,
-    phoneNumberE164: phone!,
-    activated: input.activated,
+    phoneNumberE164: phone,
+    activated: true,
     actor: input.userEmail,
   });
+  // Already on and answering: report it instead of rewriting the row.
+  if (result.status === 200 && existing?.activated) {
+    result.body.changed = false;
+  } else if (result.status === 200) {
+    result.body.changed = true;
+  }
+  return result;
+}
+
+/**
+ * Switch a receptionist off: persists `activated = false` (the number,
+ * settings, call history, customers and appointments are untouched), re-reads
+ * the live profile set so this server stops answering at once, and reports
+ * what is really true afterwards. Repeating it is harmless (`changed: false`).
+ */
+export async function deactivateProfile(
+  deps: Pick<ActivateDeps, "profiles" | "refresh" | "isAnswering">,
+  input: { organizationId: string; actor: string },
+): Promise<ServiceResult> {
+  const existing = await deps.profiles.getProfile(input.organizationId);
+  if (!existing || !existing.activated) {
+    return {
+      status: 200,
+      body: {
+        ok: true,
+        changed: false,
+        organizationId: input.organizationId,
+        activated: false,
+        phoneNumberE164: existing?.phoneNumberE164 ?? null,
+        answering: false,
+      },
+    };
+  }
+  const profile = await deps.profiles.deactivate(
+    input.organizationId,
+    input.actor,
+  );
+  await deps.refresh(true);
+  const answering = deps.isAnswering(input.organizationId);
+  // The store said "off" but this server still has the line loaded: do not
+  // report success for something that is not true yet.
+  if (!profile || profile.activated || answering) {
+    return {
+      status: 500,
+      body: {
+        error:
+          "The receptionist could not be switched off. Nothing was changed on your account. Please try again.",
+      },
+    };
+  }
+  return {
+    status: 200,
+    body: {
+      ok: true,
+      changed: true,
+      organizationId: input.organizationId,
+      activated: false,
+      phoneNumberE164: profile.phoneNumberE164 ?? null,
+      answering: false,
+    },
+  };
 }
 
 export async function activateProfile(

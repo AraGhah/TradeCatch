@@ -110,6 +110,18 @@ class ClientTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(self.requests[0]["query"], {"number": "+14382314700"})
 
+    async def test_a_switched_off_line_returns_the_off_marker_not_a_config(self):
+        self.payload = {
+            "ok": True,
+            "answering": False,
+            "reason": "deactivated",
+            "callerPolicy": {"kind": "receptionist_off", "messages": [{"lang": "en", "text": "Call back later."}]},
+        }
+        config = await self.client.fetch_business_config("+14382314700")
+        self.assertIs(config["answering"], False)
+        self.assertEqual(config["callerPolicy"]["kind"], "receptionist_off")
+        self.assertNotIn("instructions", config)
+
     async def test_config_for_an_unknown_number_is_none(self):
         self.statuses = [404]
         self.assertIsNone(await self.client.fetch_business_config("+19995550000"))

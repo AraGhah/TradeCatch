@@ -41,7 +41,9 @@ type Diagnostic = {
     | "status_finalize_failed"
     | "webhook_phase_entered"
     | "webhook_completed"
-    | "refresh_skipped_in_flight";
+    | "refresh_skipped_in_flight"
+    | "activation_check_failed"
+    | "inactive_line_answered";
   code?: string;
   callSid?: string;
   step?: string;
@@ -74,6 +76,7 @@ export function logReceptionistDiagnostic(input: Diagnostic): void {
     "webhook_completed",
     "webhook_phase_entered",
     "refresh_skipped_in_flight",
+    "inactive_line_answered",
   ];
   if (infoLevel.includes(input.event)) console.info(line);
   else console.error(line);
