@@ -1413,7 +1413,11 @@ export function createMissedCallEngine(deps: {
           }
           pushEvent(workflow, "photo_received", step, clock);
           if (!input.body.trim()) {
-            const again = promptForStep(client, step, workflow.collected.language);
+            const again = promptForStep(
+              client,
+              step,
+              workflow.collected.language,
+            );
             return again ? answer(again, `${step}_again`) : advance(step);
           }
         }
@@ -1432,7 +1436,9 @@ export function createMissedCallEngine(deps: {
           // The photo is optional, and an ordinary text is a complete answer: "no",
           // "no thanks", "I don't have one". A plain "yes" gets one reminder so a
           // photo about to arrive is not skipped.
-          const reminded = workflow.events.some((e) => e.type === "photo_reminded");
+          const reminded = workflow.events.some(
+            (e) => e.type === "photo_reminded",
+          );
           if (isPhotoPromise(input.body) && !reminded) {
             pushEvent(workflow, "photo_reminded", undefined, clock);
             return answer(

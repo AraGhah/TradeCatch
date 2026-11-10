@@ -215,7 +215,8 @@ export function isPhotoSkip(body: string): boolean {
   return /^(pass|skip|non|no|plus tard|later|aucune|none)$/i.test(body.trim());
 }
 
-const wordCount = (body: string) => body.trim().split(/\s+/).filter(Boolean).length;
+const wordCount = (body: string) =>
+  body.trim().split(/\s+/).filter(Boolean).length;
 
 /** A short, plain refusal of the photo: "no thanks", "non merci", "I don't have one". */
 export function isPhotoDecline(body: string): boolean {
