@@ -199,7 +199,12 @@ export async function generateAiSummary(
   if (!transcript.trim()) return undefined;
   try {
     const text = await llm.generateText({
-      system: `Summarize this phone call for the owner of ${config.businessName} in ${config.defaultLanguage === "fr" ? "Canadian French" : "English"}. 2–3 sentences, factual, no speculation, include what the caller needs and any time preference.`,
+      system: [
+        `Summarize this phone call for the owner of ${config.businessName}, written in ${config.defaultLanguage === "fr" ? "Canadian French" : "English"} only, even if the caller mixed French and English.`,
+        "2–3 sentences: what the caller needs, where, how urgent it is, and any day or time they asked for.",
+        "Correct spelling and grammar. Leave out greetings, filler words, speech-recognition noise and anything said twice. Keep the caller's meaning exactly.",
+        "Never invent a name, address, phone number, postal code, price, time or urgency that was not said. Copy names and addresses exactly as written in the call; do not translate them. If something was not said, leave it out.",
+      ].join(" "),
       user: transcript.slice(-8000),
       maxTokens: 250,
     });

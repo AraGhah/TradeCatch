@@ -194,6 +194,8 @@ export function voiceAgentContext(input: {
   businessFacts?: string;
   /** Owner-approved answers to common questions. */
   faqs?: { question?: string; answerFr: string; answerEn: string }[];
+  /** The language the owner reads the saved record in (the business's default). */
+  recordLanguage?: ReceptionistLanguage;
 }): string {
   const lines = [
     ...approvedFactsSection(input.businessFacts, input.faqs),
@@ -380,6 +382,7 @@ export function buildAgentConfig(
       customVoice: voice.mode === "custom",
       businessFacts: config.businessFacts,
       faqs: config.faqs,
+      recordLanguage: config.defaultLanguage,
     })}`,
     greetings: {
       fr: config.greetingFr,

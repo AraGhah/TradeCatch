@@ -147,6 +147,14 @@ class TradeCatchClient:
             if answer is not None:
                 status, data = answer
                 if status == 200:
+                    if data.get("answering") is False:
+                        # The owner switched the receptionist off: no config, no conversation.
+                        # Only the wording to read out and the fact itself are passed on.
+                        policy = data.get("callerPolicy")
+                        return {
+                            "answering": False,
+                            "callerPolicy": policy if isinstance(policy, dict) else None,
+                        }
                     config = data.get("config")
                     return config if isinstance(config, dict) else None
                 if status < 500:

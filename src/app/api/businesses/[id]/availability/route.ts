@@ -32,6 +32,28 @@ export async function GET(request: NextRequest, { params }: Params) {
       { status: access.status },
     );
   const url = new URL(request.url);
+  // Calendar picker: every free time in one month, grouped by local day.
+  if (url.searchParams.has("month") || url.searchParams.get("days") === "1") {
+    try {
+      const availability = await getSchedulingService().availabilityMonth({
+        organizationId: id,
+        month: url.searchParams.get("month") || undefined,
+        serviceId: url.searchParams.get("serviceId") || undefined,
+        serviceAddress: url.searchParams.get("address") || undefined,
+        technicianId: url.searchParams.get("technicianId") || undefined,
+        excludeAppointmentId: url.searchParams.get("exclude") || undefined,
+      });
+      return NextResponse.json({ ok: true, ...availability });
+    } catch (error) {
+      if (error instanceof SchedulingError) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: error.status },
+        );
+      }
+      throw error;
+    }
+  }
   if (url.searchParams.get("slots") === "1") {
     const result = await getSchedulingService().availability({
       organizationId: id,

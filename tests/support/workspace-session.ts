@@ -2,7 +2,11 @@ import { expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 
 /** Synthetic, isolated organization in the localhost-only E2E harness. */
-export async function workspaceSession(page: Page, locale: "en" | "fr" = "en") {
+export async function workspaceSession(
+  page: Page,
+  locale: "en" | "fr" = "en",
+  plan: "growth" | "professional" = "growth",
+) {
   const email = `workspace-${randomUUID()}@example.invalid`;
   // Independent documentation-range identity per session, not per worker:
   // repeated logins in a large suite must not exhaust one worker's quota.
@@ -19,7 +23,7 @@ export async function workspaceSession(page: Page, locale: "en" | "fr" = "en") {
         organizationName: "Example Plumbing",
         ownerName: "Demo Owner",
         locale,
-        plan: "growth",
+        plan,
       },
     },
   );

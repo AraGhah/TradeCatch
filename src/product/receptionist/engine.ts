@@ -119,6 +119,13 @@ export type ReceptionistEngineDeps = {
    * environment check; tests inject it.
    */
   livekitHandoffReady?: () => boolean;
+  /**
+   * Authoritative, uncached "is this line still switched on?" for a tenant
+   * profile, asked once when a call starts. `configs()` can be up to ~30 s
+   * old on a server instance, so a business that just turned its receptionist
+   * off must not have it answer one more call from that stale copy.
+   */
+  confirmActive?: (config: ReceptionistConfig) => Promise<boolean>;
 };
 
 export type ReceptionistFailure = {
@@ -623,13 +630,17 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
    * outside the configured handling mode): same apology, but nothing broke, so
    * nothing is reported. Anything else is a receptionist failure and is
    * reported for monitoring and owner alerts.
+   *
+   * `cause: "deactivated"` is a line its owner switched off. Nothing broke and
+   * nothing is reported, and "technical issue" would tell the caller something
+   * untrue, so it goes straight to the existing voicemail handling.
    */
   function failSafePlan(
     config: ReceptionistConfig | null,
     sessionId: string | null,
     lang: ReceptionistLanguage = config?.defaultLanguage ?? "fr",
     opts: {
-      cause?: "error" | "declined";
+      cause?: "error" | "declined" | "deactivated";
       clientAccountId?: string;
       operation?: string;
     } = {},
@@ -637,15 +648,18 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     const voice =
       config?.voices[lang] ??
       (lang === "fr" ? "Polly.Gabrielle-Neural" : "Polly.Joanna-Neural");
-    const verbs: VoiceVerb[] = [
-      {
-        verb: "say",
-        text: phrase("technicalIssue", lang),
-        language: lang,
-        voice,
-      },
-    ];
-    if (opts.cause !== "declined") {
+    const verbs: VoiceVerb[] =
+      opts.cause === "deactivated"
+        ? []
+        : [
+            {
+              verb: "say",
+              text: phrase("technicalIssue", lang),
+              language: lang,
+              voice,
+            },
+          ];
+    if (opts.cause !== "declined" && opts.cause !== "deactivated") {
       try {
         deps.onFailure?.({
           clientAccountId: opts.clientAccountId ?? config?.clientAccountId,
@@ -1411,6 +1425,16 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           enabledProfiles: configs.filter((c) => c.enabled).length,
         });
         return failSafePlan(null, null, undefined, { cause: "declined" });
+      }
+
+      if (deps.confirmActive && !(await deps.confirmActive(config))) {
+        logReceptionistDiagnostic({
+          event: "incoming_declined",
+          code: "RECEPTIONIST_DEACTIVATED",
+          callSid: input.callSid,
+          dialedNumber: input.toE164,
+        });
+        return failSafePlan(null, null, undefined, { cause: "deactivated" });
       }
 
       const at = clock.now();

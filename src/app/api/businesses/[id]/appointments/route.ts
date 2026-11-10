@@ -8,6 +8,9 @@ export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ id: string }> };
 
+const SLOT_TAKEN_MESSAGE =
+  "This time is no longer available. Please select another time.";
+
 const createSchema = z.object({
   serviceId: z.string().optional(),
   serviceName: z.string().max(160).optional(),
@@ -68,7 +71,17 @@ export async function POST(request: NextRequest, { params }: Params) {
       organizationId: id,
       ...parsed.data,
       source: parsed.data.simulated ? "simulation" : "dashboard",
+      // The person at the desk picked a time they were shown as free. If it
+      // was taken in the meantime, say so and let them pick another; a silent
+      // "pending request" for a time nobody can honour helps no one.
+      requestIfUnavailable: false,
     });
+    if (result.reason === "conflict") {
+      return NextResponse.json(
+        { ...result, error: SLOT_TAKEN_MESSAGE },
+        { status: 409 },
+      );
+    }
     return NextResponse.json(result, { status: result.confirmed ? 201 : 200 });
   } catch (error) {
     if (error instanceof SchedulingError) {
