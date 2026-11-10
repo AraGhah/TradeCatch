@@ -155,7 +155,7 @@ describe("receptionist scenarios (French-first, bilingual)", () => {
   it("1. French, caller presses nothing: starts French and stays French", async () => {
     const w = world();
     const first = await callOf(w, "S01");
-    assert.match(heard(first), /Bonjour! Merci d'avoir appelé Nord Plomberie/);
+    assert.match(heard(first), /Bonjour, ici Lucie de Nord Plomberie\./);
     assert.match(heard(first), /restez en ligne/);
     assert.match(heard(first), /For English, press 1/);
     const g = gatherOf(first);
@@ -167,7 +167,7 @@ describe("receptionist scenarios (French-first, bilingual)", () => {
     assert.match(heard(next), /Comment puis-je vous aider/);
     assert.equal((await sessionOf(w, "S01")).language, "fr");
     // No second greeting.
-    assert.doesNotMatch(heard(next), /Merci d'avoir appelé/);
+    assert.doesNotMatch(heard(next), /Bonjour, ici/);
   });
 
   it("2. English, caller presses 1: switches without repeating the greeting", async () => {
@@ -176,7 +176,7 @@ describe("receptionist scenarios (French-first, bilingual)", () => {
     const next = await press(w, first, "1");
     assert.match(heard(next), /English/i);
     assert.match(heard(next), /How can I help/);
-    assert.doesNotMatch(heard(next), /Bonjour|Merci d'avoir appelé|press 1/);
+    assert.doesNotMatch(heard(next), /Bonjour|Hello, this is|press 1/);
     assert.equal((await sessionOf(w, "S02")).language, "en");
     assert.ok(
       gatherOf(next).prompts.every((p) => p.language === "en"),
