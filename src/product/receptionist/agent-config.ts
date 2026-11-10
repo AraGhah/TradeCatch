@@ -269,6 +269,20 @@ export function voiceAgentContext(input: {
       "* No live transfer is configured. Never offer to transfer; take the caller's details instead.",
     );
   }
+  lines.push(
+    "",
+    "# TAKING A REQUEST (overrides any shorter checklist above)",
+    "",
+    "Every request for work, a quote or a visit must leave the team with what they need to act. Before you wrap up, ask for each of these, one question at a time, and save them with record_details:",
+    "1. The problem, described clearly: what is wrong or what is wanted, where in the home, since when, and anything urgent. Keep asking short follow-up questions until you could explain it to a technician in two sentences. Save it as reason, in your own words, one or two full sentences (never a single word, never the caller's filler).",
+    "2. Their name and a callback number (confirm the number they are calling from instead of asking for it).",
+    "3. The street address of the work: number, street and city. A city or neighbourhood alone is not enough; ask for the rest (the postal code only if they offer it).",
+    input.bookingEnabled
+      ? "4. The appointment. Always offer one, even if they did not ask: ask which day and time of day suit them, then follow the booking steps above."
+      : "4. The appointment. Always ask, even if they did not mention one: which day and time of day suit them, saved as preferred_time. Say the team will call to confirm the time; never say it is booked.",
+    "5. Read back the problem, the address and the time in one or two sentences and ask if that is right. Save any correction, then say goodbye.",
+    "An emergency skips the name and the appointment: safety first, then the address and a callback number. A question, a wrong number or a transfer needs none of this.",
+  );
   return lines.join("\n");
 }
 

@@ -31,6 +31,11 @@ SLOT_FIELDS: Mapping[str, tuple[str, int]] = {
 MAX_TURN_CHARS = 600
 MAX_TRANSCRIPT_TURNS = 200
 
+# Slots that make a call a request for work (rather than a question or a wrong number).
+REQUEST_SLOTS = ("issue", "service", "project")
+# A description shorter than this ("fuite", "plomberie") does not tell a technician anything.
+MIN_DESCRIPTION_WORDS = 4
+
 _EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]{2,}$")
 
 
@@ -189,12 +194,52 @@ class CallRecord:
     def duration_seconds(self) -> int:
         return max(0, int(time.monotonic() - self.started_at))
 
+    def still_needed(self) -> list[str]:
+        """What the owner still lacks to act on this request, in the order to ask it.
+
+        Empty for anything that is not a request for work (a question, a wrong number,
+        a completed transfer). Written for the model: each item says what a good answer
+        looks like, so a bare city or a one-word problem is asked about again.
+        """
+        if self.transfer and self.transfer.get("completed"):
+            return []
+        if not any(k in self.slots for k in REQUEST_SLOTS):
+            return []
+        needed: list[str] = []
+        described = max(
+            (len(self.slots.get(k, "").split()) for k in ("issue", "project")), default=0
+        )
+        if described < MIN_DESCRIPTION_WORDS:
+            needed.append(
+                "a clear description of the problem or the work (what is wrong or wanted, "
+                "where in the home, since when), then save it as reason in a full sentence"
+            )
+        if not self.emergency and "callerName" not in self.slots:
+            needed.append("the caller's name")
+        if "callbackE164" not in self.slots:
+            needed.append("a callback number (confirm the number they are calling from)")
+        if "serviceAddress" not in self.slots:
+            needed.append(
+                "the street address of the work: number, street and city "
+                "(a city or neighbourhood alone is not enough)"
+            )
+        if not self.emergency and not self.booked and "preferredTime" not in self.slots:
+            needed.append("the day and time of day they would like the visit")
+        return needed
+
     def _intent(self) -> str | None:
         if self.transfer and self.transfer.get("completed"):
             return "transfer"
-        if self.booked or self.availability_checked or self.appointment_changes:
+        # A preferred time is a request for an appointment, even when nothing could be
+        # booked on the call: the owner must see "appointment to confirm", not "message".
+        if (
+            self.booked
+            or self.availability_checked
+            or self.appointment_changes
+            or "preferredTime" in self.slots
+        ):
             return "appointment"
-        if any(k in self.slots for k in ("issue", "service", "project")):
+        if any(k in self.slots for k in REQUEST_SLOTS):
             return "service_request"
         if "message" in self.slots:
             return "message"

@@ -169,6 +169,99 @@ class PayloadTests(unittest.TestCase):
         r.availability_checked = True
         self.assertEqual(r.payload()["intent"], "appointment")
 
+    def test_a_preferred_time_makes_the_call_an_appointment_request(self):
+        # Nothing was booked (no calendar), but the owner must see "appointment to
+        # confirm", not "message taken".
+        r = record()
+        r.update(reason="remplacer le chauffe-eau", preferred_time="jeudi matin")
+        self.assertEqual(r.payload()["intent"], "appointment")
+
+    def test_the_city_travels_with_the_report_as_its_own_slot(self):
+        r = record()
+        r.update(city="Laval", address="12 rue des Pins")
+        slots = r.payload()["slots"]
+        self.assertEqual((slots["location"], slots["serviceAddress"]), ("Laval", "12 rue des Pins"))
+
+
+class StillNeededTests(unittest.TestCase):
+    """What the owner still lacks, so the receptionist asks instead of hanging up."""
+
+    FULL = dict(
+        caller_name="Marie Tremblay",
+        callback_number="514-555-0199",
+        address="12 rue des Pins, Laval",
+        reason="Le chauffe-eau de la cave fuit depuis hier et le plancher est mouillé.",
+        preferred_time="jeudi matin",
+    )
+
+    def test_a_call_that_is_not_a_request_needs_nothing(self):
+        self.assertEqual(record().still_needed(), [])
+        r = record()
+        r.update(caller_name="Marie", message="Rappelez-moi")
+        self.assertEqual(r.still_needed(), [])
+
+    def test_a_complete_request_needs_nothing(self):
+        r = record()
+        r.update(**self.FULL)
+        self.assertEqual(r.still_needed(), [])
+
+    def test_a_one_word_problem_is_asked_about_again(self):
+        r = record()
+        r.update(**{**self.FULL, "reason": "fuite"})
+        needed = r.still_needed()
+        self.assertEqual(len(needed), 1)
+        self.assertIn("clear description of the problem", needed[0])
+
+    def test_a_detailed_project_counts_as_a_description(self):
+        r = record()
+        r.update(**{**self.FULL, "reason": None, "project": "peindre la cuisine et le salon en blanc"})
+        self.assertEqual(r.still_needed(), [])
+
+    def test_a_city_alone_is_not_an_address(self):
+        r = record()
+        r.update(**{**self.FULL, "address": None, "city": "Laval"})
+        needed = r.still_needed()
+        self.assertEqual(len(needed), 1)
+        self.assertIn("street address", needed[0])
+        self.assertIn("a city or neighbourhood alone is not enough", needed[0])
+
+    def test_the_appointment_is_always_asked_for(self):
+        r = record()
+        r.update(**{**self.FULL, "preferred_time": None})
+        needed = r.still_needed()
+        self.assertEqual(len(needed), 1)
+        self.assertIn("day and time of day they would like the visit", needed[0])
+
+    def test_a_booked_appointment_does_not_need_a_preferred_time(self):
+        r = record()
+        r.update(**{**self.FULL, "preferred_time": None})
+        r.booking = {"startAt": "2026-11-03T14:00:00Z", "label": "mardi à 9 h"}
+        self.assertEqual(r.still_needed(), [])
+
+    def test_the_questions_come_in_the_order_to_ask_them(self):
+        r = record()
+        r.update(service="plomberie")
+        needed = r.still_needed()
+        self.assertEqual(len(needed), 5)
+        kinds = ["description", "name", "callback", "street address", "day and time"]
+        for item, kind in zip(needed, kinds):
+            self.assertIn(kind, item)
+
+    def test_an_emergency_needs_only_the_address_and_a_callback_number(self):
+        r = record()
+        r.emergency = True
+        r.update(reason="odeur de gaz dans le sous-sol depuis ce matin")
+        needed = r.still_needed()
+        self.assertEqual(len(needed), 2)
+        self.assertIn("callback number", needed[0])
+        self.assertIn("street address", needed[1])
+
+    def test_a_completed_transfer_needs_nothing(self):
+        r = record()
+        r.update(service="plomberie")
+        r.transfer = {"targetName": "Billing", "completed": True}
+        self.assertEqual(r.still_needed(), [])
+
     def test_a_completed_transfer_is_reported_with_the_target_name(self):
         r = record()
         r.transfer = {"targetName": "Billing", "completed": True}
