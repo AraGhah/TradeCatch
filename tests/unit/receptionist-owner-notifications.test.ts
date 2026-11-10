@@ -203,6 +203,66 @@ describe("owner email after a call", () => {
       else process.env.NEXT_PUBLIC_SITE_URL = prev;
     }
   });
+
+  function lineValue(email: BusinessNotifyInput, label: string): string | undefined {
+    for (const section of email.sections ?? []) {
+      const found = section.lines.find((l) => l.label === label);
+      if (found) return found.value ?? undefined;
+    }
+    return undefined;
+  }
+
+  it("shows the city when that is all the caller gave, instead of an empty address", async () => {
+    const h = harness();
+    await finishedCall(h, {
+      slots: { ...REPORT.slots, serviceAddress: undefined, location: "Laval" },
+    });
+    assert.equal(lineValue(h.emails[0]!, "Address"), "Laval");
+  });
+
+  it("joins a street address and a separately given city, without repeating the city", async () => {
+    const h = harness();
+    await finishedCall(h, {
+      slots: { ...REPORT.slots, serviceAddress: "12 Rue des Pins", location: "Laval" },
+    });
+    assert.equal(lineValue(h.emails[0]!, "Address"), "12 Rue des Pins, Laval");
+
+    const again = harness();
+    await finishedCall(again, {
+      callId: "call-notify-0002",
+      slots: { ...REPORT.slots, serviceAddress: "12 Rue des Pins, Laval", location: "Laval" },
+    });
+    assert.equal(lineValue(again.emails[0]!, "Address"), "12 Rue des Pins, Laval");
+  });
+
+  it("gives the owner the caller's email, the project and the appointment time they asked for", async () => {
+    const h = harness();
+    await finishedCall(h, {
+      intent: "appointment",
+      slots: {
+        ...REPORT.slots,
+        project: "Replace the kitchen faucet and check the shut-off valve",
+        preferredTime: "Thursday morning",
+        email: "john@example.com",
+      },
+    });
+    const email = h.emails[0]!;
+    assert.equal(lineValue(email, "Email"), "john@example.com");
+    assert.equal(lineValue(email, "Preferred appointment time"), "Thursday morning");
+    assert.equal(
+      lineValue(email, "Project details"),
+      "Replace the kitchen faucet and check the shut-off valve",
+    );
+    // A preferred time on an appointment call is an appointment request, not "message taken".
+    assert.equal(lineValue(email, "Call status"), "Appointment requested");
+  });
+
+  it("leaves a detail out when nobody collected it (never an empty or guessed value)", async () => {
+    const h = harness();
+    await finishedCall(h);
+    assert.equal(lineValue(h.emails[0]!, "Email"), undefined);
+    assert.equal(lineValue(h.emails[0]!, "Project details"), undefined);
+  });
 });
 
 describe("delivery records", () => {

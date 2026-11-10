@@ -160,6 +160,8 @@ export function buildCallSummary(
     callerName: session.slots.callerName,
     callbackE164: session.slots.callbackE164,
     serviceAddress: session.slots.serviceAddress,
+    location: session.slots.location,
+    email: session.slots.email,
     issue: session.slots.issue,
     preferredTime: session.slots.preferredTime,
     appointment:

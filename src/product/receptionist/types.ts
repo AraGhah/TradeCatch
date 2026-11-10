@@ -397,6 +397,10 @@ export type CallSummary = {
   callerName?: string;
   callbackE164?: string;
   serviceAddress?: string;
+  /** City or area, when that is all the caller gave (or in addition to the street address). */
+  location?: string;
+  /** The caller's own email, only if they offered it. */
+  email?: string;
   issue?: string;
   preferredTime?: string;
   /** Present when the call went through phone booking. */
