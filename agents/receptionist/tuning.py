@@ -15,14 +15,16 @@ or wait half a minute before answering.
   AGENT_INTERRUPTION_MIN_WORDS      words that count as an interruption (0-5)
   AGENT_PREEMPTIVE_GENERATION       "true"/"false": start replying before the turn ends
   AGENT_DELEGATION_REASONING        gpt-live backend reasoning effort before a tool call
-                                    ("minimal", "low", "medium", "high")
-  AGENT_DELEGATION_VERBOSITY        gpt-live backend text verbosity ("low", "medium", "high")
+                                    ("minimal", "low", "medium", "high"; default "low";
+                                    "default" leaves it to the service)
+  AGENT_DELEGATION_VERBOSITY        gpt-live backend text verbosity ("low", "medium", "high";
+                                    default "low"; "default" leaves it to the service)
 
 gpt-live (the standard voice) takes its own turns, so the endpointing, interruption
-and preemptive settings above only shape the cloned-voice pipeline. Its replies are
-spoken by the voice model; every tool call (saving details, checking the calendar,
-booking, transferring) first runs on a backend model, which is what the two
-AGENT_DELEGATION_* settings speed up.
+and preemptive settings above only shape the ElevenLabs pipeline (cloned or standard
+ElevenLabs voice). Its replies are spoken by the voice model; every tool call (saving
+details, checking the calendar, booking, transferring) first runs on a backend model,
+which is what the two AGENT_DELEGATION_* settings speed up.
 """
 
 from __future__ import annotations
@@ -63,16 +65,32 @@ def voice_settings(env: Mapping[str, str]) -> tuple[str, str]:
 
 REASONING_EFFORTS = ("minimal", "low", "medium", "high")
 VERBOSITY_LEVELS = ("low", "medium", "high")
+# The backend model behind every tool call only fills in a short form (save these details,
+# look up these times, book this one); its thinking happens while the caller waits. "low"
+# is accepted by every reasoning model, and answers as little as it can.
+DEFAULT_DELEGATION_REASONING = "low"
+DEFAULT_DELEGATION_VERBOSITY = "low"
+# AGENT_DELEGATION_* set to this word sends nothing: the service's own default applies.
+SERVICE_DEFAULT = "default"
 
 
 def delegation_options(env: Mapping[str, str]) -> dict[str, Any]:
-    """extra_kwargs for the gpt-live DuplexModel. Empty when nothing valid is set."""
+    """extra_kwargs for the gpt-live DuplexModel.
+
+    Tool calls run on a backend model first, and its default reasoning effort is the
+    longest pause in a call. So the quick settings are the default; a valid value in the
+    environment replaces one, and "default" gives that one back to the service.
+    """
     responses: dict[str, Any] = {}
     effort = (env.get("AGENT_DELEGATION_REASONING") or "").strip().lower()
-    if effort in REASONING_EFFORTS:
+    if effort not in REASONING_EFFORTS and effort != SERVICE_DEFAULT:
+        effort = DEFAULT_DELEGATION_REASONING
+    if effort != SERVICE_DEFAULT:
         responses["reasoning"] = {"effort": effort}
     verbosity = (env.get("AGENT_DELEGATION_VERBOSITY") or "").strip().lower()
-    if verbosity in VERBOSITY_LEVELS:
+    if verbosity not in VERBOSITY_LEVELS and verbosity != SERVICE_DEFAULT:
+        verbosity = DEFAULT_DELEGATION_VERBOSITY
+    if verbosity != SERVICE_DEFAULT:
         responses["text"] = {"verbosity": verbosity}
     return {"responses_options": responses} if responses else {}
 
