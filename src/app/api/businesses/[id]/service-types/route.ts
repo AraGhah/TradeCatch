@@ -10,7 +10,7 @@ type Params = { params: Promise<{ id: string }> };
 
 const schema = z.object({
   id: z.string().optional(),
-  name: z.string().min(1).max(160),
+  name: z.string().trim().min(1).max(160),
   description: z.string().max(500).optional(),
   durationMinutes: z.number().int().min(15).max(480),
   bufferMinutes: z.number().int().min(0).max(240).optional(),
@@ -49,6 +49,16 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid service." }, { status: 400 });
   try {
+    // The store upserts by id alone: an id that is not already one of this
+    // business's services must never overwrite someone else's.
+    if (parsed.data.id) {
+      const own = await getSchedulingService().listServices(id);
+      if (!own.some((row) => row.id === parsed.data.id))
+        return NextResponse.json(
+          { error: "Service not found." },
+          { status: 404 },
+        );
+    }
     const service = await getSchedulingService().saveService({
       ...parsed.data,
       id: parsed.data.id || createId("svc"),
@@ -58,7 +68,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   } catch (error) {
     if (error instanceof SchedulingError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message, code: error.code },
         { status: error.status },
       );
     }

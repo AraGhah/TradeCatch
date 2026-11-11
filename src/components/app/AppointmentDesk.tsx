@@ -4,9 +4,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { SchedulePicker, SlotConfirmPanel } from "./SchedulePicker";
 import {
+  dateKeyInZone,
+  formatDayKey,
+  formatMonth,
+  formatShortDayKey,
   formatSlotDate,
   formatSlotTime,
   pickerLocale,
+  searchKey,
+  shiftDayKey,
+  shiftMonth,
+  tidySentence,
 } from "./schedule-picker-utils";
 
 type Appointment = {
@@ -23,9 +31,22 @@ type Appointment = {
   status: string;
   timezone: string;
   appointmentKind: string;
+  simulated?: boolean;
 };
 
-type Service = { id: string; name: string; bookingMode: string };
+type Service = {
+  id: string;
+  name: string;
+  bookingMode: string;
+  active?: boolean;
+};
+type Action = "reschedule" | "cancel" | "complete" | "approve";
+
+const PHONE_INPUT = /^\+?[\d\s().-]+$/;
+/** What a person may type for a phone: ten digits or more, only digits and separators. */
+function looksLikePhone(value: string): boolean {
+  return PHONE_INPUT.test(value) && value.replace(/\D/g, "").length >= 10;
+}
 type Technician = { id: string; name: string };
 
 export function AppointmentDesk({
@@ -42,6 +63,9 @@ export function AppointmentDesk({
   const [technicianId, setTechnicianId] = useState("");
   const [query, setQuery] = useState("");
   const [view, setView] = useState<"day" | "week" | "month">("week");
+  // First day shown, as a business-local day key; null follows today.
+  const [anchor, setAnchor] = useState<string | null>(null);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [selected, setSelected] = useState<Appointment | null>(null);
   const [serviceId, setServiceId] = useState("");
   // The time chosen in the calendar: for a NEW appointment, and for a reschedule.
@@ -83,15 +107,28 @@ export function AppointmentDesk({
     [organizationId],
   );
 
+  const loadServices = useCallback(
+    () =>
+      fetch(`/api/businesses/${organizationId}/service-types`, {
+        cache: "no-store",
+      })
+        .then((res) => res.json())
+        .then((data) =>
+          setServices(
+            // Only services that can still be booked are offered.
+            ((data as { services?: Service[] }).services ?? []).filter(
+              (service) => service.active !== false,
+            ),
+          ),
+        )
+        .catch(() => setServices([])),
+    [organizationId],
+  );
+
   useEffect(() => {
     void load();
-    void fetch(`/api/businesses/${organizationId}/service-types`)
-      .then((res) => res.json())
-      .then((data) =>
-        setServices((data as { services?: Service[] }).services ?? []),
-      )
-      .catch(() => setServices([]));
-  }, [load, organizationId]);
+    void loadServices();
+  }, [load, loadServices]);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -99,56 +136,71 @@ export function AppointmentDesk({
     return () => window.clearInterval(timer);
   }, []);
 
-  const visible = useMemo(() => {
-    const horizon =
+  // Until the first availability arrives the browser's zone is only a label fallback.
+  const zone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const whenLabel = (iso: string) =>
+    `${formatSlotDate(iso, zone, locale)}, ${formatSlotTime(iso, zone, locale)}`;
+
+  // Days are the business's own calendar days, never a rolling 24 hours.
+  const todayKey = dateKeyInZone(new Date(now).toISOString(), zone);
+  const first = anchor ?? todayKey;
+  const range = useMemo(() => {
+    if (view === "day") return { from: first, to: first };
+    if (view === "week") return { from: first, to: shiftDayKey(first, 6) };
+    const month = first.slice(0, 7);
+    return { from: `${month}-01`, to: `${month}-31` };
+  }, [view, first]);
+  const rangeLabel =
+    view === "day"
+      ? formatDayKey(first, locale)
+      : view === "week"
+        ? `${formatShortDayKey(range.from, locale)} – ${formatShortDayKey(range.to, locale)}`
+        : formatMonth(first.slice(0, 7), locale);
+
+  function move(delta: -1 | 1) {
+    setAnchor(
       view === "day"
-        ? 86_400_000
+        ? shiftDayKey(first, delta)
         : view === "week"
-          ? 7 * 86_400_000
-          : 31 * 86_400_000;
+          ? shiftDayKey(first, delta * 7)
+          : `${shiftMonth(first.slice(0, 7), delta)}-01`,
+    );
+  }
+
+  const visible = useMemo(() => {
+    const wanted = searchKey(query.trim());
     return rows.filter((row) => {
       if (status && row.status !== status) return false;
       if (technicianId && row.technicianId !== technicianId) return false;
       if (
-        query &&
-        !`${row.customerName ?? ""} ${row.serviceName}`
-          .toLowerCase()
-          .includes(query.toLowerCase())
+        wanted &&
+        !searchKey(
+          `${row.customerName ?? ""} ${row.customerPhoneE164 ?? ""} ${row.serviceName}`,
+        ).includes(wanted)
       ) {
         return false;
       }
-      const start = Date.parse(row.startAt);
-      if (view === "month") {
-        const current = new Date(now);
-        const when = new Date(row.startAt);
-        return (
-          when.getMonth() === current.getMonth() &&
-          when.getFullYear() === current.getFullYear()
-        );
-      }
-      return start >= now - 86_400_000 && start <= now + horizon;
+      const day = dateKeyInZone(row.startAt, zone);
+      return day >= range.from && day <= range.to;
     });
-  }, [rows, status, technicianId, query, view, now]);
+  }, [rows, status, technicianId, query, range, zone]);
 
+  // Practice appointments from the test tools are listed, never counted.
+  const real = rows.filter((row) => !row.simulated);
   const counts = {
-    today: rows.filter(
+    today: real.filter(
       (row) =>
-        new Date(row.startAt).toDateString() === new Date(now).toDateString() &&
+        dateKeyInZone(row.startAt, zone) === todayKey &&
         row.status !== "canceled",
     ).length,
-    upcoming: rows.filter(
+    upcoming: real.filter(
       (row) =>
         Date.parse(row.startAt) > now &&
         row.status !== "canceled" &&
         row.status !== "completed",
     ).length,
-    pending: rows.filter((row) => row.status === "pending").length,
+    pending: real.filter((row) => row.status === "pending").length,
   };
-
-  // Until the first availability arrives the browser's zone is only a label fallback.
-  const zone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const whenLabel = (iso: string) =>
-    `${formatSlotDate(iso, zone, locale)}, ${formatSlotTime(iso, zone, locale)}`;
 
   /** A new time was picked: each attempt has its own key, so a double click or a retry books once. */
   function pickNewTime(iso: string) {
@@ -169,6 +221,11 @@ export function AppointmentDesk({
 
   async function book() {
     if (inFlight.current || !startAt || !name.trim()) return;
+    if (phone.trim() && !looksLikePhone(phone.trim())) {
+      setMessageError(true);
+      setMessage(t("phoneInvalid"));
+      return;
+    }
     inFlight.current = true;
     setBusy(true);
     setMessage(null);
@@ -194,17 +251,34 @@ export function AppointmentDesk({
         confirmed?: boolean;
         reason?: string;
         error?: string;
+        code?: string;
       };
       if (res.status === 409 || data.reason === "conflict") {
         setStartAt("");
         timeTaken();
+      } else if (data.code === "invalid_phone") {
+        setMessageError(true);
+        setMessage(t("phoneInvalid"));
+      } else if (data.code === "service_inactive") {
+        // Switched off since this page loaded: offer the current list again.
+        setMessageError(true);
+        setMessage(t("serviceInactive"));
+        setServiceId("");
+        setStartAt("");
+        void loadServices();
       } else if (data.confirmed || data.ok) {
         setMessageError(false);
         setMessage(
           data.confirmed
-            ? t("confirmedFor", { when: whenLabel(startAt) })
+            ? tidySentence(t("confirmedFor", { when: whenLabel(startAt) }))
             : t("requestSaved"),
         );
+        // Show the new appointment even when it is outside the dates on screen.
+        const bookedDay = dateKeyInZone(startAt, zone);
+        if (bookedDay < range.from || bookedDay > range.to)
+          setAnchor(
+            view === "month" ? `${bookedDay.slice(0, 7)}-01` : bookedDay,
+          );
         setServiceId("");
         setStartAt("");
         setName("");
@@ -213,7 +287,7 @@ export function AppointmentDesk({
         setReloadKey((n) => n + 1);
       } else {
         setMessageError(true);
-        setMessage(data.error || t("notConfirmed"));
+        setMessage(t("notConfirmed"));
         setStartAt("");
         setReloadKey((n) => n + 1);
       }
@@ -227,13 +301,14 @@ export function AppointmentDesk({
     }
   }
 
-  async function act(path: "reschedule" | "cancel" | "complete") {
+  async function act(path: Action) {
     if (!selected || inFlight.current) return;
     if (path === "reschedule" && !newStart) return;
     inFlight.current = true;
     setBusy(true);
     setMessage(null);
     setMessageError(false);
+    setConfirmingCancel(false);
     try {
       const url =
         path === "complete"
@@ -247,13 +322,16 @@ export function AppointmentDesk({
             ? { status: "completed" }
             : path === "cancel"
               ? { reason }
-              : { startAt: newStart },
+              : path === "approve"
+                ? {}
+                : { startAt: newStart },
         ),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         reason?: string;
         error?: string;
+        code?: string;
       };
       if (
         path === "reschedule" &&
@@ -265,15 +343,32 @@ export function AppointmentDesk({
         setMessageError(false);
         setMessage(
           path === "reschedule"
-            ? t("rescheduledTo", { when: whenLabel(newStart) })
-            : t("saved"),
+            ? tidySentence(t("rescheduledTo", { when: whenLabel(newStart) }))
+            : path === "approve"
+              ? tidySentence(
+                  t("approved", { when: whenLabel(selected.startAt) }),
+                )
+              : t("saved"),
         );
         setSelected(null);
         setRescheduling(false);
         setNewStart("");
+        setReason("");
+        // Freed or newly taken times must show in the calendar straight away.
+        setReloadKey((n) => n + 1);
       } else {
         setMessageError(true);
-        setMessage(data.error || t("error"));
+        setMessage(
+          path === "approve" && data.reason === "conflict"
+            ? t("approveConflict")
+            : path === "approve" && data.reason === "past"
+              ? t("approvePast")
+              : path === "approve" && data.reason?.startsWith("calendar")
+                ? t("approveCalendar")
+                : data.code === "not_started"
+                  ? t("notStarted")
+                  : t("error"),
+        );
       }
       await load();
     } catch {
@@ -289,7 +384,22 @@ export function AppointmentDesk({
     setSelected(row);
     setRescheduling(false);
     setNewStart("");
+    setConfirmingCancel(false);
+    setReason("");
   }
+
+  const kindLabel = (kind: string) =>
+    kind === "consultation"
+      ? t("consultation")
+      : kind === "request"
+        ? t("kindRequest")
+        : t("kindJob");
+  // What may still be done with the open appointment.
+  const selectedOpen =
+    selected?.status === "pending" || selected?.status === "confirmed";
+  const selectedCanComplete =
+    selected?.status === "confirmed" &&
+    dateKeyInZone(selected.startAt, zone) <= todayKey;
 
   const chosenService = services.find((item) => item.id === serviceId);
 
@@ -328,11 +438,47 @@ export function AppointmentDesk({
         ))}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => move(-1)}
+          aria-label={t("previous")}
+          className="min-h-9 rounded-md border border-navy/15 bg-white px-3 py-1.5 text-sm font-semibold text-navy"
+        >
+          <span aria-hidden="true">‹</span>
+        </button>
+        <p
+          aria-live="polite"
+          data-testid="schedule-range"
+          className="m-0 min-w-40 text-center text-sm font-semibold text-navy"
+        >
+          {rangeLabel}
+        </p>
+        <button
+          type="button"
+          onClick={() => move(1)}
+          aria-label={t("next")}
+          className="min-h-9 rounded-md border border-navy/15 bg-white px-3 py-1.5 text-sm font-semibold text-navy"
+        >
+          <span aria-hidden="true">›</span>
+        </button>
+        {anchor && anchor !== todayKey ? (
+          <button
+            type="button"
+            onClick={() => setAnchor(null)}
+            className="min-h-9 rounded-md border border-navy/15 bg-white px-3 py-1.5 text-sm font-semibold text-navy"
+          >
+            {t("today")}
+          </button>
+        ) : null}
+      </div>
+
       <div className="flex flex-wrap gap-2">
         {(["day", "week", "month"] as const).map((item) => (
           <button
             key={item}
             type="button"
+            aria-pressed={view === item}
             onClick={() => setView(item)}
             className={`rounded-md px-3 py-1.5 text-sm font-semibold ${view === item ? "bg-navy text-white" : "bg-white text-navy"}`}
           >
@@ -392,10 +538,11 @@ export function AppointmentDesk({
                     {row.serviceName}
                     {row.technicianName ? ` · ${row.technicianName}` : ""}
                     {" · "}
-                    {new Date(row.startAt).toLocaleString()}
+                    {whenLabel(row.startAt)}
                   </span>
                 </span>
                 <span className="text-xs uppercase tracking-wide text-navy/50">
+                  {row.simulated ? `${t("practice")} · ` : ""}
                   {t(row.status as "pending")}
                 </span>
               </button>
@@ -438,6 +585,10 @@ export function AppointmentDesk({
           className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
         />
         <input
+          type="tel"
+          inputMode="tel"
+          autoComplete="off"
+          maxLength={40}
           aria-label={t("phone")}
           value={phone}
           onChange={(event) => setPhone(event.target.value)}
@@ -498,44 +649,64 @@ export function AppointmentDesk({
         <section className="rounded-md border border-navy/10 bg-white p-4">
           <h2 className="font-semibold text-navy">{t("details")}</h2>
           <p className="mt-2 text-sm text-navy/80">
-            {selected.customerName} · {selected.serviceName} ·{" "}
-            {selected.serviceAddress || "—"} · {selected.appointmentKind}
+            {selected.customerName || "—"} · {selected.serviceName} ·{" "}
+            {selected.serviceAddress || "—"} ·{" "}
+            {kindLabel(selected.appointmentKind)}
           </p>
+          <p className="mt-1 text-sm text-navy/80">
+            {whenLabel(selected.startAt)} ·{" "}
+            <span className="font-semibold">
+              {t(selected.status as "pending")}
+            </span>
+          </p>
+          {selected.status === "pending" ? (
+            <p className="mt-1 text-sm text-navy/70">{t("pendingHint")}</p>
+          ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={busy}
-              aria-expanded={rescheduling}
-              onClick={() => {
-                setRescheduling((open) => !open);
-                setNewStart("");
-              }}
-              className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
-            >
-              {t("reschedule")}
-            </button>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void act("complete")}
-              className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
-            >
-              {t("complete")}
-            </button>
-            <input
-              value={reason}
-              onChange={(event) => setReason(event.target.value)}
-              placeholder={t("reason")}
-              className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
-            />
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => void act("cancel")}
-              className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              {t("cancel")}
-            </button>
+            {selected.status === "pending" ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void act("approve")}
+                className="rounded-md bg-navy px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {t("approve")}
+              </button>
+            ) : null}
+            {selectedOpen ? (
+              <button
+                type="button"
+                disabled={busy}
+                aria-expanded={rescheduling}
+                onClick={() => {
+                  setRescheduling((open) => !open);
+                  setNewStart("");
+                }}
+                className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
+              >
+                {t("reschedule")}
+              </button>
+            ) : null}
+            {selectedCanComplete ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void act("complete")}
+                className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold disabled:opacity-50"
+              >
+                {t("complete")}
+              </button>
+            ) : null}
+            {selectedOpen && !confirmingCancel ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => setConfirmingCancel(true)}
+                className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {t("cancel")}
+              </button>
+            ) : null}
             <button
               type="button"
               disabled={busy}
@@ -545,7 +716,42 @@ export function AppointmentDesk({
               {t("close")}
             </button>
           </div>
-          {rescheduling ? (
+          {selectedOpen && confirmingCancel ? (
+            <div
+              role="group"
+              aria-label={t("cancelConfirm")}
+              className="mt-3 flex flex-col gap-2 rounded-md border border-red-200 bg-red-50 p-3"
+            >
+              <p className="m-0 text-sm text-red-900">{t("cancelConfirm")}</p>
+              <input
+                value={reason}
+                maxLength={300}
+                aria-label={t("reason")}
+                onChange={(event) => setReason(event.target.value)}
+                placeholder={t("reason")}
+                className="rounded-md border border-navy/15 bg-white px-2 py-1.5 text-sm"
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void act("cancel")}
+                  className="rounded-md bg-red-700 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {t("cancelYes")}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setConfirmingCancel(false)}
+                  className="rounded-md border border-navy/20 bg-white px-3 py-1.5 text-sm font-semibold text-navy disabled:opacity-50"
+                >
+                  {t("cancelKeep")}
+                </button>
+              </div>
+            </div>
+          ) : null}
+          {rescheduling && selectedOpen ? (
             <div className="mt-4 flex flex-col gap-3">
               <h3 className="m-0 text-sm font-semibold text-navy">
                 {t("rescheduleTitle")}

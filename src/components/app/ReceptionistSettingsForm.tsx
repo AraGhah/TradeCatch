@@ -305,7 +305,9 @@ export function ReceptionistSettingsForm({
         issues?: { field: string; message: string }[];
       } | null;
       if (!res.ok) {
-        setError(data?.error || t("error"));
+        // A validation answer (400) is explained by the list below; the
+        // server's own wording is for logs, not for the owner.
+        setError(res.status === 400 ? t("error") : data?.error || t("error"));
         setIssues(data?.issues ?? []);
         return;
       }
@@ -319,6 +321,27 @@ export function ReceptionistSettingsForm({
   }
 
   const dis = readOnly || busy;
+
+  /** What to fix, in the owner's words: never the internal field path. */
+  function issueText(field: string, message: string): string {
+    const faq = /^faqs\.(\d+)(?:\.(\w+))?/.exec(field);
+    if (faq) {
+      const n = Number(faq[1]) + 1;
+      if (faq[2] === "keywords") return t("issue.faqKeywords", { n });
+      if (faq[2] === "question") return t("issue.faqQuestion", { n });
+      return t("issue.faqAnswers", { n });
+    }
+    if (/transfer loop/.test(message)) return t("issue.transferLoop");
+    if (/duplicate department/.test(message))
+      return t("issue.duplicateDepartment");
+    if (field === "notifySmsE164") return t("issue.notifySms");
+    if (field === "notifyEmail") return t("issue.notifyEmail");
+    if (/E164$/.test(field)) return t("issue.phone");
+    return t("issue.generic");
+  }
+  const issueLines = [
+    ...new Set(issues.map((i) => issueText(i.field, i.message))),
+  ];
 
   const promptPreview = showPreview
     ? renderPromptTemplate(
@@ -734,7 +757,9 @@ export function ReceptionistSettingsForm({
         <legend className="px-1 text-sm font-semibold text-navy">
           {t("faqTitle")}
         </legend>
-        <p className="mt-1 text-xs text-navy/60">{t("faqIntro")}</p>
+        <p className="mt-1 text-xs text-navy/60">
+          {t("faqIntro")} {t("faqBothAnswers")}
+        </p>
         {faqs.map((row, i) => (
           <div
             key={i}
@@ -1111,25 +1136,28 @@ export function ReceptionistSettingsForm({
           </label>
         </div>
         <div className="mt-3 flex flex-col gap-2 text-sm text-navy">
-          <label className="flex items-center gap-2">
+          <label className="flex min-h-9 items-center gap-2">
             <input
               type="checkbox"
+              className="h-4 w-4"
               checked={notifySmsOn}
               onChange={(e) => setNotifySmsOn(e.target.checked)}
             />
             {t("notifySmsEnabled")}
           </label>
-          <label className="flex items-center gap-2">
+          <label className="flex min-h-9 items-center gap-2">
             <input
               type="checkbox"
+              className="h-4 w-4"
               checked={notifyEmailOn}
               onChange={(e) => setNotifyEmailOn(e.target.checked)}
             />
             {t("notifyEmailEnabled")}
           </label>
-          <label className="flex items-center gap-2">
+          <label className="flex min-h-9 items-center gap-2">
             <input
               type="checkbox"
+              className="h-4 w-4"
               checked={emergencyOnly}
               onChange={(e) => setEmergencyOnly(e.target.checked)}
             />
@@ -1154,10 +1182,8 @@ export function ReceptionistSettingsForm({
             <>
               <p className="mt-1">{t("issuesTitle")}</p>
               <ul className="mt-1 list-disc pl-5">
-                {issues.map((i, k) => (
-                  <li key={k}>
-                    {i.field}: {i.message}
-                  </li>
+                {issueLines.map((line) => (
+                  <li key={line}>{line}</li>
                 ))}
               </ul>
             </>

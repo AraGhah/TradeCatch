@@ -175,19 +175,10 @@ export function NotificationPreferencesForm({
         />{" "}
         {t("quiet")}
       </label>
-      <label className="text-sm">
-        {t("quiet")}
-        <span className="mt-1 flex gap-2">
-          <input
-            type="time"
-            required
-            aria-label={t("quietEnd")}
-            value={prefs.quietEnd}
-            onChange={(event) =>
-              setPrefs({ ...prefs, quietEnd: event.target.value })
-            }
-            className="rounded-md border border-navy/15 px-2 py-1"
-          />
+      {/* Start first, then end, each with its own visible label. */}
+      <div className="flex flex-wrap items-end gap-3 text-sm">
+        <label className="flex flex-col gap-1">
+          <span aria-hidden="true">{t("quietFrom")}</span>
           <input
             type="time"
             required
@@ -198,8 +189,22 @@ export function NotificationPreferencesForm({
             }
             className="rounded-md border border-navy/15 px-2 py-1"
           />
-        </span>
-      </label>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span aria-hidden="true">{t("quietTo")}</span>
+          <input
+            type="time"
+            required
+            aria-label={t("quietEnd")}
+            value={prefs.quietEnd}
+            onChange={(event) =>
+              setPrefs({ ...prefs, quietEnd: event.target.value })
+            }
+            className="rounded-md border border-navy/15 px-2 py-1"
+          />
+        </label>
+      </div>
+      <p className="m-0 text-xs text-navy/70">{t("quietHint")}</p>
       <label className="text-sm">
         {t("personalTimezone")}
         <input

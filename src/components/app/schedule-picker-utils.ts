@@ -54,6 +54,38 @@ export function dateKeyInZone(startAt: string, timeZone: string): string {
   }).format(new Date(startAt));
 }
 
+/**
+ * One period at the end of a sentence that closes on a time: "…for 9:00 a.m.."
+ * reads "…for 9:00 a.m.". An ellipsis is left alone.
+ */
+export function tidySentence(text: string): string {
+  return text.replace(/([^.])\.\.(?!\.)/g, "$1.");
+}
+
+/** A day key moved by whole days ("2026-11-30" + 1 -> "2026-12-01"). */
+export function shiftDayKey(dateKey: string, delta: number): string {
+  const at = new Date(`${dateKey}T00:00:00Z`);
+  at.setUTCDate(at.getUTCDate() + delta);
+  return at.toISOString().slice(0, 10);
+}
+
+/** "Nov 11" for a business-local day key. */
+export function formatShortDayKey(dateKey: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    timeZone: "UTC",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(`${dateKey}T00:00:00Z`));
+}
+
+/** Lower case with accents removed, so "cote" finds "Côté". */
+export function searchKey(text: string): string {
+  return text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase();
+}
+
 /** "9:00 a.m." / "09 h 00": the time of day in the business's timezone. */
 export function formatSlotTime(
   startAt: string,

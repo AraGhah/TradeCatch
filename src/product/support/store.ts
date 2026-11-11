@@ -74,7 +74,10 @@ export function createMemorySupportStore(): SupportStore {
       events.push(structuredClone(row));
     },
     async saveAccountRequest(row) {
-      accounts.push(structuredClone(row));
+      const copy = structuredClone(row);
+      const index = accounts.findIndex((existing) => existing.id === row.id);
+      if (index >= 0) accounts[index] = copy;
+      else accounts.push(copy);
     },
     async listAccountRequests(organizationId, limit) {
       return accounts

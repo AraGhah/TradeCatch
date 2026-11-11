@@ -10,6 +10,7 @@ import {
 } from "@/product/crm/record-quality";
 import { getCrmService } from "@/product/crm/runtime";
 import { getSchedulingStore } from "@/product/scheduling/runtime";
+import { usableTimeZone } from "@/product/scheduling/slots";
 import type { ScheduleAppointment } from "@/product/scheduling/types";
 import {
   LEAD_PRIORITIES,
@@ -44,6 +45,8 @@ async function upcomingAppointments(
       .filter(
         (row) =>
           (row.status === "confirmed" || row.status === "pending") &&
+          // Practice bookings from the test tools are not a customer's visit.
+          !row.simulated &&
           Date.parse(row.endAt) > now,
       )
       .sort((a, b) => a.startAt.localeCompare(b.startAt));
@@ -110,7 +113,7 @@ export default async function AppLeadsPage({
       day: "numeric",
       hour: "numeric",
       minute: "2-digit",
-      timeZone: row.timezone,
+      timeZone: usableTimeZone(row.timezone),
     }).format(new Date(row.startAt));
   const recordLabels = {
     service: tr("service"),
@@ -139,6 +142,8 @@ export default async function AppLeadsPage({
           {t("search")}
           <input
             name="q"
+            type="search"
+            maxLength={120}
             defaultValue={query.q ?? ""}
             className="rounded-md border border-navy/20 px-2 py-2"
           />
@@ -200,7 +205,19 @@ export default async function AppLeadsPage({
 
       {leads.length === 0 ? (
         <p className="rounded-md border border-dashed border-navy/20 bg-white px-4 py-8 text-center text-navy/60">
-          {t("empty")}
+          {query.q?.trim() || status || source || priority ? (
+            <>
+              {t("emptyFiltered")}{" "}
+              <Link
+                href="/app/leads"
+                className="font-semibold text-navy underline"
+              >
+                {t("clearFilters")}
+              </Link>
+            </>
+          ) : (
+            t("empty")
+          )}
         </p>
       ) : (
         <ul className="divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white">

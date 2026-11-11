@@ -1,5 +1,6 @@
 import { createId } from "@/lib/id";
 import { phoneKey } from "./phone";
+import { searchFold } from "./record-quality";
 import type { CrmStore, UpsertCustomerInput } from "./store";
 import {
   OPEN_LEAD_STATUSES,
@@ -36,7 +37,7 @@ function matchesFilters(
   if (filters.from && row.createdAt < filters.from) return false;
   if (filters.to && row.createdAt > filters.to) return false;
   if (filters.q) {
-    const q = filters.q.trim().toLowerCase();
+    const q = searchFold(filters.q.trim());
     const hay = [
       row.customer.displayName,
       row.customer.firstName,
@@ -48,9 +49,8 @@ function matchesFilters(
       row.location,
     ]
       .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
-    if (!hay.includes(q)) return false;
+      .join(" ");
+    if (!searchFold(hay).includes(q)) return false;
   }
   return true;
 }

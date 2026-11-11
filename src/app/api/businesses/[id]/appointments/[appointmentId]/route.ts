@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   } catch (error) {
     if (error instanceof SchedulingError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message, code: error.code },
         { status: error.status },
       );
     }
@@ -58,7 +58,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   } catch (error) {
     if (error instanceof SchedulingError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message, code: error.code },
         { status: error.status },
       );
     }

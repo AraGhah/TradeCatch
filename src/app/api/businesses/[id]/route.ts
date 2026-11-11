@@ -128,6 +128,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
   }
+  // The plan follows billing and the status follows review: only platform
+  // staff set them. A business changing its own would skip both.
+  if (
+    access.via !== "admin" &&
+    (parsed.data.subscriptionPlan !== undefined ||
+      parsed.data.accountStatus !== undefined)
+  ) {
+    return NextResponse.json(
+      { error: "Insufficient permissions to change the plan or status." },
+      { status: 403 },
+    );
+  }
 
   const saas = getSaasStore();
   const updated = await saas.updateOrganization(id, {

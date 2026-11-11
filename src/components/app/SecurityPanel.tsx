@@ -48,6 +48,18 @@ export function SecurityPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
+  /** "Nov 11, 2026, 8:15 a.m." instead of the raw timestamp. */
+  function signedInAt(iso: string) {
+    const at = new Date(iso);
+    if (Number.isNaN(at.getTime())) return iso;
+    return t("signedIn", {
+      date: new Intl.DateTimeFormat(locale === "fr" ? "fr-CA" : "en-CA", {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }).format(at),
+    });
+  }
+
   async function revoke(sessionId: string) {
     if (revokingId) return;
     setRevokingId(sessionId);
@@ -94,7 +106,7 @@ export function SecurityPanel({
               key={session.id}
               className="flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm ring-1 ring-navy/10"
             >
-              <span>{session.createdAt}</span>
+              <span>{signedInAt(session.createdAt)}</span>
               <button
                 type="button"
                 disabled={revokingId === session.id}

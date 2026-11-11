@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type {
   ConversationControl,
   CrmMessage,
@@ -40,6 +40,7 @@ export function LeadWorkspace({
   messages,
   control,
   people,
+  timeZone,
 }: {
   organizationId: string;
   lead: LeadWithCustomer;
@@ -47,8 +48,28 @@ export function LeadWorkspace({
   messages: CrmMessage[];
   control: ConversationControl;
   people: Person[];
+  /** The business's timezone: history times are shown the way the owner lives them. */
+  timeZone?: string;
 }) {
   const t = useTranslations("app.crm");
+  const dateLocale = useLocale() === "fr" ? "fr-CA" : "en-CA";
+  const eventTime = (iso: string) => {
+    const at = new Date(iso);
+    if (Number.isNaN(at.getTime())) return iso;
+    try {
+      return new Intl.DateTimeFormat(dateLocale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: timeZone || "America/Toronto",
+      }).format(at);
+    } catch {
+      return new Intl.DateTimeFormat(dateLocale, {
+        dateStyle: "medium",
+        timeStyle: "short",
+        timeZone: "America/Toronto",
+      }).format(at);
+    }
+  };
   const router = useRouter();
   const [status, setStatus] = useState(lead.status);
   const [priority, setPriority] = useState(lead.priority);
@@ -233,9 +254,9 @@ export function LeadWorkspace({
         <ul className="flex flex-col gap-2 text-sm text-navy/80">
           {events.map((event) => (
             <li key={event.id}>
-              <span className="font-mono text-xs text-navy/50">
-                {event.at.slice(0, 16).replace("T", " ")}
-              </span>{" "}
+              <time dateTime={event.at} className="text-xs text-navy/60">
+                {eventTime(event.at)}
+              </time>{" "}
               {event.kind}
               {event.detail ? ` · ${event.detail}` : ""}
             </li>

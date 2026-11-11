@@ -41,6 +41,11 @@ const FR_FIXES: [RegExp, string][] = [
   [/\bdegats\b/gi, "dégâts"],
 ];
 
+/** Lower case with accents removed, so a search for "cote" finds "Côté". */
+export function searchFold(text: string): string {
+  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+}
+
 /** Lower-case, accent-free, punctuation-free form used only to compare texts. */
 export function comparisonKey(text: string): string {
   return text
@@ -121,7 +126,12 @@ export function cleanProblemText(raw: string | undefined, maxLength = 600): stri
   let out = "";
   for (const { text } of kept) {
     const sentence = `${capitalize(text)}.`;
-    if ((out ? `${out} ${sentence}` : sentence).length > maxLength) break;
+    if ((out ? `${out} ${sentence}` : sentence).length > maxLength) {
+      // One very long statement: keep its beginning rather than nothing at all.
+      if (!out)
+        out = `${sentence.slice(0, maxLength - 1).replace(/\s+\S*$/, "")}…`;
+      break;
+    }
     out = out ? `${out} ${sentence}` : sentence;
   }
   return out;

@@ -42,6 +42,21 @@ export class CrmError extends Error {
   }
 }
 
+/**
+ * True for a CrmError from any copy of this module. The service is kept on
+ * `globalThis`, so the error it throws can come from a different bundle than
+ * the route that catches it, where `instanceof` is false and a plain
+ * validation message would turn into a 500.
+ */
+export function isCrmError(err: unknown): err is CrmError {
+  return (
+    err instanceof CrmError ||
+    (err instanceof Error &&
+      err.name === "CrmError" &&
+      typeof (err as { status?: unknown }).status === "number")
+  );
+}
+
 export type CaptureResult = {
   customer: Customer;
   lead: Lead;

@@ -27,6 +27,7 @@ export function DashboardView({
   pollQuery,
   customFrom,
   customTo,
+  rangeReversed = false,
   showProfessionalUpsell,
   showAppointments,
   afterHeader,
@@ -35,6 +36,8 @@ export function DashboardView({
   pollQuery: string;
   customFrom?: string;
   customTo?: string;
+  /** True when the typed custom range had end before start and was swapped. */
+  rangeReversed?: boolean;
   /** Essential customers see a short note about what Professional adds. */
   showProfessionalUpsell: boolean;
   /** Appointments are a Professional feature: Essential hides every appointment block. */
@@ -160,7 +163,11 @@ export function DashboardView({
               );
             })}
           </div>
-          <form className="flex flex-wrap items-end gap-2">
+          <form
+            // Remount when the applied dates change so the fields show them.
+            key={`${customFrom ?? ""}:${customTo ?? ""}`}
+            className="flex flex-wrap items-end gap-2"
+          >
             <input type="hidden" name="range" value="custom" />
             <label className="flex flex-col gap-1 text-xs font-semibold text-navy/70">
               {t("range.from")}
@@ -189,6 +196,11 @@ export function DashboardView({
               {t("range.apply")}
             </button>
           </form>
+          {rangeReversed && customFrom && customTo ? (
+            <p role="status" className="text-sm text-navy/70">
+              {t("rangeReversed", { from: customFrom, to: customTo })}
+            </p>
+          ) : null}
         </div>
       </header>
 
