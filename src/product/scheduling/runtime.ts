@@ -140,11 +140,14 @@ export function getSchedulingService() {
     },
     async notify(input) {
       const reason = input.reason.toLowerCase();
-      const type = reason.includes("cancel")
-        ? "appointment_canceled"
-        : reason.includes("moved") || reason.includes("reschedul")
-          ? "appointment_rescheduled"
-          : "appointment_confirmed";
+      const type = (
+        {
+          confirmed: "appointment_confirmed",
+          requested: "appointment_requested",
+          rescheduled: "appointment_rescheduled",
+          canceled: "appointment_canceled",
+        } as const
+      )[input.kind];
       await emitBusinessEvent({
         organizationId: input.organizationId,
         type,

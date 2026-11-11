@@ -55,7 +55,10 @@ export default async function AppQuotesPage({
         approvedAt={settings.quoteFollowUpApprovedAt}
       />
 
-      <QuoteIngestForm locale={locale === "fr" ? "fr" : "en"} />
+      <QuoteIngestForm
+        locale={locale === "fr" ? "fr" : "en"}
+        wordingApproved={Boolean(settings.quoteFollowUpApprovedAt)}
+      />
 
       {quotes.length === 0 ? (
         <p className="rounded-md border border-dashed border-navy/20 bg-white px-4 py-8 text-center text-navy/60">
@@ -78,7 +81,7 @@ export default async function AppQuotesPage({
                 {q.quoteRef ? `${q.quoteRef} · ` : ""}
                 {q.customerPhoneE164}
                 {q.nextRunAt && q.status === "active"
-                  ? ` · next ${new Date(q.nextRunAt).toLocaleString(
+                  ? ` · ${t("quotes.next")} ${new Date(q.nextRunAt).toLocaleString(
                       locale === "fr" ? "fr-CA" : "en-CA",
                     )}`
                   : ""}

@@ -7,7 +7,7 @@ import { createMemoryCrmStore } from "./memory-store";
 import { createPostgresCrmStore } from "./postgres-store";
 import { createCrmService, type CrmService } from "./service";
 
-export { CrmError } from "./service";
+export { CrmError, isCrmError } from "./service";
 import type { CrmStore } from "./store";
 
 type State = { store: CrmStore; service: CrmService; durable: boolean };

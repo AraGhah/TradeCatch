@@ -7,6 +7,7 @@ import {
   tenantHasFeature,
   unauthorizedTenantResponse,
 } from "@/product/saas/tenant";
+import { parsePhoneInput } from "@/product/crm/phone";
 import { getStarterStore } from "@/product/starter/runtime";
 import {
   getStarterServices,
@@ -119,17 +120,25 @@ export async function POST(request: NextRequest) {
 
   const parsed = ingestSchema.safeParse(json);
   if (!parsed.success) {
+    const field = String(parsed.error.issues[0]?.path[0] ?? "");
     return NextResponse.json(
-      { error: "Invalid ingest body.", details: parsed.error.flatten() },
+      {
+        error:
+          field === "customerPhoneE164"
+            ? "Enter a valid phone number."
+            : "Check the phone number and optional fields, then try again.",
+        code:
+          field === "customerPhoneE164" ? "invalid_phone" : "invalid_values",
+      },
       { status: 400 },
     );
   }
 
-  let phone = parsed.data.customerPhoneE164.trim();
-  if (!phone.startsWith("+")) phone = `+${phone.replace(/\D/g, "")}`;
-  if (!looksLikeE164(phone)) {
+  // Typed the way people write numbers ("514-555-0123"); stored as E.164.
+  const phone = parsePhoneInput(parsed.data.customerPhoneE164);
+  if (!phone || !looksLikeE164(phone)) {
     return NextResponse.json(
-      { error: "customerPhoneE164 must be E.164." },
+      { error: "customerPhoneE164 must be E.164.", code: "invalid_phone" },
       { status: 400 },
     );
   }

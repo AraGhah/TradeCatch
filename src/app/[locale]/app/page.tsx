@@ -41,6 +41,14 @@ export default async function AppDashboardPage({
     );
   }
 
+  // "From" after "To" is read as the same period: show the dates in the
+  // order they were applied, so the form matches the numbers on screen.
+  const reversed =
+    Boolean(query.from && query.to) &&
+    (query.from as string) > (query.to as string);
+  const customFrom = reversed ? query.to : query.from;
+  const customTo = reversed ? query.from : query.to;
+
   const poll = new URLSearchParams();
   if (query.range) poll.set("range", query.range);
   if (query.from) poll.set("from", query.from);
@@ -50,12 +58,16 @@ export default async function AppDashboardPage({
     <DashboardView
       initial={overview}
       pollQuery={poll.toString()}
-      customFrom={query.from}
-      customTo={query.to}
+      customFrom={customFrom}
+      customTo={customTo}
+      rangeReversed={reversed}
       showProfessionalUpsell={!appointmentsIncluded}
       showAppointments={appointmentsIncluded}
       afterHeader={
-        <GmailDashboardCard organizationId={auth.ctx.organization.id} userId={auth.ctx.user.id} />
+        <GmailDashboardCard
+          organizationId={auth.ctx.organization.id}
+          userId={auth.ctx.user.id}
+        />
       }
     />
   );

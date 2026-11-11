@@ -106,6 +106,16 @@ const COPY: Record<
       body: "{customer} : {service} à {location}. {when}",
     },
   },
+  appointment_requested: {
+    en: {
+      title: "Appointment request",
+      body: "{customer}: {service} in {location}. {when} It is waiting for your approval.",
+    },
+    fr: {
+      title: "Demande de rendez-vous",
+      body: "{customer} : {service} à {location}. {when} Elle attend votre approbation.",
+    },
+  },
   appointment_canceled: {
     en: {
       title: "Appointment canceled",
@@ -296,6 +306,13 @@ const SUMMARY_LABELS: [
     {
       en: ["appointment confirmed", "appointments confirmed"],
       fr: ["rendez-vous confirmé", "rendez-vous confirmés"],
+    },
+  ],
+  [
+    "appointment_requested",
+    {
+      en: ["appointment request", "appointment requests"],
+      fr: ["demande de rendez-vous", "demandes de rendez-vous"],
     },
   ],
   [

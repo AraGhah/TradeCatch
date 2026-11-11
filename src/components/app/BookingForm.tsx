@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { parsePhoneInput } from "@/product/crm/phone";
 
 export function BookingForm() {
   const t = useTranslations("app");
@@ -30,6 +31,12 @@ export function BookingForm() {
         setError(t("bookings.error"));
         return;
       }
+      const typedPhone = customerPhone.trim();
+      const phone = typedPhone ? parsePhoneInput(typedPhone) : undefined;
+      if (typedPhone && !phone) {
+        setError(t("bookings.errorPhone"));
+        return;
+      }
       const res = await fetch("/api/app/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -38,15 +45,20 @@ export function BookingForm() {
           startsAt: startsIso,
           endsAt: endsIso,
           customerName: customerName || undefined,
-          customerPhoneE164: customerPhone || undefined,
+          customerPhoneE164: phone,
           notes: notes || undefined,
         }),
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => null)) as {
           error?: string;
+          code?: string;
         } | null;
-        setError(data?.error || t("bookings.error"));
+        setError(
+          data?.code === "invalid_phone"
+            ? t("bookings.errorPhone")
+            : data?.error || t("bookings.error"),
+        );
         return;
       }
       setTitle("");

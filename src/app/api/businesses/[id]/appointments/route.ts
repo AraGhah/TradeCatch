@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { parsePhoneInput } from "@/product/crm/phone";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
 import { getSchedulingService } from "@/product/scheduling/runtime";
 import { SchedulingError } from "@/product/scheduling/service";
@@ -16,7 +17,7 @@ const createSchema = z.object({
   serviceName: z.string().max(160).optional(),
   startAt: z.string().min(8),
   customerName: z.string().max(160).optional(),
-  customerPhoneE164: z.string().max(20).optional(),
+  customerPhoneE164: z.string().max(40).optional(),
   customerEmail: z.string().email().optional(),
   serviceAddress: z.string().max(300).optional(),
   technicianId: z.string().optional(),
@@ -63,13 +64,22 @@ export async function POST(request: NextRequest, { params }: Params) {
   const parsed = createSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success)
     return NextResponse.json(
-      { error: "Invalid appointment." },
+      { error: "Invalid appointment.", code: "invalid_values" },
+      { status: 400 },
+    );
+  // Reminders are texted to this number: store it only when it is one.
+  const typedPhone = parsed.data.customerPhoneE164?.trim();
+  const phone = typedPhone ? parsePhoneInput(typedPhone) : undefined;
+  if (typedPhone && !phone)
+    return NextResponse.json(
+      { error: "Enter a valid phone number.", code: "invalid_phone" },
       { status: 400 },
     );
   try {
     const result = await getSchedulingService().book({
       organizationId: id,
       ...parsed.data,
+      customerPhoneE164: phone ?? undefined,
       source: parsed.data.simulated ? "simulation" : "dashboard",
       // The person at the desk picked a time they were shown as free. If it
       // was taken in the meantime, say so and let them pick another; a silent
@@ -86,7 +96,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   } catch (error) {
     if (error instanceof SchedulingError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message, code: error.code },
         { status: error.status },
       );
     }

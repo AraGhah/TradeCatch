@@ -4,7 +4,9 @@ import {
   listSlots,
   localKey,
   localTime,
+  rulesProblem,
   slotIsFree,
+  usableTimeZone,
 } from "./slots";
 import { withOrgLock, type SchedulingStore } from "./store";
 import type {
@@ -22,10 +24,33 @@ export class SchedulingError extends Error {
   constructor(
     message: string,
     readonly status = 400,
+    /** Stable reason the dashboard can translate; the message is for logs. */
+    readonly code?: string,
   ) {
     super(message);
     this.name = "SchedulingError";
   }
+}
+
+/**
+ * Rows the engine writes for its own bookkeeping (the short hold that guards a
+ * move or an approval, a booking that timed out before it existed). They are
+ * never something the contractor booked, so they are not listed.
+ */
+const INTERNAL_CANCEL_REASONS = new Set([
+  "reschedule_hold",
+  "approval_hold",
+  "booking_timed_out",
+]);
+
+export function isInternalAppointment(
+  row: Pick<ScheduleAppointment, "status" | "cancelReason">,
+): boolean {
+  return (
+    row.status === "hold" ||
+    (row.status === "canceled" &&
+      INTERNAL_CANCEL_REASONS.has(row.cancelReason ?? ""))
+  );
 }
 
 export type CalendarPort = {
@@ -68,6 +93,8 @@ export type SchedulingDeps = {
     organizationId: string;
     title: string;
     reason: string;
+    /** What happened, so a request is never announced as a confirmation. */
+    kind: "confirmed" | "requested" | "rescheduled" | "canceled";
     refId: string;
     /** What the notice says about the job; without these it reads "—". */
     serviceName?: string;
@@ -103,6 +130,8 @@ export type BookInput = {
   source: ScheduleAppointment["bookingSource"];
   idempotencyKey?: string;
   simulated?: boolean;
+  /** Practice only: the simulated calendar refuses the event (needs `simulated`). */
+  simulateCalendarFailure?: boolean;
   /**
    * When the time is no longer free, record a pending request for the
    * contractor (default). Callers that offer another time on the spot, such as
@@ -164,7 +193,7 @@ const DEFAULT_SERVICES: Omit<ServiceType, "id" | "organizationId">[] = [
 
 function localParts(iso: string, timeZone: string) {
   return new Intl.DateTimeFormat("en-CA", {
-    timeZone,
+    timeZone: usableTimeZone(timeZone),
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -248,6 +277,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
         organizationId: row.organizationId,
         title: row.customerName || row.serviceName,
         reason: "New appointment confirmed",
+        kind: "confirmed",
         refId: row.id,
         ...noticeDetails(row),
       });
@@ -265,7 +295,11 @@ export function createSchedulingService(deps: SchedulingDeps) {
   }
   async function ensure(organizationId: string): Promise<AvailabilityRules> {
     const existing = await deps.store.getRules(organizationId);
-    if (existing) return existing;
+    if (existing) {
+      // A zone Intl does not know would throw on every availability request.
+      existing.timezone = usableTimeZone(existing.timezone);
+      return existing;
+    }
     const now = deps.now().toISOString();
     const rules: AvailabilityRules = {
       organizationId,
@@ -409,6 +443,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
     async saveRules(rules: AvailabilityRules) {
       rules.updatedAt = deps.now().toISOString();
       if (!rules.timezone) throw new SchedulingError("Timezone is required.");
+      const problem = rulesProblem(rules);
+      if (problem)
+        throw new SchedulingError("Invalid availability.", 400, problem);
       return deps.store.saveRules(rules);
     },
 
@@ -420,7 +457,27 @@ export function createSchedulingService(deps: SchedulingDeps) {
     async saveService(service: ServiceType) {
       if (service.durationMinutes < 15)
         throw new SchedulingError("Duration is too short.");
-      return deps.store.saveService(service);
+      const name = service.name.trim();
+      if (!name) throw new SchedulingError("A name is required.");
+      const key = name.toLowerCase();
+      const existing = await deps.store.listServices(service.organizationId);
+      const current = existing.find((row) => row.id === service.id);
+      // Two services with one name cannot be told apart when booking. A
+      // service that already shares its name can still be switched on or off.
+      const renamed = !current || current.name.trim().toLowerCase() !== key;
+      if (
+        renamed &&
+        existing.some(
+          (row) =>
+            row.id !== service.id && row.name.trim().toLowerCase() === key,
+        )
+      )
+        throw new SchedulingError(
+          "A service with this name already exists.",
+          409,
+          "duplicate_name",
+        );
+      return deps.store.saveService({ ...service, name });
     },
 
     async listTechnicians(organizationId: string) {
@@ -570,7 +627,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
       await ensure(organizationId);
       const rows = await deps.store.listAppointments(organizationId);
       return rows.filter((row) => {
-        if (row.status === "hold") return false;
+        if (isInternalAppointment(row)) return false;
         if (filter?.status && row.status !== filter.status) return false;
         if (filter?.technicianId && row.technicianId !== filter.technicianId)
           return false;
@@ -622,7 +679,13 @@ export function createSchedulingService(deps: SchedulingDeps) {
               (row) => row.name === input.serviceName && row.active,
             );
         if (input.serviceId && !service)
-          throw new SchedulingError("Unknown service.", 404);
+          throw new SchedulingError(
+            "Unknown service.",
+            404,
+            services.some((row) => row.id === input.serviceId)
+              ? "service_inactive"
+              : "service_unknown",
+          );
         const chosen = service;
         const duration =
           chosen?.durationMinutes ?? rules.defaultDurationMinutes;
@@ -657,7 +720,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
           chosen?.bookingMode === "manual_approval" ||
           chosen?.bookingMode === "escalate";
         const calendar = input.simulated
-          ? createSimulatedCalendar()
+          ? createSimulatedCalendar(Boolean(input.simulateCalendarFailure))
           : await deps.calendar(input.organizationId);
         const calendarBlocksConfirmation =
           !input.simulated &&
@@ -742,6 +805,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
             reason: needsReview
               ? "Appointment needs contractor approval"
               : "Appointment request saved for review",
+            kind: "requested",
             refId: appointment.id,
             ...noticeDetails(appointment, rules.timezone),
           });
@@ -880,12 +944,20 @@ export function createSchedulingService(deps: SchedulingDeps) {
         );
         if (!current || current.status === "canceled")
           throw new SchedulingError("Appointment not found.", 404);
+        if (current.status === "completed")
+          throw new SchedulingError(
+            "A completed appointment cannot be moved.",
+            409,
+            "already_completed",
+          );
         const rules = await ensure(organizationId);
         const services = await deps.store.listServices(organizationId);
         const service = services.find((row) => row.id === current.serviceId);
         const duration =
           Date.parse(current.endAt) - Date.parse(current.startAt);
         const start = new Date(startAt);
+        if (Number.isNaN(start.getTime()))
+          throw new SchedulingError("Invalid start time.");
         const end = new Date(start.getTime() + duration);
         const alternatives = await slotsFor({
           organizationId,
@@ -937,6 +1009,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
             ).toISOString(),
           },
           buffer,
+          // Its own current time is not a clash: moving by half an hour is fine.
+          current.id,
         );
         if (!reinserted) {
           current.startAt = previous.startAt;
@@ -961,6 +1035,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
             current.startAt = previous.startAt;
             current.endAt = previous.endAt;
             reinserted.status = "canceled";
+            reinserted.cancelReason = "reschedule_hold";
             await deps.store.saveAppointment(reinserted);
             await deps.store.saveAppointment(current);
             return {
@@ -985,6 +1060,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
           organizationId,
           title: current.customerName || current.serviceName,
           reason: "Appointment rescheduled",
+          kind: "rescheduled",
           refId: current.id,
           ...noticeDetails(current, rules.timezone),
         });
@@ -1052,10 +1128,112 @@ export function createSchedulingService(deps: SchedulingDeps) {
         organizationId,
         title: current.customerName || current.serviceName,
         reason: "Appointment canceled",
+        kind: "canceled",
         refId: current.id,
         ...noticeDetails(current),
       });
       return { ok: true as const, appointment: current };
+    },
+
+    /**
+     * The contractor accepts a pending request (a manual-approval service, or
+     * a request saved while the calendar was unreachable). It becomes a
+     * confirmed appointment exactly like a normal booking: the time must still
+     * be free, the calendar event is created, and the customer is told.
+     * Posted hours and minimum notice are the contractor's own rules for
+     * customers, so they do not stop the contractor from saying yes.
+     */
+    async approve(organizationId: string, appointmentId: string) {
+      return withOrgLock(organizationId, async () => {
+        const current = await deps.store.getAppointment(
+          organizationId,
+          appointmentId,
+        );
+        if (!current || isInternalAppointment(current))
+          throw new SchedulingError("Appointment not found.", 404);
+        if (current.status === "confirmed")
+          return { ok: true as const, confirmed: true, appointment: current };
+        if (current.status !== "pending")
+          throw new SchedulingError(
+            "Only a pending request can be approved.",
+            409,
+            "not_pending",
+          );
+        const fail = (reason: string) => ({
+          ok: false as const,
+          confirmed: false,
+          reason,
+          appointment: current,
+        });
+        if (Date.parse(current.startAt) <= deps.now().getTime())
+          return fail("past");
+        const rules = await ensure(organizationId);
+        const services = await deps.store.listServices(organizationId);
+        const service = services.find((row) => row.id === current.serviceId);
+        const calendar = current.simulated
+          ? createSimulatedCalendar()
+          : await deps.calendar(organizationId);
+        if (
+          !current.simulated &&
+          rules.calendarMode === "google" &&
+          (!calendar.connected || calendar.kind !== "google")
+        )
+          return fail("calendar_unavailable");
+        // The same atomic guard a booking uses: a short hold on the time, so
+        // two approvals (or an approval and a booking) cannot both win.
+        const hold = await deps.store.insertIfFree(
+          {
+            ...current,
+            id: `${current.id}_approve`,
+            idempotencyKey: undefined,
+            status: "hold",
+            holdExpiresAt: new Date(
+              deps.now().getTime() + 60_000,
+            ).toISOString(),
+          },
+          service?.bufferMinutes ?? rules.bufferMinutes,
+        );
+        if (!hold) return fail("conflict");
+        const releaseHold = async () => {
+          hold.status = "canceled";
+          hold.cancelReason = "approval_hold";
+          await deps.store.saveAppointment(hold);
+        };
+        const created = await calendar.createEvent(current);
+        if ("error" in created) {
+          await releaseHold();
+          await record(current, "calendar_failed", created.error);
+          return fail("calendar_error");
+        }
+        current.calendarEventId = created.id;
+        current.status = "confirmed";
+        if (current.appointmentKind === "request")
+          current.appointmentKind = "job";
+        current.confirmationNoticesPending = true;
+        current.updatedAt = deps.now().toISOString();
+        if (!current.leadId) {
+          const linked = await deps.linkLead?.({
+            organizationId,
+            phone: current.customerPhoneE164,
+            name: current.customerName,
+            service: current.serviceName,
+            address: current.serviceAddress,
+            startAt: current.startAt,
+            simulated: current.simulated,
+          });
+          if (linked && "leadId" in linked && linked.leadId)
+            current.leadId = linked.leadId;
+        }
+        await deps.store.saveAppointment(current);
+        await releaseHold();
+        await deliverConfirmation(current);
+        try {
+          await record(current, "confirmed", "approved");
+        } catch {
+          console.warn("[scheduling] Approved appointment history write failed");
+        }
+        return { ok: true as const, confirmed: true, appointment: current };
+      });
     },
 
     async updateDetails(
@@ -1086,7 +1264,24 @@ export function createSchedulingService(deps: SchedulingDeps) {
         current.technicianId = tech.id;
         current.technicianName = tech.name;
       }
-      if (patch.status === "completed" && current.status === "confirmed") {
+      if (patch.status === "completed" && current.status !== "completed") {
+        if (current.status !== "confirmed")
+          throw new SchedulingError(
+            "Only a confirmed appointment can be completed.",
+            409,
+            "not_confirmed",
+          );
+        // Finishing a job early in the day is normal; next week's is a slip.
+        const rules = await ensure(organizationId);
+        if (
+          localKey(new Date(current.startAt), rules.timezone) >
+          localKey(deps.now(), rules.timezone)
+        )
+          throw new SchedulingError(
+            "This appointment has not started yet.",
+            409,
+            "not_started",
+          );
         current.status = "completed";
         await record(current, "completed");
       }

@@ -284,6 +284,8 @@ export function phrase(
     .replace(/\{(\w+)\}/g, (_, k: string) => (vars[k] ?? "").trim())
     .replace(/\s+([.,!?])/g, "$1")
     .replace(/,\s*([.!?])/g, "$1")
+    // "Nord Inc." + the sentence's own period is one period, not two.
+    .replace(/([^.])\.\.(?!\.)/g, "$1.")
     .replace(/\s{2,}/g, " ")
     .trim();
   // A sentence that opens with a variable ("{target} n'est pas disponible…") gets a

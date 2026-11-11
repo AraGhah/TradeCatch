@@ -10,7 +10,7 @@ import type { AccountRequest } from "@/product/support/types";
 const requestSchema = z.object({
   id: z.string(),
   kind: z.enum(["suspension", "reactivation", "deletion"]),
-  status: z.enum(["requested", "in_review", "completed"]),
+  status: z.enum(["requested", "in_review", "completed", "withdrawn"]),
   createdAt: z.string(),
 });
 type RequestSummary = Pick<
@@ -42,6 +42,7 @@ export function AccountManagement({
   canRequestAccountChange,
   initialRequests,
   requestHistoryError,
+  locale = "en",
 }: {
   organizationId: string;
   initialName: string;
@@ -54,8 +55,18 @@ export function AccountManagement({
   canRequestAccountChange: boolean;
   initialRequests: RequestSummary[];
   requestHistoryError: boolean;
+  locale?: "en" | "fr";
 }) {
   const t = useTranslations("app.account");
+  const dateLocale = locale === "fr" ? "fr-CA" : "en-CA";
+  function submittedAt(iso: string) {
+    const at = new Date(iso);
+    if (Number.isNaN(at.getTime())) return iso;
+    return new Intl.DateTimeFormat(dateLocale, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    }).format(at);
+  }
   const [name, setName] = useState(initialName);
   const [phone, setPhone] = useState(initialPhone);
   const [city, setCity] = useState(initialCity);
@@ -67,6 +78,7 @@ export function AccountManagement({
   const [requests, setRequests] = useState(initialRequests);
   const [requesting, setRequesting] = useState(false);
   const [requestError, setRequestError] = useState(false);
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
@@ -98,8 +110,27 @@ export function AccountManagement({
           }),
         },
       );
+      const payload = (await response.json().catch(() => ({}))) as {
+        code?: string;
+        organization?: { phoneE164?: string };
+      };
       setSaveError(!response.ok);
-      setMessage(response.ok ? t("saved") : t("error"));
+      if (response.ok) {
+        // Show the number the way it was saved.
+        if (typeof payload.organization?.phoneE164 === "string")
+          setPhone(payload.organization.phoneE164);
+        setMessage(t("saved"));
+      } else {
+        setMessage(
+          payload.code === "invalid_phone"
+            ? t("errorPhone")
+            : payload.code === "invalid_name"
+              ? t("errorName")
+              : payload.code === "invalid_values"
+                ? t("errorValues")
+                : t("error"),
+        );
+      }
     } catch {
       setSaveError(true);
       setMessage(t("error"));
@@ -143,6 +174,35 @@ export function AccountManagement({
       setMessage(t("requestError"));
     } finally {
       setRequesting(false);
+    }
+  }
+
+  async function withdraw(requestId: string) {
+    if (withdrawingId || requesting || !canRequestAccountChange) return;
+    if (!window.confirm(t("requestWithdrawConfirm"))) return;
+    setWithdrawingId(requestId);
+    setRequestError(false);
+    setMessage("");
+    try {
+      const response = await fetch(
+        `/api/businesses/${organizationId}/account/requests/${requestId}/withdraw`,
+        { method: "POST" },
+      );
+      if (!response.ok) throw new Error("Withdraw failed");
+      const payload = z
+        .object({ request: requestSchema })
+        .parse(await response.json());
+      setRequests((previous) =>
+        previous.map((row) =>
+          row.id === payload.request.id ? payload.request : row,
+        ),
+      );
+      setMessage(t("requestWithdrawn"));
+    } catch {
+      setRequestError(true);
+      setMessage(t("requestWithdrawError"));
+    } finally {
+      setWithdrawingId(null);
     }
   }
 
@@ -229,6 +289,7 @@ export function AccountManagement({
             onChange={(event) => setName(event.target.value)}
             required
             minLength={2}
+            maxLength={120}
           />
         </label>
         <label className="text-sm text-navy">
@@ -237,9 +298,11 @@ export function AccountManagement({
             className={field}
             value={phone}
             onChange={(event) => setPhone(event.target.value)}
+            type="tel"
             inputMode="tel"
             autoComplete="tel"
-            placeholder="+14385551234"
+            maxLength={40}
+            placeholder="514-555-0123"
           />
           <span className="mt-1 block text-xs text-navy/55">
             {t("phoneHint")}
@@ -250,6 +313,7 @@ export function AccountManagement({
           <input
             className={field}
             value={city}
+            maxLength={80}
             onChange={(event) => setCity(event.target.value)}
           />
         </label>
@@ -258,6 +322,7 @@ export function AccountManagement({
           <input
             className={field}
             value={serviceArea}
+            maxLength={160}
             onChange={(event) => setServiceArea(event.target.value)}
           />
         </label>
@@ -266,6 +331,7 @@ export function AccountManagement({
           <input
             className={field}
             value={industry}
+            maxLength={80}
             onChange={(event) => setIndustry(event.target.value)}
           />
         </label>
@@ -364,14 +430,28 @@ export function AccountManagement({
                 <p>
                   {t("requestSubmitted")}{" "}
                   <time dateTime={row.createdAt}>
-                    {row.createdAt.slice(0, 10)}
+                    {submittedAt(row.createdAt)}
                   </time>
                 </p>
                 <p>
                   {row.status === "completed"
                     ? t("requestCompletedTiming")
-                    : t("requestPendingTiming")}
+                    : row.status === "withdrawn"
+                      ? t("requestWithdrawnTiming")
+                      : t("requestPendingTiming")}
                 </p>
+                {row.status === "requested" || row.status === "in_review" ? (
+                  <button
+                    type="button"
+                    className="mt-1 rounded-md border border-navy/15 px-2 py-1 text-xs"
+                    disabled={withdrawingId !== null || requesting}
+                    onClick={() => void withdraw(row.id)}
+                  >
+                    {withdrawingId === row.id
+                      ? t("requestWithdrawing")
+                      : t("requestWithdraw")}
+                  </button>
+                ) : null}
               </li>
             ))}
           </ul>

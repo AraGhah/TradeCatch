@@ -9,10 +9,10 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 const rulesSchema = z.object({
-  timezone: z.string().min(1),
+  timezone: z.string().trim().min(1).max(100),
   days: z.record(
-    z.string(),
-    z.object({ open: z.string(), close: z.string() }).nullable(),
+    z.string().regex(/^[0-6]$/),
+    z.object({ open: z.string().max(5), close: z.string().max(5) }).nullable(),
   ),
   defaultDurationMinutes: z.number().int().min(15).max(480),
   bufferMinutes: z.number().int().min(0).max(240),
@@ -20,7 +20,7 @@ const rulesSchema = z.object({
   minimumNoticeMinutes: z.number().int().min(0).max(10_080),
   maxAdvanceDays: z.number().int().min(1).max(365),
   maxDailyBookings: z.number().int().min(1).max(100).nullable().optional(),
-  holidays: z.array(z.string()).max(100),
+  holidays: z.array(z.string().max(10)).max(100),
 });
 
 export async function GET(request: NextRequest, { params }: Params) {
@@ -80,7 +80,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const parsed = rulesSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success)
     return NextResponse.json(
-      { error: "Invalid availability." },
+      { error: "Invalid availability.", code: "invalid_values" },
       { status: 400 },
     );
   try {
@@ -96,7 +96,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
   } catch (error) {
     if (error instanceof SchedulingError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message, code: error.code },
         { status: error.status },
       );
     }

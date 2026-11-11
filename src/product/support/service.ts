@@ -121,6 +121,15 @@ export function createSupportService(deps: {
     },
 
     async requestAccountChange(organizationId: string, kind: AccountRequest["kind"]) {
+      // Asking twice is one request: while the first is still open, a second
+      // click returns it instead of adding a duplicate to the review queue.
+      const open = (await deps.store.listAccountRequests(organizationId)).find(
+        (row) =>
+          row.kind === kind &&
+          row.status !== "completed" &&
+          row.status !== "withdrawn",
+      );
+      if (open) return open;
       const row: AccountRequest = {
         id: supportId("acct"),
         organizationId,
@@ -131,6 +140,20 @@ export function createSupportService(deps: {
       };
       await deps.store.saveAccountRequest(row);
       return row;
+    },
+
+    async withdrawAccountRequest(organizationId: string, requestId: string) {
+      const row = (await deps.store.listAccountRequests(organizationId)).find(
+        (entry) => entry.id === requestId,
+      );
+      if (!row) throw new SupportError("Request not found.", 404);
+      if (row.status === "completed") {
+        throw new SupportError("This request is already completed.", 409);
+      }
+      if (row.status === "withdrawn") return row;
+      const next = { ...row, status: "withdrawn" as const };
+      await deps.store.saveAccountRequest(next);
+      return next;
     },
   };
 }

@@ -81,7 +81,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   } catch (error) {
     if (error instanceof SchedulingError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message, code: error.code },
         { status: error.status },
       );
     }
