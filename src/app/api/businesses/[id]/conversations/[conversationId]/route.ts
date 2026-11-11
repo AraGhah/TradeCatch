@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
-import { CrmError, getCrmService } from "@/product/crm/runtime";
+import { isCrmError, getCrmService } from "@/product/crm/runtime";
 import { authorizeBusinessMemberOrAdmin } from "../../_shared";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     );
     return NextResponse.json({ ok: true, conversation });
   } catch (err) {
-    if (err instanceof CrmError) {
+    if (isCrmError(err)) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error("[crm] set control", err);

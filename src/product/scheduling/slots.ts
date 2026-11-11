@@ -13,6 +13,61 @@ export function defaultDays(): AvailabilityRules["days"] {
   };
 }
 
+export const FALLBACK_TIME_ZONE = "America/Toronto";
+const HH_MM = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+
+export function isValidTimeZone(timeZone: string | undefined): boolean {
+  if (!timeZone) return false;
+  try {
+    new Intl.DateTimeFormat("en-CA", { timeZone }).format();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** A zone that is safe to hand to Intl: a stored bad value must never take the calendar down. */
+export function usableTimeZone(timeZone: string | undefined): string {
+  return isValidTimeZone(timeZone) ? (timeZone as string) : FALLBACK_TIME_ZONE;
+}
+
+/** Open and close are real "HH:MM" times and the day closes after it opens. */
+export function validDayHours(
+  hours: AvailabilityRules["days"][string] | undefined,
+): hours is { open: string; close: string } {
+  return Boolean(
+    hours &&
+      typeof hours.open === "string" &&
+      typeof hours.close === "string" &&
+      HH_MM.test(hours.open) &&
+      HH_MM.test(hours.close) &&
+      hours.open < hours.close,
+  );
+}
+
+export type RulesProblem =
+  | "invalid_timezone"
+  | "invalid_hours"
+  | "invalid_holiday";
+
+/** What is wrong with a set of availability rules, or null when they can be saved. */
+export function rulesProblem(
+  rules: Pick<AvailabilityRules, "timezone" | "days" | "holidays">,
+): RulesProblem | null {
+  if (!isValidTimeZone(rules.timezone)) return "invalid_timezone";
+  for (const [key, hours] of Object.entries(rules.days)) {
+    if (!/^[0-6]$/.test(key)) return "invalid_hours";
+    if (hours !== null && !validDayHours(hours)) return "invalid_hours";
+  }
+  for (const day of rules.holidays) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(day);
+    if (!match) return "invalid_holiday";
+    const date = new Date(Date.UTC(+match[1], +match[2] - 1, +match[3]));
+    if (date.toISOString().slice(0, 10) !== day) return "invalid_holiday";
+  }
+  return null;
+}
+
 function parseMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
   return (h ?? 0) * 60 + (m ?? 0);
@@ -84,7 +139,7 @@ export function listSlots(input: {
 }): Slot[] {
   const rules = input.rules;
   const maxSlots = input.maxSlots ?? 48;
-  const tz = rules.timezone || "America/Toronto";
+  const tz = usableTimeZone(rules.timezone);
   const step = 30;
   const duration = input.durationMinutes;
   const buffer = input.bufferMinutes;
@@ -128,7 +183,8 @@ export function listSlots(input: {
     const day = localKey(start, tz);
     if (rules.holidays.includes(day)) continue;
     const hours = rules.days[String(parts.weekday)];
-    if (!hours) continue;
+    // Hours that are not real times would compare as NaN and open the whole day.
+    if (!validDayHours(hours)) continue;
     const minutes = parts.hour * 60 + parts.minute;
     const open = parseMinutes(hours.open);
     const close = parseMinutes(hours.close);

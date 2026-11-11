@@ -4,6 +4,7 @@ export const NOTIFICATION_TYPES = [
   "human_requested",
   "transfer_failed",
   "appointment_confirmed",
+  "appointment_requested",
   "appointment_canceled",
   "appointment_rescheduled",
   "customer_message",
@@ -19,6 +20,11 @@ export const NOTIFICATION_TYPES = [
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
+
+/** The events that describe one appointment's life: requested, confirmed, moved, canceled. */
+export function isAppointmentType(type: NotificationType): boolean {
+  return type.startsWith("appointment_");
+}
 export type Priority = "normal" | "high" | "critical";
 export type Channel = "in_app" | "email" | "sms";
 export type DeliveryStatus =
@@ -178,6 +184,7 @@ export const TYPE_PRIORITY: Record<NotificationType, Priority> = {
   human_requested: "high",
   transfer_failed: "high",
   appointment_confirmed: "normal",
+  appointment_requested: "normal",
   appointment_canceled: "normal",
   appointment_rescheduled: "normal",
   customer_message: "normal",
@@ -198,6 +205,7 @@ export const TYPE_CATEGORY: Record<NotificationType, PreferenceCategory> = {
   human_requested: "urgent",
   transfer_failed: "transfer_failed",
   appointment_confirmed: "appointments",
+  appointment_requested: "appointments",
   appointment_canceled: "appointments",
   appointment_rescheduled: "appointments",
   customer_message: "replies",

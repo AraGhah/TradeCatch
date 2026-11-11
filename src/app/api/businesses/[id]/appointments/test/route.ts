@@ -1,14 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
-import {
-  getSchedulingStore,
-  getSchedulingService,
-} from "@/product/scheduling/runtime";
-import {
-  createSchedulingService,
-  SchedulingError,
-} from "@/product/scheduling/service";
+import { getSchedulingService } from "@/product/scheduling/runtime";
+import { SchedulingError } from "@/product/scheduling/service";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
@@ -57,39 +51,21 @@ export async function POST(request: NextRequest, { params }: Params) {
       });
     }
     if (parsed.data.action === "calendar_failure") {
-      const failing = createSchedulingService({
-        store: getSchedulingStore(),
-        now: () => new Date(),
-        calendar: async () => ({
-          kind: "google" as const,
-          connected: true,
-          externalCalls: 0,
-          freeBusy: async () => [],
-          createEvent: async () => ({ error: "calendar_unavailable" }),
-          updateEvent: async () => ({ error: "calendar_unavailable" }),
-          deleteEvent: async () => ({ error: "calendar_unavailable" }),
-        }),
+      // Practice only: the simulated calendar refuses the event. The real
+      // calendar settings are never touched and the saved request is marked
+      // as practice, so it stays out of the real schedule and its counts.
+      const result = await live.book({
+        organizationId: id,
+        serviceId: parsed.data.serviceId,
+        startAt: parsed.data.startAt || new Date().toISOString(),
+        customerName: parsed.data.customerName || "Test Customer",
+        customerPhoneE164: parsed.data.customerPhoneE164,
+        serviceAddress: parsed.data.serviceAddress,
+        source: "simulation",
+        simulated: true,
+        simulateCalendarFailure: true,
       });
-      const rules = await failing.getRules(id);
-      const previous = rules.calendarMode;
-      rules.calendarMode = "google";
-      await failing.saveRules(rules);
-      try {
-        const result = await failing.book({
-          organizationId: id,
-          serviceId: parsed.data.serviceId,
-          startAt: parsed.data.startAt || new Date().toISOString(),
-          customerName: parsed.data.customerName || "Test Customer",
-          customerPhoneE164: parsed.data.customerPhoneE164,
-          serviceAddress: parsed.data.serviceAddress,
-          source: "simulation",
-          simulated: false,
-        });
-        return NextResponse.json({ ...result, externalCalendarCalls: 0 });
-      } finally {
-        rules.calendarMode = previous;
-        await failing.saveRules(rules);
-      }
+      return NextResponse.json({ ...result, externalCalendarCalls: 0 });
     }
     if (!parsed.data.startAt && parsed.data.action === "book") {
       return NextResponse.json(
@@ -134,7 +110,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   } catch (error) {
     if (error instanceof SchedulingError) {
       return NextResponse.json(
-        { error: error.message },
+        { error: error.message, code: error.code },
         { status: error.status },
       );
     }

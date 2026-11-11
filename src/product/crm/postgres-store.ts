@@ -2,6 +2,11 @@ import type { Pool } from "pg";
 import { createPostgresPool } from "@/lib/postgres-pool";
 import { createId } from "@/lib/id";
 import { phoneKey } from "./phone";
+import { searchFold } from "./record-quality";
+
+// Folded in SQL with translate(): no database extension is needed.
+const ACCENTED = "ÀÁÂÃÄÅÇÈÉÊËÌÍÎÏÑÒÓÔÕÖÙÚÛÜÝàáâãäåçèéêëìíîïñòóôõöùúûüýÿ";
+const UNACCENTED = "AAAAAACEEEEIIIINOOOOOUUUUYaaaaaaceeeeiiiinooooouuuuyy";
 import type { CrmStore, UpsertCustomerInput } from "./store";
 import {
   OPEN_LEAD_STATUSES,
@@ -349,9 +354,12 @@ export function createPostgresCrmStore(url: string): CrmStore {
            AND ($7::timestamptz IS NULL OR l.created_at <= $7)
            AND (
              $8::text IS NULL OR
-             c.display_name ILIKE $8 OR c.phone_e164 ILIKE $8 OR
-             c.email ILIKE $8 OR l.service ILIKE $8 OR
-             l.description ILIKE $8 OR l.location ILIKE $8
+             translate(c.display_name, $11::text, $12::text) ILIKE $8 OR
+             c.phone_e164 ILIKE $8 OR
+             translate(c.email, $11::text, $12::text) ILIKE $8 OR
+             translate(l.service, $11::text, $12::text) ILIKE $8 OR
+             translate(l.description, $11::text, $12::text) ILIKE $8 OR
+             translate(l.location, $11::text, $12::text) ILIKE $8
            )
          ORDER BY l.created_at DESC, l.id DESC
          LIMIT $9 OFFSET $10`,
@@ -363,9 +371,12 @@ export function createPostgresCrmStore(url: string): CrmStore {
           filters.assignedToUserId ?? null,
           filters.from ?? null,
           filters.to ?? null,
-          filters.q?.trim() ? `%${filters.q.trim()}%` : null,
+          // Accents are folded on both sides, so "cote" finds "Côté".
+          filters.q?.trim() ? `%${searchFold(filters.q.trim())}%` : null,
           limit,
           offset,
+          ACCENTED,
+          UNACCENTED,
         ],
       );
       return res.rows.map(mapJoined);

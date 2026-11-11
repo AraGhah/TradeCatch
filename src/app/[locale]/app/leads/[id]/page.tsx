@@ -55,6 +55,7 @@ export default async function LeadDetailPage({
         messages={bundle?.messages ?? []}
         control={bundle?.conversation.control ?? "ai_managed"}
         people={people}
+        timeZone={auth.ctx.organization.timezone}
       />
     </div>
   );

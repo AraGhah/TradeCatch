@@ -8,8 +8,8 @@ import {
   unauthorizedTenantResponse,
 } from "@/product/saas/tenant";
 import { getGrowthServices, getGrowthStore } from "@/product/growth";
+import { parsePhoneInput } from "@/product/crm/phone";
 import {
-  looksLikeE164,
   resolveBusinessNameForOrganization,
   resolveSmsFromForOrganization,
 } from "@/product/starter/org-context";
@@ -66,15 +66,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let phone = parsed.data.customerPhoneE164?.trim();
-  if (phone) {
-    if (!phone.startsWith("+")) phone = `+${phone.replace(/\D/g, "")}`;
-    if (!looksLikeE164(phone)) {
-      return NextResponse.json(
-        { error: "customerPhoneE164 must be E.164." },
-        { status: 400 },
-      );
-    }
+  const typedPhone = parsed.data.customerPhoneE164?.trim();
+  const phone = typedPhone ? parsePhoneInput(typedPhone) : undefined;
+  if (typedPhone && !phone) {
+    return NextResponse.json(
+      { error: "Enter a valid phone number.", code: "invalid_phone" },
+      { status: 400 },
+    );
   }
 
   const orgId = auth.ctx.organization.id;
@@ -89,7 +87,7 @@ export async function POST(request: NextRequest) {
     startsAt: parsed.data.startsAt,
     endsAt: parsed.data.endsAt,
     customerName: parsed.data.customerName,
-    customerPhoneE164: phone,
+    customerPhoneE164: phone ?? undefined,
     notes: parsed.data.notes,
     businessName,
     smsFromE164: smsFromE164 ?? undefined,

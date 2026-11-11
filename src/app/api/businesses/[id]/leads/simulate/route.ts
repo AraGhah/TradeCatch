@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { CrmError, getCrmService } from "@/product/crm/runtime";
+import { isCrmError, getCrmService } from "@/product/crm/runtime";
 import { authorizeBusinessMemberOrAdmin } from "../../_shared";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       simulated: true,
     });
   } catch (err) {
-    if (err instanceof CrmError) {
+    if (isCrmError(err)) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error("[crm] simulate lead", err);

@@ -86,10 +86,13 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-[70vh] border-b border-[rgb(var(--ink-rgb)/0.1)] bg-paper">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 md:grid-cols-[16rem_minmax(0,1fr)] md:px-6 md:py-10">
-        <aside className="flex flex-col gap-6 md:sticky md:top-6 md:self-start">
-          <div>
+    <div className="min-h-[70vh] border-b border-[rgb(var(--ink-rgb)/0.1)] bg-paper [&_input[type=checkbox]]:h-[1.125rem] [&_input[type=checkbox]]:w-[1.125rem] [&_input[type=checkbox]]:shrink-0 [&_input[type=radio]]:h-[1.125rem] [&_input[type=radio]]:w-[1.125rem] [&_input[type=radio]]:shrink-0">
+      <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 md:grid-cols-[16rem_minmax(0,1fr)] md:gap-8 md:px-6 md:py-10">
+        <aside className="flex flex-col gap-3 md:sticky md:top-6 md:gap-6 md:self-start">
+          {/* On a phone the business name and the menu button share one row,
+              so the page itself starts near the top of the screen. */}
+          <div className="flex items-start justify-between gap-3 md:block">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
               TradeCatch
               {isDemo ? (
@@ -105,12 +108,13 @@ export function AppShell({
           </div>
           <button
             type="button"
-            className={`min-h-11 w-fit rounded-md border border-[rgb(var(--ink-rgb)/0.15)] px-4 py-2.5 text-sm font-semibold text-heading md:hidden ${FOCUS_RING}`}
+            className={`min-h-11 w-fit shrink-0 rounded-md border border-[rgb(var(--ink-rgb)/0.15)] px-4 py-2.5 text-sm font-semibold text-heading md:hidden ${FOCUS_RING}`}
             aria-expanded={navOpen}
             onClick={() => setNavOpen((open) => !open)}
           >
             {navOpen ? t("nav.closeMenu") : t("nav.menu")}
           </button>
+          </div>
           <div
             className={
               navOpen
@@ -160,7 +164,7 @@ export function AppShell({
           </div>
         </aside>
         <div className="min-w-0">
-          <div className="mb-6 flex justify-end">
+          <div className="mb-3 flex justify-end md:mb-6">
             <NotificationBell organizationId={organizationId} />
           </div>
           {children}

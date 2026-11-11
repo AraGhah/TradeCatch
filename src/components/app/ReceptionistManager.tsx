@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import type { AiReceptionistOverview } from "@/product/receptionist/ai-receptionist-service";
 import type { VoiceCapabilities } from "@/product/receptionist/plan-limits";
 import type { ProfileSettings } from "@/product/receptionist/profile";
@@ -26,6 +27,7 @@ export function ReceptionistManager({
   readOnly: boolean;
   voiceCapabilities?: VoiceCapabilities;
 }) {
+  const t = useTranslations("app.receptionist");
   const [panel, setPanel] = useState<"overview" | "edit" | "test" | "history">(
     "overview",
   );
@@ -45,10 +47,12 @@ export function ReceptionistManager({
         <div className="flex flex-col gap-3">
           <button
             type="button"
-            className="self-start text-sm font-semibold text-navy underline"
+            className="min-h-9 self-start text-sm font-semibold text-navy underline"
+            aria-label={t("backToOverview")}
             onClick={() => setPanel("overview")}
           >
-            ←
+            <span aria-hidden="true">← </span>
+            {t("backToOverview")}
           </button>
           <ReceptionistSettingsForm
             organizationId={organizationId}
@@ -64,10 +68,12 @@ export function ReceptionistManager({
         <div className="flex flex-col gap-3">
           <button
             type="button"
-            className="self-start text-sm font-semibold text-navy underline"
+            className="min-h-9 self-start text-sm font-semibold text-navy underline"
+            aria-label={t("backToOverview")}
             onClick={() => setPanel("overview")}
           >
-            ←
+            <span aria-hidden="true">← </span>
+            {t("backToOverview")}
           </button>
           <ReceptionistTestPanel organizationId={organizationId} />
         </div>
@@ -77,10 +83,12 @@ export function ReceptionistManager({
         <div className="flex flex-col gap-3">
           <button
             type="button"
-            className="self-start text-sm font-semibold text-navy underline"
+            className="min-h-9 self-start text-sm font-semibold text-navy underline"
+            aria-label={t("backToOverview")}
             onClick={() => setPanel("overview")}
           >
-            ←
+            <span aria-hidden="true">← </span>
+            {t("backToOverview")}
           </button>
           <ReceptionistCallHistory organizationId={organizationId} />
         </div>

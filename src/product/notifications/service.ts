@@ -20,6 +20,7 @@ import { notificationTimezone, quietHours } from "./preferences";
 import {
   TYPE_CATEGORY,
   TYPE_PRIORITY,
+  isAppointmentType,
   type Channel,
   type ContractorNotification,
   type EscalationRule,
@@ -187,9 +188,19 @@ export function createNotificationService(deps: NotificationDeps) {
       };
     });
     // Legacy custom content (for example a targeted daily summary) is retained.
+    // A notice that began with an appointment keeps up with that appointment:
+    // its title is the latest appointment event (confirmed, then canceled,
+    // reads "canceled"). Any other notice keeps the title it started with.
+    // The message keeps the whole story in order either way.
+    let titleIndex = 0;
+    if (isAppointmentType(content[0].type)) {
+      content.forEach(({ type }, index) => {
+        if (isAppointmentType(type)) titleIndex = index;
+      });
+    }
     const result = {
       ...note,
-      title: rendered[0].title,
+      title: rendered[titleIndex].title,
       message:
         !note.content?.length && note.type === "daily_summary"
           ? note.message
@@ -731,6 +742,13 @@ export function createNotificationService(deps: NotificationDeps) {
             when: event.payload.whenLabel,
           });
           grouped.message = `${grouped.message} ${extra.message}`.slice(0, 500);
+          if (
+            isAppointmentType(grouped.type) &&
+            isAppointmentType(event.type)
+          ) {
+            grouped.type = event.type;
+            grouped.title = extra.title;
+          }
           grouped.content = [
             ...(grouped.content ?? [{ type: grouped.type, payload: {} }]),
             { type: event.type, payload: event.payload },

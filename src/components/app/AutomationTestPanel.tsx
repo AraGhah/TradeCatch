@@ -2,6 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
+
+type Job = {
+  id?: string;
+  status?: string;
+  scheduledAt?: string;
+  customerPhoneE164?: string;
+  payload?: { quoteThreadId?: string };
+};
+type TestResult = {
+  error?: string;
+  jobs?: Job[];
+  job?: Job | null;
+  canceled?: number;
+  duplicate?: boolean;
+  deferred?: boolean;
+  scheduled?: boolean;
+  reason?: string;
+};
 
 export function AutomationTestPanel({
   organizationId,
@@ -27,10 +46,49 @@ export function AutomationTestPanel({
   };
 }) {
   const router = useRouter();
+  const t = useTranslations("app.automations.testPanel");
+  const dateLocale = useLocale() === "fr" ? "fr-CA" : "en-CA";
   const [phone, setPhone] = useState("+15145550199");
   const [name, setName] = useState("Alex Martin");
   const [threadId, setThreadId] = useState("");
-  const [output, setOutput] = useState("");
+  // What happened, in sentences: the raw answer is of no use to an owner.
+  const [lines, setLines] = useState<string[]>([]);
+
+  function describe(data: TestResult): string[] {
+    const out: string[] = [];
+    if (data.duplicate) out.push(t("resultDuplicate"));
+    if (data.deferred && data.reason && t.has(`reasons.${data.reason}`))
+      out.push(t(`reasons.${data.reason}` as "reasons.duplicate"));
+    const jobs = [...(data.jobs ?? []), ...(data.job ? [data.job] : [])];
+    for (const job of jobs) {
+      const status =
+        job.status && t.has(`jobStatus.${job.status}`)
+          ? t(`jobStatus.${job.status}` as "jobStatus.pending")
+          : (job.status ?? "");
+      const at = job.scheduledAt ? new Date(job.scheduledAt) : null;
+      const when =
+        at && !Number.isNaN(at.getTime())
+          ? new Intl.DateTimeFormat(dateLocale, {
+              dateStyle: "medium",
+              timeStyle: "short",
+            }).format(at)
+          : "";
+      out.push(
+        t("resultJob", {
+          status,
+          phone: job.customerPhoneE164 ?? "",
+          when,
+        }),
+      );
+    }
+    if (typeof data.canceled === "number")
+      out.push(t("resultCanceled", { count: data.canceled }));
+    if (out.length === 0)
+      out.push(
+        data.scheduled === false ? t("resultNotScheduled") : t("resultNone"),
+      );
+    return out;
+  }
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -56,19 +114,16 @@ export function AutomationTestPanel({
         }),
       },
     );
-    const data = (await res.json().catch(() => null)) as {
-      error?: string;
-      jobs?: { payload?: { quoteThreadId?: string } }[];
-      job?: { payload?: { quoteThreadId?: string } } | null;
-    } | null;
+    const data = (await res.json().catch(() => null)) as TestResult | null;
     setBusy(false);
-    if (!res.ok) {
-      setError(data?.error || labels.error);
+    if (!res.ok || !data) {
+      setLines([]);
+      setError(labels.error);
       return;
     }
-    const created = data?.jobs?.[0]?.payload?.quoteThreadId;
+    const created = data.jobs?.[0]?.payload?.quoteThreadId;
     if (created) setThreadId(created);
-    setOutput(JSON.stringify(data, null, 2));
+    setLines(describe(data));
     router.refresh();
   }
 
@@ -103,13 +158,16 @@ export function AutomationTestPanel({
           {labels.accept}
         </button>
       </div>
-      {error ? <p className="text-sm text-red-800">{error}</p> : null}
-      {output ? (
-        <pre className="max-h-80 overflow-auto rounded-md bg-[var(--color-surface,#f7f5f1)] p-3 text-xs text-navy">
-          {labels.result}
-          {"\n"}
-          {output}
-        </pre>
+      {error ? <p role="alert" className="text-sm text-red-800">{error}</p> : null}
+      {lines.length > 0 ? (
+        <div role="status" className="rounded-md bg-[var(--color-surface,#f7f5f1)] p-3 text-sm text-navy">
+          <p className="m-0 font-semibold">{labels.result}</p>
+          <ul className="mt-1 list-disc pl-5">
+            {lines.map((line, index) => (
+              <li key={index}>{line}</li>
+            ))}
+          </ul>
+        </div>
       ) : null}
     </section>
   );

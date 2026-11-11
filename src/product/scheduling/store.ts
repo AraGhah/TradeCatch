@@ -34,9 +34,14 @@ export type SchedulingStore = {
     organizationId: string,
     key: string,
   ): Promise<ScheduleAppointment | null>;
+  /**
+   * `ignoreAppointmentId` is the appointment being moved: its own current time
+   * must not count as a clash, or a move to an adjacent time is refused.
+   */
   insertIfFree(
     row: ScheduleAppointment,
     bufferMinutes: number,
+    ignoreAppointmentId?: string,
   ): Promise<ScheduleAppointment | null>;
   saveAppointment(row: ScheduleAppointment): Promise<void>;
   listPendingConfirmations(limit: number): Promise<ScheduleAppointment[]>;
@@ -167,12 +172,13 @@ export function createMemorySchedulingStore(): SchedulingStore {
       );
       return row ? structuredClone(row) : null;
     },
-    async insertIfFree(row, bufferMinutes) {
+    async insertIfFree(row, bufferMinutes, ignoreAppointmentId) {
       const now = Date.now();
       const pad = bufferMinutes * 60_000;
       const clash = [...appointments.values()].some((existing) => {
         if (
           existing.organizationId !== row.organizationId ||
+          existing.id === ignoreAppointmentId ||
           !blocks(existing, now)
         )
           return false;

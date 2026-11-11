@@ -173,11 +173,13 @@ export function defaultGreetings(
   receptionistName?: string,
 ) {
   const name = receptionistNameOrDefault(receptionistName);
+  // "Nord Inc." already ends in a period: the sentence adds only one.
+  const business = businessName.trim().replace(/\.+$/, "");
   // "Bonjour, ici Lucie de Plomberie Nord." + the opening question
   // "Comment puis-je vous aider ?" (see openingQuestion in prompts.ts).
-  const greetingFr = `Bonjour, ici ${name} de ${businessName}.`;
+  const greetingFr = `Bonjour, ici ${name} de ${business}.`;
   // "Hello, this is Lucie from Nord Plumbing." + "How can I help you?"
-  const greetingEn = `Hello, this is ${name} from ${businessName}.`;
+  const greetingEn = `Hello, this is ${name} from ${business}.`;
   return {
     greetingFr,
     greetingEn,
