@@ -1,5 +1,11 @@
 import { createId } from "@/lib/id";
 import { normalizeE164, phoneKey } from "./phone";
+import {
+  cleanProblemText,
+  isIntentCode,
+  keepVerified,
+  mergeProblem,
+} from "./record-quality";
 import type { CrmStore } from "./store";
 import {
   CONVERSATION_CONTROLS,
@@ -161,17 +167,32 @@ export function createCrmService(store: CrmStore) {
         }
       }
 
+      // A name or address already on file is not replaced by a later automated
+      // capture (speech recognition, a one-word text reply): it is only filled
+      // when missing or completed. Staff edits (source "manual") always win.
+      const wantedName =
+        input.displayName ??
+        ([input.firstName, input.lastName].filter(Boolean).join(" ") ||
+          undefined);
+      const acceptedName = keepVerified(
+        existingCustomer?.displayName,
+        wantedName,
+        input.source,
+      );
       const customer = await store.upsertCustomer({
         organizationId: input.organizationId,
         phoneE164: phone,
-        firstName: input.firstName ?? names.firstName,
-        lastName: input.lastName ?? names.lastName,
-        displayName:
-          input.displayName ??
-          ([input.firstName, input.lastName].filter(Boolean).join(" ") ||
-            undefined),
+        firstName: acceptedName
+          ? (input.firstName ?? names.firstName)
+          : undefined,
+        lastName: acceptedName ? (input.lastName ?? names.lastName) : undefined,
+        displayName: acceptedName,
         email: input.email,
-        serviceAddress: input.serviceAddress,
+        serviceAddress: keepVerified(
+          existingCustomer?.serviceAddress,
+          input.serviceAddress,
+          input.source,
+        ),
         preferredLanguage: input.preferredLanguage ?? "fr",
         notes: undefined,
         firstContactAt: now,
@@ -186,8 +207,10 @@ export function createCrmService(store: CrmStore) {
           organizationId: input.organizationId,
           customerId: customer.id,
           source: input.source,
-          service: input.service,
-          description: input.description,
+          service: isIntentCode(input.service) ? undefined : input.service,
+          // The problem as a clean statement; the customer's own words stay in
+          // the conversation thread and the call record.
+          description: cleanProblemText(input.description) || undefined,
           location: input.location,
           priority: input.priority ?? "medium",
           status: input.status ?? "new",
@@ -210,17 +233,25 @@ export function createCrmService(store: CrmStore) {
         });
       } else {
         const patch: Partial<Lead> = {};
-        if (
-          input.description &&
-          input.description !== lead.description &&
-          !(lead.description ?? "").includes(input.description)
-        ) {
-          patch.description = [lead.description, input.description]
-            .filter(Boolean)
-            .join("\n")
-            .slice(0, 4000);
+        // One clean problem statement per lead. Texts from a back-and-forth
+        // never pile up (see problemMergeMode); repeats are ignored, so a
+        // re-delivered webhook changes nothing.
+        const merged = mergeProblem(
+          lead.description,
+          input.description,
+          input.source,
+        );
+        if (merged !== undefined && merged !== lead.description) {
+          patch.description = merged;
         }
-        if (input.service && !lead.service) patch.service = input.service;
+        // A legacy lead may carry a call "intent" code as its service: a real
+        // service name replaces it.
+        if (
+          input.service &&
+          !isIntentCode(input.service) &&
+          (!lead.service || isIntentCode(lead.service))
+        )
+          patch.service = input.service;
         if (input.location && !lead.location) patch.location = input.location;
         if (
           input.priority &&

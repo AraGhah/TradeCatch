@@ -23,17 +23,25 @@ export function zonedParts(now: Date, timeZone: string): ZonedParts {
   return partsWithFormatter(now, formatter(timeZone));
 }
 
+const formatters = new Map<string, Intl.DateTimeFormat>();
+
+/** Building an Intl formatter is the slow part; a zone's formatter never changes. */
 function formatter(timeZone: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    weekday: "short",
-    hourCycle: "h23",
-  });
+  let fmt = formatters.get(timeZone);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      weekday: "short",
+      hourCycle: "h23",
+    });
+    formatters.set(timeZone, fmt);
+  }
+  return fmt;
 }
 
 function partsWithFormatter(now: Date, fmt: Intl.DateTimeFormat): ZonedParts {

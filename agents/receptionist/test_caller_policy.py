@@ -49,6 +49,32 @@ class ParseCallerPolicyTest(unittest.TestCase):
         self.assertEqual(bad.kind, "personal_message", "a bad destination falls back to the message, never the AI")
         self.assertIsNone(bad.transfer_e164)
 
+    def test_a_switched_off_line_never_converses(self):
+        policy = parse_caller_policy(
+            {
+                "answering": False,
+                "callerPolicy": {
+                    "kind": "receptionist_off",
+                    "messages": [{"lang": "fr", "text": "Vous avez joint Nord. Rappelez plus tard."}],
+                },
+            }
+        )
+        self.assertEqual(policy.kind, "receptionist_off")
+        self.assertEqual([m.language for m in policy.messages], ["fr"])
+        self.assertIsNone(policy.transfer_e164, "nothing is dialed: no number is invented")
+
+    def test_a_switched_off_line_with_damaged_wording_still_does_not_answer(self):
+        for broken in (None, {}, {"kind": "ai"}, {"kind": "receptionist_off", "messages": ["x"]}, "oops"):
+            policy = parse_caller_policy({"answering": False, "callerPolicy": broken})
+            self.assertIsNotNone(policy, broken)
+            self.assertEqual(policy.kind, "receptionist_off")
+            self.assertTrue(policy.messages, "a call is never left in silence")
+            self.assertEqual({m.language for m in policy.messages}, {"fr", "en"})
+
+    def test_answering_true_or_missing_does_not_switch_the_line_off(self):
+        self.assertIsNone(parse_caller_policy({"answering": True}))
+        self.assertIsNone(parse_caller_policy({"instructions": "hi"}))
+
     def test_end_needs_no_message(self):
         policy = parse_caller_policy(cfg({"kind": "personal_end"}))
         self.assertEqual(policy.kind, "personal_end")

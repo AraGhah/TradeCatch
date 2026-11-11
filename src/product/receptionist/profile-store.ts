@@ -41,6 +41,21 @@ export type ProfileStore = {
     input: { phoneNumberE164: string; activated: boolean },
     updatedBy: string,
   ): Promise<ReceptionistProfile>;
+  /**
+   * Switch the receptionist off. Only the switch changes: the number, the
+   * settings and every customer record stay as they were. Returns null when
+   * the organization has no profile (there is nothing to switch off).
+   */
+  deactivate(
+    organizationId: string,
+    updatedBy: string,
+  ): Promise<ReceptionistProfile | null>;
+  /**
+   * The profile that owns a dialed number, activated or not (the one changed
+   * last when several share it). Used to tell a switched-off line from an
+   * unknown number.
+   */
+  findProfileByNumber(phoneNumberE164: string): Promise<ReceptionistProfile | null>;
 };
 
 function digits(phone: string): string {
@@ -101,6 +116,26 @@ export function createMemoryProfileStore(): ProfileStore {
       };
       rows.set(organizationId, row);
       return clone(row);
+    },
+    async deactivate(organizationId, updatedBy) {
+      const existing = rows.get(organizationId);
+      if (!existing) return null;
+      const row: ReceptionistProfile = {
+        ...existing,
+        activated: false,
+        updatedBy,
+        updatedAt: now(),
+      };
+      rows.set(organizationId, row);
+      return clone(row);
+    },
+    async findProfileByNumber(phoneNumberE164) {
+      const wanted = digits(phoneNumberE164);
+      if (!wanted) return null;
+      const matches = Array.from(rows.values())
+        .filter((p) => p.phoneNumberE164 && digits(p.phoneNumberE164) === wanted)
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      return matches[0] ? clone(matches[0]) : null;
     },
   };
 }
@@ -186,6 +221,31 @@ export function createPostgresProfileStore(url: string): ProfileStore {
         }
         throw err;
       }
+    },
+    async deactivate(organizationId, updatedBy) {
+      const res = await pool.query(
+        `UPDATE rc_profiles
+            SET activated = false, updated_by = $2, updated_at = now()
+          WHERE organization_id = $1
+        RETURNING *`,
+        [organizationId, updatedBy],
+      );
+      return res.rows[0] ? mapRow(res.rows[0]) : null;
+    },
+    async findProfileByNumber(phoneNumberE164) {
+      const wanted = digits(phoneNumberE164);
+      if (!wanted) return null;
+      // Stored numbers are E.164 ("+1514..."), callers may dial with or
+      // without the country code: compare digits with the leading 1 removed.
+      const res = await pool.query(
+        `SELECT * FROM rc_profiles
+          WHERE phone_number_e164 IS NOT NULL
+            AND regexp_replace(regexp_replace(phone_number_e164, '\\D', '', 'g'), '^1(?=\\d{10}$)', '') = $1
+          ORDER BY updated_at DESC
+          LIMIT 1`,
+        [wanted],
+      );
+      return res.rows[0] ? mapRow(res.rows[0]) : null;
     },
   };
 }

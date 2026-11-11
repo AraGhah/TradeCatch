@@ -5,6 +5,7 @@
 
 import type { MissedCallWorkflow } from "@/product/missed-call/types";
 import type { CallSession } from "@/product/receptionist/types";
+import { cleanProblemText, isIntentCode } from "./record-quality";
 import type { LeadPriority } from "./types";
 import { getCrmService } from "./runtime";
 
@@ -38,19 +39,27 @@ export async function syncAiCallToCrm(
   if (!useful) return;
   const organizationId = await organizationIdForClient(clientAccountId);
   if (!organizationId) return;
+  // What the owner reads first: the problem, as the receptionist saved it
+  // (cleaned of filler and repeats). Never the product's own headline label
+  // ("Demande de service · Ara (Message pris)"), and never the raw transcript:
+  // that stays on the call record.
   const description =
-    session.summary?.headline ||
-    session.slots.issue ||
-    session.slots.message ||
-    undefined;
+    cleanProblemText(
+      session.slots.issue || session.slots.project || session.slots.message,
+    ) || undefined;
+  const service = isIntentCode(session.slots.service)
+    ? undefined
+    : session.slots.service;
   await getCrmService().capture({
     organizationId,
     source: "ai_receptionist",
     phoneE164: session.slots.callbackE164 ?? session.fromE164,
     displayName: session.slots.callerName,
+    email: session.slots.email,
     serviceAddress: session.slots.serviceAddress,
+    location: session.slots.serviceAddress ?? session.slots.location,
     preferredLanguage: session.language,
-    service: session.intent,
+    service,
     description,
     priority: priorityFromUrgency(session.urgency?.level),
     urgencyNote: session.urgency?.level,
@@ -65,6 +74,8 @@ export async function syncAiCallToCrm(
           automated: false,
           simulated: false,
           deliveryStatus: "delivered",
+          // One summary per call: finalizing the same call twice adds nothing.
+          providerMessageSid: `call:${session.id}`,
         }
       : undefined,
   });

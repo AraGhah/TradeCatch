@@ -16,9 +16,21 @@ import re
 from dataclasses import dataclass
 from typing import Any, Literal, Mapping
 
-Kind = Literal["personal_message", "personal_transfer", "personal_end", "unknown_message"]
+Kind = Literal[
+    "personal_message",
+    "personal_transfer",
+    "personal_end",
+    "unknown_message",
+    "receptionist_off",
+]
 
-_KINDS = {"personal_message", "personal_transfer", "personal_end", "unknown_message"}
+_KINDS = {
+    "personal_message",
+    "personal_transfer",
+    "personal_end",
+    "unknown_message",
+    "receptionist_off",
+}
 _E164 = re.compile(r"^\+[1-9]\d{7,14}$")
 _LANGS = {"fr", "en"}
 _MAX_TEXT = 300
@@ -37,6 +49,15 @@ class CallerPolicy:
     transfer_e164: str | None = None
 
 
+# Used only when the business switched its receptionist off and TradeCatch sent no
+# usable wording: the line must still never hold a conversation, and must say
+# something instead of dropping the call in silence. No names, numbers or promises.
+OFF_LINES = (
+    SpokenLine("fr", "Nous ne pouvons pas répondre à votre appel pour le moment. Veuillez rappeler plus tard."),
+    SpokenLine("en", "We are unable to take your call right now. Please call back later."),
+)
+
+
 def _clean(text: object) -> str | None:
     if not isinstance(text, str):
         return None
@@ -46,23 +67,37 @@ def _clean(text: object) -> str | None:
     return value
 
 
-def parse_caller_policy(cfg: Mapping[str, Any] | None) -> CallerPolicy | None:
-    """The policy for this call, or None when the receptionist should answer."""
-    if not cfg:
-        return None
-    raw = cfg.get("callerPolicy")
-    if not isinstance(raw, Mapping):
-        return None
-    kind = raw.get("kind")
-    if kind not in _KINDS:
-        return None
+def _lines(raw: object) -> list[SpokenLine]:
     lines: list[SpokenLine] = []
+    if not isinstance(raw, Mapping):
+        return lines
     for item in raw.get("messages") or ():
         if not isinstance(item, Mapping):
             continue
         lang, text = item.get("lang"), _clean(item.get("text"))
         if lang in _LANGS and text:
             lines.append(SpokenLine(str(lang), text))
+    return lines
+
+
+def parse_caller_policy(cfg: Mapping[str, Any] | None) -> CallerPolicy | None:
+    """The policy for this call, or None when the receptionist should answer."""
+    if not cfg:
+        return None
+    raw = cfg.get("callerPolicy")
+    # TradeCatch answers "answering: false" for a line whose owner switched the
+    # receptionist off. That is final, even if the rest of the payload is damaged:
+    # an unexpected shape must never turn a switched-off line back into a conversation.
+    if cfg.get("answering") is False:
+        return CallerPolicy(kind="receptionist_off", messages=tuple(_lines(raw)) or OFF_LINES)
+    if not isinstance(raw, Mapping):
+        return None
+    kind = raw.get("kind")
+    if kind not in _KINDS:
+        return None
+    lines = _lines(raw)
+    if kind == "receptionist_off":
+        return CallerPolicy(kind=kind, messages=tuple(lines) or OFF_LINES)
     transfer = raw.get("transferE164")
     if kind == "personal_transfer":
         if not (isinstance(transfer, str) and _E164.match(transfer)):
