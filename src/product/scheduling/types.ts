@@ -94,3 +94,24 @@ export type Slot = {
   technicianName?: string;
   localLabel: string;
 };
+
+/** One free start time, as a calendar picker needs it. */
+export type DaySlot = {
+  /** The instant, ISO 8601 (what is sent back to book). */
+  startAt: string;
+  /** Wall-clock time in the business timezone, "HH:MM" 24 h. */
+  time: string;
+};
+
+/** Free start times for one month, grouped by the business's own calendar day. */
+export type MonthAvailability = {
+  timezone: string;
+  /** "YYYY-MM" */
+  month: string;
+  /** "YYYY-MM-DD" today in the business timezone. */
+  today: string;
+  /** Last "YYYY-MM-DD" that may be booked (today + the maximum advance). */
+  lastBookableDate: string;
+  /** Only days with at least one free time appear. */
+  days: Record<string, DaySlot[]>;
+};

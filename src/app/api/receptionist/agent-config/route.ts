@@ -6,6 +6,8 @@ import {
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
 import { buildAgentConfig } from "@/product/receptionist/agent-config";
+import { logReceptionistDiagnostic } from "@/product/receptionist/diagnostics";
+import { inactiveLineNotice } from "@/product/receptionist/inactive-line";
 import { resolveAgentVoice } from "@/product/receptionist/custom-voice/agent-voice";
 import { getVoiceService } from "@/product/receptionist/custom-voice/runtime";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
@@ -46,6 +48,48 @@ export async function GET(request: NextRequest) {
   const config = runtime.configs.find(
     (c) => c.enabled && digits(c.phoneNumberE164) === digits(number),
   );
+
+  // The cached profile set can be ~30 s old on this instance. A business that
+  // just switched its receptionist off must not have it answer another call,
+  // so a tenant line is confirmed against the database on every call.
+  const stillOn = config ? await runtime.confirmLineActive(config) : false;
+  if (!config || !stillOn) {
+    const off =
+      (await runtime.describeInactiveLine(number)) ??
+      // The line was loaded but its profile is gone or off: still not answered.
+      (config
+        ? {
+            reason: "deactivated" as const,
+            notice: inactiveLineNotice({
+              businessName: config.businessName,
+              languages: config.languages,
+              defaultLanguage: config.defaultLanguage,
+            }),
+          }
+        : null);
+    if (off) {
+      logReceptionistDiagnostic({
+        event: "inactive_line_answered",
+        code: off.reason,
+        dialedNumber: number,
+      });
+      // 200, not 404: the line is known and the answer is "do not converse".
+      // `config` is deliberately absent, so an agent that predates this field
+      // keeps its old behaviour instead of failing on a half-built config.
+      return NextResponse.json({
+        ok: true,
+        answering: false,
+        reason: off.reason,
+        callerPolicy: {
+          kind: "receptionist_off",
+          messages: off.notice.map((line) => ({
+            lang: line.lang,
+            text: line.text,
+          })),
+        },
+      });
+    }
+  }
   if (!config) {
     return NextResponse.json(
       { error: "No active receptionist for that number." },
