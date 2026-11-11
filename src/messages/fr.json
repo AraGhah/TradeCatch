@@ -1050,30 +1050,6 @@
           "title": "Combien vaut un job moyen?",
           "optionsKey": "jobValue"
         },
-        "record": {
-          "service": "Service",
-          "problem": "Problème",
-          "address": "Adresse",
-          "appointment": "Rendez-vous",
-          "notes": "Notes",
-          "notProvided": "Non fourni",
-          "notScheduled": "Non planifié",
-          "requested": "Demandé : {time}",
-          "moreDetails": "Plus de détails",
-          "lessDetails": "Masquer les détails",
-          "conversation": "Conversation d'origine",
-          "conversationEmpty": "Aucune conversation enregistrée.",
-          "caller": "Appelant",
-          "receptionist": "Réceptionniste",
-          "unknownCaller": "Appelant inconnu",
-          "priority": {
-            "urgent": "Urgence",
-            "high": "Élevée",
-            "medium": "Moyenne",
-            "low": "Faible"
-          },
-          "legacyService": "Demande de service"
-        },
         "crm": {
           "id": "crm",
           "label": "Outils actuels",
@@ -1438,7 +1414,8 @@
   "notFound": {
     "title": "Page introuvable",
     "body": "La page que vous recherchez n'existe pas.",
-    "cta": "Retour à l'accueil"
+    "cta": "Retour à l'accueil",
+    "appCta": "Retour au tableau de bord"
   },
   "onePager": {
     "title": "TradeCatch : aperçu en une page",
@@ -1717,7 +1694,14 @@
         "chars": "Caractères",
         "segments": "Segments SMS",
         "segmentWarning": "Ce message peut utiliser plus d'un segment SMS et coûter plus cher à livrer.",
-        "missing": "Valeurs manquantes"
+        "missing": "Valeurs manquantes",
+        "errors": {
+          "empty": "Le message est trop court.",
+          "too_long": "Le message est trop long. Limitez-le à 1 000 caractères.",
+          "missing_business_identification": "Gardez la variable du nom de l’entreprise dans le message, pour que les clients sachent qui leur écrit.",
+          "missing_opt_out": "Gardez la mention de désabonnement dans le message : « Répondez STOP pour vous désabonner. »",
+          "unknown_variable": "Le message utilise une variable qui n’existe pas. Utilisez seulement les variables indiquées au-dessus du message."
+        }
       },
       "testPanel": {
         "title": "Centre de test : flux simulés",
@@ -1729,7 +1713,29 @@
         "accept": "Marquer la soumission acceptée",
         "result": "Résultat",
         "phone": "Téléphone fictif",
-        "name": "Nom fictif"
+        "name": "Nom fictif",
+        "resultNone": "Rien n’était prévu : aucun message n’a été planifié ni envoyé.",
+        "resultNotScheduled": "Rien n’a été planifié. Vérifiez que cette automatisation est activée.",
+        "resultDuplicate": "Cette réponse a déjà été traitée.",
+        "resultJob": "{status} : texto au {phone}, {when}",
+        "resultCanceled": "{count, plural, =0 {Aucun texto en attente à annuler.} one {# texto en attente annulé.} other {# textos en attente annulés.}}",
+        "jobStatus": {
+          "pending": "Planifié",
+          "processing": "Envoi en cours",
+          "submitted": "Envoyé",
+          "sent": "Envoyé",
+          "delivered": "Livré",
+          "failed": "Échec",
+          "undelivered": "Non livré",
+          "canceled": "Annulé",
+          "skipped": "Ignoré",
+          "uncertain": "Non confirmé"
+        },
+        "reasons": {
+          "call_handled": "Aucun texto n’a été planifié : l’appel a déjà été pris en charge.",
+          "ineligible": "Aucun texto n’a été planifié : ce numéro ne peut pas en recevoir.",
+          "duplicate": "Aucun nouveau texto n’a été planifié : il y en a déjà un de prévu pour cet appelant."
+        }
       },
       "historyCols": {
         "customer": "Client",
@@ -1881,6 +1887,7 @@
       "emptyBody": "Les nouveaux appels, demandes et rendez-vous de votre entreprise apparaîtront ici.",
       "loadErrorTitle": "Le tableau de bord n’a pas pu se charger",
       "loadErrorBody": "La connexion a échoué ou les données n’ont pas pu être lues. Réessayez dans un moment.",
+      "rangeReversed": "La date de fin était avant la date de début, alors les dates ont été inversées, de {from} à {to}.",
       "retry": "Réessayer",
       "vsPrevious": "Par rapport à la période précédente",
       "newPeriod": "Nouveau",
@@ -2073,7 +2080,7 @@
       "notes": "Notes internes",
       "save": "Enregistrer",
       "saving": "Enregistrement…",
-      "error": "Quelque chose s'est mal passé.",
+      "error": "La demande n’a pas pu être enregistrée. Réessayez.",
       "customer": "Client",
       "assigned": "Assigné à",
       "unassigned": "Non assigné",
@@ -2132,7 +2139,15 @@
         "delivered": "Livré",
         "failed": "Échec",
         "undelivered": "Non livré"
-      }
+      },
+      "errorPhone": "Entrez un numéro de téléphone valide, par exemple 514-555-0123.",
+      "errorTooLong": "L’un des champs est trop long. Raccourcissez-le et réessayez.",
+      "descriptionLimit": "Longueur maximale atteinte. Raccourcissez le texte pour ajouter plus de détails.",
+      "emptyFiltered": "Aucune demande ne correspond à cette recherche ou à ces filtres.",
+      "clearFilters": "Effacer les filtres",
+      "existingCustomer": "Ce numéro est déjà au dossier sous le nom {existing}. Vous avez saisi {typed}.",
+      "existingKeep": "Ajouter la demande à {existing}",
+      "existingRename": "Renommer le client en {typed}"
     },
     "gmail": {
       "title": "Gmail",
@@ -2324,7 +2339,8 @@
       "notes": "Notes",
       "submit": "Réserver",
       "saving": "Enregistrement…",
-      "error": "Impossible de réserver le rendez-vous. Vérifiez votre connexion et réessayez."
+      "error": "Impossible de réserver le rendez-vous. Vérifiez votre connexion et réessayez.",
+      "errorPhone": "Entrez un numéro de téléphone valide, par exemple 514-555-0123."
     },
     "schedule": {
       "headline": "Rendez-vous",
@@ -2357,7 +2373,7 @@
       "details": "Détails du rendez-vous",
       "reschedule": "Reporter",
       "cancel": "Annuler",
-      "reason": "Raison",
+      "reason": "Raison (facultatif)",
       "close": "Fermer",
       "complete": "Marquer terminé",
       "saved": "Enregistré.",
@@ -2431,12 +2447,68 @@
       "requestSaved": "Enregistré comme demande. Il sera confirmé une fois approuvé.",
       "rescheduleTitle": "Choisissez une nouvelle date et heure",
       "confirmReschedule": "Confirmer la nouvelle heure",
-      "rescheduledTo": "Rendez-vous déplacé au {when}."
+      "rescheduledTo": "Rendez-vous déplacé au {when}.",
+      "opens": "ouverture",
+      "closes": "fermeture",
+      "closed": "Fermé",
+      "timezoneCanada": "Canada",
+      "timezoneOther": "Autres fuseaux horaires",
+      "errorTimezone": "Choisissez un fuseau horaire valide.",
+      "errorHours": "Vérifiez vos heures : chaque jour ouvert doit avoir une heure d’ouverture antérieure à l’heure de fermeture.",
+      "errorHoliday": "Les jours fériés doivent être de vraies dates au format AAAA-MM-JJ, séparées par des virgules.",
+      "errorValues": "Certaines valeurs sont hors limites. Vérifiez les chiffres et réessayez.",
+      "previous": "Dates précédentes",
+      "next": "Dates suivantes",
+      "practice": "Essai",
+      "kindJob": "Travail",
+      "kindRequest": "Demande",
+      "approve": "Approuver",
+      "approved": "Demande approuvée. Le rendez-vous est confirmé pour {when}.",
+      "approveConflict": "Cette plage n’est plus libre. Déplacez la demande vers une plage libre, puis approuvez-la.",
+      "approvePast": "Cette heure est déjà passée. Déplacez la demande vers une nouvelle heure, puis approuvez-la.",
+      "approveCalendar": "Votre calendrier n’a pas pu être joint; la demande n’a donc pas été confirmée. Vérifiez la connexion de votre calendrier et réessayez.",
+      "pendingHint": "Cette demande attend votre approbation. Approuvez-la pour confirmer le rendez-vous et aviser le client.",
+      "cancelConfirm": "Annuler ce rendez-vous? Les rappels au client cesseront.",
+      "cancelYes": "Oui, l’annuler",
+      "cancelKeep": "Le conserver",
+      "notStarted": "Ce rendez-vous n’a pas encore commencé. Vous pourrez le marquer comme terminé le jour du travail.",
+      "phoneInvalid": "Entrez un numéro de téléphone valide, par exemple 514-555-0123.",
+      "serviceInactive": "Ce service n’est plus actif. Choisissez un autre service.",
+      "inactive": "Inactif",
+      "activateService": "Activer",
+      "deactivateService": "Désactiver",
+      "duplicateService": "Un service porte déjà ce nom. Choisissez un autre nom.",
+      "serviceDuration": "Durée (minutes)",
+      "testError": "L’essai n’a pas pu être effectué. Réessayez.",
+      "testNoSlots": "Aucune disponibilité n’a été trouvée pour ce service.",
+      "testSlots": "{count, plural, one {# disponibilité trouvée} other {# disponibilités trouvées}}. La première : {first}.",
+      "testConfirmed": "Rendez-vous d’essai confirmé pour {when}. Rien n’a été ajouté à votre vrai calendrier.",
+      "testConflict": "Cette heure était déjà prise : cette réservation a été refusée. La double réservation est bloquée.",
+      "testCalendarFailed": "Le calendrier simulé a refusé l’événement : le rendez-vous n’a pas été confirmé. Il a été enregistré comme demande d’essai et reste hors de votre vrai horaire.",
+      "testNotConfirmed": "Le rendez-vous d’essai n’a pas été confirmé. Vérifiez les disponibilités et réessayez.",
+      "testCheckFirst": "Vérifiez d’abord les disponibilités, puis lancez cet essai.",
+      "withdrawPractice": "Retirer la dernière réservation d’essai",
+      "testWithdrawn": "La réservation d’essai a été retirée."
+    },
+    "reliabilityTest": {
+      "title": "Fiabilité du système",
+      "intro": "Ces simulations restent dans TradeCatch. Elles n’appellent ni Twilio, ni Stripe, ni Google, ni aucun autre fournisseur externe.",
+      "error": "La simulation n’a pas pu s’exécuter. Réessayez.",
+      "actions": {
+        "ai_timeout": "Simuler un délai fournisseur",
+        "job_failure": "Simuler un échec de tâche",
+        "cost_threshold": "Simuler un seuil de coût"
+      },
+      "ok": {
+        "ai_timeout": "Simulation de délai fournisseur enregistrée.",
+        "job_failure": "Simulation d’échec de tâche enregistrée.",
+        "cost_threshold": "Simulation de seuil de coût enregistrée."
+      }
     },
     "team": {
       "headline": "Équipe",
       "intro": "Chaque membre de l’équipe a son propre calendrier. Les rendez-vous peuvent être assignés à un technicien précis.",
-      "upsell": "Les calendriers d’équipe multiples sont inclus avec Réceptionniste. Mettez à niveau pour assigner des rendez-vous à votre équipe.",
+      "upsell": "Les calendriers d’équipe distincts ne font pas partie de votre forfait. Tous vos rendez-vous sont réunis dans un seul calendrier. Si votre équipe a besoin de ses propres calendriers, écrivez au soutien.",
       "empty": "Aucun membre d’équipe pour le moment.",
       "addIntro": "Ajoutez un membre de l’équipe pour lui assigner des rendez-vous.",
       "limitReached": "Ce forfait permet jusqu’à {limit} calendriers d’équipe. Désactivez-en un pour en ajouter un autre.",
@@ -2547,6 +2619,10 @@
       "enabled": "Activer les alertes urgentes",
       "testTitle": "Notifications",
       "testIntro": "Ces simulations passent par la logique réelle et n’envoient aucun message.",
+      "testQueued": "Une notification d’essai a été créée dans votre boîte.",
+      "testDuplicate": "Cette notification d’essai existait déjà.",
+      "testHint": "Ouvrez Notifications pour la voir. Rien n’a été envoyé par courriel ou texto.",
+      "testFailed": "La notification d’essai n’a pas pu être créée. Réessayez.",
       "lead": "Simuler un prospect",
       "urgent": "Simuler une demande urgente",
       "appointment": "Simuler un rendez-vous",
@@ -2578,7 +2654,10 @@
         "admin": "Administrateur",
         "member": "Employé",
         "viewer": "Observateur"
-      }
+      },
+      "quietFrom": "De",
+      "quietTo": "À",
+      "quietHint": "Entre ces heures, les alertes par courriel et par texto attendent la fin des heures calmes. Les alertes urgentes passent quand même lorsque vos règles d’escalade le permettent hors des heures."
     },
     "pipeline": {
       "headline": "Travaux en cours",
@@ -2643,12 +2722,13 @@
       "empty": "Aucun fil de soumission. Ajoutez un téléphone client ci-dessous pour démarrer une séquence.",
       "entitlement": "La relance de soumissions n'est pas dans votre forfait.",
       "add": "Démarrer une séquence de relance",
-      "phone": "Téléphone client (E.164)",
+      "phone": "Téléphone du client",
       "name": "Nom (optionnel)",
       "ref": "Réf. soumission (optionnel)",
       "submit": "Démarrer",
       "saving": "Enregistrement…",
       "error": "Impossible de démarrer la relance.",
+      "errorValues": "Vérifiez le numéro de téléphone et les champs facultatifs, puis réessayez.",
       "wordingTitle": "Texte que vos clients recevront",
       "wordingIntro": "Rien n’est envoyé tant que vous n’avez pas approuvé ce texte. Chaque message part dans la langue du client, au jour indiqué après la soumission.",
       "wordingDay": "Jour {day}",
@@ -2656,7 +2736,10 @@
       "wordingWithdraw": "Retirer l’approbation",
       "wordingApprovedOn": "Approuvé le {date}. Les relances sont envoyées.",
       "wordingPending": "Pas encore approuvé. Aucune relance ne sera envoyée.",
-      "wordingError": "Impossible d’enregistrer votre approbation."
+      "wordingError": "Impossible d’enregistrer votre approbation.",
+      "errorPhone": "Entrez un numéro de téléphone valide, par exemple 514-555-0123.",
+      "approveFirst": "Approuvez d’abord le texte ci-dessus. Une séquence de relance ne peut commencer qu’une fois son texte approuvé.",
+      "next": "prochain"
     },
     "inbox": {
       "headline": "Boîte de prise en charge",
@@ -2703,7 +2786,8 @@
       "retry": "Réessayer",
       "adminVerification": "Vérification administrateur",
       "mfa": "Activer la vérification administrateur",
-      "mfaHint": "Les administrateurs de la plateforme peuvent ajouter un second code après le lien de connexion."
+      "mfaHint": "Les administrateurs de la plateforme peuvent ajouter un second code après le lien de connexion.",
+      "signedIn": "Connexion du {date}"
     },
     "privacy": {
       "headline": "Paramètres de confidentialité",
@@ -2737,7 +2821,59 @@
       "details": "Billet",
       "status": "Statut",
       "reply": "Envoyer une mise à jour",
-      "configNote": "Ces vérifications lisent la configuration. Elles ne prouvent pas qu’un appel téléphonique réel fonctionne."
+      "configNote": "Ces vérifications lisent la configuration. Elles ne prouvent pas qu’un appel téléphonique réel fonctionne.",
+      "loading": "Chargement…",
+      "loadError": "Impossible de charger ces données. Vérifiez votre connexion et appuyez sur Actualiser.",
+      "notFound": "Ce billet est introuvable.",
+      "back": "Retour au soutien",
+      "opened": "Ouvert le {date}",
+      "noMessages": "Aucune réponse pour le moment.",
+      "replyLabel": "Ajouter une mise à jour",
+      "categories": {
+        "ai": "Réceptionniste",
+        "calls": "Appels",
+        "sms": "Textos",
+        "appointments": "Rendez-vous",
+        "billing": "Facturation",
+        "other": "Autre"
+      },
+      "priorities": {
+        "normal": "Normale",
+        "high": "Élevée",
+        "critical": "Critique"
+      },
+      "statuses": {
+        "open": "Ouvert",
+        "investigating": "En cours d’analyse",
+        "waiting_for_customer": "En attente de votre réponse",
+        "in_progress": "En cours",
+        "resolved": "Résolu",
+        "closed": "Fermé"
+      },
+      "roles": {
+        "contractor": "Vous",
+        "admin": "Soutien TradeCatch"
+      },
+      "checks": {
+        "ai": "Réceptionniste",
+        "phone": "Téléphone",
+        "calendar": "Calendrier",
+        "notifications": "Notifications",
+        "sms": "Textos",
+        "automations": "Automatisations",
+        "subscription": "Abonnement"
+      },
+      "checkRunning": "Vérification…",
+      "checkFailed": "La vérification n’a pas pu être lancée. Vérifiez votre connexion et réessayez.",
+      "checkClear": "Aucun problème de configuration n’a été trouvé.",
+      "checkRecentErrors": "{count, plural, one {# erreur récente est enregistrée} other {# erreurs récentes sont enregistrées}} pour cette entreprise. Écrivez au soutien si quelque chose ne fonctionne pas.",
+      "findings": {
+        "plan": "Votre forfait n’inclut pas la réceptionniste.",
+        "phone_missing": "Aucun numéro d’entreprise n’est encore attribué à ce compte.",
+        "calendar_disconnected": "Google Agenda n’est pas connecté : les rendez-vous ne peuvent pas être confirmés dans votre calendrier.",
+        "automation_off": "La relance par texto des appels manqués est désactivée.",
+        "sms_unconfigured": "La messagerie texte n’est pas encore configurée pour ce compte."
+      }
     },
     "help": {
       "headline": "Centre d’aide",
@@ -2766,7 +2902,7 @@
       "requestTiming": "Le soutien examine les demandes. Le service et le routage téléphonique restent inchangés jusqu’à une transition confirmée.",
       "requestPendingTiming": "Date d’effet : non planifiée. Le soutien confirmera quand le changement prendra effet.",
       "requestCompletedTiming": "Examen terminé. Consultez la confirmation du soutien pour la date d’effet et les détails du service.",
-      "requestSubmitted": "Envoi (UTC) :",
+      "requestSubmitted": "Envoyée :",
       "requestReference": "Référence : {id}",
       "requestSending": "Envoi de la demande…",
       "requestNone": "Aucune demande récente de modification du compte.",
@@ -2778,8 +2914,15 @@
       "requestStatuses": {
         "requested": "En attente d’examen",
         "in_review": "En cours d’examen",
-        "completed": "Examen terminé"
+        "completed": "Examen terminé",
+        "withdrawn": "Retirée"
       },
+      "requestWithdraw": "Retirer la demande",
+      "requestWithdrawing": "Retrait…",
+      "requestWithdrawConfirm": "Retirer cette demande ? Le soutien cessera de l’examiner.",
+      "requestWithdrawn": "Demande retirée.",
+      "requestWithdrawError": "Impossible de retirer la demande. Réessayez.",
+      "requestWithdrawnTiming": "Vous avez retiré cette demande. Rien d’autre ne changera tant que vous ne redemanderez pas.",
       "export": "Exporter les données",
       "deletion": "Demander la suppression",
       "deletionNote": "La suppression est examinée d’abord. Cette demande n’efface pas les dossiers.",
@@ -2787,7 +2930,7 @@
       "billingMissing": "Cette entreprise n’est pas encore liée à la facturation Stripe. Contactez le soutien pour la configurer.",
       "sessions": "Sessions et sécurité",
       "phone": "Téléphone de l’entreprise",
-      "phoneHint": "Numéro canadien au format international, par exemple +14385551234.",
+      "phoneHint": "Un numéro à 10 chiffres, par exemple 514-555-0123. Il est enregistré au format international.",
       "city": "Ville",
       "serviceArea": "Secteur desservi",
       "industry": "Métier",
@@ -2840,7 +2983,10 @@
       "overageDecline": "Ne pas facturer",
       "overageError": "Impossible d’enregistrer votre décision. Réessayez.",
       "checkoutWebsiteLabel": "Ajouter le service de site web ({price} CAD, payé une seule fois)",
-      "checkoutWebsiteNote": "Facultatif. Il est ajouté à ce paiement seulement si vous cochez la case. Nous confirmons la portée avec vous par écrit avant de commencer."
+      "checkoutWebsiteNote": "Facultatif. Il est ajouté à ce paiement seulement si vous cochez la case. Nous confirmons la portée avec vous par écrit avant de commencer.",
+      "errorPhone": "Entrez un numéro de téléphone valide, par exemple 514-555-0123.",
+      "errorName": "Le nom de l’entreprise doit compter de 2 à 120 caractères.",
+      "errorValues": "L’un des champs est trop long. Raccourcissez-le et réessayez."
     },
     "receptionist": {
       "headline": "Réceptionniste",
@@ -3053,7 +3199,25 @@
         "yes": "Oui"
       },
       "plusOnlyTransfer": "Les appels ne sont pas transférés. La réceptionniste note les détails et les transmet à votre équipe.",
-      "plusOnlyBooking": "La prise de rendez-vous pendant l’appel est incluse avec Professional. Avec Essential, la réceptionniste note les moments souhaités et votre équipe les confirme."
+      "plusOnlyBooking": "La prise de rendez-vous pendant l’appel est incluse avec Professional. Avec Essential, la réceptionniste note les moments souhaités et votre équipe les confirme.",
+      "notifySmsEnabled": "M’envoyer les résumés d’appel par texto",
+      "notifyEmailEnabled": "M’envoyer les résumés d’appel par courriel",
+      "notifyEmergencyOnly": "Envoyer des résumés seulement pour les urgences",
+      "notifyEmailMissing": "Ajoutez une adresse courriel ci-dessus pour recevoir les résumés par courriel.",
+      "notifyHint": "Désactiver un canal arrête seulement les résumés. Votre réceptionniste continue de répondre et chaque appel reste dans l’historique des appels.",
+      "backToOverview": "Retour à l’aperçu",
+      "faqBothAnswers": "Chaque question doit avoir sa réponse en français et en anglais, car la réceptionniste répond dans la langue de l’appelant.",
+      "issue": {
+        "faqAnswers": "Question {n} : écrivez la réponse en français et en anglais.",
+        "faqKeywords": "Question {n} : chaque mot déclencheur doit compter de 2 à 40 caractères, avec 8 mots au maximum.",
+        "faqQuestion": "Question {n} : la question est trop longue (200 caractères au maximum).",
+        "transferLoop": "Un numéro de transfert ne peut pas être le numéro auquel votre réceptionniste répond.",
+        "duplicateDepartment": "Deux services portent le même nom. Donnez un nom différent à chacun.",
+        "notifySms": "Le numéro pour les résumés par texto n’est pas valide. Écrivez-le en format international, par exemple +14385551234.",
+        "notifyEmail": "L’adresse courriel pour les résumés n’est pas valide.",
+        "phone": "Un des numéros de téléphone n’est pas valide. Écrivez-le en format international, par exemple +14385551234.",
+        "generic": "Une des valeurs n’est pas valide ou est trop longue. Vérifiez ce que vous avez modifié et réessayez."
+      }
     },
     "phoneSettings": {
       "headline": "Paramètres téléphone",
@@ -3425,7 +3589,7 @@
       "readOnly": "Seul un propriétaire ou un administrateur peut modifier la gestion des appels.",
       "errors": {
         "generic": "Impossible d'enregistrer. Réessayez.",
-        "invalid": "Certains numéros ne sont pas valides. Vérifiez les champs signalés.",
+        "invalid": "Certains numéros de téléphone ne sont pas valides. Écrivez chacun en format international, par exemple +14385551234, puis réessayez.",
         "plan": "Votre forfait n'inclut pas la réceptionniste téléphonique.",
         "forbidden": "Seul un propriétaire ou un administrateur peut modifier la gestion des appels.",
         "notLinked": "Votre ligne téléphonique n'est pas encore reliée. Contactez le soutien."
@@ -3456,6 +3620,30 @@
       "sendLink": "M’envoyer un lien pour choisir un mot de passe",
       "linkSending": "Envoi…",
       "linkSent": "Un lien est en route vers votre courriel."
+    },
+    "record": {
+      "service": "Service",
+      "problem": "Problème",
+      "address": "Adresse",
+      "appointment": "Rendez-vous",
+      "notes": "Notes",
+      "notProvided": "Non fourni",
+      "notScheduled": "Non planifié",
+      "requested": "Demandé : {time}",
+      "moreDetails": "Plus de détails",
+      "lessDetails": "Masquer les détails",
+      "conversation": "Conversation d'origine",
+      "conversationEmpty": "Aucune conversation enregistrée.",
+      "caller": "Appelant",
+      "receptionist": "Réceptionniste",
+      "unknownCaller": "Appelant inconnu",
+      "priority": {
+        "urgent": "Urgence",
+        "high": "Élevée",
+        "medium": "Moyenne",
+        "low": "Faible"
+      },
+      "legacyService": "Demande de service"
     }
   },
   "aiReceptionist": {

@@ -1,6 +1,6 @@
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import type { SupportStore } from "./store";
-import type { SupportTicket } from "./types";
+import type { AccountRequest, SupportTicket } from "./types";
 
 export function createPostgresSupportStore(connectionString: string): SupportStore {
   const pool = getPgPool(connectionString);
@@ -50,7 +50,9 @@ export function createPostgresSupportStore(connectionString: string): SupportSto
     },
     async saveAccountRequest(row) {
       await pool.query(
-        `INSERT INTO tc_account_requests (id, organization_id, kind, status, phone_routing, created_at) VALUES ($1,$2,$3,$4,$5,$6)`,
+        `INSERT INTO tc_account_requests (id, organization_id, kind, status, phone_routing, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6)
+         ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status`,
         [row.id, row.organizationId, row.kind, row.status, row.phoneRouting, row.createdAt],
       );
     },
@@ -60,7 +62,7 @@ export function createPostgresSupportStore(connectionString: string): SupportSto
         id: String(row.id),
         organizationId: String(row.organization_id),
         kind: row.kind as "deletion" | "suspension" | "reactivation",
-        status: row.status as "requested" | "in_review" | "completed",
+        status: row.status as AccountRequest["status"],
         phoneRouting: "unchanged_until_transition" as const,
         createdAt: new Date(String(row.created_at)).toISOString(),
       }));

@@ -78,10 +78,15 @@ export default async function AppReceptionistPage({
           {t("receptionist.headline")}
         </h1>
         <p className="mt-2 text-navy/70">{t("receptionist.intro")}</p>
-        <Link href="/app/receptionist/voice" className="mt-3 inline-block text-sm font-semibold text-navy underline">
-          {t("voice.headline")}
-        </Link>
-        {" · "}
+        {/* The voice page exists only on plans that include a custom voice. */}
+        {orgHasFeature(organization.plan, "AI_CUSTOM_VOICE") ? (
+          <>
+            <Link href="/app/receptionist/voice" className="mt-3 inline-block text-sm font-semibold text-navy underline">
+              {t("voice.headline")}
+            </Link>
+            {" · "}
+          </>
+        ) : null}
         <Link href="/app/receptionist/fallback" className="mt-3 inline-block text-sm font-semibold text-navy underline">
           {t("monitoring.fallbackTitle")}
         </Link>

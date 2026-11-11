@@ -65,7 +65,17 @@ export async function runSimulatedPhoneScenario(input: {
   const store = createMemoryReceptionistStore();
   const engine = createReceptionistEngine({
     store,
-    configs: () => [{ ...config, enabled: true }],
+    // The caller in this simulation speaks the chosen language: without
+    // this an English test was answered in the line's default language.
+    configs: () => [
+      {
+        ...config,
+        enabled: true,
+        ...(input.language
+          ? { languages: [input.language], defaultLanguage: input.language }
+          : {}),
+      },
+    ],
     brain: createRuleBrain(),
     notifier: {
       async deliverSummary() {

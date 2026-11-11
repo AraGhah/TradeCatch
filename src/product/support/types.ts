@@ -46,7 +46,7 @@ export type AccountRequest = {
   id: string;
   organizationId: string;
   kind: "deletion" | "suspension" | "reactivation";
-  status: "requested" | "in_review" | "completed";
+  status: "requested" | "in_review" | "completed" | "withdrawn";
   phoneRouting: "unchanged_until_transition";
   createdAt: string;
 };

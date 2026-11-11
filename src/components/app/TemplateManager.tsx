@@ -32,6 +32,8 @@ export function TemplateManager({
     saved: string;
     error: string;
     missing: string;
+    /** Why a template was refused, by validation code. */
+    errors: Record<string, string>;
     names: Record<TemplateKey, string>;
   };
 }) {
@@ -49,6 +51,16 @@ export function TemplateManager({
     () => [...new Set(templates.map((t) => t.templateKey))],
     [templates],
   );
+
+  /** The validator answers with short codes; the owner reads sentences. */
+  function reasons(codes: string[]): string {
+    const lines = codes.map((code) => labels.errors[code.trim()]).filter(Boolean);
+    return lines.length > 0 ? [...new Set(lines)].join(" ") : labels.error;
+  }
+  function describe(error: string | undefined): string {
+    const rejected = /^Template rejected:\s*(.+)$/.exec(error ?? "");
+    return rejected ? reasons(rejected[1].split(",")) : labels.error;
+  }
 
   function choose(nextKey: TemplateKey, nextLocale: "en" | "fr") {
     const row = templates.find((t) => t.templateKey === nextKey && t.locale === nextLocale);
@@ -76,7 +88,7 @@ export function TemplateManager({
     const data = (await res.json().catch(() => null)) as { error?: string; preview?: Preview } | null;
     setBusy(false);
     if (!res.ok || !data?.preview) {
-      setError(data?.error || labels.error);
+      setError(describe(data?.error));
       return;
     }
     setPreview(data.preview);
@@ -101,7 +113,7 @@ export function TemplateManager({
     } | null;
     setBusy(false);
     if (!res.ok || !data?.template) {
-      setError(data?.error || labels.error);
+      setError(describe(data?.error));
       return;
     }
     setBody(data.template.body);
@@ -185,12 +197,12 @@ export function TemplateManager({
               </p>
             ) : null}
             {preview.errors.length > 0 ? (
-              <p className="mt-1 text-xs text-red-800">{preview.errors.join(", ")}</p>
+              <p className="mt-1 text-xs text-red-800">{reasons(preview.errors)}</p>
             ) : null}
           </div>
         ) : null}
-        {error ? <p className="text-sm text-red-800">{error}</p> : null}
-        {message ? <p className="text-sm text-navy">{message}</p> : null}
+        {error ? <p role="alert" className="text-sm text-red-800">{error}</p> : null}
+        {message ? <p role="status" className="text-sm text-navy">{message}</p> : null}
       </div>
     </div>
   );

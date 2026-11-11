@@ -33,7 +33,9 @@ export function ServiceTypeEditor({
 
   const load = useCallback(
     () =>
-      fetch(`/api/businesses/${organizationId}/service-types`)
+      fetch(`/api/businesses/${organizationId}/service-types`, {
+        cache: "no-store",
+      })
         .then(async (response) => {
           if (!response.ok) throw new Error("Service types unavailable");
           return {
@@ -52,7 +54,7 @@ export function ServiceTypeEditor({
     void load();
   }, [load]);
 
-  async function save(service: Service) {
+  async function save(service: Service, isNew = false) {
     if (busy) return;
     setBusy(true);
     setMessage(null);
@@ -63,11 +65,42 @@ export function ServiceTypeEditor({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(service),
+          body: JSON.stringify({
+            ...service,
+            name: service.name.trim(),
+            description: service.description?.trim() || undefined,
+          }),
         },
       );
+      const data = (await res.json().catch(() => ({}))) as {
+        code?: string;
+        service?: Service;
+      };
       setMessageError(!res.ok);
-      setMessage(res.ok ? t("saved") : t("error"));
+      setMessage(
+        res.ok
+          ? t("saved")
+          : data.code === "duplicate_name"
+            ? t("duplicateService")
+            : t("error"),
+      );
+      if (res.ok && data.service) {
+        // Show the change at once; the reload below confirms it.
+        const saved = data.service;
+        setServices((rows) =>
+          rows.some((row) => row.id === saved.id)
+            ? rows.map((row) => (row.id === saved.id ? saved : row))
+            : [...rows, saved],
+        );
+        if (isNew)
+          setDraft({
+            name: "",
+            durationMinutes: 60,
+            bookingMode: "automatic",
+            active: true,
+            eligibleTechnicianIds: [],
+          });
+      }
       await load();
     } catch {
       setMessageError(true);
@@ -100,14 +133,25 @@ export function ServiceTypeEditor({
                 )}
               </span>
             </span>
-            <button
-              type="button"
-              disabled={busy}
-              className="text-navy/70 disabled:opacity-50"
-              onClick={() => void save({ ...service, active: !service.active })}
-            >
-              {service.active ? t("active") : t("canceled")}
-            </button>
+            <span className="flex items-center gap-3">
+              <span
+                className={
+                  service.active ? "text-green-800" : "text-navy/60"
+                }
+              >
+                {service.active ? t("active") : t("inactive")}
+              </span>
+              <button
+                type="button"
+                disabled={busy}
+                className="min-h-9 rounded-md border border-navy/20 px-3 py-1 font-semibold text-navy disabled:opacity-50"
+                onClick={() =>
+                  void save({ ...service, active: !service.active })
+                }
+              >
+                {service.active ? t("deactivateService") : t("activateService")}
+              </button>
+            </span>
           </li>
         ))}
       </ul>
@@ -115,17 +159,21 @@ export function ServiceTypeEditor({
         className="grid gap-2 rounded-md border border-navy/10 bg-white p-4"
         onSubmit={(event) => {
           event.preventDefault();
-          void save(draft);
+          void save(draft, true);
         }}
       >
         <input
           required
+          maxLength={160}
+          aria-label={t("service")}
           value={draft.name}
           onChange={(event) => setDraft({ ...draft, name: event.target.value })}
           placeholder={t("service")}
           className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
         />
         <input
+          maxLength={500}
+          aria-label={t("description")}
           value={draft.description ?? ""}
           onChange={(event) =>
             setDraft({ ...draft, description: event.target.value })
@@ -135,6 +183,11 @@ export function ServiceTypeEditor({
         />
         <input
           type="number"
+          required
+          min={15}
+          max={480}
+          step={5}
+          aria-label={t("serviceDuration")}
           value={draft.durationMinutes}
           onChange={(event) =>
             setDraft({ ...draft, durationMinutes: Number(event.target.value) })
@@ -142,6 +195,7 @@ export function ServiceTypeEditor({
           className="rounded-md border border-navy/15 px-2 py-1.5 text-sm"
         />
         <select
+          aria-label={t("mode")}
           value={draft.bookingMode}
           onChange={(event) =>
             setDraft({

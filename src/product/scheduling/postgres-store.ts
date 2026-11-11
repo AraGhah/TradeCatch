@@ -303,7 +303,7 @@ export function createPostgresSchedulingStore(
       );
       return res.rows[0] ? appointmentFrom(res.rows[0]) : null;
     },
-    async insertIfFree(row, bufferMinutes) {
+    async insertIfFree(row, bufferMinutes, ignoreAppointmentId) {
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
@@ -332,13 +332,15 @@ export function createPostgresSchedulingStore(
              AND end_at + $4::interval > $2::timestamptz
              AND (
                $5::text IS NULL OR technician_id IS NULL OR technician_id = $5
-             )`,
+             )
+             AND ($6::text IS NULL OR id <> $6)`,
           [
             row.organizationId,
             row.startAt,
             row.endAt,
             pad,
             row.technicianId ?? null,
+            ignoreAppointmentId ?? null,
           ],
         );
         if (clash.rows.length > 0) {

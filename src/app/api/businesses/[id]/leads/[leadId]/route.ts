@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
-import { CrmError, getCrmService } from "@/product/crm/runtime";
+import { isCrmError, getCrmService } from "@/product/crm/runtime";
 import { authorizeBusinessMemberOrAdmin } from "../../_shared";
 import { getSaasStore } from "@/product/saas/runtime";
 
@@ -91,7 +91,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     });
     return NextResponse.json({ ok: true, lead });
   } catch (err) {
-    if (err instanceof CrmError) {
+    if (isCrmError(err)) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
     console.error("[crm] update lead", err);

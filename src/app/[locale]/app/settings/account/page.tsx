@@ -69,6 +69,7 @@ export default async function AccountPage({
           }),
         )}
         requestHistoryError={requestHistoryError}
+        locale={locale === "fr" ? "fr" : "en"}
       />
     </div>
   );

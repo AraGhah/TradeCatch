@@ -53,6 +53,15 @@ export default async function TemplatesPage({
           saved: t("saved"),
           error: t("error"),
           missing: t("templateUi.missing"),
+          errors: {
+            empty: t("templateUi.errors.empty"),
+            too_long: t("templateUi.errors.too_long"),
+            missing_business_identification: t(
+              "templateUi.errors.missing_business_identification",
+            ),
+            missing_opt_out: t("templateUi.errors.missing_opt_out"),
+            unknown_variable: t("templateUi.errors.unknown_variable"),
+          },
           names,
         }}
       />

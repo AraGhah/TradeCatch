@@ -420,8 +420,18 @@ const SPOKEN_DIGITS: Record<string, string> = {
   neuf: "9",
 };
 
+/** A number written out as one run: "514-555-0142", "(514) 555 0142", "+1 514 555 0142". */
+const PHONE_RUN =
+  /(?<!\d)(?:\+?1[\s.-]?)?\(?(\d{3})\)?[\s.-]?(\d{3})[\s.-]?(\d{4})(?!\d)/;
+
 /** Parse a North-American callback number from DTMF or speech. */
 export function extractPhoneE164(text: string, digits?: string): string | null {
+  // A sentence can hold other numbers too ("I'm at 12 Main Street, my number
+  // is 514-555-0142"): a phone-shaped run wins over gluing every digit together.
+  if (!(digits && digits.length >= 10)) {
+    const run = PHONE_RUN.exec(text);
+    if (run) return `+1${run[1]}${run[2]}${run[3]}`;
+  }
   const fromWords = text
     .toLowerCase()
     .split(/[\s,.-]+/)

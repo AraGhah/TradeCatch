@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { Link } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
+import { NOTIFICATIONS_CHANGED } from "./NotificationBell";
 
 const rowSchema = z.object({
   id: z.string(),
@@ -34,6 +35,7 @@ export function NotificationCenter({
 
 function BusinessNotifications({ organizationId }: { organizationId: string }) {
   const t = useTranslations("app.alerts");
+  const dateLocale = useLocale() === "fr" ? "fr-CA" : "en-CA";
   const [rows, setRows] = useState<Row[]>([]);
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("");
@@ -110,6 +112,8 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
       );
       if (!res.ok) throw new Error("Notification update failed");
       setMessage(t("saved"));
+      // The bell in the header shows the same count: tell it right away.
+      window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED));
       await load();
     } catch {
       setActionError(true);
@@ -225,16 +229,20 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
                 </p>
                 <p className="mt-1 text-sm text-navy/70">{row.message}</p>
                 <p className="mt-1 text-xs text-navy/50">
-                  {new Date(row.createdAt).toLocaleString()} ·{" "}
+                  {new Intl.DateTimeFormat(dateLocale, {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  }).format(new Date(row.createdAt))}{" "}
+                  ·{" "}
                   {row.readAt ? t("read") : t("unread")}
                   {row.acknowledgedAt ? ` · ${t("acknowledged")}` : ""}
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {row.href ? (
                   <Link
                     href={row.href as "/app/leads"}
-                    className="text-sm font-semibold text-navy underline"
+                    className="inline-flex min-h-11 items-center px-2 text-sm font-semibold text-navy underline"
                   >
                     {t("open")}
                   </Link>
@@ -243,7 +251,7 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
                   type="button"
                   disabled={acting}
                   onClick={() => void act(row.id, "read")}
-                  className="text-sm font-semibold text-navy"
+                  className="min-h-11 rounded-md border border-navy/15 px-3 text-sm font-semibold text-navy disabled:opacity-50"
                 >
                   {t("markRead")}
                 </button>
@@ -251,7 +259,7 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
                   type="button"
                   disabled={acting}
                   onClick={() => void act(row.id, "acknowledge")}
-                  className="text-sm font-semibold text-navy"
+                  className="min-h-11 rounded-md border border-navy/15 px-3 text-sm font-semibold text-navy disabled:opacity-50"
                 >
                   {t("acknowledge")}
                 </button>

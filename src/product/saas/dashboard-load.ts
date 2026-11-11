@@ -1,3 +1,4 @@
+import { isPracticeCall } from "@/product/receptionist/call-history";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import type { Organization } from "@/product/saas/types";
 import {
@@ -106,7 +107,8 @@ async function loadCalls(
     return {
       status: "ready",
       truncated,
-      rows: sessions.map((call) => ({
+      // Practice conversations from the test tools are not call activity.
+      rows: sessions.filter((call) => !isPracticeCall(call)).map((call) => ({
         id: call.id,
         fromE164: call.fromE164,
         startedAt: call.startedAt,
@@ -212,11 +214,15 @@ async function loadAppointments(organizationId: string): Promise<{
 }> {
   try {
     const { getSchedulingStore } = await import("@/product/scheduling/runtime");
+    const { isInternalAppointment } = await import("@/product/scheduling/service");
     const rows = await getSchedulingStore().listAppointments(organizationId);
     return {
       status: "ready",
       rows: rows
         .filter((row) => row.organizationId === organizationId)
+        // Practice bookings from the test tools and the engine's own short
+        // holds are not appointments the business has.
+        .filter((row) => !row.simulated && !isInternalAppointment(row))
         .map((row) => ({
           id: row.id,
           customerName: row.customerName,

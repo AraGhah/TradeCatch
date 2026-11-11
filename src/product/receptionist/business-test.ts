@@ -155,11 +155,25 @@ function noopNotifier() {
   };
 }
 
-function makeEngine(config: ReceptionistConfig, scenario: BusinessTestScenario) {
+function makeEngine(
+  config: ReceptionistConfig,
+  scenario: BusinessTestScenario,
+  language?: ReceptionistLanguage,
+) {
   const store = createMemoryReceptionistStore();
   const engine = createReceptionistEngine({
     store,
-    configs: () => [{ ...config, enabled: true, callHandlingMode: "always" }],
+    // The practice caller speaks the chosen language from the first word.
+    configs: () => [
+      {
+        ...config,
+        enabled: true,
+        callHandlingMode: "always",
+        ...(language
+          ? { languages: [language], defaultLanguage: language }
+          : {}),
+      },
+    ],
     brain: createRuleBrain(),
     notifier: noopNotifier(),
     llm: null,
@@ -301,7 +315,11 @@ export async function runBusinessTestTurn(
   }
 
   if (request.action === "start") {
-    const { store, engine } = makeEngine(config, request.scenario);
+    const { store, engine } = makeEngine(
+      config,
+      request.scenario,
+      request.language,
+    );
     const callSid = `sim_${randomUUID()}`;
     const plan = await engine.startCall({
       callSid,
@@ -312,7 +330,7 @@ export async function runBusinessTestTurn(
       engine,
       store,
       plan,
-      request.language === "en" ? "en" : config.defaultLanguage,
+      request.language ?? config.defaultLanguage,
       callSid,
     );
     const session = (await store.getSessionByCallSid(callSid))!;
@@ -346,7 +364,7 @@ export async function runBusinessTestTurn(
     deps.organizationId,
   );
   const language = hydrated.session.language;
-  const { store, engine } = makeEngine(config, hydrated.scenario);
+  const { store, engine } = makeEngine(config, hydrated.scenario, language);
   await store.insertSessionIfAbsent(hydrated.session);
 
   const speech = request.speech.trim().slice(0, MAX_TEST_UTTERANCE);

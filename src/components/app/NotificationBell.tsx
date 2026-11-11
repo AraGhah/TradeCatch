@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
+/** Fired on `window` whenever notifications are read or acknowledged. */
+export const NOTIFICATIONS_CHANGED = "tradecatch:notifications-changed";
+
 export function NotificationBell({ organizationId }: { organizationId: string }) {
   const t = useTranslations("app.alerts");
   const [count, setCount] = useState(0);
@@ -18,6 +21,7 @@ export function NotificationBell({ organizationId }: { organizationId: string })
       try {
         const res = await fetch(`/api/businesses/${organizationId}/notifications/unread-count`, {
           signal: ctrl.signal,
+          cache: "no-store",
         });
         if (!res.ok) return;
         const data = (await res.json()) as { count?: number };
@@ -31,12 +35,19 @@ export function NotificationBell({ organizationId }: { organizationId: string })
     function onVisible() {
       if (document.visibilityState === "visible") void load();
     }
+    // The notifications page says when something was read or acknowledged,
+    // so the count follows at once instead of at the next poll.
+    function onChanged() {
+      void load();
+    }
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener(NOTIFICATIONS_CHANGED, onChanged);
     return () => {
       stop = true;
       ctrl?.abort();
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener(NOTIFICATIONS_CHANGED, onChanged);
     };
   }, [organizationId]);
 
