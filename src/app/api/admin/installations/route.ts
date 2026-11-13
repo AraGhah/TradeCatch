@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
 import { isCrossSiteMutation } from "@/lib/csrf";
 import { readJsonBody } from "@/lib/request-body";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import {
   installationCommand,
   InstallationConflict,
@@ -54,11 +54,8 @@ export async function POST(request: Request) {
     return reply({ error: "Cross-site request blocked." }, 403);
   const auth = await access(request);
   if (auth.response) return auth.response;
-  const limited = await enforceRateLimit({
-    scope: "installation-admin",
+  const limited = await enforcePolicy("admin.installations", {
     subject: auth.actor!,
-    limit: 30,
-    windowMs: 60000,
   });
   if (limited) return limited;
   const body = await readJsonBody(request, 4096);

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
 import { isCrossSiteMutation } from "@/lib/csrf";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { readJsonBody } from "@/lib/request-body";
 import { REFERRAL_CODE_PATTERN } from "@/product/referrals/code";
 import { logReferralFailure } from "@/product/referrals/log";
@@ -118,11 +118,8 @@ export async function POST(request: Request) {
   }
   const auth = await access(request);
   if (auth.response) return auth.response;
-  const limited = await enforceRateLimit({
-    scope: "referral-admin",
+  const limited = await enforcePolicy("admin.referrals", {
     subject: auth.actor!,
-    limit: 60,
-    windowMs: 60_000,
   });
   if (limited) return limited;
 
