@@ -41,12 +41,7 @@ export async function PUT(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(auth.role, "manage_ai");
   if (denied) return denied;
-  const limited = await limitVoice(
-    auth.actor,
-    "voice-mode",
-    30,
-    10 * 60 * 1000,
-  );
+  const limited = await limitVoice(auth.actor, "sensitive.voice-mode");
   if (limited) return limited;
 
   const read = await readJsonBody(request, 1024);
@@ -74,12 +69,7 @@ export async function DELETE() {
   if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(auth.role, "manage_ai");
   if (denied) return denied;
-  const limited = await limitVoice(
-    auth.actor,
-    "voice-delete",
-    20,
-    10 * 60 * 1000,
-  );
+  const limited = await limitVoice(auth.actor, "sensitive.voice-delete");
   if (limited) return limited;
   try {
     const result = await getVoiceService().deleteVoice(auth.actor);
