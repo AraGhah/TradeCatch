@@ -26,12 +26,7 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(auth.role, "manage_ai");
   if (denied) return denied;
-  const limited = await limitVoice(
-    auth.actor,
-    "voice-challenge",
-    10,
-    60 * 60 * 1000,
-  );
+  const limited = await limitVoice(auth.actor, "sensitive.voice-challenge");
   if (limited) return limited;
 
   const read = await readJsonBody(request, 1024);

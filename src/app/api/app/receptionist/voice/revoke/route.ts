@@ -19,12 +19,7 @@ export async function POST() {
   if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(auth.role, "manage_ai");
   if (denied) return denied;
-  const limited = await limitVoice(
-    auth.actor,
-    "voice-revoke",
-    20,
-    10 * 60 * 1000,
-  );
+  const limited = await limitVoice(auth.actor, "sensitive.voice-revoke");
   if (limited) return limited;
   try {
     const result = await getVoiceService().revokeConsent(auth.actor);
