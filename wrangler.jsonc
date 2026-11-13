@@ -8,6 +8,14 @@
   // first pilot. Preserve plaintext vars on deploy; Wrangler already preserves
   // secrets. Staging overrides live under env.staging (separate Worker + DB).
   "keep_vars": true,
+  // Keep the bundle small and free of third-party comments. The runtime holds
+  // the whole script as one string in the 128 MiB isolate heap, and a single
+  // character above U+00FF (an em dash in a dependency comment is enough)
+  // doubles that string to two bytes per character. Without minify the
+  // 27 MB script cost ~52 MiB of heap instead of ~26 MiB, and Cloudflare killed
+  // isolates with Error 1102. `npm run check:cloudflare-bundle` enforces this;
+  // see docs/WORKER_MEMORY.md.
+  "minify": true,
   "triggers": {
     "crons": ["* * * * *", "*/15 * * * *", "15 6 * * *"],
   },

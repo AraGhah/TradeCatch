@@ -27,7 +27,7 @@ const FILLER = new Set([
 const LABEL =
   /^(?:demande de service|service request|demande de rendez-vous|appointment request|message pris|message taken|appel de la réceptionniste|rendez-vous|appointment|urgence|emergency|appel|call)\s*(?:$|[·|]\s)/i;
 
-const GREETING_PREFIX = /^(?:(?:salut|bonjour|bonsoir|allo|allô|hello|hi|hey)\b[\s,!.\-–]*)+/i;
+const GREETING_PREFIX = /^(?:(?:salut|bonjour|bonsoir|allo|allô|hello|hi|hey)\b[\s,!.\-\u2013]*)+/i;
 const HESITATION = /\b(?:e+uh+|u+h+|u+m+|h+m+|ben|bah)\b[\s,]*/gi;
 
 /** Speech-to-text drops apostrophes and accents on a few very common words. */
@@ -67,7 +67,7 @@ function capitalize(sentence: string): string {
 
 function cleanSegment(raw: string): string {
   let text = raw
-    .replace(/[​-‍﻿]/g, "")
+    .replace(/[\u200b-\u200d\ufeff]/g, "")
     .replace(/\s+/g, " ")
     .trim();
   if (!text || LABEL.test(text)) return "";
@@ -75,7 +75,7 @@ function cleanSegment(raw: string): string {
   for (const [pattern, fix] of FR_FIXES) text = text.replace(pattern, fix);
   // "the the" -> "the"
   text = text.replace(/\b(\p{L}+)(\s+\1\b)+/giu, "$1");
-  text = text.replace(/[\s,;:\-–·]+$/g, "").replace(/\s+/g, " ").trim();
+  text = text.replace(/[\s,;:\-\u2013·]+$/g, "").replace(/\s+/g, " ").trim();
   // A clause said twice in a row, with or without a comma: "X, X" -> "X".
   for (let i = 0; i < 3; i += 1) {
     const collapsed = text.replace(/^(.{6,}?)(?:\s*[,;]\s*|\s+)\1$/i, "$1");
@@ -85,7 +85,7 @@ function cleanSegment(raw: string): string {
   const words = comparisonKey(text).split(" ").filter(Boolean);
   if (words.length === 0) return "";
   if (words.length <= 4 && words.every((w) => FILLER.has(w))) return "";
-  return text.replace(/[.!?…]+$/, "").trim();
+  return text.replace(/[.!?\u2026]+$/, "").trim();
 }
 
 /**
@@ -100,7 +100,7 @@ export function cleanProblemText(raw: string | undefined, maxLength = 600): stri
     .split(/\n+/)
     // A product label line ("Demande de service · Ara (Message pris)") goes whole.
     .filter((line) => !LABEL.test(line.trim()))
-    .flatMap((line) => line.split(/(?<=[.!?…])\s+|;\s*/))
+    .flatMap((line) => line.split(/(?<=[.!?\u2026])\s+|;\s*/))
     .map(cleanSegment)
     .filter(Boolean);
 

@@ -7,7 +7,7 @@ export function csvCell(value: CsvValue, phone = false): string {
   const e164 = phone && /^\+[1-9][0-9]{6,14}$/.test(text);
   if (
     !e164 &&
-    (/^[\s\u0000-\u001f\u007f\u200b-\u200d\u2060\ufeff]*[=+\-@＝＋－＠]/u.test(
+    (/^[\s\u0000-\u001f\u007f\u200b-\u200d\u2060\ufeff]*[=+\-@\uff1d\uff0b\uff0d\uff20]/u.test(
       text,
     ) ||
       /^[\t\r\n]/.test(text))

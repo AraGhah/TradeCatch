@@ -7,6 +7,7 @@ import {
   cloudflareSchedulerSecret,
 } from "./src/lib/cloudflare-scheduler";
 import { withPostgresRequestScope } from "./src/lib/postgres-pool";
+import { guardWorkerFetch } from "./src/lib/worker-fetch-guard";
 import { recordScheduledJob } from "./src/product/reliability/job-health";
 import { workerLoginPreview } from "./src/product/saas/auth/login-preview";
 import {
@@ -41,13 +42,15 @@ function schedulerOrigin(env: TradeCatchWorkerEnv): string {
 
 export default {
   fetch(request, env, ctx) {
-    return withPostgresRequestScope(async () => {
-      const denied = await enforceInstallationRequest(request, env);
-      if (denied) return denied;
-      const preview = workerLoginPreview(request, env);
-      if (preview) return preview;
-      return openNextWorker.fetch(request, env, ctx);
-    });
+    return guardWorkerFetch(request, () =>
+      withPostgresRequestScope(async () => {
+        const denied = await enforceInstallationRequest(request, env);
+        if (denied) return denied;
+        const preview = workerLoginPreview(request, env);
+        if (preview) return preview;
+        return openNextWorker.fetch(request, env, ctx);
+      }),
+    );
   },
 
   async scheduled(controller, env, ctx) {

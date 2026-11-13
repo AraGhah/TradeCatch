@@ -89,7 +89,7 @@ export function isCarefulSentence(sentence: string): boolean {
 
 function splitSentences(text: string): string[] {
   return text
-    .split(/(?<=[.!?…])\s+/)
+    .split(/(?<=[.!?\u2026])\s+/)
     .map((s) => s.trim())
     .filter(Boolean);
 }

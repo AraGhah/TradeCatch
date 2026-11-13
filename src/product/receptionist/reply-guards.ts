@@ -17,7 +17,7 @@ const MONEY: RegExp[] = [
   /\$\s?\d[\d\s.,]*/g,
   // "500 $" / "500$" (no word boundary after "$"), "500 dollars", "500 CAD".
   /\b\d[\d\s.,]*\s?(?:\$|(?:dollars?|piastres?|cad|bucks?)\b)/gi,
-  /\b\d[\d.,]*\s?(?:\/|per |par |l['’]|the )\s?(?:h|hr|hour|heure|hre)\b/gi,
+  /\b\d[\d.,]*\s?(?:\/|per |par |l['\u2019]|the )\s?(?:h|hr|hour|heure|hre)\b/gi,
 ];
 
 function digitsOnly(value: string): string {
