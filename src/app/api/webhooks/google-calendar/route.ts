@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getClientIp } from "@/lib/rate-limit";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { clientIpKey, getClientIp } from "@/lib/rate-limit";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { safeEqual } from "@/lib/safe-compare";
 import { reconcileGoogleBusy } from "@/product/scheduling/runtime";
 
@@ -21,11 +21,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Missing channel." }, { status: 400 });
   }
   // Each notification triggers calls to Google with that business's credentials.
-  const limited = await enforceRateLimit({
-    scope: "google-calendar-hook",
-    subject: `${organizationId}:${getClientIp(request)}`,
-    limit: 60,
-    windowMs: 60_000,
+  const limited = await enforcePolicy("public.calendar-hook", {
+    subject: `${organizationId}:${clientIpKey(getClientIp(request))}`,
   });
   if (limited) return limited;
   const result = await reconcileGoogleBusy(organizationId);

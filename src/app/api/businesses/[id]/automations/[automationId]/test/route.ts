@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { z } from "zod";
 import { requireAutomationAccess } from "@/product/sms-automation/access";
 import { AutomationError } from "@/product/sms-automation/service";
@@ -37,11 +37,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       { status: access.status },
     );
   }
-  const limited = await enforceRateLimit({
-    scope: "automation-test",
+  const limited = await enforcePolicy("tools.automation-test", {
     subject: `${id}:${access.ctx.user.id}`,
-    limit: 30,
-    windowMs: 10 * 60_000,
   });
   if (limited) return limited;
   let json: unknown;
@@ -59,11 +56,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
   if (parsed.data.action === "live_self") {
     // The only action here that sends a real, billed text message.
-    const liveLimited = await enforceRateLimit({
-      scope: "automation-live-sms",
+    const liveLimited = await enforcePolicy("sms.live-test", {
       subject: `${id}:${access.ctx.user.id}`,
-      limit: 5,
-      windowMs: 60 * 60_000,
     });
     if (liveLimited) return liveLimited;
   }
