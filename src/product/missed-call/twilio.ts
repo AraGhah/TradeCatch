@@ -1,13 +1,17 @@
 import { isStagingRuntime, shouldUseDryRunSms } from "@/lib/environment";
-import { rateLimitAsync } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
 import type { OutboundSms, SmsPort } from "./types";
 
 /**
- * Billing/spam backstop for the customer-facing conversational SMS path
- * (missed-call recovery replies, receptionist opener/confirmations): one
- * abusive caller should not be able to drive unbounded Twilio spend by
- * repeatedly calling/texting. Per sending-number→recipient pair, without
- * capping normal multi-message conversations.
+ * Billing/spam backstops for the customer-facing conversational SMS path
+ * (missed-call recovery replies, receptionist opener/confirmations), both
+ * token buckets from src/lib/rate-limit-policy.ts:
+ *
+ *  - `sms.conversation`: per sending-number→recipient pair, so one abusive
+ *    caller cannot drive unbounded Twilio spend by repeatedly calling or
+ *    texting, without capping normal multi-message conversations.
+ *  - `sms.sender`: per sending number, so a bug or loop cannot text hundreds
+ *    of different customers from one business number.
  *
  * Internal alerts (owner/staff notifications) are exempt — see
  * `OutboundSms.internal` — because they all share one fixed
@@ -15,9 +19,10 @@ import type { OutboundSms, SmsPort } from "./types";
  * them, so capping that pair would silently drop real alerts on a busy day
  * instead of stopping any abuse (the recipient is the business, not the
  * attacker-influenced party).
+ *
+ * A refused text is not lost: the outbox keeps it and sends it when the
+ * bucket has refilled (see SmsRateLimitError).
  */
-const SMS_SEND_LIMIT = 20;
-const SMS_SEND_WINDOW_MS = 60 * 60 * 1000;
 
 /** Thrown by assertSmsSendAllowed so callers can tell this apart from a
  * real provider failure and avoid burning retry attempts on it. */
@@ -56,14 +61,17 @@ async function assertSmsSendAllowed(
   fromE164: string,
   env: NodeJS.ProcessEnv,
 ) {
-  const { allowed, resetAt } = await rateLimitAsync({
-    key: `sms-send:${fromE164}:${toE164}`,
-    limit: SMS_SEND_LIMIT,
-    windowMs: SMS_SEND_WINDOW_MS,
+  const pair = await consumePolicy(
+    "sms.conversation",
+    { subject: `${fromE164}:${toE164}` },
     env,
-  });
-  if (!allowed) {
-    throw new SmsRateLimitError(resetAt);
+  );
+  if (!pair.allowed) {
+    throw new SmsRateLimitError(Date.now() + pair.retryAfterMs);
+  }
+  const sender = await consumePolicy("sms.sender", { subject: fromE164 }, env);
+  if (!sender.allowed) {
+    throw new SmsRateLimitError(Date.now() + sender.retryAfterMs);
   }
 }
 
