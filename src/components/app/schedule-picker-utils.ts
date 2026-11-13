@@ -82,7 +82,7 @@ export function formatShortDayKey(dateKey: string, locale: string): string {
 export function searchKey(text: string): string {
   return text
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
 }
 

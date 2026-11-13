@@ -11,7 +11,7 @@ export function normalizeSpeech(text: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
-    .replace(/[’']/g, "'")
+    .replace(/[\u2019']/g, "'")
     .replace(/[^a-z0-9\s']/g, " ")
     .replace(/\s+/g, " ")
     .trim();

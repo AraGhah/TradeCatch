@@ -142,8 +142,8 @@ const tokens = (text: string) =>
   text
     .toLowerCase()
     .normalize("NFC")
-    .split(/[^\p{L}\p{N}'’-]+/u)
-    .map((t) => t.replace(/’/g, "'"))
+    .split(/[^\p{L}\p{N}'\u2019-]+/u)
+    .map((t) => t.replace(/\u2019/g, "'"))
     .filter(Boolean);
 
 /**
@@ -155,7 +155,7 @@ export function detectLanguage(
   text: string,
   fallback: SmsLanguage,
 ): SmsLanguage {
-  if (/[àâçéèêëîïôûùüÿœ]/i.test(text)) return "fr";
+  if (/[àâçéèêëîïôûùüÿ\u0153]/i.test(text)) return "fr";
   let fr = 0;
   let en = 0;
   for (const token of tokens(text)) {

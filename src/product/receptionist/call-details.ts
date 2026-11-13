@@ -329,7 +329,7 @@ const WHEN_PATTERNS: RegExp[] = [
 
 // "since this morning", "depuis lundi": when a problem started, not when to come.
 const SINCE_BEFORE =
-  /(?:depuis|since|jusqu['’]?[àa]|until|started|commenc[ée]e?|a commenc[ée])\s+(?:(?:le|la|l['’]|this|ce|cette|last|dernier|derni[èe]re|on|à|at)\s*)*$/i;
+  /(?:depuis|since|jusqu['\u2019]?[àa]|until|started|commenc[ée]e?|a commenc[ée])\s+(?:(?:le|la|l['\u2019]|this|ce|cette|last|dernier|derni[èe]re|on|à|at)\s*)*$/i;
 
 /** A date or time phrase exactly as the caller said it ("next Thursday"). */
 export function detectWhen(text: string): string | undefined {
@@ -389,7 +389,7 @@ export function detectLocation(
   }
   // No \b before "à": it is not a word character, so a boundary never forms there.
   const m =
-    /(?:^|[\s,.;])(?:[Ii]n|[Aa]t|[Nn]ear|[Ff]rom|[Aa]round|[Àà]|[Aa]|[Aa]u|[Aa]ux|[Dd]ans|[Pp]r[èe]s de|[Vv]ers)\s+([A-ZÀ-ÖØ-Þ][\p{L}'’-]+(?:[ -][A-ZÀ-ÖØ-Þ][\p{L}'’-]+){0,2})/u.exec(
+    /(?:^|[\s,.;])(?:[Ii]n|[Aa]t|[Nn]ear|[Ff]rom|[Aa]round|[Àà]|[Aa]|[Aa]u|[Aa]ux|[Dd]ans|[Pp]r[èe]s de|[Vv]ers)\s+([A-ZÀ-ÖØ-Þ][\p{L}'\u2019-]+(?:[ -][A-ZÀ-ÖØ-Þ][\p{L}'\u2019-]+){0,2})/u.exec(
       text,
     );
   const candidate = m?.[1];
@@ -415,9 +415,9 @@ const NOT_A_NAME = new Set(
 );
 
 const STRONG_NAME_INTRO =
-  /(?:my name is|my name's|name's|call me|je m'appelle|je m’appelle|mon nom (?:est|c'est|c’est))\s+(\p{L}[\p{L}'’-]*(?:\s+\p{L}[\p{L}'’-]*){0,3})/iu;
+  /(?:my name is|my name's|name's|call me|je m'appelle|je m\u2019appelle|mon nom (?:est|c'est|c\u2019est))\s+(\p{L}[\p{L}'\u2019-]*(?:\s+\p{L}[\p{L}'\u2019-]*){0,3})/iu;
 const WEAK_NAME_INTRO =
-  /(?:this is|it's|it’s|i am|i'm|i’m|je suis|moi c'est|moi c’est|c'est|c’est)\s+(\p{L}[\p{L}'’-]*(?:\s+\p{L}[\p{L}'’-]*){0,3})/iu;
+  /(?:this is|it's|it\u2019s|i am|i'm|i\u2019m|je suis|moi c'est|moi c\u2019est|c'est|c\u2019est)\s+(\p{L}[\p{L}'\u2019-]*(?:\s+\p{L}[\p{L}'\u2019-]*){0,3})/iu;
 
 function cleanName(raw: string, requireCapital: boolean): string | undefined {
   const words: string[] = [];

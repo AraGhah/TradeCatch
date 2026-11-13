@@ -42,7 +42,7 @@ const lastTen = (phone: string | undefined) =>
 export function nameWords(name: string | undefined): string[] {
   return (name ?? "")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .split(/[^a-z]+/)
     .filter((w) => w.length >= 2);

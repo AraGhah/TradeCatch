@@ -223,7 +223,7 @@ export function isPhotoDecline(body: string): boolean {
   const text = body.trim();
   return (
     wordCount(text) <= 6 &&
-    /^(no|non|nope|nah|nan|pas|aucun|aucune|none|n\/?a|nothing|skip|pass|later|plus tard|not now|not right now|maybe later|peut[- ]être|i don['’]?t|i do not|i can['’]?t|i cannot|je n['’ ]|je ne|j['’]en ai pas|sans photo)/i.test(
+    /^(no|non|nope|nah|nan|pas|aucun|aucune|none|n\/?a|nothing|skip|pass|later|plus tard|not now|not right now|maybe later|peut[- ]être|i don['\u2019]?t|i do not|i can['\u2019]?t|i cannot|je n['\u2019 ]|je ne|j['\u2019]en ai pas|sans photo)/i.test(
       text,
     )
   );
@@ -234,7 +234,7 @@ export function isPhotoPromise(body: string): boolean {
   const text = body.trim();
   return (
     wordCount(text) <= 8 &&
-    /^(yes|yeah|yep|yup|sure|ok|okay|oui|ouais|d['’]accord|bien s[ûu]r|will do|i will|i['’]ll|je vais|je l['’]envoie|one sec|un instant)/i.test(
+    /^(yes|yeah|yep|yup|sure|ok|okay|oui|ouais|d['\u2019]accord|bien s[ûu]r|will do|i will|i['\u2019]ll|je vais|je l['\u2019]envoie|one sec|un instant)/i.test(
       text,
     )
   );
