@@ -5,7 +5,7 @@ import {
   createInstallationCheckoutSession,
 } from "@/product/saas/stripe-checkout";
 import { isCrossSiteMutation } from "@/lib/csrf";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { recordSecurityEvent } from "@/product/security/hooks";
 
 export const dynamic = "force-dynamic";
@@ -31,11 +31,8 @@ export async function POST(request: NextRequest) {
   }
   const access = await requireBillingContext();
   if (!access.ok) return error("forbidden", access.status);
-  const limited = await enforceRateLimit({
-    scope: "installation-checkout",
+  const limited = await enforcePolicy("payments.checkout", {
     subject: access.ctx.organization.id + ":" + access.ctx.user.id,
-    limit: 5,
-    windowMs: 10 * 60_000,
   });
   if (limited) return limited;
   try {
