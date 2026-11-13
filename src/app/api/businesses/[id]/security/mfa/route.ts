@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
+import { clientIpKey, getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import { SecurityError } from "@/product/security/service";
 import { getSecurityService } from "@/product/security/runtime";
 import { requireSameBusiness } from "@/product/security/access";
@@ -34,15 +36,14 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   }
 
-  const budget = await rateLimitAsync({
-    key: `admin-mfa:${access.ctx.user.id}:${getClientIp(request)}`,
-    limit: 20,
-    windowMs: 15 * 60_000,
+  const budget = await consumePolicy("auth.mfa", {
+    subject: `${access.ctx.user.id}:${clientIpKey(getClientIp(request))}`,
   });
   if (!budget.allowed) {
-    return NextResponse.json(
+    return tooManyRequests(
+      budget,
       { error: "Too many attempts. Try again later." },
-      { status: 429, headers: NO_STORE },
+      NO_STORE,
     );
   }
 

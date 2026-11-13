@@ -70,8 +70,12 @@ describe("enforceRateLimit", () => {
     const retryAfter = Number(refused.headers.get("retry-after"));
     assert.ok(retryAfter >= 1 && retryAfter <= 60, `Retry-After ${retryAfter}`);
     assert.equal(refused.headers.get("cache-control"), "no-store");
+    // The message is unchanged; the body also carries the wait in a machine
+    // readable form so the browser can back off without parsing a header.
     assert.deepEqual(await refused.json(), {
       error: "Too many requests. Please wait a moment and try again.",
+      code: "rate_limited",
+      retryAfterSeconds: retryAfter,
     });
   });
 
