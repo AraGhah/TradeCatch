@@ -3,7 +3,7 @@ import { requireSameBusiness } from "@/product/security/access";
 import { getSaasStore } from "@/product/saas/runtime";
 import { canManageAccount } from "@/product/support/access";
 import { recordSecurityEvent } from "@/product/security/hooks";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { buildAccountExport } from "@/product/account-export/archive";
 import { accountExportSources } from "@/product/account-export/sources";
 
@@ -22,11 +22,8 @@ export async function GET(_request: NextRequest, { params }: Params) {
   if (!access.ok) return error(access.error, access.status);
   if (!canManageAccount(access.ctx.membership.role, access.ctx.isPlatformAdmin))
     return error("Insufficient permissions.", 403);
-  const limited = await enforceRateLimit({
-    scope: "account-export",
+  const limited = await enforcePolicy("sensitive.account-export", {
     subject: `${id}:${access.ctx.user.id}`,
-    limit: 3,
-    windowMs: 60 * 60_000,
   });
   if (limited) return limited;
   try {

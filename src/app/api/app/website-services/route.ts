@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { sendWebsiteRequestEmail } from "@/lib/email";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { readJsonBody } from "@/lib/request-body";
 import { websiteRequestSchema } from "@/lib/validation/website-request";
 import { forbiddenUnless } from "@/product/security/access";
@@ -57,11 +57,8 @@ export async function POST(request: NextRequest) {
   const denied = forbiddenUnless(membership.role, "manage_billing");
   if (denied) return denied;
 
-  const limited = await enforceRateLimit({
-    scope: "website-service-request",
+  const limited = await enforcePolicy("sensitive.website-service", {
     subject: `${organization.id}:${user.id}`,
-    limit: 5,
-    windowMs: 60 * 60 * 1000,
   });
   if (limited) return limited;
 
