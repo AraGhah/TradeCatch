@@ -1,0 +1,222 @@
+[
+ {
+  "id": "P001",
+  "name": "Omar",
+  "age": 28,
+  "segment": "Renovation, roofing or landscaping contractor, seasonal (business revenue)",
+  "income": 539000,
+  "behaviour": "Spouse or partner handles the phone",
+  "behaviour_how": "A spouse or family member answers when they can and keeps the details in a notebook or a text thread.",
+  "objection": "What happens at 11 p.m. when it's an emergency and it can't transfer the call to me?",
+  "habit": "winter is your busy season and you lose track of callbacks"
+ },
+ {
+  "id": "P002",
+  "name": "Raj",
+  "age": 46,
+  "segment": "Renovation, roofing or landscaping contractor, seasonal (business revenue)",
+  "income": 203000,
+  "behaviour": "French-first, tech-wary",
+  "behaviour_how": "Works in French, texts rather than emails, will not sign anything long, and worries most about how it will sound to long-time clients.",
+  "objection": "I've paid for software before that nobody set up properly.",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P003",
+  "name": "Emil",
+  "age": 48,
+  "segment": "Small plumbing/HVAC crew, 2 to 5 people (business revenue)",
+  "income": 1160000,
+  "behaviour": "Word-of-mouth only, no website",
+  "behaviour_how": "Work comes from referrals and the Google Maps listing; distrusts anything that sounds like software or marketing.",
+  "objection": "What if I hit the minute allowance in January?",
+  "habit": "you are up a ladder or under a sink when the phone rings"
+ },
+ {
+  "id": "P004",
+  "name": "Owen",
+  "age": 57,
+  "segment": "Established 6 to 10 person shop with an office person (business revenue)",
+  "income": 2819000,
+  "behaviour": "Already on Jobber or Housecall Pro",
+  "behaviour_how": "Runs quotes and invoices in Jobber; has seen its $29 receptionist add-on and the Google Calendar sync.",
+  "objection": "What if I hit the minute allowance in January?",
+  "habit": "you speak French on the job and English with half your Laval customers"
+ },
+ {
+  "id": "P005",
+  "name": "Sana",
+  "age": 53,
+  "segment": "Small plumbing/HVAC crew, 2 to 5 people (business revenue)",
+  "income": 689000,
+  "behaviour": "Lets it ring, calls back at lunch",
+  "behaviour_how": "Calls go to voicemail while on site; calls back when there is a minute; knows some callers never pick up again.",
+  "objection": "Voxify is 300 $ a month with no setup fee.",
+  "habit": "you lost a $9,000 kitchen job last month because the quote sat unanswered"
+ },
+ {
+  "id": "P006",
+  "name": "Maya",
+  "age": 53,
+  "segment": "Solo plumber or electrician, one truck (business revenue)",
+  "income": 134000,
+  "behaviour": "Spouse or partner handles the phone",
+  "behaviour_how": "A spouse or family member answers when they can and keeps the details in a notebook or a text thread.",
+  "objection": "Voxify is 300 $ a month with no setup fee.",
+  "habit": "your Google listing has 23 reviews and you have replied to none"
+ },
+ {
+  "id": "P007",
+  "name": "Selin",
+  "age": 56,
+  "segment": "Established 6 to 10 person shop with an office person (business revenue)",
+  "income": 1492000,
+  "behaviour": "About to hire a human",
+  "behaviour_how": "Considering a part-time office person at around $20 an hour; compares every tool to that cost and to what a person can do.",
+  "objection": "Where do the recordings go? Is it in the States?",
+  "habit": "you are up a ladder or under a sink when the phone rings"
+ },
+ {
+  "id": "P008",
+  "name": "Ruby",
+  "age": 34,
+  "segment": "Solo plumber or electrician, one truck (business revenue)",
+  "income": 120000,
+  "behaviour": "Burned by a tool before",
+  "behaviour_how": "Paid monthly for a CRM or lead service that nobody set up properly, cancelled after a fight, wary of anything recurring.",
+  "objection": "What happens at 11 p.m. when it's an emergency and it can't transfer the call to me?",
+  "habit": "you quote three jobs a week and chase maybe one"
+ },
+ {
+  "id": "P009",
+  "name": "Nora",
+  "age": 51,
+  "segment": "Renovation, roofing or landscaping contractor, seasonal (business revenue)",
+  "income": 630000,
+  "behaviour": "Spouse or partner handles the phone",
+  "behaviour_how": "A spouse or family member answers when they can and keeps the details in a notebook or a text thread.",
+  "objection": "Voxify is 300 $ a month with no setup fee.",
+  "habit": "your Google listing has 23 reviews and you have replied to none"
+ },
+ {
+  "id": "P010",
+  "name": "Fatima",
+  "age": 52,
+  "segment": "Solo plumber or electrician, one truck (business revenue)",
+  "income": 154000,
+  "behaviour": "Burned by a tool before",
+  "behaviour_how": "Paid monthly for a CRM or lead service that nobody set up properly, cancelled after a fight, wary of anything recurring.",
+  "objection": "My clients will hang up on a robot, especially in French.",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P011",
+  "name": "Tariq",
+  "age": 51,
+  "segment": "Small plumbing/HVAC crew, 2 to 5 people (business revenue)",
+  "income": 753000,
+  "behaviour": "Lets it ring, calls back at lunch",
+  "behaviour_how": "Calls go to voicemail while on site; calls back when there is a minute; knows some callers never pick up again.",
+  "objection": "Voxify is 300 $ a month with no setup fee.",
+  "habit": "you lost a $9,000 kitchen job last month because the quote sat unanswered"
+ },
+ {
+  "id": "P012",
+  "name": "Felix",
+  "age": 57,
+  "segment": "Solo plumber or electrician, one truck (business revenue)",
+  "income": 230000,
+  "behaviour": "Already on Jobber or Housecall Pro",
+  "behaviour_how": "Runs quotes and invoices in Jobber; has seen its $29 receptionist add-on and the Google Calendar sync.",
+  "objection": "My clients will hang up on a robot, especially in French.",
+  "habit": "you quote three jobs a week and chase maybe one"
+ },
+ {
+  "id": "P013",
+  "name": "Zoe",
+  "age": 37,
+  "segment": "Renovation, roofing or landscaping contractor, seasonal (business revenue)",
+  "income": 272000,
+  "behaviour": "French-first, tech-wary",
+  "behaviour_how": "Works in French, texts rather than emails, will not sign anything long, and worries most about how it will sound to long-time clients.",
+  "objection": "Where do the recordings go? Is it in the States?",
+  "habit": "winter is your busy season and you lose track of callbacks"
+ },
+ {
+  "id": "P014",
+  "name": "Dev",
+  "age": 58,
+  "segment": "Small plumbing/HVAC crew, 2 to 5 people (business revenue)",
+  "income": 1055000,
+  "behaviour": "Already on Jobber or Housecall Pro",
+  "behaviour_how": "Runs quotes and invoices in Jobber; has seen its $29 receptionist add-on and the Google Calendar sync.",
+  "objection": "What happens at 11 p.m. when it's an emergency and it can't transfer the call to me?",
+  "habit": "you are up a ladder or under a sink when the phone rings"
+ },
+ {
+  "id": "P015",
+  "name": "Yusuf",
+  "age": 41,
+  "segment": "Small plumbing/HVAC crew, 2 to 5 people (business revenue)",
+  "income": 1158000,
+  "behaviour": "About to hire a human",
+  "behaviour_how": "Considering a part-time office person at around $20 an hour; compares every tool to that cost and to what a person can do.",
+  "objection": "What if I hit the minute allowance in January?",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P016",
+  "name": "Theo",
+  "age": 37,
+  "segment": "Solo plumber or electrician, one truck (business revenue)",
+  "income": 279000,
+  "behaviour": "Lets it ring, calls back at lunch",
+  "behaviour_how": "Calls go to voicemail while on site; calls back when there is a minute; knows some callers never pick up again.",
+  "objection": "2 000 $ before I've even heard it answer one of my calls?",
+  "habit": "winter is your busy season and you lose track of callbacks"
+ },
+ {
+  "id": "P017",
+  "name": "Alma",
+  "age": 33,
+  "segment": "Solo plumber or electrician, one truck (business revenue)",
+  "income": 280000,
+  "behaviour": "Lets it ring, calls back at lunch",
+  "behaviour_how": "Calls go to voicemail while on site; calls back when there is a minute; knows some callers never pick up again.",
+  "objection": "My clients will hang up on a robot, especially in French.",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P018",
+  "name": "Freya",
+  "age": 38,
+  "segment": "Small plumbing/HVAC crew, 2 to 5 people (business revenue)",
+  "income": 652000,
+  "behaviour": "Word-of-mouth only, no website",
+  "behaviour_how": "Work comes from referrals and the Google Maps listing; distrusts anything that sounds like software or marketing.",
+  "objection": "My Jobber already has a receptionist for 29 $.",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P019",
+  "name": "Harper",
+  "age": 42,
+  "segment": "Solo plumber or electrician, one truck (business revenue)",
+  "income": 261000,
+  "behaviour": "French-first, tech-wary",
+  "behaviour_how": "Works in French, texts rather than emails, will not sign anything long, and worries most about how it will sound to long-time clients.",
+  "objection": "My Jobber already has a receptionist for 29 $.",
+  "habit": "your Google listing has 23 reviews and you have replied to none"
+ },
+ {
+  "id": "P020",
+  "name": "Emma",
+  "age": 53,
+  "segment": "Small plumbing/HVAC crew, 2 to 5 people (business revenue)",
+  "income": 979000,
+  "behaviour": "Lets it ring, calls back at lunch",
+  "behaviour_how": "Calls go to voicemail while on site; calls back when there is a minute; knows some callers never pick up again.",
+  "objection": "My Jobber already has a receptionist for 29 $.",
+  "habit": "your Google listing has 23 reviews and you have replied to none"
+ }
+]

@@ -1,0 +1,106 @@
+{
+ "n": 20,
+ "seed": 7,
+ "customer": {
+  "business": "TradeCatch (a bilingual AI phone receptionist for Québec contractors)",
+  "target": "Owner-operators of small trade businesses (1 to 10 people) in Montréal, Laval, Mirabel and Vaudreuil-Dorion who are on job sites all day, miss calls, and lose jobs to the next company on Google",
+  "where": "Montréal, Laval, Mirabel, Vaudreuil-Dorion",
+  "age": [
+   28,
+   60
+  ],
+  "segments": [
+   {
+    "name": "Solo plumber or electrician, one truck (business revenue)",
+    "share": 0.35,
+    "income": [
+     120000,
+     350000
+    ]
+   },
+   {
+    "name": "Small plumbing/HVAC crew, 2 to 5 people (business revenue)",
+    "share": 0.35,
+    "income": [
+     350000,
+     1200000
+    ]
+   },
+   {
+    "name": "Renovation, roofing or landscaping contractor, seasonal (business revenue)",
+    "share": 0.2,
+    "income": [
+     200000,
+     900000
+    ]
+   },
+   {
+    "name": "Established 6 to 10 person shop with an office person (business revenue)",
+    "share": 0.1,
+    "income": [
+     1200000,
+     3000000
+    ]
+   }
+  ],
+  "behaviours": [
+   {
+    "name": "Lets it ring, calls back at lunch",
+    "share": 0.22,
+    "how": "Calls go to voicemail while on site; calls back when there is a minute; knows some callers never pick up again."
+   },
+   {
+    "name": "Spouse or partner handles the phone",
+    "share": 0.15,
+    "how": "A spouse or family member answers when they can and keeps the details in a notebook or a text thread."
+   },
+   {
+    "name": "Already on Jobber or Housecall Pro",
+    "share": 0.15,
+    "how": "Runs quotes and invoices in Jobber; has seen its $29 receptionist add-on and the Google Calendar sync."
+   },
+   {
+    "name": "Burned by a tool before",
+    "share": 0.12,
+    "how": "Paid monthly for a CRM or lead service that nobody set up properly, cancelled after a fight, wary of anything recurring."
+   },
+   {
+    "name": "Word-of-mouth only, no website",
+    "share": 0.12,
+    "how": "Work comes from referrals and the Google Maps listing; distrusts anything that sounds like software or marketing."
+   },
+   {
+    "name": "About to hire a human",
+    "share": 0.1,
+    "how": "Considering a part-time office person at around $20 an hour; compares every tool to that cost and to what a person can do."
+   },
+   {
+    "name": "French-first, tech-wary",
+    "share": 0.14,
+    "how": "Works in French, texts rather than emails, will not sign anything long, and worries most about how it will sound to long-time clients."
+   }
+  ],
+  "objections": [
+   "2 000 $ before I've even heard it answer one of my calls?",
+   "Voxify is 300 $ a month with no setup fee.",
+   "What happens at 11 p.m. when it's an emergency and it can't transfer the call to me?",
+   "My Jobber already has a receptionist for 29 $.",
+   "My clients will hang up on a robot, especially in French.",
+   "Where do the recordings go? Is it in the States?",
+   "I've paid for software before that nobody set up properly.",
+   "My wife already answers the phone.",
+   "What if I hit the minute allowance in January?"
+  ],
+  "habits": [
+   "you are up a ladder or under a sink when the phone rings",
+   "you quote three jobs a week and chase maybe one",
+   "you check your phone at lunch and again at 6 p.m.",
+   "your Google listing has 23 reviews and you have replied to none",
+   "winter is your busy season and you lose track of callbacks",
+   "you do your invoicing on Sunday night",
+   "you speak French on the job and English with half your Laval customers",
+   "you lost a $9,000 kitchen job last month because the quote sat unanswered"
+  ]
+ },
+ "pitch": "TradeCatch answers your business line 24/7, in Québec French and English, under your company name. It asks the caller's name, number, address, what they need and how urgent it is, texts you right away, and follows up with the caller by text.\n\nEssential: 1,999.99 $ setup, paid once, then 249 $ a month. Professional: same setup, then 349 $ a month, and it also books appointments into your Google Calendar with text confirmations and reminders. Month to month after setup, cancel with notice. All prices CAD.\n\nThe founder sets it up with you: he maps how calls and quotes move through your business, writes every message with you, tests every scenario with your team before it goes live, and keeps watching it after. Nothing speaks or sends until you approve the wording.\n\nEach plan includes a monthly allowance of call minutes and text messages; extra usage is billed only if you confirm it. It does not transfer calls to you live; urgent calls are flagged and you are alerted.\n\nFree demo: you talk with the founder, and you can call the live demo line now from the website.\n\n(When asked for prices, answer in Canadian dollars per month.)"
+}
