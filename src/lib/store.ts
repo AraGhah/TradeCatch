@@ -2,8 +2,11 @@
  * Tiny key/value store used by rate limiting and idempotency.
  *
  * Default: in-memory (single Node process). For multi-instance / serverless
- * production, set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN and use
- * `rateLimitAsync` / `upstashClaimIdempotencyKey` (see src/lib/upstash.ts).
+ * production, set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN (or turn
+ * on the durable Postgres store). Rate limits go through `takeToken` /
+ * `consumePolicy` (src/lib/rate-limit.ts, docs/RATE_LIMITS.md), which pick the
+ * shared store themselves; idempotency claims use `upstashClaimIdempotencyKey`
+ * (see src/lib/upstash.ts).
  */
 
 export type TimedStore = {
