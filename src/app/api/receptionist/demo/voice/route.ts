@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
-import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import {
   demoSpeechText,
   demoVoiceId,
@@ -44,13 +45,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Voice unavailable" }, { status: 503 });
   }
 
-  const { allowed } = await rateLimitAsync({
-    key: `demo-voice:${getClientIp(request)}`,
-    limit: 30,
-    windowMs: 10 * 60 * 1000,
-  });
-  if (!allowed) {
-    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  const budget = await consumePolicy("public.demo-voice", { request });
+  if (!budget.allowed) {
+    return tooManyRequests(budget, { error: "Too many requests" });
   }
 
   const read = await readJsonBody(request, 4_096);

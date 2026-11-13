@@ -3,7 +3,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
 import { reportError } from "@/lib/errors";
-import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 
 export const dynamic = "force-dynamic";
 
@@ -52,14 +54,8 @@ function pruneDedupe(now: number) {
  */
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const { allowed } = await rateLimitAsync({
-    key: `client-error:${ip}`,
-    limit: 12,
-    windowMs: 10 * 60 * 1000,
-  });
-  if (!allowed) {
-    return NextResponse.json({ ok: false }, { status: 429 });
-  }
+  const budget = await consumePolicy("public.client-error", { ip });
+  if (!budget.allowed) return tooManyRequests(budget, { ok: false });
 
   const read = await readJsonBody(request, 16_384);
   if (!read.ok)

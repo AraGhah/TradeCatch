@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BodyTooLargeError, readBodyText } from "@/lib/request-body";
 import { z } from "zod";
-import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import {
   DemoError,
   MAX_DEMO_HISTORY,
@@ -41,16 +42,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Demo disabled" }, { status: 404 });
   }
 
-  const { allowed } = await rateLimitAsync({
-    key: `receptionist-demo:${getClientIp(request)}`,
-    limit: 120,
-    windowMs: 10 * 60 * 1000,
-  });
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Too many requests", code: "rate_limited" },
-      { status: 429 },
-    );
+  const budget = await consumePolicy("public.receptionist-demo", { request });
+  if (!budget.allowed) {
+    return tooManyRequests(budget, {
+      error: "Too many requests",
+      code: "rate_limited",
+    });
   }
 
   let raw: string;
