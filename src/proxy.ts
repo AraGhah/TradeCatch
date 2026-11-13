@@ -2,6 +2,7 @@ import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { isCrossSiteMutation } from "./lib/csrf";
+import { enforceCentralLimit } from "./lib/rate-limit-central";
 import { contentLengthExceeds } from "./lib/request-body";
 import { routing } from "./i18n/routing";
 import { enforceStagingAccess } from "./lib/staging-middleware";
@@ -52,7 +53,7 @@ function acceptedHosts(request: NextRequest): Array<string | null> {
  * rewrites as 307 self-redirects (vercel/next.js#94745). Prefer the default
  * hostname (`localhost`) or omit `--hostname`.
  */
-export default function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const stagingGate = enforceStagingAccess(request);
   if (stagingGate) return stagingGate;
 
@@ -72,6 +73,10 @@ export default function proxy(request: NextRequest) {
     ) {
       return NextResponse.json({ error: "Payload too large." }, { status: 413 });
     }
+    // After the checks that cost nothing, so a blocked cross-site request
+    // cannot spend the visitor's budget. See src/lib/rate-limit-central.ts.
+    const limited = await enforceCentralLimit(request);
+    if (limited) return limited;
     return NextResponse.next();
   }
   if (path === "/health" || path === "/ready") {
