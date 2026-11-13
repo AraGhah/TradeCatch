@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import {
   BusinessTestError,
   runBusinessTestTurn,
@@ -35,11 +35,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
-  const limited = await enforceRateLimit({
-    scope: "receptionist-test",
+  const limited = await enforcePolicy("tools.receptionist-test", {
     subject: `${id}:${access.ctx?.user.id ?? "ops"}`,
-    limit: 60,
-    windowMs: 10 * 60_000,
   });
   if (limited) return limited;
 

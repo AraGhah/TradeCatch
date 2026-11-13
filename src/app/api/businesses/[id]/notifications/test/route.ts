@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { z } from "zod";
 import { requireNotificationAccess } from "@/product/notifications/access";
 import { getNotificationService } from "@/product/notifications/runtime";
@@ -27,11 +27,8 @@ export async function POST(request: NextRequest, { params }: Params) {
       { error: access.error },
       { status: access.status },
     );
-  const limited = await enforceRateLimit({
-    scope: "notification-test",
+  const limited = await enforcePolicy("tools.notification-test", {
     subject: `${id}:${access.ctx.user.id}`,
-    limit: 20,
-    windowMs: 10 * 60_000,
   });
   if (limited) return limited;
   const parsed = schema.safeParse(await request.json().catch(() => null));

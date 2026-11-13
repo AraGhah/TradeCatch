@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { readJsonBody } from "@/lib/request-body";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
-import { getClientIp } from "@/lib/rate-limit";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { originSchema } from "@/product/installations/model";
 import { installationRegistry } from "@/product/installations/registry";
 
@@ -23,11 +22,8 @@ export async function POST(request: Request) {
       { error: "Installation credential required." },
       { status: 401, headers },
     );
-  const limited = await enforceRateLimit({
-    scope: "installation-verify",
-    subject: getClientIp(request),
-    limit: 600,
-    windowMs: 60000,
+  const limited = await enforcePolicy("public.installation-verify", {
+    request,
   });
   if (limited) return limited;
   const body = await readJsonBody(request, 1024);

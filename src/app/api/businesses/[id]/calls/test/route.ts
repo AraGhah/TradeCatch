@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { z } from "zod";
 import { voiceCapabilitiesForPlan } from "@/product/receptionist/plan-limits";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
@@ -32,11 +32,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await authorizeBusinessMemberOrAdmin(request, id);
   if (!access.ok) return access.response;
-  const limited = await enforceRateLimit({
-    scope: "call-test",
+  const limited = await enforcePolicy("tools.call-test", {
     subject: `${id}:${access.ctx?.user.id ?? "ops"}`,
-    limit: 10,
-    windowMs: 10 * 60_000,
   });
   if (limited) return limited;
 
