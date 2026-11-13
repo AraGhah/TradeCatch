@@ -55,6 +55,8 @@ export function AppointmentDesk({
   organizationId: string;
 }) {
   const t = useTranslations("app.schedule");
+  // The shared "too many requests" wording (same strings as the account buttons).
+  const tLimit = useTranslations("app.account");
   const locale = pickerLocale(useLocale());
   const [rows, setRows] = useState<Appointment[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
@@ -246,6 +248,15 @@ export function AppointmentDesk({
           }),
         },
       );
+      if (res.status === 429) {
+        // Refused before anything ran (rate limit, or Cloudflare's own). Keep
+        // the chosen time and its idempotency key: trying again after the wait
+        // is the same booking, and still books once.
+        const wait = Math.max(1, Math.ceil(Number(res.headers.get("retry-after")) || 5));
+        setMessageError(true);
+        setMessage(tLimit("requestsLimited", { seconds: wait }));
+        return;
+      }
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         confirmed?: boolean;
@@ -327,6 +338,12 @@ export function AppointmentDesk({
                 : { startAt: newStart },
         ),
       });
+      if (res.status === 429) {
+        const wait = Math.max(1, Math.ceil(Number(res.headers.get("retry-after")) || 5));
+        setMessageError(true);
+        setMessage(tLimit("requestsLimited", { seconds: wait }));
+        return;
+      }
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         reason?: string;

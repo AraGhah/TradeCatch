@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { createPoller } from "@/lib/client/poller";
+import { requestJson } from "@/lib/client/request";
 import { Link } from "@/i18n/navigation";
 import { ProfessionalUpsell } from "@/components/app/ProfessionalUpsell";
 import { DashboardCharts } from "@/components/app/dashboard/DashboardCharts";
@@ -64,31 +66,28 @@ export function DashboardView({
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<string | null>(null);
 
   useEffect(() => {
-    let stop = false;
-    async function tick() {
-      if (document.visibilityState === "hidden") return;
-      try {
-        const response = await fetch(`/api/app/overview?${pollQuery}`, { cache: "no-store" });
-        if (!response.ok) throw new Error("overview");
-        const body = (await response.json()) as { overview?: DashboardOverview };
-        if (!stop && body.overview) {
-          setData(body.overview);
-          setLive("ok");
+    // Polls every ~20 s while the tab is visible; backs off (and honours
+    // Retry-After) when the server is slow or refusing. See src/lib/client/poller.ts.
+    const poller = createPoller(
+      async (signal) => {
+        try {
+          const body = await requestJson<{ overview?: DashboardOverview }>(
+            `/api/app/overview?${pollQuery}`,
+            { signal, retries: 0 },
+          );
+          if (body.overview && !signal.aborted) {
+            setData(body.overview);
+            setLive("ok");
+          }
+        } catch (error) {
+          if (!signal.aborted) setLive("error");
+          throw error;
         }
-      } catch {
-        if (!stop) setLive("error");
-      }
-    }
-    const timer = window.setInterval(() => void tick(), 20_000);
-    function onVisible() {
-      if (document.visibilityState === "visible") void tick();
-    }
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      stop = true;
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
+      },
+      { intervalMs: 20_000 },
+    );
+    poller.start();
+    return () => poller.stop();
   }, [pollQuery]);
 
   useEffect(() => {

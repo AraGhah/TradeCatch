@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
+import { createPoller } from "@/lib/client/poller";
+import { requestJson } from "@/lib/client/request";
 
 /** Fired on `window` whenever notifications are read or acknowledged. */
 export const NOTIFICATIONS_CHANGED = "tradecatch:notifications-changed";
@@ -12,41 +14,25 @@ export function NotificationBell({ organizationId }: { organizationId: string })
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    let stop = false;
-    let ctrl: AbortController | null = null;
-    async function load() {
-      if (document.visibilityState === "hidden") return;
-      ctrl?.abort();
-      ctrl = new AbortController();
-      try {
-        const res = await fetch(`/api/businesses/${organizationId}/notifications/unread-count`, {
-          signal: ctrl.signal,
-          cache: "no-store",
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as { count?: number };
-        if (!stop) setCount(data.count ?? 0);
-      } catch (err) {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-      }
-    }
-    void load();
-    const timer = window.setInterval(() => void load(), 20_000);
-    function onVisible() {
-      if (document.visibilityState === "visible") void load();
-    }
+    const poller = createPoller(
+      async (signal) => {
+        const data = await requestJson<{ count?: number }>(
+          `/api/businesses/${organizationId}/notifications/unread-count`,
+          { signal, retries: 0 },
+        );
+        if (!signal.aborted) setCount(data.count ?? 0);
+      },
+      // The bell sits on every page, so it is the busiest poller: spread it,
+      // back it off, pause it in hidden tabs (src/lib/client/poller.ts).
+      { intervalMs: 20_000, minGapMs: 1_000 },
+    );
+    poller.start({ immediate: true });
     // The notifications page says when something was read or acknowledged,
     // so the count follows at once instead of at the next poll.
-    function onChanged() {
-      void load();
-    }
-    document.addEventListener("visibilitychange", onVisible);
+    const onChanged = () => poller.poke();
     window.addEventListener(NOTIFICATIONS_CHANGED, onChanged);
     return () => {
-      stop = true;
-      ctrl?.abort();
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
+      poller.stop();
       window.removeEventListener(NOTIFICATIONS_CHANGED, onChanged);
     };
   }, [organizationId]);

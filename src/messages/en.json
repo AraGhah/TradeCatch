@@ -2969,6 +2969,8 @@
       "checkoutPending": "A checkout is already in progress. Finish it or try again in a few minutes.",
       "checkoutPendingNote": "Your installation payment is in progress. If you closed the checkout page, try again below.",
       "checkoutError": "Checkout could not be started. Please try again or contact support.",
+      "requestsLimited": "Too many attempts. Please wait {seconds} seconds and try again.",
+      "requestsBlocked": "This request was blocked. Please contact support if it keeps happening.",
       "usageHeadline": "Usage this month",
       "usageSms": "SMS: {used} of {allowance} segments used",
       "usageVoice": "AI voice: {used} of {allowance} minutes used",

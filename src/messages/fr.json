@@ -2969,6 +2969,8 @@
       "checkoutPending": "Un paiement est déjà en cours. Terminez-le ou réessayez dans quelques minutes.",
       "checkoutPendingNote": "Votre paiement d’installation est en cours. Si vous avez fermé la page de paiement, réessayez ci-dessous.",
       "checkoutError": "Le paiement n’a pas pu démarrer. Réessayez ou contactez le soutien.",
+      "requestsLimited": "Trop de tentatives. Veuillez patienter {seconds} secondes, puis réessayer.",
+      "requestsBlocked": "Cette demande a été bloquée. Contactez le soutien si cela continue.",
       "usageHeadline": "Utilisation ce mois-ci",
       "usageSms": "SMS : {used} segments utilisés sur {allowance}",
       "usageVoice": "Voix IA : {used} minutes utilisées sur {allowance}",
