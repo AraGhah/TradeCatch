@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
 import { BodyTooLargeError, readBodyText } from "@/lib/request-body";
 import { loginPreview } from "@/product/saas/auth/login-preview";
 import { loginConfirmationHeaders as privateHeaders } from "@/product/saas/auth/login-confirmation";
@@ -90,11 +91,7 @@ export async function POST(request: NextRequest) {
     return loginError(request, locale, "Invalid or expired link.");
 
   const ip = getClientIp(request);
-  const budget = await rateLimitAsync({
-    key: `auth-callback:${ip}`,
-    limit: ip.startsWith("unknown") ? 600 : 60,
-    windowMs: 10 * 60_000,
-  });
+  const budget = await consumePolicy("auth.callback", { ip });
   if (!budget.allowed) return loginError(request, locale, "rate_limited");
 
   try {

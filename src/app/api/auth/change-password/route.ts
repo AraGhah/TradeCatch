@@ -1,9 +1,10 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { rateLimitAsync } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import { readJsonBody } from "@/lib/request-body";
 import { changePassword } from "@/product/saas/auth/password-auth";
-import { authJson } from "@/product/saas/auth/route-helpers";
+import { authJson, NO_STORE } from "@/product/saas/auth/route-helpers";
 import { requireTenantContext } from "@/product/saas/tenant";
 
 export const dynamic = "force-dynamic";
@@ -19,12 +20,11 @@ export async function POST(request: NextRequest) {
   const auth = await requireTenantContext();
   if (!auth.ok) return authJson({ error: auth.error }, auth.status);
 
-  const budget = await rateLimitAsync({
-    key: `auth-change-password:${auth.ctx.user.id}`,
-    limit: 20,
-    windowMs: 15 * 60 * 1000,
+  const budget = await consumePolicy("auth.change-password", {
+    subject: auth.ctx.user.id,
   });
-  if (!budget.allowed) return authJson({ error: "rate_limited" }, 429);
+  if (!budget.allowed)
+    return tooManyRequests(budget, { error: "rate_limited" }, NO_STORE);
 
   const read = await readJsonBody(request, 4_096);
   if (!read.ok) return authJson({ error: read.error }, read.status);

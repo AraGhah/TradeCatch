@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
-import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import { requestMagicLink } from "@/product/saas/auth/magic-link";
 
 export const dynamic = "force-dynamic";
@@ -16,16 +18,11 @@ const bodySchema = z
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const { allowed } = await rateLimitAsync({
-    key: `auth-magic:${ip}`,
-    limit: 5,
-    windowMs: 15 * 60 * 1000,
-  });
-  if (!allowed) {
-    return NextResponse.json(
-      { error: "Too many requests. Please try again later." },
-      { status: 429 },
-    );
+  const budget = await consumePolicy("auth.magic-link", { ip });
+  if (!budget.allowed) {
+    return tooManyRequests(budget, {
+      error: "Too many requests. Please try again later.",
+    });
   }
 
   const read = await readJsonBody(request, 4_096);
