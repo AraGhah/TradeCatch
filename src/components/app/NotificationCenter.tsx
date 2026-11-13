@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { createPoller } from "@/lib/client/poller";
+import { requestJson } from "@/lib/client/request";
 import { NOTIFICATIONS_CHANGED } from "./NotificationBell";
 
 const rowSchema = z.object({
@@ -59,44 +61,34 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
     if (priority) params.set("priority", priority);
     if (query) params.set("q", query);
     try {
-      const res = await fetch(
+      const body = await requestJson(
         `/api/businesses/${organizationId}/notifications?${params}`,
-        {
-          signal: controller.signal,
-          cache: "no-store",
-        },
+        { signal: controller.signal, retries: 0 },
       );
-      if (!res.ok) throw new Error("Notifications unavailable");
       const data = z
         .object({ notifications: z.array(rowSchema) })
-        .parse(await res.json());
+        .parse(body);
       if (controller.signal.aborted) return;
       setRows(data.notifications);
       setLoaded(true);
-    } catch {
-      if (!controller.signal.aborted) setLoadError(true);
+    } catch (error) {
+      if (controller.signal.aborted) return;
+      setLoadError(true);
+      // The poller needs to hear about it to back off.
+      throw error;
     } finally {
       if (!controller.signal.aborted) setLoading(false);
     }
   }, [organizationId, status, priority, query]);
 
   useEffect(() => {
-    let stop = false;
-    async function pull() {
-      if (stop || document.visibilityState === "hidden") return;
-      await load();
-    }
-    void pull();
-    const timer = window.setInterval(() => void pull(), 20_000);
-    function onVisible() {
-      if (document.visibilityState === "visible") void pull();
-    }
-    document.addEventListener("visibilitychange", onVisible);
+    // Refreshes every ~20 s while visible; backs off when the server is
+    // struggling or refusing (src/lib/client/poller.ts).
+    const poller = createPoller(() => load(), { intervalMs: 20_000 });
+    poller.start({ immediate: true });
     return () => {
-      stop = true;
+      poller.stop();
       pending.current?.abort();
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [load]);
 
@@ -106,15 +98,15 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
     setMessage(null);
     setActionError(false);
     try {
-      const res = await fetch(
+      await requestJson(
         `/api/businesses/${organizationId}/notifications/${id ? `${encodeURIComponent(id)}/${action}` : "read-all"}`,
         { method: id && action === "read" ? "PATCH" : "POST" },
       );
-      if (!res.ok) throw new Error("Notification update failed");
       setMessage(t("saved"));
       // The bell in the header shows the same count: tell it right away.
       window.dispatchEvent(new Event(NOTIFICATIONS_CHANGED));
-      await load();
+      // A failed refresh is shown by load() itself; the action succeeded.
+      await load().catch(() => undefined);
     } catch {
       setActionError(true);
       setMessage(t("error"));

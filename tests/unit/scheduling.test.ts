@@ -214,6 +214,50 @@ describe("appointment scheduling", () => {
     assert.equal([a, b].some((result) => result.confirmed === false), true);
   });
 
+  it("books once when the same request is sent 25 times at once (double click, impatient retries, a browser retry after a 429)", async () => {
+    const { service, store, notices } = setup();
+    const send = () =>
+      service.book({
+        organizationId: "org-a",
+        startAt: MONDAY_10,
+        customerName: "Customer A",
+        customerPhoneE164: "+15145550101",
+        source: "dashboard",
+        idempotencyKey: "attempt-1",
+      });
+    const results = await Promise.all(Array.from({ length: 25 }, send));
+    assert.equal(results.every((result) => result.confirmed), true, "every copy is told it worked");
+    assert.equal(
+      new Set(results.map((result) => result.appointment?.id)).size,
+      1,
+      "all copies are the same appointment",
+    );
+    assert.equal((await store.listAppointments("org-a")).length, 1, "one appointment exists");
+    assert.equal(notices.length, 1, "one confirmation text is queued, not 25");
+    // And once more after the burst, as a person retrying later would.
+    const later = await send();
+    assert.equal(later.appointment?.id, results[0].appointment?.id);
+    assert.equal((await store.listAppointments("org-a")).length, 1);
+    assert.equal(notices.length, 1, "still one");
+  });
+
+  it("keeps different bookings for the same time apart: 30 people, one slot, one winner", async () => {
+    const { service, store } = setup();
+    const results = await Promise.all(
+      Array.from({ length: 30 }, (_, i) =>
+        service.book({
+          organizationId: "org-a",
+          startAt: MONDAY_10,
+          customerName: `Customer ${i}`,
+          source: "dashboard",
+          idempotencyKey: `attempt-${i}`,
+        }),
+      ),
+    );
+    assert.equal(results.filter((result) => result.confirmed).length, 1);
+    assert.equal((await store.listAppointments("org-a")).length, 1);
+  });
+
   it("adds travel time between different addresses", async () => {
     const { service } = setup();
     const first = await service.book({

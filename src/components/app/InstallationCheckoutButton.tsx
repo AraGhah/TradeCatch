@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { ApiError, requestJson } from "@/lib/client/request";
+import { useCooldown, useSingleFlight } from "@/lib/client/use-single-flight";
 import { isStripeCheckoutUrl } from "@/product/saas/billing-access";
 
 export function InstallationCheckoutButton({
@@ -11,33 +13,52 @@ export function InstallationCheckoutButton({
   websitePrice?: string;
 }) {
   const t = useTranslations("app.account");
-  const [opening, setOpening] = useState(false);
+  // One checkout at a time: a double click must not create two Stripe sessions.
+  // The server also refuses a second pending checkout; this keeps the person
+  // from ever seeing that refusal.
+  const flight = useSingleFlight();
+  const cooldown = useCooldown();
+  // Stays true once the person is on their way to Stripe, so the button cannot
+  // be clicked again while the browser navigates.
+  const [redirecting, setRedirecting] = useState(false);
   // Never ticked for the customer: the website service is charged only when this is chosen.
   const [websiteService, setWebsiteService] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<
+    "checkoutError" | "checkoutPending" | "requestsLimited" | "requestsBlocked" | null
+  >(null);
+  const opening = flight.pending || redirecting;
   async function start() {
-    setOpening(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/billing/checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({ websiteService }),
-      });
-      const body = (await response.json()) as { url?: string; code?: string };
-      if (!response.ok || !isStripeCheckoutUrl(body.url)) {
-        setError(body.code === "already_pending" ? "checkoutPending" : "checkoutError");
-        setOpening(false);
-        return;
+    await flight.run(async () => {
+      setError(null);
+      try {
+        const body = await requestJson<{ url?: string }>("/api/billing/checkout", {
+          method: "POST",
+          body: { websiteService },
+          // Never repeated automatically: this creates something to pay for.
+          retries: 0,
+        });
+        if (!isStripeCheckoutUrl(body?.url)) {
+          setError("checkoutError");
+          return;
+        }
+        setRedirecting(true);
+        window.location.assign(body.url);
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.kind === "rate_limited") {
+          cooldown.start(cause.retryAfterMs ?? 5_000);
+          setError("requestsLimited");
+        } else if (cause instanceof ApiError && cause.kind === "blocked") {
+          setError("requestsBlocked");
+        } else if (
+          cause instanceof ApiError &&
+          (cause.body as { code?: string } | undefined)?.code === "already_pending"
+        ) {
+          setError("checkoutPending");
+        } else {
+          setError("checkoutError");
+        }
       }
-      window.location.assign(body.url);
-    } catch {
-      setError("checkoutError");
-      setOpening(false);
-    }
+    });
   }
   return (
     <div className="flex flex-col items-start gap-2">
@@ -60,7 +81,7 @@ export function InstallationCheckoutButton({
       ) : null}
       <button
         type="button"
-        disabled={opening}
+        disabled={opening || cooldown.secondsLeft > 0}
         aria-busy={opening}
         className="rounded-md bg-orange px-3 py-2 text-sm font-semibold text-navy disabled:opacity-60"
         onClick={() => void start()}
@@ -69,7 +90,7 @@ export function InstallationCheckoutButton({
       </button>
       {error ? (
         <p role="alert" className="text-sm text-navy">
-          {t(error)}
+          {t(error, { seconds: cooldown.secondsLeft || 1 })}
         </p>
       ) : null}
     </div>

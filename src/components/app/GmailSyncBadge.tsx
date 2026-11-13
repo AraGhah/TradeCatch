@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { createPoller } from "@/lib/client/poller";
+import { ApiError, requestJson } from "@/lib/client/request";
 import type { GmailPublicStatus } from "@/product/gmail/types";
 
 /** Fired on `window` after a sync or a read-state change; carries `{ status }`. */
@@ -10,6 +12,8 @@ export const GMAIL_EVENT = "tradecatch:gmail";
 
 const POLL_MS = 60_000;
 const MIN_GAP_MS = 20_000;
+/** The first background sync waits this long after the page loads. */
+const FIRST_SYNC_DELAY_MS = 1_000;
 
 type SyncBody = { ok?: boolean; added?: number; status?: GmailPublicStatus };
 
@@ -26,62 +30,72 @@ export function GmailSyncBadge() {
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
-    let stopped = false;
-    let lastRun = 0;
     let signature = "";
 
-    async function tick() {
-      if (stopped || document.visibilityState === "hidden") return;
-      if (Date.now() - lastRun < MIN_GAP_MS) return;
-      lastRun = Date.now();
-      try {
-        const response = await fetch("/api/app/gmail/sync?mode=auto", {
-          method: "POST",
-          cache: "no-store",
-        });
-        if (response.status === 401) {
-          stopped = true;
-          return;
-        }
-        const body = (await response.json()) as SyncBody;
-        const status = body.status;
-        if (!status || status.status === "not_connected") {
-          // Nothing to poll for until the person connects Gmail (that reloads the page).
-          stopped = true;
-          setUnread(0);
-          return;
-        }
-        setUnread(status.unread);
-        const next = `${status.status}|${status.lastError}|${status.unread}`;
-        const changed = Boolean(signature) && next !== signature;
-        signature = next;
-        // A successful empty sync still updates the visible freshness time.
-        window.dispatchEvent(new CustomEvent(GMAIL_EVENT, { detail: body }));
-        if ((body.added ?? 0) > 0 || changed) {
-          router.refresh();
-        }
-      } catch {
-        // Offline or the server is restarting: the next tick tries again.
+    // Shows what the server said about the mailbox. A throttled or failed sync
+    // still carries the status, so it is applied either way.
+    function apply(body: SyncBody) {
+      const status = body.status;
+      if (!status || status.status === "not_connected") {
+        // Nothing to poll for until the person connects Gmail (that reloads the page).
+        poller.stop();
+        setUnread(0);
+        return;
+      }
+      setUnread(status.unread);
+      const next = `${status.status}|${status.lastError}|${status.unread}`;
+      const changed = Boolean(signature) && next !== signature;
+      signature = next;
+      // A successful empty sync still updates the visible freshness time.
+      window.dispatchEvent(new CustomEvent(GMAIL_EVENT, { detail: body }));
+      if ((body.added ?? 0) > 0 || changed) {
+        router.refresh();
       }
     }
+
+    // A POST, but background work: it must not pile up or hammer a throttled
+    // mailbox. The poller keeps one in flight, spaces runs by at least
+    // MIN_GAP_MS, pauses in hidden tabs, and backs off after a failure or a 429
+    // (see src/lib/client/poller.ts).
+    const poller = createPoller(
+      async (signal) => {
+        try {
+          apply(
+            await requestJson<SyncBody>("/api/app/gmail/sync?mode=auto", {
+              method: "POST",
+              signal,
+              retries: 0,
+            }),
+          );
+        } catch (error) {
+          const answered =
+            error instanceof ApiError
+              ? (error.body as SyncBody | undefined)
+              : undefined;
+          if (answered?.status) apply(answered);
+          // 401 ends the poller; anything else (offline, restarting, throttled)
+          // is tried again after a backoff.
+          throw error;
+        }
+      },
+      { intervalMs: POLL_MS, minGapMs: MIN_GAP_MS },
+    );
 
     function onGmailEvent(event: Event) {
       const status = (event as CustomEvent<SyncBody>).detail?.status;
       if (status) setUnread(status.unread);
     }
-    function onVisible() {
-      if (document.visibilityState === "visible") void tick();
-    }
 
-    const first = window.setTimeout(() => void tick(), 1_000);
-    const timer = window.setInterval(() => void tick(), POLL_MS);
-    document.addEventListener("visibilitychange", onVisible);
+    // A page load does not begin with a POST: the first background sync waits a
+    // moment, so someone who opens the inbox and presses Refresh straight away
+    // is answered by that press (and told how many emails it brought), not
+    // beaten to it by this one.
+    poller.start();
+    const first = window.setTimeout(() => poller.poke(), FIRST_SYNC_DELAY_MS);
     window.addEventListener(GMAIL_EVENT, onGmailEvent);
     return () => {
-      stopped = true;
       window.clearTimeout(first);
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
+      poller.stop();
       window.removeEventListener(GMAIL_EVENT, onGmailEvent);
     };
   }, [router]);
