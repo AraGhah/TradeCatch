@@ -4,7 +4,9 @@ import { z } from "zod";
 import { hashToken } from "@/product/saas/ids";
 import { getSaasStore } from "@/product/saas/runtime";
 import { orgHasFeature } from "@/product/saas/entitlements";
-import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
+import { clientIpKey, getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import { getStarterStore } from "@/product/starter/runtime";
 import { getStarterServices } from "@/product/starter/org-context";
 import {
@@ -61,21 +63,15 @@ export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
   // The per-key bucket below is keyed on the key the caller sent, so guessing
   // keys would start a fresh bucket every time. Cap each IP across all keys too.
-  const ipBudget = await rateLimitAsync({
-    key: `website-lead-ip:${ip}`,
-    limit: 120,
-    windowMs: 10 * 60 * 1000,
-  });
+  const ipBudget = await consumePolicy("public.website-leads-ip", { ip });
   if (!ipBudget.allowed) {
-    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+    return tooManyRequests(ipBudget, { error: "Too many requests." });
   }
-  const { allowed } = await rateLimitAsync({
-    key: `website-lead:${hashToken(apiKey).slice(0, 16)}:${ip}`,
-    limit: 30,
-    windowMs: 10 * 60 * 1000,
+  const keyBudget = await consumePolicy("public.website-leads-key", {
+    subject: `${hashToken(apiKey).slice(0, 16)}:${clientIpKey(ip)}`,
   });
-  if (!allowed) {
-    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  if (!keyBudget.allowed) {
+    return tooManyRequests(keyBudget, { error: "Too many requests." });
   }
 
   const organizationId = await getStarterStore().findOrgIdByApiKeyHash(

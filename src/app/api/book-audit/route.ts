@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/request-body";
 import { z } from "zod";
 import { bookAuditSchema } from "@/lib/validation/book-audit";
-import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import { reportError } from "@/lib/errors";
 import {
@@ -52,15 +54,11 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request);
-  const unknownIp = ip === "unknown" || ip.startsWith("unknown:");
-
-  const { allowed } = await rateLimitAsync({
-    key: `book-audit:${ip}`,
-    limit: unknownIp ? 2 : 5,
-    windowMs: 10 * 60 * 1000,
-  });
-  if (!allowed) {
-    return jsonError("Too many requests. Please try again later.", 429);
+  const budget = await consumePolicy("public.book-audit", { ip });
+  if (!budget.allowed) {
+    return tooManyRequests(budget, {
+      error: "Too many requests. Please try again later.",
+    });
   }
 
   const read = await readJsonBody(request, 32_768);
