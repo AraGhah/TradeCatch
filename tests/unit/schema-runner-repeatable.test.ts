@@ -63,16 +63,17 @@ describe("db:schema is repeatable (real PostgreSQL)", { skip: !serverUrl }, () =
 
       const recorded = await db.query(`SELECT id FROM mc_schema_migrations`);
       const ids = new Set(recorded.rows.map((row) => row.id));
-      for (const id of ["037_password_auth", "038_referral_rewards_by_plan", "030_billing_v2"]) {
+      for (const id of ["037_password_auth", "038_referral_rewards_by_plan", "039_auth_sessions", "030_billing_v2"]) {
         assert.ok(ids.has(id), `${id} not recorded`);
       }
       const objects = await db.query(
         `SELECT (SELECT count(*) FROM information_schema.tables WHERE table_name IN
-                  ('tc_user_passwords','tc_password_tokens','tc_usage_overage_confirmations','tc_usage_overage_invoices'))::int AS tables,
+                  ('tc_user_passwords','tc_password_tokens','tc_usage_overage_confirmations','tc_usage_overage_invoices',
+                   'tc_refresh_tokens','tc_account_recovery_requests'))::int AS tables,
                 (SELECT count(*) FROM information_schema.columns
                   WHERE table_name = 'tc_org_settings' AND column_name = 'quote_followup_approved_at')::int AS col`,
       );
-      assert.equal(objects.rows[0]?.tables, 4);
+      assert.equal(objects.rows[0]?.tables, 6);
       assert.equal(objects.rows[0]?.col, 1);
     } finally {
       await db.end().catch(() => undefined);

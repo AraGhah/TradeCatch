@@ -217,6 +217,13 @@ async function main() {
       ["src", "product", "referrals", "rewards-by-plan.sql"],
       "038_referral_rewards_by_plan",
     );
+    // Refresh tokens (short-lived access tokens) and support account recovery.
+    // Must run after 037 (password auth) and 002 (tc_sessions, tc_users).
+    await applyFile(
+      client,
+      ["src", "product", "saas", "auth-sessions.sql"],
+      "039_auth_sessions",
+    );
   } finally {
     await client.end();
   }
