@@ -4,7 +4,8 @@ import { normalizeEmail } from "../store";
 import { devTokenAllowed, sendAuthEmail } from "./mailer";
 import { safeReturnPath } from "./return-path";
 import { getAuthSecret } from "./secret";
-import { SESSION_COOKIE } from "./session-token";
+// Cookie attributes live with the tokens; re-exported for existing imports.
+export { sessionCookieOptions } from "./session-token";
 import { startSessionForUser, type StartedSession } from "./session-start";
 
 // Account invitations now carry a "choose your password" link; see password-auth.ts.
@@ -129,15 +130,4 @@ export async function consumeMagicLinkAndCreateSession(input: {
     userAgent: input.userAgent,
     ip: input.ip,
   });
-}
-
-export function sessionCookieOptions(maxAge: number) {
-  return {
-    name: SESSION_COOKIE,
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
-    path: "/",
-    maxAge,
-  };
 }
