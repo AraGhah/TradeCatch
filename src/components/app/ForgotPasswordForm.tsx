@@ -91,6 +91,12 @@ export function ForgotPasswordForm() {
         </p>
       ) : null}
       <p className="text-sm text-navy/70">
+        {t("lostEmail")}{" "}
+        <Link href="/account-recovery" className="font-semibold underline">
+          {t("lostEmailCta")}
+        </Link>
+      </p>
+      <p className="text-sm text-navy/70">
         <Link href="/login" className="font-semibold underline">
           {t("back")}
         </Link>

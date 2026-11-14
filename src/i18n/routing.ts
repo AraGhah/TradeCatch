@@ -60,11 +60,19 @@ export const routing = defineRouting({
       en: "/set-password",
       fr: "/definir-mot-de-passe",
     },
+    "/account-recovery": {
+      en: "/account-recovery",
+      fr: "/recuperation-de-compte",
+    },
     "/admin": {
       en: "/admin",
       fr: "/admin",
     },
     "/admin/sales": { en: "/admin/sales", fr: "/admin/sales" },
+    "/admin/account-recovery": {
+      en: "/admin/account-recovery",
+      fr: "/admin/account-recovery",
+    },
     "/admin/installations": {
       en: "/admin/installations",
       fr: "/admin/installations",
