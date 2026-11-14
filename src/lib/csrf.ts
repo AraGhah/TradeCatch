@@ -15,8 +15,12 @@
 const UNSAFE_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 // Literals so the Edge middleware does not import auth code. A unit test checks
-// they equal SESSION_COOKIE and ADMIN_JWT_COOKIE.
-export const AUTH_COOKIE_NAMES = ["tc_session", "tc_admin"] as const;
+// they equal SESSION_COOKIE, REFRESH_COOKIE and ADMIN_JWT_COOKIE.
+export const AUTH_COOKIE_NAMES = [
+  "tc_session",
+  "tc_refresh",
+  "tc_admin",
+] as const;
 
 export function carriesAuthCookie(cookieHeader: string | null): boolean {
   if (!cookieHeader) return false;

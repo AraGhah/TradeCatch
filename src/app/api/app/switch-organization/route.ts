@@ -11,11 +11,9 @@ import {
   ADMIN_JWT_COOKIE,
   adminJwtCookieOptions,
 } from "@/product/saas/auth/admin-jwt";
-import {
-  SESSION_COOKIE,
-  SESSION_TTL_SECONDS,
-  signSessionClaims,
-} from "@/product/saas/auth/session-token";
+import { issueSessionTokens } from "@/product/saas/auth/refresh-token";
+import { setSessionCookies } from "@/product/saas/auth/route-helpers";
+import { SESSION_TTL_SECONDS } from "@/product/saas/auth/session-token";
 
 export const dynamic = "force-dynamic";
 
@@ -91,16 +89,14 @@ export async function POST(request: NextRequest) {
   };
   await saas.createSession(session);
 
-  const token = await signSessionClaims(
-    {
-      sid: session.id,
-      uid: auth.ctx.user.id,
-      oid: target.id,
-      plan: target.plan,
-      exp: Math.floor(expiresAt.getTime() / 1000),
-    },
+  // The old session was revoked above; the new one gets its own access and
+  // refresh tokens, issued the same way as at sign-in.
+  const tokens = await issueSessionTokens({
+    session,
+    plan: target.plan,
     secret,
-  );
+    nowMs: now.getTime(),
+  });
 
   const response = NextResponse.json({
     ok: true,
@@ -108,13 +104,7 @@ export async function POST(request: NextRequest) {
     organizationName: target.name,
     membershipRole: membership.role,
   });
-  response.cookies.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: expiresAt,
-  });
+  setSessionCookies(response, tokens);
   response.cookies.set(ADMIN_JWT_COOKIE, "", {
     ...adminJwtCookieOptions(0),
     maxAge: 0,

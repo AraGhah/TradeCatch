@@ -106,6 +106,7 @@ async function resolveTenantContext(
           : [],
       isPlatformAdminIdentity: adminIdentity,
       isPlatformAdmin: adminIdentity && adminVerified,
+      accessExpiresAt: claims.exp,
     },
   };
 }

@@ -4,6 +4,7 @@ import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { SessionKeeper } from "@/components/app/SessionKeeper";
 
 /** The plan names an owner can see. Plans sold before launch keep their own label. */
 const KNOWN_PLANS = ["essential", "professional", "starter", "growth", "receptionist"];
@@ -57,6 +58,7 @@ export function AppShell({
   isPlatformAdmin,
   organizationId,
   appointmentsEnabled = false,
+  accessExpiresAt,
 }: {
   children: React.ReactNode;
   orgName: string;
@@ -68,6 +70,8 @@ export function AppShell({
   organizationId: string;
   /** True on Professional: the plan that includes appointments and the calendar. */
   appointmentsEnabled?: boolean;
+  /** Unix seconds when the access token expires; the keeper renews it before then. */
+  accessExpiresAt?: number;
 }) {
   const t = useTranslations("app");
   const pathname = usePathname();
@@ -167,6 +171,7 @@ export function AppShell({
           <div className="mb-3 flex justify-end md:mb-6">
             <NotificationBell organizationId={organizationId} />
           </div>
+          <SessionKeeper accessExpiresAt={accessExpiresAt} locale={locale} />
           {children}
         </div>
       </div>

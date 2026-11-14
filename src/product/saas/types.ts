@@ -86,6 +86,8 @@ export type TenantContext = {
   isPlatformAdminIdentity: boolean;
   /** Administrator whose session has passed the second factor. The only flag that unlocks cross-tenant access. */
   isPlatformAdmin: boolean;
+  /** Unix seconds when this request's access token expires (lets the page renew it in time). */
+  accessExpiresAt?: number;
 };
 
 export type CreateOrganizationInput = {
@@ -144,4 +146,52 @@ export type PasswordToken = {
   expiresAt: string;
   consumedAt?: string;
   createdAt: string;
+};
+
+/**
+ * One refresh token of a sign-in (session). Only the SHA-256 of the token is
+ * stored. A token is used once: refreshing marks it rotated and issues a new
+ * one. Presenting a rotated token again (after a short grace period for
+ * parallel tabs) is treated as theft and ends the whole session.
+ */
+export type RefreshToken = {
+  id: string;
+  sessionId: string;
+  userId: string;
+  tokenHash: string;
+  expiresAt: string;
+  createdAt: string;
+  rotatedAt?: string;
+};
+
+export type AccountRecoveryStatus = "open" | "verified" | "completed" | "rejected";
+
+/**
+ * A request from someone who can no longer reach the email on their account.
+ * Handled by a TradeCatch administrator, who must record how they verified the
+ * person's identity before the account email can be changed.
+ */
+export type AccountRecoveryRequest = {
+  id: string;
+  status: AccountRecoveryStatus;
+  /** The email the person says is on the account (normalized). */
+  accountEmail: string;
+  /** Where they can be reached now, and the address the account moves to. */
+  contactEmail: string;
+  contactName: string;
+  businessName: string;
+  phone?: string;
+  details: string;
+  locale: "en" | "fr";
+  /** The matching user, resolved on the server. Never shown to the requester. */
+  userId?: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  verificationMethod?: string;
+  verificationNotes?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  resolutionNotes?: string;
+  createdAt: string;
+  updatedAt: string;
 };

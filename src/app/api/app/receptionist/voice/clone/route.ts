@@ -36,12 +36,7 @@ export async function POST(request: NextRequest) {
   if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(auth.role, "manage_ai");
   if (denied) return denied;
-  const limited = await limitVoice(
-    auth.actor,
-    "voice-clone",
-    6,
-    60 * 60 * 1000,
-  );
+  const limited = await limitVoice(auth.actor, "sensitive.voice-clone");
   if (limited) return limited;
 
   let form: FormData | null;

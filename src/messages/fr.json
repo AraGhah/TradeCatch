@@ -2969,6 +2969,8 @@
       "checkoutPending": "Un paiement est déjà en cours. Terminez-le ou réessayez dans quelques minutes.",
       "checkoutPendingNote": "Votre paiement d’installation est en cours. Si vous avez fermé la page de paiement, réessayez ci-dessous.",
       "checkoutError": "Le paiement n’a pas pu démarrer. Réessayez ou contactez le soutien.",
+      "requestsLimited": "Trop de tentatives. Veuillez patienter {seconds} secondes, puis réessayer.",
+      "requestsBlocked": "Cette demande a été bloquée. Contactez le soutien si cela continue.",
       "usageHeadline": "Utilisation ce mois-ci",
       "usageSms": "SMS : {used} segments utilisés sur {allowance}",
       "usageVoice": "Voix IA : {used} minutes utilisées sur {allowance}",
@@ -4260,7 +4262,8 @@
       "churnedStatus": "Annulé",
       "open": "Ouvrir",
       "supportLink": "Bureau de support",
-      "navReferrals": "Parrainage"
+      "navReferrals": "Parrainage",
+      "navAccountRecovery": "Récupération de compte"
     }
   },
   "plans": {
@@ -4647,7 +4650,29 @@
     "devLinkCta": "Choisir un nouveau mot de passe",
     "errorGeneric": "Une erreur est survenue. Réessayez.",
     "rateLimited": "Trop de demandes. Réessayez dans quelques minutes.",
-    "back": "Retour à la connexion"
+    "back": "Retour à la connexion",
+    "lostEmail": "Vous n’avez plus accès à ce courriel ?",
+    "lostEmailCta": "Demandez au soutien de récupérer votre compte"
+  },
+  "accountRecovery": {
+    "eyebrow": "Espace client",
+    "headline": "Récupérer votre compte",
+    "intro": "Utilisez ce formulaire seulement si vous n’avez plus accès à l’adresse courriel de votre compte TradeCatch. Si vous pouvez encore lire ce courriel, utilisez plutôt « Mot de passe oublié » : c’est plus rapide.",
+    "accountEmail": "Courriel de votre compte TradeCatch",
+    "contactEmail": "Courriel où vous joindre maintenant",
+    "contactName": "Votre nom",
+    "businessName": "Nom de l’entreprise",
+    "phone": "Numéro de téléphone (facultatif)",
+    "details": "Que s’est-il passé ? (par exemple : le compte courriel a été fermé)",
+    "howItWorks": "Notre équipe vous contactera et vérifiera votre identité à l’aide des renseignements que nous avons déjà au dossier (par exemple en appelant le numéro de l’entreprise inscrit à votre compte) avant de modifier quoi que ce soit. Les données, rendez-vous, paramètres et abonnement de votre entreprise restent intacts. Nous ne vous demanderons jamais votre mot de passe.",
+    "submit": "Envoyer la demande de récupération",
+    "sending": "Envoi…",
+    "sent": "Merci. Si les renseignements correspondent à un compte, notre équipe vous contactera pour vérifier votre identité. Rien ne change au compte avant cette vérification.",
+    "back": "Retour à la connexion",
+    "stillHaveEmail": "J’ai encore accès au courriel de mon compte",
+    "rateLimited": "Trop de demandes. Réessayez plus tard ou écrivez à contact@tradecatch.ca.",
+    "invalid": "Vérifiez les champs : les deux courriels doivent être valides et la description doit compter au moins 10 caractères.",
+    "errorGeneric": "Une erreur s’est produite. Réessayez ou écrivez à contact@tradecatch.ca."
   },
   "setPassword": {
     "eyebrow": "Centre de compte",

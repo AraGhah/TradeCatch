@@ -1,14 +1,16 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
 import { BodyTooLargeError, readBodyText } from "@/lib/request-body";
 import { loginPreview } from "@/product/saas/auth/login-preview";
 import { loginConfirmationHeaders as privateHeaders } from "@/product/saas/auth/login-confirmation";
-import {
-  consumeMagicLinkAndCreateSession,
-  sessionCookieOptions,
-} from "@/product/saas/auth/magic-link";
+import { consumeMagicLinkAndCreateSession } from "@/product/saas/auth/magic-link";
 import { safeReturnPath } from "@/product/saas/auth/return-path";
+import {
+  homePathFor,
+  setSessionCookies,
+} from "@/product/saas/auth/route-helpers";
 
 export const dynamic = "force-dynamic";
 
@@ -90,11 +92,7 @@ export async function POST(request: NextRequest) {
     return loginError(request, locale, "Invalid or expired link.");
 
   const ip = getClientIp(request);
-  const budget = await rateLimitAsync({
-    key: `auth-callback:${ip}`,
-    limit: ip.startsWith("unknown") ? 600 : 60,
-    windowMs: 10 * 60_000,
-  });
+  const budget = await consumePolicy("auth.callback", { ip });
   if (!budget.allowed) return loginError(request, locale, "rate_limited");
 
   try {
@@ -110,14 +108,7 @@ export async function POST(request: NextRequest) {
     const back = result.billingOnly ? null : safeReturnPath(body.get("next"));
     const response = NextResponse.redirect(
       new URL(
-        back ??
-          (result.billingOnly
-            ? locale === "fr"
-              ? "/fr/facturation"
-              : "/billing"
-            : locale === "fr"
-              ? "/fr/app"
-              : "/app"),
+        back ?? homePathFor(locale, result.billingOnly, result.isPlatformAdmin),
         request.url,
       ),
       {
@@ -125,8 +116,7 @@ export async function POST(request: NextRequest) {
         headers: privateHeaders,
       },
     );
-    const opts = sessionCookieOptions(result.maxAge);
-    response.cookies.set(opts.name, result.cookieValue, opts);
+    setSessionCookies(response, result.tokens);
     return response;
   } catch {
     console.error("[auth/callback] Sign-in confirmation unavailable");

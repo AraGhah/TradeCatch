@@ -2969,6 +2969,8 @@
       "checkoutPending": "A checkout is already in progress. Finish it or try again in a few minutes.",
       "checkoutPendingNote": "Your installation payment is in progress. If you closed the checkout page, try again below.",
       "checkoutError": "Checkout could not be started. Please try again or contact support.",
+      "requestsLimited": "Too many attempts. Please wait {seconds} seconds and try again.",
+      "requestsBlocked": "This request was blocked. Please contact support if it keeps happening.",
       "usageHeadline": "Usage this month",
       "usageSms": "SMS: {used} of {allowance} segments used",
       "usageVoice": "AI voice: {used} of {allowance} minutes used",
@@ -4260,7 +4262,8 @@
       "churnedStatus": "Cancelled",
       "open": "Open",
       "supportLink": "Support desk",
-      "navReferrals": "Referrals"
+      "navReferrals": "Referrals",
+      "navAccountRecovery": "Account recovery"
     }
   },
   "plans": {
@@ -4647,7 +4650,29 @@
     "devLinkCta": "Choose a new password",
     "errorGeneric": "Something went wrong. Try again.",
     "rateLimited": "Too many requests. Try again in a few minutes.",
-    "back": "Back to sign in"
+    "back": "Back to sign in",
+    "lostEmail": "Can't open that email anymore?",
+    "lostEmailCta": "Ask support to recover your account"
+  },
+  "accountRecovery": {
+    "eyebrow": "Account Center",
+    "headline": "Recover your account",
+    "intro": "Use this form only if you can no longer open the email address on your TradeCatch account. If you can still read that email, use Forgot your password instead: it is faster.",
+    "accountEmail": "Email on your TradeCatch account",
+    "contactEmail": "Email where we can reach you now",
+    "contactName": "Your name",
+    "businessName": "Business name",
+    "phone": "Phone number (optional)",
+    "details": "What happened? (for example: the email account was closed)",
+    "howItWorks": "Our team will contact you and verify your identity using the details we already have on file (for example by calling the business phone number on your account) before changing anything. Your business data, appointments, settings and subscription stay exactly as they are. We will never ask for your password.",
+    "submit": "Send recovery request",
+    "sending": "Sending…",
+    "sent": "Thank you. If the details match an account, our team will contact you to verify your identity. Nothing changes on the account until that is done.",
+    "back": "Back to sign in",
+    "stillHaveEmail": "I can still open my account email",
+    "rateLimited": "Too many requests. Try again later or email contact@tradecatch.ca.",
+    "invalid": "Check the fields: both emails must be valid and the description needs at least 10 characters.",
+    "errorGeneric": "Something went wrong. Try again, or email contact@tradecatch.ca."
   },
   "setPassword": {
     "eyebrow": "Account Center",

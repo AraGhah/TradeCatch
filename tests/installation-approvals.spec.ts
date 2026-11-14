@@ -112,7 +112,8 @@ for (const locale of ["en", "fr"] as const) {
         exact: true,
       })
       .click();
-    await expect(page).toHaveURL(/\/app\/?$/);
+    // A platform administrator lands on the admin area, where the MFA gate takes over.
+    await expect(page).toHaveURL(/\/admin\/?$/);
     expect((await page.request.get(endpoint)).status()).toBe(403);
     const me = await (await page.request.get("/api/app/me")).json();
     const mfa = `/api/businesses/${me.organization.id}/security/mfa`;

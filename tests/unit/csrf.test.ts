@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import proxy from "../../src/proxy";
 import { AUTH_COOKIE_NAMES, carriesAuthCookie, isCrossSiteMutation } from "../../src/lib/csrf";
 import { ADMIN_JWT_COOKIE } from "../../src/product/saas/auth/admin-jwt";
-import { SESSION_COOKIE } from "../../src/product/saas/auth/session-token";
+import { REFRESH_COOKIE, SESSION_COOKIE } from "../../src/product/saas/auth/session-token";
 
 const HOSTS = ["app.tradecatch.test", null, undefined];
 const SESSION = "tc_session=abc.def";
@@ -15,7 +15,7 @@ function check(method: string, headers: Record<string, string>) {
 
 describe("csrf guard decisions", () => {
   it("knows which cookies are ours, and they match the real cookie names", () => {
-    assert.deepEqual([...AUTH_COOKIE_NAMES].sort(), [ADMIN_JWT_COOKIE, SESSION_COOKIE].sort());
+    assert.deepEqual([...AUTH_COOKIE_NAMES].sort(), [ADMIN_JWT_COOKIE, REFRESH_COOKIE, SESSION_COOKIE].sort());
     assert.equal(carriesAuthCookie(null), false);
     assert.equal(carriesAuthCookie("theme=dark; NEXT_LOCALE=fr"), false);
     assert.equal(carriesAuthCookie("theme=dark; tc_session=x"), true);

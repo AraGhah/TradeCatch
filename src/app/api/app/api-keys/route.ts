@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { z } from "zod";
 import {
   forbiddenFeatureResponse,
@@ -34,11 +34,8 @@ export async function POST(request: NextRequest) {
     auth.ctx.isPlatformAdmin,
   );
   if (denied) return denied;
-  const limited = await enforceRateLimit({
-    scope: "api-key-create",
+  const limited = await enforcePolicy("sensitive.api-key-create", {
     subject: `${auth.ctx.organization.id}:${auth.ctx.user.id}`,
-    limit: 10,
-    windowMs: 60 * 60_000,
   });
   if (limited) return limited;
 

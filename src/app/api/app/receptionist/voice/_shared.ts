@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
+import type { PolicyId } from "@/lib/rate-limit-policy";
 import type { VoiceError } from "@/product/receptionist/custom-voice/model";
 import type { VoiceActor } from "@/product/receptionist/custom-voice/service";
 import {
@@ -74,17 +75,9 @@ export async function requireVoiceActor(): Promise<
   };
 }
 
-/** Spends one request from this user's budget for `scope`; a 429 response when it is used up. */
-export function limitVoice(
-  actor: VoiceActor,
-  scope: string,
-  limit: number,
-  windowMs: number,
-) {
-  return enforceRateLimit({
-    scope,
+/** Spends one request from this user's budget for `policy`; a 429 response when it is used up. */
+export function limitVoice(actor: VoiceActor, policy: PolicyId) {
+  return enforcePolicy(policy, {
     subject: `${actor.organizationId}:${actor.userId}`,
-    limit,
-    windowMs,
   });
 }

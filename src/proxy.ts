@@ -2,10 +2,11 @@ import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { isCrossSiteMutation } from "./lib/csrf";
+import { enforceCentralLimit } from "./lib/rate-limit-central";
 import { contentLengthExceeds } from "./lib/request-body";
 import { routing } from "./i18n/routing";
 import { enforceStagingAccess } from "./lib/staging-middleware";
-import { signedOutLoginPath } from "./product/saas/auth/return-path";
+import { renewalRedirectPath } from "./product/saas/auth/return-path";
 import { SESSION_COOKIE } from "./product/saas/auth/session-token";
 
 const handleI18n = createMiddleware(routing);
@@ -52,7 +53,7 @@ function acceptedHosts(request: NextRequest): Array<string | null> {
  * rewrites as 307 self-redirects (vercel/next.js#94745). Prefer the default
  * hostname (`localhost`) or omit `--hostname`.
  */
-export default function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const stagingGate = enforceStagingAccess(request);
   if (stagingGate) return stagingGate;
 
@@ -72,24 +73,36 @@ export default function proxy(request: NextRequest) {
     ) {
       return NextResponse.json({ error: "Payload too large." }, { status: 413 });
     }
+    // After the checks that cost nothing, so a blocked cross-site request
+    // cannot spend the visitor's budget. See src/lib/rate-limit-central.ts.
+    const limited = await enforceCentralLimit(request);
+    if (limited) return limited;
     return NextResponse.next();
   }
   if (path === "/health" || path === "/ready") {
     return NextResponse.next();
   }
 
-  // A signed-out visitor opening a specific workspace page (for example the
-  // referral page from "Get your link") goes to sign in and then comes back to
-  // it. A session cookie that exists but is no longer valid is still handled
-  // by the workspace layout, which sends them to the plain login page.
-  if (!request.cookies.has(SESSION_COOKIE)) {
-    const login = signedOutLoginPath(path, request.nextUrl.search);
-    if (login) {
+  // Signed-in pages without a fresh access token: renew it first. A visitor
+  // who is not signed in at all ends up on the login page, carrying the page
+  // they asked for (for example the referral page from "Get your link") so
+  // signing in brings them back to it. A token that looks fresh but is not
+  // valid is still refused by the page layout, which sends them to log in.
+  if (request.method === "GET" || request.method === "HEAD") {
+    const renew = renewalRedirectPath(
+      path,
+      request.nextUrl.search,
+      request.cookies.get(SESSION_COOKIE)?.value,
+    );
+    if (renew) {
       const target = request.nextUrl.clone();
-      const [loginPath, loginQuery] = login.split("?");
-      target.pathname = loginPath;
-      target.search = `?${loginQuery}`;
-      return NextResponse.redirect(target);
+      const [renewPath, renewQuery] = renew.split("?");
+      target.pathname = renewPath!;
+      target.search = renewQuery ? `?${renewQuery}` : "";
+      return NextResponse.redirect(target, {
+        status: 307,
+        headers: { "Cache-Control": "no-store, private" },
+      });
     }
   }
 

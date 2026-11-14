@@ -26,6 +26,7 @@ const GROUPS = [
   {
     items: [
       { href: "/admin/support", key: "navSupport" },
+      { href: "/admin/account-recovery", key: "navAccountRecovery" },
       { href: "/admin/qa", key: "navQa" },
       { href: "/admin/launch", key: "navLaunch" },
       { href: "/admin/pilots", key: "navPilots" },

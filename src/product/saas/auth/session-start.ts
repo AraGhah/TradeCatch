@@ -1,18 +1,26 @@
 import { canManageBilling } from "../billing-access";
 import { newId } from "../ids";
+import { isPlatformAdminUser } from "../platform-admin";
 import { getSaasStore } from "../runtime";
-import { getAuthSecret } from "./secret";
 import type { User } from "../types";
-import { SESSION_TTL_SECONDS, signSessionClaims } from "./session-token";
+import { issueSessionTokens, type SessionTokens } from "./refresh-token";
+import { getAuthSecret } from "./secret";
+import { SESSION_TTL_SECONDS } from "./session-token";
 
 export type StartedSession =
   | {
       ok: true;
+      /** The access token (JWT) for the `tc_session` cookie. */
       cookieValue: string;
-      user: User;
+      /** Seconds the access cookie should live. */
       maxAge: number;
+      tokens: SessionTokens;
+      sessionId: string;
+      user: User;
       /** The business is not active: the person may only reach billing. */
       billingOnly: boolean;
+      /** On the administrator list: lands on the admin dashboard (which still asks for MFA). */
+      isPlatformAdmin: boolean;
     }
   | { ok: false; error: string };
 
@@ -58,34 +66,32 @@ export async function startSessionForUser(input: {
     return { ok: false, error: "Organization unavailable." };
   }
 
-  const expiresAt = new Date(now.getTime() + SESSION_TTL_SECONDS * 1000);
-  const sessionId = newId("ses");
-  await store.createSession({
-    id: sessionId,
+  const session = {
+    id: newId("ses"),
     userId: user.id,
     organizationId: organization.id,
-    expiresAt: expiresAt.toISOString(),
+    expiresAt: new Date(now.getTime() + SESSION_TTL_SECONDS * 1000).toISOString(),
     createdAt: now.toISOString(),
-    userAgent: input.userAgent,
+    userAgent: input.userAgent?.slice(0, 300),
     ip: input.ip,
-  });
+  };
+  await store.createSession(session);
 
-  const cookieValue = await signSessionClaims(
-    {
-      sid: sessionId,
-      uid: user.id,
-      oid: organization.id,
-      plan: organization.plan,
-      exp: Math.floor(expiresAt.getTime() / 1000),
-    },
+  const tokens = await issueSessionTokens({
+    session,
+    plan: organization.plan,
     secret,
-  );
+    nowMs: now.getTime(),
+  });
 
   return {
     ok: true,
-    cookieValue,
+    cookieValue: tokens.accessToken,
+    maxAge: tokens.accessMaxAge,
+    tokens,
+    sessionId: session.id,
     billingOnly,
+    isPlatformAdmin: isPlatformAdminUser(user),
     user,
-    maxAge: SESSION_TTL_SECONDS,
   };
 }

@@ -38,7 +38,7 @@ let existingCustomerId: string | undefined;
 let stripeEvents: Set<string>;
 let customers: { organization_id: string; customer_id: string; livemode: boolean }[];
 let deferral: { billing_start_at: string } | undefined;
-let requests: { path: string; method: string; body?: string }[];
+let requests: { path: string; method: string; body?: string; idempotencyKey?: string | null }[];
 let subscriptionAlreadyExists: boolean;
 let fetchOverride: ((path: string) => Response | null) | null;
 
@@ -189,7 +189,12 @@ beforeEach(() => {
     async (input: string | URL | Request, init?: RequestInit) => {
       const url = new URL(String(input));
       const path = url.pathname.replace(/^\/v1\//, "");
-      requests.push({ path, method: init?.method || "GET", body: init?.body ? String(init.body) : undefined });
+      requests.push({
+        path,
+        method: init?.method || "GET",
+        body: init?.body ? String(init.body) : undefined,
+        idempotencyKey: new Headers(init?.headers).get("idempotency-key"),
+      });
       const override = fetchOverride?.(path);
       if (override) return override;
       if (path === "checkout/sessions") {
@@ -271,6 +276,34 @@ describe("createInstallationCheckoutSession", () => {
       () => createInstallationCheckoutSession({ id: "org_1", plan: "starter", accountType: "demo" }),
       (err: unknown) => err instanceof CheckoutError && err.code === "already_pending",
     );
+  });
+
+  it("creates exactly one Stripe session when 20 requests arrive together (a double click, a retry storm)", async () => {
+    const results = await Promise.allSettled(
+      Array.from({ length: 20 }, () =>
+        createInstallationCheckoutSession({ id: "org_1", plan: "starter", accountType: "demo" }),
+      ),
+    );
+    assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
+    const refused = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+    assert.equal(refused.length, 19);
+    assert.ok(
+      refused.every((r) => r.reason instanceof CheckoutError && r.reason.code === "already_pending"),
+      "everyone else is told a checkout is already open, not charged or errored",
+    );
+    assert.equal(
+      requests.filter((r) => r.path === "checkout/sessions").length,
+      1,
+      "Stripe was asked for one session",
+    );
+    assert.equal(checkouts.filter((c) => c.status === "pending").length, 1);
+  });
+
+  it("gives Stripe an idempotency key for the session, so a repeated call to Stripe cannot charge twice", async () => {
+    await createInstallationCheckoutSession({ id: "org_1", plan: "starter", accountType: "demo" });
+    const call = requests.find((r) => r.path === "checkout/sessions");
+    assert.ok(call?.idempotencyKey, "the Idempotency-Key header is sent");
+    assert.equal(call.idempotencyKey, checkouts[0].id, "it is tied to this checkout's own database claim");
   });
 
   it("releases a checkout abandoned more than 24h ago and allows a retry", async () => {

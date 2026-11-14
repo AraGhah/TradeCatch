@@ -2,6 +2,7 @@ import { hashToken, newId, randomToken } from "../ids";
 import { getSaasStore } from "../runtime";
 import { normalizeEmail } from "../store";
 import type { PasswordToken, User } from "../types";
+import { runAfterResponse } from "@/lib/after-response";
 import { devTokenAllowed, sendAuthEmail } from "./mailer";
 import {
   checkPasswordStrength,
@@ -11,6 +12,7 @@ import {
   verifyPassword,
   type PasswordProblem,
 } from "./password";
+import { sendPasswordChangedEmail } from "./security-emails";
 import { startSessionForUser, type StartedSession } from "./session-start";
 
 type Locale = "en" | "fr";
@@ -173,15 +175,21 @@ async function sendLegacyActivationLink(input: {
   origin: string;
   organizationId: string;
   organizationName: string;
+  ttlMs?: number;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const rawToken = randomToken(32);
   const now = new Date();
+  const ttlMs = input.ttlMs ?? ACTIVATION_TTL_MS;
+  const validFor =
+    ttlMs === ACTIVATION_TTL_MS
+      ? { en: "7 days", fr: "7 jours" }
+      : { en: `${Math.round(ttlMs / 60_000)} minutes`, fr: `${Math.round(ttlMs / 60_000)} minutes` };
   await getSaasStore().createMagicLink({
     id: newId("mlk"),
     email: input.email,
     tokenHash: hashToken(rawToken),
     organizationId: input.organizationId,
-    expiresAt: new Date(now.getTime() + ACTIVATION_TTL_MS).toISOString(),
+    expiresAt: new Date(now.getTime() + ttlMs).toISOString(),
     createdAt: now.toISOString(),
   });
   const url = `${input.origin.replace(/\/$/, "")}/api/auth/callback?token=${encodeURIComponent(rawToken)}&locale=${input.locale}`;
@@ -198,14 +206,14 @@ async function sendLegacyActivationLink(input: {
 Votre compte TradeCatch pour ${input.organizationName} est prêt. Cliquez sur le lien pour l’activer et vous connecter :
 ${url}
 
-Le lien ne sert qu’une fois et expire dans 7 jours.
+Le lien ne sert qu’une fois et expire dans ${validFor.fr}.
 `
         : `Hi,
 
 Your TradeCatch account for ${input.organizationName} is ready. Click the link to activate it and sign in:
 ${url}
 
-The link works once and expires in 7 days.
+The link works once and expires in ${validFor.en}.
 `,
   });
 }
@@ -213,6 +221,11 @@ The link works once and expires in 7 days.
 /**
  * Sends a password reset link. The answer is the same whether or not the email
  * belongs to an account, and an unknown email never creates anything.
+ *
+ * In production the account lookup, the link and the email all happen after
+ * the answer has been sent, so the response time does not reveal whether the
+ * address has an account either. Only a local or test run (where the link is
+ * handed back instead of emailed) does the work before answering.
  */
 export async function requestPasswordReset(input: {
   email: string;
@@ -230,13 +243,54 @@ export async function requestPasswordReset(input: {
   }
   await limiter.note(key);
 
+  if (!devTokenAllowed(false)) {
+    await runAfterResponse(async () => {
+      await deliverPasswordReset(email, input, limiter);
+    });
+    return { ok: true };
+  }
+  const devToken = await deliverPasswordReset(email, input, limiter);
+  return { ok: true, ...(devToken ? { devToken } : {}) };
+}
+
+/** Looks the account up and emails the link. Returns the raw token only where a dev token is allowed. */
+async function deliverPasswordReset(
+  email: string,
+  input: { locale: Locale; origin: string },
+  limiter: Throttle,
+): Promise<string | undefined> {
   const store = getSaasStore();
   const user = await store.getUserByEmail(email);
-  if (!user) return { ok: true };
+  if (!user) return undefined;
   const home = await firstOrganization(user.id);
-  if (!home) return { ok: true };
+  if (!home) return undefined;
 
-  const rawToken = await issuePasswordToken({ userId: user.id, kind: "reset" });
+  let rawToken: string;
+  try {
+    rawToken = await issuePasswordToken({ userId: user.id, kind: "reset" });
+  } catch (error) {
+    // Password storage (migration 037) is not in the database yet. Never
+    // leave a locked-out customer with a silent "email sent": send them a
+    // single-use sign-in link instead, the way invitations already do.
+    console.error("[saas-auth] password tokens unavailable, sending a sign-in link", {
+      error: error instanceof Error ? error.message : "unknown",
+    });
+    await sendLegacyActivationLink({
+      email,
+      locale: input.locale,
+      origin: input.origin,
+      organizationId: home.organization.id,
+      organizationName: home.organization.name,
+      ttlMs: RESET_TTL_MS,
+    });
+    await limiter.audit({
+      organizationId: home.organization.id,
+      actorUserId: user.id,
+      action: "password_reset_sign_in_link_fallback",
+    });
+    return undefined;
+  }
+
   const url = setPasswordUrl(input.origin, input.locale, rawToken);
   const sent = await sendAuthEmail({
     to: email,
@@ -264,7 +318,7 @@ The link works once and expires in 30 minutes. If you did not ask for this, igno
   await limiter.audit({
     organizationId: home.organization.id,
     actorUserId: user.id,
-    action: "password_reset_requested",
+    action: sent.ok ? "password_reset_requested" : "password_reset_email_failed",
   });
 
   const allowDev = devTokenAllowed(sent.ok);
@@ -273,7 +327,7 @@ The link works once and expires in 30 minutes. If you did not ask for this, igno
       error: sent.error || "send failed",
     });
   }
-  return { ok: true, ...(allowDev ? { devToken: rawToken } : {}) };
+  return allowDev ? rawToken : undefined;
 }
 
 export type CompletePasswordResult =
@@ -335,6 +389,9 @@ export async function completePassword(input: {
     actorUserId: user.id,
     action: consumed.kind === "activation" ? "account_activated" : "password_reset",
   });
+  if (consumed.kind === "reset") {
+    await notifyPasswordChanged(user, limiter, home?.organization.id);
+  }
 
   const started = await startSessionForUser({
     user,
@@ -342,6 +399,27 @@ export async function completePassword(input: {
     ip: input.ip,
   });
   return { ok: true, session: started.ok ? started : null };
+}
+
+/** Emails the account owner that the password changed (after the answer is sent). */
+async function notifyPasswordChanged(
+  user: User,
+  limiter: Throttle,
+  organizationId?: string,
+) {
+  await runAfterResponse(async () => {
+    const sent = await sendPasswordChangedEmail({ to: user.email, locale: user.locale });
+    if (!sent.ok) {
+      console.error("[saas-auth] password change notice not sent", {
+        error: sent.error || "send failed",
+      });
+    }
+    await limiter.audit({
+      organizationId,
+      actorUserId: user.id,
+      action: sent.ok ? "password_change_notice_sent" : "password_change_notice_failed",
+    });
+  });
 }
 
 export type PasswordLoginResult =
@@ -464,6 +542,7 @@ export async function changePassword(input: {
     actorUserId: input.user.id,
     action: "password_changed",
   });
+  await notifyPasswordChanged(input.user, limiter);
   return { ok: true };
 }
 

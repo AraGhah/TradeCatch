@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { enforceRateLimit } from "@/lib/rate-limit-response";
+import { enforcePolicy } from "@/lib/rate-limit-response";
 import { referralUrl } from "@/product/referrals/links";
 import { logReferralFailure } from "@/product/referrals/log";
 import { getReferralServiceReady } from "@/product/referrals/runtime";
@@ -80,11 +80,8 @@ export async function POST() {
   const caller = await authorize();
   if (caller.response) return caller.response;
 
-  const limited = await enforceRateLimit({
-    scope: "referral-link",
+  const limited = await enforcePolicy("sensitive.referral-link", {
     subject: `${caller.organization.id}:${caller.user.id}`,
-    limit: 20,
-    windowMs: 10 * 60 * 1000,
   });
   if (limited) return limited;
 

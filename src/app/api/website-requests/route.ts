@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readJsonBody } from "@/lib/request-body";
-import { rateLimitAsync, getClientIp } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import { verifyTurnstileToken } from "@/lib/turnstile";
 import {
   getProductionConfigErrors,
@@ -41,15 +43,11 @@ export async function POST(request: NextRequest) {
   }
 
   const ip = getClientIp(request);
-  const unknownIp = ip === "unknown" || ip.startsWith("unknown:");
-
-  const { allowed } = await rateLimitAsync({
-    key: `website-request:${ip}`,
-    limit: unknownIp ? 2 : 5,
-    windowMs: 10 * 60 * 1000,
-  });
-  if (!allowed) {
-    return jsonError("Too many requests. Please try again later.", 429);
+  const budget = await consumePolicy("public.website-request", { ip });
+  if (!budget.allowed) {
+    return tooManyRequests(budget, {
+      error: "Too many requests. Please try again later.",
+    });
   }
 
   const read = await readJsonBody(request, 16_384);

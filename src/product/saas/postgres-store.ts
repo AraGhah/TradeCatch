@@ -10,7 +10,9 @@ import {
 import { normalizeEmail, type SaasStore } from "./store";
 import {
   mergeBusinessFeatures,
+  type AccountRecoveryRequest,
   type MagicLink,
+  type RefreshToken,
   type PasswordToken,
   type Membership,
   type Session,
@@ -31,6 +33,92 @@ function mapMembership(row: MemRow): Membership {
     userId: row.user_id,
     role: row.role as Membership["role"],
     createdAt: row.created_at.toISOString(),
+  };
+}
+
+type RefreshTokenRow = {
+  id: string;
+  session_id: string;
+  user_id: string;
+  token_hash: string;
+  expires_at: Date;
+  created_at: Date;
+  rotated_at: Date | null;
+};
+
+function mapRefreshToken(row: RefreshTokenRow): RefreshToken {
+  return {
+    id: row.id,
+    sessionId: row.session_id,
+    userId: row.user_id,
+    tokenHash: row.token_hash,
+    expiresAt: row.expires_at.toISOString(),
+    createdAt: row.created_at.toISOString(),
+    rotatedAt: row.rotated_at?.toISOString(),
+  };
+}
+
+type RecoveryRow = {
+  id: string;
+  status: string;
+  account_email: string;
+  contact_email: string;
+  contact_name: string;
+  business_name: string;
+  phone: string | null;
+  details: string;
+  locale: string;
+  user_id: string | null;
+  verified_by: string | null;
+  verified_at: Date | null;
+  verification_method: string | null;
+  verification_notes: string | null;
+  resolved_by: string | null;
+  resolved_at: Date | null;
+  resolution_notes: string | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+const RECOVERY_STATUSES = ["open", "verified", "completed", "rejected"] as const;
+
+/** The only fields an update may touch, mapped to fixed column names (never user input). */
+const RECOVERY_COLUMNS: Record<string, string> = {
+  status: "status",
+  userId: "user_id",
+  verifiedBy: "verified_by",
+  verifiedAt: "verified_at",
+  verificationMethod: "verification_method",
+  verificationNotes: "verification_notes",
+  resolvedBy: "resolved_by",
+  resolvedAt: "resolved_at",
+  resolutionNotes: "resolution_notes",
+  updatedAt: "updated_at",
+};
+
+function mapRecovery(row: RecoveryRow): AccountRecoveryRequest {
+  return {
+    id: row.id,
+    status: (RECOVERY_STATUSES as readonly string[]).includes(row.status)
+      ? (row.status as AccountRecoveryRequest["status"])
+      : "open",
+    accountEmail: row.account_email,
+    contactEmail: row.contact_email,
+    contactName: row.contact_name,
+    businessName: row.business_name,
+    phone: row.phone ?? undefined,
+    details: row.details,
+    locale: row.locale === "fr" ? "fr" : "en",
+    userId: row.user_id ?? undefined,
+    verifiedBy: row.verified_by ?? undefined,
+    verifiedAt: row.verified_at?.toISOString(),
+    verificationMethod: row.verification_method ?? undefined,
+    verificationNotes: row.verification_notes ?? undefined,
+    resolvedBy: row.resolved_by ?? undefined,
+    resolvedAt: row.resolved_at?.toISOString(),
+    resolutionNotes: row.resolution_notes ?? undefined,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
   };
 }
 
@@ -341,6 +429,26 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
       return rows.map(mapUserRow);
     },
 
+    async updateUserEmail(userId, email) {
+      try {
+        const { rows } = await query<UserRow>(
+          `UPDATE tc_users
+           SET email = $2, updated_at = now()
+           WHERE id = $1
+           RETURNING *`,
+          [userId, normalizeEmail(email)],
+        );
+        return rows[0]
+          ? { ok: true as const, user: mapUserRow(rows[0]) }
+          : { ok: false as const, error: "not_found" as const };
+      } catch (error) {
+        if ((error as { code?: string }).code === "23505") {
+          return { ok: false as const, error: "email_taken" as const };
+        }
+        throw error;
+      }
+    },
+
     async setUserPlatformRole(userId, role) {
       const { rows } = await query<UserRow>(
         `UPDATE tc_users
@@ -570,6 +678,10 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
       );
     },
 
+    async deletePasswordCredential(userId) {
+      await query(`DELETE FROM tc_user_passwords WHERE user_id = $1`, [userId]);
+    },
+
     async createPasswordToken(token) {
       await query(
         `INSERT INTO tc_password_tokens
@@ -651,6 +763,102 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
          WHERE user_id = $1 AND consumed_at IS NULL`,
         [userId, at],
       );
+    },
+
+    async createRefreshToken(token) {
+      await query(
+        `INSERT INTO tc_refresh_tokens
+           (id, session_id, user_id, token_hash, expires_at, created_at, rotated_at)
+         VALUES ($1, $2, $3, $4, $5::timestamptz, $6::timestamptz, $7::timestamptz)`,
+        [
+          token.id,
+          token.sessionId,
+          token.userId,
+          token.tokenHash,
+          token.expiresAt,
+          token.createdAt,
+          token.rotatedAt ?? null,
+        ],
+      );
+    },
+
+    async findRefreshToken(tokenHash) {
+      const { rows } = await query<RefreshTokenRow>(
+        `SELECT * FROM tc_refresh_tokens WHERE token_hash = $1`,
+        [tokenHash],
+      );
+      return rows[0] ? mapRefreshToken(rows[0]) : null;
+    },
+
+    async rotateRefreshToken(tokenHash, atIso) {
+      const { rows } = await query<RefreshTokenRow>(
+        `UPDATE tc_refresh_tokens
+         SET rotated_at = $2::timestamptz
+         WHERE token_hash = $1 AND rotated_at IS NULL
+         RETURNING *`,
+        [tokenHash, atIso],
+      );
+      return rows[0] ? mapRefreshToken(rows[0]) : null;
+    },
+
+    async createRecoveryRequest(request) {
+      await query(
+        `INSERT INTO tc_account_recovery_requests
+           (id, status, account_email, contact_email, contact_name, business_name,
+            phone, details, locale, user_id, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::timestamptz, $12::timestamptz)`,
+        [
+          request.id,
+          request.status,
+          request.accountEmail,
+          request.contactEmail,
+          request.contactName,
+          request.businessName,
+          request.phone ?? null,
+          request.details,
+          request.locale,
+          request.userId ?? null,
+          request.createdAt,
+          request.updatedAt,
+        ],
+      );
+    },
+
+    async getRecoveryRequest(id) {
+      const { rows } = await query<RecoveryRow>(
+        `SELECT * FROM tc_account_recovery_requests WHERE id = $1`,
+        [id],
+      );
+      return rows[0] ? mapRecovery(rows[0]) : null;
+    },
+
+    async listRecoveryRequests() {
+      const { rows } = await query<RecoveryRow>(
+        `SELECT * FROM tc_account_recovery_requests
+         ORDER BY created_at DESC
+         LIMIT 200`,
+      );
+      return rows.map(mapRecovery);
+    },
+
+    async updateRecoveryRequest(id, expected, patch) {
+      const sets: string[] = [];
+      const params: unknown[] = [id, expected];
+      for (const [key, value] of Object.entries(patch)) {
+        const column = RECOVERY_COLUMNS[key];
+        if (!column || value === undefined) continue;
+        params.push(value);
+        sets.push(`${column} = $${params.length}`);
+      }
+      if (sets.length === 0) return null;
+      const { rows } = await query<RecoveryRow>(
+        `UPDATE tc_account_recovery_requests
+         SET ${sets.join(", ")}
+         WHERE id = $1 AND status = $2
+         RETURNING *`,
+        params,
+      );
+      return rows[0] ? mapRecovery(rows[0]) : null;
     },
 
     async claimDemoIdempotencyKey(key, organizationId) {

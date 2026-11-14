@@ -1,12 +1,15 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { getClientIp, rateLimitAsync } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/rate-limit";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import { tooManyRequests } from "@/lib/rate-limit-response";
 import { readJsonBody } from "@/lib/request-body";
 import { completePassword } from "@/product/saas/auth/password-auth";
 import {
   authJson,
   localePath,
   signedInResponse,
+  NO_STORE,
 } from "@/product/saas/auth/route-helpers";
 
 export const dynamic = "force-dynamic";
@@ -21,12 +24,9 @@ const bodySchema = z
 
 export async function POST(request: NextRequest) {
   const ip = getClientIp(request);
-  const budget = await rateLimitAsync({
-    key: `auth-set-password:${ip}`,
-    limit: ip.startsWith("unknown") ? 200 : 20,
-    windowMs: 15 * 60 * 1000,
-  });
-  if (!budget.allowed) return authJson({ error: "rate_limited" }, 429);
+  const budget = await consumePolicy("auth.set-password", { ip });
+  if (!budget.allowed)
+    return tooManyRequests(budget, { error: "rate_limited" }, NO_STORE);
 
   const read = await readJsonBody(request, 4_096);
   if (!read.ok) return authJson({ error: read.error }, read.status);
