@@ -34,7 +34,8 @@ test("platform sales dashboard requires MFA and an admin token, renders safely, 
   await page
     .getByRole("button", { name: "Confirm and sign in", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/app\/?$/);
+  // A platform administrator lands on the admin area, where the MFA gate takes over.
+  await expect(page).toHaveURL(/\/admin\/?$/);
   expect((await page.request.get("/api/admin/sales-leads")).status()).toBe(403);
   const me = await (await page.request.get("/api/app/me")).json();
   const endpoint = `/api/businesses/${me.organization.id}/security/mfa`;

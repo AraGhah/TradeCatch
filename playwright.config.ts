@@ -66,7 +66,7 @@ export default defineConfig({
       SAAS_DEV_LOGIN: "1",
       // Synthetic platform identity for exercising real admin MFA/session gates.
       TRADECATCH_ADMIN_EMAILS:
-        "sales-admin@example.test,installation-admin-en@example.test,installation-admin-fr@example.test",
+        "sales-admin@example.test,installation-admin-en@example.test,installation-admin-fr@example.test,auth-session-admin@example.test",
       // Never inherit a future production enforcement rollout into this harness.
       INSTALLATION_ENFORCEMENT: "off",
       INSTALLATION_CREDENTIAL: "",
