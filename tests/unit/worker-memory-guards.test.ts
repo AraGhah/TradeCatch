@@ -143,7 +143,7 @@ describe("guardWorkerFetch", () => {
     const response = await guardWorkerFetch(
       new Request("https://tradecatch.test/api/health", { method: "POST" }),
       async () => {
-        throw new Error("connect failed postgres://app:hunter2@db.example:5432/x");
+        throw new Error("connect failed postgres://app:hunter2@db.example:5432/x"); // secret-scan: allow — deliberate redaction fixture
       },
     );
     assert.equal(response.status, 503);
