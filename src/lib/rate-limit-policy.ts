@@ -105,6 +105,20 @@ export const POLICIES = {
     per: "user",
     why: "Guessing the current password from a stolen session.",
   },
+  "auth.refresh": {
+    ...perWindow(60, 10 * MIN),
+    unknown: perWindow(600, 10 * MIN),
+    group: "auth",
+    per: "ip",
+    why: "Guessing refresh tokens. A signed-in tab renews about every 14 minutes.",
+  },
+  "auth.account-recovery": {
+    ...perWindow(3, HOUR),
+    unknown: perWindow(30, HOUR),
+    group: "auth",
+    per: "ip",
+    why: "Support recovery requests from people locked out of their email.",
+  },
   "auth.mfa": {
     ...perWindow(20, 15 * MIN),
     group: "auth",
@@ -218,6 +232,12 @@ export const POLICIES = {
     group: "admin",
     per: "user",
     why: "Installation approvals.",
+  },
+  "admin.account-recovery": {
+    ...perWindow(30, 10 * MIN),
+    group: "admin",
+    per: "user",
+    why: "Identity verification and account email changes by an administrator.",
   },
   "admin.referrals": {
     ...perWindow(60, MIN),

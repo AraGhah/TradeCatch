@@ -66,6 +66,8 @@ Which route uses which policy is found by searching the policy id, for example `
 | `auth.set-password` | 20 | 1 per 45 s | ip | 200, 1 per 4.5 s | Guessing reset tokens. |
 | `auth.callback` | 60 | 1 per 10 s | ip | 600, 1 per 1 s | Guessing magic-link tokens. |
 | `auth.change-password` | 20 | 1 per 45 s | user | same | Guessing the current password from a stolen session. |
+| `auth.refresh` | 60 | 1 per 10 s | ip | 600, 1 per 1 s | Guessing refresh tokens. A signed-in tab renews about every 14 minutes. |
+| `auth.account-recovery` | 3 | 1 per 20 min | ip | 30, 1 per 2 min | Support recovery requests from people locked out of their email. |
 | `auth.mfa` | 20 | 1 per 45 s | other | same | Guessing the second factor (user and address). |
 
 ### sms
@@ -105,6 +107,7 @@ Both SMS buckets are checked inside the one adapter every text goes through ([sr
 | Policy | Burst | Refill | Shared by | Shared unknown address | Protects |
 | --- | --- | --- | --- | --- | --- |
 | `admin.installations` | 30 | 1 per 2 s | user | same | Installation approvals. |
+| `admin.account-recovery` | 30 | 1 per 20 s | user | same | Identity verification and account email changes by an administrator. |
 | `admin.referrals` | 60 | 1 per 1 s | user | same | Referral reward administration. |
 
 ### public
