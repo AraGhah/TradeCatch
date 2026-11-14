@@ -3,11 +3,13 @@ import { newId, slugify } from "./ids";
 import { normalizeEmail, type SaasStore } from "./store";
 import {
   mergeBusinessFeatures,
+  type AccountRecoveryRequest,
   type MagicLink,
   type PasswordCredential,
   type PasswordToken,
   type Membership,
   type Organization,
+  type RefreshToken,
   type Session,
   type User,
 } from "./types";
@@ -27,6 +29,8 @@ export function createMemorySaasStore(): SaasStore {
   const sessions = new Map<string, Session>();
   const passwords = new Map<string, PasswordCredential>();
   const passwordTokens = new Map<string, PasswordToken>();
+  const refreshTokens = new Map<string, RefreshToken>();
+  const recoveryRequests = new Map<string, AccountRecoveryRequest>();
   const demoIdempotency = new Map<string, string>();
 
   return {
@@ -191,6 +195,19 @@ export function createMemorySaasStore(): SaasStore {
       return found;
     },
 
+    async updateUserEmail(userId, email) {
+      const user = users.get(userId);
+      if (!user) return { ok: false, error: "not_found" };
+      const next = normalizeEmail(email);
+      const owner = usersByEmail.get(next);
+      if (owner && owner !== userId) return { ok: false, error: "email_taken" };
+      usersByEmail.delete(normalizeEmail(user.email));
+      usersByEmail.set(next, userId);
+      const updated = { ...user, email: next, updatedAt: nowIso() };
+      users.set(userId, updated);
+      return { ok: true, user: updated };
+    },
+
     async setUserPlatformRole(userId, role) {
       const user = users.get(userId);
       if (!user) return null;
@@ -294,6 +311,10 @@ export function createMemorySaasStore(): SaasStore {
       passwords.set(credential.userId, { ...credential });
     },
 
+    async deletePasswordCredential(userId) {
+      passwords.delete(userId);
+    },
+
     async createPasswordToken(token) {
       passwordTokens.set(token.tokenHash, { ...token });
     },
@@ -318,6 +339,46 @@ export function createMemorySaasStore(): SaasStore {
           passwordTokens.set(hash, { ...token, consumedAt: at });
         }
       }
+    },
+
+    async createRefreshToken(token) {
+      refreshTokens.set(token.tokenHash, { ...token });
+    },
+
+    async findRefreshToken(tokenHash) {
+      const token = refreshTokens.get(tokenHash);
+      return token ? { ...token } : null;
+    },
+
+    async rotateRefreshToken(tokenHash, atIso) {
+      const token = refreshTokens.get(tokenHash);
+      if (!token || token.rotatedAt) return null;
+      const rotated = { ...token, rotatedAt: atIso };
+      refreshTokens.set(tokenHash, rotated);
+      return { ...rotated };
+    },
+
+    async createRecoveryRequest(request) {
+      recoveryRequests.set(request.id, { ...request });
+    },
+
+    async getRecoveryRequest(id) {
+      const found = recoveryRequests.get(id);
+      return found ? { ...found } : null;
+    },
+
+    async listRecoveryRequests() {
+      return [...recoveryRequests.values()]
+        .map((row) => ({ ...row }))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    },
+
+    async updateRecoveryRequest(id, expected, patch) {
+      const found = recoveryRequests.get(id);
+      if (!found || found.status !== expected) return null;
+      const next = { ...found, ...patch, id, createdAt: found.createdAt };
+      recoveryRequests.set(id, next);
+      return { ...next };
     },
 
     async claimDemoIdempotencyKey(key, organizationId) {
