@@ -39,6 +39,7 @@ export default async function AppLayout({
         accountType={auth.ctx.organization.accountType}
         isPlatformAdmin={auth.ctx.isPlatformAdminIdentity}
         organizationId={auth.ctx.organization.id}
+        accessExpiresAt={auth.ctx.accessExpiresAt}
         appointmentsEnabled={orgHasFeature(
           auth.ctx.organization.plan,
           "APPOINTMENT_BOOKING",

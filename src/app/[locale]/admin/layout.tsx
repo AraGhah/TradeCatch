@@ -3,6 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import { AdminMfaGate } from "@/components/admin/AdminMfaGate";
 import { AdminNav } from "@/components/admin/AdminNav";
 import { AdminTokenGate } from "@/components/admin/AdminTokenGate";
+import { SessionKeeper } from "@/components/app/SessionKeeper";
 import { FullMessagesProvider } from "@/components/FullMessagesProvider";
 import { readMatchingAdminJwt } from "@/lib/admin-auth";
 import { isPlatformAdminUser } from "@/product/saas/platform-admin";
@@ -46,6 +47,10 @@ export default async function AdminLayout({
 
   return (
     <FullMessagesProvider>
+      <SessionKeeper
+        accessExpiresAt={auth.ctx.accessExpiresAt}
+        locale={locale === "fr" ? "fr" : "en"}
+      />
       <div className="min-h-[70vh] border-b border-navy/10 bg-[var(--color-surface,#f7f5f1)]">
         <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 md:grid-cols-[15.5rem_minmax(0,1fr)] md:px-6 md:py-10">
           <aside className="md:sticky md:top-6 md:self-start">

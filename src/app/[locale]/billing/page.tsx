@@ -11,6 +11,7 @@ import { ADD_ONS } from "@/product/saas/plan-catalog";
 import { getInstallationStatus } from "@/product/saas/stripe-checkout";
 import { listOverages, usageSummary } from "@/product/saas/usage-metering";
 import { UsageOverageConfirm } from "@/components/app/UsageOverageConfirm";
+import { SessionKeeper } from "@/components/app/SessionKeeper";
 
 export const dynamic = "force-dynamic";
 export const metadata = { robots: { index: false, follow: false } };
@@ -45,6 +46,12 @@ export default async function BillingPage({
     : { setup: "", monthly: "" };
   return (
     <FullMessagesProvider>
+      {access.ok ? (
+        <SessionKeeper
+          accessExpiresAt={access.ctx.accessExpiresAt}
+          locale={locale === "fr" ? "fr" : "en"}
+        />
+      ) : null}
       <div className="mx-auto flex max-w-xl flex-col gap-5 px-4 py-12">
         <h1 className="text-2xl font-bold text-navy">{t("billingHeadline")}</h1>
         {access.ok && org ? (
