@@ -6,7 +6,7 @@ import { enforceCentralLimit } from "./lib/rate-limit-central";
 import { contentLengthExceeds } from "./lib/request-body";
 import { routing } from "./i18n/routing";
 import { enforceStagingAccess } from "./lib/staging-middleware";
-import { signedOutLoginPath } from "./product/saas/auth/return-path";
+import { renewalRedirectPath } from "./product/saas/auth/return-path";
 import { SESSION_COOKIE } from "./product/saas/auth/session-token";
 
 const handleI18n = createMiddleware(routing);
@@ -83,18 +83,26 @@ export default async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // A signed-out visitor opening a specific workspace page (for example the
-  // referral page from "Get your link") goes to sign in and then comes back to
-  // it. A session cookie that exists but is no longer valid is still handled
-  // by the workspace layout, which sends them to the plain login page.
-  if (!request.cookies.has(SESSION_COOKIE)) {
-    const login = signedOutLoginPath(path, request.nextUrl.search);
-    if (login) {
+  // Signed-in pages without a fresh access token: renew it first. A visitor
+  // who is not signed in at all ends up on the login page, carrying the page
+  // they asked for (for example the referral page from "Get your link") so
+  // signing in brings them back to it. A token that looks fresh but is not
+  // valid is still refused by the page layout, which sends them to log in.
+  if (request.method === "GET" || request.method === "HEAD") {
+    const renew = renewalRedirectPath(
+      path,
+      request.nextUrl.search,
+      request.cookies.get(SESSION_COOKIE)?.value,
+    );
+    if (renew) {
       const target = request.nextUrl.clone();
-      const [loginPath, loginQuery] = login.split("?");
-      target.pathname = loginPath;
-      target.search = `?${loginQuery}`;
-      return NextResponse.redirect(target);
+      const [renewPath, renewQuery] = renew.split("?");
+      target.pathname = renewPath!;
+      target.search = renewQuery ? `?${renewQuery}` : "";
+      return NextResponse.redirect(target, {
+        status: 307,
+        headers: { "Cache-Control": "no-store, private" },
+      });
     }
   }
 
