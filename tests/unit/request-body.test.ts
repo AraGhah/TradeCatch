@@ -9,6 +9,7 @@ import {
   readMultipartBounded,
   readFormParamsBounded,
   readJsonBody,
+  readJsonBounded,
 } from "../../src/lib/request-body";
 import { POST as clientError } from "../../src/app/api/client-error/route";
 import { POST as magicLink } from "../../src/app/api/auth/magic-link/route";
@@ -16,6 +17,20 @@ import { POST as stripeWebhook } from "../../src/app/api/webhooks/stripe/route";
 import { POST as twilioSmsStatus } from "../../src/app/api/twilio/sms/status/route";
 
 const URL = "http://localhost/api/x";
+
+describe("readJsonBounded", () => {
+  it("parses valid JSON and rejects malformed JSON", async () => {
+    const valid = new Request(URL, { method: "POST", body: '{"ok":true}' });
+    assert.deepEqual(await readJsonBounded(valid, 16), { ok: true });
+    const invalid = new Request(URL, { method: "POST", body: "{" });
+    await assert.rejects(() => readJsonBounded(invalid, 16), SyntaxError);
+  });
+
+  it("cuts off a streamed JSON body without a declared length", async () => {
+    const request = new Request(URL, chunked(['{"x":"', "a".repeat(20), '"}']));
+    await assert.rejects(() => readJsonBounded(request, 16), BodyTooLargeError);
+  });
+});
 
 /** A body with no Content-Length, the way a chunked upload arrives. */
 function chunked(parts: string[]): RequestInit {
@@ -25,7 +40,8 @@ function chunked(parts: string[]): RequestInit {
     method: "POST",
     body: new ReadableStream<Uint8Array>({
       pull(controller) {
-        if (index < parts.length) controller.enqueue(encoder.encode(parts[index++]));
+        if (index < parts.length)
+          controller.enqueue(encoder.encode(parts[index++]));
         else controller.close();
       },
     }),
@@ -36,28 +52,58 @@ function chunked(parts: string[]): RequestInit {
 
 describe("readBodyText", () => {
   it("returns a body within the limit, including at exactly the limit", async () => {
-    assert.equal(await readBodyText(new Request(URL, { method: "POST", body: "hello" }), 100), "hello");
-    assert.equal(await readBodyText(new Request(URL, { method: "POST", body: "12345" }), 5), "12345");
-    assert.equal(await readBodyText(new Request(URL, { method: "POST" }), 5), "");
+    assert.equal(
+      await readBodyText(
+        new Request(URL, { method: "POST", body: "hello" }),
+        100,
+      ),
+      "hello",
+    );
+    assert.equal(
+      await readBodyText(
+        new Request(URL, { method: "POST", body: "12345" }),
+        5,
+      ),
+      "12345",
+    );
+    assert.equal(
+      await readBodyText(new Request(URL, { method: "POST" }), 5),
+      "",
+    );
   });
 
   it("rejects a body whose declared length is over the limit without reading it", async () => {
     // An inbound request carries the header from the wire; a locally built one does not.
-    const request = new Request(URL, { method: "POST", body: "x".repeat(50), headers: { "content-length": "50" } });
+    const request = new Request(URL, {
+      method: "POST",
+      body: "x".repeat(50),
+      headers: { "content-length": "50" },
+    });
     assert.equal(request.headers.get("content-length"), "50");
     assert.equal(contentLengthExceeds(request, 10), true);
     assert.equal(contentLengthExceeds(request, 50), false);
     await assert.rejects(() => readBodyText(request, 10), BodyTooLargeError);
 
     // A lying header cannot be used to smuggle a larger body past the limit.
-    const lying = new Request(URL, { method: "POST", body: "x".repeat(50), headers: { "content-length": "3" } });
+    const lying = new Request(URL, {
+      method: "POST",
+      body: "x".repeat(50),
+      headers: { "content-length": "3" },
+    });
     await assert.rejects(() => readBodyText(lying, 10), BodyTooLargeError);
   });
 
   it("stops a chunked upload that sends no Content-Length once it crosses the limit", async () => {
-    const request = new Request(URL, chunked(["a".repeat(60), "b".repeat(60), "c".repeat(60)]));
+    const request = new Request(
+      URL,
+      chunked(["a".repeat(60), "b".repeat(60), "c".repeat(60)]),
+    );
     assert.equal(request.headers.get("content-length"), null);
-    assert.equal(contentLengthExceeds(request, 100), false, "the header cannot catch this one");
+    assert.equal(
+      contentLengthExceeds(request, 100),
+      false,
+      "the header cannot catch this one",
+    );
     await assert.rejects(() => readBodyText(request, 100), BodyTooLargeError);
   });
 
@@ -86,7 +132,10 @@ describe("readFormParamsBounded", () => {
       body: "Body=" + "x".repeat(200),
       headers: { "content-length": "205" },
     });
-    await assert.rejects(() => readFormParamsBounded(request, 50), BodyTooLargeError);
+    await assert.rejects(
+      () => readFormParamsBounded(request, 50),
+      BodyTooLargeError,
+    );
   });
 
   it("bounds a chunked form body with no declared Content-Length", async () => {
@@ -95,28 +144,52 @@ describe("readFormParamsBounded", () => {
       chunked(["Body=", "x".repeat(60), "x".repeat(60)]),
     );
     assert.equal(request.headers.get("content-length"), null);
-    await assert.rejects(() => readFormParamsBounded(request, 100), BodyTooLargeError);
+    await assert.rejects(
+      () => readFormParamsBounded(request, 100),
+      BodyTooLargeError,
+    );
   });
 });
 
 describe("readJsonBody", () => {
   it("parses valid JSON", async () => {
-    const read = await readJsonBody(new Request(URL, { method: "POST", body: '{"a":1}' }), 100);
+    const read = await readJsonBody(
+      new Request(URL, { method: "POST", body: '{"a":1}' }),
+      100,
+    );
     assert.deepEqual(read, { ok: true, data: { a: 1 } });
   });
 
   it("reports 400 for malformed or empty JSON and 413 for an oversized body", async () => {
-    assert.deepEqual(await readJsonBody(new Request(URL, { method: "POST", body: "{nope" }), 100), {
-      ok: false,
-      status: 400,
-      error: "Invalid JSON.",
-    });
-    assert.equal((await readJsonBody(new Request(URL, { method: "POST" }), 100)).ok, false);
-    assert.deepEqual(await readJsonBody(new Request(URL, { method: "POST", body: JSON.stringify({ a: "x".repeat(500) }) }), 100), {
-      ok: false,
-      status: 413,
-      error: "Payload too large.",
-    });
+    assert.deepEqual(
+      await readJsonBody(
+        new Request(URL, { method: "POST", body: "{nope" }),
+        100,
+      ),
+      {
+        ok: false,
+        status: 400,
+        error: "Invalid JSON.",
+      },
+    );
+    assert.equal(
+      (await readJsonBody(new Request(URL, { method: "POST" }), 100)).ok,
+      false,
+    );
+    assert.deepEqual(
+      await readJsonBody(
+        new Request(URL, {
+          method: "POST",
+          body: JSON.stringify({ a: "x".repeat(500) }),
+        }),
+        100,
+      ),
+      {
+        ok: false,
+        status: 413,
+        error: "Payload too large.",
+      },
+    );
   });
 });
 
@@ -128,7 +201,10 @@ describe("public endpoints refuse oversized bodies", () => {
       new NextRequest("http://localhost/api/client-error", {
         method: "POST",
         body: big,
-        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.50" },
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.50",
+        },
       }),
     );
     assert.equal(res.status, 413);
@@ -139,7 +215,10 @@ describe("public endpoints refuse oversized bodies", () => {
       new NextRequest("http://localhost/api/auth/magic-link", {
         method: "POST",
         body: JSON.stringify({ email: `${"a".repeat(10_000)}@example.com` }),
-        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.51" },
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.51",
+        },
       }),
     );
     assert.equal(res.status, 413);
@@ -172,14 +251,19 @@ describe("public endpoints refuse oversized bodies", () => {
     const res = await magicLink(
       new NextRequest("http://localhost/api/auth/magic-link", {
         ...init,
-        headers: { "content-type": "application/json", "x-forwarded-for": "203.0.113.52" },
+        headers: {
+          "content-type": "application/json",
+          "x-forwarded-for": "203.0.113.52",
+        },
       } as ConstructorParameters<typeof NextRequest>[1]),
     );
     assert.equal(res.status, 413);
   });
 
   it("Twilio SMS status webhook refuses a chunked body with no declared Content-Length", async () => {
-    const init = chunked(Array.from({ length: 40 }, () => "Body=" + "x".repeat(1_000)));
+    const init = chunked(
+      Array.from({ length: 40 }, () => "Body=" + "x".repeat(1_000)),
+    );
     const res = await twilioSmsStatus(
       new NextRequest("http://localhost/api/twilio/sms/status", {
         ...init,
@@ -192,7 +276,10 @@ describe("public endpoints refuse oversized bodies", () => {
 describe("readBodyBytes", () => {
   it("returns the bytes untouched and stops at the limit", async () => {
     const bytes = new Uint8Array([0, 1, 2, 250, 251, 255]);
-    const got = await readBodyBytes(new Request(URL, { method: "POST", body: bytes }), 6);
+    const got = await readBodyBytes(
+      new Request(URL, { method: "POST", body: bytes }),
+      6,
+    );
     assert.deepEqual([...got], [...bytes]);
     await assert.rejects(
       () => readBodyBytes(new Request(URL, { method: "POST", body: bytes }), 5),
@@ -224,12 +311,19 @@ describe("readMultipartBounded", () => {
     assert.equal(form.get("name"), "Jo Acme");
     const sample = form.get("sample");
     assert.ok(sample instanceof Blob);
-    assert.deepEqual([...new Uint8Array(await sample.arrayBuffer())], [...file]);
+    assert.deepEqual(
+      [...new Uint8Array(await sample.arrayBuffer())],
+      [...file],
+    );
   });
 
   it("cuts off an upload bigger than the limit", async () => {
     await assert.rejects(
-      () => readMultipartBounded(upload(new Uint8Array(new ArrayBuffer(5000))), 1000),
+      () =>
+        readMultipartBounded(
+          upload(new Uint8Array(new ArrayBuffer(5000))),
+          1000,
+        ),
       BodyTooLargeError,
     );
   });
@@ -259,4 +353,3 @@ describe("readMultipartBounded", () => {
     );
   });
 });
-
