@@ -238,14 +238,20 @@ herself once, never keep calling herself an AI, but never claim to be a person a
 truthfully in one sentence if asked. Calm, warm and professional; Québec French, North
 American English.
 
-The voice is the `AGENT_VOICE` of the realtime model, `marin` by default. Which voice
-sounds natural and female enough in French and English is something to decide by
-**listening to a call**: it cannot be judged from the code. Two ways to change it, neither
+The voice follows the receptionist's first name (`persona.name_gender`), so a receptionist
+called Sophie does not answer with a man's voice. A clearly female name uses
+`AGENT_VOICE_FEMALE` (`marin` by default), a clearly male one `AGENT_VOICE_MALE` (`cedar`);
+any other name (Alex, Camille, a name not in the list) uses `AGENT_VOICE`, then `marin`.
+`AGENT_VOICE_MATCH_NAME=off` restores one voice for every call. Which voice
+sounds natural in French and English is something to decide by
+**listening to a call**: it cannot be judged from the code. Ways to change it, none
 needing a code change:
 
-* another realtime voice: `AGENT_VOICE` (`beacon`, `cedar`, `cinder`, `marin`, `stone`, `vesper`);
-* one ElevenLabs voice for everyone: `AGENT_STANDARD_VOICE=elevenlabs` plus
-  `AGENT_ELEVENLABS_VOICE_ID` and the `ELEVENLABS_API_KEY` secret (tune with
+* other realtime voices: `AGENT_VOICE_FEMALE`, `AGENT_VOICE_MALE`, `AGENT_VOICE`
+  (`beacon`, `cedar`, `cinder`, `marin`, `stone`, `vesper`);
+* ElevenLabs voices: `AGENT_STANDARD_VOICE=elevenlabs` plus
+  `AGENT_ELEVENLABS_VOICE_ID` (and optionally `AGENT_ELEVENLABS_VOICE_ID_FEMALE` /
+  `_MALE`, picked by name) and the `ELEVENLABS_API_KEY` secret (tune with
   `AGENT_ELEVENLABS_{SPEED,STABILITY,SIMILARITY,STYLE}`). This path is
   speech-to-text → LLM → ElevenLabs, so it adds latency; compare before adopting it.
 
