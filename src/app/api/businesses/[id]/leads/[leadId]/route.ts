@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { isCrmError, getCrmService } from "@/product/crm/runtime";
@@ -46,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     notes?: string;
   };
   try {
-    body = await request.json();
+    body = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
