@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { ownerVisibleCalls } from "@/product/receptionist/call-history";
 import { NextRequest, NextResponse } from "next/server";
 import { recordServerError } from "@/lib/api-error";
@@ -74,7 +75,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }

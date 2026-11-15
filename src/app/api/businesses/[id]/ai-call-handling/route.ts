@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { allows } from "@/product/security/permissions";
 import { voiceCapabilitiesForPlan } from "@/product/receptionist/plan-limits";
@@ -135,7 +136,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await readJsonBounded(request);
   } catch {
     return NextResponse.json(
       { error: "Invalid JSON.", code: "invalid_json" },
@@ -249,7 +250,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
   let action: unknown;
   try {
-    action = ((await request.json()) as { action?: unknown })?.action;
+    action = ((await readJsonBounded(request)) as { action?: unknown })?.action;
   } catch {
     return NextResponse.json(
       { error: "Invalid JSON.", code: "invalid_json" },
