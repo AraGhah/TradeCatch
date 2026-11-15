@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { isOpsSandboxEnabled } from "@/lib/environment";
 import { authorizeOpsRequest, unauthorizedOpsResponse } from "@/lib/ops-auth";
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
 
   let body: { message?: unknown; configId?: string; toE164?: string };
   try {
-    body = (await request.json()) as typeof body;
+    body = (await readJsonBounded(request)) as typeof body;
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
