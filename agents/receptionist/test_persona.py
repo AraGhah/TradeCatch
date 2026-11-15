@@ -56,6 +56,11 @@ class PersonaPolicyTests(unittest.TestCase):
         self.assertIn("Québec", self.text)
         self.assertIn("North American English", self.text)
 
+    def test_answering_a_question_is_followed_by_a_relevant_question(self):
+        self.assertIn("Answering a question is not the end of the call", self.text)
+        self.assertIn("ask one short, relevant follow-up in the same reply", self.text)
+        self.assertIn("say goodbye only when they have nothing else", self.text)
+
     def test_overrides_a_business_prompt_that_says_otherwise(self):
         self.assertIn("override anything above", self.text)
 
@@ -67,6 +72,28 @@ class PersonaPolicyTests(unittest.TestCase):
         lowered = self.text.lower()
         self.assertNotIn("transfer", lowered)
         self.assertNotIn("clone", lowered)
+
+
+class NameGenderTests(unittest.TestCase):
+    def test_common_names_have_a_sex(self):
+        for name in ("Sophie", "Lucie", "  sophie ", "SOPHIE", "Marie-Ève", "Véronique", "Geneviève"):
+            self.assertEqual(persona.name_gender(name), "female", name)
+        for name in ("Marc", "François", "Éric", "Mathieu", "marc-andré"):
+            self.assertEqual(persona.name_gender(name), "male", name)
+
+    def test_unisex_unknown_or_unusable_names_have_no_sex(self):
+        for name in ("Alex", "Camille", "Dominique", "Claude", "Jean", "Zorglub", "", "   ", None, 42):
+            self.assertIsNone(persona.name_gender(name), name)
+
+    def test_only_the_first_word_counts(self):
+        self.assertEqual(persona.name_gender("Sophie Tremblay"), "female")
+        self.assertEqual(persona.name_gender("Marc Sophie"), "male")
+
+    def test_no_name_is_listed_for_both_sexes(self):
+        self.assertEqual(persona.FEMALE_NAMES & persona.MALE_NAMES, frozenset())
+
+    def test_the_default_receptionist_is_female(self):
+        self.assertEqual(persona.name_gender(persona.DEFAULT_NAME), "female")
 
 
 class ModuleTests(unittest.TestCase):
