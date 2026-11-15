@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
@@ -72,7 +73,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       { status: access.status },
     );
   const { ticketId } = await params;
-  const parsed = patchSchema.safeParse(await request.json().catch(() => null));
+  const parsed = patchSchema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid update." }, { status: 400 });
   try {

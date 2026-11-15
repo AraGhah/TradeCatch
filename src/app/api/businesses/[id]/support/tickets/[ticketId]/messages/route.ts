@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSameBusiness } from "@/product/security/access";
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   const parsed = z
     .object({ body: z.string().min(1).max(4000) })
-    .safeParse(await request.json().catch(() => null));
+    .safeParse(await readJsonBounded(request).catch(() => null));
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid message." }, { status: 400 });
   try {

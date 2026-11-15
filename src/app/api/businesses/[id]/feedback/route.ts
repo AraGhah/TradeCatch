@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSameBusiness } from "@/product/security/access";
@@ -26,7 +27,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       { error: "Insufficient permissions." },
       { status: 403 },
     );
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid feedback." }, { status: 400 });
   const feedback = await getLaunchService().addFeedback({

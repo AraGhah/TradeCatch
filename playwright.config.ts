@@ -67,6 +67,9 @@ export default defineConfig({
       // Synthetic platform identity for exercising real admin MFA/session gates.
       TRADECATCH_ADMIN_EMAILS:
         "sales-admin@example.test,installation-admin-en@example.test,installation-admin-fr@example.test,auth-session-admin@example.test",
+      // A second approved frontend (CORS_ALLOWED_ORIGINS) for tests/cors.spec.ts;
+      // the built-in development list already covers localhost:3000/3001/3100.
+      CORS_ALLOWED_ORIGINS: "http://localhost:3101",
       // Never inherit a future production enforcement rollout into this harness.
       INSTALLATION_ENFORCEMENT: "off",
       INSTALLATION_CREDENTIAL: "",

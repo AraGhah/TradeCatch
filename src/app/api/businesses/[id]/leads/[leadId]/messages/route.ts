@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { shouldUseDryRunSms } from "@/lib/environment";
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   let body: { body?: string };
   try {
-    body = await request.json();
+    body = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }

@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { requireBillingContext } from "@/product/saas/tenant";
 import {
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
   if (limited) return limited;
   try {
     // Only an explicit `websiteService: true` adds the website line. Anything else is ignored.
-    const body = (await request.json().catch(() => null)) as {
+    const body = (await readJsonBounded(request).catch(() => null)) as {
       websiteService?: unknown;
     } | null;
     const websiteService = body?.websiteService === true;

@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { SecurityError } from "@/product/security/service";
@@ -42,7 +43,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       { status: 403 },
     );
   }
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json(
       { error: "Invalid privacy request." },
@@ -91,7 +94,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
       phone: z.string().max(20).optional(),
       address: z.string().max(200).optional(),
     })
-    .safeParse(await request.json().catch(() => null));
+    .safeParse(await readJsonBounded(request).catch(() => null));
   if (!body.success)
     return NextResponse.json(
       { error: "Invalid privacy request." },

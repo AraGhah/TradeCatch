@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { clientIpKey, getClientIp } from "@/lib/rate-limit";
@@ -49,7 +50,9 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const service = getSecurityService();
   if (request.headers.get("content-type")?.includes("json")) {
-    const parsed = schema.safeParse(await request.json().catch(() => null));
+    const parsed = schema.safeParse(
+      await readJsonBounded(request).catch(() => null),
+    );
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid authentication code." },

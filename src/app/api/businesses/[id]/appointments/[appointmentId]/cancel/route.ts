@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     );
   const parsed = z
     .object({ reason: z.string().max(300).optional() })
-    .safeParse(await request.json().catch(() => ({})));
+    .safeParse(await readJsonBounded(request).catch(() => ({})));
   if (!parsed.success)
     return NextResponse.json(
       { error: "Invalid cancellation." },

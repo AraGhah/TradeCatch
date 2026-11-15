@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { orgSettingsSchema } from "@/product/starter/qualification";
 import {
@@ -46,7 +47,7 @@ export async function PATCH(request: NextRequest) {
 
   let json: unknown;
   try {
-    json = await request.json();
+    json = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }

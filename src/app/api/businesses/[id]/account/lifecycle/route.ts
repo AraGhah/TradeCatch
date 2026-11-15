@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSameBusiness } from "@/product/security/access";
@@ -26,7 +27,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
   const parsed = z
     .object({ kind: z.enum(["suspension", "reactivation"]) })
-    .safeParse(await request.json().catch(() => null));
+    .safeParse(await readJsonBounded(request).catch(() => null));
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   const row = await getSupportService().requestAccountChange(

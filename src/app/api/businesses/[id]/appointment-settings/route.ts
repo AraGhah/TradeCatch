@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { putAppointmentSettings } from "@/product/receptionist/ai-receptionist-service";
 import {
@@ -53,7 +54,7 @@ export async function PUT(request: NextRequest, { params }: Params) {
     };
   };
   try {
-    body = (await request.json()) as typeof body;
+    body = (await readJsonBounded(request)) as typeof body;
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }

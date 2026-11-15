@@ -143,6 +143,8 @@ Both SMS buckets are checked inside the one adapter every text goes through ([sr
 
 The two `api.*` rows are the default limit for every route not listed above and not exempt. They are deliberately generous (a person using the dashboard never gets near them); they exist to stop loops and floods. A named policy on a route is checked **in addition to** the default.
 
+Browser CORS preflights (`OPTIONS` with `Access-Control-Request-Method`) are answered before the default limit runs, because they carry no cookies and touch no data ([CORS.md](CORS.md)). They are not charged to the visitor's bucket, so a page that preflights a write cannot use up the write budget.
+
 To change a number, edit [src/lib/rate-limit-policy.ts](../src/lib/rate-limit-policy.ts) and the matching row here. `tests/unit/rate-limit-policy.test.ts` fails if a row is missing or no longer matches the code.
 
 ## Voice receptionist and provider webhooks

@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import {
@@ -40,7 +41,7 @@ export async function PATCH(
   const { id } = await params;
   let body: PatchBody;
   try {
-    body = (await request.json()) as PatchBody;
+    body = (await readJsonBounded(request)) as PatchBody;
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }

@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import {
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
 
   let json: unknown;
   try {
-    json = await request.json();
+    json = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid body." }, { status: 400 });
   }

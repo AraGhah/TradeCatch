@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parsePhoneInput } from "@/product/crm/phone";
@@ -61,7 +62,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       { error: access.error },
       { status: access.status },
     );
-  const parsed = createSchema.safeParse(await request.json().catch(() => null));
+  const parsed = createSchema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json(
       { error: "Invalid appointment.", code: "invalid_values" },

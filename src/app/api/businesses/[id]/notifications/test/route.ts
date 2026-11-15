@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { enforcePolicy } from "@/lib/rate-limit-response";
 import { z } from "zod";
@@ -31,7 +32,9 @@ export async function POST(request: NextRequest, { params }: Params) {
     subject: `${id}:${access.ctx.user.id}`,
   });
   if (limited) return limited;
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json(
       { error: "Invalid notification test." },

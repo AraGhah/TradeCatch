@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { enforcePolicy } from "@/lib/rate-limit-response";
 import { z } from "zod";
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (limited) return limited;
   let json: unknown;
   try {
-    json = await request.json();
+    json = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }

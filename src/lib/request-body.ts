@@ -61,6 +61,14 @@ export async function readBodyText(
   return new TextDecoder().decode(await readBodyBytes(request, maxBytes));
 }
 
+/** Drop-in JSON parser with the same two-megabyte cap as the API proxy. */
+export async function readJsonBounded(
+  request: Request,
+  maxBytes = 2 * 1024 * 1024,
+) {
+  return JSON.parse(await readBodyText(request, maxBytes));
+}
+
 /**
  * Bounded replacement for `await request.formData()` on a multipart upload:
  * the bytes are counted as they arrive and only then handed to the parser, so

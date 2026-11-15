@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
@@ -62,7 +63,9 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
     if (action === "leave")
       return NextResponse.json({ ok: true, pilot: await service.leave(id) });
-    const parsed = testSchema.safeParse(await request.json().catch(() => null));
+    const parsed = testSchema.safeParse(
+      await readJsonBounded(request).catch(() => null),
+    );
     if (!parsed.success)
       return NextResponse.json(
         { error: "Invalid live test result." },

@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
@@ -32,7 +33,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       { error: access.error },
       { status: access.status },
     );
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid test." }, { status: 400 });
   const live = getSchedulingService();

@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
 import { getQaService } from "@/product/qa/runtime";
@@ -26,7 +27,9 @@ export async function POST(request: NextRequest) {
       { error: access.error },
       { status: access.status },
     );
-  const body = (await request.json().catch(() => ({}))) as { suite?: string };
+  const body = (await readJsonBounded(request).catch(() => ({}))) as {
+    suite?: string;
+  };
   const suite = body.suite || "all";
   if (!getQaService().catalog().includes(suite)) {
     return NextResponse.json({ error: "Unknown suite." }, { status: 400 });

@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSameBusiness } from "@/product/security/access";
@@ -34,7 +35,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       { status: 403 },
     );
   }
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success) {
     // Name the field so the form can say what to fix.
     const field = String(parsed.error.issues[0]?.path[0] ?? "");
