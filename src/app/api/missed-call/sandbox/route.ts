@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { isOpsSandboxEnabled } from "@/lib/environment";
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
