@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { putKnowledge } from "@/product/receptionist/ai-receptionist-service";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
@@ -38,7 +39,10 @@ export async function PUT(request: NextRequest, { params }: Params) {
 
   let body: { knowledge?: unknown; faqs?: unknown };
   try {
-    body = (await request.json()) as { knowledge?: unknown; faqs?: unknown };
+    body = (await readJsonBounded(request)) as {
+      knowledge?: unknown;
+      faqs?: unknown;
+    };
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
