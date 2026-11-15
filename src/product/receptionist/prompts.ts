@@ -135,6 +135,14 @@ export const PHRASES = {
     fr: "Y a-t-il autre chose que je peux faire pour vous?",
     en: "Is there anything else I can help you with?",
   },
+  /**
+   * After an FAQ answer when the caller has not described any need yet: a relevant
+   * next question that moves toward a request, instead of a bare "anything else?".
+   */
+  faqFollowUp: {
+    fr: "Souhaitez-vous que je prenne votre demande pour une visite ou une soumission?",
+    en: "Would you like me to take your details for a visit or an estimate?",
+  },
   listening: {
     fr: "Je vous écoute.",
     en: "Go ahead, I'm listening.",
