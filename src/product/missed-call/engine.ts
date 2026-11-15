@@ -31,6 +31,7 @@ import {
   promptForStep,
   validateCollectionAnswer,
 } from "./messaging";
+import { missedCallRecoverySmsDisabled } from "./recovery-switch";
 import { checkServiceArea } from "./service-area";
 import { SmsRateLimitError, smsFailureDisposition } from "./twilio";
 import type { MissedCallStore } from "./store";
@@ -55,6 +56,9 @@ async function deferOpeningSms(input: {
   callerE164: string;
   disposition: string;
 }): Promise<boolean> {
+  // The operator turned the customer text off: report it as handled elsewhere, so the
+  // opening SMS is not sent either. Checked before anything that can fail and fall back.
+  if (missedCallRecoverySmsDisabled()) return true;
   try {
     const { deferMissedCallOpening } =
       await import("@/product/sms-automation/hooks");

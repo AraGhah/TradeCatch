@@ -1,3 +1,4 @@
+import { missedCallRecoverySmsDisabled } from "@/product/missed-call/recovery-switch";
 import { getSaasStore } from "@/product/saas/runtime";
 import { getAutomationServices, getAutomationStore } from "./runtime";
 
@@ -15,6 +16,9 @@ export async function deferMissedCallOpening(input: {
   disposition: string;
   customerLanguage?: "en" | "fr";
 }): Promise<boolean> {
+  // Operator kill switch (MISSED_CALL_RECOVERY_SMS=off): nothing is scheduled, and the
+  // caller must not fall back to the Module A opening text either.
+  if (missedCallRecoverySmsDisabled()) return true;
   const org = await getSaasStore().findOrganizationByMissedCallClientId(
     input.clientAccountId,
   );
