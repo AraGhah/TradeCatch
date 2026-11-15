@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { enforcePolicy } from "@/lib/rate-limit-response";
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
 
   let json: unknown = {};
   try {
-    json = await request.json();
+    json = await readJsonBounded(request);
   } catch {
     json = {};
   }
