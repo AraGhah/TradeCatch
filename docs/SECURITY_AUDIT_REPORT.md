@@ -143,7 +143,9 @@ Numbers follow the sections of the audit brief. Sections 2, 7, 11, 12, 13 and 21
 
 ### 16. CORS
 
-- **Status: PASS.** No route sets `Access-Control-*` headers, so browsers deny cross-origin reads. A second layer refuses cross-site writes that carry a session cookie before the route runs (`src/lib/csrf.ts`, `src/middleware.ts`; added in this pass, **FIXED** as defense in depth). Tests: `tests/unit/csrf.test.ts`, and the end-to-end checks in `tests/security-headers.spec.ts`.
+- **Status: PASS.** One policy in `src/lib/cors.ts`, applied by the proxy and the Worker entry and documented in `docs/CORS.md`: exact-match origin allowlist per environment (production `https://tradecatch.ca` and `https://www.tradecatch.ca`; localhost only in development; staging never trusts the live origins), `Vary: Origin`, credentials only with one exact origin and never `*`, preflights answered before staging Basic auth and route auth, and only the browser-facing API groups offered. Webhooks, cron ticks, the voice agent, ops and the API-key lead endpoint never get CORS headers. Unapproved origins get no `Access-Control-*` headers, so browsers deny the read.
+- A second layer refuses cross-site writes that carry a session cookie before the route runs (`src/lib/csrf.ts`, `src/proxy.ts`; **FIXED** as defense in depth). An origin the CORS policy approved for that request is the only exception.
+- Tests: `tests/unit/cors.test.ts`, `tests/unit/csrf.test.ts`, and the browser checks in `tests/cors.spec.ts` and `tests/security-headers.spec.ts`.
 
 ### 18. Dependencies and configuration warnings
 

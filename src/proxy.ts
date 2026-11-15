@@ -1,6 +1,12 @@
 import createMiddleware from "next-intl/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import {
+  applyCorsHeaders,
+  corsDecision,
+  corsPreflightResponse,
+  type CorsDecision,
+} from "./lib/cors";
 import { isCrossSiteMutation } from "./lib/csrf";
 import { enforceCentralLimit } from "./lib/rate-limit-central";
 import { contentLengthExceeds } from "./lib/request-body";
@@ -37,8 +43,14 @@ function acceptedHosts(request: NextRequest): Array<string | null> {
   return [request.nextUrl.host, request.headers.get("host"), request.headers.get("x-forwarded-host"), site];
 }
 
+/** The hosts this very request was sent to. CORS must not treat the configured public site as "self". */
+function requestHosts(request: NextRequest): Array<string | null> {
+  return [request.nextUrl.host, request.headers.get("host")];
+}
+
 /**
- * Staging HTTP Basic gate (when configured) + locale routing.
+ * CORS preflight (answered before everything else), staging HTTP Basic gate
+ * (when configured), then locale routing.
  *
  * Next.js Proxy uses the default Node.js runtime. The installed OpenNext
  * adapter bundles this entry point for Cloudflare Workers.
@@ -54,15 +66,46 @@ function acceptedHosts(request: NextRequest): Array<string | null> {
  * hostname (`localhost`) or omit `--hostname`.
  */
 export default async function proxy(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const isApi = path.startsWith("/api/");
+
+  // One cross-origin policy for every API route; see src/lib/cors.ts. Decided
+  // first because a preflight carries no credentials: the staging gate (or
+  // any route auth) would answer it 401 and a legitimate frontend could never
+  // get past it. An approved origin gets 204 with the policy, any other 403
+  // with no CORS headers.
+  const cors: CorsDecision = isApi
+    ? corsDecision({
+        method: request.method,
+        pathname: path,
+        headers: request.headers,
+        selfHosts: requestHosts(request),
+      })
+    : { kind: "none" };
+  if (cors.kind !== "none" && cors.preflight) return corsPreflightResponse(cors);
+
   const stagingGate = enforceStagingAccess(request);
   if (stagingGate) return stagingGate;
 
   // API routes must not go through next-intl locale rewrites.
-  const path = request.nextUrl.pathname;
-  if (path.startsWith("/api/")) {
+  if (isApi) {
+    // Every answer from here on carries the CORS headers for an approved
+    // origin, so a frontend can read a 403, 413 or 429 instead of seeing an
+    // opaque network failure.
+    const answer = <T extends Response>(response: T): T => {
+      applyCorsHeaders(response.headers, cors);
+      return response;
+    };
     // Second layer behind SameSite cookies; see src/lib/csrf.ts.
-    if (isCrossSiteMutation({ method: request.method, headers: request.headers, hosts: acceptedHosts(request) })) {
-      return NextResponse.json({ error: "Cross-site request blocked." }, { status: 403 });
+    if (
+      isCrossSiteMutation({
+        method: request.method,
+        headers: request.headers,
+        hosts: acceptedHosts(request),
+        trustedOrigin: cors.kind === "allowed" ? cors.origin : null,
+      })
+    ) {
+      return answer(NextResponse.json({ error: "Cross-site request blocked." }, { status: 403 }));
     }
     if (
       BODY_METHODS.has(request.method) &&
@@ -71,13 +114,13 @@ export default async function proxy(request: NextRequest) {
         LARGE_BODY_ROUTES[path] ?? DEFAULT_MAX_API_BODY_BYTES,
       )
     ) {
-      return NextResponse.json({ error: "Payload too large." }, { status: 413 });
+      return answer(NextResponse.json({ error: "Payload too large." }, { status: 413 }));
     }
     // After the checks that cost nothing, so a blocked cross-site request
     // cannot spend the visitor's budget. See src/lib/rate-limit-central.ts.
     const limited = await enforceCentralLimit(request);
-    if (limited) return limited;
-    return NextResponse.next();
+    if (limited) return answer(limited);
+    return answer(NextResponse.next());
   }
   if (path === "/health" || path === "/ready") {
     return NextResponse.next();
