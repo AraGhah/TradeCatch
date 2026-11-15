@@ -50,11 +50,18 @@ export function pickReceptionistVoice<T extends BrowserVoice>(
     return sorted[0] ?? null;
   };
   const exact = voices.filter((v) => norm(v.lang) === wanted);
-  const sameLanguage = voices.filter((v) => norm(v.lang).split("-")[0] === primary);
+  const sameLanguage = voices.filter(
+    (v) => norm(v.lang).split("-")[0] === primary,
+  );
   const exactPick = best(exact);
   const languagePick = best(sameLanguage);
   // A same-language voice of the right sex beats an exact-region voice of the wrong one.
-  if (exactPick && rank(exactPick) === 0 && languagePick && rank(languagePick) > 0) {
+  if (
+    exactPick &&
+    rank(exactPick) === 0 &&
+    languagePick &&
+    rank(languagePick) > 0
+  ) {
     return languagePick;
   }
   return exactPick ?? languagePick;

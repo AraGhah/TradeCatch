@@ -21,16 +21,18 @@ const OFF_VALUES = new Set(["off", "0", "false", "no", "disabled", "disable"]);
 export const DEFAULT_RECOVERY_MAX_AGE_MINUTES = 60;
 const MAX_AGE_LIMITS = { min: 1, max: 24 * 60 };
 
-export function missedCallRecoverySmsDisabled(
-  env: Env = process.env,
-): boolean {
-  return OFF_VALUES.has((env.MISSED_CALL_RECOVERY_SMS ?? "").trim().toLowerCase());
+export function missedCallRecoverySmsDisabled(env: Env = process.env): boolean {
+  return OFF_VALUES.has(
+    (env.MISSED_CALL_RECOVERY_SMS ?? "").trim().toLowerCase(),
+  );
 }
 
 export function missedCallRecoveryMaxAgeMs(env: Env = process.env): number {
   const raw = Number((env.MISSED_CALL_RECOVERY_MAX_AGE_MINUTES ?? "").trim());
   const minutes =
-    Number.isFinite(raw) && raw >= MAX_AGE_LIMITS.min && raw <= MAX_AGE_LIMITS.max
+    Number.isFinite(raw) &&
+    raw >= MAX_AGE_LIMITS.min &&
+    raw <= MAX_AGE_LIMITS.max
       ? raw
       : DEFAULT_RECOVERY_MAX_AGE_MINUTES;
   return minutes * 60_000;
