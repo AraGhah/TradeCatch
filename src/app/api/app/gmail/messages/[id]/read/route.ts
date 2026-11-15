@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenOrigin, isSameOrigin } from "@/product/gmail/http";
 import { getGmailStore } from "@/product/gmail/runtime";
@@ -20,7 +21,9 @@ export async function POST(request: NextRequest, { params }: Params) {
       { status: auth.status },
     );
   const { id } = await params;
-  const body = (await request.json().catch(() => ({}))) as { read?: unknown };
+  const body = (await readJsonBounded(request).catch(() => ({}))) as {
+    read?: unknown;
+  };
   const read = body.read !== false;
   const { organization, user } = auth.ctx;
   const store = getGmailStore();
