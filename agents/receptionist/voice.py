@@ -29,8 +29,12 @@ speaks both French and English, so the receptionist keeps one identity when the
 caller presses 1.
 
   AGENT_STANDARD_VOICE      "elevenlabs" to turn it on (default: the realtime voice)
-  AGENT_ELEVENLABS_VOICE_ID the ElevenLabs voice id (must match the receptionist's
-                            name and persona, e.g. a female voice for "Sophia")
+  AGENT_ELEVENLABS_VOICE_ID the ElevenLabs voice id, used for every receptionist name
+  AGENT_ELEVENLABS_VOICE_ID_FEMALE / _MALE
+                            optional: used instead when the receptionist's first name is a
+                            clearly female / male one ("Sophie", "Marc"), so the voice
+                            matches the name. Unset or invalid: AGENT_ELEVENLABS_VOICE_ID
+  AGENT_VOICE_MATCH_NAME    "off" ignores the name: one voice for every receptionist
   AGENT_ELEVENLABS_MODEL    one of ALLOWED_MODELS (default eleven_flash_v2_5)
 
 Delivery, for every ElevenLabs voice (unset: ElevenLabs' own voice settings):
@@ -46,6 +50,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from typing import Any, Mapping
+
+from persona import name_gender, receptionist_name
 
 PROVIDER = "elevenlabs"
 VOICE_ID_PATTERN = re.compile(r"^[A-Za-z0-9]{10,40}$")
@@ -124,13 +130,33 @@ def parse_custom_voice(
     return CustomVoice(voice_id=voice_id, model=model)
 
 
-def standard_voice(env: Mapping[str, str]) -> CustomVoice | None:
-    """The ElevenLabs voice every call uses when the operator turned it on, else None."""
+def _standard_voice_id(env: Mapping[str, str], name: str | None) -> str:
+    """AGENT_ELEVENLABS_VOICE_ID_FEMALE / _MALE for a name of that sex, else the common id.
+
+    A gendered id that is unset or malformed falls back to AGENT_ELEVENLABS_VOICE_ID, so
+    adding the new variables can never turn the standard voice off.
+    """
+    common = (env.get("AGENT_ELEVENLABS_VOICE_ID") or "").strip()
+    if _flag_off(env, "AGENT_VOICE_MATCH_NAME"):
+        return common
+    gender = name_gender(name)
+    if gender is None:
+        return common
+    own = (env.get(f"AGENT_ELEVENLABS_VOICE_ID_{gender.upper()}") or "").strip()
+    return own if VOICE_ID_PATTERN.fullmatch(own) else common
+
+
+def standard_voice(env: Mapping[str, str], name: str | None = None) -> CustomVoice | None:
+    """The ElevenLabs voice every call uses when the operator turned it on, else None.
+
+    `name` is the receptionist's name: it picks the female or male voice when the operator
+    configured one for each.
+    """
     if (env.get("AGENT_STANDARD_VOICE") or "").strip().lower() != PROVIDER:
         return None
     if _flag_off(env, "AGENT_CUSTOM_VOICE") or not (env.get("ELEVENLABS_API_KEY") or "").strip():
         return None
-    voice_id = (env.get("AGENT_ELEVENLABS_VOICE_ID") or "").strip()
+    voice_id = _standard_voice_id(env, name)
     if not VOICE_ID_PATTERN.fullmatch(voice_id):
         return None
     model = (env.get("AGENT_ELEVENLABS_MODEL") or "").strip() or DEFAULT_MODEL
@@ -141,7 +167,7 @@ def standard_voice(env: Mapping[str, str]) -> CustomVoice | None:
 
 def call_voice(cfg: Mapping[str, Any] | None, env: Mapping[str, str]) -> CustomVoice | None:
     """The ElevenLabs voice for this call: the business's own, else the standard one."""
-    return parse_custom_voice(cfg, env) or standard_voice(env)
+    return parse_custom_voice(cfg, env) or standard_voice(env, receptionist_name(cfg))
 
 
 def _unit(env: Mapping[str, str], name: str, low: float, high: float) -> float | None:
