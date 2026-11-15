@@ -7,6 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
+import { pickReceptionistVoice } from "@/lib/browser-voice";
 
 /**
  * Voice for the website demo. The visitor speaks through the browser (Web
@@ -60,21 +61,6 @@ function synthesis(): SpeechSynthesis | null {
 
 function subscribe() {
   return () => {};
-}
-
-/** Best installed voice for the language: exact region, then same language. */
-function pickVoice(
-  voices: SpeechSynthesisVoice[],
-  lang: string,
-): SpeechSynthesisVoice | null {
-  const norm = (value: string) => value.toLowerCase().replace("_", "-");
-  const wanted = norm(lang);
-  const primary = wanted.split("-")[0]!;
-  return (
-    voices.find((v) => norm(v.lang) === wanted) ??
-    voices.find((v) => norm(v.lang).split("-")[0] === primary) ??
-    null
-  );
 }
 
 function failureFor(error: string): VoiceFailure {
@@ -269,7 +255,8 @@ export function useDemoVoice(locale: "fr" | "en") {
           finish();
           return;
         }
-        const voice = pickVoice(synth.getVoices(), lang);
+        // The receptionist is a woman: never a man's system voice just for the language.
+        const voice = pickReceptionistVoice(synth.getVoices(), lang);
         const queue = clean.map((line, i) => {
           const utterance = new SpeechSynthesisUtterance(line);
           utterance.lang = lang;
