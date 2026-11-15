@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import {
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
 
   let body: CreateBody;
   try {
-    body = (await request.json()) as CreateBody;
+    body = (await readJsonBounded(request)) as CreateBody;
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
