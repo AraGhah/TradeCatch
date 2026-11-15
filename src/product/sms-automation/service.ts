@@ -1,5 +1,9 @@
 import { createId } from "@/lib/id";
 import { isOptOut } from "@/product/missed-call/messaging";
+import {
+  missedCallRecoveryMaxAgeMs,
+  missedCallRecoverySmsDisabled,
+} from "@/product/missed-call/recovery-switch";
 import type { ClientAccount } from "@/product/missed-call/types";
 import { normalizeE164, phoneKey } from "@/product/crm/phone";
 import type { AutomationStore } from "./store";
@@ -422,7 +426,27 @@ export function createAutomationService(deps: AutomationDeps) {
       }
     }
 
-    if (!isInsideSendingWindow(now, org.timezone || "America/Toronto", config)) {
+    // "Sorry we missed your call" answers the caller's own call, so it goes out right away
+    // and is never held for the contractor's marketing-style sending window (that held
+    // evening calls until 8 a.m.). The operator can still switch it off, and a text that
+    // has waited too long is useless, so it is dropped rather than sent hours late.
+    const immediate = job.automationType === "missed_call_recovery";
+    if (immediate && !job.simulated) {
+      if (missedCallRecoverySmsDisabled()) {
+        await finish(job, "canceled", "recovery_sms_disabled");
+        return job;
+      }
+      const age = now.getTime() - Date.parse(job.createdAt);
+      if (Number.isFinite(age) && age > missedCallRecoveryMaxAgeMs()) {
+        await finish(job, "skipped", "stale");
+        return job;
+      }
+    }
+
+    if (
+      !immediate &&
+      !isInsideSendingWindow(now, org.timezone || "America/Toronto", config)
+    ) {
       job.status = "pending";
       job.claimToken = undefined;
       job.claimedAt = undefined;
@@ -797,11 +821,10 @@ export function createAutomationService(deps: AutomationDeps) {
         category: "inquiry_response",
         evidence: `Inbound call ${input.callId} was not answered. Recovery is a direct response to that inquiry, not a promotion.`,
       });
-      const when = snap(
-        new Date(deps.now().getTime() + automation.config.initialDelayMinutes * 60 * 1000),
-        org,
-        automation.config,
-      );
+      // Not snapped to the sending window: see processJob.
+      const when = new Date(
+        deps.now().getTime() + automation.config.initialDelayMinutes * 60 * 1000,
+      ).toISOString();
       const job = await placeJob({
         organizationId: input.organizationId,
         automation,
