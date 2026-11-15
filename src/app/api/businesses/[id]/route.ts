@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { allows } from "@/product/security/permissions";
 import { z } from "zod";
@@ -119,7 +120,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   let json: unknown;
   try {
-    json = await request.json();
+    json = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
