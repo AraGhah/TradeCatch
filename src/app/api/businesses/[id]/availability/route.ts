@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
@@ -77,7 +78,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
       { error: access.error },
       { status: access.status },
     );
-  const parsed = rulesSchema.safeParse(await request.json().catch(() => null));
+  const parsed = rulesSchema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json(
       { error: "Invalid availability.", code: "invalid_values" },
