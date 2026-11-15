@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSameBusiness } from "@/product/security/access";
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       { status: access.status },
     );
   const parsed = schema.safeParse(
-    await request.json().catch(() => ({ check: "all" })),
+    await readJsonBounded(request).catch(() => ({ check: "all" })),
   );
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid check." }, { status: 400 });

@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { allows } from "@/product/security/permissions";
 import { z } from "zod";
@@ -58,7 +59,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
   const gate = await access(id, true);
   if (!gate.ok)
     return NextResponse.json({ error: gate.error }, { status: gate.status });
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json(
       { error: "Invalid fallback settings." },
