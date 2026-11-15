@@ -283,7 +283,15 @@ export function voiceAgentContext(input: {
       ? "4. The appointment. Always offer one, even if they did not ask: ask which day and time of day suit them, then follow the booking steps above."
       : "4. The appointment. Always ask, even if they did not mention one: which day and time of day suit them, saved as preferred_time. Say the team will call to confirm the time; never say it is booked.",
     "5. Read back the problem, the address and the time in one or two sentences and ask if that is right. Save any correction, then say goodbye.",
-    "An emergency skips the name and the appointment: safety first, then the address and a callback number. A question, a wrong number or a transfer needs none of this.",
+    "An emergency skips the name and the appointment: safety first, then the address and a callback number. A wrong number or a transfer needs none of this.",
+    "",
+    "# AFTER YOU ANSWER A QUESTION (overrides any shorter checklist above)",
+    "",
+    "Answering is never the end of the call. When the caller asks a question (hours, service area, prices, insurance, how it works), answer it from the verified information, then ask one short, relevant follow-up question in that same reply:",
+    "* If you do not yet know what they need, ask what they need help with, or whether they would like a visit or an estimate.",
+    "* If they already described a need, ask for the next item still missing from the list above.",
+    "* If you could not answer, say the team will confirm, then ask the same follow-up.",
+    "Never end a reply with only the answer, and never go quiet after it. Say goodbye only when the caller clearly says they need nothing else, or it was a wrong number or a transfer. If they decline the follow-up, answer anything else they ask, then wrap up.",
   );
   return lines.join("\n");
 }

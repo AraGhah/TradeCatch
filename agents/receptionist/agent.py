@@ -89,7 +89,7 @@ from transfer import (
     transfer_event,
     transfer_settings,
 )
-from tuning import delegation_options, turn_handling_from_env, voice_settings
+from tuning import delegation_options, persona_voice_settings, turn_handling_from_env
 from voice import CustomVoice, call_voice, cascade_settings, delivery_settings
 from warm_transfer import (
     ScreenedTransfer,
@@ -1279,7 +1279,9 @@ class ReceptionistAgent(Agent):
     @function_tool()
     async def end_call(self, context: RunContext) -> str:
         """Hang up. Call this only after you have said goodbye and the caller has
-        nothing left to ask. Never while a booking or transfer is in progress."""
+        nothing left to ask. Never while a booking or transfer is in progress, and never
+        right after answering a question: first ask one relevant follow-up (what they need,
+        or the next detail the team lacks) and wait for the answer."""
         if self._transferring or self._busy > 0:
             return "Something is still in progress. Do not hang up yet."
         # One check, never a trap: a caller who cannot or will not give a detail is let go
@@ -1418,7 +1420,7 @@ def build_session(
             logger.exception("ElevenLabs voice unavailable; answering with the realtime voice")
     elif custom is not None:
         logger.warning("ElevenLabs voice requested but no voice-activity model; using the realtime voice")
-    model, voice = voice_settings(os.environ)
+    model, voice = persona_voice_settings(os.environ, receptionist_name(cfg))
     extra = delegation_options(os.environ)
     duplex = (
         inference.DuplexModel(model=model, voice=voice, extra_kwargs=extra)

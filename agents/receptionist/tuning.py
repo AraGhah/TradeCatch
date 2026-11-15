@@ -31,6 +31,8 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from persona import name_gender
+
 DEFAULT_VOICE = "marin"
 DEFAULT_MODEL = "openai/gpt-live-1"
 
@@ -61,6 +63,32 @@ def voice_settings(env: Mapping[str, str]) -> tuple[str, str]:
         (env.get("AGENT_REALTIME_MODEL") or "").strip() or DEFAULT_MODEL,
         (env.get("AGENT_VOICE") or "").strip() or DEFAULT_VOICE,
     )
+
+
+# One realtime voice per sex, so a receptionist called Sophie never speaks with a man's
+# voice (and a Marc never with a woman's). Which built-in voice sounds right is a matter of
+# listening to a call; these are only the defaults, and AGENT_VOICE_FEMALE / AGENT_VOICE_MALE
+# replace them without a code change.
+DEFAULT_VOICE_FEMALE = "marin"
+DEFAULT_VOICE_MALE = "cedar"
+
+
+def persona_voice_settings(env: Mapping[str, str], name: str | None) -> tuple[str, str]:
+    """(model, voice) for a receptionist with this name.
+
+    A name with a clear sex gets the matching voice (AGENT_VOICE_FEMALE / AGENT_VOICE_MALE).
+    Any other name keeps voice_settings(), i.e. AGENT_VOICE or the default.
+    AGENT_VOICE_MATCH_NAME=off turns the matching off: AGENT_VOICE answers every call again.
+    """
+    model, voice = voice_settings(env)
+    if _flag(env, "AGENT_VOICE_MATCH_NAME") is False:
+        return model, voice
+    gender = name_gender(name)
+    if gender == "female":
+        return model, (env.get("AGENT_VOICE_FEMALE") or "").strip() or DEFAULT_VOICE_FEMALE
+    if gender == "male":
+        return model, (env.get("AGENT_VOICE_MALE") or "").strip() or DEFAULT_VOICE_MALE
+    return model, voice
 
 
 REASONING_EFFORTS = ("minimal", "low", "medium", "high")

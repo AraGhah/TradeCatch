@@ -41,6 +41,9 @@ export function AutomationSettingsForm({
   };
 }) {
   const router = useRouter();
+  // A missed-call text answers the caller's own call and is sent right away: the
+  // sending window only holds back follow-ups (quotes, reminders).
+  const sendingWindowApplies = automation.type !== "missed_call_recovery";
   const [config, setConfig] = useState<AutomationConfig>(automation.config);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -151,31 +154,37 @@ export function AutomationSettingsForm({
             className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
           />
         </label>
-        <label className="text-xs text-navy/70">
-          {labels.windowStart}
-          <input
-            type="number"
-            min={0}
-            max={23}
-            value={config.windowStartHour}
-            onChange={(event) => set("windowStartHour", Number(event.target.value))}
-            className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
-          />
-        </label>
-        <label className="text-xs text-navy/70">
-          {labels.windowEnd}
-          <input
-            type="number"
-            min={1}
-            max={24}
-            value={config.windowEndHour}
-            onChange={(event) => set("windowEndHour", Number(event.target.value))}
-            className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
-          />
-        </label>
+        {sendingWindowApplies ? (
+          <>
+            <label className="text-xs text-navy/70">
+              {labels.windowStart}
+              <input
+                type="number"
+                min={0}
+                max={23}
+                value={config.windowStartHour}
+                onChange={(event) => set("windowStartHour", Number(event.target.value))}
+                className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
+              />
+            </label>
+            <label className="text-xs text-navy/70">
+              {labels.windowEnd}
+              <input
+                type="number"
+                min={1}
+                max={24}
+                value={config.windowEndHour}
+                onChange={(event) => set("windowEndHour", Number(event.target.value))}
+                className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
+              />
+            </label>
+          </>
+        ) : null}
       </div>
       <div className="grid gap-2 text-sm text-navy">
-        <Check label={labels.weekend} checked={config.weekendSending} onChange={(value) => set("weekendSending", value)} />
+        {sendingWindowApplies ? (
+          <Check label={labels.weekend} checked={config.weekendSending} onChange={(value) => set("weekendSending", value)} />
+        ) : null}
         <Check label={labels.duplicate} checked={config.duplicateProtection} onChange={(value) => set("duplicateProtection", value)} />
         <Check label={labels.stopReply} checked={config.stopOnCustomerReply} onChange={(value) => set("stopOnCustomerReply", value)} />
         <Check label={labels.stopHuman} checked={config.stopOnHumanContact} onChange={(value) => set("stopOnHumanContact", value)} />

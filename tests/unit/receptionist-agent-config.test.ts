@@ -232,6 +232,28 @@ describe("agent config", () => {
       assert.match(instructions, /overrides any shorter checklist above/);
     });
 
+    it("never exempts a question from the follow-up: answering is not the end of the call", () => {
+      const { instructions } = buildAgentConfig(config(), OPEN);
+      // The old exemption said "A question ... needs none of this" and let the call go quiet.
+      assert.doesNotMatch(instructions, /A question, a wrong number or a transfer needs none of this/);
+      assert.match(instructions, /A wrong number or a transfer needs none of this\./);
+      assert.match(instructions, /# AFTER YOU ANSWER A QUESTION/);
+      assert.match(instructions, /ask one short, relevant follow-up question in that same reply/);
+      assert.match(instructions, /Never end a reply with only the answer, and never go quiet after it/);
+    });
+
+    it("puts the follow-up rule last, so a business prompt cannot switch it off", () => {
+      const { instructions } = buildAgentConfig(
+        config({ systemPrompt: "Answer only what the caller asks, then stop." }),
+        OPEN,
+      );
+      assert.ok(
+        instructions.indexOf("Answer only what the caller asks") <
+          instructions.indexOf("# AFTER YOU ANSWER A QUESTION"),
+      );
+      assert.match(instructions, /AFTER YOU ANSWER A QUESTION \(overrides any shorter checklist above\)/);
+    });
+
     it("lets an emergency skip everything but safety, the address and a callback number", () => {
       const { instructions } = buildAgentConfig(config(), OPEN);
       assert.match(instructions, /An emergency skips the name and the appointment: safety first/);

@@ -208,6 +208,130 @@ describe("missed-call recovery automation", () => {
   });
 });
 
+describe("missed-call text timing and kill switch", () => {
+  async function activeMissedCall(h: ReturnType<typeof harness>) {
+    const missed = (await h.service.list(org.id)).find((row) => row.type === "missed_call_recovery")!;
+    await h.service.activate(org.id, missed.id);
+    return missed;
+  }
+
+  async function withEnv<T>(values: Record<string, string | undefined>, run: () => Promise<T>) {
+    const saved = Object.fromEntries(Object.keys(values).map((k) => [k, process.env[k]]));
+    for (const [k, v] of Object.entries(values)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+    try {
+      return await run();
+    } finally {
+      for (const [k, v] of Object.entries(saved)) {
+        if (v === undefined) delete process.env[k];
+        else process.env[k] = v;
+      }
+    }
+  }
+
+  it("sends the text of an evening call minutes later, not at 8 a.m. the next day", async () => {
+    await withEnv({ MISSED_CALL_RECOVERY_SMS: undefined }, async () => {
+      const h = harness();
+      await activeMissedCall(h);
+      // Wednesday 22:00 in Toronto, outside the default 8-20 sending window.
+      h.setNow(new Date("2026-01-22T03:00:00.000Z"));
+      const scheduled = await h.service.scheduleMissedCall({
+        organizationId: org.id,
+        callId: "call_evening",
+        callerE164: "+15145550110",
+        disposition: "after_hours_missed",
+        simulated: false,
+      });
+      assert.equal(scheduled.scheduled, true);
+      assert.equal(scheduled.job?.scheduledAt, "2026-01-22T03:02:00.000Z");
+      h.setNow(new Date("2026-01-22T03:03:00.000Z"));
+      const ran = await h.service.processDue({ organizationId: org.id });
+      assert.equal(ran.jobs[0]?.status, "submitted");
+      assert.equal(h.sends(), 1);
+      assert.equal((await h.service.history(org.id)).some((row) => row.cancelReason === "stale"), false);
+    });
+  });
+
+  it("drops a text that is still unsent hours later instead of sending it late", async () => {
+    await withEnv({ MISSED_CALL_RECOVERY_SMS: undefined, MISSED_CALL_RECOVERY_MAX_AGE_MINUTES: undefined }, async () => {
+      const h = harness();
+      await activeMissedCall(h);
+      await h.service.scheduleMissedCall({
+        organizationId: org.id,
+        callId: "call_stalled",
+        callerE164: "+15145550111",
+        disposition: "missed",
+        simulated: false,
+      });
+      // The cron was down for three hours.
+      h.setNow(new Date("2026-01-21T18:00:00.000Z"));
+      const ran = await h.service.processDue({ organizationId: org.id });
+      assert.equal(ran.jobs[0]?.status, "skipped");
+      assert.equal(ran.jobs[0]?.cancelReason, "stale");
+      assert.equal(h.sends(), 0);
+    });
+  });
+
+  it("still sends a text that is a little late, within the maximum age", async () => {
+    await withEnv({ MISSED_CALL_RECOVERY_SMS: undefined, MISSED_CALL_RECOVERY_MAX_AGE_MINUTES: "30" }, async () => {
+      const h = harness();
+      await activeMissedCall(h);
+      await h.service.scheduleMissedCall({
+        organizationId: org.id,
+        callId: "call_slightly_late",
+        callerE164: "+15145550112",
+        disposition: "missed",
+        simulated: false,
+      });
+      h.setNow(new Date("2026-01-21T15:20:00.000Z"));
+      const ran = await h.service.processDue({ organizationId: org.id });
+      assert.equal(ran.jobs[0]?.status, "submitted");
+      assert.equal(h.sends(), 1);
+    });
+  });
+
+  it("MISSED_CALL_RECOVERY_SMS=off cancels a text that was already queued", async () => {
+    const h = harness();
+    await activeMissedCall(h);
+    await withEnv({ MISSED_CALL_RECOVERY_SMS: undefined }, () =>
+      h.service.scheduleMissedCall({
+        organizationId: org.id,
+        callId: "call_queued",
+        callerE164: "+15145550113",
+        disposition: "missed",
+        simulated: false,
+      }),
+    );
+    h.setNow(new Date("2026-01-21T15:03:00.000Z"));
+    await withEnv({ MISSED_CALL_RECOVERY_SMS: "off" }, async () => {
+      const ran = await h.service.processDue({ organizationId: org.id });
+      assert.equal(ran.jobs[0]?.status, "canceled");
+      assert.equal(ran.jobs[0]?.cancelReason, "recovery_sms_disabled");
+    });
+    assert.equal(h.sends(), 0);
+  });
+
+  it("does not let the sending window delay quote follow-ups", async () => {
+    const h = harness();
+    const quote = (await h.service.list(org.id)).find((row) => row.type === "quote_followup")!;
+    await h.service.update(org.id, quote.id, { initialDelayMinutes: 0, secondDelayMinutes: 60 });
+    await h.service.activate(org.id, quote.id);
+    h.setNow(new Date("2026-01-22T03:00:00.000Z")); // Wednesday 22:00 Toronto
+    const created = await h.service.scheduleQuoteFollowUps({
+      organizationId: org.id,
+      threadId: "thread_night",
+      phoneE164: "+15145550114",
+      customerName: "Pat",
+      quoteSentAt: "2026-01-22T03:00:00.000Z",
+      simulated: false,
+    });
+    // Follow-ups keep waiting for 8 a.m. Thursday (13:00Z): only the missed-call text is immediate.
+    assert.equal(created.jobs[0]?.scheduledAt, "2026-01-22T13:00:00.000Z");
+  });
+});
+
 describe("quote follow-up automation", () => {
   it("cancels the next reminder when the quote is accepted", async () => {
     const { service, sends } = harness();

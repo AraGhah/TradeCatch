@@ -15,11 +15,13 @@ import {
   explicitHumanTransfer,
   mergeCallDetails,
   nextMissingStep,
+  questionForStep,
   wrapUpOutcome,
 } from "./brain-rules";
 import { extractCallDetails } from "./call-details";
 import type { LlmClient } from "./llm";
 import { asksIfAi, asksPrice } from "./nlu";
+import { phrase } from "./prompts";
 import {
   claimsToBeHuman,
   claimsTransferPromise,
@@ -34,6 +36,7 @@ import type {
   BrainInput,
   CallFlags,
   CallSlots,
+  CallStep,
   ReceptionistBrain,
 } from "./types";
 
@@ -224,6 +227,7 @@ export function buildSystemPrompt(input: BrainInput): string {
       'Short, warm, calm sentences. ONE question per reply, never two. Acknowledge briefly in your own words before the next question ("Got it.", "Parfait.") and vary them; do not repeat the caller\'s words back as a quote.',
       "Never announce that you are an AI or a robot unprompted, and never claim to be a person. If asked whether you are a person, a robot or an AI, answer honestly and briefly that you are the virtual assistant for the business, then return to the question you were on.",
       "Keep every reply under 2 short sentences — this is a phone call. Say numbers and times plainly.",
+      "Every reply with action=ask ends with a question. After you answer a factual question (hours, area, insurance, how it works), follow it in the same reply with one relevant question: what they need, or the next missing item. Never answer and stop.",
       "# Price questions (any time)",
       config.pricingInfo
         ? `Approved pricing wording: "${config.pricingInfo}". You may say this and nothing more; an exact price needs an estimate. Then return to what you were asking.`
@@ -259,6 +263,20 @@ export function buildUserPrompt(input: BrainInput, missing: string): string {
     `Transcript:\n${transcript || "(none)"}`,
     `Caller just said: "${utterance}"`,
   ].join("\n\n");
+}
+
+/**
+ * The question to append to a reply that asked nothing: the next missing detail, or,
+ * when no need has been described yet, an offer to take a request for a visit or estimate.
+ */
+export function followUpQuestion(
+  next: CallStep,
+  input: Pick<BrainInput, "session">,
+  slots: CallSlots,
+): string {
+  const lang = input.session.language;
+  if (next === "reason") return phrase("faqFollowUp", lang);
+  return questionForStep(next, lang, input.session, slots);
 }
 
 export function createLlmBrain(
@@ -395,15 +413,22 @@ export function createLlmBrain(
           };
         }
 
+        const nextStep = nextMissingStep(
+          config,
+          { ...session, intent },
+          slots,
+          { recap: false, scope: false },
+        );
+        // A reply that only answers leaves the caller in silence on the phone. The model
+        // is told to end on a question; when it does not, add the relevant one.
+        if (!reply.includes("?")) {
+          reply = `${reply} ${followUpQuestion(nextStep, input, slots)}`;
+        }
+
         return {
           reply,
           action: { type: "ask" },
-          nextStep: nextMissingStep(
-            config,
-            { ...session, intent },
-            slots,
-            { recap: false, scope: false },
-          ),
+          nextStep,
           slots,
           intent,
           brain: "llm",

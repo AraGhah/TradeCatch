@@ -1,9 +1,20 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { expect, test as base, type Page } from "@playwright/test";
 import { waitForFormHydration } from "./support/hydration";
 
 const OPS = "Bearer tradecatch-e2e-ops-secret-not-for-production";
 const PASSWORD = "Copper-Pipe-Kettle-82";
+
+// Auth limits are keyed by client address. Give each test its own synthetic
+// address so parallel browser specs cannot consume its password/reset quota.
+const freshIp = () =>
+  `2001:db8:${randomUUID().replaceAll("-", "").match(/.{4}/g)!.slice(0, 6).join(":")}`;
+const test = base.extend({
+  extraHTTPHeaders: async ({}, provide) => {
+    await provide({ "x-forwarded-for": freshIp() });
+  },
+});
 
 async function rejectCookiesIfVisible(page: Page) {
   const reject = page.getByRole("button", { name: "Reject non-essential" });
@@ -52,7 +63,9 @@ test.describe("customer passwords", () => {
     await page.goto("/login");
     await rejectCookiesIfVisible(page);
     await expect(
-      page.getByRole("link", { name: /sign.?up|register|create (an )?account/i }),
+      page.getByRole("link", {
+        name: /sign.?up|register|create (an )?account/i,
+      }),
     ).toHaveCount(0);
 
     const unknown = `nobody-${Date.now()}@example.invalid`;
@@ -85,20 +98,26 @@ test.describe("customer passwords", () => {
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
     await page.getByLabel("New password").fill("password123");
     await page.getByLabel("Confirm password").fill("password123");
-    await page.getByRole("button", { name: "Save password and sign in" }).click();
+    await page
+      .getByRole("button", { name: "Save password and sign in" })
+      .click();
     await expect(page.locator("form").getByRole("alert")).toContainText(
       "too easy to guess",
     );
 
     await page.getByLabel("New password").fill(PASSWORD);
     await page.getByLabel("Confirm password").fill("Something-Else-99");
-    await page.getByRole("button", { name: "Save password and sign in" }).click();
+    await page
+      .getByRole("button", { name: "Save password and sign in" })
+      .click();
     await expect(page.locator("form").getByRole("alert")).toContainText(
       "do not match",
     );
 
     await page.getByLabel("Confirm password").fill(PASSWORD);
-    await page.getByRole("button", { name: "Save password and sign in" }).click();
+    await page
+      .getByRole("button", { name: "Save password and sign in" })
+      .click();
     await expect(page).toHaveURL(/\/app(?:\/)?$/);
 
     // The same link cannot be used a second time, even with a good password.
@@ -115,7 +134,9 @@ test.describe("customer passwords", () => {
     await page.goto("/login");
     await waitForFormHydration(page);
     await page.getByLabel("Work email").fill(email);
-    await page.getByLabel("Password", { exact: true }).fill("wrong-wrong-wrong");
+    await page
+      .getByLabel("Password", { exact: true })
+      .fill("wrong-wrong-wrong");
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page.locator("form").getByRole("alert")).toContainText(
       "email and password do not match",
@@ -128,8 +149,12 @@ test.describe("customer passwords", () => {
     await page.goto("/app/settings/security");
     await waitForFormHydration(page);
     await page.getByLabel("Current password").fill(PASSWORD);
-    await page.getByLabel("New password", { exact: true }).fill("Maple-Wrench-Lantern-47");
-    await page.getByLabel("Confirm new password").fill("Maple-Wrench-Lantern-47");
+    await page
+      .getByLabel("New password", { exact: true })
+      .fill("Maple-Wrench-Lantern-47");
+    await page
+      .getByLabel("Confirm new password")
+      .fill("Maple-Wrench-Lantern-47");
     await page.getByRole("button", { name: "Change password" }).click();
     await expect(
       page.getByRole("status").filter({ hasText: "Password changed" }),
@@ -145,7 +170,9 @@ test.describe("customer passwords", () => {
     await waitForFormHydration(page);
     await page.getByLabel("New password").fill(PASSWORD);
     await page.getByLabel("Confirm password").fill(PASSWORD);
-    await page.getByRole("button", { name: "Save password and sign in" }).click();
+    await page
+      .getByRole("button", { name: "Save password and sign in" })
+      .click();
     await expect(page).toHaveURL(/\/app(?:\/)?$/);
     await page.request.post("/api/auth/logout");
     await page.context().clearCookies();
@@ -181,11 +208,15 @@ test.describe("customer passwords", () => {
     await waitForFormHydration(page);
     await page.getByLabel("New password").fill(PASSWORD);
     await page.getByLabel("Confirm password").fill(PASSWORD);
-    await page.getByRole("button", { name: "Save password and sign in" }).click();
+    await page
+      .getByRole("button", { name: "Save password and sign in" })
+      .click();
     await expect(page).toHaveURL(/\/app(?:\/)?$/);
 
     // A second device signs in with the password.
-    const other = await browser.newContext();
+    const other = await browser.newContext({
+      extraHTTPHeaders: { "x-forwarded-for": freshIp() },
+    });
     try {
       const phone = await other.newPage();
       await phone.goto("/login");
@@ -200,8 +231,12 @@ test.describe("customer passwords", () => {
       await page.goto("/app/settings/security");
       await waitForFormHydration(page);
       await page.getByLabel("Current password").fill(PASSWORD);
-      await page.getByLabel("New password", { exact: true }).fill("Maple-Wrench-Lantern-47");
-      await page.getByLabel("Confirm new password").fill("Maple-Wrench-Lantern-47");
+      await page
+        .getByLabel("New password", { exact: true })
+        .fill("Maple-Wrench-Lantern-47");
+      await page
+        .getByLabel("Confirm new password")
+        .fill("Maple-Wrench-Lantern-47");
       await page.getByRole("button", { name: "Change password" }).click();
       await expect(
         page.getByRole("status").filter({ hasText: "Password changed" }),
@@ -221,7 +256,9 @@ test.describe("customer passwords", () => {
     page,
   }) => {
     await page.goto(`/set-password?token=${"A".repeat(43)}`);
-    await expect(page.getByText("invalid, expired, or already used").first()).toBeVisible();
+    await expect(
+      page.getByText("invalid, expired, or already used").first(),
+    ).toBeVisible();
     await expect(
       page.getByRole("link", { name: "Request a new link" }),
     ).toBeVisible();
@@ -237,7 +274,9 @@ test.describe("customer passwords", () => {
   }) => {
     await page.goto("/fr/connexion");
     await rejectCookiesIfVisible(page);
-    await expect(page.getByLabel("Mot de passe", { exact: true })).toBeVisible();
+    await expect(
+      page.getByLabel("Mot de passe", { exact: true }),
+    ).toBeVisible();
     await page.getByRole("link", { name: "Mot de passe oublié?" }).click();
     await expect(page).toHaveURL(/\/fr\/mot-de-passe-oublie$/);
     await expect(
@@ -258,7 +297,12 @@ test.describe("customer passwords", () => {
     );
   });
 
-  for (const path of ["/login", "/forgot-password", "/set-password", "/fr/connexion"]) {
+  for (const path of [
+    "/login",
+    "/forgot-password",
+    "/set-password",
+    "/fr/connexion",
+  ]) {
     test(`${path} has no automatically detectable WCAG A/AA violations`, async ({
       page,
     }) => {

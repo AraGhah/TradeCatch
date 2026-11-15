@@ -4,7 +4,10 @@ from routing import call_id_from_room, caller_number
 from tuning import (
     DEFAULT_MODEL,
     DEFAULT_VOICE,
+    DEFAULT_VOICE_FEMALE,
+    DEFAULT_VOICE_MALE,
     delegation_options,
+    persona_voice_settings,
     turn_handling_from_env,
     voice_settings,
 )
@@ -103,6 +106,38 @@ class VoiceSettingsTests(unittest.TestCase):
     def test_overrides(self):
         env = {"AGENT_REALTIME_MODEL": " openai/other ", "AGENT_VOICE": "cedar"}
         self.assertEqual(voice_settings(env), ("openai/other", "cedar"))
+
+
+class PersonaVoiceTests(unittest.TestCase):
+    def test_a_female_name_never_gets_the_global_male_voice(self):
+        # The reported bug: AGENT_VOICE is one voice for the whole deployment.
+        env = {"AGENT_VOICE": "cedar"}
+        self.assertEqual(persona_voice_settings(env, "Sophie"), (DEFAULT_MODEL, DEFAULT_VOICE_FEMALE))
+
+    def test_a_male_name_gets_the_male_voice(self):
+        self.assertEqual(persona_voice_settings({}, "Marc"), (DEFAULT_MODEL, DEFAULT_VOICE_MALE))
+
+    def test_the_operator_picks_each_voice(self):
+        env = {"AGENT_VOICE_FEMALE": " vesper ", "AGENT_VOICE_MALE": "stone"}
+        self.assertEqual(persona_voice_settings(env, "Sophie")[1], "vesper")
+        self.assertEqual(persona_voice_settings(env, "Marc")[1], "stone")
+
+    def test_an_unknown_or_unisex_name_keeps_the_global_voice(self):
+        self.assertEqual(persona_voice_settings({}, "Alex"), voice_settings({}))
+        self.assertEqual(persona_voice_settings({"AGENT_VOICE": "stone"}, "Alex")[1], "stone")
+        self.assertEqual(persona_voice_settings({"AGENT_VOICE": "stone"}, None)[1], "stone")
+
+    def test_the_model_override_is_kept(self):
+        env = {"AGENT_REALTIME_MODEL": "openai/other"}
+        self.assertEqual(persona_voice_settings(env, "Sophie")[0], "openai/other")
+
+    def test_matching_can_be_turned_off(self):
+        env = {"AGENT_VOICE": "cedar", "AGENT_VOICE_MATCH_NAME": "off"}
+        self.assertEqual(persona_voice_settings(env, "Sophie"), (DEFAULT_MODEL, "cedar"))
+
+    def test_the_default_voices_differ(self):
+        self.assertNotEqual(DEFAULT_VOICE_FEMALE, DEFAULT_VOICE_MALE)
+        self.assertEqual(DEFAULT_VOICE, DEFAULT_VOICE_FEMALE)
 
 
 class CallerNumberTests(unittest.TestCase):

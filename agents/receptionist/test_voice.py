@@ -127,6 +127,41 @@ class StandardVoiceTest(unittest.TestCase):
         self.assertIsNone(voice.call_voice({"instructions": "x"}, KEY))
 
 
+class StandardVoiceByNameTest(unittest.TestCase):
+    FEMALE = "femaleVoice123456"
+    MALE = "maleVoiceId1234567"
+    BOTH = {**STANDARD, "AGENT_ELEVENLABS_VOICE_ID_FEMALE": FEMALE, "AGENT_ELEVENLABS_VOICE_ID_MALE": MALE}
+
+    def test_the_voice_follows_the_name(self):
+        self.assertEqual(voice.standard_voice(self.BOTH, "Sophie").voice_id, self.FEMALE)
+        self.assertEqual(voice.standard_voice(self.BOTH, "Marc").voice_id, self.MALE)
+
+    def test_unknown_or_missing_names_use_the_common_voice(self):
+        for name in ("Alex", None, ""):
+            self.assertEqual(voice.standard_voice(self.BOTH, name).voice_id, "j9RedbMRSNQ74PyikQwD", name)
+        self.assertEqual(voice.standard_voice(self.BOTH).voice_id, "j9RedbMRSNQ74PyikQwD")
+
+    def test_a_missing_or_invalid_gendered_id_falls_back_to_the_common_voice(self):
+        for env in (STANDARD, {**STANDARD, "AGENT_ELEVENLABS_VOICE_ID_FEMALE": "bad id!"}):
+            self.assertEqual(voice.standard_voice(env, "Sophie").voice_id, "j9RedbMRSNQ74PyikQwD")
+
+    def test_matching_can_be_turned_off(self):
+        env = {**self.BOTH, "AGENT_VOICE_MATCH_NAME": "off"}
+        self.assertEqual(voice.standard_voice(env, "Sophie").voice_id, "j9RedbMRSNQ74PyikQwD")
+
+    def test_call_voice_reads_the_name_from_the_agent_config(self):
+        sophie = {"instructions": "x", "receptionistName": "Sophie"}
+        marc = {"instructions": "x", "receptionistName": "Marc"}
+        self.assertEqual(voice.call_voice(sophie, self.BOTH).voice_id, self.FEMALE)
+        self.assertEqual(voice.call_voice(marc, self.BOTH).voice_id, self.MALE)
+        # No name configured: the default receptionist is Lucie, a female name.
+        self.assertEqual(voice.call_voice({"instructions": "x"}, self.BOTH).voice_id, self.FEMALE)
+
+    def test_a_business_clone_still_wins(self):
+        c = {**cfg(), "receptionistName": "Sophie"}
+        self.assertEqual(voice.call_voice(c, self.BOTH).source, "cloned")
+
+
 class DeliverySettingsTest(unittest.TestCase):
     def test_unset_keeps_the_voice_own_settings(self):
         self.assertIsNone(voice.delivery_settings({}))

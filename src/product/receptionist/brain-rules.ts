@@ -597,7 +597,8 @@ function handleReason(input: BrainInput): AgentDecision {
   if (faq) {
     const answer = lang === "fr" ? faq.answerFr : faq.answerEn;
     return {
-      reply: `${answer} ${phrase("anythingElse", lang)}`,
+      // No need described yet: follow the answer with a question that leads to a request.
+      reply: `${answer} ${phrase("faqFollowUp", lang)}`,
       action: { type: "ask" },
       nextStep: "anything_else",
       intent: session.intent ?? "faq",
@@ -680,6 +681,16 @@ function handleAnythingElse(input: BrainInput): AgentDecision {
 
   if (yn === "no" && count <= 5) return finish(input, slots, session.intent);
   if (yn === "yes" && count <= 3) {
+    // "Yes" to "would you like me to take your details?": start the request, don't just listen.
+    if (!slots.issue && !slots.message) {
+      return {
+        reply: phrase("askReason", lang),
+        action: { type: "ask" },
+        nextStep: "reason",
+        slots,
+        brain: "rules",
+      };
+    }
     return {
       reply: phrase("listening", lang),
       action: { type: "ask" },
@@ -700,8 +711,9 @@ function handleAnythingElse(input: BrainInput): AgentDecision {
   const faq = matchFaq(utterance, config.faqs);
   if (faq) {
     const answer = lang === "fr" ? faq.answerFr : faq.answerEn;
+    const hasNeed = Boolean(slots.issue || slots.message);
     return {
-      reply: `${answer} ${phrase("anythingElse", lang)}`,
+      reply: `${answer} ${phrase(hasNeed ? "anythingElse" : "faqFollowUp", lang)}`,
       action: { type: "ask" },
       nextStep: "anything_else",
       slots,
@@ -898,6 +910,13 @@ export function createRuleBrain(): ReceptionistBrain {
         if (asksPrice(utterance)) {
           const price = priceReply(input);
           return resume(input, price.reply, price.flags);
+        }
+        // A business question in the middle of the intake (hours, insurance, area...):
+        // answer it, then go back to the question that was pending. An answer that
+        // also gives request details is an answer to the intake, not a side question.
+        const faq = matchFaq(utterance, input.config.faqs);
+        if (faq && !hasAnyDetail(detailsOf(input))) {
+          return resume(input, lang === "fr" ? faq.answerFr : faq.answerEn, {});
         }
       }
 
