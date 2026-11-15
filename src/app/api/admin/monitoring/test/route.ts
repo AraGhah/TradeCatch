@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
@@ -24,7 +25,9 @@ export async function POST(request: Request) {
       { error: access.error },
       { status: access.status },
     );
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid simulation." }, { status: 400 });
   const service = getReliabilityService();
