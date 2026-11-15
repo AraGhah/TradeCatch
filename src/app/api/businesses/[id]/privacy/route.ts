@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { SecurityError } from "@/product/security/service";
@@ -64,7 +65,9 @@ export async function PUT(request: NextRequest, { params }: Params) {
       { error: access.error },
       { status: access.status },
     );
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json(
       { error: "Invalid privacy settings." },
