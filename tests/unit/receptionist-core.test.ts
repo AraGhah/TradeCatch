@@ -280,6 +280,56 @@ describe("receptionist call flow (rule brain)", () => {
     assert.equal(s.outcome, "faq_answered");
   });
 
+  it("follows an FAQ answer with a relevant question, not just 'anything else?'", async () => {
+    const { engine } = setup();
+    let plan = await engine.startCall({ callSid: "CA2F", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "what are your opening hours?");
+    assert.match(texts(plan), /Monday to Friday/);
+    assert.match(texts(plan), /take your details for a visit or an estimate\?/);
+    assert.doesNotMatch(texts(plan), /anything else/i);
+  });
+
+  it("starts taking the request when the caller says yes to that follow-up", async () => {
+    const { engine, store } = setup();
+    let plan = await engine.startCall({ callSid: "CA2Y", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "what are your opening hours?");
+    plan = await say(engine, plan, "yes");
+    assert.match(texts(plan), /How can I help you today\?/);
+    assert.equal((await store.getSessionByCallSid("CA2Y"))!.step, "reason");
+    plan = await say(engine, plan, "I need a plumber, my kitchen sink is leaking");
+    const s = (await store.getSessionByCallSid("CA2Y"))!;
+    assert.ok(s.slots.issue, "the request is now recorded");
+    assert.notEqual(s.step, "anything_else");
+  });
+
+  it("answers an FAQ asked in the middle of the intake, then asks the pending question again", async () => {
+    const { engine, store } = setup();
+    let plan = await engine.startCall({ callSid: "CA2M", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "I need a plumber, my kitchen sink is leaking");
+    const stepBefore = (await store.getSessionByCallSid("CA2M"))!.step;
+    plan = await say(engine, plan, "what are your opening hours?");
+    const reply = texts(plan);
+    assert.match(reply, /Monday to Friday/);
+    const s = (await store.getSessionByCallSid("CA2M"))!;
+    assert.equal(s.step, stepBefore, "the intake is still on the same question");
+    assert.match(reply, /\?/, "the pending question is asked again");
+    assert.ok(s.slots.issue, "what the caller already said is kept");
+  });
+
+  it("does not take an answer that carries request details for a side question", async () => {
+    const { engine, store } = setup();
+    let plan = await engine.startCall({ callSid: "CA2D", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "1");
+    plan = await say(engine, plan, "I need a plumber, my kitchen sink is leaking");
+    plan = await say(engine, plan, "my name is Marie Tremblay");
+    const s = (await store.getSessionByCallSid("CA2D"))!;
+    assert.equal(s.slots.callerName, "Marie Tremblay");
+    assert.doesNotMatch(texts(plan), /Monday to Friday/);
+  });
+
   it("does not finalize twice and does not double-notify", async () => {
     const { engine, sms } = setup();
     let plan = await engine.startCall({ callSid: "CA3", fromE164: CALLER, toE164: OFFICE });
@@ -526,6 +576,52 @@ describe("receptionist LLM brain guardrails", () => {
     assert.equal(s.slots.callerName, "Marie");
     assert.equal(s.slots.callbackE164, undefined, "invalid phone rejected");
     assert.equal(s.turns.at(-1)!.brain, "llm");
+  });
+
+  it("adds the relevant follow-up when the model answers and asks nothing", async () => {
+    const llm = fakeLlm({
+      reply: "Nous sommes ouverts de 8 h à 17 h, du lundi au vendredi.",
+      action: "ask",
+      intent: "faq",
+    });
+    const { engine } = setup({ brain: createLlmBrain(llm) });
+    let plan = await engine.startCall({ callSid: "CCQ1", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "vous êtes ouverts quand");
+    const reply = texts(plan);
+    assert.match(reply, /de 8 h à 17 h/);
+    assert.match(reply, /\?\s*$|\?\s*\|/, "the reply now ends on a question");
+    assert.match(reply, /visite ou une soumission/);
+  });
+
+  it("asks the next missing detail, not the generic offer, when a need is already known", async () => {
+    const llm = fakeLlm({
+      reply: "Merci Marie, c'est noté.",
+      action: "ask",
+      intent: "service_request",
+      slots: { callerName: "Marie", issue: "évier qui coule dans la cuisine" },
+    });
+    const { engine } = setup({ brain: createLlmBrain(llm) });
+    let plan = await engine.startCall({ callSid: "CCQ2", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "Marie, mon évier coule dans la cuisine");
+    assert.match(texts(plan), /c'est noté\./);
+    assert.match(texts(plan), /adresse|address/i);
+    assert.doesNotMatch(texts(plan), /visite ou une soumission/);
+  });
+
+  it("leaves a reply that already ends on a question untouched", async () => {
+    const llm = fakeLlm({
+      reply: "Merci Marie. Quelle est l'adresse?",
+      action: "ask",
+      intent: "service_request",
+      slots: { callerName: "Marie", issue: "évier qui coule" },
+    });
+    const { engine } = setup({ brain: createLlmBrain(llm) });
+    let plan = await engine.startCall({ callSid: "CCQ3", fromE164: CALLER, toE164: OFFICE });
+    plan = await say(engine, plan, "", "2");
+    plan = await say(engine, plan, "Bonjour, c'est Marie, mon évier coule");
+    assert.equal((texts(plan).match(/\?/g) ?? []).length, 1);
   });
 
   it("transfers a caller who asks for a person even when the model only asks another question", async () => {
