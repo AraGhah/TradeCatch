@@ -1,3 +1,4 @@
+import { readJsonBounded } from "@/lib/request-body";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
@@ -26,7 +27,9 @@ export async function POST(
     );
   if (!access.ctx)
     return NextResponse.json({ error: "session" }, { status: 403 });
-  const parsed = schema.safeParse(await request.json().catch(() => null));
+  const parsed = schema.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json({ error: "role" }, { status: 400 });
   const { id } = await context.params;
