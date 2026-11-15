@@ -2,6 +2,7 @@
 // The OpenNext worker is generated before Wrangler bundles this entrypoint.
 // @ts-ignore -- .open-next/worker.js is generated after a clean type-check.
 import openNextWorker from "./.open-next/worker.js";
+import { corsDecision, withCors } from "./src/lib/cors";
 import {
   runCloudflareCron,
   cloudflareSchedulerSecret,
@@ -35,6 +36,19 @@ export { DOShardedTagCache } from "./.open-next/worker.js";
 // @ts-ignore -- generated during `opennextjs-cloudflare build`.
 export { BucketCachePurge } from "./.open-next/worker.js";
 
+/**
+ * Worker bindings as the plain string settings the CORS policy reads. This
+ * entry point only ever runs a production build, so NODE_ENV is fixed rather
+ * than read: a missing value must never select the development origin list.
+ */
+function corsEnv(env: TradeCatchWorkerEnv): Record<string, string | undefined> {
+  const settings: Record<string, string | undefined> = {};
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === "string") settings[key] = value;
+  }
+  return { ...settings, NODE_ENV: "production" };
+}
+
 function schedulerOrigin(env: TradeCatchWorkerEnv): string {
   const configured = env.NEXT_PUBLIC_SITE_URL?.trim();
   return new URL(configured || "https://tradecatch.ca").origin;
@@ -42,6 +56,18 @@ function schedulerOrigin(env: TradeCatchWorkerEnv): string {
 
 export default {
   fetch(request, env, ctx) {
+    // The Next proxy answers CORS for everything it handles (src/proxy.ts).
+    // This covers what never reaches it: the installation gate's refusals and
+    // the fetch guard's 503, so an approved frontend can read the error.
+    // withCors sets headers rather than appending, so nothing is duplicated.
+    const url = new URL(request.url);
+    const cors = corsDecision({
+      method: request.method,
+      pathname: url.pathname,
+      headers: request.headers,
+      selfHosts: [url.host],
+      env: corsEnv(env),
+    });
     return guardWorkerFetch(request, () =>
       withPostgresRequestScope(async () => {
         const denied = await enforceInstallationRequest(request, env);
@@ -50,7 +76,7 @@ export default {
         if (preview) return preview;
         return openNextWorker.fetch(request, env, ctx);
       }),
-    );
+    ).then((response) => withCors(response, cors));
   },
 
   async scheduled(controller, env, ctx) {

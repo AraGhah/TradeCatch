@@ -47,9 +47,22 @@ export function isCrossSiteMutation(input: {
   headers: Headers;
   /** Hostnames this deployment answers to, e.g. the Host header and the public site URL. */
   hosts: Array<string | null | undefined>;
+  /**
+   * An origin the CORS policy (src/lib/cors.ts) has approved for this very
+   * request: an exact allowlist match on a browser-facing route. A request
+   * whose Origin is exactly this value is a first-party frontend, so it is not
+   * treated as cross-site. Any other origin, including a sibling subdomain
+   * that is not on the list, is judged as before.
+   */
+  trustedOrigin?: string | null;
 }): boolean {
   if (!UNSAFE_METHODS.has(input.method.toUpperCase())) return false;
   if (!carriesAuthCookie(input.headers.get("cookie"))) return false;
+  if (
+    input.trustedOrigin &&
+    input.headers.get("origin") === input.trustedOrigin
+  )
+    return false;
 
   const fetchSite = input.headers.get("sec-fetch-site")?.trim().toLowerCase();
   if (fetchSite) return fetchSite !== "same-origin" && fetchSite !== "none";
