@@ -1,0 +1,13 @@
+{
+  "id": "P013",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "need",
+  "reason": "I lost a $9,000 kitchen job last month because nobody chased the quote, and a text follow-up on day 1, 3, 7 and 14 is exactly that gap. $2,000 plus $249 a month is small next to one lost job, the demo is free, and the setup fee comes back if it doesn't capture 10 calls.",
+  "objection": "It only books into Google Calendar and not the software I actually run jobs and quotes in, so I don't know how it would know a quote went out. I also want to know where my customers' recordings and info are stored, and it's one guy doing the setup and the watching.",
+  "would_change_my_mind": "If the demo call log shows I miss too few calls for this to pay, or the Québec French on the test calls sounds stiff or fake, I walk away.",
+  "price_too_cheap": 79,
+  "price_cheap": 175,
+  "price_expensive": 450,
+  "price_too_expensive": 750
+}

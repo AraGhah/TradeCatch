@@ -1,0 +1,13 @@
+{
+  "id": "P008",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "convenience",
+  "reason": "I run my jobs and appointments out of my scheduling/CRM tool, and this books into Google Calendar, not into that. So every lead it catches I'd have to re-type into my system, and I'm already doing invoicing on Sunday night with nothing left over. $2,000 up front plus $249 a month for something that doesn't plug into how I already work is a hard sell this week.",
+  "objection": "It doesn't fit with my CRM. A text and a Google Calendar entry means double entry, and I'd rather not run two systems for one job. The founder is also one person with no track record I can check, and I'd be paying $2K before I know if it catches anything.",
+  "would_change_my_mind": "If it pushed the leads straight into my CRM so I never re-type anything, and the $2K setup came down or I could see real before-and-after numbers from another plumber or HVAC guy first.",
+  "price_too_cheap": 49,
+  "price_cheap": 99,
+  "price_expensive": 249,
+  "price_too_expensive": 400
+}

@@ -1,0 +1,31 @@
+{
+  "business": "TradeCatch (bilingual AI phone receptionist for Québec contractors), CAD, before sales tax",
+  "notes": [
+    "unit = one client-month. days_per_month is 1 on purpose, so the tool's 'per day' columns read as 'active clients' and 'per month'.",
+    "price = 299, an ESTIMATE of a 50/50 mix of Essential (249) and Professional (349). Run --price 249 and --price 349 for each plan.",
+    "variable = cost of one client-month with the voice minutes and texts FULLY used (the plan allowance in src/lib/plans.ts, which is provisional). Real use is lower, so margin here is a floor. Sources and arithmetic: founder/cfo-sources.md.",
+    "The setup fee (1,999.99) cannot be a per-unit price in this tool. It is entered as a NEGATIVE fixed line: 1 new client a month x (1,999.99 - 58.30 card fee) = 1,941.69. That matches the ramp below (one net new client a month). If sales stop, that income stops: see founder/cfo.md for the break-even without it.",
+    "ramp = +1 net client a month. ESTIMATE from the panel: about 20 demos a month at the panel's 5% buy rate is 1 sale a month, with referrals offsetting any cancellations.",
+    "ESTIMATES the founder must replace with real figures: founder living wage, LiveKit plan, other hosting and software, startup legal and accounting, demos a month, plan mix. capacity_per_day is left out on purpose: hours per install and per customer per month are not known yet."
+  ],
+  "unit": "client-month",
+  "price": 299,
+  "variable": [
+    {"label": "Voice minutes at full allowance (avg of Essential 500 and Professional 750 min x CA$0.1091)", "cost": 68.17},
+    {"label": "Text segments at full allowance (avg of Essential 1,000 and Professional 2,000 x CA$0.0229)", "cost": 34.38},
+    {"label": "Transfer leg, ESTIMATE: 10% of minutes (62.5) x CA$0.0133", "cost": 0.83},
+    {"label": "Card fee + Stripe Billing 0.7% (avg of Essential 9.26 and Professional 12.86)", "cost": 11.06},
+    {"label": "Twilio phone number rental, US$1.15 x 1.4257 (one local number a client, ESTIMATE)", "cost": 1.64}
+  ],
+  "fixed_monthly": [
+    {"label": "Founder living wage drawn from the business (PLACEHOLDER, founder to set)", "cost": 4000},
+    {"label": "LiveKit Ship plan US$50 (ESTIMATE of plan; US$0 on Build)", "cost": 71.29},
+    {"label": "Other hosting and software: Cloudflare, database, domain, email, monitoring (ESTIMATE)", "cost": 200},
+    {"label": "LESS setup-fee income: 1 new client a month x (1,999.99 - 58.30 card fee)", "cost": -1941.69}
+  ],
+  "startup": [
+    {"label": "Legal and accounting set-up: terms, Law 25 privacy review, structure (ESTIMATE)", "cost": 2000}
+  ],
+  "days_per_month": 1,
+  "ramp_per_day": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P015",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I do lose callbacks in winter, but paying almost 2,000 $ up front before I've seen it catch a single call for me is too much of a leap. My paper agenda and texts are messy, but they're free and I know them.",
+  "objection": "2,000 $ setup on top of 249 $ a month, for something I can't try first. If my customers hang up on a robot or it gets the address wrong, that money is gone.",
+  "would_change_my_mind": "Drop or spread out the setup fee, or let me run it for a month in winter and only pay setup if it actually caught calls I would have missed.",
+  "price_too_cheap": 50,
+  "price_cheap": 120,
+  "price_expensive": 250,
+  "price_too_expensive": 400
+}

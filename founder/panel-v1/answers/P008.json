@@ -1,0 +1,13 @@
+{
+  "id": "P008",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "convenience",
+  "reason": "My whole schedule already lives in my CRM, and this only books into Google Calendar, so I'd be retyping leads on Sunday nights or running two systems. Two grand up front plus 249 to 349 a month for something that doesn't plug into what I use isn't a clear win yet.",
+  "objection": "It doesn't connect to my scheduling/CRM tool, and I can't see how many extra jobs it would actually catch to justify a $2,000 setup on top of the monthly fee.",
+  "would_change_my_mind": "Leads and bookings landing straight in my existing CRM, plus a trial month or a smaller setup fee so I can see the booked jobs it catches before paying $2,000.",
+  "price_too_cheap": 40,
+  "price_cheap": 99,
+  "price_expensive": 249,
+  "price_too_expensive": 400
+}

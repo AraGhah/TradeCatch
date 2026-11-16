@@ -1,0 +1,13 @@
+{
+  "id": "P009",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "My people already pick up most calls, and paying 2,000 $ up front before I know a robot won't mess up a Laval customer who switches between French and English mid-sentence is too big a bet. One wrong answer or a botched appointment costs me more than a missed call that goes to voicemail.",
+  "objection": "That it says something wrong to a customer or gets the booking details mixed up, and I only find out when the customer is already gone. The setup fee means I'm paying a lot before I've seen it work on my real calls.",
+  "would_change_my_mind": "A trial on my real line for a few weeks with no setup fee, where I can read every call transcript and see it handle bilingual callers without mistakes.",
+  "price_too_cheap": 50,
+  "price_cheap": 120,
+  "price_expensive": 250,
+  "price_too_expensive": 400
+}

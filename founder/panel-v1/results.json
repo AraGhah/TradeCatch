@@ -1,0 +1,154 @@
+{
+ "business": "TradeCatch (a bilingual AI phone receptionist for Québec contractors)",
+ "seed": 7,
+ "dealt": 20,
+ "answered": 20,
+ "skipped": [],
+ "buys": 1,
+ "passes": 19,
+ "buy_rate": 0.05,
+ "by_segment": [
+  [
+   "Small service business, 2 to 5 employees (business revenue)",
+   7,
+   0.14285714285714285
+  ],
+  [
+   "Growing business, 6 to 10 employees (business revenue)",
+   3,
+   0.0
+  ],
+  [
+   "Renovation, roofing or landscaping business (business revenue)",
+   2,
+   0.0
+  ],
+  [
+   "Solo contractor (plumber, electrician or HVAC), business revenue",
+   8,
+   0.0
+  ]
+ ],
+ "by_behaviour": [
+  [
+   "Misses calls on the job",
+   5,
+   0.2
+  ],
+  [
+   "Personal phone, voicemail or an employee answers",
+   5,
+   0.0
+  ],
+  [
+   "Bilingual service matters",
+   2,
+   0.0
+  ],
+  [
+   "Manages appointments by hand",
+   3,
+   0.0
+  ],
+  [
+   "Wants it simple",
+   2,
+   0.0
+  ],
+  [
+   "Uses scheduling or CRM software",
+   3,
+   0.0
+  ]
+ ],
+ "by_income": [
+  [
+   "$277,000 to $789,000",
+   7,
+   0.14285714285714285
+  ],
+  [
+   "$789,000 and up",
+   7,
+   0.0
+  ],
+  [
+   "under $277,000",
+   6,
+   0.0
+  ]
+ ],
+ "why_not": [
+  [
+   "trust",
+   10,
+   [
+    "Winter is crazy for us and I do lose callbacks, so the problem is real, but I'm not dropping two grand on setup for a robot I've never heard handle one of my customers. I'd call the demo line, maybe, but I wouldn't sign anything this week.",
+    "I'd call the demo line in both languages and probably book the call, but I don't hand over 2,000 $ before I've seen it work for a business like mine. There's no testimonial, no client name, no numbers on recovered jobs, nothing that tells me this has worked for anyone yet."
+   ],
+   [
+    "P001",
+    "P002"
+   ]
+  ],
+  [
+   "price",
+   6,
+   [
+    "Losing that $9,000 kitchen job stung, but that quote sat because I didn't get back to him, not because nobody answered the phone. Two grand up front plus 249 a month, before I've seen it catch a single job, is a lot to bet when my notebook and texts mostly work.",
+    "Two thousand dollars just to get started, before I know if it catches even one job I'd have missed, is a lot to put down on a phone answering thing. The monthly I could live with, but I'm not paying the setup this month on a first look."
+   ],
+   [
+    "P003",
+    "P007"
+   ]
+  ],
+  [
+   "convenience",
+   3,
+   [
+    "My whole schedule already lives in my CRM, and this only books into Google Calendar, so I'd be retyping leads on Sunday nights or running two systems. Two grand up front plus 249 to 349 a month for something that doesn't plug into what I use isn't a clear win yet.",
+    "Missed calls on a job do cost me work, and I'm glad I keep my number. But my appointments already live in my scheduling/CRM tool, and this only texts me or books into Google Calendar, so I'd end up retyping every lead on Sunday night. That's a second system, and I'd be paying $2,000 up front just to get it."
+   ],
+   [
+    "P008",
+    "P010"
+   ]
+  ]
+ ],
+ "why_yes": [
+  [
+   "need",
+   1,
+   [
+    "I lost a $9,000 kitchen last month because nobody got back to the caller. If this saves one job like that a year, the setup and the monthly fee pay for themselves, so I'd sign up for Essential after I call the demo line and it sounds like a real person in proper Québec French."
+   ],
+   [
+    "P011"
+   ]
+  ]
+ ],
+ "flip": [
+  "Calling the demo line myself, in French, as an angry customer with an urgent problem, and having it sound natural and text me the right details, plus being able to try it a month before paying the full setup fee.",
+  "Two or three Montréal or Laval trade owners I can actually call who use it in both languages, or a paid trial month where the setup fee is waived or refunded if it doesn't catch jobs I would have missed.",
+  "Drop the setup fee, or let me pay it only after the first month if it actually brings in a job I would have lost.",
+  "Talking to two or three roofers or landscapers around Laval who have used it for a full season and can tell me how many jobs it got them, or a first month where I don't pay the setup unless it proves itself.",
+  "Proof from local trades with real numbers, or a trial month with the setup fee waived or refundable if it doesn't catch calls I would have missed.",
+  "A trial month without the $2,000 setup, or the setup refunded if it doesn't catch at least one job I'd have missed, after I hear it handle my own test calls in Québec French.",
+  "If the setup was waived or refunded when it doesn't bring me at least one real job in the first two months, I'd try it.",
+  "Leads and bookings landing straight in my existing CRM, plus a trial month or a smaller setup fee so I can see the booked jobs it catches before paying $2,000.",
+  "A trial on my real line for a few weeks with no setup fee, where I can read every call transcript and see it handle bilingual callers without mistakes.",
+  "If it pushed the caller's details and bookings straight into my existing scheduling/CRM tool, with the setup fee cut or credited back after a trial month where I see it catch real jobs.",
+  "Drop the setup fee, or give me a free month on my real line so I can count the jobs it actually catches that I would have lost.",
+  "Calling the demo line in French and English and having it sound like a real Montréal receptionist in both, plus a written privacy policy saying where the data is stored, and two or three local trade owners I can call who have used it for months.",
+  "A direct sync with the scheduling/CRM tool I already use, plus a trial where I can listen to real recordings of how it handled my calls before I pay the full setup fee.",
+  "Drop or spread out the setup fee, or let me run it for a month in winter and only pay setup if it actually caught calls I would have missed.",
+  "A trial month on my real line with no setup fee, or the setup refunded if I cancel in the first 60 days, plus a plain answer on where the call recordings and customer info are stored.",
+  "Drop or refund the setup fee if it doesn't bring me at least a couple of jobs in the first 60 days, so I'm only risking the monthly.",
+  "Hearing it handle real calls from my own customers for a couple of weeks with no setup fee up front, or a referral from another business owner around Laval who says it hasn't lost them a single client.",
+  "Hearing it handle a real emergency call properly in Québec French, plus a first month where I can walk away and get the setup fee back if it costs me a customer.",
+  "Dropping or splitting the setup fee, or a trial month where I can see how many calls it actually caught that I would have missed."
+ ],
+ "purchases_first_month_per_buyer": 1.0,
+ "price_answers": 20
+}

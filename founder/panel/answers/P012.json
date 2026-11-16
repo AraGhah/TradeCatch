@@ -1,0 +1,13 @@
+{
+  "id": "P012",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "Two grand up front plus 250 a month is real money, and the guarantee only promises 10 messages, not 10 jobs. I'd call the demo line and maybe sit through the free demo, but I'm not signing this week.",
+  "objection": "A captured request isn't a booked job. Half of those could be tire-kickers or someone wanting a price. I pay 2,000 and then 250 a month, and all I'm guaranteed is a count of messages, not money in my pocket.",
+  "would_change_my_mind": "The call-log count in the free demo showing I'm really missing 15 or more real customer calls a month on jobs worth $500 or more, plus a reference call with another Laval or Montréal plumber or HVAC guy saying it turned into actual booked work.",
+  "price_too_cheap": 49,
+  "price_cheap": 99,
+  "price_expensive": 249,
+  "price_too_expensive": 400
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P010",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "Keeping my number is good, and the guarantee is fair, but all my jobs already live in my scheduling software and this only books into Google Calendar. So every call it catches I'd be retyping into my system on a Sunday night, and I'm not putting $2,000 down for that.",
+  "objection": "It doesn't plug into my scheduling tool, so it adds a second place to keep track of jobs. Also, the guarantee only gives back the setup fee, and I'd still be out $249 a month for two months.",
+  "would_change_my_mind": "If it pushed the captured requests into my scheduling software instead of just texting me and using Google Calendar, I'd book the demo and probably sign. Seeing from my own call log that I'm losing several real jobs a month would also get me to a yes.",
+  "price_too_cheap": 49,
+  "price_cheap": 129,
+  "price_expensive": 299,
+  "price_too_expensive": 450
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P012",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "Two grand up front plus 249 a month is over 5,000 $ the first year, and I'm already booked solid off my cell and voicemail. I only look at my phone at lunch and at six anyway, so getting a text right away doesn't change much for me.",
+  "objection": "I can't see the return. Most people who need me leave a voicemail or call back, and I don't know how many jobs I'm really losing, so 1,999.99 $ setup on top of the monthly feels like paying a lot to fix a problem I can't measure.",
+  "would_change_my_mind": "Drop the setup fee, or give me a free month on my real line so I can count the jobs it actually catches that I would have lost.",
+  "price_too_cheap": 30,
+  "price_cheap": 75,
+  "price_expensive": 150,
+  "price_too_expensive": 250
+}

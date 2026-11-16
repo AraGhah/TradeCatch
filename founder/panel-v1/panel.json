@@ -1,0 +1,101 @@
+{
+ "n": 20,
+ "seed": 7,
+ "customer": {
+  "business": "TradeCatch (a bilingual AI phone receptionist for Québec contractors)",
+  "target": "Owners of trade and home-service businesses (solo to 10 employees) in Montréal, Laval and surrounding areas who miss calls while working on job sites or serving customers",
+  "where": "Montréal, Laval and surrounding areas",
+  "age": [
+   25,
+   60
+  ],
+  "segments": [
+   {
+    "name": "Solo contractor (plumber, electrician or HVAC), business revenue",
+    "share": 0.4,
+    "income": [
+     120000,
+     350000
+    ]
+   },
+   {
+    "name": "Small service business, 2 to 5 employees (business revenue)",
+    "share": 0.35,
+    "income": [
+     350000,
+     1200000
+    ]
+   },
+   {
+    "name": "Growing business, 6 to 10 employees (business revenue)",
+    "share": 0.15,
+    "income": [
+     1200000,
+     3000000
+    ]
+   },
+   {
+    "name": "Renovation, roofing or landscaping business (business revenue)",
+    "share": 0.1,
+    "income": [
+     200000,
+     900000
+    ]
+   }
+  ],
+  "behaviours": [
+   {
+    "name": "Misses calls on the job",
+    "share": 0.25,
+    "how": "Frequently misses calls while working on job sites or serving customers; calls back when there is a minute."
+   },
+   {
+    "name": "Personal phone, voicemail or an employee answers",
+    "share": 0.25,
+    "how": "Relies on a personal cell, voicemail, or whichever employee is free to pick up."
+   },
+   {
+    "name": "Uses scheduling or CRM software",
+    "share": 0.15,
+    "how": "Already runs appointments in a scheduling or CRM tool and expects anything new to fit with it."
+   },
+   {
+    "name": "Manages appointments by hand",
+    "share": 0.15,
+    "how": "Keeps appointments in a paper agenda, a notebook or text messages."
+   },
+   {
+    "name": "Wants it simple",
+    "share": 0.1,
+    "how": "Prefers solutions that need minimal technical knowledge; will not configure software alone."
+   },
+   {
+    "name": "Bilingual service matters",
+    "share": 0.1,
+    "how": "Serves customers in both French and English and judges any service on how it sounds in both."
+   }
+  ],
+  "objections": [
+   "1 999,99 $ for setup is expensive.",
+   "249 to 349 $ a month needs a clear return on investment.",
+   "Will the receptionist sound natural and understand my customers?",
+   "I'm afraid of losing customers to wrong answers or missed appointments.",
+   "Is it reliable, is my data private, and does it work with the tools I already use?",
+   "Can I keep my existing business phone number?",
+   "I want proof: a demonstration, testimonials or real results.",
+   "How quickly can it be up and running?"
+  ],
+  "habits": [
+   "you are up a ladder or under a sink when the phone rings",
+   "you quote three jobs a week and chase maybe one",
+   "you check your phone at lunch and again at 6 p.m.",
+   "your Google listing has 23 reviews and you have replied to none",
+   "winter is your busy season and you lose track of callbacks",
+   "you do your invoicing on Sunday night",
+   "you speak French on the job and English with half your Laval customers",
+   "you lost a $9,000 kitchen job last month because the quote sat unanswered"
+  ],
+  "notes": "Segments, behaviours and objections supplied by the founder on 2026-11-14. Revenue ranges per segment and the behaviour shares are estimates added by Claude; habits are Claude's illustrative context lines."
+ },
+ "pitch": "TradeCatch answers your business line 24/7, in Québec French and English, under your company name. It asks the caller's name, number, address, what they need and how urgent it is, texts you right away, and follows up with the caller by text.\n\nEssential: 1,999.99 $ setup, paid once, then 249 $ a month. Professional: same setup, then 349 $ a month, and it also books appointments into your Google Calendar with text confirmations and reminders. Month to month after setup, cancel with notice. All prices CAD.\n\nThe founder sets it up with you: he maps how calls and quotes move through your business, writes every message with you, tests every scenario with your team before it goes live, and keeps watching it after. Nothing speaks or sends until you approve the wording.\n\nEach plan includes a monthly allowance of call minutes and text messages; extra usage is billed only if you confirm it. It does not transfer calls to you live; urgent calls are flagged and you are alerted.\n\nYour existing business number stays: it still rings you first, and if nobody picks up or the call comes after hours, the receptionist answers.\n\nFree demo: you talk with the founder, and you can call the live demo line now from the website.\n\n(When asked for prices, answer in Canadian dollars per month.)"
+}

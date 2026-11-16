@@ -1,0 +1,13 @@
+{
+  "id": "P006",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "Losing that $9,000 kitchen job still stings, so I'd call the demo line, but I'm not putting $2,000 up front plus $249 a month on a robot answering my customers until I've heard it handle a real messy call. If it tells a client something wrong or drops an appointment, I lose more than I save.",
+  "objection": "A machine giving my customers a wrong answer or messing up a booking under my company name, and me paying a $2,000 setup before I know it actually works for my calls.",
+  "would_change_my_mind": "A trial month without the $2,000 setup, or the setup refunded if it doesn't catch at least one job I'd have missed, after I hear it handle my own test calls in Québec French.",
+  "price_too_cheap": 40,
+  "price_cheap": 99,
+  "price_expensive": 249,
+  "price_too_expensive": 400
+}

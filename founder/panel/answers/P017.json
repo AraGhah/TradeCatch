@@ -1,0 +1,13 @@
+{
+  "id": "P017",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I do miss calls on the roof or under a sink, but I'm not putting two grand down on a thing that talks to my customers when I've never heard it handle a real one. I'd probably call the demo line and listen, but I wouldn't pay this month.",
+  "objection": "A customer gets a wrong answer or a bad booking and I lose the job, and I'm the guinea pig for $2,000 because the first five clients are how he gets his references. Nobody has run this through a winter in my area yet.",
+  "would_change_my_mind": "A call with a plumber or HVAC guy in Laval who has had it live for a couple of months, with his real before and after missed-call numbers, and no complaints from his customers.",
+  "price_too_cheap": 50,
+  "price_cheap": 120,
+  "price_expensive": 250,
+  "price_too_expensive": 400
+}

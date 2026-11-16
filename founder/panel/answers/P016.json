@@ -1,0 +1,13 @@
+{
+  "id": "P016",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I do miss calls on jobs and a lost job is worth a few hundred bucks at least, so I'd probably call the demo line out of curiosity. But $2,000 up front plus $249 a month is a real decision, and I'd be one of the first five guinea pigs with nobody I can call who's already running it. I'm not signing that off a web page.",
+  "objection": "It says nothing about where my customers' names, addresses and call recordings end up or who can see them, and it doesn't plug into the tools I already invoice and quote with, only Google Calendar. If it garbles a no-heat call at 2 a.m. it's my name on that call, and I'm the first one finding out.",
+  "would_change_my_mind": "A plain written statement of where call data is stored and that it's never used for anything else, plus one plumber or HVAC guy in Laval or Montréal who has run it for a couple of months telling me it didn't botch a real call. Then I'd do the free demo and pay if my own call log shows enough missed calls.",
+  "price_too_cheap": 40,
+  "price_cheap": 120,
+  "price_expensive": 250,
+  "price_too_expensive": 450
+}

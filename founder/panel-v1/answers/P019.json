@@ -1,0 +1,13 @@
+{
+  "id": "P019",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I'd maybe call the demo line out of curiosity, but I'm not handing my customers to a robot and paying two grand up front before I've seen it not screw up a real call. I can't even find time to answer my Google reviews, so I'm not starting a whole setup project this week either.",
+  "objection": "A machine gives one of my customers a wrong answer or messes up an appointment, they go to the next guy, and I don't even know it happened. On top of that, $2,000 is gone before I know if it works.",
+  "would_change_my_mind": "Hearing it handle a real emergency call properly in Québec French, plus a first month where I can walk away and get the setup fee back if it costs me a customer.",
+  "price_too_cheap": 50,
+  "price_cheap": 120,
+  "price_expensive": 250,
+  "price_too_expensive": 400
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P005",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "Missed calls cost me jobs, I know that, but I'm not handing over two grand up front to something I've only seen on a website. Show me other plumbers or electricians around Montréal and Laval who are actually getting booked jobs out of it.",
+  "objection": "The $1,999.99 setup before I've seen any real results. There are no testimonials or numbers from trades like mine, just promises, and if it sounds robotic or gets an address wrong in French, I'm the one who loses the customer.",
+  "would_change_my_mind": "Proof from local trades with real numbers, or a trial month with the setup fee waived or refundable if it doesn't catch calls I would have missed.",
+  "price_too_cheap": 40,
+  "price_cheap": 100,
+  "price_expensive": 250,
+  "price_too_expensive": 400
+}

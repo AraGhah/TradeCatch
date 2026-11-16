@@ -1,0 +1,13 @@
+{
+  "id": "P007",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "I do miss calls when I'm up on a roof or in a client's house, and chasing quotes is a real hole for me, but $1,999.99 up front plus $249 a month is a lot to commit to a one-man outfit I've never heard of. I'd probably try the free demo, but I'm not paying before I've seen it land one real job.",
+  "objection": "Two grand up front before I know it wins me a single job. The guarantee only gives the setup back if it catches 10 missed calls, which is easy to hit with junk calls and doesn't mean any of them turn into paying work. I also worry it will annoy my homeowners, and the early spots are for plumbing and HVAC, not roofing or renovation.",
+  "would_change_my_mind": "No setup fee up front: I'd pay it only after it has caught real quote requests, or a roofer or renovator I know tells me it booked him jobs.",
+  "price_too_cheap": 40,
+  "price_cheap": 99,
+  "price_expensive": 199,
+  "price_too_expensive": 299
+}

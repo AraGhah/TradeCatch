@@ -1,0 +1,13 @@
+{
+  "id": "P002",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I would call the demo line and probably take the free call-log count, but I would not wire $2,000 in the first month to a one-man setup that has no live clients to show me yet. My calls are my revenue and I want to see it work for somebody else first.",
+  "objection": "The Québec French. If it sounds like a translated robot to a customer in Laval, I lose jobs, and nothing here shows me it working for a real shop. The setup is $2,000 up front and the refund only covers it if it catches 10 calls, so a $249 a month for a thing nobody has proven stays with me.",
+  "would_change_my_mind": "A reference call with a plumber or HVAC owner in Laval or Montréal who is already live and will tell me how many calls it caught, plus a recorded night-time French call that sounds like a real person from here.",
+  "price_too_cheap": 79,
+  "price_cheap": 149,
+  "price_expensive": 400,
+  "price_too_expensive": 700
+}

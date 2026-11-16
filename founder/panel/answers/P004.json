@@ -1,0 +1,13 @@
+{
+  "id": "P004",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "Two grand up front for something that has no customer I can call yet, and the open spots are plumbers and HVAC, not roofers or landscapers. My cell and my guys already catch most of it, so I'm not signing on a promise.",
+  "objection": "There's no proof yet. A demo line and a guarantee are nice, but nobody in my line of work is using it and I'd be the guinea pig, paying $2,000 before I see it land one real job.",
+  "would_change_my_mind": "Talking to a roofing or renovation contractor in Laval who has had it running for a few months and can tell me how many real jobs it caught, plus the founder going through my own call log and showing me the missed calls.",
+  "price_too_cheap": 50,
+  "price_cheap": 125,
+  "price_expensive": 300,
+  "price_too_expensive": 500
+}

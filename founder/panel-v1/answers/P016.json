@@ -1,0 +1,13 @@
+{
+  "id": "P016",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "Missed calls cost me jobs, I know that, but I'm not dropping two grand up front plus 249 a month on a robot answering my line before I know it won't botch an emergency call or mangle a customer's address. Nothing in there tells me where my customers' info goes or whether it talks to anything I use besides Google Calendar.",
+  "objection": "Is it actually reliable and is my customers' data private? I'd be paying $2,000 just to find out, and if it screws up a call it's my name on it, not theirs.",
+  "would_change_my_mind": "A trial month on my real line with no setup fee, or the setup refunded if I cancel in the first 60 days, plus a plain answer on where the call recordings and customer info are stored.",
+  "price_too_cheap": 40,
+  "price_cheap": 100,
+  "price_expensive": 220,
+  "price_too_expensive": 350
+}

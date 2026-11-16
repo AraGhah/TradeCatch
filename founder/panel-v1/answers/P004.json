@@ -1,0 +1,13 @@
+{
+  "id": "P004",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "My cell, my voicemail and the guys have handled the phone for years, and my customers know to leave a message. I'm not putting two thousand dollars down on a robot answering under my company name because a website says it works in Québec French.",
+  "objection": "Two grand up front before I've seen it work for anybody like me. I have no idea if it really catches more jobs than my voicemail does, and if it sounds wrong to a customer in Laval, that's my name on it.",
+  "would_change_my_mind": "Talking to two or three roofers or landscapers around Laval who have used it for a full season and can tell me how many jobs it got them, or a first month where I don't pay the setup unless it proves itself.",
+  "price_too_cheap": 50,
+  "price_cheap": 125,
+  "price_expensive": 300,
+  "price_too_expensive": 500
+}

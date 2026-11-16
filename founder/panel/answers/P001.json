@@ -1,0 +1,13 @@
+{
+  "id": "P001",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "need",
+  "reason": "In winter I lose callbacks all the time because it's my cell or whoever's free, and one missed job costs me more than the monthly fee. The free demo, where he counts my missed calls first and walks away if there aren't enough, plus the refund if it doesn't catch 10, takes most of the risk off the $2,000.",
+  "objection": "Will it actually sound natural and understand my customers, in Québec French with street names and people who are stressed or half-talking? If it sounds like a robot or gets the address wrong, I'm just paying for something that annoys the people I'm trying to keep.",
+  "would_change_my_mind": "Calling the demo line and hearing it fumble Québec French or mangle a Laval street name, or the founder not being able to show me my own missed-call count from my call log.",
+  "price_too_cheap": 60,
+  "price_cheap": 150,
+  "price_expensive": 400,
+  "price_too_expensive": 550
+}

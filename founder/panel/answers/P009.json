@@ -1,0 +1,13 @@
+{
+  "id": "P009",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I do miss calls when I'm on a job and the voicemail is not great, so I'd call the free demo line and maybe sit with him, but I'm not putting $2,000 down on a first look. That's real money for a business my size, and it's a voice I haven't heard talking to my Laval customers yet.",
+  "objection": "I pay $2,000 before I know it won't butcher a call from a customer. The guarantee only counts requests it caught, it doesn't say anything if it handles them badly, and he's one guy setting up five at a time.",
+  "would_change_my_mind": "Only charging the setup after I've heard the French and English test calls and approved them, with my money back if I say no. Not just a refund based on a count of requests.",
+  "price_too_cheap": 60,
+  "price_cheap": 120,
+  "price_expensive": 200,
+  "price_too_expensive": 300
+}

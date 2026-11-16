@@ -1,0 +1,13 @@
+{
+  "id": "P018",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I run everything out of a paper agenda and my texts, and it works well enough that I haven't even found time to answer my 23 Google reviews. Paying 2,000 $ up front so a machine can talk to my clients under my name feels like a big leap when one wrong answer could cost me a good customer.",
+  "objection": "I'm afraid it will tell a caller something wrong or take down the wrong details, and the client gets annoyed with my company, not with the robot. On top of that, it doesn't book anything on the Essential plan, so I'd still be the one calling everyone back and writing it in my agenda.",
+  "would_change_my_mind": "Hearing it handle real calls from my own customers for a couple of weeks with no setup fee up front, or a referral from another business owner around Laval who says it hasn't lost them a single client.",
+  "price_too_cheap": 40,
+  "price_cheap": 90,
+  "price_expensive": 200,
+  "price_too_expensive": 300
+}

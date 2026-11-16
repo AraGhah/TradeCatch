@@ -1,0 +1,13 @@
+{
+  "id": "P001",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "Winter is crazy for us and I do lose callbacks, so the problem is real, but I'm not dropping two grand on setup for a robot I've never heard handle one of my customers. I'd call the demo line, maybe, but I wouldn't sign anything this week.",
+  "objection": "If it sounds fake or gets confused by a stressed customer talking fast in joual about a no-heat call, they hang up and call the next guy, and I paid $2,000 to lose the job anyway.",
+  "would_change_my_mind": "Calling the demo line myself, in French, as an angry customer with an urgent problem, and having it sound natural and text me the right details, plus being able to try it a month before paying the full setup fee.",
+  "price_too_cheap": 49,
+  "price_cheap": 129,
+  "price_expensive": 349,
+  "price_too_expensive": 599
+}
