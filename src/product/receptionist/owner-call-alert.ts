@@ -8,6 +8,7 @@
  */
 
 import type { BusinessNotifyInput } from "@/lib/business-notifications";
+import { formatPhone as formatDisplayPhone, isWithheldCaller } from "@/lib/phone";
 import { OUTCOME_LABEL } from "./summary";
 import type {
   CallSession,
@@ -35,11 +36,37 @@ export function formatDuration(seconds?: number): string | undefined {
   return m === 0 ? `${s}s` : `${m}m ${String(s).padStart(2, "0")}s`;
 }
 
-/** "+15145550123" -> "+1 514-555-0123"; anything else is shown as received. */
+/**
+ * "+15145550123" -> "(514) 555-0123"; other countries in international form
+ * ("+44 20 7183 8750"). A withheld caller has no number to show, so nothing is
+ * printed rather than the word "anonymous". Anything unreadable is shown as
+ * received, never altered.
+ */
 export function formatPhone(e164?: string): string | undefined {
-  if (!e164) return undefined;
-  const m = /^\+1(\d{3})(\d{3})(\d{4})$/.exec(e164);
-  return m ? `+1 ${m[1]}-${m[2]}-${m[3]}` : e164;
+  if (!e164 || isWithheldCaller(e164)) return undefined;
+  return formatDisplayPhone(e164) || undefined;
+}
+
+/**
+ * How a call the receptionist never handled ended, for the owner. Undefined for
+ * every call it did handle, which reads from its outcome as always.
+ */
+export function unhandledCallLabel(
+  session: CallSession,
+  lang: Lang,
+): string | undefined {
+  const fr = lang === "fr";
+  const origin = session.activity?.origin;
+  if (session.activity?.declinedCode) {
+    return fr
+      ? "Non pris par la réceptionniste — rappeler"
+      : "Not taken by the receptionist — call back";
+  }
+  if (origin !== "status_callback") return undefined;
+  const provider = (session.activity?.providerStatus ?? "").toLowerCase();
+  if (provider === "failed")
+    return fr ? "Appel échoué — rappeler" : "Call failed — call back";
+  return fr ? "Appel manqué — rappeler" : "Missed call — call back";
 }
 
 /** What the owner has to do (or that nothing is needed), from the recorded outcome. */
@@ -138,7 +165,10 @@ export function ownerCallSms(
         : URGENCY_LABEL[summary.urgency][lang],
     ),
     line(fr ? "Durée" : "Duration", formatDuration(summary.durationSeconds)),
-    line(fr ? "Statut" : "Status", nextActionLabel(summary, lang)),
+    line(
+      fr ? "Statut" : "Status",
+      unhandledCallLabel(session, lang) ?? nextActionLabel(summary, lang),
+    ),
     url
       ? `${fr ? "Détails" : "Details"}: ${url}`
       : fr
@@ -200,7 +230,9 @@ export function ownerCallEmail(
           { label: fr ? "Langue" : "Language", value: spoken === "fr" ? "Français" : "English" },
           {
             label: fr ? "Statut de l'appel" : "Call status",
-            value: OUTCOME_LABEL[summary.outcome][lang],
+            value:
+              unhandledCallLabel(session, lang) ??
+              OUTCOME_LABEL[summary.outcome][lang],
           },
         ],
       },
