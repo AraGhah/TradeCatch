@@ -22,7 +22,7 @@ import { getReceptionistRuntime } from "./runtime";
 import type { ReceptionistConfig } from "./types";
 
 /** Connection-level SQLSTATEs / socket errors: worth retrying, not a code defect. */
-const TRANSIENT_DB_CODES = new Set([
+export const TRANSIENT_DB_CODES = new Set([
   "ECONNRESET",
   "ECONNREFUSED",
   "ETIMEDOUT",

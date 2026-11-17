@@ -50,6 +50,8 @@ type RuntimeState = {
   profileStore: ProfileStore;
   engine: ReceptionistEngine;
   agentCalls: AgentCallService;
+  /** The same call service for the Bland agent: `bl_` sessions, its own idempotency keys. */
+  blandCalls: AgentCallService;
   agentAppointments: AgentAppointmentService;
   envConfigs: ReceptionistConfig[];
   profileConfigs: ReceptionistConfig[];
@@ -373,6 +375,12 @@ function bootstrap(): RuntimeState {
     scheduler: state.engine.scheduler,
     finalize: state.engine.finalizeSession,
   });
+  state.blandCalls = createAgentCallService({
+    store,
+    scheduler: state.engine.scheduler,
+    finalize: state.engine.finalizeSession,
+    channel: "bland",
+  });
 
   if (envConfigs.length > 0) {
     console.info("[receptionist] ready", {
@@ -407,6 +415,8 @@ export function getReceptionistRuntime() {
     engine: s.engine,
     /** Server side of the LiveKit agent's tools: availability, booking and the call report. */
     agentCalls: s.agentCalls,
+    /** Server side of the Bland agent's tools (see src/product/bland). */
+    blandCalls: s.blandCalls,
     /** Existing appointments (find, move, cancel) and texts to the caller. */
     agentAppointments: s.agentAppointments,
     llm: s.llm,

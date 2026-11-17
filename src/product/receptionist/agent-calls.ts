@@ -17,6 +17,15 @@
 import { randomUUID } from "@/lib/id";
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import type { Clock } from "@/product/missed-call/types";
+import { parsePhoneInput } from "@/product/crm/phone";
+import {
+  addressesMatch,
+  checkServiceAddress,
+  stripAccents,
+  type AddressCheck,
+  type AddressField,
+  type AddressInput,
+} from "@/product/scheduling/address";
 import {
   localDayWindow,
   parseTimePreference,
@@ -31,6 +40,7 @@ import type {
   CallSession,
   CallSlots,
   CallTurn,
+  ConfirmedField,
   ReceptionistConfig,
   ReceptionistLanguage,
 } from "./types";
@@ -56,7 +66,113 @@ export type AgentCallDeps = {
    */
   notifyTransferFailed?(clientAccountId: string, sessionId: string): Promise<void>;
   clock?: Clock;
+  /**
+   * Which voice agent drives these calls. It only names the session
+   * (`lk_<id>` or `bl_<id>`) and the booking idempotency key, so a call id
+   * from one provider can never collide with, or reach, a call of another.
+   */
+  channel?: "livekit" | "bland";
 };
+
+/** A call id that already belongs to another business's receptionist. */
+export class CallTenantMismatchError extends Error {
+  constructor() {
+    super("Call belongs to a different receptionist");
+    this.name = "CallTenantMismatchError";
+  }
+}
+
+export type DetailField = ConfirmedField;
+export type ConfirmedDetails = Partial<Record<DetailField, string>>;
+
+const DETAIL_FIELDS: readonly DetailField[] = [
+  "callerName",
+  "callbackE164",
+  "serviceAddress",
+];
+
+/** What the agent is told about an address it tried to save or book with. */
+export type AddressFeedback = {
+  status: AddressCheck["status"];
+  /** The canonical one-line address, when complete. */
+  formatted?: string;
+  /** Still needed to book. */
+  missing?: AddressField[];
+  /** Not needed to book; ask if the caller can give it. */
+  recommended?: AddressField[];
+  problem?: string;
+  /** What was understood so far, so the agent only has to add the missing part. */
+  understood?: Record<string, string>;
+};
+
+function addressFeedback(check: AddressCheck): AddressFeedback {
+  if (check.status === "complete") {
+    return {
+      status: "complete",
+      formatted: check.address.formatted,
+      ...(check.recommended.length > 0 ? { recommended: check.recommended } : {}),
+    };
+  }
+  if (check.status === "incomplete") {
+    const understood: Record<string, string> = {};
+    for (const [key, value] of Object.entries(check.partial)) {
+      if (typeof value === "string" && key !== "country") understood[key] = value;
+    }
+    return { status: "incomplete", missing: check.missing, understood };
+  }
+  return { status: "invalid", problem: check.problem };
+}
+
+export type AgentDetails = {
+  /** `rejected` when something sent could not be saved; `saved` otherwise. */
+  status: "saved" | "rejected";
+  confirmed: ConfirmedDetails;
+  /** Still needed before booking (human labels, same as `book`). */
+  missing: string[];
+  rejected: DetailField[];
+  address?: AddressFeedback;
+};
+
+const MISSING_LABEL: Record<DetailField, string> = {
+  callerName: "name",
+  callbackE164: "callback number",
+  serviceAddress: "service address",
+};
+
+/** A later value replaces an earlier one, except what the caller confirmed. */
+function mergeSlots(session: CallSession, incoming: CallSlots): CallSlots {
+  const merged: CallSlots = { ...session.slots, ...incoming };
+  for (const field of session.confirmedFields ?? []) {
+    if (session.slots[field] !== undefined) merged[field] = session.slots[field];
+  }
+  return merged;
+}
+
+const EMERGENCY_URGENCY: NonNullable<CallSession["urgency"]> = {
+  level: "critical",
+  source: "voice_agent",
+  requiresHuman: true,
+  escalated: true,
+};
+
+function confirmedOf(session: CallSession): ConfirmedDetails {
+  const out: ConfirmedDetails = {};
+  for (const field of session.confirmedFields ?? []) {
+    const value = session.slots[field];
+    if (value) out[field] = value;
+  }
+  return out;
+}
+
+function plainName(value: string): string {
+  return stripAccents(value).toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function sameDetail(field: DetailField, a: string, b: string): boolean {
+  if (field === "callbackE164") return a === b;
+  if (field === "serviceAddress") return addressesMatch(a, b);
+  return plainName(a) === plainName(b);
+}
 
 async function defaultNotifyTransferFailed(clientAccountId: string, sessionId: string) {
   const { emitTransferFailed } = await import("@/product/notifications/hooks");
@@ -88,7 +204,12 @@ export type AgentBooking =
       label: string;
     }
   | { status: "taken"; offers: AgentOffer[]; timezone: string }
-  | { status: "missing_details"; missing: string[] }
+  | { status: "missing_details"; missing: string[]; address?: AddressFeedback }
+  /**
+   * The agent supplied a value that disagrees with what the caller already
+   * confirmed. Nothing was booked: re-confirm, save the details, book again.
+   */
+  | { status: "details_conflict"; fields: DetailField[]; confirmed: ConfirmedDetails }
   | { status: "request" | "error"; reason: string };
 
 export type AgentReportInput = {
@@ -171,6 +292,8 @@ async function withinBudget<T>(task: () => Promise<T>): Promise<T | null> {
 export function createAgentCallService(deps: AgentCallDeps) {
   const clock = deps.clock ?? { now: () => new Date() };
   const nowIso = () => clock.now().toISOString();
+  const channel = deps.channel ?? "livekit";
+  const keyPrefix = channel === "bland" ? "rcb" : "rca";
 
   function bookingEnabled(config: ReceptionistConfig): boolean {
     return config.phoneBooking === true && Boolean(deps.scheduler);
@@ -183,8 +306,8 @@ export function createAgentCallService(deps: AgentCallDeps) {
     const at = clock.now();
     const draft: CallSession = {
       id: `rcs_${randomUUID()}`,
-      // The room name keeps the session unique per call and unrelated to Twilio SIDs.
-      callSid: `lk_${input.callId}`,
+      // The provider's call id, prefixed by channel: unique per call, never a Twilio SID.
+      callSid: `${channel === "bland" ? "bl" : "lk"}_${input.callId}`,
       configId: config.id,
       clientAccountId: config.clientAccountId,
       fromE164:
@@ -208,7 +331,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
     };
     const { session } = await deps.store.insertSessionIfAbsent(draft);
     if (session.configId !== config.id || session.clientAccountId !== config.clientAccountId) {
-      throw new Error("Call belongs to a different receptionist");
+      throw new CallTenantMismatchError();
     }
     return session;
   }
@@ -248,7 +371,11 @@ export function createAgentCallService(deps: AgentCallDeps) {
       },
     ): Promise<AgentAvailability> {
       if (!bookingEnabled(config)) return { ok: false, reason: "booking_disabled" };
-      await ensureSession(config, input);
+      const session = await ensureSession(config, input);
+      // Travel time between jobs depends on where this one is: an address the
+      // server chose (an existing appointment's) first, else the one the
+      // caller already confirmed on this call.
+      const knownAddress = input.serviceAddress ?? confirmedOf(session).serviceAddress;
 
       const now = clock.now();
       const pref = input.preferredTime
@@ -262,7 +389,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
             config,
             issue: clip(input.issue, 300),
             serviceId: extra.serviceId,
-            serviceAddress: clip(input.serviceAddress, 300),
+            serviceAddress: clip(knownAddress, 300),
             language: input.language,
             from: extra.from,
             until: extra.until,
@@ -315,16 +442,44 @@ export function createAgentCallService(deps: AgentCallDeps) {
         callerName?: string;
         callbackE164?: string;
         serviceAddress?: string;
+        /**
+         * Require a complete, canonical address (street number, city,
+         * province) instead of any non-empty text. The Bland agent uses it.
+         */
+        strictAddress?: boolean;
       },
     ): Promise<AgentBooking> {
       if (!bookingEnabled(config)) {
         return { status: "request", reason: "booking_disabled" };
       }
-      const slots = cleanSlots({
+      const session = await ensureSession(config, input);
+      const confirmed = confirmedOf(session);
+      const supplied = cleanSlots({
         callerName: input.callerName,
         callbackE164: input.callbackE164,
         serviceAddress: input.serviceAddress,
       });
+      let addressNote: AddressFeedback | undefined;
+      if (input.strictAddress && supplied.serviceAddress) {
+        const check = checkServiceAddress({ address: supplied.serviceAddress });
+        if (check.status === "complete") {
+          supplied.serviceAddress = check.address.formatted;
+        } else {
+          addressNote = addressFeedback(check);
+          delete supplied.serviceAddress;
+        }
+      }
+      // What the caller confirmed wins over a repeat; a disagreement is a
+      // question for the caller, never a silent choice between two addresses.
+      const conflicts = DETAIL_FIELDS.filter((field) => {
+        const known = confirmed[field];
+        const given = supplied[field];
+        return known !== undefined && given !== undefined && !sameDetail(field, known, given);
+      });
+      if (conflicts.length > 0) {
+        return { status: "details_conflict", fields: conflicts, confirmed };
+      }
+      const slots: CallSlots = { ...supplied, ...confirmed };
       const missing = (
         [
           ["name", slots.callerName],
@@ -334,12 +489,17 @@ export function createAgentCallService(deps: AgentCallDeps) {
       )
         .filter(([, v]) => !v)
         .map(([k]) => k);
-      if (missing.length > 0) return { status: "missing_details", missing };
+      if (missing.length > 0) {
+        return {
+          status: "missing_details",
+          missing,
+          ...(addressNote ? { address: addressNote } : {}),
+        };
+      }
       if (!Number.isFinite(Date.parse(input.startAt))) {
         return { status: "error", reason: "invalid_time" };
       }
 
-      const session = await ensureSession(config, input);
       const timezone = validTimeZone(input.timezone, config.timezone);
       const reserved = await withinBudget(() =>
         deps.scheduler!.reserve({
@@ -352,7 +512,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
           serviceAddress: slots.serviceAddress,
           language: input.language,
           // A repeated tool call must never book the same time twice.
-          idempotencyKey: `rca:${input.callId}:${new Date(input.startAt).toISOString()}`,
+          idempotencyKey: `${keyPrefix}:${input.callId}:${new Date(input.startAt).toISOString()}`,
         }),
       );
 
@@ -363,6 +523,8 @@ export function createAgentCallService(deps: AgentCallDeps) {
           intent: "appointment",
           outcome: "appointment_booked",
           slots: { ...s.slots, ...slots },
+          // The appointment now holds these details: the call record must agree with it.
+          confirmedFields: [...DETAIL_FIELDS],
           booking: {
             timezone,
             offered: [],
@@ -398,6 +560,121 @@ export function createAgentCallService(deps: AgentCallDeps) {
       return { status: "request", reason: reserved.reason };
     },
 
+    /**
+     * Records what the caller confirmed (name, callback number, service
+     * address). Values are validated and canonicalised here, kept on the call
+     * and reused by availability, booking and the final report, so the agent
+     * does not have to repeat them correctly each time. Anything that cannot
+     * be saved is returned with the reason; nothing is guessed.
+     */
+    async saveDetails(
+      config: ReceptionistConfig,
+      input: {
+        callId: string;
+        fromE164?: string;
+        language: ReceptionistLanguage;
+        callerName?: string;
+        callbackPhone?: string;
+        /** Use the number the caller is phoning from as the callback number. */
+        useCallerId?: boolean;
+        address?: AddressInput;
+      },
+    ): Promise<AgentDetails> {
+      const session = await ensureSession(config, input);
+      const updates: CallSlots = {};
+      const rejected: DetailField[] = [];
+
+      const name = clip(input.callerName, 80);
+      if (name) updates.callerName = name;
+
+      let phone: string | null | undefined;
+      if (input.callbackPhone?.trim()) {
+        phone = parsePhoneInput(input.callbackPhone.slice(0, 40));
+      } else if (input.useCallerId) {
+        phone = E164.test(session.fromE164) ? session.fromE164 : null;
+      }
+      if (phone) updates.callbackE164 = phone;
+      else if (phone === null) rejected.push("callbackE164");
+
+      let address: AddressFeedback | undefined;
+      const parts = input.address;
+      if (parts && Object.values(parts).some((v) => typeof v === "string" && v.trim())) {
+        const check = checkServiceAddress(parts);
+        address = addressFeedback(check);
+        if (check.status === "complete") {
+          updates.serviceAddress = check.address.formatted;
+          updates.location = check.address.city;
+        } else {
+          rejected.push("serviceAddress");
+        }
+      }
+
+      const saved = DETAIL_FIELDS.filter((field) => updates[field] !== undefined);
+      const after =
+        saved.length === 0
+          ? session
+          : ((await mutate(session.id, (s) => ({
+              ...s,
+              slots: { ...s.slots, ...updates },
+              confirmedFields: [...new Set([...(s.confirmedFields ?? []), ...saved])],
+            }))) ?? session);
+      const confirmed = confirmedOf(after);
+      return {
+        status: rejected.length > 0 ? "rejected" : "saved",
+        confirmed,
+        missing: DETAIL_FIELDS.filter((field) => !confirmed[field]).map(
+          (field) => MISSING_LABEL[field],
+        ),
+        rejected,
+        ...(address ? { address } : {}),
+      };
+    },
+
+    /**
+     * Saves what the agent has learned about the request (the problem, the
+     * service, the preferred time, a message) on the call WITHOUT finishing
+     * it, so a voice platform that has no memory of its own between tool
+     * calls can still hand the team a complete record, and the final report
+     * (or the stale-call sweep) has something to summarise even if the
+     * platform never sends one. Confirmed details are never replaced.
+     */
+    async recordSlots(
+      config: ReceptionistConfig,
+      input: {
+        callId: string;
+        fromE164?: string;
+        language: ReceptionistLanguage;
+        intent?: CallIntent;
+        slots?: Partial<CallSlots>;
+        emergency?: boolean;
+      },
+    ): Promise<{ recorded: boolean; fields: string[] }> {
+      const session = await ensureSession(config, input);
+      if (session.finalizedAt) return { recorded: false, fields: [] };
+      const slots = cleanSlots(input.slots);
+      const updated = await mutate(session.id, (s) => ({
+        ...s,
+        language: input.language,
+        intent: input.intent ?? s.intent,
+        slots: mergeSlots(s, slots),
+        urgency: input.emergency && !s.urgency ? EMERGENCY_URGENCY : s.urgency,
+      }));
+      return {
+        recorded: Boolean(updated),
+        fields: Object.keys(slots).filter(
+          (key) => !(session.confirmedFields ?? []).includes(key as ConfirmedField),
+        ),
+      };
+    },
+
+    /** The details the caller confirmed on this call (empty when none). */
+    async confirmedDetails(
+      config: ReceptionistConfig,
+      input: { callId: string; fromE164?: string; language: ReceptionistLanguage },
+    ): Promise<ConfirmedDetails> {
+      return confirmedOf(await ensureSession(config, input));
+    },
+
     /** The finished call becomes a normal receptionist call record and is finalized. */
     async report(
       config: ReceptionistConfig,
@@ -418,7 +695,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
         .filter((t) => t.text);
 
       const updated = await mutate(session.id, (s) => {
-        const merged = { ...s.slots, ...slots };
+        const merged = mergeSlots(s, slots);
         // A booking recorded by the book tool is the only proof of a booking.
         const booked = s.booking?.status === "booked";
         const transferred = input.transfer?.completed === true;
@@ -457,15 +734,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
                 },
               ]
             : s.transfers,
-          urgency:
-            input.emergency && !s.urgency
-              ? {
-                  level: "critical" as const,
-                  source: "voice_agent",
-                  requiresHuman: true,
-                  escalated: true,
-                }
-              : s.urgency,
+          urgency: input.emergency && !s.urgency ? EMERGENCY_URGENCY : s.urgency,
           status: input.endReason === "error" ? "failed" : "completed",
           step: "done",
           outcome,
