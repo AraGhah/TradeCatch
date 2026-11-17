@@ -12,6 +12,7 @@ import {
   getSmsInbox,
   processSmsInbox,
 } from "@/product/sms-receptionist/inbox-runtime";
+import { isBlandOwnedSmsNumber } from "@/product/receptionist/bland/lines";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +57,21 @@ export async function POST(request: NextRequest) {
     );
   }
   params.MessageSid = id;
+  // A number answered by Bland's SMS agent is never answered here, even if a
+  // tenant's record also lists it as its sending number: two responders on one
+  // number would reply twice, or reply to a conversation the other one owns.
+  // Nothing is saved or sent; a customer's STOP is honored by Twilio itself.
+  if (isBlandOwnedSmsNumber(params.To)) {
+    console.warn(
+      JSON.stringify({
+        event: "tradecatch.sms.bland_owned_number",
+        messageSid: id,
+      }),
+    );
+    return new NextResponse(EMPTY_TWIML, {
+      headers: { "Content-Type": "text/xml; charset=utf-8" },
+    });
+  }
   let replies: string[] = [];
   try {
     const { store, engine } = await ensureMissedCallReady();

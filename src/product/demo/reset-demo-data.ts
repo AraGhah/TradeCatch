@@ -65,6 +65,7 @@ export const DEMO_RESET_TABLES = [
   "tc_calendar_sync_state",
   "tc_calendar_busy",
   "tc_calendar_connections",
+  "tc_calcom_connections",
   "tc_appointment_events",
   "tc_schedule_appointments",
   "tc_technicians",

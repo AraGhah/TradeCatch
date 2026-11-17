@@ -1,5 +1,6 @@
 import { isStagingRuntime, shouldUseDryRunSms } from "@/lib/environment";
 import { consumePolicy } from "@/lib/rate-limit-policy";
+import { isBlandOwnedSmsNumber } from "@/product/receptionist/bland/lines";
 import type { OutboundSms, SmsPort } from "./types";
 
 /**
@@ -56,6 +57,24 @@ export function smsFailureDisposition(
   return error instanceof SmsDeliveryError ? error.disposition : "uncertain";
 }
 
+/**
+ * A number whose texts Bland's SMS agent answers is never a TradeCatch sender:
+ * the customer's reply would go to Bland while our records say the
+ * conversation is ours. Not retried: the configuration has to be fixed.
+ */
+function assertSenderNotBlandOwned(
+  fromE164: string,
+  env: NodeJS.ProcessEnv,
+): void {
+  if (isBlandOwnedSmsNumber(fromE164, env)) {
+    throw new SmsDeliveryError(
+      "dead",
+      "sender_owned_by_bland",
+      "This number is answered by Bland SMS and cannot send TradeCatch texts",
+    );
+  }
+}
+
 async function assertSmsSendAllowed(
   toE164: string,
   fromE164: string,
@@ -100,6 +119,7 @@ export function createMemorySmsPort(): SmsPort & {
 export function createDryRunSmsPort(): SmsPort {
   return {
     async send(message) {
+      assertSenderNotBlandOwned(message.fromE164, process.env);
       console.info("[missed-call] SMS dry-run", {
         to: message.toE164,
         body: message.body.slice(0, 80),
@@ -159,6 +179,7 @@ export function createTwilioSmsPort(
 
   return {
     async send(message) {
+      assertSenderNotBlandOwned(message.fromE164, env);
       if (!message.internal) {
         await assertSmsSendAllowed(message.toE164, message.fromE164, env);
       }
