@@ -1779,7 +1779,7 @@
       "transcript": "Transcript",
       "caller": "Caller",
       "agent": "Receptionist",
-      "purged": "Transcript purged (retention policy).",
+      "purged": "Transcript not kept (privacy settings or retention period).",
       "knownContact": "Known contact",
       "stats": {
         "total": "Calls answered",
@@ -2132,6 +2132,7 @@
         "automation_paused": "Automation paused",
         "closed": "Closed"
       },
+      "bodyNotKept": "Message text not kept (privacy settings).",
       "delivery": {
         "queued": "Queued",
         "sending": "Sending",
@@ -2791,9 +2792,58 @@
     },
     "privacy": {
       "headline": "Privacy settings",
-      "intro": "Tell callers when a call may be recorded, and stop recording when consent is refused. Customer speech is never trusted as an instruction.",
+      "intro": "Choose what TradeCatch records and keeps for your business. Each setting is saved for your business only and applies to new calls and messages within about a minute.",
+      "loading": "Loading privacy settings…",
+      "loadError": "Your privacy settings could not be loaded. Nothing was changed.",
+      "retry": "Retry",
       "save": "Save privacy settings",
-      "saved": "Privacy settings saved."
+      "saving": "Saving…",
+      "saved": "Privacy settings saved.",
+      "unchanged": "There are no changes to save.",
+      "saveError": "Your changes were not saved. The settings marked “Not saved” still have their previous value. Try again.",
+      "stale": "These settings were changed somewhere else. The current values are shown; make your change again and save.",
+      "denied": "Only an owner or administrator can change these settings. Your changes were not saved.",
+      "readOnly": "Only an owner or administrator can change these settings.",
+      "notSaved": "Not saved",
+      "unsavedCount": "{count, plural, one {# change not saved yet} other {# changes not saved yet}}",
+      "recording": {
+        "label": "Record voicemails",
+        "help": "If the receptionist cannot handle a call and no one can take it, the caller may leave a voicemail. They are told first that it will be recorded and can hang up. Off: nothing is recorded; the caller is asked to call back later."
+      },
+      "transcripts": {
+        "label": "Keep call transcripts",
+        "help": "The word-for-word text of each call handled by the receptionist, shown in your call history.",
+        "offImpact": "Off: new calls are still summarized and sent to you (caller, need, callback number), but the word-for-word text is deleted as soon as the summary is made. It will not appear in your call history. Transcripts you already have stay until your retention period ends."
+      },
+      "sms": {
+        "label": "Keep text message history",
+        "help": "The wording of texts sent and received for your business. Off: texts are still sent and delivered normally, and the record that a text was sent stays, but its wording is cleared 24 hours later. Opt-out (STOP) records are always kept."
+      },
+      "retention": {
+        "label": "Keep call and message content for",
+        "help": "After this period, call transcripts, voicemail links, caller details in call summaries and text-message wording are cleared.",
+        "excludes": "Not affected: invoices, payments and billing records, opt-out and consent records, and security logs, which are kept as the law requires. Your customer list, jobs and quotes are not deleted.",
+        "standard": "Standard retention (current)",
+        "days": "{days} days"
+      },
+      "analytics": {
+        "label": "Usage analytics in your dashboard",
+        "help": "Let TradeCatch measure how your team uses the dashboard (pages visited, no customer data). Each person's cookie choice still applies.",
+        "notUsed": "TradeCatch does not run usage analytics in your dashboard, so there is nothing to switch off."
+      },
+      "calendar": {
+        "title": "Calendar",
+        "body": "The receptionist only reads when you are busy or free. It never reads the titles, attendees or notes of your events, and only creates or changes the appointments it booked."
+      },
+      "marketing": {
+        "title": "Marketing emails",
+        "body": "TradeCatch does not send you marketing emails. If that changes, nothing will be sent until you agree to it."
+      },
+      "data": {
+        "title": "Your data",
+        "body": "Download a copy of your business's data, or ask for your account and data to be deleted. A deletion request is reviewed by TradeCatch before anything is removed, and billing and legal records are kept as required.",
+        "link": "Export or delete your data"
+      }
     },
     "pilot": {
       "headline": "Send feedback",
@@ -2894,6 +2944,8 @@
       "suspend": "Request Suspension",
       "reactivate": "Request Reactivation",
       "requestConfirm": "Submit a {kind} request for review? This does not change service status immediately. Support will confirm the effective timing.",
+      "deletionConfirm": "Ask TradeCatch to delete this account and its data? Nothing is deleted until support reviews the request; billing and legal records are kept as required. To confirm, type your business name: {name}",
+      "deletionMismatch": "The business name did not match. No deletion request was sent.",
       "requestReceived": "Request received for review. Your service status has not changed immediately.",
       "requestError": "Could not confirm your request. Check request history after reloading before trying again, or contact support.",
       "requestHistory": "Account change requests",
@@ -3239,8 +3291,8 @@
       "routingTitle": "Routing",
       "aiEnabled": "Receptionist enabled",
       "recordingTitle": "Recording",
-      "recordingEnabled": "Enable call recording",
-      "recordingHelp": "Subject to applicable notices, consent, and retention rules.",
+      "recordingHelp": "Voicemail recording, transcripts and how long call content is kept are set in your privacy settings.",
+      "recordingLink": "Open privacy settings",
       "save": "Save",
       "saving": "Saving…",
       "saved": "Phone settings saved.",
