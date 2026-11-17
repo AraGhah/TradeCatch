@@ -7,6 +7,11 @@ import type {
   ServiceType,
   Technician,
 } from "./types";
+import type {
+  CalcomBookingRecord,
+  CalcomConnection,
+  CalcomLedgerState,
+} from "./calcom/types";
 import { overlaps } from "./slots";
 
 export type StoredConnection = CalendarConnectionPublic & {
@@ -65,6 +70,27 @@ export type SchedulingStore = {
   saveConnection(row: StoredConnection): Promise<void>;
   replaceBusy(organizationId: string, blocks: BusyBlock[]): Promise<void>;
   listBusy(organizationId: string): Promise<BusyBlock[]>;
+
+  // Cal.com provider. The connection holds the sealed credential; the ledger
+  // records every booking attempt so none can be lost or duplicated.
+  getCalcomConnection(organizationId: string): Promise<CalcomConnection | null>;
+  saveCalcomConnection(row: CalcomConnection): Promise<void>;
+  /** Businesses that may have Cal.com bookings to keep in step. */
+  listCalcomConnections(): Promise<CalcomConnection[]>;
+  getCalcomBooking(
+    organizationId: string,
+    appointmentId: string,
+  ): Promise<CalcomBookingRecord | null>;
+  findCalcomBookingByUid(
+    organizationId: string,
+    uid: string,
+  ): Promise<CalcomBookingRecord | null>;
+  saveCalcomBooking(row: CalcomBookingRecord): Promise<void>;
+  listCalcomBookings(
+    organizationId: string,
+    states: CalcomLedgerState[],
+    limit: number,
+  ): Promise<CalcomBookingRecord[]>;
 };
 
 const locks = new Map<string, Promise<void>>();
@@ -111,8 +137,53 @@ export function createMemorySchedulingStore(): SchedulingStore {
   }[] = [];
   const connections = new Map<string, StoredConnection>();
   const busy = new Map<string, BusyBlock[]>();
+  const calcomConnections = new Map<string, CalcomConnection>();
+  // Keyed by organization and appointment: a tenant can never read or
+  // overwrite another tenant's ledger row.
+  const calcomBookings = new Map<string, CalcomBookingRecord>();
+  const ledgerKey = (organizationId: string, appointmentId: string) =>
+    `${organizationId}\u0000${appointmentId}`;
 
   return {
+    async getCalcomConnection(organizationId) {
+      const row = calcomConnections.get(organizationId);
+      return row ? structuredClone(row) : null;
+    },
+    async saveCalcomConnection(row) {
+      calcomConnections.set(row.organizationId, structuredClone(row));
+    },
+    async listCalcomConnections() {
+      return [...calcomConnections.values()]
+        .filter((row) => row.status !== "disconnected")
+        .map((row) => structuredClone(row));
+    },
+    async getCalcomBooking(organizationId, appointmentId) {
+      const row = calcomBookings.get(ledgerKey(organizationId, appointmentId));
+      return row ? structuredClone(row) : null;
+    },
+    async findCalcomBookingByUid(organizationId, uid) {
+      const row = [...calcomBookings.values()].find(
+        (entry) =>
+          entry.organizationId === organizationId && entry.providerUid === uid,
+      );
+      return row ? structuredClone(row) : null;
+    },
+    async saveCalcomBooking(row) {
+      calcomBookings.set(
+        ledgerKey(row.organizationId, row.appointmentId),
+        structuredClone(row),
+      );
+    },
+    async listCalcomBookings(organizationId, states, limit) {
+      return [...calcomBookings.values()]
+        .filter(
+          (row) =>
+            row.organizationId === organizationId && states.includes(row.state),
+        )
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+        .slice(0, limit)
+        .map((row) => structuredClone(row));
+    },
     async listPendingConfirmations(limit) {
       return [...appointments.values()]
         .filter((a) => a.status === "confirmed" && a.confirmationNoticesPending)

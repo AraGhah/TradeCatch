@@ -1,6 +1,11 @@
 import { createId } from "@/lib/id";
 import type { Pool } from "pg";
 import { getPgPool } from "@/product/missed-call/postgres-store";
+import type {
+  CalcomBookingRecord,
+  CalcomConnection,
+  CalcomRoute,
+} from "./calcom/types";
 import type { SchedulingStore, StoredConnection } from "./store";
 import type {
   AvailabilityRules,
@@ -483,5 +488,153 @@ export function createPostgresSchedulingStore(
         externalId: row.external_id ? String(row.external_id) : undefined,
       }));
     },
+
+    async getCalcomConnection(organizationId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_calcom_connections WHERE organization_id = $1`,
+        [organizationId],
+      );
+      return res.rows[0] ? calcomConnectionFrom(res.rows[0]) : null;
+    },
+    async saveCalcomConnection(row) {
+      await pool.query(
+        `INSERT INTO tc_calcom_connections (
+          organization_id, status, credential_kind, credential_ciphertext,
+          account_email, account_username, account_timezone,
+          default_event_type_id, routes_json, attendee_email,
+          last_error, last_verified_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,now())
+        ON CONFLICT (organization_id) DO UPDATE SET
+          status = EXCLUDED.status,
+          credential_kind = EXCLUDED.credential_kind,
+          credential_ciphertext = EXCLUDED.credential_ciphertext,
+          account_email = EXCLUDED.account_email,
+          account_username = EXCLUDED.account_username,
+          account_timezone = EXCLUDED.account_timezone,
+          default_event_type_id = EXCLUDED.default_event_type_id,
+          routes_json = EXCLUDED.routes_json,
+          attendee_email = EXCLUDED.attendee_email,
+          last_error = EXCLUDED.last_error,
+          last_verified_at = EXCLUDED.last_verified_at,
+          updated_at = now()`,
+        [
+          row.organizationId,
+          row.status,
+          row.credentialKind,
+          row.credentialCiphertext ?? null,
+          row.accountEmail ?? null,
+          row.accountUsername ?? null,
+          row.accountTimeZone ?? null,
+          row.defaultEventTypeId,
+          JSON.stringify(row.routes),
+          row.attendeeEmail ?? null,
+          row.lastError ?? null,
+          row.lastVerifiedAt ?? null,
+        ],
+      );
+    },
+    async listCalcomConnections() {
+      const res = await pool.query(
+        `SELECT * FROM tc_calcom_connections WHERE status <> 'disconnected'`,
+      );
+      return res.rows.map(calcomConnectionFrom);
+    },
+    async getCalcomBooking(organizationId, appointmentId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_calcom_bookings
+         WHERE organization_id = $1 AND appointment_id = $2`,
+        [organizationId, appointmentId],
+      );
+      return res.rows[0] ? calcomBookingFrom(res.rows[0]) : null;
+    },
+    async findCalcomBookingByUid(organizationId, uid) {
+      const res = await pool.query(
+        `SELECT * FROM tc_calcom_bookings
+         WHERE organization_id = $1 AND provider_uid = $2`,
+        [organizationId, uid],
+      );
+      return res.rows[0] ? calcomBookingFrom(res.rows[0]) : null;
+    },
+    async saveCalcomBooking(row) {
+      await pool.query(
+        `INSERT INTO tc_calcom_bookings (
+          organization_id, appointment_id, event_type_id, state, provider_uid,
+          start_at, error_code, attempts, created_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+        ON CONFLICT (organization_id, appointment_id) DO UPDATE SET
+          event_type_id = EXCLUDED.event_type_id,
+          state = EXCLUDED.state,
+          provider_uid = EXCLUDED.provider_uid,
+          start_at = EXCLUDED.start_at,
+          error_code = EXCLUDED.error_code,
+          attempts = EXCLUDED.attempts,
+          updated_at = EXCLUDED.updated_at`,
+        [
+          row.organizationId,
+          row.appointmentId,
+          row.eventTypeId,
+          row.state,
+          row.providerUid ?? null,
+          row.startAt,
+          row.errorCode ?? null,
+          row.attempts,
+          row.createdAt,
+          row.updatedAt,
+        ],
+      );
+    },
+    async listCalcomBookings(organizationId, states, limit) {
+      const res = await pool.query(
+        `SELECT * FROM tc_calcom_bookings
+         WHERE organization_id = $1 AND state = ANY($2::text[])
+         ORDER BY created_at ASC
+         LIMIT $3`,
+        [organizationId, states, Math.max(1, Math.min(200, limit))],
+      );
+      return res.rows.map(calcomBookingFrom);
+    },
+  };
+}
+
+function calcomConnectionFrom(row: Record<string, unknown>): CalcomConnection {
+  return {
+    organizationId: String(row.organization_id),
+    status: row.status as CalcomConnection["status"],
+    credentialKind: "api_key",
+    credentialCiphertext: row.credential_ciphertext
+      ? String(row.credential_ciphertext)
+      : undefined,
+    accountEmail: row.account_email ? String(row.account_email) : undefined,
+    accountUsername: row.account_username
+      ? String(row.account_username)
+      : undefined,
+    accountTimeZone: row.account_timezone
+      ? String(row.account_timezone)
+      : undefined,
+    defaultEventTypeId: Number(row.default_event_type_id),
+    routes: Array.isArray(row.routes_json)
+      ? (row.routes_json as CalcomRoute[])
+      : [],
+    attendeeEmail: row.attendee_email ? String(row.attendee_email) : undefined,
+    lastError: row.last_error ? String(row.last_error) : undefined,
+    lastVerifiedAt: row.last_verified_at
+      ? new Date(String(row.last_verified_at)).toISOString()
+      : undefined,
+    updatedAt: new Date(String(row.updated_at)).toISOString(),
+  };
+}
+
+function calcomBookingFrom(row: Record<string, unknown>): CalcomBookingRecord {
+  return {
+    organizationId: String(row.organization_id),
+    appointmentId: String(row.appointment_id),
+    eventTypeId: Number(row.event_type_id),
+    state: row.state as CalcomBookingRecord["state"],
+    providerUid: row.provider_uid ? String(row.provider_uid) : undefined,
+    startAt: new Date(String(row.start_at)).toISOString(),
+    errorCode: row.error_code ? String(row.error_code) : undefined,
+    attempts: Number(row.attempts),
+    createdAt: new Date(String(row.created_at)).toISOString(),
+    updatedAt: new Date(String(row.updated_at)).toISOString(),
   };
 }
