@@ -9,6 +9,7 @@
  * and never translate or reword what the customer said.
  */
 
+import { formatPhone } from "@/lib/phone";
 import type { LeadSource } from "./types";
 
 /** Words that carry no request on their own. */
@@ -209,13 +210,10 @@ export function isIntentCode(value: string | undefined): boolean {
   return Boolean(value && INTENT_CODES.has(value.trim().toLowerCase()));
 }
 
-/** "+14389936997" -> "438-993-6997"; anything that is not a North American number is kept as is. */
+/**
+ * "+14389936997" -> "(438) 993-6997"; another country -> "+33 6 12 34 56 78".
+ * A value that is not a readable number is kept as is. See `@/lib/phone`.
+ */
 export function formatPhoneDisplay(phone: string | undefined): string {
-  const raw = (phone ?? "").trim();
-  const digits = raw.replace(/\D/g, "");
-  const national = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
-  if (national.length === 10 && (digits.length === 10 || digits.startsWith("1"))) {
-    return `${national.slice(0, 3)}-${national.slice(3, 6)}-${national.slice(6)}`;
-  }
-  return raw;
+  return formatPhone(phone);
 }

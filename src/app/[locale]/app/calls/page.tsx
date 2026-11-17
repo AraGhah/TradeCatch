@@ -1,4 +1,12 @@
-import { ownerVisibleCalls } from "@/product/receptionist/call-history";
+import { formatPhone, isWithheldCaller } from "@/lib/phone";
+import { getMissedCallReadStore } from "@/product/missed-call/runtime";
+import { loadCallFeed } from "@/product/receptionist/call-feed";
+import { callState } from "@/product/receptionist/call-history-view";
+import {
+  formatCallDuration,
+  formatCallTime,
+} from "@/product/receptionist/call-format";
+import { receptionistErrorCode } from "@/product/receptionist/diagnostics";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { requireTenantContext } from "@/product/saas/tenant";
@@ -31,16 +39,37 @@ export default async function AppCallsPage({
   const clientId = auth.ctx.organization.missedCallClientId;
   let calls: CallSession[] = [];
   let configured = false;
+  // Dates are shown in the business's own time zone, not the server's (UTC).
+  let timeZone = "America/Toronto";
+  // A failed load is not an empty history: say so, never show "no calls yet".
+  let loadFailed = false;
+  // The receptionist's calls loaded but the missed-call text-back list did not.
+  let partial = false;
   if (clientId) {
     try {
       const runtime = getReceptionistRuntime();
       await runtime.refresh();
-      configured = runtime.configs.some((c) => c.clientAccountId === clientId);
-      calls = ownerVisibleCalls(
-        await runtime.store.listSessions({ clientAccountId: clientId, limit: 100 }),
-      );
-    } catch {
+      const config = runtime.configs.find((c) => c.clientAccountId === clientId);
+      configured = Boolean(config);
+      if (config?.timezone) timeZone = config.timezone;
+      // Both call paths, for this business only (the id comes from the session).
+      const feed = await loadCallFeed({
+        clientAccountId: clientId,
+        receptionist: runtime.store,
+        missedCall: getMissedCallReadStore,
+        limit: 100,
+      });
+      calls = feed.calls;
+      partial = feed.missedCallsUnavailable;
+    } catch (err) {
+      loadFailed = true;
       calls = [];
+      console.error(
+        JSON.stringify({
+          event: "tradecatch.calls.page_load_failed",
+          errorCode: receptionistErrorCode(err),
+        }),
+      );
     }
   }
 
@@ -56,8 +85,11 @@ export default async function AppCallsPage({
     ).length,
   };
 
-  const fmt = (iso: string) =>
-    new Date(iso).toLocaleString(lang === "fr" ? "fr-CA" : "en-CA");
+  const fmt = (iso: string) => formatCallTime(iso, timeZone, lang);
+  const who = (number: string | undefined) =>
+    !number || isWithheldCaller(number)
+      ? t("calls.unknownCaller")
+      : formatPhone(number);
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,8 +118,24 @@ export default async function AppCallsPage({
 
       {!clientId ? (
         <p className="text-sm text-navy/70">{t("dashboard.notLinked")}</p>
+      ) : loadFailed ? (
+        <p
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
+          {t("calls.loadError")}
+        </p>
       ) : !configured ? (
         <p className="text-sm text-navy/70">{t("calls.notConfigured")}</p>
+      ) : null}
+
+      {partial && !loadFailed ? (
+        <p
+          role="alert"
+          className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
+        >
+          {t("calls.partialError")}
+        </p>
       ) : null}
 
       {calls.length > 0 ? (
@@ -108,7 +156,7 @@ export default async function AppCallsPage({
         </dl>
       ) : null}
 
-      {calls.length === 0 ? (
+      {loadFailed ? null : calls.length === 0 ? (
         <p className="rounded-md border border-dashed border-navy/20 bg-white px-4 py-8 text-center text-navy/60">
           {t("calls.empty")}
         </p>
@@ -116,20 +164,33 @@ export default async function AppCallsPage({
         <ul className="divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white">
           {calls.map((call) => {
             const s = call.summary;
-            const outcome = call.outcome ? OUTCOME_LABEL[call.outcome][lang] : t("calls.inProgress");
+            const state = callState(call);
+            // A handled call reads as what happened in it; every other state
+            // is named by itself (missed, not answered, failed, ...).
+            const outcome =
+              state === "completed" && call.outcome
+                ? OUTCOME_LABEL[call.outcome][lang]
+                : t(`calls.state.${state}`);
+            const duration = formatCallDuration(call.durationSeconds);
             return (
               <li key={call.id} className="px-4 py-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <p className="font-semibold text-navy">
                     {call.urgency?.level === "critical" ? "🚨 " : ""}
-                    {call.slots.callerName || call.fromE164}
+                    {call.slots.callerName || who(call.fromE164)}
                   </p>
-                  <p className="text-xs text-navy/70">{fmt(call.startedAt)}</p>
+                  <p className="text-xs text-navy/70">
+                    <time dateTime={call.startedAt}>{fmt(call.startedAt)}</time>
+                  </p>
                 </div>
+                {call.slots.callerName && !isWithheldCaller(call.fromE164) ? (
+                  <p className="mt-0.5 text-xs text-navy/70">{who(call.fromE164)}</p>
+                ) : null}
                 <p className="mt-1 text-sm text-navy/70">
                   {outcome}
                   {call.afterHours ? ` · ${t("calls.afterHours")}` : ""}
-                  {call.durationSeconds ? ` · ${call.durationSeconds}s` : ""}
+                  {duration ? ` · ${duration}` : ""}
+                  {call.toE164 ? ` · ${t("calls.calledNumber")} ${formatPhone(call.toE164)}` : ""}
                 </p>
                 {call.slots.issue ? (
                   <p className="mt-2 text-sm text-navy">{call.slots.issue}</p>
@@ -143,7 +204,7 @@ export default async function AppCallsPage({
                   {call.slots.callbackE164 ? (
                     <div>
                       <dt className="inline font-semibold">{t("calls.callback")}: </dt>
-                      <dd className="inline">{call.slots.callbackE164}</dd>
+                      <dd className="inline">{formatPhone(call.slots.callbackE164)}</dd>
                     </div>
                   ) : null}
                   {call.slots.serviceAddress ? (

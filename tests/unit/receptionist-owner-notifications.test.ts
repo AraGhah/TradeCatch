@@ -123,7 +123,7 @@ describe("owner SMS after a call", () => {
         [
           "TradeCatch | New Call",
           "Customer: John Smith",
-          "Phone: +1 514-555-0123",
+          "Phone: (514) 555-0123",
           "Service: Plumbing",
           "Issue: Kitchen pipe leaking",
           "Duration: 2m 06s",
@@ -144,7 +144,7 @@ describe("owner SMS after a call", () => {
     const body = h.memorySms.sent[0]!.body;
     assert.match(body, /^TradeCatch \| New Call\n/);
     assert.doesNotMatch(body, /Customer:|Service:|Issue:|Duration:|Unknown|undefined/);
-    assert.match(body, /Phone: \+1 514-555-0123/);
+    assert.match(body, /Phone: \(514\) 555-0123/);
   });
 
   it("is written in the owner's language", async () => {
@@ -168,8 +168,11 @@ describe("owner SMS after a call", () => {
     assert.equal(formatDuration(126), "2m 06s");
     assert.equal(formatDuration(45), "45s");
     assert.equal(formatDuration(undefined), undefined);
-    assert.equal(formatPhone("+15145550123"), "+1 514-555-0123");
-    assert.equal(formatPhone("+442071838750"), "+442071838750");
+    assert.equal(formatPhone("+15145550123"), "(514) 555-0123");
+    assert.equal(formatPhone("+442071838750"), "+44 20 7183 8750");
+    // A withheld caller has no number to print, and is never shown as "anonymous".
+    assert.equal(formatPhone("anonymous"), undefined);
+    assert.equal(formatPhone(undefined), undefined);
   });
 });
 

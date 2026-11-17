@@ -104,9 +104,9 @@ describe("keepVerified", () => {
 
 describe("phone and service display", () => {
   it("formats North American numbers and leaves others alone", () => {
-    assert.equal(formatPhoneDisplay("+14389936997"), "438-993-6997");
-    assert.equal(formatPhoneDisplay("4389936997"), "438-993-6997");
-    assert.equal(formatPhoneDisplay("+33612345678"), "+33612345678");
+    assert.equal(formatPhoneDisplay("+14389936997"), "(438) 993-6997");
+    assert.equal(formatPhoneDisplay("4389936997"), "(438) 993-6997");
+    assert.equal(formatPhoneDisplay("+33612345678"), "+33 6 12 34 56 78");
     assert.equal(formatPhoneDisplay(undefined), "");
   });
   it("knows a call intent is not a service", () => {

@@ -775,9 +775,11 @@ describe("call history", () => {
     const record = fakeSession({ routing: { handoff: { target: "livekit", status: "connected", at: NOW.toISOString() }, quiet: true } });
     const report = fakeSession({ callSid: "lk_call-1" });
     const failedHandoff = fakeSession({ routing: { handoff: { target: "livekit", status: "failed", at: NOW.toISOString() } } });
+    // Which calls are listed (the three share a start time and have random ids,
+    // so their order is not what this test is about).
     assert.deepEqual(
-      ownerVisibleCalls([record, report, failedHandoff]).map((s) => s.id),
-      [report.id, failedHandoff.id],
+      ownerVisibleCalls([record, report, failedHandoff]).map((s) => s.id).sort(),
+      [report.id, failedHandoff.id].sort(),
     );
   });
 });

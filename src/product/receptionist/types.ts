@@ -459,6 +459,35 @@ export type CallFlags = {
 /** Caller details a voice agent read back and the caller agreed to. */
 export type ConfirmedField = "callerName" | "callbackE164" | "serviceAddress";
 
+/**
+ * Where a call came from and how its provider last reported it. Optional on a
+ * session: records saved before call activity was tracked have none, and read
+ * exactly as they always did.
+ */
+export type CallActivity = {
+  provider: "twilio" | "bland" | "livekit";
+  direction: "inbound";
+  /**
+   * What first created this record. `missed_call` is a missed-call text-back
+   * (Module A) call, read into the list at display time; it is never stored as
+   * a receptionist session.
+   */
+  origin:
+    | "incoming"
+    | "status_callback"
+    | "declined"
+    | "agent_report"
+    | "missed_call";
+  /** Module A's own verdict on the call (`missed_call` records only). */
+  disposition?: "missed" | "answered" | "abandoned" | "after_hours_missed";
+  /** The provider's terminal call status: completed, no-answer, busy, failed, canceled. */
+  providerStatus?: string;
+  /** Why the receptionist did not take the call (deactivated, outside its hours, routing). */
+  declinedCode?: string;
+  /** `startedAt` is the end time minus the reported duration, not a provider timestamp. */
+  startDerived?: true;
+};
+
 export type CallSession = {
   id: string;
   /**
@@ -495,6 +524,8 @@ export type CallSession = {
   transfers: TransferAttempt[];
   /** How this call was routed (ring-first, hand-off, personal-contact policy). */
   routing?: CallRouting;
+  /** Provider, direction and the provider's last reported status. */
+  activity?: CallActivity;
   recordingUrl?: string;
   summary?: CallSummary;
   context?: CallContext;

@@ -118,6 +118,55 @@ export function deliveryState(
   return !unreached ? "sent" : due ? "retrying" : "failed";
 }
 
+/**
+ * One word for what happened to the call, from the provider's status and what
+ * the receptionist captured. Records saved before activity was tracked have no
+ * provider status and read from their outcome alone.
+ *
+ *  in_progress  the call is still going
+ *  failed       a technical failure ended it
+ *  unanswered   nobody picked up (ring, busy, receptionist off or out of hours)
+ *  missed       the caller hung up before leaving anything
+ *  unreported   handed to the voice agent, its report has not arrived
+ *  completed    the call was handled
+ */
+export type CallState =
+  | "in_progress"
+  | "completed"
+  | "missed"
+  | "unanswered"
+  | "failed"
+  | "unreported";
+
+/** A call that ended before this, with nothing captured, is a missed call. */
+const MISSED_UNDER_SECONDS = 30;
+
+export function callState(c: CallSession): CallState {
+  const provider = (c.activity?.providerStatus ?? "").toLowerCase();
+  // A missed-call text-back call: someone picked up, or nobody did.
+  if (c.activity?.origin === "missed_call")
+    return c.activity.disposition === "answered" ? "completed" : "missed";
+  if (c.activity?.declinedCode) return "unanswered";
+  if (!c.finalizedAt && (c.status === "in_progress" || c.status === "transferring"))
+    return "in_progress";
+  if (c.status === "failed" || c.outcome === "failed" || provider === "failed")
+    return "failed";
+  // Only a routing record whose agent report never arrived is ever listed.
+  if (c.routing?.handoff?.status === "connected") return "unreported";
+  if (provider === "no-answer" || provider === "busy") return "unanswered";
+  if (provider === "canceled" || provider === "cancelled") return "missed";
+  if (
+    c.outcome === "caller_hung_up" &&
+    c.callerTurnCount === 0 &&
+    !c.slots.issue &&
+    !c.slots.message &&
+    // A caller who stayed on the line did not miss anyone.
+    (c.durationSeconds === undefined || c.durationSeconds < MISSED_UNDER_SECONDS)
+  )
+    return "missed";
+  return "completed";
+}
+
 export type CallRow = ReturnType<typeof toCallRow>;
 
 export function toCallRow(c: CallSession) {
@@ -125,7 +174,11 @@ export function toCallRow(c: CallSession) {
     id: c.id,
     callSid: c.callSid,
     simulated: c.callSid.startsWith("sim_") || c.callSid.startsWith("demo_"),
+    direction: c.activity?.direction ?? ("inbound" as const),
+    provider: c.activity?.provider ?? ("twilio" as const),
+    state: callState(c),
     fromE164: c.fromE164,
+    toE164: c.toE164,
     callerName: c.summary?.callerName ?? c.slots.callerName,
     service: c.slots.service ?? c.slots.project,
     language: c.language,

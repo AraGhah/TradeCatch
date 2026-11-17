@@ -260,7 +260,8 @@ describe("receptionist call flow (rule brain)", () => {
     const done = await engine.handleCallStatus({ callSid: "CA1", callStatus: "completed", durationSeconds: 71 });
     assert.equal(done.finalized, true);
     assert.equal(done.session!.summary!.outcome, "message_taken");
-    assert.match(done.session!.summary!.nextStep, new RegExp(CALLER.replace("+", "\\+")));
+    // The owner reads the number as "(514) 555-9876", not as E.164.
+    assert.match(done.session!.summary!.nextStep, /\(514\) 555-9876/);
     assert.equal(sms.sent.length, 1);
     assert.match(sms.sent[0]!.body, /Marie Tremblay/);
     assert.equal(emails.length, 1);

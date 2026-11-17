@@ -15,6 +15,7 @@
  */
 
 import { randomUUID } from "@/lib/id";
+import { toE164 } from "@/lib/phone";
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import type { Clock } from "@/product/missed-call/types";
 import { parsePhoneInput } from "@/product/crm/phone";
@@ -301,19 +302,36 @@ export function createAgentCallService(deps: AgentCallDeps) {
 
   async function ensureSession(
     config: ReceptionistConfig,
-    input: { callId: string; fromE164?: string; language: ReceptionistLanguage },
+    input: {
+      callId: string;
+      fromE164?: string;
+      language: ReceptionistLanguage;
+      /** Only a finished call's report knows this: it dates a call the report itself had to create. */
+      durationSeconds?: number;
+    },
   ): Promise<CallSession> {
-    const at = clock.now();
+    const now = clock.now();
+    // The first thing heard of a call is usually a tool call, close to its
+    // start. When the first thing is the end-of-call report (no tool ran), the
+    // call began `duration` before it: say so rather than dating the call from
+    // its hang-up.
+    const duration =
+      typeof input.durationSeconds === "number" &&
+      Number.isFinite(input.durationSeconds) &&
+      input.durationSeconds > 0 &&
+      input.durationSeconds <= 24 * 3600
+        ? Math.round(input.durationSeconds)
+        : undefined;
+    const at = duration ? new Date(now.getTime() - duration * 1000) : now;
     const draft: CallSession = {
       id: `rcs_${randomUUID()}`,
       // The provider's call id, prefixed by channel: unique per call, never a Twilio SID.
       callSid: `${channel === "bland" ? "bl" : "lk"}_${input.callId}`,
       configId: config.id,
       clientAccountId: config.clientAccountId,
-      fromE164:
-        input.fromE164 && E164.test(input.fromE164)
-          ? input.fromE164
-          : "anonymous",
+      // The number as the agent sent it ("514-555-9876", "+1 514 555 9876") in
+      // E.164; a number that cannot be read is "anonymous", never guessed.
+      fromE164: toE164(input.fromE164) ?? "anonymous",
       toE164: config.phoneNumberE164,
       language: input.language,
       status: "in_progress",
@@ -325,8 +343,14 @@ export function createAgentCallService(deps: AgentCallDeps) {
       callerTurnCount: 0,
       transfers: [],
       notifications: [],
+      activity: {
+        provider: channel === "bland" ? "bland" : "livekit",
+        direction: "inbound",
+        origin: "agent_report",
+        ...(duration ? { startDerived: true as const } : {}),
+      },
       startedAt: at.toISOString(),
-      updatedAt: at.toISOString(),
+      updatedAt: now.toISOString(),
       version: 1,
     };
     const { session } = await deps.store.insertSessionIfAbsent(draft);
@@ -354,6 +378,52 @@ export function createAgentCallService(deps: AgentCallDeps) {
       }
     }
     return null;
+  }
+
+  function cleanTranscript(raw: AgentReportInput["transcript"]): CallTurn[] {
+    return (raw ?? [])
+      .slice(-MAX_TRANSCRIPT_TURNS)
+      .map((t) => ({
+        at: nowIso(),
+        speaker: t.speaker,
+        text: clip(t.text, MAX_TURN_CHARS) ?? "",
+        brain: t.speaker === "agent" ? ("llm" as const) : undefined,
+      }))
+      .filter((t) => t.text);
+  }
+
+  /**
+   * A report that reaches a call already finalized (a delayed webhook, or a
+   * retry after the stale-call sweep closed it): the record stays one record
+   * and nothing is sent again. It only gains what it lacked, the real duration
+   * and the conversation, and never a transcript the retention purge removed.
+   */
+  async function completeLate(
+    session: CallSession,
+    input: AgentReportInput,
+  ): Promise<CallSession> {
+    const turns =
+      session.turns.length === 0 && !session.transcriptPurgedAt
+        ? cleanTranscript(input.transcript)
+        : [];
+    const duration =
+      session.durationSeconds === undefined &&
+      typeof input.durationSeconds === "number" &&
+      input.durationSeconds >= 0 &&
+      input.durationSeconds <= 24 * 3600
+        ? Math.round(input.durationSeconds)
+        : undefined;
+    if (turns.length === 0 && duration === undefined) return session;
+    const updated = await mutate(session.id, (s) => ({
+      ...s,
+      turns: s.turns.length === 0 && turns.length > 0 ? turns : s.turns,
+      callerTurnCount:
+        s.turns.length === 0 && turns.length > 0
+          ? turns.filter((t) => t.speaker === "caller").length
+          : s.callerTurnCount,
+      durationSeconds: s.durationSeconds ?? duration,
+    }));
+    return updated ?? session;
   }
 
   return {
@@ -681,18 +751,10 @@ export function createAgentCallService(deps: AgentCallDeps) {
       input: AgentReportInput,
     ): Promise<CallSession | null> {
       const session = await ensureSession(config, input);
-      if (session.finalizedAt) return session;
+      if (session.finalizedAt) return completeLate(session, input);
 
       const slots = cleanSlots(input.slots);
-      const transcript: CallTurn[] = (input.transcript ?? [])
-        .slice(-MAX_TRANSCRIPT_TURNS)
-        .map((t) => ({
-          at: nowIso(),
-          speaker: t.speaker,
-          text: clip(t.text, MAX_TURN_CHARS) ?? "",
-          brain: t.speaker === "agent" ? ("llm" as const) : undefined,
-        }))
-        .filter((t) => t.text);
+      const transcript = cleanTranscript(input.transcript);
 
       const updated = await mutate(session.id, (s) => {
         const merged = mergeSlots(s, slots);

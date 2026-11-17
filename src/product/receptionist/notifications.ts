@@ -8,6 +8,7 @@ import type { BusinessNotifyInput } from "@/lib/business-notifications";
 import { smsFailureDisposition } from "@/product/missed-call/twilio";
 import type { SmsPort } from "@/product/missed-call/types";
 import { ownerCallEmail, ownerCallSms } from "./owner-call-alert";
+import { ownerNumberText } from "./summary";
 import type {
   CallSession,
   CallSummary,
@@ -237,7 +238,7 @@ export function createReceptionistNotifier(
       const fr = config.defaultLanguage === "fr";
       const body = [
         `🚨 [${config.businessName}] ${fr ? "APPEL URGENT en cours" : "URGENT CALL in progress"}`,
-        `${fr ? "De" : "From"}: ${session.fromE164}`,
+        `${fr ? "De" : "From"}: ${ownerNumberText(session.fromE164, config.defaultLanguage)}`,
         `${fr ? "Dit" : "Said"}: ${issue.slice(0, 300)}`,
         config.emergencyTransferE164
           ? fr

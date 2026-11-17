@@ -1,3 +1,4 @@
+import { formatPhone, isWithheldCaller } from "@/lib/phone";
 import type { LlmClient } from "./llm";
 import type {
   CallIntent,
@@ -42,6 +43,19 @@ export const OUTCOME_LABEL: Record<
   failed: { fr: "Échec technique", en: "Technical failure" },
 };
 
+/**
+ * A number the way the owner reads it: "(514) 555-1234". A withheld caller has
+ * no number to show, and is never printed as the word "anonymous".
+ */
+export function ownerNumberText(
+  raw: string | undefined,
+  lang: ReceptionistLanguage,
+): string {
+  const shown = !raw || isWithheldCaller(raw) ? "" : formatPhone(raw);
+  if (shown) return shown;
+  return lang === "fr" ? "numéro inconnu" : "unknown number";
+}
+
 function nextStepText(
   session: CallSession,
   outcome: CallOutcome,
@@ -49,7 +63,20 @@ function nextStepText(
 ): string {
   const fr = lang === "fr";
   const lastTransfer = session.transfers.at(-1);
-  const callback = session.slots.callbackE164 ?? session.fromE164;
+  const callbackRaw = session.slots.callbackE164 ?? session.fromE164;
+  const callbackKnown = Boolean(callbackRaw) && !isWithheldCaller(callbackRaw);
+  // "Call back (514) 555-1234", or, with no number to call, what the owner can do.
+  const callback = callbackKnown
+    ? formatPhone(callbackRaw)
+    : fr
+      ? "le client (numéro masqué)"
+      : "the caller (number withheld)";
+  // A call the receptionist never took: nothing was said, nothing was captured.
+  if (session.activity?.declinedCode) {
+    return fr
+      ? `La réceptionniste n'a pas pris cet appel. Rappeler le ${callback}.`
+      : `The receptionist did not take this call. Call back ${callback}.`;
+  }
   switch (outcome) {
     case "appointment_booked":
       return fr
@@ -141,7 +168,7 @@ export function buildCallSummary(
           ? "Prioritaire · "
           : "Priority · "
         : "";
-  const who = session.slots.callerName ?? session.fromE164;
+  const who = session.slots.callerName ?? ownerNumberText(session.fromE164, lang);
   const transferred = session.transfers.find((t) => t.status === "completed");
 
   return {
