@@ -8,6 +8,8 @@ import {
 import {
   getSchedulingStore,
   getSchedulingService,
+  reconcileCalcomAll,
+  reconcileCalcomFor,
   reconcileGoogleBusy,
 } from "@/product/scheduling/runtime";
 
@@ -20,9 +22,14 @@ async function tick(request: NextRequest) {
   if (audit.missingActor && !isCron) return missingOpsActorResponse();
   const confirmations =
     await getSchedulingService().retryPendingConfirmations();
+  // Cal.com bookings are checked against the contractor's own account: a time
+  // moved or cancelled there is followed, and a request that never answered
+  // is settled. Counts only; nothing about a customer leaves this handler.
+  const calcom = await reconcileCalcomAll().catch(() => ({ failed: true }));
   return NextResponse.json({
     ok: true,
     confirmations,
+    calcom,
     note: "Per-business reconcile runs when a calendar is connected.",
     ready: Boolean(getSchedulingStore()),
   });
@@ -34,7 +41,10 @@ export async function POST(request: NextRequest) {
   if (organizationId) {
     if (!authorizeOpsRequest(request)) return unauthorizedOpsResponse();
     const result = await reconcileGoogleBusy(organizationId);
-    return NextResponse.json({ ok: true, ...result });
+    const calcom = await reconcileCalcomFor(organizationId).catch(() => ({
+      failed: true,
+    }));
+    return NextResponse.json({ ok: true, ...result, calcom });
   }
   return tick(request);
 }
