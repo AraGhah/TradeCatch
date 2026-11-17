@@ -295,7 +295,11 @@ export function LeadWorkspace({
                     : "bg-navy/5 text-navy"
                 }`}
               >
-                <p>{message.body}</p>
+                {message.body ? (
+                  <p>{message.body}</p>
+                ) : (
+                  <p className="italic text-navy/60">{t("bodyNotKept")}</p>
+                )}
                 <p className="mt-1 text-xs text-navy/50">
                   {message.direction === "outbound" ? t("outbound") : t("inbound")}
                   {" · "}

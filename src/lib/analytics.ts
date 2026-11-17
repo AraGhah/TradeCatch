@@ -75,16 +75,49 @@ function clearAnalyticsCookies() {
 
 const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
+export const BUSINESS_ANALYTICS_EVENT = "tradecatch:business-analytics";
+
+type BusinessAnalyticsWindow = Window & { __tcBusinessAnalytics?: boolean };
+
+/** Dashboard pages (/app, /fr/app and below). */
+export function isDashboardPath(pathname: string) {
+  return /^(?:\/fr)?\/app(?:\/|$)/.test(pathname);
+}
+
+/**
+ * Set by the dashboard layout from the business's privacy setting
+ * (analyticsEnabled). Until it is set, dashboard pages are not measured.
+ */
+export function setBusinessAnalytics(allowed: boolean | undefined) {
+  if (typeof window === "undefined") return;
+  const w = window as BusinessAnalyticsWindow;
+  if (w.__tcBusinessAnalytics === allowed) return;
+  w.__tcBusinessAnalytics = allowed;
+  window.dispatchEvent(new CustomEvent(BUSINESS_ANALYTICS_EVENT));
+}
+
+/**
+ * Marketing pages need only the visitor's cookie consent. Dashboard pages also
+ * need the business to allow analytics; unknown counts as no.
+ */
+export function analyticsAllowed(pathname?: string) {
+  if (typeof window === "undefined") return false;
+  if (!hasAnalyticsConsent()) return false;
+  const path = pathname ?? window.location.pathname;
+  if (!isDashboardPath(path)) return true;
+  return (window as BusinessAnalyticsWindow).__tcBusinessAnalytics === true;
+}
+
 export function trackEvent(name: string, params?: Record<string, unknown>) {
   if (typeof window === "undefined") return;
-  if (!hasAnalyticsConsent()) return;
+  if (!analyticsAllowed()) return;
   (window as GtagWindow).gtag?.("event", name, params);
 }
 
 /** Fires GA4 page_view on client navigations (locale + route changes). */
 export function trackPageView(pagePath: string, locale?: string) {
   if (typeof window === "undefined") return;
-  if (!hasAnalyticsConsent() || !GA_MEASUREMENT_ID) return;
+  if (!analyticsAllowed(pagePath) || !GA_MEASUREMENT_ID) return;
   gtag("event", "page_view", {
     page_path: pagePath,
     page_location: window.location.href,

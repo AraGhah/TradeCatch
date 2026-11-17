@@ -5,9 +5,10 @@ import Script from "next/script";
 import { useLocale } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
 import {
+  BUSINESS_ANALYTICS_EVENT,
   CONSENT_EVENT,
+  analyticsAllowed,
   applyConsentDefaults,
-  hasAnalyticsConsent,
   trackPageView,
   updateGoogleConsent,
 } from "@/lib/analytics";
@@ -21,15 +22,31 @@ export function Analytics({ nonce }: { nonce?: string }) {
 
   useEffect(() => {
     applyConsentDefaults();
+  }, []);
+
+  // Visitor cookie consent, and on dashboard pages the business's own
+  // analytics setting (see BusinessAnalyticsFlag). Re-checked on every route
+  // change so moving into the dashboard stops measurement there.
+  useEffect(() => {
     function sync() {
-      const granted = hasAnalyticsConsent();
+      const granted = analyticsAllowed(window.location.pathname);
+      // Google's own switch: while set, gtag sends nothing at all (including
+      // automatic events), even if the script was loaded on an earlier page.
+      if (GA_MEASUREMENT_ID)
+        (window as unknown as Record<string, unknown>)[
+          `ga-disable-${GA_MEASUREMENT_ID}`
+        ] = !granted;
       updateGoogleConsent(granted);
       setEnabled(granted);
     }
     sync();
     window.addEventListener(CONSENT_EVENT, sync);
-    return () => window.removeEventListener(CONSENT_EVENT, sync);
-  }, []);
+    window.addEventListener(BUSINESS_ANALYTICS_EVENT, sync);
+    return () => {
+      window.removeEventListener(CONSENT_EVENT, sync);
+      window.removeEventListener(BUSINESS_ANALYTICS_EVENT, sync);
+    };
+  }, [pathname]);
 
   useEffect(() => {
     if (!enabled || !GA_MEASUREMENT_ID) return;
