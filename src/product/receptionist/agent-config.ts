@@ -31,6 +31,10 @@ import {
   phrase,
 } from "./prompts";
 import { liveTransfersAllowedNow } from "./transfer-policy";
+import {
+  callerPolicyFor,
+  personalCallMessage,
+} from "@/product/telephony/caller-policy";
 import type {
   ReceptionistConfig,
   ReceptionistLanguage,
@@ -420,5 +424,38 @@ export function buildAgentConfig(
     emergencyTransferE164: emergency,
     departments,
     voice,
+  };
+}
+
+/**
+ * What to do with this caller before any AI starts, as the voice agent receives it.
+ * Only this call's decision leaves the server: the owner's personal-contacts list
+ * never does. Undefined means "answer normally".
+ */
+export function agentCallerPolicy(
+  config: ReceptionistConfig,
+  from: string | null,
+):
+  | {
+      kind: string;
+      messages: { lang: ReceptionistLanguage; text: string }[];
+      transferE164?: string;
+    }
+  | undefined {
+  // "anonymous" is what the agent sends for a withheld caller ID.
+  const policy = from === null ? null : callerPolicyFor(config, from.slice(0, 32));
+  if (!policy || policy.kind === "ai") return undefined;
+  return {
+    kind: policy.kind,
+    messages:
+      policy.kind === "personal_end"
+        ? []
+        : personalCallMessage(
+            config,
+            policy.kind === "unknown_message" ? "unknown" : "personal",
+          ),
+    ...(policy.kind === "personal_transfer"
+      ? { transferE164: policy.transferE164 }
+      : {}),
   };
 }

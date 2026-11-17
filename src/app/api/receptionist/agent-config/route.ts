@@ -5,17 +5,16 @@ import {
   missingOpsActorResponse,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
-import { buildAgentConfig } from "@/product/receptionist/agent-config";
+import {
+  agentCallerPolicy,
+  buildAgentConfig,
+} from "@/product/receptionist/agent-config";
 import { logReceptionistDiagnostic } from "@/product/receptionist/diagnostics";
 import { inactiveLineNotice } from "@/product/receptionist/inactive-line";
 import { resolveAgentVoice } from "@/product/receptionist/custom-voice/agent-voice";
 import { getVoiceService } from "@/product/receptionist/custom-voice/runtime";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { getSaasStore } from "@/product/saas/runtime";
-import {
-  callerPolicyFor,
-  personalCallMessage,
-} from "@/product/telephony/caller-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -105,25 +104,10 @@ export async function GET(request: NextRequest) {
   // With `from` (the agent sends "anonymous" for a withheld caller ID), the
   // owner's personal-contacts policy is decided here. Only this call's
   // decision goes back; the list never leaves the server.
-  const from = request.nextUrl.searchParams.get("from");
-  const policy =
-    from === null ? null : callerPolicyFor(config, from.slice(0, 32));
-  const callerPolicy =
-    !policy || policy.kind === "ai"
-      ? undefined
-      : {
-          kind: policy.kind,
-          messages:
-            policy.kind === "personal_end"
-              ? []
-              : personalCallMessage(
-                  config,
-                  policy.kind === "unknown_message" ? "unknown" : "personal",
-                ),
-          ...(policy.kind === "personal_transfer"
-            ? { transferE164: policy.transferE164 }
-            : {}),
-        };
+  const callerPolicy = agentCallerPolicy(
+    config,
+    request.nextUrl.searchParams.get("from"),
+  );
   return NextResponse.json({
     ok: true,
     config: {

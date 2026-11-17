@@ -163,7 +163,7 @@ export function createPhoneScheduler(
       }
 
       const rules = await scheduling.getRules(organizationId);
-      if (rules.calendarMode === "google") {
+      if (rules.calendarMode === "google" || rules.calendarMode === "calcom") {
         // A confirmation needs the calendar event. Do not read out times that
         // cannot be confirmed; the call becomes a request straight away.
         const connection = await scheduling.connectionStatus(organizationId);

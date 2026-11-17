@@ -38,9 +38,10 @@ const TRANSIENT_DB_CODES = new Set([
 ]);
 
 /** A realistic report (200 transcript turns) is well under this. */
-const MAX_BODY_BYTES = 256 * 1024;
+export const MAX_AGENT_BODY_BYTES = 256 * 1024;
 
-const digits = (s: string) => s.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
+export const digits = (s: string) =>
+  s.replace(/\D/g, "").replace(/^1(?=\d{10}$)/, "");
 
 const short = (max: number) => z.string().max(max).optional();
 
@@ -99,7 +100,7 @@ export const bookSchema = agentBaseSchema.extend({
   serviceAddress: short(300),
 });
 
-const slotsSchema = z
+export const slotsSchema = z
   .object({
     callerName: short(80),
     serviceAddress: short(300),
@@ -113,6 +114,13 @@ const slotsSchema = z
     email: short(120),
   })
   .partial();
+
+/**
+ * Details the caller has confirmed so far, saved as they are given so a dropped
+ * call or a tool that forgets a field never loses them (Bland has no in-process
+ * state like the LiveKit agent's record_details).
+ */
+export const detailsSchema = agentBaseSchema.extend({ slots: slotsSchema });
 
 export const reportSchema = agentBaseSchema.extend({
   intent: z
@@ -163,7 +171,7 @@ export async function handleAgentRequest<S extends z.ZodType>(
   if (audit.missingActor) return missingOpsActorResponse();
 
   const text = await request.text();
-  if (Buffer.byteLength(text) > MAX_BODY_BYTES) {
+  if (Buffer.byteLength(text) > MAX_AGENT_BODY_BYTES) {
     return NextResponse.json({ error: "Payload too large." }, { status: 413 });
   }
   let json: unknown;
@@ -204,27 +212,38 @@ export async function handleAgentRequest<S extends z.ZodType>(
     const result = await run({ config, body, runtime });
     return NextResponse.json({ ok: true, ...(result as object) });
   } catch (err) {
-    // Structured and value-free: the driver message can quote row values or
-    // connection details, and the report body is caller speech.
-    const sqlState = safeDatabaseErrorCode(err);
-    console.error(
-      JSON.stringify({
-        event: "tradecatch.receptionist.agent_failed",
-        operation,
-        callId: body.callId,
-        code: err instanceof Error ? err.name : "Error",
-        sqlState,
-      }),
-    );
-    // A database that is unreachable or restarting heals itself; tell the
-    // agent so it keeps retrying. Anything else is a defect and stays a 500.
-    const transient = sqlState !== undefined && TRANSIENT_DB_CODES.has(sqlState);
-    return NextResponse.json(
-      { error: transient ? "Temporarily unavailable." : "Internal error." },
-      {
-        status: transient ? 503 : 500,
-        headers: transient ? { "Retry-After": "5" } : {},
-      },
-    );
+    return agentFailureResponse(operation, body.callId, err);
   }
+}
+
+/**
+ * The answer for a tool call that threw. Structured and value-free: the driver
+ * message can quote row values or connection details, and the report body is
+ * caller speech. A database that is unreachable or restarting heals itself, so
+ * it gets a 503 the agent keeps retrying; anything else is a defect and stays a 500.
+ */
+export function agentFailureResponse(
+  operation: string,
+  callId: string,
+  err: unknown,
+  channel = "agent",
+): Response {
+  const sqlState = safeDatabaseErrorCode(err);
+  console.error(
+    JSON.stringify({
+      event: `tradecatch.receptionist.${channel}_failed`,
+      operation,
+      callId,
+      code: err instanceof Error ? err.name : "Error",
+      sqlState,
+    }),
+  );
+  const transient = sqlState !== undefined && TRANSIENT_DB_CODES.has(sqlState);
+  return NextResponse.json(
+    { error: transient ? "Temporarily unavailable." : "Internal error." },
+    {
+      status: transient ? 503 : 500,
+      headers: transient ? { "Retry-After": "5" } : {},
+    },
+  );
 }

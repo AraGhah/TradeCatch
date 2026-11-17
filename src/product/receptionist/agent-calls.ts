@@ -24,6 +24,12 @@ import {
   spokenSlotLabel,
   type ReceptionistScheduler,
 } from "./booking";
+import {
+  addressIsComplete,
+  mergeAddress,
+  tidyAddress,
+  withCity,
+} from "./address";
 import { isConflictError, type ReceptionistStore } from "./store";
 import type {
   CallIntent,
@@ -43,6 +49,21 @@ const MAX_SLOT_CHARS = 600;
 
 export const CALL_ID_PATTERN = /^[A-Za-z0-9_.:-]{6,128}$/;
 const E164 = /^\+[1-9]\d{9,14}$/;
+
+/** Which voice platform made the call: it only changes the call record's key prefix. */
+export type AgentChannel = "livekit" | "bland";
+const CALL_SID_PREFIX: Record<AgentChannel, string> = {
+  livekit: "lk",
+  bland: "bl",
+};
+
+/** A call id that already belongs to another business's receptionist. */
+export class CallOwnershipError extends Error {
+  constructor() {
+    super("Call belongs to a different receptionist");
+    this.name = "CallOwnershipError";
+  }
+}
 
 export type AgentCallDeps = {
   store: ReceptionistStore;
@@ -93,6 +114,7 @@ export type AgentBooking =
 
 export type AgentReportInput = {
   callId: string;
+  channel?: AgentChannel;
   fromE164?: string;
   language: ReceptionistLanguage;
   intent?: CallIntent;
@@ -146,9 +168,25 @@ export function cleanSlots(raw: Partial<CallSlots> | undefined): CallSlots {
     const value = clip(raw[key], key === "callerName" ? 80 : MAX_SLOT_CHARS);
     if (value) slots[key] = value;
   }
+  // The address and the city are tidied the same way everywhere they are saved.
+  const address = tidyAddress(raw.serviceAddress);
+  if (address) slots.serviceAddress = address;
+  else delete slots.serviceAddress;
   const phone = clip(raw.callbackE164, 20);
   if (phone && E164.test(phone)) slots.callbackE164 = phone;
   return slots;
+}
+
+/**
+ * What the call knows after new details arrive. A new value replaces an old
+ * one (the caller corrected it), except that a complete street address is
+ * never replaced by a vaguer one, such as a city said again later.
+ */
+export function mergeSlots(existing: CallSlots, incoming: CallSlots): CallSlots {
+  const merged: CallSlots = { ...existing, ...incoming };
+  const address = mergeAddress(existing.serviceAddress, incoming.serviceAddress);
+  if (address) merged.serviceAddress = address;
+  return merged;
 }
 
 async function withinBudget<T>(task: () => Promise<T>): Promise<T | null> {
@@ -178,13 +216,18 @@ export function createAgentCallService(deps: AgentCallDeps) {
 
   async function ensureSession(
     config: ReceptionistConfig,
-    input: { callId: string; fromE164?: string; language: ReceptionistLanguage },
+    input: {
+      callId: string;
+      channel?: AgentChannel;
+      fromE164?: string;
+      language: ReceptionistLanguage;
+    },
   ): Promise<CallSession> {
     const at = clock.now();
     const draft: CallSession = {
       id: `rcs_${randomUUID()}`,
-      // The room name keeps the session unique per call and unrelated to Twilio SIDs.
-      callSid: `lk_${input.callId}`,
+      // The call id keeps the session unique per call and unrelated to Twilio SIDs.
+      callSid: `${CALL_SID_PREFIX[input.channel ?? "livekit"]}_${input.callId}`,
       configId: config.id,
       clientAccountId: config.clientAccountId,
       fromE164:
@@ -208,7 +251,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
     };
     const { session } = await deps.store.insertSessionIfAbsent(draft);
     if (session.configId !== config.id || session.clientAccountId !== config.clientAccountId) {
-      throw new Error("Call belongs to a different receptionist");
+      throw new CallOwnershipError();
     }
     return session;
   }
@@ -233,11 +276,60 @@ export function createAgentCallService(deps: AgentCallDeps) {
     return null;
   }
 
+  /**
+   * Saves details on the call without ever failing the tool that gave them.
+   * An earlier issue or preferred time is kept: a model's later one-word
+   * paraphrase must not replace what the caller actually said.
+   */
+  async function remember(sessionId: string, incoming: Partial<CallSlots>) {
+    const fresh = cleanSlots(incoming);
+    if (Object.keys(fresh).length === 0) return;
+    try {
+      await mutate(sessionId, (s) => {
+        const keepFirst: CallSlots = { ...fresh };
+        if (s.slots.issue) delete keepFirst.issue;
+        if (s.slots.preferredTime) delete keepFirst.preferredTime;
+        return { ...s, slots: mergeSlots(s.slots, keepFirst) };
+      });
+    } catch (err) {
+      console.warn(
+        "[receptionist] could not save call details",
+        err instanceof Error ? err.name : "unknown",
+      );
+    }
+  }
+
   return {
+    /**
+     * Saves details the caller confirmed so far. Safe to repeat; a correction
+     * replaces the earlier value, a vaguer address does not replace a complete one.
+     */
+    async saveDetails(
+      config: ReceptionistConfig,
+      input: {
+        callId: string;
+        channel?: AgentChannel;
+        fromE164?: string;
+        language: ReceptionistLanguage;
+        slots?: Partial<CallSlots>;
+      },
+    ): Promise<{ saved: string[] }> {
+      const session = await ensureSession(config, input);
+      if (session.finalizedAt) return { saved: [] };
+      const fresh = cleanSlots(input.slots);
+      if (Object.keys(fresh).length === 0) return { saved: [] };
+      await mutate(session.id, (s) => ({
+        ...s,
+        slots: mergeSlots(s.slots, fresh),
+      }));
+      return { saved: Object.keys(fresh) };
+    },
+
     async availability(
       config: ReceptionistConfig,
       input: {
         callId: string;
+        channel?: AgentChannel;
         fromE164?: string;
         language: ReceptionistLanguage;
         preferredTime?: string;
@@ -245,10 +337,21 @@ export function createAgentCallService(deps: AgentCallDeps) {
         serviceAddress?: string;
         /** Keep this service (moving an existing appointment) instead of guessing from the issue. */
         serviceId?: string;
+        /** Moving an existing appointment: its address is not a detail of a new request. */
+        rescheduling?: boolean;
       },
     ): Promise<AgentAvailability> {
       if (!bookingEnabled(config)) return { ok: false, reason: "booking_disabled" };
-      await ensureSession(config, input);
+      const session = await ensureSession(config, input);
+      if (!input.rescheduling) {
+        // What the caller just told us is kept now, so booking and the final
+        // report do not depend on the model repeating it.
+        await remember(session.id, {
+          serviceAddress: input.serviceAddress,
+          preferredTime: input.preferredTime,
+          issue: input.issue,
+        });
+      }
 
       const now = clock.now();
       const pref = input.preferredTime
@@ -306,6 +409,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
       config: ReceptionistConfig,
       input: {
         callId: string;
+        channel?: AgentChannel;
         fromE164?: string;
         language: ReceptionistLanguage;
         startAt: string;
@@ -320,16 +424,32 @@ export function createAgentCallService(deps: AgentCallDeps) {
       if (!bookingEnabled(config)) {
         return { status: "request", reason: "booking_disabled" };
       }
+      const session = await ensureSession(config, input);
+      // Details the caller already confirmed on this call are used when the tool
+      // call omits them; what the tool call does say wins (a correction). The
+      // number they are calling from is the callback number unless they gave another.
+      const known = session.slots;
       const slots = cleanSlots({
-        callerName: input.callerName,
-        callbackE164: input.callbackE164,
-        serviceAddress: input.serviceAddress,
+        callerName: input.callerName ?? known.callerName,
+        callbackE164: input.callbackE164 ?? known.callbackE164 ?? input.fromE164,
+        serviceAddress: mergeAddress(
+          known.serviceAddress,
+          tidyAddress(input.serviceAddress),
+        ),
       });
+      // The city said on its own is added to the street, so the technician and
+      // the calendar get one full address.
+      slots.serviceAddress = withCity(slots.serviceAddress, known.location);
       const missing = (
         [
           ["name", slots.callerName],
           ["callback number", slots.callbackE164],
-          ["service address", slots.serviceAddress],
+          [
+            slots.serviceAddress
+              ? "service address (street number and street name)"
+              : "service address",
+            addressIsComplete(slots.serviceAddress) ? slots.serviceAddress : "",
+          ],
         ] as const
       )
         .filter(([, v]) => !v)
@@ -339,7 +459,6 @@ export function createAgentCallService(deps: AgentCallDeps) {
         return { status: "error", reason: "invalid_time" };
       }
 
-      const session = await ensureSession(config, input);
       const timezone = validTimeZone(input.timezone, config.timezone);
       const reserved = await withinBudget(() =>
         deps.scheduler!.reserve({
@@ -362,7 +481,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
           ...s,
           intent: "appointment",
           outcome: "appointment_booked",
-          slots: { ...s.slots, ...slots },
+          slots: mergeSlots(s.slots, slots),
           booking: {
             timezone,
             offered: [],
@@ -418,7 +537,7 @@ export function createAgentCallService(deps: AgentCallDeps) {
         .filter((t) => t.text);
 
       const updated = await mutate(session.id, (s) => {
-        const merged = { ...s.slots, ...slots };
+        const merged = mergeSlots(s.slots, slots);
         // A booking recorded by the book tool is the only proof of a booking.
         const booked = s.booking?.status === "booked";
         const transferred = input.transfer?.completed === true;

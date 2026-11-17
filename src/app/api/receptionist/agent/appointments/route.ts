@@ -3,6 +3,7 @@ import {
   appointmentActionSchema,
   handleAgentRequest,
 } from "@/product/receptionist/agent-api";
+import { agentAppointments } from "@/product/receptionist/agent-operations";
 
 export const dynamic = "force-dynamic";
 
@@ -22,44 +23,6 @@ export async function POST(request: NextRequest) {
     request,
     "appointments",
     appointmentActionSchema,
-    async ({ config, body, runtime }) => {
-      const service = runtime.agentAppointments;
-      const caller = { callerE164: body.from, callerName: body.callerName };
-      switch (body.action) {
-        case "find":
-          return {
-            result: await service.find(config, {
-              ...caller,
-              language: body.language,
-            }),
-          };
-        case "move":
-          return {
-            result: await service.move(config, {
-              ...caller,
-              appointmentId: body.appointmentId,
-              startAt: body.startAt,
-              language: body.language,
-            }),
-          };
-        case "cancel":
-          return {
-            result: await service.cancel(config, {
-              ...caller,
-              appointmentId: body.appointmentId,
-            }),
-          };
-        case "text":
-          return {
-            result: await service.text(config, {
-              ...caller,
-              callId: body.callId,
-              language: body.language,
-              kind: body.kind,
-              appointmentId: body.appointmentId,
-            }),
-          };
-      }
-    },
+    (ctx) => agentAppointments(ctx),
   );
 }

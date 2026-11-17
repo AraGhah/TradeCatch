@@ -3,6 +3,7 @@ import {
   handleAgentRequest,
   reportSchema,
 } from "@/product/receptionist/agent-api";
+import { agentReport } from "@/product/receptionist/agent-operations";
 
 export const dynamic = "force-dynamic";
 
@@ -12,30 +13,7 @@ export const dynamic = "force-dynamic";
  * missed-call recovery as for any other call. Repeating it is harmless.
  */
 export async function POST(request: NextRequest) {
-  return handleAgentRequest(
-    request,
-    "report",
-    reportSchema,
-    async ({ config, body, runtime }) => {
-      const session = await runtime.agentCalls.report(config, {
-        callId: body.callId,
-        fromE164: body.from,
-        language: body.language,
-        intent: body.intent,
-        slots: body.slots,
-        transcript: body.transcript,
-        transfer: body.transfer,
-        emergency: body.emergency,
-        durationSeconds: body.durationSeconds,
-        endReason: body.endReason,
-      });
-      return {
-        recorded: Boolean(session),
-        outcome: session?.outcome ?? null,
-        notified: session
-          ? session.notifications.filter((n) => n.ok).length
-          : 0,
-      };
-    },
+  return handleAgentRequest(request, "report", reportSchema, (ctx) =>
+    agentReport(ctx),
   );
 }

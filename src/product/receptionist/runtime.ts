@@ -26,6 +26,7 @@ import {
   type AgentAppointmentService,
   type CallerTextPort,
 } from "./agent-appointments";
+import { isBlandOwnedSmsNumber } from "./bland/lines";
 import { createPhoneScheduler } from "./phone-booking";
 import { createPostgresReceptionistStore } from "./postgres-store";
 import { loadProfileConfigs } from "./profile-loader";
@@ -51,6 +52,7 @@ type RuntimeState = {
   engine: ReceptionistEngine;
   agentCalls: AgentCallService;
   agentAppointments: AgentAppointmentService;
+  bookingProvider(config: ReceptionistConfig): Promise<"google" | "calcom" | null>;
   envConfigs: ReceptionistConfig[];
   profileConfigs: ReceptionistConfig[];
   profilesLoadedAt: number;
@@ -204,6 +206,8 @@ function callerTextPort(
       .store;
   return {
     async sender(config) {
+      // A number answered by Bland's SMS agent is not ours to text from.
+      if (isBlandOwnedSmsNumber(config.smsFromE164)) return null;
       return config.smsFromE164 ? { fromE164: config.smsFromE164 } : null;
     },
     async isSuppressed(config, phoneE164) {
@@ -368,6 +372,16 @@ function bootstrap(): RuntimeState {
     texts: callerTextPort(sms, scheduling.findOrganizationId),
   });
 
+  // The real calendar provider this business confirms bookings in, if any. A
+  // simulated or unconnected calendar is null: the Bland agent never offers or
+  // confirms a time there.
+  state.bookingProvider = async (config) => {
+    if (config.phoneBooking !== true) return null;
+    const organizationId = await scheduling.findOrganizationId(config);
+    if (!organizationId) return null;
+    return (await scheduling.scheduling()).liveProvider(organizationId);
+  };
+
   state.agentCalls = createAgentCallService({
     store,
     scheduler: state.engine.scheduler,
@@ -409,6 +423,8 @@ export function getReceptionistRuntime() {
     agentCalls: s.agentCalls,
     /** Existing appointments (find, move, cancel) and texts to the caller. */
     agentAppointments: s.agentAppointments,
+    /** "google" or "calcom" when this business books into a connected real calendar. */
+    bookingProvider: s.bookingProvider,
     llm: s.llm,
     durable: s.durable,
     /** Uncached check that a tenant line is still switched on (see confirmLineActive). */
