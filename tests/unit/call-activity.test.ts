@@ -676,7 +676,8 @@ describe("dates and durations", () => {
   it("shows the stored UTC time in the business's own zone", () => {
     const iso = "2026-11-17T14:05:00.000Z";
     assert.match(formatCallTime(iso, "America/Toronto", "en"), /9:05/);
-    assert.match(formatCallTime(iso, "America/Vancouver", "en"), /6:05/);
+    // B.C. observes permanent UTC-7 Pacific time beginning November 2026.
+    assert.match(formatCallTime(iso, "America/Vancouver", "en"), /7:05/);
     assert.match(formatCallTime(iso, "Europe/Paris", "fr"), /15 h 05|15:05/);
     // A summer instant uses daylight time.
     assert.match(formatCallTime("2026-07-17T14:05:00.000Z", "America/Toronto", "en"), /10:05/);
