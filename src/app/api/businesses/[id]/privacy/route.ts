@@ -1,7 +1,13 @@
 import { readJsonBody } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
-import { forbiddenUnless, requireSameBusiness } from "@/product/security/access";
-import { loadPrivacySettings, savePrivacySettings } from "@/product/privacy/runtime";
+import {
+  forbiddenUnless,
+  requireSameBusiness,
+} from "@/product/security/access";
+import {
+  loadPrivacySettings,
+  savePrivacySettings,
+} from "@/product/privacy/runtime";
 import { patchFrom, privacyPatchSchema } from "@/product/privacy/settings";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +21,10 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSameBusiness(id);
   if (!access.ok)
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   try {
     return NextResponse.json(
       { ok: true, settings: await loadPrivacySettings(id) },
@@ -43,7 +52,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSameBusiness(id);
   if (!access.ok)
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   const denied = forbiddenUnless(
     access.ctx.membership.role,
     "manage_security",
@@ -75,7 +87,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     if (!result.ok)
       return NextResponse.json(
         {
-          error: "These settings were changed elsewhere. Review the current values and save again.",
+          error:
+            "These settings were changed elsewhere. Review the current values and save again.",
           code: "stale",
           settings: result.current,
         },

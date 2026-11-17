@@ -372,7 +372,8 @@ async function handlePost(
           // A leg the platform dialed out (the owner's phone) reports with its
           // own call id and a ParentCallSid; it is not a call to this business.
           const inboundParent =
-            !form.ParentCallSid && !(form.Direction ?? "").startsWith("outbound");
+            !form.ParentCallSid &&
+            !(form.Direction ?? "").startsWith("outbound");
           // Summaries + notifications can take a few seconds; respond first.
           await deferTask(() =>
             recordCallStatus(engine, {
@@ -419,7 +420,12 @@ async function handlePost(
       operation: step,
       canText: Boolean(callerE164 && form.CallSid),
     });
-    if (config && callerE164 && form.CallSid && engine.failSafePromisesText(config)) {
+    if (
+      config &&
+      callerE164 &&
+      form.CallSid &&
+      engine.failSafePromisesText(config)
+    ) {
       const callSid = form.CallSid;
       await deferTask(async () => {
         await engine.sendFailSafeTextBack(config, { callerE164, callSid });

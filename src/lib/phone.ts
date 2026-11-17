@@ -67,7 +67,9 @@ export function isWithheldCaller(raw: string | null | undefined): boolean {
   if (!text) return false;
   if (WITHHELD_CALLER_IDS.has(text)) return true;
   const digits = text.replace(/[^\d+]/g, "");
-  return WITHHELD_CALLER_IDS.has(digits.startsWith("+") ? digits : `+${digits}`);
+  return WITHHELD_CALLER_IDS.has(
+    digits.startsWith("+") ? digits : `+${digits}`,
+  );
 }
 
 /**
@@ -94,7 +96,8 @@ export function parsePhone(
   // code), which would be stored as the wrong number. Only a full number counts:
   // E.164 length, and ten digits after +1.
   if (!E164_SHAPE.test(parsed.number)) return null;
-  if (parsed.number.startsWith("+1") && !/^\+1\d{10}$/.test(parsed.number)) return null;
+  if (parsed.number.startsWith("+1") && !/^\+1\d{10}$/.test(parsed.number))
+    return null;
   return {
     e164: parsed.number,
     ...(parsed.ext ? { extension: parsed.ext } : {}),
@@ -115,7 +118,9 @@ export function toE164(
  * the text as received (trimmed and bounded). Nothing is invented, so a
  * withheld caller ID or an odd SIP address stays recognisable.
  */
-export function normalizeProviderNumber(raw: string | null | undefined): string {
+export function normalizeProviderNumber(
+  raw: string | null | undefined,
+): string {
   const text = (raw ?? "").trim();
   return toE164(text) ?? text.slice(0, MAX_INPUT_CHARS);
 }

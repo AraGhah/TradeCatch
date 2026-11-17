@@ -90,7 +90,8 @@ export async function GET(request: NextRequest, { params }: Params) {
         source: missedCallPath
           ? ("missed_call" as const)
           : ("receptionist" as const),
-        simulated: c.callSid.startsWith("sim_") || c.callSid.startsWith("demo_"),
+        simulated:
+          c.callSid.startsWith("sim_") || c.callSid.startsWith("demo_"),
         direction: c.activity?.direction ?? ("inbound" as const),
         provider: c.activity?.provider ?? ("twilio" as const),
         state: callState(c),
