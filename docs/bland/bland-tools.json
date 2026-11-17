@@ -1,0 +1,450 @@
+[
+  {
+    "name": "check_availability",
+    "description": "Look up real open appointment times. Use before offering any time. Only offer times returned by this tool; if it returns ok false, offer to take a message instead. Never invent a time.",
+    "speech": "One moment while I check the calendar.",
+    "url": "https://YOUR-DEPLOYMENT/api/bland/availability",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "number": "{{to}}",
+      "callId": "{{call_id}}",
+      "from": "{{phone_number}}",
+      "preferredTime": "{{input.preferredTime}}",
+      "issue": "{{input.issue}}",
+      "serviceAddress": "{{input.serviceAddress}}"
+    },
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "preferredTime": {
+          "type": "string",
+          "description": "When the caller prefers, in their words (e.g. tomorrow morning)."
+        },
+        "issue": {
+          "type": "string",
+          "description": "What the visit is for, in the caller's words."
+        },
+        "serviceAddress": {
+          "type": "string",
+          "description": "The service address, if already given."
+        }
+      },
+      "required": [
+        "preferredTime",
+        "issue"
+      ],
+      "example": {
+        "preferredTime": "tomorrow morning",
+        "issue": "leaking kitchen tap",
+        "serviceAddress": "123 Rue Principale, Laval"
+      }
+    },
+    "timeout": 10000
+  },
+  {
+    "name": "book_appointment",
+    "description": "Book one of the times returned by check_availability. Say the appointment is booked ONLY if the result has booking.status equal to confirmed. If status is taken, offer the times returned. If status is request, error or anything else, say the team will confirm by message, and never say it is booked.",
+    "speech": "Let me book that for you.",
+    "url": "https://YOUR-DEPLOYMENT/api/bland/book",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "number": "{{to}}",
+      "callId": "{{call_id}}",
+      "from": "{{phone_number}}",
+      "startAt": "{{input.startAt}}",
+      "callerName": "{{input.callerName}}",
+      "serviceAddress": "{{input.serviceAddress}}",
+      "serviceId": "{{input.serviceId}}",
+      "callbackE164": "{{input.callbackE164}}"
+    },
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "startAt": {
+          "type": "string",
+          "description": "The chosen start time, exactly as returned by check_availability (ISO 8601)."
+        },
+        "callerName": {
+          "type": "string",
+          "description": "The caller's name."
+        },
+        "serviceAddress": {
+          "type": "string",
+          "description": "Full service address with street number."
+        },
+        "serviceId": {
+          "type": "string",
+          "description": "The service id returned by check_availability, if any."
+        },
+        "callbackE164": {
+          "type": "string",
+          "description": "Callback number in international format, only if different from the caller's own."
+        }
+      },
+      "required": [
+        "startAt",
+        "callerName",
+        "serviceAddress"
+      ],
+      "example": {
+        "startAt": "2026-11-18T14:00:00.000Z",
+        "callerName": "Jean Tremblay",
+        "serviceAddress": "123 Rue Principale, Laval, QC H7N 1A1"
+      }
+    },
+    "timeout": 15000
+  },
+  {
+    "name": "find_my_appointments",
+    "description": "Find this caller's upcoming appointments. Needs the name the caller gives; the phone number is the one they are calling from.",
+    "speech": "Let me look that up.",
+    "url": "https://YOUR-DEPLOYMENT/api/bland/appointments",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "number": "{{to}}",
+      "callId": "{{call_id}}",
+      "from": "{{phone_number}}",
+      "action": "find",
+      "callerName": "{{input.callerName}}"
+    },
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "callerName": {
+          "type": "string",
+          "description": "The name the appointment was booked under."
+        }
+      },
+      "required": [
+        "callerName"
+      ],
+      "example": {
+        "callerName": "Jean Tremblay"
+      }
+    },
+    "timeout": 10000
+  },
+  {
+    "name": "move_appointment",
+    "description": "Move one of the caller's appointments to a new time. Get new times from check_availability with the appointmentId first. Say it was moved only if result.status equals moved.",
+    "speech": "Let me move that.",
+    "url": "https://YOUR-DEPLOYMENT/api/bland/appointments",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "number": "{{to}}",
+      "callId": "{{call_id}}",
+      "from": "{{phone_number}}",
+      "action": "move",
+      "callerName": "{{input.callerName}}",
+      "appointmentId": "{{input.appointmentId}}",
+      "startAt": "{{input.startAt}}"
+    },
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "callerName": {
+          "type": "string",
+          "description": "The name the appointment was booked under."
+        },
+        "appointmentId": {
+          "type": "string",
+          "description": "The id returned by find_my_appointments."
+        },
+        "startAt": {
+          "type": "string",
+          "description": "The new start time, exactly as returned by check_availability."
+        }
+      },
+      "required": [
+        "callerName",
+        "appointmentId",
+        "startAt"
+      ],
+      "example": {
+        "callerName": "Jean Tremblay",
+        "appointmentId": "appt_abc123",
+        "startAt": "2026-11-19T15:00:00.000Z"
+      }
+    },
+    "timeout": 15000
+  },
+  {
+    "name": "cancel_appointment",
+    "description": "Cancel one of the caller's appointments. Ask the caller to confirm first. Say it was canceled only if result.status equals canceled.",
+    "speech": "Canceling that now.",
+    "url": "https://YOUR-DEPLOYMENT/api/bland/appointments",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "number": "{{to}}",
+      "callId": "{{call_id}}",
+      "from": "{{phone_number}}",
+      "action": "cancel",
+      "callerName": "{{input.callerName}}",
+      "appointmentId": "{{input.appointmentId}}"
+    },
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "callerName": {
+          "type": "string",
+          "description": "The name the appointment was booked under."
+        },
+        "appointmentId": {
+          "type": "string",
+          "description": "The id returned by find_my_appointments."
+        }
+      },
+      "required": [
+        "callerName",
+        "appointmentId"
+      ],
+      "example": {
+        "callerName": "Jean Tremblay",
+        "appointmentId": "appt_abc123"
+      }
+    },
+    "timeout": 15000
+  },
+  {
+    "name": "text_me_details",
+    "description": "Text the caller, on the number they are calling from, either the business details or their appointment. Say a text was sent only if result.status equals sent.",
+    "speech": "Sending that now.",
+    "url": "https://YOUR-DEPLOYMENT/api/bland/appointments",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "number": "{{to}}",
+      "callId": "{{call_id}}",
+      "from": "{{phone_number}}",
+      "action": "text",
+      "callerName": "{{input.callerName}}",
+      "kind": "{{input.kind}}",
+      "appointmentId": "{{input.appointmentId}}"
+    },
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "callerName": {
+          "type": "string",
+          "description": "The caller's name (needed to text an appointment)."
+        },
+        "kind": {
+          "type": "string",
+          "description": "What to send.",
+          "enum": [
+            "business_info",
+            "appointment"
+          ]
+        },
+        "appointmentId": {
+          "type": "string",
+          "description": "Only for kind appointment."
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "example": {
+        "kind": "business_info"
+      }
+    },
+    "timeout": 10000
+  },
+  {
+    "name": "save_caller_details",
+    "description": "Save details the caller has confirmed so far. Call it whenever the caller confirms their name, address or problem, so nothing is lost if the call drops. Only send what was confirmed.",
+    "url": "https://YOUR-DEPLOYMENT/api/bland/details",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "number": "{{to}}",
+      "callId": "{{call_id}}",
+      "from": "{{phone_number}}",
+      "callerName": "{{input.callerName}}",
+      "serviceAddress": "{{input.serviceAddress}}",
+      "issue": "{{input.issue}}",
+      "callbackE164": "{{input.callbackE164}}",
+      "preferredTime": "{{input.preferredTime}}",
+      "message": "{{input.message}}",
+      "email": "{{input.email}}"
+    },
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "callerName": {
+          "type": "string",
+          "description": "The caller's name, as they said it."
+        },
+        "serviceAddress": {
+          "type": "string",
+          "description": "The full service address: street number, street name, city. Only what the caller confirmed."
+        },
+        "issue": {
+          "type": "string",
+          "description": "The problem or job, in the caller's words."
+        },
+        "callbackE164": {
+          "type": "string",
+          "description": "A callback number in international format, only if different from the number they called from."
+        },
+        "preferredTime": {
+          "type": "string",
+          "description": "When the caller would like the visit."
+        },
+        "message": {
+          "type": "string",
+          "description": "A short message for the business owner."
+        },
+        "email": {
+          "type": "string",
+          "description": "The caller's email, only if they gave one."
+        }
+      },
+      "required": [],
+      "example": {
+        "callerName": "Jean Tremblay",
+        "serviceAddress": "123 Rue Principale, Laval, QC H7N 1A1"
+      }
+    },
+    "timeout": 10000
+  },
+  {
+    "name": "report_call",
+    "description": "Report the call. Always call this once, at the end of every call, with everything the caller confirmed. It tells the owner who called and what they need.",
+    "url": "https://YOUR-DEPLOYMENT/api/bland/report",
+    "method": "POST",
+    "headers": {
+      "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>",
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "number": "{{to}}",
+      "callId": "{{call_id}}",
+      "from": "{{phone_number}}",
+      "callerName": "{{input.callerName}}",
+      "serviceAddress": "{{input.serviceAddress}}",
+      "issue": "{{input.issue}}",
+      "callbackE164": "{{input.callbackE164}}",
+      "preferredTime": "{{input.preferredTime}}",
+      "message": "{{input.message}}",
+      "email": "{{input.email}}",
+      "intent": "{{input.intent}}",
+      "emergency": "{{input.emergency}}",
+      "endReason": "{{input.endReason}}",
+      "transferCompleted": "{{input.transferCompleted}}",
+      "transferTarget": "{{input.transferTarget}}"
+    },
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "callerName": {
+          "type": "string",
+          "description": "The caller's name, as they said it."
+        },
+        "serviceAddress": {
+          "type": "string",
+          "description": "The full service address: street number, street name, city. Only what the caller confirmed."
+        },
+        "issue": {
+          "type": "string",
+          "description": "The problem or job, in the caller's words."
+        },
+        "callbackE164": {
+          "type": "string",
+          "description": "A callback number in international format, only if different from the number they called from."
+        },
+        "preferredTime": {
+          "type": "string",
+          "description": "When the caller would like the visit."
+        },
+        "message": {
+          "type": "string",
+          "description": "A short message for the business owner."
+        },
+        "email": {
+          "type": "string",
+          "description": "The caller's email, only if they gave one."
+        },
+        "intent": {
+          "type": "string",
+          "description": "What the call was.",
+          "enum": [
+            "service_request",
+            "appointment",
+            "faq",
+            "transfer",
+            "message",
+            "other"
+          ]
+        },
+        "emergency": {
+          "type": "string",
+          "description": "true if the caller described an emergency, otherwise false.",
+          "enum": [
+            "true",
+            "false"
+          ]
+        },
+        "endReason": {
+          "type": "string",
+          "description": "How the call ended.",
+          "enum": [
+            "completed",
+            "caller_hung_up",
+            "silence",
+            "error"
+          ]
+        },
+        "transferCompleted": {
+          "type": "string",
+          "description": "true if the call was handed to a person.",
+          "enum": [
+            "true",
+            "false"
+          ]
+        },
+        "transferTarget": {
+          "type": "string",
+          "description": "Who it was handed to (a department or name)."
+        }
+      },
+      "required": [
+        "intent"
+      ],
+      "example": {
+        "intent": "service_request",
+        "callerName": "Jean Tremblay",
+        "issue": "no heat",
+        "emergency": "false",
+        "endReason": "completed"
+      }
+    },
+    "timeout": 10000
+  }
+]

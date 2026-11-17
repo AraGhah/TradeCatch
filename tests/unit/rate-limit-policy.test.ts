@@ -191,6 +191,8 @@ describe("which routes the default limit covers", () => {
       "authorizeGmailPush",
       "authorizeOpsRequest",
       "handleAgentRequest",
+      "handleBlandRequest",
+      "handleBlandConfig",
       "safeEqual",
       "/api/twilio/",
     ];

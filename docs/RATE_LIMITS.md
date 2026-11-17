@@ -133,6 +133,7 @@ Both SMS buckets are checked inside the one adapter every text goes through ([sr
 | `tools.notification-test` | 20 | 1 per 30 s | business+user | same | Test notifications. |
 | `tools.automation-test` | 30 | 1 per 20 s | business+user | same | Automation dry runs. |
 | `tools.receptionist-test` | 60 | 1 per 10 s | business+user | same | Receptionist test chat (model calls cost money). |
+| `tools.bland-line` | 300 | 5 per s | number | same | Bland agent tool calls for one business line (Cal.com and database work behind each). |
 
 ### api
 
@@ -158,6 +159,7 @@ A live call must never be delayed, queued or refused by a rate limit. These rout
 | `/api/voice/`                       | The live voice socket and tool calls.                                             |
 | `/api/receptionist/agent/`          | The voice agent's availability, booking and lookup calls during a call.           |
 | `/api/receptionist/agent-config`    | The agent loading its configuration at call start.                                |
+| `/api/bland/`                       | The Bland agent's tool calls: authenticated per line, limited per line (`tools.bland-line`). |
 | `/api/health`                       | Uptime probes.                                                                    |
 
 Exempt does not mean open. A test (`exempts only routes that prove who is calling`) fails unless every exempt route verifies a Twilio/Stripe signature, a shared secret, or an ops token. There is no queue in front of any of them. The only voice routes with limits are the ones a **person** clicks in the dashboard (cloning, previewing, switching voice: `sensitive.voice-*`), and the public marketing demo (`public.demo-voice`, `public.receptionist-demo`), none of which are on a live call's path.

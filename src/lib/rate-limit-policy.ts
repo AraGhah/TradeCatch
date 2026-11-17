@@ -336,6 +336,14 @@ export const POLICIES = {
     per: "business+user",
     why: "Receptionist test chat (model calls cost money).",
   },
+  "tools.bland-line": {
+    // 300 at once, then 5 a second: a busy line makes about one tool call a
+    // second. This stops a leaked line token or a loop, never a real call.
+    ...perWindow(300, MIN),
+    group: "tools",
+    per: "number",
+    why: "Bland agent tool calls for one business line (Cal.com and database work behind each).",
+  },
 
   // --- Defaults for every other /api route (rate-limit-central.ts) --------
   // Per address. Deliberately generous: these catch loops and floods, not
@@ -437,6 +445,11 @@ export const EXEMPT_API_PREFIXES: ReadonlyArray<{
   {
     prefix: "/api/receptionist/agent-config",
     reason: "Voice agent configuration fetch at call start",
+  },
+  {
+    prefix: "/api/bland/",
+    reason:
+      "Bland agent tool calls during a live call: per-line token, per-line limit",
   },
   {
     prefix: "/api/health",

@@ -1,0 +1,80 @@
+{
+  "dynamic_data": [
+    {
+      "url": "https://YOUR-DEPLOYMENT/api/bland/config",
+      "method": "GET",
+      "headers": {
+        "Authorization": "Bearer <LINE_TOKEN: reference your Bland Secret>"
+      },
+      "query": {
+        "number": "{{to}}",
+        "from": "{{phone_number}}",
+        "callId": "{{call_id}}"
+      },
+      "response_data": [
+        {
+          "name": "tc_answering",
+          "data": "$.answering",
+          "context": "false means this call must not be handled by the assistant"
+        },
+        {
+          "name": "tc_business_name",
+          "data": "$.config.business.name",
+          "context": "the business's name"
+        },
+        {
+          "name": "tc_receptionist_name",
+          "data": "$.config.business.receptionistName",
+          "context": "the assistant's own name"
+        },
+        {
+          "name": "tc_prompt",
+          "data": "$.config.prompt",
+          "context": "the owner's instructions and the approved facts to answer from"
+        },
+        {
+          "name": "tc_after_hours",
+          "data": "$.config.business.afterHours",
+          "context": "true when the office is closed right now"
+        },
+        {
+          "name": "tc_booking_enabled",
+          "data": "$.config.capabilities.booking",
+          "context": "true only when real appointment booking works on this call; otherwise never offer a time"
+        },
+        {
+          "name": "tc_texts_enabled",
+          "data": "$.config.capabilities.callerTexts",
+          "context": "true only when text_me_details may be used"
+        },
+        {
+          "name": "tc_transfer_normal",
+          "data": "$.config.transfer.normal",
+          "context": "number to transfer to for 'talk to a person'; empty means do not transfer"
+        },
+        {
+          "name": "tc_transfer_backup",
+          "data": "$.config.transfer.backup",
+          "context": "number to try if the first does not answer"
+        },
+        {
+          "name": "tc_transfer_emergency",
+          "data": "$.config.transfer.emergency",
+          "context": "number to transfer emergencies to, at any hour"
+        },
+        {
+          "name": "tc_policy_kind",
+          "data": "$.callerPolicy.kind",
+          "context": "set when this caller must not get the assistant"
+        },
+        {
+          "name": "tc_policy_message",
+          "data": "$.callerPolicy.messages[0].text",
+          "context": "what to say to that caller before ending the call"
+        }
+      ],
+      "timeout": 2000,
+      "cache": true
+    }
+  ]
+}

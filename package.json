@@ -21,6 +21,7 @@
     "check:i18n": "node scripts/check-i18n-parity.js",
     "check:module-a": "tsx scripts/check-module-a-readiness.ts",
     "agent-tools:mcp": "tsx scripts/agent-tools-mcp-server.ts",
+    "bland:config": "tsx scripts/bland-tool-config.ts",
     "evals:agents": "tsx scripts/run-agent-evals.ts",
     "check:legal": "node scripts/check-legal-placeholders.js",
     "check:media": "node scripts/check-repo-media.js",
