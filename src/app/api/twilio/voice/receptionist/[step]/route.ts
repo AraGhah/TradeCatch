@@ -17,6 +17,11 @@ import {
   type TwimlCallbackUrl,
 } from "@/product/receptionist/voice";
 import { renderConversationRelayTwiml } from "@/product/telephony/conversation-relay";
+import { callEventId } from "@/product/telephony/call-events";
+import {
+  recordDialEvents,
+  recordFinalEvents,
+} from "@/product/telephony/call-timeline";
 import { getTelephonyRuntime } from "@/product/telephony/runtime";
 
 export const dynamic = "force-dynamic";
@@ -217,51 +222,52 @@ async function handlePost(
         try {
           const orgId = config?.id.replace(/^rc_org_/, "") || "unknown";
           const events = getTelephonyRuntime().events;
-          if (!(await events.seenRecently({ callSid, kind: "incoming" }))) {
+          const clientAccountId =
+            session?.clientAccountId || config?.clientAccountId || "unknown";
+          // Each event has a stable id, so Twilio retrying this webhook (or
+          // two workers handling it at once) writes each row once.
+          const base = {
+            organizationId: orgId,
+            clientAccountId,
+            callSid,
+            sessionId: session?.id,
+          };
+          await events.append({
+            ...base,
+            id: callEventId(callSid, "incoming"),
+            kind: "incoming",
+            detail: `from=${fromE164} to=${toE164}`,
+          });
+          const policy = session?.routing?.callerPolicy;
+          const dialing = plan.verbs.some((v) => v.verb === "dial");
+          if (session) {
+            // What the saved routing decided, in the same words the dashboard
+            // simulation uses (`action:reason`).
             await events.append({
-              organizationId: orgId,
-              clientAccountId:
-                session?.clientAccountId ||
-                config?.clientAccountId ||
-                "unknown",
-              callSid,
-              sessionId: session?.id,
-              kind: "incoming",
-              detail: `from=${fromE164} to=${toE164}`,
+              ...base,
+              id: callEventId(callSid, "routing_decision"),
+              kind: "routing_decision",
+              // Which contact matched a caller policy stays out of the log.
+              detail: policy
+                ? `caller_policy:${policy}`
+                : dialing
+                  ? `ring_human:${session.transfers[0]?.reason ?? "human_first"}`
+                  : `ai:${session.afterHours ? "after_hours_ai" : "ai_first"}`,
             });
           }
-          const policy = session?.routing?.callerPolicy;
-          if (policy) {
-            // The call never reaches the AI. The event names the policy only:
-            // which contact matched stays out of the event log.
+          if (!policy && dialing) {
             await events.append({
-              organizationId: orgId,
-              clientAccountId: session!.clientAccountId,
-              callSid,
-              sessionId: session!.id,
-              kind: "routing_decision",
-              detail: `caller_policy:${policy}`,
-            });
-          } else if (plan.verbs.some((v) => v.verb === "dial")) {
-            await events.append({
-              organizationId: orgId,
-              clientAccountId:
-                session?.clientAccountId ||
-                config?.clientAccountId ||
-                "unknown",
-              callSid,
-              sessionId: session?.id,
+              ...base,
+              id: callEventId(callSid, "human_ring"),
               kind: "human_ring",
               detail: session?.routing?.screened
                 ? "ring_first_screened"
                 : "inbound_strategy",
             });
-          } else if (session) {
+          } else if (!policy && session) {
             await events.append({
-              organizationId: orgId,
-              clientAccountId: session.clientAccountId,
-              callSid,
-              sessionId: session.id,
+              ...base,
+              id: callEventId(callSid, "ai_started"),
               kind: "ai_started",
               detail: plan.verbs.some((v) => v.verb === "sip_handoff")
                 ? "livekit_handoff"
@@ -317,18 +323,27 @@ async function handlePost(
           }),
         );
 
-      case "dial":
+      case "dial": {
         if (!sessionId)
           return render({ sessionId: null, verbs: [{ verb: "hangup" }] });
-        return render(
-          await engine.handleDialResult({
+        const plan = await engine.handleDialResult({
+          sessionId,
+          dialStatus: form.DialCallStatus ?? "failed",
+          durationSeconds: num(form.DialCallDuration),
+          callSid: form.CallSid,
+          callStatus: form.CallStatus,
+        });
+        // After the response: the caller is waiting for the next TwiML, and
+        // tracking must never add to that silence.
+        void deferTask(() =>
+          recordDialEvents(
+            { store, events: getTelephonyRuntime().events },
             sessionId,
-            dialStatus: form.DialCallStatus ?? "failed",
-            durationSeconds: num(form.DialCallDuration),
-            callSid: form.CallSid,
-            callStatus: form.CallStatus,
-          }),
+            plan,
+          ),
         );
+        return render(plan);
+      }
 
       case "screen":
       case "screen_result":
@@ -375,16 +390,23 @@ async function handlePost(
             !form.ParentCallSid &&
             !(form.Direction ?? "").startsWith("outbound");
           // Summaries + notifications can take a few seconds; respond first.
-          await deferTask(() =>
-            recordCallStatus(engine, {
+          await deferTask(async () => {
+            await recordCallStatus(engine, {
               callSid,
               callStatus,
               durationSeconds,
               fromE164: form.From || form.Caller,
               toE164: form.To || form.Called,
               createIfMissing: inboundParent,
-            }),
-          );
+            });
+            if (inboundParent) {
+              await recordFinalEvents(
+                { store, events: getTelephonyRuntime().events },
+                callSid,
+                callStatus,
+              );
+            }
+          });
         }
         return emptyTwiml();
       }

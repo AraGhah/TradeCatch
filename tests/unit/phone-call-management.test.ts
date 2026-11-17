@@ -150,43 +150,47 @@ describe("engine human-first then AI", () => {
   });
 });
 
+/** A Wednesday, 10:00 in Toronto: inside business hours whatever day the suite runs. */
+const BUSINESS_HOURS = new Date("2026-03-04T15:00:00Z");
+
 describe("simulated live phone scenarios", () => {
-  it("records events and keeps tenant isolation", async () => {
-    const events = createMemoryCallEventStore();
-    const result = await runSimulatedPhoneScenario({
+  it("runs the receptionist for a call that goes straight to it, labelled as a simulation", async () => {
+    const { run } = await runSimulatedPhoneScenario({
       organizationId: "org_a",
       profile: profile(),
       client,
-      scenario: "ai_answers",
+      scenario: "receptionist_response",
       language: "en",
-      events,
+      now: BUSINESS_HOURS,
     });
-    assert.equal(result.simulated, true);
-    assert.ok(result.callSid.startsWith("sim_live_"));
-    assert.ok(result.events.some((e) => e.kind === "ai_started"));
-    const listed = await events.listForOrganization({
-      organizationId: "org_a",
-    });
-    assert.ok(listed.length >= 2);
-    assert.ok(listed.every((e) => e.organizationId === "org_a"));
+    assert.equal(run.simulated, true);
+    assert.ok(run.callSid.startsWith("sim_live_"));
+    assert.equal(run.routing.action, "ai");
+    assert.ok(run.events.some((e) => e.kind === "ai_started"));
+    assert.ok(run.events.every((e) => e.simulated === true));
   });
 
-  it("simulates missed human then AI", async () => {
-    const result = await runSimulatedPhoneScenario({
+  it("never pairs ring_human with ai_started unless the ring was missed", async () => {
+    const { run } = await runSimulatedPhoneScenario({
       organizationId: "org_a",
       profile: profile({
         phoneSettings: {
           ...defaultPhoneSettings(),
+          tradecatchNumberE164: "+14385597100",
           inboundStrategy: "human_first",
           humanTransferE164: "+14385597004",
           aiEnabled: true,
         },
       }),
       client,
-      scenario: "human_first_missed_then_ai",
+      scenario: "missed_call",
+      now: BUSINESS_HOURS,
     });
-    assert.ok(result.events.some((e) => e.kind === "missed"));
-    assert.ok(result.events.some((e) => e.kind === "ai_started"));
+    const kinds = run.events.map((e) => e.kind);
+    const ring = kinds.indexOf("human_ring");
+    const missed = kinds.indexOf("missed");
+    const ai = kinds.indexOf("ai_started");
+    assert.ok(ring >= 0 && missed > ring && ai > missed, kinds.join(" > "));
   });
 });
 

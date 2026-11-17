@@ -27,6 +27,10 @@ const keys = [
 const saved = new Map(keys.map((key) => [key, process.env[key]]));
 const env = process.env as Record<string, string | undefined>;
 const lines: string[] = [];
+// Every test reuses one call id; the event store must not carry rows between them.
+const resetCallEvents = () => {
+  delete (globalThis as { __tradecatchTelephony?: unknown }).__tradecatchTelephony;
+};
 const phone = "+14385597001";
 const callSid = "CA0123456789abcdef0123456789abcdef";
 function request(path: string, params: Record<string, string>) {
@@ -42,6 +46,7 @@ beforeEach(() => {
   env.RECEPTIONIST_LLM_PROVIDER = "none";
   env.MISSED_CALL_SMS_MODE = "dry-run";
   resetReceptionistRuntimeForTests();
+  resetCallEvents();
   lines.length = 0;
   mock.method(console, "error", (line: string) => lines.push(line));
 });

@@ -14,11 +14,9 @@ import { normalizeProviderNumber } from "@/lib/phone";
 import { logReceptionistDiagnostic } from "./diagnostics";
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import { shouldAnswerCall } from "./call-handling";
-import { decideInboundRouting } from "@/product/telephony/call-routing";
-import { defaultPhoneSettings } from "@/product/telephony/phone-settings";
+import { resolveInboundRouting } from "@/product/telephony/call-routing";
 import { livekitHandoffReady } from "@/product/telephony/livekit-handoff";
 import {
-  callerPolicyFor,
   personalCallMessage,
   screeningPrompt,
 } from "@/product/telephony/caller-policy";
@@ -1706,26 +1704,14 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         return failSafePlan(null, null, undefined, { cause: "declined" });
       }
 
-      // A carrier-forwarded call already rang the contractor's phone, and
-      // ringing it again would forward right back here: never ring first.
-      const forwarded = config.routingMethod === "carrier_forwarding";
-      const phone = {
-        ...defaultPhoneSettings(),
-        aiEnabled: config.enabled,
-        inboundStrategy: forwarded
-          ? ("ai_first" as const)
-          : (config.inboundStrategy ?? "ai_first"),
-        humanRingTimeoutSeconds: config.humanRingTimeoutSeconds ?? 25,
-        humanTransferE164: forwarded
-          ? undefined
-          : (config.ringFirstE164 ?? config.fallbackTransferE164),
-        ringHumanOnOverflow: !forwarded,
-      };
-      const policy = callerPolicyFor(config, input.fromE164);
-      const routing =
-        policy.kind !== "ai" || input.skipHumanRing
-          ? ({ action: "ai", reason: "forced_ai", strategy: "ai_first" } as const)
-          : decideInboundRouting({ config, phone, now: at });
+      // Shared with the dashboard simulation (telephony/call-routing.ts): a
+      // simulated call is routed by exactly this decision.
+      const { policy, routing } = resolveInboundRouting({
+        config,
+        fromE164: input.fromE164,
+        now: at,
+        skipHumanRing: input.skipHumanRing,
+      });
 
       if (routing.action === "reject") {
         logReceptionistDiagnostic({
@@ -2505,9 +2491,12 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           };
           const step = nextMissingStep(config, next, next.slots);
           const reply = `${phrase("transferFailed", lang, { target: last?.targetName ?? "" })} ${questionForStep(step, lang, next, next.slots)}`;
-          void import("@/product/notifications/hooks").then((mod) =>
-            mod.emitTransferFailed(config.clientAccountId, session.id),
-          );
+          // A practice call (dashboard simulation) never alerts the owner.
+          if (!isPracticeCall(session)) {
+            void import("@/product/notifications/hooks").then((mod) =>
+              mod.emitTransferFailed(config.clientAccountId, session.id),
+            );
+          }
           next = {
             ...next,
             step,
