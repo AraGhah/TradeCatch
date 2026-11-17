@@ -3,7 +3,10 @@ import {
   isProductionRuntime,
 } from "@/lib/config";
 import { getCrmService } from "@/product/crm/runtime";
-import { hasGoogleCalendarPilot } from "./availability";
+import { hasCalcomAccess, hasGoogleCalendarPilot } from "./availability";
+import { createCalcomClient } from "./calcom/client";
+import { openCalcomApiKey } from "./calcom/credentials";
+import { createCalcomPort } from "./calcom/provider";
 import { emitBusinessEvent } from "@/product/notifications/hooks";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 import {
@@ -73,9 +76,46 @@ const disconnected: CalendarPort = {
   },
 };
 
+const disconnectedCalcom: CalendarPort = { ...disconnected, kind: "calcom" };
+
+/**
+ * The Cal.com port for a business, or a disconnected one. Disconnected means
+ * every call fails closed: no times offered, nothing booked, nothing simulated.
+ */
+async function calcomFor(organizationId: string): Promise<CalendarPort> {
+  const store = getSchedulingStore();
+  // Same plan and operator-enrollment rule as Google Calendar.
+  if (!(await hasCalcomAccess(organizationId))) return disconnectedCalcom;
+  const connection = await store.getCalcomConnection(organizationId);
+  if (!connection?.credentialCiphertext || connection.status !== "connected") {
+    return disconnectedCalcom;
+  }
+  const apiKey = openCalcomApiKey(connection.credentialCiphertext);
+  if (!apiKey) return disconnectedCalcom;
+  return createCalcomPort({
+    connection,
+    client: createCalcomClient({ apiKey }),
+    onAuthFailure: async () => {
+      // Cal.com refused the key: stop using it until the contractor reconnects.
+      const current = await store.getCalcomConnection(organizationId);
+      if (!current || current.status !== "connected") return;
+      current.status = "error";
+      current.lastError = "key_rejected";
+      await store.saveCalcomConnection(current);
+      await emitBusinessEvent({
+        organizationId,
+        type: "calendar_disconnected",
+        idempotencyKey: `calendar-disconnected:${organizationId}:${new Date().toISOString().slice(0, 13)}`,
+        href: "/app/settings/calendar",
+      });
+    },
+  });
+}
+
 async function calendarFor(organizationId: string): Promise<CalendarPort> {
   const store = getSchedulingStore();
   const rules = await store.getRules(organizationId);
+  if (rules?.calendarMode === "calcom") return calcomFor(organizationId);
   if (!rules || rules.calendarMode !== "google")
     return createSimulatedCalendar();
   if (!(await hasGoogleCalendarPilot(organizationId))) return disconnected;
@@ -208,4 +248,25 @@ export async function reconcileGoogleBusy(organizationId: string) {
   const blocks = await port.freeBusy(from.toISOString(), until.toISOString());
   await service.syncBusy(organizationId, blocks);
   return { synced: true as const, blocks: blocks.length };
+}
+
+/** Reconciles one business's appointments with its Cal.com bookings. */
+export async function reconcileCalcom(organizationId: string) {
+  return getSchedulingService().reconcileProvider(organizationId);
+}
+
+/** Reconciles every business with a connected Cal.com account (cron tick). */
+export async function reconcileAllCalcom(limit = 25) {
+  const organizations = await getSchedulingStore().listCalcomOrganizations(limit);
+  const results: { organizationId: string; ok: boolean; skipped?: string }[] = [];
+  for (const organizationId of organizations) {
+    try {
+      const summary = await reconcileCalcom(organizationId);
+      results.push({ organizationId, ok: summary.ok, skipped: summary.skipped });
+    } catch {
+      // One business failing must not stop the others.
+      results.push({ organizationId, ok: false, skipped: "error" });
+    }
+  }
+  return results;
 }

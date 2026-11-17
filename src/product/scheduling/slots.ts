@@ -102,6 +102,11 @@ function labelFormatter(timeZone: string): Intl.DateTimeFormat {
   return fmt;
 }
 
+/** "Tue, Nov 17, 2:30 p.m." for an instant, in the business's timezone. */
+export function slotLabel(date: Date, timeZone: string): string {
+  return labelFormatter(usableTimeZone(timeZone)).format(date);
+}
+
 export function overlaps(
   aStart: string,
   aEnd: string,
@@ -111,7 +116,7 @@ export function overlaps(
   return aStart < bEnd && bStart < aEnd;
 }
 
-function activeAppointments(rows: ScheduleAppointment[], now: Date): ScheduleAppointment[] {
+export function activeAppointments(rows: ScheduleAppointment[], now: Date): ScheduleAppointment[] {
   return rows.filter((row) => {
     if (row.status === "canceled" || row.status === "completed") return false;
     if (row.status === "hold") {

@@ -29,6 +29,22 @@ export function googleCalendarPilotAllowed(
   );
 }
 
+/**
+ * Cal.com follows the same rule as Google Calendar: a plan with appointments,
+ * an active non-demo account, and the business's id on the operator's list
+ * (CALCOM_ORG_IDS). Never a customer-editable flag.
+ */
+export function calcomAllowed(
+  org: Parameters<typeof googleCalendarPilotAllowed>[0],
+  enrolled = process.env.CALCOM_ORG_IDS ?? "",
+) {
+  return googleCalendarPilotAllowed(org, enrolled);
+}
+
+export async function hasCalcomAccess(organizationId: string) {
+  return calcomAllowed(await getSaasStore().getOrganization(organizationId));
+}
+
 export async function hasGoogleCalendarPilot(organizationId: string) {
   return googleCalendarPilotAllowed(
     await getSaasStore().getOrganization(organizationId),
