@@ -246,7 +246,10 @@ export function routingPathOf(
   if (method === "carrier_forwarding" && session.routing?.forwardedFrom) {
     return "forwarded_by_carrier";
   }
-  if (session.callSid.startsWith("lk_")) return "ai_answered_livekit_direct";
+  // A voice agent that took the call directly (LiveKit `lk_`, Bland `bl_`).
+  if (session.callSid.startsWith("lk_") || session.callSid.startsWith("bl_")) {
+    return "ai_answered_livekit_direct";
+  }
   if (
     session.transfers.some(
       (t) => t.reason === "human_first" || t.reason === "overflow_ring",
