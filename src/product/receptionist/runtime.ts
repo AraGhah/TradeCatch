@@ -28,6 +28,7 @@ import {
 } from "./agent-appointments";
 import { createPhoneScheduler } from "./phone-booking";
 import { createPostgresReceptionistStore } from "./postgres-store";
+import { getPrivacyStore } from "@/product/privacy/runtime";
 import { loadProfileConfigs } from "./profile-loader";
 import {
   createMemoryProfileStore,
@@ -164,6 +165,12 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
       profiles: state.profileStore,
       getOrganization: (id) => saas.getOrganization(id),
       getClient: (id) => missedCall.getClient(id),
+      getPrivacy: (ids) => getPrivacyStore().getMany(ids),
+      onPrivacyError: (error) =>
+        console.error(
+          "[receptionist] privacy settings unavailable; recording and transcripts off for this reload",
+          error instanceof Error ? error.name : "error",
+        ),
       onSkip: (organizationId, reason) =>
         logReceptionistDiagnostic({
           event: "profile_skipped",

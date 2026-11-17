@@ -308,7 +308,9 @@ export function createSmsReceptionist(deps: SmsReceptionistDeps) {
         return skip("rate_limited");
       }
 
+      // A message whose wording was not kept (privacy settings) says nothing.
       const turns: HistoryTurn[] = earlier
+        .filter((m) => m.body.trim())
         .slice(-PROMPT_HISTORY_LIMIT)
         .map((m) => ({
           role: m.direction === "inbound" ? "customer" : "assistant",

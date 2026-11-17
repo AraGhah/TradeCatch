@@ -301,3 +301,49 @@ describe("confirmed caller details", () => {
     assert.deepEqual(late, { recorded: false, fields: [] });
   });
 });
+
+describe("business privacy setting: call transcripts (Bland and LiveKit)", () => {
+  const TRANSCRIPT = [
+    { speaker: "agent" as const, text: "Nord Plomberie, bonjour." },
+    { speaker: "caller" as const, text: "J'ai une fuite sous l'évier." },
+  ];
+
+  for (const channel of ["bland", "livekit"] as const) {
+    const prefix = channel === "bland" ? "bl_" : "lk_";
+
+    it(`${channel}: transcripts off drops the turns but keeps the summary and outcome`, async () => {
+      const config = { ...makeConfig(), saveCallTranscripts: false };
+      const { service, store } = setup(channel, undefined, config);
+      await service.report(config, {
+        ...base,
+        intent: "service_request",
+        slots: { callerName: "Marie Tremblay", issue: "fuite" },
+        transcript: TRANSCRIPT,
+        endReason: "completed",
+      });
+      const session = (await store.getSessionByCallSid(`${prefix}call-bland-1`))!;
+      assert.ok(session.finalizedAt);
+      assert.deepEqual(session.turns, []);
+      assert.ok(session.transcriptPurgedAt);
+      assert.equal(session.slots.callerName, "Marie Tremblay");
+      assert.ok(session.summary, "the owner's summary is still built");
+    });
+
+    it(`${channel}: transcripts on (and the default) keep the turns`, async () => {
+      for (const over of [{ saveCallTranscripts: true }, {}]) {
+        const config = { ...makeConfig(), ...over };
+        const { service, store } = setup(channel, undefined, config);
+        await service.report(config, {
+          ...base,
+          intent: "service_request",
+          slots: { callerName: "Marie Tremblay", issue: "fuite" },
+          transcript: TRANSCRIPT,
+          endReason: "completed",
+        });
+        const session = (await store.getSessionByCallSid(`${prefix}call-bland-1`))!;
+        assert.equal(session.turns.length, 2, JSON.stringify(over));
+        assert.equal(session.transcriptPurgedAt, undefined);
+      }
+    });
+  }
+});
