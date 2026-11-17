@@ -16,6 +16,7 @@
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import { approvedFactsSection } from "@/product/receptionist/agent-config";
 import { receptionistNameOrDefault } from "@/product/receptionist/persona";
+import { greetingStatement } from "@/product/receptionist/prompts";
 import { formatBusinessHours } from "@/product/receptionist/system-prompt";
 import type { ReceptionistConfig } from "@/product/receptionist/types";
 import { blandOwnLines, getBlandRoutes } from "./routes";
@@ -33,6 +34,13 @@ export type BlandConfigResponse = BlandTransferVariables & {
   timezone: string;
   /** The language to start in. */
   language: "fr" | "en";
+  /**
+   * The exact opening line, in `language`, from the saved greeting (or the
+   * default built from the business and receptionist names). The pathway's
+   * first node should say `{{greeting}}` so the Bland agent and the
+   * dashboard's test show the same words.
+   */
+  greeting: string;
   languages: string;
   after_hours: "true" | "false";
   booking_enabled: "true" | "false";
@@ -88,14 +96,16 @@ export function buildBlandConfig(
     warnings.push("bland_sms_number_conflict");
   }
   const smsAllowed = smsTextingAllowed(config, env);
+  const language: "fr" | "en" = config.languages.includes(config.defaultLanguage)
+    ? config.defaultLanguage
+    : (config.languages[0] ?? "fr");
   return {
     ...variables,
     business_name: config.businessName,
     receptionist_name: receptionistNameOrDefault(config.receptionistName),
     timezone: config.timezone,
-    language: config.languages.includes(config.defaultLanguage)
-      ? config.defaultLanguage
-      : (config.languages[0] ?? "fr"),
+    language,
+    greeting: greetingStatement(config, language),
     languages: config.languages.join(","),
     after_hours: flag(afterHours),
     booking_enabled: flag(config.phoneBooking === true),
