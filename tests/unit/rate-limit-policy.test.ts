@@ -153,6 +153,8 @@ describe("which routes the default limit covers", () => {
       "/api/voice/socket",
       "/api/receptionist/agent/book",
       "/api/receptionist/agent-config",
+      "/api/bland/book",
+      "/api/bland/webhook",
       "/api/health",
     ]) {
       assert.equal(classifyApiRequest("POST", path).kind, "exempt", path);
@@ -164,6 +166,7 @@ describe("which routes the default limit covers", () => {
       "/api/receptionist/agents",
       "/api/receptionist/demo",
       "/api/receptionist/calls",
+      "/api/blandish/book",
       "/api/app/voice/socket",
     ]) {
       assert.equal(classifyApiRequest("POST", path).kind, "limited", path);
@@ -191,6 +194,9 @@ describe("which routes the default limit covers", () => {
       "authorizeGmailPush",
       "authorizeOpsRequest",
       "handleAgentRequest",
+      // Bland: bearer BLAND_TOOL_SECRET (tools) / HMAC signature (webhook).
+      "handleBlandRequest",
+      "handleBlandWebhook",
       "safeEqual",
       "/api/twilio/",
     ];

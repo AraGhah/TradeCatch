@@ -12,6 +12,7 @@ import {
   getSmsInbox,
   processSmsInbox,
 } from "@/product/sms-receptionist/inbox-runtime";
+import { isBlandSmsNumber } from "@/product/bland/sms-guard";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +64,10 @@ export async function POST(request: NextRequest) {
     const org = client
       ? await getSaasStore().findOrganizationByMissedCallClientId(client.id)
       : null;
-    if (client && org?.status === "active") {
+    // A number Bland's agent texts from has another responder: never also
+    // answer it here with an AI reply or a CRM record (see bland/sms-guard.ts).
+    const blandOwned = isBlandSmsNumber(params.To);
+    if (client && org?.status === "active" && !blandOwned) {
       await getSmsInbox().enqueue({
         id,
         organizationId: org.id,
@@ -81,9 +85,10 @@ export async function POST(request: NextRequest) {
         );
       });
     } else if (client) {
-      // A business whose organization is suspended or missing gets no AI reply
-      // and no CRM record, but a customer's STOP and a technician's reply must
-      // still be honored, exactly as before the inbox existed.
+      // A business whose organization is suspended or missing, or whose SMS
+      // number Bland also uses, gets no AI reply and no CRM record, but a
+      // customer's STOP and a technician's reply must still be honored,
+      // exactly as before the inbox existed.
       const mediaCount = Math.min(
         10,
         Math.max(0, Number(params.NumMedia) || 0),
@@ -101,7 +106,9 @@ export async function POST(request: NextRequest) {
       replies = result.replies;
       console.warn(
         JSON.stringify({
-          event: "tradecatch.sms.inactive_organization",
+          event: blandOwned
+            ? "tradecatch.sms.bland_number_conflict"
+            : "tradecatch.sms.inactive_organization",
           messageSid: id,
         }),
       );

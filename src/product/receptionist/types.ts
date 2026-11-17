@@ -444,8 +444,15 @@ export type CallFlags = {
   nameRetries?: number;
 };
 
+/** Caller details a voice agent read back and the caller agreed to. */
+export type ConfirmedField = "callerName" | "callbackE164" | "serviceAddress";
+
 export type CallSession = {
   id: string;
+  /**
+   * Provider call id with a channel prefix: `lk_` (LiveKit agent) or `bl_`
+   * (Bland agent). Twilio webhook calls use the Twilio CallSid.
+   */
   callSid: string;
   configId: string;
   clientAccountId: string;
@@ -458,6 +465,12 @@ export type CallSession = {
   outcome?: CallOutcome;
   afterHours: boolean;
   slots: CallSlots;
+  /**
+   * Slots that were confirmed with the caller (voice agent `save_details`, or
+   * used by a real booking). A later, unconfirmed repeat of the same field
+   * from the agent never replaces them.
+   */
+  confirmedFields?: ConfirmedField[];
   booking?: CallBooking;
   urgency?: UrgencyClassification;
   turns: CallTurn[];

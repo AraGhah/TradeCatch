@@ -1,4 +1,5 @@
 import { zonedParts } from "@/product/sms-automation/window";
+import { addressesMatch } from "./address";
 import type { AvailabilityRules, BusyBlock, ScheduleAppointment, Slot } from "./types";
 
 export function defaultDays(): AvailabilityRules["days"] {
@@ -136,6 +137,11 @@ export function listSlots(input: {
   excludeAppointmentId?: string;
   /** Stop after this many slots (default 48: enough for "what else is free?"). */
   maxSlots?: number;
+  /**
+   * When a provider (Cal.com) decides availability, only these start times
+   * (ISO instants) may be offered, on top of every local rule.
+   */
+  allowedStarts?: ReadonlySet<string>;
 }): Slot[] {
   const rules = input.rules;
   const maxSlots = input.maxSlots ?? 48;
@@ -190,6 +196,9 @@ export function listSlots(input: {
     const close = parseMinutes(hours.close);
     if (minutes < open || minutes + duration > close) continue;
     if (start.getTime() < notice || start.getTime() > horizon) continue;
+    if (input.allowedStarts && !input.allowedStarts.has(start.toISOString())) {
+      continue;
+    }
     const end = start.getTime() + duration * 60_000;
     let blocked = false;
     for (const block of occupied) {
@@ -199,7 +208,7 @@ export function listSlots(input: {
         travel > 0 &&
         input.serviceAddress &&
         block.address &&
-        block.address.trim().toLowerCase() !== input.serviceAddress.trim().toLowerCase()
+        !addressesMatch(block.address, input.serviceAddress)
       ) {
         blockStart -= travel * 60_000;
         blockEnd += travel * 60_000;

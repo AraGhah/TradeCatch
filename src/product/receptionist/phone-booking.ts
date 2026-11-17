@@ -171,6 +171,13 @@ export function createPhoneScheduler(
           return { ok: false, reason: "not_bookable" };
         }
       }
+      if (rules.calendarMode === "calcom") {
+        // Same rule as Google: no times are read out when the real calendar
+        // cannot confirm them.
+        if (!(await scheduling.calendarReady(organizationId))) {
+          return { ok: false, reason: "not_bookable" };
+        }
+      }
       const { slots } = await scheduling.availability({
         organizationId,
         serviceId: service?.id,
