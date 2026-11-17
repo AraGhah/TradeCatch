@@ -84,6 +84,7 @@ Do **not** enable Bland's native `cal-com-v2` or `bland-sms` tools on this agent
     "receptionist_name": "$.config.receptionist_name",
     "timezone": "$.config.timezone",
     "language": "$.config.language",
+    "greeting": "$.config.greeting",
     "after_hours": "$.config.after_hours",
     "booking_enabled": "$.config.booking_enabled",
     "sms_text_enabled": "$.config.sms_text_enabled",
@@ -100,6 +101,8 @@ Do **not** enable Bland's native `cal-com-v2` or `bland-sms` tools on this agent
 ```
 
 Every value is a string (`"true"` / `"false"`, an empty string for an unusable number), so a pathway that forgets to branch still fails safe.
+
+**`greeting` is the opening line, in `language`, from the business's saved greeting** (or the default built from the business and receptionist names, for example "Bonjour, ici Sophie de testTradeCatch."). Make the pathway's first node say `{{greeting}}` instead of a hard-coded sentence. The dashboard's live-phone test and the Twilio webhook read the same saved greeting, so all three say the same words and a change in Receptionist settings reaches the Bland agent without editing the pathway. A pathway that still hard-codes its greeting can drift from the saved one; the dashboard cannot see the pathway's text, so compare it by calling the line.
 
 ### 2. `check_availability`
 
