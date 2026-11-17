@@ -1,0 +1,13 @@
+{
+  "id": "P020",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "Two thousand dollars just to set it up, before I've seen it catch a single job, is a lot to put down for something my customers might hang up on. I've always called people back when I come down off the ladder, and most of them wait for me.",
+  "objection": "Paying 1,999.99 $ up front plus 249 $ every month without knowing whether my regular customers will actually talk to a machine instead of hanging up and calling the next guy.",
+  "would_change_my_mind": "Dropping or splitting the setup fee, or a trial month where I can see how many calls it actually caught that I would have missed.",
+  "price_too_cheap": 50,
+  "price_cheap": 120,
+  "price_expensive": 250,
+  "price_too_expensive": 400
+}

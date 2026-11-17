@@ -1,0 +1,13 @@
+{
+  "id": "P013",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "Losing that $9,000 kitchen job stung, and 249 $ a month is nothing next to one job. But I'm not handing my business line and my customers' addresses to a one-man setup I've never heard of, and paying 2,000 $ up front, when nothing here says where the call data goes or who can see it.",
+  "objection": "Is my customers' data private and kept in Québec under Law 25, and what happens to my line if this founder gets sick or disappears? On top of that, the job I lost was a quote that sat unanswered, so I'm not sure a phone receptionist would even have caught it, and it only works with Google Calendar.",
+  "would_change_my_mind": "Calling the demo line in French and English and having it sound like a real Montréal receptionist in both, plus a written privacy policy saying where the data is stored, and two or three local trade owners I can call who have used it for months.",
+  "price_too_cheap": 60,
+  "price_cheap": 150,
+  "price_expensive": 350,
+  "price_too_expensive": 600
+}

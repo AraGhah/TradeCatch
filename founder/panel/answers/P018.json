@@ -1,0 +1,13 @@
+{
+  "id": "P018",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I'm afraid of losing customers to wrong answers, and I'd be handing my business line to a machine I've never heard on a real call. Close to $2,000 upfront plus $249 a month is a lot to commit to when my agenda is still on paper and I haven't even replied to my 23 Google reviews.",
+  "objection": "What if it gets an address wrong or tells a customer something that isn't true, and I only find out when they show up angry or never come? I'd lose that customer and I wouldn't even know it happened.",
+  "would_change_my_mind": "Hearing a recorded test call that sounds like my own kind of job, with the name, address and urgency taken down correctly, plus a reference call with another owner in my trade who has run it for a couple of months and says it never got an address wrong.",
+  "price_too_cheap": 40,
+  "price_cheap": 100,
+  "price_expensive": 250,
+  "price_too_expensive": 450
+}

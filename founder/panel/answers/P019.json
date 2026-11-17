@@ -1,0 +1,13 @@
+{
+  "id": "P019",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "convenience",
+  "reason": "I'm under a sink or on a roof half the day and every call I miss is a job that goes to the next guy. He sets it all up with me and I hear the test calls before it goes live, so I don't have to touch any software, and if it doesn't catch 10 calls I get the setup back.",
+  "objection": "I'm scared it tells somebody the wrong thing or books them wrong and I lose the customer, and he's one guy with no plumber live on it yet to call. Two grand up front is real money even with the guarantee.",
+  "would_change_my_mind": "If my own call log shows only a handful of missed calls, or if the French test call sounds like a robot or gets the no-heat call wrong, I walk away.",
+  "price_too_cheap": 59,
+  "price_cheap": 150,
+  "price_expensive": 400,
+  "price_too_expensive": 600
+}

@@ -1,0 +1,13 @@
+{
+  "id": "P017",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "Two grand up front before it answers a single call, then 249 a month, is a lot for a one-man shop that already calls people back on breaks. I'd try the demo line, but I wouldn't sign this week.",
+  "objection": "Paying almost $2,000 setup and still not knowing if a robot taking messages will lose me the customer anyway, because it can't put an urgent call through to me and people in a panic don't want a text back.",
+  "would_change_my_mind": "Drop or refund the setup fee if it doesn't bring me at least a couple of jobs in the first 60 days, so I'm only risking the monthly.",
+  "price_too_cheap": 40,
+  "price_cheap": 99,
+  "price_expensive": 199,
+  "price_too_expensive": 300
+}

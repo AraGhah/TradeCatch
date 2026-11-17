@@ -1,0 +1,13 @@
+{
+  "id": "P014",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "habit",
+  "reason": "Everything I book already lives in my scheduling/CRM tool, and this one books into Google Calendar instead. So I'd be keying jobs in twice, and double entry is exactly how I end up with a missed appointment. I'd take the free demo, but I'm not paying $2,000 upfront off a first look.",
+  "objection": "It doesn't plug into my CRM. If it books into a separate calendar and I forget to copy it over, I've created the missed-appointment problem I'm trying to fix. And I'm still worried it gives a customer a wrong answer under my company name.",
+  "would_change_my_mind": "If it sent every captured call straight into my CRM, or I could keep my CRM as the master and only get clean text summaries to copy over in 10 seconds. A reference call with another contractor who uses the same CRM would help too.",
+  "price_too_cheap": 40,
+  "price_cheap": 99,
+  "price_expensive": 300,
+  "price_too_expensive": 500
+}

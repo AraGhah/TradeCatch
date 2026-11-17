@@ -1,0 +1,13 @@
+{
+  "id": "P020",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "price",
+  "reason": "Two thousand dollars up front plus $249 a month is a lot to put down on something I have never heard talk to my customers. I miss calls, yes, but I call them back when I get a minute and most of them wait.",
+  "objection": "$1,999.99 before I know if my customers will even talk to a machine. The guarantee only gives the setup back, so I would still have burned two months of $249 and the time to set it up with him.",
+  "would_change_my_mind": "A setup fee of $500 or less, or no setup and just the monthly, so I can try it for a couple of months and walk away if it does nothing.",
+  "price_too_cheap": 39,
+  "price_cheap": 99,
+  "price_expensive": 199,
+  "price_too_expensive": 300
+}

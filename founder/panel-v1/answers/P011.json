@@ -1,0 +1,13 @@
+{
+  "id": "P011",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "need",
+  "reason": "I lost a $9,000 kitchen last month because nobody got back to the caller. If this saves one job like that a year, the setup and the monthly fee pay for themselves, so I'd sign up for Essential after I call the demo line and it sounds like a real person in proper Québec French.",
+  "objection": "How long until it's actually live? All that mapping, writing messages and testing with my guys sounds like weeks of my evenings, and I'm paying $2,000 before it answers a single call. It also won't put an urgent caller through to me, so I'm still the one chasing them back.",
+  "would_change_my_mind": "If the founder can't promise it's answering my line within a week or two, or if the demo call sounds robotic or the French is off, I don't buy.",
+  "price_too_cheap": 50,
+  "price_cheap": 150,
+  "price_expensive": 400,
+  "price_too_expensive": 650
+}

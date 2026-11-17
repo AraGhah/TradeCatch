@@ -1,0 +1,222 @@
+[
+ {
+  "id": "P001",
+  "name": "Omar",
+  "age": 25,
+  "segment": "Growing business, 6 to 10 employees (business revenue)",
+  "income": 2073000,
+  "behaviour": "Personal phone, voicemail or an employee answers",
+  "behaviour_how": "Relies on a personal cell, voicemail, or whichever employee is free to pick up.",
+  "objection": "Will the receptionist sound natural and understand my customers?",
+  "habit": "winter is your busy season and you lose track of callbacks"
+ },
+ {
+  "id": "P002",
+  "name": "Raj",
+  "age": 43,
+  "segment": "Growing business, 6 to 10 employees (business revenue)",
+  "income": 1207000,
+  "behaviour": "Bilingual service matters",
+  "behaviour_how": "Serves customers in both French and English and judges any service on how it sounds in both.",
+  "objection": "I want proof: a demonstration, testimonials or real results.",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P003",
+  "name": "Emil",
+  "age": 45,
+  "segment": "Small service business, 2 to 5 employees (business revenue)",
+  "income": 1160000,
+  "behaviour": "Manages appointments by hand",
+  "behaviour_how": "Keeps appointments in a paper agenda, a notebook or text messages.",
+  "objection": "1 999,99 $ for setup is expensive.",
+  "habit": "you lost a $9,000 kitchen job last month because the quote sat unanswered"
+ },
+ {
+  "id": "P004",
+  "name": "Owen",
+  "age": 60,
+  "segment": "Renovation, roofing or landscaping business (business revenue)",
+  "income": 475000,
+  "behaviour": "Personal phone, voicemail or an employee answers",
+  "behaviour_how": "Relies on a personal cell, voicemail, or whichever employee is free to pick up.",
+  "objection": "I want proof: a demonstration, testimonials or real results.",
+  "habit": "you speak French on the job and English with half your Laval customers"
+ },
+ {
+  "id": "P005",
+  "name": "Sana",
+  "age": 31,
+  "segment": "Solo contractor (plumber, electrician or HVAC), business revenue",
+  "income": 231000,
+  "behaviour": "Misses calls on the job",
+  "behaviour_how": "Frequently misses calls while working on job sites or serving customers; calls back when there is a minute.",
+  "objection": "I want proof: a demonstration, testimonials or real results.",
+  "habit": "you are up a ladder or under a sink when the phone rings"
+ },
+ {
+  "id": "P006",
+  "name": "Maya",
+  "age": 37,
+  "segment": "Solo contractor (plumber, electrician or HVAC), business revenue",
+  "income": 135000,
+  "behaviour": "Personal phone, voicemail or an employee answers",
+  "behaviour_how": "Relies on a personal cell, voicemail, or whichever employee is free to pick up.",
+  "objection": "I'm afraid of losing customers to wrong answers or missed appointments.",
+  "habit": "you lost a $9,000 kitchen job last month because the quote sat unanswered"
+ },
+ {
+  "id": "P007",
+  "name": "Selin",
+  "age": 35,
+  "segment": "Renovation, roofing or landscaping business (business revenue)",
+  "income": 277000,
+  "behaviour": "Wants it simple",
+  "behaviour_how": "Prefers solutions that need minimal technical knowledge; will not configure software alone.",
+  "objection": "1 999,99 $ for setup is expensive.",
+  "habit": "you quote three jobs a week and chase maybe one"
+ },
+ {
+  "id": "P008",
+  "name": "Ruby",
+  "age": 25,
+  "segment": "Solo contractor (plumber, electrician or HVAC), business revenue",
+  "income": 250000,
+  "behaviour": "Uses scheduling or CRM software",
+  "behaviour_how": "Already runs appointments in a scheduling or CRM tool and expects anything new to fit with it.",
+  "objection": "249 to 349 $ a month needs a clear return on investment.",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P009",
+  "name": "Nora",
+  "age": 26,
+  "segment": "Small service business, 2 to 5 employees (business revenue)",
+  "income": 410000,
+  "behaviour": "Personal phone, voicemail or an employee answers",
+  "behaviour_how": "Relies on a personal cell, voicemail, or whichever employee is free to pick up.",
+  "objection": "I'm afraid of losing customers to wrong answers or missed appointments.",
+  "habit": "you speak French on the job and English with half your Laval customers"
+ },
+ {
+  "id": "P010",
+  "name": "Fatima",
+  "age": 34,
+  "segment": "Solo contractor (plumber, electrician or HVAC), business revenue",
+  "income": 266000,
+  "behaviour": "Uses scheduling or CRM software",
+  "behaviour_how": "Already runs appointments in a scheduling or CRM tool and expects anything new to fit with it.",
+  "objection": "Can I keep my existing business phone number?",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P011",
+  "name": "Tariq",
+  "age": 55,
+  "segment": "Small service business, 2 to 5 employees (business revenue)",
+  "income": 454000,
+  "behaviour": "Misses calls on the job",
+  "behaviour_how": "Frequently misses calls while working on job sites or serving customers; calls back when there is a minute.",
+  "objection": "How quickly can it be up and running?",
+  "habit": "you lost a $9,000 kitchen job last month because the quote sat unanswered"
+ },
+ {
+  "id": "P012",
+  "name": "Felix",
+  "age": 55,
+  "segment": "Solo contractor (plumber, electrician or HVAC), business revenue",
+  "income": 231000,
+  "behaviour": "Personal phone, voicemail or an employee answers",
+  "behaviour_how": "Relies on a personal cell, voicemail, or whichever employee is free to pick up.",
+  "objection": "249 to 349 $ a month needs a clear return on investment.",
+  "habit": "you check your phone at lunch and again at 6 p.m."
+ },
+ {
+  "id": "P013",
+  "name": "Zoe",
+  "age": 31,
+  "segment": "Growing business, 6 to 10 employees (business revenue)",
+  "income": 2549000,
+  "behaviour": "Bilingual service matters",
+  "behaviour_how": "Serves customers in both French and English and judges any service on how it sounds in both.",
+  "objection": "Is it reliable, is my data private, and does it work with the tools I already use?",
+  "habit": "you lost a $9,000 kitchen job last month because the quote sat unanswered"
+ },
+ {
+  "id": "P014",
+  "name": "Dev",
+  "age": 35,
+  "segment": "Small service business, 2 to 5 employees (business revenue)",
+  "income": 789000,
+  "behaviour": "Uses scheduling or CRM software",
+  "behaviour_how": "Already runs appointments in a scheduling or CRM tool and expects anything new to fit with it.",
+  "objection": "I'm afraid of losing customers to wrong answers or missed appointments.",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P015",
+  "name": "Yusuf",
+  "age": 34,
+  "segment": "Small service business, 2 to 5 employees (business revenue)",
+  "income": 937000,
+  "behaviour": "Manages appointments by hand",
+  "behaviour_how": "Keeps appointments in a paper agenda, a notebook or text messages.",
+  "objection": "1 999,99 $ for setup is expensive.",
+  "habit": "winter is your busy season and you lose track of callbacks"
+ },
+ {
+  "id": "P016",
+  "name": "Theo",
+  "age": 30,
+  "segment": "Solo contractor (plumber, electrician or HVAC), business revenue",
+  "income": 280000,
+  "behaviour": "Misses calls on the job",
+  "behaviour_how": "Frequently misses calls while working on job sites or serving customers; calls back when there is a minute.",
+  "objection": "Is it reliable, is my data private, and does it work with the tools I already use?",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P017",
+  "name": "Alma",
+  "age": 35,
+  "segment": "Solo contractor (plumber, electrician or HVAC), business revenue",
+  "income": 202000,
+  "behaviour": "Misses calls on the job",
+  "behaviour_how": "Frequently misses calls while working on job sites or serving customers; calls back when there is a minute.",
+  "objection": "I'm afraid of losing customers to wrong answers or missed appointments.",
+  "habit": "you do your invoicing on Sunday night"
+ },
+ {
+  "id": "P018",
+  "name": "Freya",
+  "age": 39,
+  "segment": "Small service business, 2 to 5 employees (business revenue)",
+  "income": 871000,
+  "behaviour": "Manages appointments by hand",
+  "behaviour_how": "Keeps appointments in a paper agenda, a notebook or text messages.",
+  "objection": "I'm afraid of losing customers to wrong answers or missed appointments.",
+  "habit": "your Google listing has 23 reviews and you have replied to none"
+ },
+ {
+  "id": "P019",
+  "name": "Harper",
+  "age": 50,
+  "segment": "Solo contractor (plumber, electrician or HVAC), business revenue",
+  "income": 290000,
+  "behaviour": "Wants it simple",
+  "behaviour_how": "Prefers solutions that need minimal technical knowledge; will not configure software alone.",
+  "objection": "I'm afraid of losing customers to wrong answers or missed appointments.",
+  "habit": "your Google listing has 23 reviews and you have replied to none"
+ },
+ {
+  "id": "P020",
+  "name": "Emma",
+  "age": 58,
+  "segment": "Small service business, 2 to 5 employees (business revenue)",
+  "income": 769000,
+  "behaviour": "Misses calls on the job",
+  "behaviour_how": "Frequently misses calls while working on job sites or serving customers; calls back when there is a minute.",
+  "objection": "1 999,99 $ for setup is expensive.",
+  "habit": "you are up a ladder or under a sink when the phone rings"
+ }
+]

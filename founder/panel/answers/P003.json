@@ -1,0 +1,13 @@
+{
+  "id": "P003",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "need",
+  "reason": "I lost a $9,000 kitchen job last month because a quote sat unanswered, so one saved job pays for the setup and a good part of the year. The free demo costs me nothing and he walks away if my missed calls are too few, so I would sit down with him and sign on the Essential plan if the count is there.",
+  "objection": "$1,999.99 up front is a lot for something I can't touch yet, and the refund only needs 10 caller requests I didn't pick up, not 10 real jobs. I could still pay for a pile of tire-kickers and wrong numbers and not get that money back.",
+  "would_change_my_mind": "If the demo shows I only miss a few calls a month, I'm out. A low missed-call count means it won't pay for itself.",
+  "price_too_cheap": 39,
+  "price_cheap": 99,
+  "price_expensive": 325,
+  "price_too_expensive": 500
+}

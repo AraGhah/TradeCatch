@@ -1,0 +1,13 @@
+{
+  "id": "P010",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "convenience",
+  "reason": "Missed calls on a job do cost me work, and I'm glad I keep my number. But my appointments already live in my scheduling/CRM tool, and this only texts me or books into Google Calendar, so I'd end up retyping every lead on Sunday night. That's a second system, and I'd be paying $2,000 up front just to get it.",
+  "objection": "It doesn't plug into the software I already run my jobs in, and $1,999.99 before I've seen a single lead is a lot for a one-person shop when there's no live transfer on urgent calls.",
+  "would_change_my_mind": "If it pushed the caller's details and bookings straight into my existing scheduling/CRM tool, with the setup fee cut or credited back after a trial month where I see it catch real jobs.",
+  "price_too_cheap": 40,
+  "price_cheap": 99,
+  "price_expensive": 249,
+  "price_too_expensive": 400
+}

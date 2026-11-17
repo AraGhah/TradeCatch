@@ -1,0 +1,13 @@
+{
+  "id": "P005",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "trust",
+  "reason": "I miss calls all the time, so I get the problem, and the demo-first, refund-if-it-doesn't-work setup is better than most. But I'd be one of the first five clients with nobody to show me it works in real Montréal French on a real job, and $2,000 up front plus $249 a month is real money for me. I'd call the demo line and probably book the free call-log count, but I wouldn't pay anything today.",
+  "objection": "Nobody has it running yet that I can talk to. The reference calls come from the people who sign after me, so I'm the guinea pig. And the guarantee only refunds the setup after 60 days, counts 'caller requests' (which could be spam or wrong numbers, not jobs), and I'd still have paid 2 months of $249.",
+  "would_change_my_mind": "Calling the demo line and hearing it handle a stressed no-heat caller in Québec French without sounding like a robot, then the founder counting my own call log and showing me enough missed jobs that one recovered call a month clearly covers the $249.",
+  "price_too_cheap": 50,
+  "price_cheap": 120,
+  "price_expensive": 300,
+  "price_too_expensive": 450
+}

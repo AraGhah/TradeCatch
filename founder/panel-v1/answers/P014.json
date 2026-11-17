@@ -1,0 +1,13 @@
+{
+  "id": "P014",
+  "buys": false,
+  "purchases_first_month": 0,
+  "reason_code": "convenience",
+  "reason": "My appointments already live in my scheduling/CRM tool, and this only books into Google Calendar, so I'd be running two systems and reconciling them on Sunday night. Two grand up front before I know it fits how we work is too much to commit to off a first look.",
+  "objection": "If it books a slot my CRM doesn't know about, or tells a customer something wrong, I lose that customer, and I don't find out until they've gone to someone else.",
+  "would_change_my_mind": "A direct sync with the scheduling/CRM tool I already use, plus a trial where I can listen to real recordings of how it handled my calls before I pay the full setup fee.",
+  "price_too_cheap": 60,
+  "price_cheap": 150,
+  "price_expensive": 350,
+  "price_too_expensive": 550
+}

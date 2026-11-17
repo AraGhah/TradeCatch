@@ -1,0 +1,13 @@
+{
+  "id": "P011",
+  "buys": true,
+  "purchases_first_month": 1,
+  "reason_code": "need",
+  "reason": "I lost a $9,000 kitchen job last month because a quote sat unanswered, and $249 a month is small next to one job like that. The free demo and the refund make it cheap to find out, so I'd sit through the call log count and sign if the numbers are there.",
+  "objection": "Nobody says how fast it's actually live. I'm on a job site all day, and if setup means weeks of meetings with me and my guys, it isn't answering my phone when I need it. The refund also only needs 10 requests, which doesn't prove it gets me any jobs.",
+  "would_change_my_mind": "If the test call sounds like a machine and I'd hang up on it myself, I'm out.",
+  "price_too_cheap": 79,
+  "price_cheap": 150,
+  "price_expensive": 350,
+  "price_too_expensive": 600
+}
