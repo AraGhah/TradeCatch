@@ -1,9 +1,14 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { CustomerRecordCard, type RecordPriority } from "./CustomerRecordCard";
+import { isWithheldCaller } from "@/lib/phone";
 import { cleanProblemText, formatPhoneDisplay } from "@/product/crm/record-quality";
+import {
+  formatCallDuration,
+  formatCallTime,
+} from "@/product/receptionist/call-format";
 
 type CallRow = {
   id: string;
@@ -12,6 +17,8 @@ type CallRow = {
   fromE164: string;
   language: string;
   status: string;
+  /** In progress, completed, missed, not answered, failed (see callState). */
+  state?: string;
   outcome?: string;
   urgency?: string;
   summary?: {
@@ -129,7 +136,11 @@ export function ReceptionistCallHistory({
 }) {
   const t = useTranslations("app.receptionist.history");
   const tr = useTranslations("app.record");
+  const tc = useTranslations("app.calls");
+  const lang = useLocale() === "fr" ? "fr" : "en";
   const [calls, setCalls] = useState<CallRow[]>([]);
+  // Calls are stored in UTC and shown in the business's own time zone.
+  const [timeZone, setTimeZone] = useState("America/Toronto");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -143,13 +154,17 @@ export function ReceptionistCallHistory({
         );
         const data = (await res.json().catch(() => null)) as {
           calls?: CallRow[];
+          timezone?: string;
           error?: string;
         } | null;
         if (!res.ok) {
           if (!cancelled) setError(data?.error || t("error"));
           return;
         }
-        if (!cancelled) setCalls(data?.calls ?? []);
+        if (!cancelled) {
+          if (data?.timezone) setTimeZone(data.timezone);
+          setCalls(data?.calls ?? []);
+        }
       } catch {
         if (!cancelled) setError(t("error"));
       } finally {
@@ -203,10 +218,14 @@ export function ReceptionistCallHistory({
             : c.appointment?.label || preferred
               ? tr("requested", { time: c.appointment?.label || preferred! })
               : tr("notScheduled");
-        const minutes = c.durationSeconds != null ? Math.floor(c.durationSeconds / 60) : null;
+        const duration = formatCallDuration(c.durationSeconds);
+        const hasNumber = Boolean(phone) && !isWithheldCaller(phone);
         const meta = [
-          new Date(c.startedAt).toLocaleString(),
-          minutes != null ? `${t("duration")}: ${minutes}m ${c.durationSeconds! % 60}s` : "",
+          formatCallTime(c.startedAt, timeZone, lang),
+          // A handled call reads as its outcome in the card; any other state
+          // (missed, not answered, failed, ...) is named here.
+          c.state && c.state !== "completed" ? tc(`state.${c.state}`) : "",
+          duration ? `${t("duration")}: ${duration}` : "",
           c.simulated ? t("simulated") : "",
         ]
           .filter(Boolean)
@@ -220,13 +239,9 @@ export function ReceptionistCallHistory({
               name={
                 slots.callerName ||
                 c.summary?.callerName ||
-                (phone && phone !== "anonymous"
-                  ? formatPhoneDisplay(phone)
-                  : tr("unknownCaller"))
+                (hasNumber ? formatPhoneDisplay(phone) : tr("unknownCaller"))
               }
-              phone={
-                phone && phone !== "anonymous" ? formatPhoneDisplay(phone) : undefined
-              }
+              phone={hasNumber ? formatPhoneDisplay(phone) : undefined}
               service={slots.service ?? slots.project}
               problem={problem || undefined}
               address={slots.serviceAddress ?? slots.location}

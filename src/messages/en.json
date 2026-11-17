@@ -1771,6 +1771,19 @@
       "entitlement": "Call answering is not available on your plan.",
       "notConfigured": "The Receptionist is not configured for your number yet. Ask the founder to enable it.",
       "inProgress": "In progress",
+      "loadError": "Your calls could not be loaded. They are not lost. Refresh the page to try again.",
+      "partialError": "Some of your calls could not be loaded, so this list may be incomplete. They are not lost. Refresh the page to try again.",
+      "unknownCaller": "Unknown number",
+      "calledNumber": "Called",
+      "duration": "Duration",
+      "state": {
+        "in_progress": "In progress",
+        "completed": "Completed",
+        "missed": "Missed",
+        "unanswered": "Not answered",
+        "failed": "Failed",
+        "unreported": "Handled by the voice agent (summary not received)"
+      },
       "afterHours": "after hours",
       "callback": "Callback",
       "address": "Address",
@@ -1782,7 +1795,7 @@
       "purged": "Transcript purged (retention policy).",
       "knownContact": "Known contact",
       "stats": {
-        "total": "Calls answered",
+        "total": "Calls",
         "afterHours": "After hours",
         "emergencies": "Emergencies",
         "requests": "Messages and appointment requests"

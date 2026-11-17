@@ -1771,6 +1771,19 @@
       "entitlement": "La réponse aux appels n'est pas disponible avec votre forfait.",
       "notConfigured": "La réceptionniste n'est pas encore configurée pour votre numéro. Demandez au fondateur de l'activer.",
       "inProgress": "En cours",
+      "loadError": "Vos appels n'ont pas pu être chargés. Ils ne sont pas perdus. Actualisez la page pour réessayer.",
+      "partialError": "Certains de vos appels n'ont pas pu être chargés, la liste peut donc être incomplète. Ils ne sont pas perdus. Actualisez la page pour réessayer.",
+      "unknownCaller": "Numéro inconnu",
+      "calledNumber": "Appelé",
+      "duration": "Durée",
+      "state": {
+        "in_progress": "En cours",
+        "completed": "Terminé",
+        "missed": "Manqué",
+        "unanswered": "Sans réponse",
+        "failed": "Échec",
+        "unreported": "Pris en charge par l'agent vocal (résumé non reçu)"
+      },
       "afterHours": "hors des heures",
       "callback": "Rappel",
       "address": "Adresse",
@@ -1782,7 +1795,7 @@
       "purged": "Transcription purgée (politique de rétention).",
       "knownContact": "Contact connu",
       "stats": {
-        "total": "Appels répondus",
+        "total": "Appels",
         "afterHours": "Hors des heures",
         "emergencies": "Urgences",
         "requests": "Messages et demandes de rendez-vous"
