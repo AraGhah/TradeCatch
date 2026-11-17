@@ -3,6 +3,10 @@ import type { Pool } from "pg";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import type { SchedulingStore, StoredConnection } from "./store";
 import type {
+  CalcomEventTypeMapping,
+  StoredCalcomConnection,
+} from "./calcom/types";
+import type {
   AvailabilityRules,
   BusyBlock,
   ScheduleAppointment,
@@ -482,6 +486,66 @@ export function createPostgresSchedulingStore(
         endAt: new Date(String(row.end_at)).toISOString(),
         externalId: row.external_id ? String(row.external_id) : undefined,
       }));
+    },
+    async getCalcomConnection(organizationId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_calcom_connections WHERE organization_id = $1`,
+        [organizationId],
+      );
+      const row = res.rows[0];
+      if (!row) return null;
+      return {
+        organizationId,
+        status: row.status,
+        credentialCiphertext: row.credential_ciphertext ?? undefined,
+        accountLabel: row.account_label ?? undefined,
+        eventTypes: (row.event_types_json ?? []) as CalcomEventTypeMapping[],
+        fallbackAttendeeEmail: row.fallback_attendee_email ?? undefined,
+        language: row.language === "fr" ? "fr" : "en",
+        lastError: row.last_error ?? undefined,
+        updatedAt: new Date(String(row.updated_at)).toISOString(),
+      } satisfies StoredCalcomConnection;
+    },
+    async saveCalcomConnection(row) {
+      await pool.query(
+        `INSERT INTO tc_calcom_connections (
+          organization_id, status, credential_ciphertext, account_label,
+          event_types_json, fallback_attendee_email, language, last_error, updated_at
+        ) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,now())
+        ON CONFLICT (organization_id) DO UPDATE SET
+          status = EXCLUDED.status,
+          credential_ciphertext = COALESCE(EXCLUDED.credential_ciphertext, tc_calcom_connections.credential_ciphertext),
+          account_label = EXCLUDED.account_label,
+          event_types_json = EXCLUDED.event_types_json,
+          fallback_attendee_email = EXCLUDED.fallback_attendee_email,
+          language = EXCLUDED.language,
+          last_error = EXCLUDED.last_error,
+          updated_at = now()`,
+        [
+          row.organizationId,
+          row.status,
+          row.credentialCiphertext ?? null,
+          row.accountLabel ?? null,
+          JSON.stringify(row.eventTypes),
+          row.fallbackAttendeeEmail ?? null,
+          row.language,
+          row.lastError ?? null,
+        ],
+      );
+    },
+    async deleteCalcomConnection(organizationId) {
+      await pool.query(
+        `DELETE FROM tc_calcom_connections WHERE organization_id = $1`,
+        [organizationId],
+      );
+    },
+    async listCalcomOrganizations(limit) {
+      const res = await pool.query(
+        `SELECT organization_id FROM tc_calcom_connections
+         WHERE status = 'connected' ORDER BY updated_at, organization_id LIMIT $1`,
+        [limit],
+      );
+      return res.rows.map((row) => String(row.organization_id));
     },
   };
 }

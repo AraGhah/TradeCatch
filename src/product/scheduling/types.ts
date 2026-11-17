@@ -4,7 +4,7 @@ export type BookingMode =
 export type AppointmentStatus =
   "hold" | "pending" | "confirmed" | "completed" | "canceled";
 
-export type CalendarMode = "simulated" | "google" | "internal";
+export type CalendarMode = "simulated" | "google" | "internal" | "calcom";
 
 export type CalendarStatus =
   "connected" | "disconnected" | "expired" | "error" | "simulated";
@@ -78,7 +78,7 @@ export type ScheduleAppointment = {
 export type BusyBlock = { startAt: string; endAt: string; externalId?: string };
 
 export type CalendarConnectionPublic = {
-  provider: "google";
+  provider: "google" | "calcom";
   status: CalendarStatus;
   calendarId?: string;
   calendarSummary?: string;

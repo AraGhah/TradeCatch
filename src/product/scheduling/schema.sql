@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS tc_availability_rules (
   max_daily_bookings INT,
   holidays_json JSONB NOT NULL DEFAULT '[]'::jsonb,
   calendar_mode TEXT NOT NULL DEFAULT 'simulated'
-    CHECK (calendar_mode IN ('simulated', 'google', 'internal')),
+    CHECK (calendar_mode IN ('simulated', 'google', 'internal', 'calcom')),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -134,4 +134,45 @@ CREATE INDEX IF NOT EXISTS tc_schedule_pending_confirmations
 
 INSERT INTO mc_schema_migrations (id)
 VALUES ('060_scheduling_confirmation_recovery')
+ON CONFLICT (id) DO NOTHING;
+
+-- Cal.com (API v2) as an optional real scheduling provider. The API key is
+-- stored sealed (AES-256-GCM under AUTH_SECRET); it never leaves the server.
+-- event_types_json maps TradeCatch services / specialists to Cal.com event types.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'tc_availability_rules_calendar_mode_check'
+  ) THEN
+    ALTER TABLE tc_availability_rules
+      DROP CONSTRAINT tc_availability_rules_calendar_mode_check;
+  END IF;
+  ALTER TABLE tc_availability_rules
+    ADD CONSTRAINT tc_availability_rules_calendar_mode_check
+    CHECK (calendar_mode IN ('simulated', 'google', 'internal', 'calcom'));
+END $$;
+
+CREATE TABLE IF NOT EXISTS tc_calcom_connections (
+  organization_id TEXT PRIMARY KEY REFERENCES tc_organizations (id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'disconnected'
+    CHECK (status IN ('connected', 'error', 'disconnected')),
+  credential_ciphertext TEXT,
+  account_label TEXT,
+  event_types_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  fallback_attendee_email TEXT,
+  language TEXT NOT NULL DEFAULT 'en' CHECK (language IN ('fr', 'en')),
+  last_error TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- A Cal.com booking (stored as 'calcom:<uid>') belongs to exactly one live
+-- TradeCatch appointment. Scoped to that prefix so it cannot clash with ids
+-- from other providers.
+CREATE UNIQUE INDEX IF NOT EXISTS tc_schedule_calendar_event_unique
+  ON tc_schedule_appointments (organization_id, calendar_event_id)
+  WHERE calendar_event_id LIKE 'calcom:%' AND status <> 'canceled';
+
+INSERT INTO mc_schema_migrations (id)
+VALUES ('061_calcom_provider')
 ON CONFLICT (id) DO NOTHING;

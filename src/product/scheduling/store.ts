@@ -8,6 +8,7 @@ import type {
   Technician,
 } from "./types";
 import { overlaps } from "./slots";
+import type { StoredCalcomConnection } from "./calcom/types";
 
 export type StoredConnection = CalendarConnectionPublic & {
   organizationId: string;
@@ -65,6 +66,13 @@ export type SchedulingStore = {
   saveConnection(row: StoredConnection): Promise<void>;
   replaceBusy(organizationId: string, blocks: BusyBlock[]): Promise<void>;
   listBusy(organizationId: string): Promise<BusyBlock[]>;
+  getCalcomConnection(
+    organizationId: string,
+  ): Promise<StoredCalcomConnection | null>;
+  saveCalcomConnection(row: StoredCalcomConnection): Promise<void>;
+  deleteCalcomConnection(organizationId: string): Promise<void>;
+  /** Businesses with a connected Cal.com account, for the reconcile tick. */
+  listCalcomOrganizations(limit: number): Promise<string[]>;
 };
 
 const locks = new Map<string, Promise<void>>();
@@ -111,8 +119,25 @@ export function createMemorySchedulingStore(): SchedulingStore {
   }[] = [];
   const connections = new Map<string, StoredConnection>();
   const busy = new Map<string, BusyBlock[]>();
+  const calcom = new Map<string, StoredCalcomConnection>();
 
   return {
+    async getCalcomConnection(organizationId) {
+      const row = calcom.get(organizationId);
+      return row ? structuredClone(row) : null;
+    },
+    async saveCalcomConnection(row) {
+      calcom.set(row.organizationId, structuredClone(row));
+    },
+    async deleteCalcomConnection(organizationId) {
+      calcom.delete(organizationId);
+    },
+    async listCalcomOrganizations(limit) {
+      return [...calcom.values()]
+        .filter((row) => row.status === "connected")
+        .slice(0, limit)
+        .map((row) => row.organizationId);
+    },
     async listPendingConfirmations(limit) {
       return [...appointments.values()]
         .filter((a) => a.status === "confirmed" && a.confirmationNoticesPending)
