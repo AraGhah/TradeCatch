@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { renderTwiml } from "@/product/receptionist/voice";
+import { callEventId } from "@/product/telephony/call-events";
 import { getTelephonyRuntime } from "@/product/telephony/runtime";
 import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
 
@@ -46,6 +47,8 @@ export async function POST(request: NextRequest) {
     const orgId = session.configId.replace(/^rc_org_/, "");
     try {
       await getTelephonyRuntime().events.append({
+        // One row per call, however many times Twilio repeats the callback.
+        id: callEventId(session.callSid, "relay_ended"),
         organizationId: orgId,
         clientAccountId: session.clientAccountId,
         callSid: session.callSid,
