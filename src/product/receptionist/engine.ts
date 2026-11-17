@@ -10,6 +10,7 @@
  */
 
 import { randomUUID } from "@/lib/id";
+import { normalizeProviderNumber } from "@/lib/phone";
 import { logReceptionistDiagnostic } from "./diagnostics";
 import { isAfterHours } from "@/product/missed-call/call-handling";
 import { shouldAnswerCall } from "./call-handling";
@@ -60,6 +61,7 @@ import {
   phrase,
 } from "./prompts";
 import { isConflictError, type ReceptionistStore } from "./store";
+import { isPracticeCall } from "./call-history";
 import { buildCallSummary, generateAiSummary } from "./summary";
 import type {
   AgentDecision,
@@ -69,6 +71,7 @@ import type {
   CallSession,
   CallSlots,
   CallStep,
+  CallSummary,
   CallTurn,
   ReceptionistBrain,
   ReceptionistConfig,
@@ -177,6 +180,15 @@ const TERMINAL_CALL_STATUSES = new Set([
   "cancelled",
 ]);
 
+/** Provider statuses that mean nobody took the call. */
+const UNANSWERED_STATUSES = new Set([
+  "busy",
+  "failed",
+  "no-answer",
+  "canceled",
+  "cancelled",
+]);
+
 /** Steps where free-form speech is screened for emergencies. */
 const EMERGENCY_SCREEN_STEPS = new Set([
   "language",
@@ -227,6 +239,171 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
 
   function configFor(session: CallSession): ReceptionistConfig | null {
     return deps.configs().find((c) => c.id === session.configId) ?? null;
+  }
+
+  /** A duration a provider reported, or undefined when it cannot be a real one. */
+  function cleanDuration(seconds: number | undefined): number | undefined {
+    return typeof seconds === "number" &&
+      Number.isFinite(seconds) &&
+      seconds >= 0 &&
+      seconds <= 24 * 3600
+      ? Math.round(seconds)
+      : undefined;
+  }
+
+  /** A record with nothing in it but who called, when, and how it ended. */
+  function bareSession(
+    config: ReceptionistConfig,
+    input: { callSid: string; fromE164: string; toE164: string },
+    at: Date,
+    extra: Partial<CallSession>,
+  ): CallSession {
+    const iso = at.toISOString();
+    return {
+      id: `rcs_${randomUUID()}`,
+      callSid: input.callSid,
+      configId: config.id,
+      clientAccountId: config.clientAccountId,
+      fromE164: normalizeProviderNumber(input.fromE164),
+      toE164: normalizeProviderNumber(input.toE164),
+      language: config.defaultLanguage,
+      status: "in_progress",
+      step: "reason",
+      afterHours: isAfterHours(config, at),
+      slots: {},
+      turns: [],
+      silenceCount: 0,
+      callerTurnCount: 0,
+      transfers: [],
+      notifications: [],
+      // Nobody follows up a call the receptionist never handled: no summary,
+      // no text to the caller, no lead.
+      routing: { quiet: true },
+      startedAt: iso,
+      updatedAt: iso,
+      version: 1,
+      ...extra,
+    };
+  }
+
+  /**
+   * A call the receptionist did not take (switched off, outside its hours,
+   * rejected by routing) still happened and is the owner's to see. Saved as a
+   * finished record. Best effort: the caller's answer never waits on a retry
+   * or fails because of it, and Twilio retrying the call changes nothing
+   * (one record per call id).
+   */
+  async function recordDeclined(
+    config: ReceptionistConfig,
+    input: { callSid: string; fromE164: string; toE164: string },
+    declinedCode: string,
+    defer?: DeferFn,
+  ): Promise<void> {
+    try {
+      const at = clock.now();
+      const { session, created } = await deps.store.insertSessionIfAbsent(
+        bareSession(config, input, at, {
+          status: "completed",
+          step: "done",
+          outcome: "caller_hung_up",
+          endedAt: at.toISOString(),
+          finalizedAt: at.toISOString(),
+          activity: {
+            provider: "twilio",
+            direction: "inbound",
+            origin: "declined",
+            declinedCode,
+          },
+        }),
+      );
+      // Only the request that saved the record alerts: Twilio retrying the call
+      // finds it already there. The alert is sent after the caller's answer.
+      if (created) {
+        const alert = () => alertOwnerOfUnhandledCall(session.id);
+        if (defer) defer(alert);
+        else await alert();
+      }
+    } catch (err) {
+      logReceptionistDiagnostic({
+        event: "call_record_failed",
+        code: declinedCode,
+        callSid: input.callSid,
+        error: err,
+      });
+    }
+  }
+
+  /**
+   * A call the receptionist never handled (declined by its own rules, or known
+   * only from the provider's status callback) is still the owner's to follow
+   * up, so the owner is told. The caller is not: no text-back, no CRM lead.
+   *
+   * The call is claimed by saving its summary first, so a repeated webhook or a
+   * second worker cannot send a second alert; the deliveries are then recorded
+   * on the call, where the notification retry job finds a failed one. Never
+   * throws: a failed alert is logged and must not fail the webhook.
+   */
+  async function alertOwnerOfUnhandledCall(sessionId: string): Promise<void> {
+    let callSid: string | undefined;
+    try {
+      let claimed: CallSession | null = null;
+      let summary: CallSummary | null = null;
+      let config: ReceptionistConfig | null = null;
+      for (let attempt = 0; attempt < 3 && !claimed; attempt += 1) {
+        const stored = await deps.store.getSession(sessionId);
+        if (!stored) return;
+        callSid = stored.callSid;
+        const origin = stored.activity?.origin;
+        if (
+          stored.summary ||
+          isPracticeCall(stored) ||
+          (origin !== "declined" && origin !== "status_callback")
+        )
+          return;
+        // A call that connected to someone (a "completed" status with no
+        // receptionist record) is not known to be missed: it is listed, not alerted.
+        const provider = (stored.activity?.providerStatus ?? "").toLowerCase();
+        if (origin === "status_callback" && !UNANSWERED_STATUSES.has(provider))
+          return;
+        config = configFor(stored);
+        if (!config) return;
+        summary = buildCallSummary(config, stored);
+        try {
+          claimed = await save({ ...stored, summary });
+        } catch (err) {
+          // Someone else wrote to the call meanwhile: read it again.
+          if (!isConflictError(err)) throw err;
+        }
+      }
+      if (!claimed || !summary || !config) return;
+
+      const deliveries = await deps.notifier.deliverSummary(
+        config,
+        claimed,
+        summary,
+      );
+      if (deliveries.length === 0) return;
+      for (let attempt = 0; attempt < 4; attempt += 1) {
+        const latest = await deps.store.getSession(sessionId);
+        if (!latest) return;
+        try {
+          await save({
+            ...latest,
+            notifications: [...latest.notifications, ...deliveries],
+          });
+          return;
+        } catch (err) {
+          if (!isConflictError(err) || attempt === 3) throw err;
+        }
+      }
+    } catch (err) {
+      logReceptionistDiagnostic({
+        event: "call_record_failed",
+        code: "OWNER_ALERT_FAILED",
+        callSid,
+        error: err,
+      });
+    }
   }
 
   function voiceOf(config: ReceptionistConfig, lang: ReceptionistLanguage) {
@@ -1412,6 +1589,8 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       skipHumanRing?: boolean;
       /** Twilio `ForwardedFrom`: the line the carrier forwarded from, if sent. */
       forwardedFromE164?: string;
+      /** Runs the owner's alert for a declined call after the caller's answer. */
+      defer?: DeferFn;
     }): Promise<VoicePlan> {
       const config = resolveConfig(input.toE164);
       if (!config) {
@@ -1434,6 +1613,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           callSid: input.callSid,
           dialedNumber: input.toE164,
         });
+        await recordDeclined(config, input, "RECEPTIONIST_DEACTIVATED", input.defer);
         return failSafePlan(null, null, undefined, { cause: "deactivated" });
       }
 
@@ -1445,6 +1625,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           callSid: input.callSid,
           dialedNumber: input.toE164,
         });
+        await recordDeclined(config, input, "CALL_HANDLING_MODE_DECLINED", input.defer);
         return failSafePlan(null, null, undefined, { cause: "declined" });
       }
 
@@ -1476,6 +1657,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
           callSid: input.callSid,
           dialedNumber: input.toE164,
         });
+        await recordDeclined(config, input, "ROUTING_REJECTED", input.defer);
         return failSafePlan(config, null, undefined, { cause: "declined" });
       }
 
@@ -1486,8 +1668,13 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         callSid: input.callSid,
         configId: config.id,
         clientAccountId: config.clientAccountId,
-        fromE164: input.fromE164,
-        toE164: input.toE164,
+        fromE164: normalizeProviderNumber(input.fromE164),
+        toE164: normalizeProviderNumber(input.toE164),
+        activity: {
+          provider: "twilio",
+          direction: "inbound",
+          origin: "incoming",
+        },
         // Every call starts in French when French is enabled; see language-select.ts.
         language: opening.language,
         status:
@@ -2301,25 +2488,112 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       return plan ?? hangupPlan(null);
     },
 
-    /** Call StatusCallback — finalize on terminal statuses. */
+    /**
+     * Call StatusCallback: finalize on a terminal status.
+     *
+     * Safe to repeat and to receive out of order:
+     *  - the same callback again changes nothing (one record per call id, and
+     *    finalizing is claimed once);
+     *  - a callback for a call that was never saved (the "incoming" webhook
+     *    failed, or this arrived first) creates the record from the callback's
+     *    own From / To / duration, so the call is not lost;
+     *  - a callback that arrives after the call was finalized (the stale-call
+     *    sweep got there first) only fills in what is still blank, so the real
+     *    duration and provider status are kept without a second summary.
+     */
     async handleCallStatus(input: {
       callSid: string;
       callStatus: string;
       durationSeconds?: number;
+      /** Twilio From / To, so a callback that has no saved call can still record it. */
+      fromE164?: string;
+      toE164?: string;
+      /**
+       * Record the call when none is saved. Only for the inbound call's own
+       * callback: a callback for a leg the platform dialed out is not a call
+       * to this business.
+       */
+      createIfMissing?: boolean;
     }): Promise<{ finalized: boolean; session: CallSession | null }> {
       const status = input.callStatus.toLowerCase();
       if (!TERMINAL_CALL_STATUSES.has(status))
         return { finalized: false, session: null };
-      const existing = await deps.store.getSessionByCallSid(input.callSid);
-      if (!existing) return { finalized: false, session: null };
+      const duration = cleanDuration(input.durationSeconds);
+
+      let existing = await deps.store.getSessionByCallSid(input.callSid);
+      let createdHere = false;
+      if (!existing) {
+        const config =
+          input.createIfMissing && input.toE164
+            ? resolveConfig(input.toE164)
+            : null;
+        if (!config) {
+          // Not attributable to a business: nothing is recorded, nothing guessed.
+          logReceptionistDiagnostic({
+            event: "status_unmatched",
+            code: "NO_ENABLED_CONFIG_FOR_NUMBER",
+            callSid: input.callSid,
+            dialedNumber: input.toE164,
+          });
+          return { finalized: false, session: null };
+        }
+        const endedAt = clock.now();
+        // The callback reports when the call ended and how long it lasted;
+        // the start is that end minus the duration, and the record says so.
+        const startedAt =
+          duration !== undefined
+            ? new Date(endedAt.getTime() - duration * 1000)
+            : endedAt;
+        const inserted = await deps.store.insertSessionIfAbsent(
+          bareSession(
+            config,
+            {
+              callSid: input.callSid,
+              fromE164: input.fromE164 ?? "",
+              toE164: input.toE164 ?? "",
+            },
+            startedAt,
+            {
+              activity: {
+                provider: "twilio",
+                direction: "inbound",
+                origin: "status_callback",
+                ...(duration !== undefined ? { startDerived: true as const } : {}),
+              },
+            },
+          ),
+        );
+        existing = inserted.session;
+        createdHere = inserted.created;
+      }
 
       try {
         await withSession(existing.id, async (session) => {
-          if (session.finalizedAt) return { session: null, result: null };
+          const activity: CallSession["activity"] = {
+            provider: "twilio",
+            direction: "inbound",
+            origin: "incoming",
+            ...session.activity,
+            providerStatus: session.activity?.providerStatus ?? status,
+          };
+          if (session.finalizedAt) {
+            const missing =
+              (session.durationSeconds === undefined && duration !== undefined) ||
+              session.activity?.providerStatus === undefined;
+            if (!missing) return { session: null, result: null };
+            return {
+              session: {
+                ...session,
+                durationSeconds: session.durationSeconds ?? duration,
+                activity,
+              },
+              result: null,
+            };
+          }
           return {
             session: {
               ...session,
-              durationSeconds: input.durationSeconds ?? session.durationSeconds,
+              durationSeconds: duration ?? session.durationSeconds,
               endedAt: session.endedAt ?? nowIso(),
               status:
                 status === "failed" && !session.outcome
@@ -2328,6 +2602,7 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
               outcome:
                 session.outcome ??
                 (status === "failed" ? "failed" : "caller_hung_up"),
+              activity,
             },
             result: null,
           };
@@ -2338,6 +2613,9 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         if (!isConflictError(err)) throw err;
       }
       const session = await finalizeSession(existing.id);
+      // A call known only from this callback was never handled: tell the owner,
+      // once (only the request that saved the record gets here).
+      if (createdHere) await alertOwnerOfUnhandledCall(existing.id);
       return { finalized: Boolean(session?.finalizedAt), session };
     },
 

@@ -9,6 +9,7 @@ import {
   receptionistErrorCode,
 } from "@/product/receptionist/diagnostics";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
+import { recordCallStatus } from "@/product/receptionist/status-recorder";
 import type { VoicePlan } from "@/product/receptionist/types";
 import {
   renderTwiml,
@@ -203,6 +204,9 @@ async function handlePost(
           fromE164,
           toE164,
           forwardedFromE164: form.ForwardedFrom,
+          // A call the receptionist declines still alerts its owner, after the
+          // caller has been answered.
+          defer: (task) => void deferTask(task),
         });
         const session = plan.sessionId
           ? await store.getSession(plan.sessionId)
@@ -364,23 +368,21 @@ async function handlePost(
         if (callSid) {
           const callStatus = form.CallStatus ?? "";
           const durationSeconds = num(form.CallDuration);
+          // A leg the platform dialed out (the owner's phone) reports with its
+          // own call id and a ParentCallSid; it is not a call to this business.
+          const inboundParent =
+            !form.ParentCallSid && !(form.Direction ?? "").startsWith("outbound");
           // Summaries + notifications can take a few seconds; respond first.
-          await deferTask(async () => {
-            try {
-              await engine.handleCallStatus({
-                callSid,
-                callStatus,
-                durationSeconds,
-              });
-            } catch (err) {
-              logReceptionistDiagnostic({
-                event: "status_finalize_failed",
-                step,
-                callSid,
-                error: err,
-              });
-            }
-          });
+          await deferTask(() =>
+            recordCallStatus(engine, {
+              callSid,
+              callStatus,
+              durationSeconds,
+              fromE164: form.From || form.Caller,
+              toE164: form.To || form.Called,
+              createIfMissing: inboundParent,
+            }),
+          );
         }
         return emptyTwiml();
       }

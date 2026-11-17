@@ -9,6 +9,7 @@
  * the LiveKit agent receives only the computed policy for one call.
  */
 
+import { WITHHELD_CALLER_IDS } from "@/lib/phone";
 import type { ReceptionistConfig, ReceptionistLanguage } from "@/product/receptionist/types";
 
 export type CallerPolicyDecision =
@@ -18,22 +19,7 @@ export type CallerPolicyDecision =
   | { kind: "personal_end" }
   | { kind: "unknown_message" };
 
-/**
- * Caller IDs carriers and Twilio use for a withheld number
- * (anonymous, unknown, restricted, blocked).
- */
-const WITHHELD = new Set([
-  "+266696687",
-  "+86282452253",
-  "+7378742833",
-  "+2562533",
-  "anonymous",
-  "unknown",
-  "restricted",
-  "private",
-  "blocked",
-  "unavailable",
-]);
+const WITHHELD = WITHHELD_CALLER_IDS;
 
 const E164 = /^\+[1-9]\d{7,14}$/;
 
