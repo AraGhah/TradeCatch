@@ -65,8 +65,10 @@ export function updateParams(s: CallSession): unknown[] {
 
 export function createPostgresReceptionistStore(
   url: string,
+  /** A ready pool (tests run the real SQL against an in-process Postgres). */
+  options: { pool?: Pool } = {},
 ): ReceptionistStore {
-  const pool = getPool(url);
+  const pool = options.pool ?? getPool(url);
 
   const store: ReceptionistStore = {
     async insertSessionIfAbsent(session) {
