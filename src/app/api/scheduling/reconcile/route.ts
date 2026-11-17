@@ -8,6 +8,8 @@ import {
 import {
   getSchedulingStore,
   getSchedulingService,
+  reconcileAllCalcom,
+  reconcileCalcom,
   reconcileGoogleBusy,
 } from "@/product/scheduling/runtime";
 
@@ -20,9 +22,11 @@ async function tick(request: NextRequest) {
   if (audit.missingActor && !isCron) return missingOpsActorResponse();
   const confirmations =
     await getSchedulingService().retryPendingConfirmations();
+  const calcom = await reconcileAllCalcom();
   return NextResponse.json({
     ok: true,
     confirmations,
+    calcom,
     note: "Per-business reconcile runs when a calendar is connected.",
     ready: Boolean(getSchedulingStore()),
   });
@@ -33,6 +37,13 @@ export async function POST(request: NextRequest) {
   const organizationId = url.searchParams.get("organizationId");
   if (organizationId) {
     if (!authorizeOpsRequest(request)) return unauthorizedOpsResponse();
+    const rules = await getSchedulingService().getRules(organizationId);
+    if (rules.calendarMode === "calcom") {
+      return NextResponse.json({
+        ok: true,
+        calcom: await reconcileCalcom(organizationId),
+      });
+    }
     const result = await reconcileGoogleBusy(organizationId);
     return NextResponse.json({ ok: true, ...result });
   }
