@@ -4,7 +4,7 @@ export type BookingMode =
 export type AppointmentStatus =
   "hold" | "pending" | "confirmed" | "completed" | "canceled";
 
-export type CalendarMode = "simulated" | "google" | "internal";
+export type CalendarMode = "simulated" | "google" | "internal" | "calcom";
 
 export type CalendarStatus =
   "connected" | "disconnected" | "expired" | "error" | "simulated";

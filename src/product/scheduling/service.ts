@@ -13,6 +13,7 @@ import type {
   AvailabilityRules,
   BusyBlock,
   CalendarConnectionPublic,
+  CalendarMode,
   MonthAvailability,
   ScheduleAppointment,
   ServiceType,
@@ -53,25 +54,55 @@ export function isInternalAppointment(
   );
 }
 
+/** What a provider that owns availability (Cal.com) is asked for. */
+export type ProviderSlotQuery = {
+  from: Date;
+  until: Date;
+  /** The business timezone: Cal.com answers in it, which settles DST. */
+  timeZone: string;
+  serviceId?: string;
+  technicianId?: string;
+  /** The booking being moved, so its own time is not counted as busy. */
+  rescheduleEventId?: string;
+};
+
+export type ProviderSlotsResult =
+  | { ok: true; starts: string[] }
+  | { error: string };
+
 export type CalendarPort = {
-  kind: "simulated" | "google";
+  kind: "simulated" | "google" | "calcom";
   connected: boolean;
   externalCalls: number;
   freeBusy(fromIso: string, untilIso: string): Promise<BusyBlock[]>;
+  /**
+   * Providers that decide availability themselves return the start times they
+   * would accept. TradeCatch's own rules and bookings are applied on top, so
+   * a time is offered only when both agree.
+   */
+  listSlots?(query: ProviderSlotQuery): Promise<ProviderSlotsResult>;
   createEvent(
     appointment: ScheduleAppointment,
   ): Promise<{ id: string } | { error: string }>;
   updateEvent(
     eventId: string,
     appointment: ScheduleAppointment,
-  ): Promise<{ ok: true } | { error: string }>;
+  ): Promise<{ ok: true; eventId?: string } | { error: string }>;
   deleteEvent(eventId: string): Promise<{ ok: true } | { error: string }>;
 };
 
 export type SchedulingDeps = {
   store: SchedulingStore;
   now: () => Date;
-  calendar: (organizationId: string) => Promise<CalendarPort>;
+  /**
+   * `hint.eventId` is the calendar event an operation is about. A booking made
+   * with one provider is changed through that provider, whatever the business
+   * uses today.
+   */
+  calendar: (
+    organizationId: string,
+    hint?: { eventId?: string },
+  ) => Promise<CalendarPort>;
   scheduleNotices?: (input: {
     organizationId: string;
     appointmentId: string;
@@ -342,6 +373,12 @@ export function createSchedulingService(deps: SchedulingDeps) {
     excludeAppointmentId?: string;
     /** Most slots to return (default 48). A month view asks for them all. */
     limit?: number;
+    /** The provider to ask when the business uses Cal.com; fetched if omitted. */
+    calendar?: CalendarPort;
+    /** Test bookings never reach the contractor's real calendar. */
+    simulated?: boolean;
+    /** The calendar event of the booking being moved (Cal.com only). */
+    rescheduleEventId?: string;
   }): Promise<Slot[]> {
     const limit = input.limit ?? 48;
     const rules = await ensure(input.organizationId);
@@ -350,6 +387,21 @@ export function createSchedulingService(deps: SchedulingDeps) {
       deps.store.listBusy(input.organizationId),
       deps.store.listTechnicians(input.organizationId),
     ]);
+    // With Cal.com the contractor's calendar decides which times exist. Without
+    // a working connection nothing is offered: a time that cannot be booked is
+    // never read out.
+    let provider: CalendarPort | undefined;
+    if (rules.calendarMode === "calcom" && !input.simulated) {
+      provider = input.calendar ?? (await deps.calendar(input.organizationId));
+      if (
+        provider.kind !== "calcom" ||
+        !provider.connected ||
+        !provider.listSlots
+      ) {
+        return [];
+      }
+    }
+    let providerFailed = false;
     const duration =
       input.service?.durationMinutes ?? rules.defaultDurationMinutes;
     const buffer = input.service?.bufferMinutes ?? rules.bufferMinutes;
@@ -365,6 +417,22 @@ export function createSchedulingService(deps: SchedulingDeps) {
       eligible.length > 0 ? eligible : [undefined];
     const slots: Slot[] = [];
     for (const person of people) {
+      let allowedStarts: ReadonlySet<string> | undefined;
+      if (provider?.listSlots) {
+        const offered = await provider.listSlots({
+          from: input.from,
+          until: input.until,
+          timeZone: rules.timezone,
+          serviceId: input.service?.id,
+          technicianId: person?.id,
+          rescheduleEventId: input.rescheduleEventId,
+        });
+        if (!("ok" in offered)) {
+          providerFailed = true;
+          continue;
+        }
+        allowedStarts = new Set(offered.starts);
+      }
       slots.push(
         ...listSlots({
           rules,
@@ -380,7 +448,15 @@ export function createSchedulingService(deps: SchedulingDeps) {
           technicianName: person?.name,
           excludeAppointmentId: input.excludeAppointmentId,
           maxSlots: limit,
+          allowedStarts,
         }),
+      );
+    }
+    if (providerFailed && slots.length === 0) {
+      throw new SchedulingError(
+        "The calendar could not be reached.",
+        503,
+        "calendar_unavailable",
       );
     }
     // One entry per start time: with several technicians the same time was
@@ -696,22 +772,46 @@ export function createSchedulingService(deps: SchedulingDeps) {
         const end = new Date(start.getTime() + duration * 60_000);
         const windowFrom = new Date(start.getTime() - 60_000);
         const windowUntil = new Date(end.getTime() + 7 * 24 * 60 * 60 * 1000);
-        const alternatives = await slotsFor({
-          organizationId: input.organizationId,
-          service: chosen,
+        const calendar = input.simulated
+          ? createSimulatedCalendar(Boolean(input.simulateCalendarFailure))
+          : await deps.calendar(input.organizationId);
+        // A Cal.com outage must not stop a request from being saved, so the
+        // two lookups treat "calendar unreachable" as "no times" and remember
+        // it: the booking is then recorded as a request, never confirmed.
+        let providerDown = false;
+        const openSlots = async (
+          range: { from: Date; until: Date },
+        ): Promise<Slot[]> => {
+          try {
+            return await slotsFor({
+              organizationId: input.organizationId,
+              service: chosen,
+              from: range.from,
+              until: range.until,
+              serviceAddress: input.serviceAddress,
+              technicianId: input.technicianId,
+              calendar,
+              simulated: input.simulated,
+            });
+          } catch (error) {
+            if (
+              error instanceof SchedulingError &&
+              error.code === "calendar_unavailable"
+            ) {
+              providerDown = true;
+              return [];
+            }
+            throw error;
+          }
+        };
+        const alternatives = await openSlots({
           from: deps.now(),
           until: windowUntil,
-          serviceAddress: input.serviceAddress,
-          technicianId: input.technicianId,
         });
         const match = slotIsFree(
-          await slotsFor({
-            organizationId: input.organizationId,
-            service: chosen,
+          await openSlots({
             from: windowFrom,
             until: new Date(end.getTime() + 60_000),
-            serviceAddress: input.serviceAddress,
-            technicianId: input.technicianId,
           }),
           start.toISOString(),
         );
@@ -719,13 +819,14 @@ export function createSchedulingService(deps: SchedulingDeps) {
         const needsReview =
           chosen?.bookingMode === "manual_approval" ||
           chosen?.bookingMode === "escalate";
-        const calendar = input.simulated
-          ? createSimulatedCalendar(Boolean(input.simulateCalendarFailure))
-          : await deps.calendar(input.organizationId);
         const calendarBlocksConfirmation =
           !input.simulated &&
-          rules.calendarMode === "google" &&
-          (!calendar.connected || calendar.kind !== "google");
+          ((rules.calendarMode === "google" &&
+            (!calendar.connected || calendar.kind !== "google")) ||
+            (rules.calendarMode === "calcom" &&
+              (!calendar.connected ||
+                calendar.kind !== "calcom" ||
+                providerDown)));
 
         if (
           !match &&
@@ -774,7 +875,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
           void import("@/product/reliability/hooks").then(({ recordFailure }) =>
             recordFailure({
               organizationId: input.organizationId,
-              service: "google_calendar",
+              service:
+                rules.calendarMode === "calcom" ? "calcom" : "google_calendar",
               operation: "book_appointment",
               errorCode: "CALENDAR_UNAVAILABLE",
               severity: "medium",
@@ -880,6 +982,20 @@ export function createSchedulingService(deps: SchedulingDeps) {
           reserved.updatedAt = deps.now().toISOString();
           await deps.store.saveAppointment(reserved);
           await record(reserved, "calendar_failed", created.error);
+          // Cal.com said the time was taken between our check and the
+          // booking. For a caller who is offered another time on the line
+          // that is a plain conflict, not a request to leave behind.
+          if (
+            created.error === "slot_unavailable" &&
+            input.requestIfUnavailable === false
+          ) {
+            return {
+              ok: false,
+              confirmed: false,
+              reason: "conflict",
+              alternatives: alternatives.slice(0, 6),
+            };
+          }
           const request = await deps.store.insertIfFree(
             {
               ...base,
@@ -967,6 +1083,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
           serviceAddress: current.serviceAddress,
           technicianId: current.technicianId,
           excludeAppointmentId: current.id,
+          simulated: current.simulated,
+          rescheduleEventId: current.calendarEventId,
         });
         const match = slotIsFree(
           await slotsFor({
@@ -977,6 +1095,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
             serviceAddress: current.serviceAddress,
             technicianId: current.technicianId,
             excludeAppointmentId: current.id,
+            simulated: current.simulated,
+            rescheduleEventId: current.calendarEventId,
           }),
           start.toISOString(),
         );
@@ -1025,7 +1145,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
         }
         const calendar = current.simulated
           ? createSimulatedCalendar()
-          : await deps.calendar(organizationId);
+          : await deps.calendar(organizationId, {
+              eventId: current.calendarEventId,
+            });
         if (current.calendarEventId) {
           const updated = await calendar.updateEvent(
             current.calendarEventId,
@@ -1046,6 +1168,8 @@ export function createSchedulingService(deps: SchedulingDeps) {
               appointment: current,
             };
           }
+          // Cal.com gives the moved booking a new uid; the old one is dead.
+          if (updated.eventId) current.calendarEventId = updated.eventId;
         }
         reinserted.status = "canceled";
         reinserted.cancelReason = "reschedule_hold";
@@ -1104,7 +1228,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
       if (current.calendarEventId) {
         const calendar = current.simulated
           ? createSimulatedCalendar()
-          : await deps.calendar(organizationId);
+          : await deps.calendar(organizationId, {
+              eventId: current.calendarEventId,
+            });
         const removed = await calendar.deleteEvent(current.calendarEventId);
         if ("error" in removed) {
           return {
@@ -1175,8 +1301,10 @@ export function createSchedulingService(deps: SchedulingDeps) {
           : await deps.calendar(organizationId);
         if (
           !current.simulated &&
-          rules.calendarMode === "google" &&
-          (!calendar.connected || calendar.kind !== "google")
+          ((rules.calendarMode === "google" &&
+            (!calendar.connected || calendar.kind !== "google")) ||
+            (rules.calendarMode === "calcom" &&
+              (!calendar.connected || calendar.kind !== "calcom")))
         )
           return fail("calendar_unavailable");
         // The same atomic guard a booking uses: a short hold on the time, so
@@ -1342,6 +1470,125 @@ export function createSchedulingService(deps: SchedulingDeps) {
 
     async syncBusy(organizationId: string, blocks: BusyBlock[]) {
       await deps.store.replaceBusy(organizationId, blocks);
+    },
+
+    /**
+     * Choose which calendar decides availability. The caller has already
+     * checked that the business may use that provider.
+     */
+    async setCalendarMode(organizationId: string, mode: CalendarMode) {
+      const rules = await ensure(organizationId);
+      if (rules.calendarMode !== mode) {
+        rules.calendarMode = mode;
+        rules.updatedAt = deps.now().toISOString();
+        await deps.store.saveRules(rules);
+      }
+      return rules;
+    },
+
+    /**
+     * Whether a business that books through Cal.com can confirm right now.
+     * Other calendar modes answer true: their own checks live elsewhere.
+     */
+    async calendarReady(organizationId: string): Promise<boolean> {
+      const rules = await ensure(organizationId);
+      if (rules.calendarMode !== "calcom") return true;
+      const calendar = await deps.calendar(organizationId);
+      return calendar.kind === "calcom" && calendar.connected;
+    },
+
+    /**
+     * The provider changed a booking behind our back (the contractor moved or
+     * cancelled it in Cal.com). TradeCatch follows: the provider's calendar is
+     * the one that decides. Nothing is sent to the provider.
+     */
+    async applyProviderChange(
+      organizationId: string,
+      appointmentId: string,
+      change:
+        | { kind: "canceled" }
+        | { kind: "moved"; startAt: string; eventId: string },
+    ): Promise<{ applied: boolean }> {
+      return withOrgLock(organizationId, async () => {
+        const current = await deps.store.getAppointment(
+          organizationId,
+          appointmentId,
+        );
+        if (!current || current.status !== "confirmed") {
+          return { applied: false };
+        }
+        const rules = await ensure(organizationId);
+        if (change.kind === "canceled") {
+          current.status = "canceled";
+          current.cancelReason = "provider_canceled";
+          current.updatedAt = deps.now().toISOString();
+          await deps.store.saveAppointment(current);
+          await record(current, "provider_canceled");
+          await deps.cancelNotices?.(
+            organizationId,
+            current.id,
+            "appointment_canceled",
+          );
+          await deps.notify?.({
+            organizationId,
+            title: current.customerName || current.serviceName,
+            reason: "Appointment canceled",
+            kind: "canceled",
+            refId: current.id,
+            ...noticeDetails(current, rules.timezone),
+          });
+          return { applied: true };
+        }
+        const start = new Date(change.startAt);
+        if (Number.isNaN(start.getTime())) return { applied: false };
+        const unchanged =
+          start.toISOString() === current.startAt &&
+          change.eventId === current.calendarEventId;
+        if (unchanged) return { applied: false };
+        const timeChanged = start.toISOString() !== current.startAt;
+        const previousStart = current.startAt;
+        const duration =
+          Date.parse(current.endAt) - Date.parse(current.startAt);
+        current.startAt = start.toISOString();
+        current.endAt = new Date(start.getTime() + duration).toISOString();
+        current.calendarEventId = change.eventId;
+        current.updatedAt = deps.now().toISOString();
+        await deps.store.saveAppointment(current);
+        if (!timeChanged) {
+          await record(current, "provider_relinked", change.eventId);
+          return { applied: true };
+        }
+        await record(
+          current,
+          "provider_rescheduled",
+          `${previousStart}->${current.startAt}`,
+        );
+        await deps.notify?.({
+          organizationId,
+          title: current.customerName || current.serviceName,
+          reason: "Appointment rescheduled",
+          kind: "rescheduled",
+          refId: current.id,
+          ...noticeDetails(current, rules.timezone),
+        });
+        await deps.cancelNotices?.(organizationId, current.id, "rescheduled");
+        if (current.customerPhoneE164) {
+          const when = localParts(current.startAt, rules.timezone);
+          await deps.scheduleNotices?.({
+            organizationId,
+            appointmentId: current.id,
+            phoneE164: current.customerPhoneE164,
+            customerName: current.customerName,
+            serviceName: current.serviceName,
+            appointmentDate: when.slice(0, 10),
+            appointmentTime: when,
+            startAt: current.startAt,
+            simulated: current.simulated,
+            leadId: current.leadId,
+          });
+        }
+        return { applied: true };
+      });
     },
   };
 }
