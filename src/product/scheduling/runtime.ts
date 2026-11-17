@@ -5,7 +5,23 @@ import {
 import { getCrmService } from "@/product/crm/runtime";
 import { hasGoogleCalendarPilot } from "./availability";
 import { emitBusinessEvent } from "@/product/notifications/hooks";
+import { getSaasStore } from "@/product/saas/runtime";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
+import {
+  createCalcomCalendar,
+  type CalcomCalendarPort,
+} from "./calcom/adapter";
+import { getMe } from "./calcom/client";
+import {
+  calcomMultiCrew,
+  calcomPilotAllowed,
+  openCalcomKey,
+} from "./calcom/connection";
+import {
+  reconcileCalcom,
+  reconcileCalcomOrganization,
+} from "./calcom/reconcile";
+import { isCalcomEventId } from "./calcom/types";
 import {
   createGoogleCalendarPort,
   googleCalendarConfigured,
@@ -73,9 +89,76 @@ const disconnected: CalendarPort = {
   },
 };
 
-async function calendarFor(organizationId: string): Promise<CalendarPort> {
+/**
+ * A Cal.com business whose connection cannot be used right now. It never
+ * confirms anything: availability is empty and every booking is refused, so a
+ * caller is taken as a request and nothing is invented.
+ */
+const disconnectedCalcom: CalendarPort = {
+  kind: "calcom",
+  connected: false,
+  externalCalls: 0,
+  async freeBusy() {
+    return [];
+  },
+  async listSlots() {
+    return { error: "calendar_unavailable" };
+  },
+  async createEvent() {
+    return { error: "calendar_unavailable" };
+  },
+  async updateEvent() {
+    return { error: "calendar_unavailable" };
+  },
+  async deleteEvent() {
+    return { error: "calendar_unavailable" };
+  },
+};
+
+/** The working Cal.com provider for a business, or null when it has none. */
+export async function calcomPortFor(
+  organizationId: string,
+): Promise<CalcomCalendarPort | null> {
+  const store = getSchedulingStore();
+  const connection = await store.getCalcomConnection(organizationId);
+  if (!connection || connection.status !== "connected") return null;
+  const organization = await getSaasStore().getOrganization(organizationId);
+  // The operator's enrollment and the plan are checked on every use, not only
+  // when the key was saved: a downgrade or an un-enrolment stops it at once.
+  if (!calcomPilotAllowed(organization)) return null;
+  const apiKey = openCalcomKey(connection.credentialCiphertext);
+  if (!apiKey) return null;
+  return createCalcomCalendar({
+    organizationId,
+    apiKey,
+    defaultEventTypeId: connection.defaultEventTypeId,
+    routes: connection.routes,
+    attendeeEmail: connection.attendeeEmail,
+    multiCrew: calcomMultiCrew(organization),
+    ledger: {
+      get: (org, appointmentId) => store.getCalcomBooking(org, appointmentId),
+      findByUid: (org, uid) => store.findCalcomBookingByUid(org, uid),
+      save: (row) => store.saveCalcomBooking(row),
+    },
+  });
+}
+
+async function calendarFor(
+  organizationId: string,
+  hint?: { eventId?: string },
+): Promise<CalendarPort> {
   const store = getSchedulingStore();
   const rules = await store.getRules(organizationId);
+  // An event made through Cal.com is changed through Cal.com, and one made
+  // elsewhere is never sent to Cal.com, whatever the business uses today.
+  if (hint?.eventId) {
+    if (isCalcomEventId(hint.eventId)) {
+      return (await calcomPortFor(organizationId)) ?? disconnectedCalcom;
+    }
+    if (rules?.calendarMode === "calcom") return disconnected;
+  } else if (rules?.calendarMode === "calcom") {
+    return (await calcomPortFor(organizationId)) ?? disconnectedCalcom;
+  }
   if (!rules || rules.calendarMode !== "google")
     return createSimulatedCalendar();
   if (!(await hasGoogleCalendarPilot(organizationId))) return disconnected;
@@ -208,4 +291,41 @@ export async function reconcileGoogleBusy(organizationId: string) {
   const blocks = await port.freeBusy(from.toISOString(), until.toISOString());
   await service.syncBusy(organizationId, blocks);
   return { synced: true as const, blocks: blocks.length };
+}
+
+function calcomReconcileDeps() {
+  const store = getSchedulingStore();
+  return {
+    store,
+    scheduling: getSchedulingService(),
+    portFor: calcomPortFor,
+    async checkKey(organizationId: string) {
+      const connection = await store.getCalcomConnection(organizationId);
+      const apiKey = openCalcomKey(connection?.credentialCiphertext);
+      if (!apiKey) return "unauthorized" as const;
+      const me = await getMe({ apiKey });
+      if (me.ok) return "ok" as const;
+      return me.kind === "rejected" && me.code === "unauthorized"
+        ? ("unauthorized" as const)
+        : ("unreachable" as const);
+    },
+    async onKeyRejected(organizationId: string) {
+      await emitBusinessEvent({
+        organizationId,
+        type: "calendar_disconnected",
+        idempotencyKey: `calendar-disconnected:${organizationId}:${new Date().toISOString().slice(0, 13)}`,
+        href: "/app/settings/calendar",
+      });
+    },
+  };
+}
+
+/** One pass over every business that has Cal.com connected (ops tick). */
+export async function reconcileCalcomAll() {
+  return reconcileCalcom(calcomReconcileDeps());
+}
+
+/** The same pass for one business. */
+export async function reconcileCalcomFor(organizationId: string) {
+  return reconcileCalcomOrganization(calcomReconcileDeps(), organizationId);
 }
