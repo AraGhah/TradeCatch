@@ -1,94 +1,98 @@
-import { readJsonBounded } from "@/lib/request-body";
+import { readJsonBody } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
-import { SecurityError } from "@/product/security/service";
-import { getSecurityService } from "@/product/security/runtime";
-import { requireTenantContext } from "@/product/saas/tenant";
+import { forbiddenUnless, requireSameBusiness } from "@/product/security/access";
+import { loadPrivacySettings, savePrivacySettings } from "@/product/privacy/runtime";
+import { patchFrom, privacyPatchSchema } from "@/product/privacy/settings";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
-const schema = z.object({
-  disclosureEnabled: z.boolean(),
-  recordingEnabled: z.boolean(),
-  retentionDays: z.number().int().min(1).max(365),
-  onDenied: z.enum(["continue_without_recording", "end_call"]),
-});
+const NO_STORE = { "Cache-Control": "no-store" };
+const MAX_PATCH_BYTES = 4 * 1024;
 
-async function gate(organizationId: string, write: boolean) {
-  const tenant = await requireTenantContext();
-  if (!tenant.ok) return tenant;
-  if (
-    tenant.ctx.organization.id !== organizationId &&
-    !tenant.ctx.isPlatformAdmin
-  ) {
-    return {
-      ok: false as const,
-      status: 403 as const,
-      error: "Not a member of this business.",
-    };
-  }
-  if (write) {
-    try {
-      getSecurityService().assertPermission(
-        tenant.ctx.membership.role,
-        "manage_ai",
-        tenant.ctx.isPlatformAdmin,
-      );
-    } catch (error) {
-      const status = error instanceof SecurityError ? error.status : 403;
-      return { ok: false as const, status, error: "Insufficient permissions." };
-    }
-  }
-  return { ok: true as const, ctx: tenant.ctx };
-}
-
+/** The business's stored privacy settings (defaults when never saved). Any member may read them. */
 export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
-  const access = await gate(id, false);
+  const access = await requireSameBusiness(id);
   if (!access.ok)
+    return NextResponse.json({ error: access.error }, { status: access.status });
+  try {
     return NextResponse.json(
-      { error: access.error },
-      { status: access.status },
+      { ok: true, settings: await loadPrivacySettings(id) },
+      { headers: NO_STORE },
     );
-  return NextResponse.json({
-    ok: true,
-    settings: await getSecurityService().recording(id),
-  });
+  } catch (error) {
+    console.error(
+      "[privacy] settings load failed",
+      error instanceof Error ? error.name : "error",
+    );
+    return NextResponse.json(
+      { error: "Unable to load privacy settings." },
+      { status: 503, headers: NO_STORE },
+    );
+  }
 }
 
-export async function PUT(request: NextRequest, { params }: Params) {
+/**
+ * Saves only the settings named in the body, and only if `expectedVersion`
+ * still matches what is stored (409 with the current values otherwise). The
+ * response carries the values as stored, so the page shows what was saved,
+ * never what it asked for.
+ */
+export async function PATCH(request: NextRequest, { params }: Params) {
   const { id } = await params;
-  const access = await gate(id, true);
+  const access = await requireSameBusiness(id);
   if (!access.ok)
-    return NextResponse.json(
-      { error: access.error },
-      { status: access.status },
-    );
-  const parsed = schema.safeParse(
-    await readJsonBounded(request).catch(() => null),
+    return NextResponse.json({ error: access.error }, { status: access.status });
+  const denied = forbiddenUnless(
+    access.ctx.membership.role,
+    "manage_security",
+    access.ctx.isPlatformAdmin,
   );
+  if (denied) return denied;
+
+  // A save names at most six small fields; anything larger is not a save.
+  const body = await readJsonBody(request, MAX_PATCH_BYTES);
+  if (!body.ok)
+    return NextResponse.json(
+      { error: body.error },
+      { status: body.status, headers: NO_STORE },
+    );
+  const parsed = privacyPatchSchema.safeParse(body.data);
   if (!parsed.success)
     return NextResponse.json(
       { error: "Invalid privacy settings." },
-      { status: 400 },
+      { status: 400, headers: NO_STORE },
     );
+
   try {
-    const settings = await getSecurityService().saveRecording({
+    const result = await savePrivacySettings({
       organizationId: id,
-      ...parsed.data,
-      updatedAt: new Date().toISOString(),
+      actorUserId: access.ctx.user.id,
+      expectedVersion: parsed.data.expectedVersion,
+      patch: patchFrom(parsed.data),
     });
-    return NextResponse.json({ ok: true, settings });
-  } catch (error) {
+    if (!result.ok)
+      return NextResponse.json(
+        {
+          error: "These settings were changed elsewhere. Review the current values and save again.",
+          code: "stale",
+          settings: result.current,
+        },
+        { status: 409, headers: NO_STORE },
+      );
     return NextResponse.json(
-      {
-        error:
-          error instanceof SecurityError
-            ? error.message
-            : "Unable to save privacy settings.",
-      },
-      { status: error instanceof SecurityError ? error.status : 500 },
+      { ok: true, settings: result.settings },
+      { headers: NO_STORE },
+    );
+  } catch (error) {
+    console.error(
+      "[privacy] settings save failed",
+      error instanceof Error ? error.name : "error",
+    );
+    return NextResponse.json(
+      { error: "Unable to save privacy settings." },
+      { status: 503, headers: NO_STORE },
     );
   }
 }
