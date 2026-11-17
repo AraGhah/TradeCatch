@@ -194,6 +194,18 @@ export type ReceptionistConfig = {
   smsRecoveryOnIncomplete: boolean;
   /** Days before transcripts/slot PII are purged by the retention tick. */
   transcriptRetentionDays: number;
+  /**
+   * Business privacy setting: the failure fallback may record a voicemail
+   * (after telling the caller). false = no audio is recorded; the caller is
+   * asked to call back instead. Unset = allowed (founder/env configs).
+   */
+  callRecordingEnabled?: boolean;
+  /**
+   * Business privacy setting: keep the call transcript after the summary is
+   * built and sent. false = the turns are dropped when the call is finalized;
+   * the summary and caller details stay. Unset = kept.
+   */
+  saveCallTranscripts?: boolean;
 };
 
 export type CallStep =

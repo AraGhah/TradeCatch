@@ -1779,7 +1779,7 @@
       "transcript": "Transcription",
       "caller": "Appelant",
       "agent": "Réceptionniste",
-      "purged": "Transcription purgée (politique de rétention).",
+      "purged": "Transcription non conservée (paramètres de confidentialité ou durée de conservation).",
       "knownContact": "Contact connu",
       "stats": {
         "total": "Appels répondus",
@@ -2132,6 +2132,7 @@
         "automation_paused": "Automatisation en pause",
         "closed": "Fermée"
       },
+      "bodyNotKept": "Texte du message non conservé (paramètres de confidentialité).",
       "delivery": {
         "queued": "En file",
         "sending": "Envoi",
@@ -2791,9 +2792,58 @@
     },
     "privacy": {
       "headline": "Paramètres de confidentialité",
-      "intro": "Informez l’appelant lorsqu’un appel peut être enregistré, et cessez l’enregistrement si le consentement est refusé. La parole du client n’est jamais une instruction.",
-      "save": "Enregistrer",
-      "saved": "Paramètres de confidentialité enregistrés."
+      "intro": "Choisissez ce que TradeCatch enregistre et conserve pour votre entreprise. Chaque paramètre est enregistré pour votre entreprise seulement et s'applique aux nouveaux appels et messages en environ une minute.",
+      "loading": "Chargement des paramètres de confidentialité…",
+      "loadError": "Vos paramètres de confidentialité n'ont pas pu être chargés. Rien n'a été modifié.",
+      "retry": "Réessayer",
+      "save": "Enregistrer les paramètres de confidentialité",
+      "saving": "Enregistrement…",
+      "saved": "Paramètres de confidentialité enregistrés.",
+      "unchanged": "Il n'y a aucun changement à enregistrer.",
+      "saveError": "Vos changements n'ont pas été enregistrés. Les paramètres marqués « Non enregistré » gardent leur valeur précédente. Réessayez.",
+      "stale": "Ces paramètres ont été modifiés ailleurs. Les valeurs actuelles sont affichées; refaites votre changement et enregistrez.",
+      "denied": "Seul un propriétaire ou un administrateur peut modifier ces paramètres. Vos changements n'ont pas été enregistrés.",
+      "readOnly": "Seul un propriétaire ou un administrateur peut modifier ces paramètres.",
+      "notSaved": "Non enregistré",
+      "unsavedCount": "{count, plural, one {# changement pas encore enregistré} other {# changements pas encore enregistrés}}",
+      "recording": {
+        "label": "Enregistrer les messages vocaux",
+        "help": "Si la réceptionniste ne peut pas traiter un appel et que personne ne peut le prendre, l'appelant peut laisser un message vocal. Il est d'abord averti que le message sera enregistré et peut raccrocher. Désactivé : rien n'est enregistré; on demande à l'appelant de rappeler plus tard."
+      },
+      "transcripts": {
+        "label": "Conserver les transcriptions d'appels",
+        "help": "Le texte mot à mot de chaque appel traité par la réceptionniste, affiché dans votre historique d'appels.",
+        "offImpact": "Désactivé : les nouveaux appels sont toujours résumés et vous sont envoyés (appelant, besoin, numéro de rappel), mais le texte mot à mot est supprimé dès que le résumé est fait. Il n'apparaîtra pas dans votre historique d'appels. Les transcriptions existantes restent jusqu'à la fin de votre durée de conservation."
+      },
+      "sms": {
+        "label": "Conserver l'historique des textos",
+        "help": "Le contenu des textos envoyés et reçus pour votre entreprise. Désactivé : les textos sont toujours envoyés et livrés normalement, et la trace de l'envoi reste, mais leur contenu est effacé 24 heures plus tard. Les demandes de désabonnement (STOP) sont toujours conservées."
+      },
+      "retention": {
+        "label": "Conserver le contenu des appels et des messages pendant",
+        "help": "Après cette période, les transcriptions d'appels, les liens vers les messages vocaux, les coordonnées des appelants dans les résumés et le contenu des textos sont effacés.",
+        "excludes": "Non touchés : factures, paiements et dossiers de facturation, demandes de désabonnement et consentements, et journaux de sécurité, conservés comme la loi l'exige. Votre liste de clients, vos travaux et vos soumissions ne sont pas supprimés.",
+        "standard": "Conservation standard (actuelle)",
+        "days": "{days} jours"
+      },
+      "analytics": {
+        "label": "Statistiques d'utilisation dans votre tableau de bord",
+        "help": "Permettre à TradeCatch de mesurer comment votre équipe utilise le tableau de bord (pages visitées, aucune donnée client). Le choix de témoins (cookies) de chaque personne s'applique toujours.",
+        "notUsed": "TradeCatch n'utilise pas de statistiques d'utilisation dans votre tableau de bord; il n'y a donc rien à désactiver."
+      },
+      "calendar": {
+        "title": "Calendrier",
+        "body": "La réceptionniste lit seulement quand vous êtes occupé ou libre. Elle ne lit jamais les titres, les participants ni les notes de vos événements, et ne crée ou modifie que les rendez-vous qu'elle a pris."
+      },
+      "marketing": {
+        "title": "Courriels marketing",
+        "body": "TradeCatch ne vous envoie pas de courriels marketing. Si cela change, rien ne sera envoyé sans votre accord."
+      },
+      "data": {
+        "title": "Vos données",
+        "body": "Téléchargez une copie des données de votre entreprise, ou demandez la suppression de votre compte et de vos données. Une demande de suppression est examinée par TradeCatch avant que quoi que ce soit soit retiré, et les dossiers de facturation et légaux sont conservés comme exigé.",
+        "link": "Exporter ou supprimer vos données"
+      }
     },
     "pilot": {
       "headline": "Envoyer des commentaires",
@@ -2894,6 +2944,8 @@
       "suspend": "Demander une suspension",
       "reactivate": "Demander une réactivation",
       "requestConfirm": "Envoyer une demande de {kind} pour examen? Le statut du service ne change pas immédiatement. Le soutien confirmera la date d’effet.",
+      "deletionConfirm": "Demander à TradeCatch de supprimer ce compte et ses données? Rien n’est supprimé avant l’examen de la demande par le soutien; les dossiers de facturation et légaux sont conservés comme exigé. Pour confirmer, tapez le nom de votre entreprise : {name}",
+      "deletionMismatch": "Le nom de l’entreprise ne correspond pas. Aucune demande de suppression n’a été envoyée.",
       "requestReceived": "Demande reçue pour examen. Le statut de votre service n’a pas changé immédiatement.",
       "requestError": "Impossible de confirmer votre demande. Rechargez la page et vérifiez l’historique avant de réessayer, ou contactez le soutien.",
       "requestHistory": "Demandes de modification du compte",
@@ -3239,8 +3291,8 @@
       "routingTitle": "Routage",
       "aiEnabled": "Réceptionniste activée",
       "recordingTitle": "Enregistrement",
-      "recordingEnabled": "Activer l’enregistrement des appels",
-      "recordingHelp": "Soumis aux avis, consentements et règles de conservation applicables.",
+      "recordingHelp": "L’enregistrement des messages vocaux, les transcriptions et la durée de conservation du contenu des appels se règlent dans vos paramètres de confidentialité.",
+      "recordingLink": "Ouvrir les paramètres de confidentialité",
       "save": "Enregistrer",
       "saving": "Enregistrement…",
       "saved": "Paramètres téléphone enregistrés.",

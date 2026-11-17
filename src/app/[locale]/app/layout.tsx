@@ -7,6 +7,8 @@ import {
 import { AppShell } from "@/components/app/AppShell";
 import { FullMessagesProvider } from "@/components/FullMessagesProvider";
 import { orgHasFeature } from "@/product/saas/entitlements";
+import { BusinessAnalyticsFlag } from "@/components/app/BusinessAnalyticsFlag";
+import { loadPrivacySettings } from "@/product/privacy/runtime";
 
 export default async function AppLayout({
   children,
@@ -29,8 +31,14 @@ export default async function AppLayout({
     redirect(locale === "fr" ? "/fr/connexion" : "/login");
   }
 
+  // The business's analytics choice; unreadable counts as off.
+  const analyticsAllowed = await loadPrivacySettings(auth.ctx.organization.id)
+    .then((settings) => settings.analyticsEnabled)
+    .catch(() => false);
+
   return (
     <FullMessagesProvider>
+      <BusinessAnalyticsFlag allowed={analyticsAllowed} />
       <AppShell
         orgName={auth.ctx.organization.name}
         plan={auth.ctx.organization.plan}

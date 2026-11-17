@@ -1,5 +1,6 @@
 import type { ClientAccount } from "@/product/missed-call/types";
 import type { PlanId } from "@/product/saas/entitlements";
+import type { PrivacySettings } from "@/product/privacy/settings";
 import { voiceCapabilitiesForPlan } from "./plan-limits";
 import { validateProfile } from "./profile";
 import type { ProfileStore } from "./profile-store";
@@ -16,7 +17,48 @@ export type ProfileLoaderDeps = {
   getClient(clientAccountId: string): Promise<ClientAccount | null>;
   env?: NodeJS.ProcessEnv;
   onSkip?: (organizationId: string, reason: string) => void;
+  /**
+   * Each business's privacy settings (recording, transcripts, retention).
+   * The production runtime always passes it; without it the profile's own
+   * values apply unchanged.
+   */
+  getPrivacy?: (
+    organizationIds: string[],
+  ) => Promise<Map<string, PrivacySettings>>;
+  onPrivacyError?: (error: unknown) => void;
 };
+
+/**
+ * The business's privacy choices, applied to the config the line answers
+ * with. A retention choice replaces the transcript retention; "standard"
+ * (null) keeps the profile's.
+ */
+export function applyPrivacySettings(
+  config: ReceptionistConfig,
+  privacy: Pick<
+    PrivacySettings,
+    "callRecordingEnabled" | "saveCallTranscripts" | "customerDataRetentionDays"
+  >,
+): ReceptionistConfig {
+  return {
+    ...config,
+    callRecordingEnabled: privacy.callRecordingEnabled,
+    saveCallTranscripts: privacy.saveCallTranscripts,
+    transcriptRetentionDays:
+      privacy.customerDataRetentionDays ?? config.transcriptRetentionDays,
+  };
+}
+
+/**
+ * Used for one reload when the settings cannot be read: calls are still
+ * answered, nothing is recorded and no transcript is kept, and nothing is
+ * deleted earlier than the profile already says.
+ */
+const PRIVACY_UNAVAILABLE = {
+  callRecordingEnabled: false,
+  saveCallTranscripts: false,
+  customerDataRetentionDays: null,
+} as const;
 
 /**
  * How many organization/client lookups run at once. The agent waits for this
@@ -90,6 +132,17 @@ export async function loadProfileConfigs(
     },
   );
 
+  let privacy: Map<string, PrivacySettings> | null = null;
+  if (deps.getPrivacy) {
+    try {
+      privacy = await deps.getPrivacy(
+        profiles.map((profile) => profile.organizationId),
+      );
+    } catch (error) {
+      deps.onPrivacyError?.(error);
+    }
+  }
+
   const out: ReceptionistConfig[] = [];
   const claimed = new Set<string>();
   profiles.forEach((profile, index) => {
@@ -115,7 +168,14 @@ export async function loadProfileConfigs(
       return;
     }
     claimed.add(digits);
-    out.push(result.config);
+    out.push(
+      deps.getPrivacy
+        ? applyPrivacySettings(
+            result.config,
+            privacy?.get(profile.organizationId) ?? PRIVACY_UNAVAILABLE,
+          )
+        : result.config,
+    );
   });
   return out;
 }

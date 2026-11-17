@@ -224,6 +224,15 @@ async function main() {
       ["src", "product", "saas", "auth-sessions.sql"],
       "039_auth_sessions",
     );
+    // Per-business privacy settings. The backfill keeps every existing
+    // business's current behavior and runs only before 040 is recorded.
+    // Must run after 015 (tc_recording_permissions, tc_audit_logs) and the
+    // receptionist schema (rc_profiles).
+    await applyFile(
+      client,
+      ["src", "product", "privacy", "privacy-settings.sql"],
+      "040_privacy_settings",
+    );
   } finally {
     await client.end();
   }

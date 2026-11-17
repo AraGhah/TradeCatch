@@ -28,6 +28,17 @@ export async function workspaceSession(
     },
   );
   expect(provision.status()).toBe(201);
+  await signInAs(page, email, clientIp, locale);
+  return { email, clientIp };
+}
+
+/** Signs in again as an existing workspace user (a fresh session). */
+export async function signInAs(
+  page: Page,
+  email: string,
+  clientIp: string,
+  locale: "en" | "fr" = "en",
+) {
   const login = await page.request.post("/api/auth/magic-link", {
     data: { email, locale },
     headers: {

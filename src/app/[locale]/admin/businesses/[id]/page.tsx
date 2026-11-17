@@ -8,7 +8,7 @@ import { ReceptionistSettingsForm } from "@/components/app/ReceptionistSettingsF
 import { getMissedCallReadStore } from "@/product/missed-call/runtime";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
-import { getSecurityService } from "@/product/security/runtime";
+import { loadPrivacySettings } from "@/product/privacy/runtime";
 import { getSaasStore } from "@/product/saas/runtime";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export default async function AdminBusinessPage({
   const usage = snapshot.rows.find((row) => row.id === id);
   let recording = false;
   try {
-    recording = (await getSecurityService().recording(id)).recordingEnabled;
+    recording = (await loadPrivacySettings(id)).callRecordingEnabled;
   } catch {
     recording = false;
   }

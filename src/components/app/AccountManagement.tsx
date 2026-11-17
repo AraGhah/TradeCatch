@@ -68,6 +68,8 @@ export function AccountManagement({
     }).format(at);
   }
   const [name, setName] = useState(initialName);
+  // The name as stored: a deletion request is confirmed by typing it.
+  const [savedName, setSavedName] = useState(initialName);
   const [phone, setPhone] = useState(initialPhone);
   const [city, setCity] = useState(initialCity);
   const [serviceArea, setServiceArea] = useState(initialServiceArea);
@@ -119,6 +121,7 @@ export function AccountManagement({
         // Show the number the way it was saved.
         if (typeof payload.organization?.phoneE164 === "string")
           setPhone(payload.organization.phoneE164);
+        setSavedName(name.trim());
         setMessage(t("saved"));
       } else {
         setMessage(
@@ -141,7 +144,18 @@ export function AccountManagement({
 
   async function request(kind: AccountRequest["kind"]) {
     if (requesting || !canRequestAccountChange) return;
-    if (
+    let confirm: string | undefined;
+    if (kind === "deletion") {
+      // Deletion is confirmed by typing the business name; the server checks it too.
+      const typed = window.prompt(t("deletionConfirm", { name: savedName }));
+      if (typed === null) return;
+      if (typed.trim().toLowerCase() !== savedName.trim().toLowerCase()) {
+        setRequestError(true);
+        setMessage(t("deletionMismatch"));
+        return;
+      }
+      confirm = typed;
+    } else if (
       !window.confirm(t("requestConfirm", { kind: t(`requestKinds.${kind}`) }))
     )
       return;
@@ -155,7 +169,9 @@ export function AccountManagement({
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ kind }),
+          body: JSON.stringify(
+            confirm === undefined ? { kind } : { kind, confirm },
+          ),
         },
       );
       if (!response.ok) throw new Error("Account request failed");

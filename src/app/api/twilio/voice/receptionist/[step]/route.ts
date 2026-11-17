@@ -1,6 +1,7 @@
 import { after, NextRequest, NextResponse } from "next/server";
 import { readFormParamsBounded } from "@/lib/request-body";
 import { withPostgresRequestScope } from "@/lib/postgres-pool";
+import { parsePhoneInput } from "@/product/crm/phone";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
 import { greetingFor } from "@/product/receptionist/prompts";
 import {
@@ -409,9 +410,20 @@ async function handlePost(
     }
     // The session store may be what failed: the dialed number still names the business.
     config ??= engine.resolveConfig(form.To || form.Called || "");
-    return render(
-      engine.failSafePlan(config, sessionId, language, { operation: step }),
-    );
+    // A caller told "we're sending you a text" must really get one, and only a
+    // known number can be texted (blocked and anonymous callers cannot).
+    const callerE164 = parsePhoneInput(form.From || form.Caller || "");
+    const plan = engine.failSafePlan(config, sessionId, language, {
+      operation: step,
+      canText: Boolean(callerE164 && form.CallSid),
+    });
+    if (config && callerE164 && form.CallSid && engine.failSafePromisesText(config)) {
+      const callSid = form.CallSid;
+      await deferTask(async () => {
+        await engine.sendFailSafeTextBack(config, { callerE164, callSid });
+      });
+    }
+    return render(plan);
   }
 
   return emptyTwiml();

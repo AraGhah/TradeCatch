@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { Link } from "@/i18n/navigation";
 import type { PhoneSettingsView } from "@/product/telephony/types";
 
 const INPUT =
@@ -35,7 +36,9 @@ export function PhoneSettingsForm({
   const human = initial.humanTransferE164 ?? "";
   const backup = initial.backupTransferE164 ?? "";
   const timeout = initial.humanRingTimeoutSeconds;
-  const [recording, setRecording] = useState(initial.callRecordingEnabled);
+  // Recording is a privacy setting now (Privacy page). The old value here is
+  // sent back unchanged so saving this form never rewrites it.
+  const recording = initial.callRecordingEnabled;
   const [forwardAck, setForwardAck] = useState(
     initial.forwardingInstructionsAck,
   );
@@ -160,15 +163,13 @@ export function PhoneSettingsForm({
         <legend className="px-1 text-sm font-semibold text-navy">
           {t("recordingTitle")}
         </legend>
-        <label className="mt-3 flex items-center gap-2 text-sm text-navy">
-          <input
-            type="checkbox"
-            checked={recording}
-            onChange={(e) => setRecording(e.target.checked)}
-          />
-          {t("recordingEnabled")}
-        </label>
-        <p className="mt-1 text-xs text-navy/60">{t("recordingHelp")}</p>
+        <p className="mt-2 text-sm text-navy/70">{t("recordingHelp")}</p>
+        <Link
+          href="/app/receptionist/privacy"
+          className="mt-1 inline-block text-sm font-semibold text-navy underline"
+        >
+          {t("recordingLink")}
+        </Link>
       </fieldset>
 
       {error ? (

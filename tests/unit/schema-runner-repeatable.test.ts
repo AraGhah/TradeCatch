@@ -50,7 +50,13 @@ describe("db:schema is repeatable (real PostgreSQL)", { skip: !serverUrl }, () =
          VALUES (1, true, 6500, 6500, 6500, ARRAY['essential','professional']::text[], 30, true, 'manual', 6500, 6500)`,
       );
 
+      // A business created after 040 must not receive the legacy backfill on the second run.
+      await db.query(`INSERT INTO tc_organizations (id, name, slug) VALUES ('org-after-040', 'After', 'after-040')`);
+
       runSchema(target.toString());
+
+      const backfilled = await db.query(`SELECT 1 FROM tc_privacy_settings WHERE organization_id = 'org-after-040'`);
+      assert.equal(backfilled.rows.length, 0, "a repeated run gave a new business the legacy privacy values");
 
       const prefs = await db.query(
         `SELECT settings_json->>'dailySummary' AS daily FROM tc_notification_preferences WHERE organization_id = 'org-keep'`,
@@ -63,17 +69,17 @@ describe("db:schema is repeatable (real PostgreSQL)", { skip: !serverUrl }, () =
 
       const recorded = await db.query(`SELECT id FROM mc_schema_migrations`);
       const ids = new Set(recorded.rows.map((row) => row.id));
-      for (const id of ["037_password_auth", "038_referral_rewards_by_plan", "039_auth_sessions", "030_billing_v2"]) {
+      for (const id of ["037_password_auth", "038_referral_rewards_by_plan", "039_auth_sessions", "040_privacy_settings", "030_billing_v2"]) {
         assert.ok(ids.has(id), `${id} not recorded`);
       }
       const objects = await db.query(
         `SELECT (SELECT count(*) FROM information_schema.tables WHERE table_name IN
                   ('tc_user_passwords','tc_password_tokens','tc_usage_overage_confirmations','tc_usage_overage_invoices',
-                   'tc_refresh_tokens','tc_account_recovery_requests'))::int AS tables,
+                   'tc_refresh_tokens','tc_account_recovery_requests','tc_privacy_settings'))::int AS tables,
                 (SELECT count(*) FROM information_schema.columns
                   WHERE table_name = 'tc_org_settings' AND column_name = 'quote_followup_approved_at')::int AS col`,
       );
-      assert.equal(objects.rows[0]?.tables, 6);
+      assert.equal(objects.rows[0]?.tables, 7);
       assert.equal(objects.rows[0]?.col, 1);
     } finally {
       await db.end().catch(() => undefined);

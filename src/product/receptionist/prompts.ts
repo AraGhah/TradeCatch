@@ -187,6 +187,19 @@ export const PHRASES = {
     fr: "Votre message sera enregistré pour que notre équipe puisse vous répondre. Si vous ne souhaitez pas être enregistré, raccrochez avant le bip. Sinon, laissez votre nom, votre numéro et votre demande après le bip, puis appuyez sur le carré.",
     en: "Your message will be recorded so our team can respond. If you do not want to be recorded, hang up before the beep. Otherwise, leave your name, number and request after the beep, then press pound.",
   },
+  /**
+   * Recording is off, so no voicemail is taken. The caller is never told to
+   * call back: they get a text now (the missed-call text-back) to send the details.
+   */
+  textBackComing: {
+    fr: "Nous vous envoyons un message texte dans un instant pour que vous puissiez nous donner les détails. Au revoir.",
+    en: "We're sending you a text message in a moment so you can give us the details. Goodbye.",
+  },
+  /** Recording is off and this business does not text callers: the team still sees the call. */
+  callLogged: {
+    fr: "Nous n'avons pas pu prendre votre message, mais notre équipe verra votre appel et vous recontactera. Au revoir.",
+    en: "We couldn't take your message, but our team will see your call and get back to you. Goodbye.",
+  },
   voicemailThanks: {
     fr: "Merci, votre message a été transmis à l'équipe. Au revoir.",
     en: "Thank you, your message has been sent to the team. Goodbye.",

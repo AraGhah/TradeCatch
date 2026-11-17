@@ -635,6 +635,52 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
    * nothing is reported, and "technical issue" would tell the caller something
    * untrue, so it goes straight to the existing voicemail handling.
    */
+  /** The business texts callers whose call ended without details, and a sender is wired. */
+  function textBackAvailable(config: ReceptionistConfig): boolean {
+    return config.smsRecoveryOnIncomplete && Boolean(deps.onIncompleteCall);
+  }
+
+  /**
+   * True when failSafePlan(config) ends the call by promising a text: recording
+   * is off, there is no fallback line to ring, and the business texts callers.
+   * The caller route then has to call sendFailSafeTextBack.
+   */
+  function failSafePromisesText(config: ReceptionistConfig | null): boolean {
+    return Boolean(
+      config &&
+        !config.fallbackTransferE164 &&
+        config.callRecordingEnabled === false &&
+        textBackAvailable(config),
+    );
+  }
+
+  /**
+   * Sends the missed-call text now, so a caller told "we're sending you a text"
+   * gets it in seconds. The text-back dedupes on the call id, so the later
+   * finalization of the same call cannot send a second one. Never throws: a
+   * failed text must not turn into a failed call.
+   */
+  async function sendFailSafeTextBack(
+    config: ReceptionistConfig,
+    caller: { callerE164: string; callSid: string },
+  ): Promise<boolean> {
+    if (!failSafePromisesText(config) || !caller.callerE164 || !caller.callSid) {
+      return false;
+    }
+    try {
+      await deps.onIncompleteCall!({
+        clientAccountId: config.clientAccountId,
+        callerE164: caller.callerE164,
+        callSid: caller.callSid,
+        at: clock.now(),
+      });
+      return true;
+    } catch (err) {
+      console.error("[receptionist] fail-safe text-back failed", err);
+      return false;
+    }
+  }
+
   function failSafePlan(
     config: ReceptionistConfig | null,
     sessionId: string | null,
@@ -643,6 +689,8 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       cause?: "error" | "declined" | "deactivated";
       clientAccountId?: string;
       operation?: string;
+      /** False when the caller's number is unknown (blocked/anonymous): no text can be promised. */
+      canText?: boolean;
     } = {},
   ): VoicePlan {
     const voice =
@@ -677,6 +725,23 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         phoneE164: config.fallbackTransferE164,
         timeoutSeconds: transferRingTimeoutSeconds(config),
       });
+    } else if (config?.callRecordingEnabled === false) {
+      // The business switched recording off: no audio is captured, not even
+      // a voicemail, and the caller is never told to call back. They are
+      // promised the missed-call text only when it will really be sent
+      // (sendFailSafeTextBack); otherwise they are told the team will see the
+      // call. The call is logged and finalized like any other unanswered call.
+      const promisesText =
+        opts.canText !== false && textBackAvailable(config);
+      verbs.push(
+        {
+          verb: "say",
+          text: phrase(promisesText ? "textBackComing" : "callLogged", lang),
+          language: lang,
+          voice,
+        },
+        { verb: "hangup" },
+      );
     } else {
       verbs.push(
         {
@@ -1354,6 +1419,16 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     );
     session = { ...session, summary };
 
+    // Business privacy setting: without saved transcripts, the turns go now,
+    // after the summary is built from them and before anything is sent or
+    // stored. The summary, caller details and outcome stay.
+    const keepTranscript = config.saveCallTranscripts !== false;
+    const withoutTranscript = (s: CallSession): CallSession =>
+      keepTranscript || s.turns.length === 0
+        ? s
+        : { ...s, turns: [], transcriptPurgedAt: s.transcriptPurgedAt ?? nowIso() };
+    session = withoutTranscript(session);
+
     try {
       const deliveries = await deps.notifier.deliverSummary(
         config,
@@ -1377,13 +1452,13 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
         if (!isConflictError(err) || attempt === 2) throw err;
         const latest = await deps.store.getSession(sessionId);
         if (!latest) break;
-        session = {
+        session = withoutTranscript({
           ...latest,
           summary: session.summary,
           context: session.context,
           notifications: session.notifications,
           smsRecoveryTriggeredAt: session.smsRecoveryTriggeredAt,
-        };
+        });
       }
     }
 
@@ -1400,6 +1475,8 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
   return {
     resolveConfig,
     failSafePlan,
+    failSafePromisesText,
+    sendFailSafeTextBack,
     /** The scheduling backend, for callers (the voice-agent API) that book outside a Twilio call. */
     scheduler: deps.scheduler,
 

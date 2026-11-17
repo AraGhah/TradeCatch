@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireTenantContext } from "@/product/saas/tenant";
+import { allows } from "@/product/security/permissions";
 import { PrivacySettingsForm } from "@/components/app/PrivacySettingsForm";
 
 export default async function ReceptionistPrivacyPage({
@@ -16,7 +17,15 @@ export default async function ReceptionistPrivacyPage({
     <div className="flex flex-col gap-4">
       <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t("headline")}</h1>
       <p className="max-w-2xl text-sm text-navy/70">{t("intro")}</p>
-      <PrivacySettingsForm organizationId={auth.ctx.organization.id} />
+      <PrivacySettingsForm
+        organizationId={auth.ctx.organization.id}
+        canEdit={allows(
+          auth.ctx.membership.role,
+          "manage_security",
+          auth.ctx.isPlatformAdmin,
+        )}
+        analyticsAvailable={Boolean(process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID)}
+      />
     </div>
   );
 }
