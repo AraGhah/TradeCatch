@@ -3312,24 +3312,167 @@
       "error": "Impossible d’enregistrer."
     },
     "livePhoneTesting": {
-      "headline": "Test téléphonique live",
-      "intro": "Simulez le routage et les événements d’appel sans frais, ou affichez les instructions pour appeler le numéro de staging.",
+      "headline": "Test téléphonique en direct",
+      "intro": "Lancez un appel simulé pour vérifier comment votre réceptionniste achemine et répond les appels, sans appel réel et sans frais. Ou suivez les étapes pour faire vous-même un vrai appel de test.",
       "back": "Centre de test",
-      "simTitle": "Mode simulation",
-      "simBadge": "Aucun appel réel. Les résultats sont enregistrés dans l’historique de cette entreprise seulement.",
+      "simTitle": "Simulation",
+      "simBadge": "Simulation seulement : aucun téléphone n’est appelé et rien n’est facturé. Les résultats sont gardés dans l’historique de test de cette entreprise, séparément des vrais appels.",
       "scenario": "Scénario",
-      "language": "Langue",
+      "language": "Langue de l’appelant",
       "scenarios": {
-        "ai_answers": "La réceptionniste répond",
-        "human_first_missed_then_ai": "Humain d’abord, sans réponse → réceptionniste",
+        "answered_call": "L’appel est répondu",
+        "missed_call": "Appel manqué (le téléphone de l’entrepreneur ne répond pas)",
+        "caller_hangup": "L’appelant raccroche",
+        "receptionist_response": "La réceptionniste répond à une question",
+        "routing_failure": "Échec d’acheminement (la sonnerie ou le transfert échoue)",
+        "transfer_request": "L’appelant demande à parler à quelqu’un",
         "appointment_request": "Demande de rendez-vous"
       },
+      "needsRing": "Le scénario d’appel manqué exige « Le téléphone de l’entrepreneur sonne d’abord » dans Gestion des appels par IA.",
       "startSimulation": "Lancer la simulation",
-      "liveInstructions": "Instructions test live",
-      "liveWarning": "Le bouton live n’envoie jamais d’appel sortant automatiquement. Les frais opérateur peuvent s’appliquer si vous composez le numéro.",
-      "testNumber": "Numéro de test",
+      "running": "Simulation en cours…",
+      "liveTitle": "Test en direct : appelez votre réceptionniste",
+      "liveIntro": "Cette page ne vous appelle jamais, ni personne d’autre. Pour tester pour de vrai, vous composez le numéro vous-même.",
+      "liveInstructions": "Revérifier la ligne de test",
+      "checking": "Vérification…",
+      "liveWarning": "Des frais d’opérateur peuvent s’appliquer. L’appel est fait depuis votre propre téléphone : les tarifs habituels de votre opérateur, ainsi que les frais d’interurbain ou d’itinérance, s’appliquent. TradeCatch ne fait pas cet appel et ne le paie pas.",
+      "testNumber": "Numéro à composer",
+      "noNumber": "Aucun numéro n’est configuré pour cette entreprise. Ajoutez-en un dans les paramètres téléphoniques.",
+      "numberVia": {
+        "tradecatch": "Numéro TradeCatch",
+        "bland": "Ligne directe vers l’agent vocal Bland",
+        "carrier_forwarding": "Votre ligne d’affaires (votre opérateur la transfère à TradeCatch)"
+      },
+      "routingNow": {
+        "title": "Ce que fait un appel en ce moment",
+        "ring_human": "Fait sonner le téléphone de l’entrepreneur (se terminant par {last4}) pendant {seconds} secondes. Sans réponse, la réceptionniste prend l’appel.",
+        "ai": "La réceptionniste répond immédiatement.",
+        "reject": "L’appel serait refusé. Vérifiez la gestion des appels par IA.",
+        "afterHours": "Nous sommes actuellement en dehors des heures d’ouverture.",
+        "limitedByPlan": "Vos paramètres font sonner d’abord le téléphone de l’entrepreneur, mais votre forfait n’inclut pas le transfert d’appel en direct : la réceptionniste répond donc tout de suite, y compris lors d’un vrai appel. Passez à un forfait supérieur pour que votre téléphone sonne d’abord."
+      },
+      "expected": {
+        "title": "Ce que vous devriez entendre",
+        "receptionist": "Réceptionniste",
+        "greeting": "Accueil",
+        "startsIn": "Commence en",
+        "languages": "Langues offertes",
+        "voice": "Voix"
+      },
+      "languageNames": {
+        "fr": "français",
+        "en": "anglais"
+      },
+      "steps": {
+        "title": "Comment faire le test en direct",
+        "dial": "Depuis votre propre téléphone, composez le {number}.",
+        "listen": "Écoutez l’accueil ci-dessus, en {language}.",
+        "talk": "Posez une question, demandez à parler à quelqu’un ou laissez un message de test.",
+        "review": "Raccrochez, puis ouvrez l’historique des appels. Un appel que vous faites vous-même y apparaît comme un vrai appel, pas comme une simulation."
+      },
+      "checks": {
+        "title": "État de préparation",
+        "ready": "Rien n’empêche un test en direct.",
+        "notReady": "Corrigez les éléments marqués « À corriger » avant un test en direct.",
+        "items": {
+          "activated": "La réceptionniste est activée",
+          "receptionist_enabled": "La réceptionniste est en marche",
+          "plan_includes_voice": "Votre forfait inclut la réceptionniste vocale",
+          "number_assigned": "Un numéro de téléphone est attribué",
+          "number_reaches_this_business": "Chaque numéro mène à cette entreprise et à aucune autre",
+          "number_routed_to_tradecatch": "Le numéro est acheminé vers TradeCatch",
+          "answering_now": "La réceptionniste répond aux appels en ce moment",
+          "bland_route": "Une ligne Bland est acheminée vers cette entreprise",
+          "bland_secrets": "Les secrets Bland sont configurés sur le serveur"
+        },
+        "status": {
+          "ok": "OK",
+          "warning": "À vérifier",
+          "problem": "À corriger"
+        }
+      },
       "results": "Résultats",
-      "error": "Le test a échoué."
+      "savedTitle": "Simulations enregistrées",
+      "noRuns": "Aucune simulation pour l’instant. Lancez-en une ci-dessus : les résultats restent ici après une actualisation ou une nouvelle connexion.",
+      "simulatedBadge": "Simulation",
+      "status": {
+        "completed": "Terminé",
+        "transferred": "Transféré à une personne",
+        "caller_hung_up": "L’appelant a raccroché",
+        "voicemail": "Messagerie vocale",
+        "failed": "Échec"
+      },
+      "termination": {
+        "answered_by_contractor": "L’entrepreneur a répondu",
+        "caller_hung_up": "L’appelant a raccroché",
+        "voicemail_recorded": "Un message vocal a été enregistré",
+        "call_failed": "L’appel a échoué",
+        "completed_by_receptionist": "La réceptionniste a terminé l’appel"
+      },
+      "fields": {
+        "started": "Début",
+        "duration": "Durée (simulée)",
+        "status": "Statut final",
+        "ended": "L’appel s’est terminé parce que",
+        "routing": "Acheminement",
+        "greeting": "Accueil entendu",
+        "voice": "Voix",
+        "languageHeld": "Langue de l’appel",
+        "receptionist": "Réceptionniste",
+        "none": "Aucune réceptionniste n’a parlé : une personne a répondu ou l’appelant est parti avant."
+      },
+      "routing": {
+        "ring_human": "Fait sonner d’abord le téléphone de l’entrepreneur",
+        "ai": "La réceptionniste répond",
+        "reject": "Refusé"
+      },
+      "timeline": "Chronologie",
+      "transcript": "Conversation",
+      "caller": "Appelant",
+      "receptionistRole": "Réceptionniste",
+      "events": {
+        "test_simulated": "Simulation lancée",
+        "incoming": "Appel entrant",
+        "routing_decision": "Décision d’acheminement",
+        "human_ring": "Le téléphone de l’entrepreneur sonne",
+        "missed": "Sans réponse",
+        "ai_started": "La réceptionniste répond",
+        "ai_turn": "Échange",
+        "transfer_attempt": "Transfert tenté",
+        "transfer_result": "Résultat du transfert",
+        "status": "Statut de l’appel",
+        "relay_ended": "Session vocale terminée",
+        "finalized": "Appel enregistré",
+        "error": "Problème"
+      },
+      "notes": {
+        "voice_engine_conversation_relay": "Sur les vrais appels, cette ligne utilise le moteur vocal en continu. La simulation utilise la réceptionniste intégrée à règles : la formulation peut différer.",
+        "voice_engine_livekit": "Sur les vrais appels, cette ligne utilise l’agent vocal. La simulation utilise la réceptionniste intégrée à règles : la formulation peut différer.",
+        "ring_first_unavailable_on_plan": "Vos paramètres font sonner d’abord le téléphone de l’entrepreneur, mais ce forfait n’inclut pas le transfert d’appel en direct : la réceptionniste a donc répondu tout de suite. Un vrai appel se comporte de la même façon."
+      },
+      "errors": {
+        "receptionist_not_activated": "La réceptionniste n’est pas activée : les vrais appels ne lui parviendraient pas. Activez-la dans les paramètres de la réceptionniste.",
+        "receptionist_disabled": "La réceptionniste est désactivée : les vrais appels ne lui parviendraient pas. Activez-la dans les paramètres de la réceptionniste.",
+        "no_phone_number": "Aucun numéro TradeCatch n’est attribué à cette entreprise. Ajoutez-en un dans les paramètres téléphoniques.",
+        "invalid_configuration": "Les paramètres enregistrés de la réceptionniste ne sont pas valides : l’appel ne peut pas être simulé. Vérifiez les paramètres de la réceptionniste et enregistrez de nouveau.",
+        "call_not_answered_now": "La réceptionniste est réglée pour ne pas répondre à cette heure. Changez le mode de gestion des appels ou faites le test pendant les heures où elle répond.",
+        "routing_rejected": "L’acheminement enregistré refuse cet appel : la réponse par IA est désactivée et aucun téléphone n’est réglé pour sonner. Activez la réponse par IA ou ajoutez un téléphone à faire sonner.",
+        "language_not_enabled": "La réceptionniste n’est pas configurée pour cette langue. Choisissez l’une de ses langues activées.",
+        "scenario_not_applicable": "Ce scénario exige que le téléphone de l’entrepreneur sonne d’abord, mais les appels vont actuellement directement à la réceptionniste. Choisissez « Le téléphone de l’entrepreneur sonne d’abord » dans Gestion des appels par IA.",
+        "ring_first_unavailable_on_plan": "Vos paramètres font sonner d’abord le téléphone de l’entrepreneur, mais ce forfait n’inclut pas le transfert d’appel en direct : un appel va directement à la réceptionniste et un appel manqué ne peut pas être montré. Passez à un forfait supérieur ou lancez un autre scénario.",
+        "no_transfer_destination": "Aucun téléphone n’est disponible pour un transfert (aucun numéro de transfert, pas de transfert en direct dans votre forfait, ou hors des heures de transfert). Ajoutez-en un dans les paramètres de transfert.",
+        "voice_engine_not_simulatable": "Les appels de cette entreprise sont confiés à l’agent vocal, qu’une simulation ne peut pas exécuter. Utilisez plutôt le test en direct.",
+        "test_caller_is_personal_contact": "Le numéro de l’appelant simulé figure dans votre liste de contacts personnels : il n’atteindrait pas la réceptionniste.",
+        "persistence_failed": "La simulation a été exécutée, mais son résultat n’a pas pu être enregistré; il n’est donc pas affiché. Réessayez dans un instant.",
+        "history_unavailable": "Les simulations enregistrées n’ont pas pu être chargées. Actualisez la page dans un instant.",
+        "simulation_incomplete": "Une tentative précédente n’a pas fini de s’enregistrer. Relancez la simulation.",
+        "runtime_unavailable": "Les paramètres de la réceptionniste n’ont pas pu être chargés. Réessayez dans un instant.",
+        "simulation_failed": "La simulation a échoué de façon inattendue. Aucun appel n’a été fait. Réessayez, ou communiquez avec le soutien si le problème persiste.",
+        "phone_client_not_linked": "Aucun compte téléphonique n’est encore lié à cette entreprise."
+      },
+      "error": "Le test a échoué.",
+      "fieldsLabel": "Champs à vérifier : {fields}",
+      "loadError": "Une partie de cette page n’a pas pu être chargée. Actualisez la page; si le problème persiste, communiquez avec le soutien."
     },
     "websiteServices": {
       "headline": "Services de site web",

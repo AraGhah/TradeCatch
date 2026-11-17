@@ -3313,23 +3313,166 @@
     },
     "livePhoneTesting": {
       "headline": "Live phone testing",
-      "intro": "Simulate routing and call events with no charges, or show instructions for calling the staging number.",
+      "intro": "Run a simulated call to check how your receptionist routes and answers, with no phone call and no charges. Or follow the steps to place a real test call yourself.",
       "back": "Test Center",
-      "simTitle": "Simulation mode",
-      "simBadge": "No real calls. Results are saved in this business’s call history only.",
+      "simTitle": "Simulation",
+      "simBadge": "Simulation only: no phone is called and nothing is billed. Results are saved to this business’s test history, separate from real calls.",
       "scenario": "Scenario",
-      "language": "Language",
+      "language": "Caller language",
       "scenarios": {
-        "ai_answers": "Receptionist answers",
-        "human_first_missed_then_ai": "Human first, no answer → Receptionist",
+        "answered_call": "Call is answered",
+        "missed_call": "Missed call (contractor phone not answered)",
+        "caller_hangup": "Caller hangs up",
+        "receptionist_response": "Receptionist answers a question",
+        "routing_failure": "Routing failure (ring or transfer fails)",
+        "transfer_request": "Caller asks for a person",
         "appointment_request": "Appointment request"
       },
-      "startSimulation": "Start simulation",
-      "liveInstructions": "Live test instructions",
-      "liveWarning": "The live button never places an outbound call automatically. Carrier charges may apply if you dial the number.",
-      "testNumber": "Test number",
+      "needsRing": "The missed-call scenario needs “Contractor phone rings first” in AI Call Handling.",
+      "startSimulation": "Run simulation",
+      "running": "Running…",
+      "liveTitle": "Live test: call your receptionist",
+      "liveIntro": "This page never calls you or anyone else. To test for real, you dial the number yourself.",
+      "liveInstructions": "Re-check live test line",
+      "checking": "Checking…",
+      "liveWarning": "Carrier charges may apply. The call is placed from your own phone, so your carrier’s normal rates, long-distance or roaming charges apply. TradeCatch does not place or pay for this call.",
+      "testNumber": "Number to dial",
+      "noNumber": "No number is set up for this business yet. Add one in Phone settings.",
+      "numberVia": {
+        "tradecatch": "TradeCatch number",
+        "bland": "Direct line to the Bland voice agent",
+        "carrier_forwarding": "Your business line (your carrier forwards it to TradeCatch)"
+      },
+      "routingNow": {
+        "title": "What a call does right now",
+        "ring_human": "Rings the contractor’s phone (ending in {last4}) for {seconds} seconds. If nobody answers, the receptionist takes the call.",
+        "ai": "The receptionist answers right away.",
+        "reject": "The call would be rejected. Check AI Call Handling.",
+        "afterHours": "It is currently outside business hours.",
+        "limitedByPlan": "Your settings ring the contractor’s phone first, but your plan does not include live call transfer, so the receptionist answers right away, in a real call as well. Upgrade the plan to have your phone ring first."
+      },
+      "expected": {
+        "title": "What you should hear",
+        "receptionist": "Receptionist",
+        "greeting": "Greeting",
+        "startsIn": "Starts in",
+        "languages": "Languages offered",
+        "voice": "Voice"
+      },
+      "languageNames": {
+        "fr": "French",
+        "en": "English"
+      },
+      "steps": {
+        "title": "How to run the live test",
+        "dial": "From your own phone, call {number}.",
+        "listen": "Listen for the greeting above, in {language}.",
+        "talk": "Ask a question, ask for a person, or leave a test message.",
+        "review": "Hang up, then open Call history. A call you place yourself appears there as a real call, not a simulation."
+      },
+      "checks": {
+        "title": "Readiness",
+        "ready": "Nothing blocks a live test.",
+        "notReady": "Fix the items marked “Fix” before a live test.",
+        "items": {
+          "activated": "Receptionist is activated",
+          "receptionist_enabled": "Receptionist is switched on",
+          "plan_includes_voice": "Your plan includes the voice receptionist",
+          "number_assigned": "A phone number is assigned",
+          "number_reaches_this_business": "Each number reaches this business and no other",
+          "number_routed_to_tradecatch": "The number is routed to TradeCatch",
+          "answering_now": "The receptionist answers calls right now",
+          "bland_route": "A Bland line is routed to this business",
+          "bland_secrets": "Bland secrets are configured on the server"
+        },
+        "status": {
+          "ok": "OK",
+          "warning": "Check",
+          "problem": "Fix"
+        }
+      },
       "results": "Results",
-      "error": "The test failed."
+      "savedTitle": "Saved simulations",
+      "noRuns": "No simulations yet. Run one above; results stay here after a refresh or a new login.",
+      "simulatedBadge": "Simulation",
+      "status": {
+        "completed": "Completed",
+        "transferred": "Transferred to a person",
+        "caller_hung_up": "Caller hung up",
+        "voicemail": "Voicemail",
+        "failed": "Failed"
+      },
+      "termination": {
+        "answered_by_contractor": "The contractor answered",
+        "caller_hung_up": "The caller hung up",
+        "voicemail_recorded": "A voicemail was recorded",
+        "call_failed": "The call failed",
+        "completed_by_receptionist": "The receptionist finished the call"
+      },
+      "fields": {
+        "started": "Started",
+        "duration": "Duration (simulated)",
+        "status": "Final status",
+        "ended": "Call ended because",
+        "routing": "Routing",
+        "greeting": "Greeting heard",
+        "voice": "Voice",
+        "languageHeld": "Language of the call",
+        "receptionist": "Receptionist",
+        "none": "No receptionist spoke: a person answered or the caller left first."
+      },
+      "routing": {
+        "ring_human": "Rings the contractor’s phone first",
+        "ai": "Receptionist answers",
+        "reject": "Rejected"
+      },
+      "timeline": "Timeline",
+      "transcript": "Conversation",
+      "caller": "Caller",
+      "receptionistRole": "Receptionist",
+      "events": {
+        "test_simulated": "Simulation started",
+        "incoming": "Incoming call",
+        "routing_decision": "Routing decision",
+        "human_ring": "Contractor phone rings",
+        "missed": "Not answered",
+        "ai_started": "Receptionist answers",
+        "ai_turn": "Conversation turn",
+        "transfer_attempt": "Transfer attempted",
+        "transfer_result": "Transfer result",
+        "status": "Call status",
+        "relay_ended": "Voice session ended",
+        "finalized": "Call recorded",
+        "error": "Problem"
+      },
+      "notes": {
+        "voice_engine_conversation_relay": "This line uses the streaming voice engine on real calls. The simulation runs the built-in rules receptionist, so wording can differ.",
+        "voice_engine_livekit": "This line uses the voice agent on real calls. The simulation runs the built-in rules receptionist, so wording can differ.",
+        "ring_first_unavailable_on_plan": "Your settings ring the contractor’s phone first, but this plan does not include live call transfer, so the receptionist answered right away. A real call behaves the same way."
+      },
+      "errors": {
+        "receptionist_not_activated": "The receptionist is not activated, so real calls would not reach it. Activate it in Receptionist settings.",
+        "receptionist_disabled": "The receptionist is switched off, so real calls would not reach it. Turn it on in Receptionist settings.",
+        "no_phone_number": "No TradeCatch phone number is assigned to this business yet. Add one in Phone settings.",
+        "invalid_configuration": "The saved receptionist settings are not valid, so the call cannot be simulated. Review your Receptionist settings and save again.",
+        "call_not_answered_now": "The receptionist is set not to answer calls at this time of day. Change the call handling mode, or run the test during the hours it answers.",
+        "routing_rejected": "The saved routing rejects this call: AI answering is off and no phone is set to ring. Turn AI answering on or add a phone to ring.",
+        "language_not_enabled": "The receptionist is not set up for that language. Pick one of its enabled languages.",
+        "scenario_not_applicable": "This scenario needs the contractor’s phone to ring first, but calls currently go straight to the receptionist. Choose “Contractor phone rings first” in AI Call Handling.",
+        "ring_first_unavailable_on_plan": "Your settings ring the contractor’s phone first, but this plan does not include live call transfer, so a call goes straight to the receptionist and a missed call cannot be shown. Upgrade the plan, or run another scenario.",
+        "no_transfer_destination": "No phone is available to transfer a call to (no transfer number, no live transfer on your plan, or outside transfer hours). Add one in Transfer settings.",
+        "voice_engine_not_simulatable": "Calls to this business are handed to the voice agent, which a simulation cannot run. Use the live test instead.",
+        "test_caller_is_personal_contact": "The simulated caller number is in your personal contacts list, so it would not reach the receptionist.",
+        "persistence_failed": "The simulation ran but could not be saved, so it is not shown. Try again in a moment.",
+        "history_unavailable": "Saved simulations could not be loaded. Refresh the page in a moment.",
+        "simulation_incomplete": "An earlier attempt did not finish saving. Run the simulation again.",
+        "runtime_unavailable": "The receptionist settings could not be loaded. Try again in a moment.",
+        "simulation_failed": "The simulation failed unexpectedly. Nothing was called. Try again, or contact support if it keeps happening.",
+        "phone_client_not_linked": "This business has no phone account linked yet."
+      },
+      "error": "The test failed.",
+      "fieldsLabel": "Fields to check: {fields}",
+      "loadError": "Part of this page could not be loaded. Refresh the page; if it keeps happening, contact support."
     },
     "websiteServices": {
       "headline": "Website Services",
