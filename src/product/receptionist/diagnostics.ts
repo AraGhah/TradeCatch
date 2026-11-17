@@ -39,6 +39,8 @@ type Diagnostic = {
     | "orphan_voicemail"
     | "call_event_write_failed"
     | "status_finalize_failed"
+    | "status_unmatched"
+    | "call_record_failed"
     | "webhook_phase_entered"
     | "webhook_completed"
     | "refresh_skipped_in_flight"
