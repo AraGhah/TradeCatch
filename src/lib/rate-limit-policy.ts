@@ -336,6 +336,16 @@ export const POLICIES = {
     per: "business+user",
     why: "Receptionist test chat (model calls cost money).",
   },
+  // Not a dashboard tool: the Bland agent's tool calls, keyed by business and
+  // call. The route is exempt from the per-address default (see below), so
+  // this is what stops a looping agent from hammering the calendar. A real
+  // call makes a few dozen tool calls at most.
+  "tools.bland-call": {
+    ...perWindow(120, 10 * MIN),
+    group: "tools",
+    per: "other",
+    why: "A looping Bland agent hammering the scheduler and calendar during one call.",
+  },
 
   // --- Defaults for every other /api route (rate-limit-central.ts) --------
   // Per address. Deliberately generous: these catch loops and floods, not
@@ -437,6 +447,11 @@ export const EXEMPT_API_PREFIXES: ReadonlyArray<{
   {
     prefix: "/api/receptionist/agent-config",
     reason: "Voice agent configuration fetch at call start",
+  },
+  {
+    prefix: "/api/bland/",
+    reason:
+      "Bland voice agent tool calls and signed post-call webhook (shared Bland addresses; limited per call instead)",
   },
   {
     prefix: "/api/health",
