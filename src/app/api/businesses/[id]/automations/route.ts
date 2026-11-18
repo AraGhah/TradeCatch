@@ -2,7 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAutomationAccess } from "@/product/sms-automation/access";
-import { AutomationError } from "@/product/sms-automation/service";
+import { automationFailure } from "@/product/sms-automation/http";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 import { AUTOMATION_TYPES } from "@/product/sms-automation/types";
 
@@ -23,8 +23,12 @@ export async function GET(_request: NextRequest, { params }: Params) {
       { status: access.status },
     );
   }
-  const automations = await getAutomationServices().list(id);
-  return NextResponse.json({ ok: true, automations });
+  try {
+    const automations = await getAutomationServices().list(id);
+    return NextResponse.json({ ok: true, automations });
+  } catch (err) {
+    return automationFailure(err, "list");
+  }
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -54,9 +58,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     const automation = automations.find((row) => row.type === parsed.data.type);
     return NextResponse.json({ ok: true, automation });
   } catch (err) {
-    if (err instanceof AutomationError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    throw err;
+    return automationFailure(err, "list");
   }
 }
