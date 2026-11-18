@@ -15,15 +15,24 @@ For live billing configure these server secrets/variables:
 
 - `STRIPE_SECRET_KEY`: the account's live secret API key.
 - `STRIPE_WEBHOOK_SECRET`: the live endpoint's signing secret.
-- `STRIPE_PRICE_STARTER` and `STRIPE_PRICE_GROWTH`: trusted recurring Price IDs.
-  Comma-separated values support monthly, annual, and retired prices. Keep legacy
-  IDs while historical subscriptions still reference them. A price must map to
-  exactly one plan. Unknown or mixed-plan subscription items fail with HTTP 503
-  and do not change access.
+- `STRIPE_PRICE_ESSENTIAL` and `STRIPE_PRICE_PROFESSIONAL`: the monthly recurring
+  Price IDs of the two plans on sale (see [Plans](#plans-names-prices-and-the-legacy-mapping)).
+- `STRIPE_PRICE_INSTALL_ESSENTIAL` and `STRIPE_PRICE_INSTALL_PROFESSIONAL`: the
+  one-time setup-fee Prices charged by the self-serve checkout.
+- `STRIPE_PRICE_WEBSITE_SERVICE`: the optional one-time website add-on.
+- `STRIPE_PRICE_STARTER`, `STRIPE_PRICE_GROWTH`, `STRIPE_PRICE_RECEPTIONIST`:
+  **retired** plans. Keep their Price IDs for as long as any subscription still
+  uses them. Comma-separated values support several Prices per plan (the first
+  is the one new checkouts use; later ones are retired Prices still mapped).
+  A price must map to exactly one plan. Unknown or mixed-plan subscription items
+  fail with HTTP 503 and do not change access.
 
 Register a **snapshot** webhook endpoint at
 `https://tradecatch.ca/api/webhooks/stripe`, with these events:
 
+- `checkout.session.completed` — **required**. When a customer pays the setup
+  fee, this event is what creates their deferred monthly subscription. Without it
+  the customer pays once and is never billed monthly.
 - `customer.subscription.created`, `customer.subscription.updated`,
   `customer.subscription.deleted`, `customer.subscription.paused`,
   `customer.subscription.resumed`
@@ -50,11 +59,85 @@ customer with no mapping is acknowledged without modifying an account. Connect
 events are unsupported and cannot modify platform organizations.
 
 For testing, configure `STRIPE_TEST_SECRET_KEY`, `STRIPE_TEST_WEBHOOK_SECRET`,
-`STRIPE_TEST_PRICE_STARTER`, and `STRIPE_TEST_PRICE_GROWTH` separately. A test key
+and the `STRIPE_TEST_PRICE_*` / `STRIPE_TEST_PRICE_INSTALL_*` variants of every
+price above separately. A test key
 in `STRIPE_SECRET_KEY` can serve as the test API key fallback, but cannot process
 live events. Test signatures cannot authorize live events. Test subscriptions
 may only change organizations whose `account_type` is `demo`. Never use test
 billing to activate a production organization.
+
+## Plans: names, prices and the legacy mapping
+
+Two plans are on sale, each with the same one-time setup fee. All amounts are CAD.
+
+| Customer-facing name | Internal id    | Monthly | Setup     | Env (monthly / setup)                                             |
+| -------------------- | -------------- | ------- | --------- | ----------------------------------------------------------------- |
+| Essential            | `essential`    | $249    | $1,999.99 | `STRIPE_PRICE_ESSENTIAL` / `STRIPE_PRICE_INSTALL_ESSENTIAL`       |
+| Professional         | `professional` | $349    | $1,999.99 | `STRIPE_PRICE_PROFESSIONAL` / `STRIPE_PRICE_INSTALL_PROFESSIONAL` |
+
+The single source for these amounts is `PLAN_PRICES` in `src/lib/plans.ts`; names
+and the legacy mapping live in `src/lib/plan-names.ts`; features in
+`src/product/saas/plan-catalog.ts` and entitlements in
+`src/product/saas/entitlements.ts`. The website, the dashboard and the checkout
+all read those, and the checkout refuses to create a Stripe Checkout Session when
+a configured Price does not match them (`assertPriceMatchesCatalog`), so a wrong
+Price fails closed instead of charging the wrong amount.
+
+**Retired plan ids stay as they are.** Database rows, Stripe Price mappings and
+entitlements keep using `starter`, `growth` and `receptionist`; renaming them
+would risk billing and access. Only the label changes:
+
+| Internal id    | Shown to the customer as | Price shown                                   |
+| -------------- | ------------------------ | --------------------------------------------- |
+| `starter`      | Essential                | none ("price stays as agreed when you signed up") |
+| `growth`       | Professional             | none (same)                                   |
+| `receptionist` | Professional             | none (same)                                   |
+
+The label is label-only. A customer on a retired plan keeps exactly the features
+that plan was sold with (the dashboard lists them from the real entitlements, not
+from the public plan they are labelled with), so relabelling cannot grant or
+remove anything. The catalog price is never shown for a retired plan, because
+those customers pay what they signed up at. Whether a retired plan should instead
+be moved onto the new plan and its entitlements is a business decision that
+needs per-customer billing review.
+
+### Changing a price
+
+Stripe Prices are immutable. To change an amount, create a **new** Price and
+point the variable at it; never edit or delete the old one.
+
+1. `node scripts/stripe-setup-plan-prices.js --dry-run` (add `--live` for the live
+   account). The script only adds: it creates a Price only when none with that
+   exact amount exists on the product, and never touches existing Prices,
+   customers or subscriptions. It finds products by the exact names "TradeCatch
+   Essential" and "TradeCatch Professional". If the account already sells the
+   plans under other names (the live account calls them "TradeCatch Essentials"
+   and "TradeCatch AI Receptionist"), the dry run prints `would create product`:
+   pass the existing products instead with
+   `--product-essential prod_... --product-professional prod_...` (ids from the
+   Stripe Dashboard product catalogue). Each id is checked to exist and be active.
+2. Run it without `--dry-run` once the plan looks right, then set the printed
+   `STRIPE_PRICE_*` values. If any subscription still uses the old Price, keep it
+   in the same variable **after** the new one (`price_new,price_old`) so it keeps
+   mapping to its plan; existing subscriptions keep the amount they signed up at.
+3. Re-run the audit below.
+
+### Auditing the configuration
+
+```
+npm run billing:audit -- --env-file <file>            # test mode
+npm run billing:audit -- --env-file <file> --live     # live account, live key
+```
+
+Read-only: it only sends GET requests, prints Price ids, amounts, event names and
+counts (never a key, secret, customer or subscription id), loads no env file
+unless you name one, and exits non-zero when a check fails. It verifies each
+configured Price against the catalog (amount, CAD, monthly vs one-time, active,
+mode), that every existing subscription's Price maps to a plan, that the webhook
+endpoint carries every event the application acts on (including
+`checkout.session.completed`), the portal's plan-change setting, and it flags
+misspelt variable names such as `STRIPE_WEBHOOK_SEKRET`. Pass `--names A,B,C`
+(for example the names from `wrangler secret list`) to spell-check Worker bindings.
 
 ## Access policy
 
@@ -62,12 +145,15 @@ billing to activate a production organization.
 | ------------------------------------------------------- | ----------------------------------------------------- |
 | `active` or `trialing`                                  | Active with the mapped plan                           |
 | Active, cancellation scheduled at period end            | Retain plan/access until Stripe ends the subscription |
-| `past_due`, `unpaid`, `incomplete`, or `paused`         | Suspended; Growth permissions removed                 |
-| All subscriptions canceled/expired, or customer deleted | Churned; Growth permissions removed                   |
+| `past_due`, `unpaid`, `incomplete`, or `paused`         | Suspended; product access removed, plan kept          |
+| All subscriptions canceled/expired, or customer deleted | Churned; product access removed, plan kept            |
 | Payment recovered and subscription becomes active       | Restore the mapped plan/access                        |
 
-An active Growth subscription takes precedence over Starter; cancellation of an
-old subscription cannot revoke access provided by its active replacement.
+When one customer holds several subscriptions the most capable plan wins
+(Receptionist, Professional, Growth, Essential, Starter), so cancelling an old
+subscription cannot revoke access provided by its active replacement. An upgrade
+or downgrade is therefore just Stripe moving the subscription to another Price:
+the next event rewrites the recorded plan, and the dashboard follows.
 Suspension starts immediately on `past_due`; Stripe remains responsible for
 payment retries and customer billing communications. This webhook does not change
 Stripe's retry settings or charge a customer.

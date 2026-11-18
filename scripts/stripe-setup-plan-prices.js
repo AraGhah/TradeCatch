@@ -24,6 +24,12 @@
  *   Live mode (only after the dry run looks right):
  *     STRIPE_SECRET_KEY=sk_live_... node scripts/stripe-setup-plan-prices.js --live
  *
+ * Products are found by exact name ("TradeCatch Essential", "TradeCatch
+ * Professional"). If the account already sells these plans under different
+ * product names, reuse those products instead of creating new ones:
+ *     --product-essential prod_xxx --product-professional prod_yyy
+ * Each id is checked to exist and be active; no product is created or edited.
+ *
  * It prints the resulting Price IDs for the environment (STRIPE_PRICE_*,
  * STRIPE_PRICE_INSTALL_*, STRIPE_PRICE_WEBSITE_SERVICE, or the TEST_ variants).
  * It does not write to .env itself.
@@ -49,6 +55,26 @@ async function stripe(key, method, path, body) {
     throw new Error(`Stripe ${method} ${path} failed: ${JSON.stringify(json)}`);
   }
   return json;
+}
+
+function argValue(name) {
+  const at = process.argv.indexOf(name);
+  if (at < 0) return undefined;
+  const value = process.argv[at + 1];
+  // A flag without its value must not silently fall back to creating a product.
+  if (!value || value.startsWith("--")) throw new Error(`${name} needs a Stripe product id (prod_...).`);
+  return value;
+}
+
+/** Reuses a product the owner named by id. Read-only: it only checks that it exists and is active. */
+async function useExistingProduct(key, id, label) {
+  if (!/^prod_[A-Za-z0-9]+$/.test(id || "")) {
+    throw new Error(`${label}: "${id}" is not a Stripe product id (prod_...).`);
+  }
+  const product = await stripe(key, "GET", `products/${id}`);
+  if (!product.active) throw new Error(`${label}: product ${id} is archived.`);
+  console.info(`  using existing product: ${product.name} -> ${id}`);
+  return id;
 }
 
 async function findOrCreateProduct(key, name, dryRun) {
@@ -111,9 +137,15 @@ async function main() {
   );
   const envPrefix = live ? "" : "TEST_";
   const results = {};
+  const productOverride = {
+    ESSENTIAL: argValue("--product-essential"),
+    PROFESSIONAL: argValue("--product-professional"),
+  };
   for (const [plan, cfg] of Object.entries(PLANS)) {
     console.info(`\n${cfg.product}`);
-    const productId = await findOrCreateProduct(key, cfg.product, dryRun);
+    const productId = productOverride[plan]
+      ? await useExistingProduct(key, productOverride[plan], cfg.product)
+      : await findOrCreateProduct(key, cfg.product, dryRun);
     results[`STRIPE_${envPrefix}PRICE_INSTALL_${plan}`] = await findOrCreatePrice(
       key,
       productId,
