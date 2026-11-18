@@ -1887,13 +1887,6 @@
       "autoSave": "Enregistrer",
       "autoSaved": "Enregistré."
     },
-    "plan": {
-      "starter": "Starter",
-      "growth": "Growth",
-      "receptionist": "Réceptionniste Plus",
-      "essential": "Essential",
-      "professional": "Professional"
-    },
     "dashboard": {
       "headline": "Ce que TradeCatch a fait pour vous",
       "intro": "Les totaux de récupération de votre entreprise. Les revenus n’apparaissent que lorsqu’un montant réel est au dossier.",
@@ -2318,7 +2311,9 @@
       },
       "planBilling": "Facturation et factures",
       "planAccount": "Profil de l’entreprise et équipe",
-      "planProfessionalNote": "Les rendez-vous et le calendrier sont inclus avec Professional.",
+      "planProfessionalNote": "Les rendez-vous et le calendrier sont inclus avec Professional, {amount} par mois.",
+      "planMonthly": "{amount} par mois",
+      "planLegacyPrice": "Votre prix reste celui convenu à votre inscription.",
       "hubTitle": "Configuration",
       "hub": {
         "receptionist": {
@@ -3059,7 +3054,15 @@
       "billingHeadline": "Facturation",
       "billingSupport": "Contacter le soutien",
       "billingPlanLine": "{plan} : {amount} par mois",
+      "billingPlanLineLegacy": "{plan}. Votre prix mensuel reste celui convenu à votre inscription.",
       "billingFirstChargeOn": "Premier prélèvement mensuel : {date}.",
+      "billingNextCharge": "Prochain prélèvement mensuel : {date}.",
+      "billingCancelsOn": "Votre abonnement se termine le {date}. Vous gardez un accès complet jusque-là.",
+      "billingStatusActive": "Abonnement : actif.",
+      "billingStatusPaymentNeeded": "Abonnement : paiement requis. Mettez à jour votre mode de paiement pour rétablir l’accès.",
+      "billingStatusCanceled": "Abonnement : annulé.",
+      "billingIncludedTitle": "Ce que comprend votre forfait",
+      "billingComparePlans": "Comparer les forfaits",
       "checkoutIntro": "Payez les frais d’installation uniques de {setup} CAD pour démarrer. Votre premier prélèvement mensuel de {monthly} CAD a lieu un mois après l’installation, puis chaque mois.",
       "checkoutStart": "Payer les frais d’installation",
       "checkoutOpening": "Ouverture du paiement…",
@@ -3555,9 +3558,9 @@
       "entitlement": "La voix de la réceptionniste n'est pas offerte avec votre forfait.",
       "unavailable": "Le clonage de voix n'est pas disponible pour le moment. Vos appels continuent d'utiliser la voix standard.",
       "locked": {
-        "badge": "Réceptionniste Plus",
-        "title": "Le clonage de voix personnalisée est inclus avec Réceptionniste Plus",
-        "body": "Passez au forfait supérieur pour que votre réceptionniste réponde aux appels avec votre propre voix. D'ici là, vos appels utilisent la voix standard.",
+        "badge": "Non disponible",
+        "title": "Le clonage de voix personnalisée n'est pas disponible avec votre forfait",
+        "body": "Votre réceptionniste répond aux appels avec la voix standard.",
         "cta": "Voir les forfaits",
         "existing": "Votre forfait n'inclut plus de voix personnalisée : les appels utilisent la voix standard. Vous pouvez tout de même supprimer la voix que vous avez enregistrée."
       },
@@ -3664,7 +3667,7 @@
       },
       "errors": {
         "generic": "Un problème est survenu. Vos appels continuent d'utiliser leur voix actuelle. Veuillez réessayer.",
-        "not_entitled": "La voix personnalisée est incluse avec Réceptionniste Plus.",
+        "not_entitled": "La voix personnalisée n'est pas disponible avec votre forfait.",
         "unavailable": "Le clonage de voix n'est pas disponible pour le moment. Veuillez réessayer plus tard.",
         "consent_required": "Veuillez accepter la déclaration de consentement et saisir votre nom.",
         "consent_outdated": "Le texte du consentement a été mis à jour. Rechargez la page et acceptez-le de nouveau.",
@@ -4508,25 +4511,16 @@
   },
   "plans": {
     "names": {
-      "starter": "Starter",
-      "growth": "Growth",
-      "receptionist": "Réceptionniste Plus",
       "essential": "Essential",
       "professional": "Professional"
     },
     "kind": {
-      "starter": "Réceptionniste SMS",
-      "growth": "Réceptionniste limitée",
-      "receptionist": "Réceptionniste complète",
       "essential": "Répond aux appels et capte les clients",
       "professional": "Répond aux appels et gère les rendez-vous"
     },
     "channels": {
       "voice-answering": "Répond aux appels, jour et nuit, en français ou en anglais, et note les coordonnées et la demande de chaque appelant.",
-      "voice-booking": "Fait tout ce que fait Essential, et prend aussi les rendez-vous directement dans votre Google Agenda.",
-      "sms": "Textos automatiques pour les appels manqués, les demandes du site web et les soumissions restées sans réponse. Ne répond pas au téléphone.",
-      "voice-essentials": "Répond aux appels en français ou en anglais, qualifie le travail, répond à partir de vos renseignements approuvés et envoie un résumé à votre équipe.",
-      "voice-complete": "Réceptionniste complète : répond, qualifie, prend les rendez-vous pendant l’appel et conserve les transcriptions lorsqu’elles sont activées."
+      "voice-booking": "Fait tout ce que fait Essential, et prend aussi les rendez-vous directement dans votre Google Agenda."
     },
     "availability": {
       "included": "Inclus",

@@ -1887,13 +1887,6 @@
       "autoSave": "Save",
       "autoSaved": "Saved."
     },
-    "plan": {
-      "starter": "Starter",
-      "growth": "Growth",
-      "receptionist": "Receptionist Plus",
-      "essential": "Essential",
-      "professional": "Professional"
-    },
     "dashboard": {
       "headline": "What TradeCatch did for you",
       "intro": "Recovery totals for your business. Revenue is shown only when a real amount is on file.",
@@ -2318,7 +2311,9 @@
       },
       "planBilling": "Billing and invoices",
       "planAccount": "Business profile and team",
-      "planProfessionalNote": "Appointments and the calendar come with Professional.",
+      "planProfessionalNote": "Appointments and the calendar come with Professional, {amount} per month.",
+      "planMonthly": "{amount} per month",
+      "planLegacyPrice": "Your price stays as agreed when you signed up.",
       "hubTitle": "Set up",
       "hub": {
         "receptionist": {
@@ -3059,7 +3054,15 @@
       "billingHeadline": "Billing",
       "billingSupport": "Contact support",
       "billingPlanLine": "{plan}: {amount} per month",
+      "billingPlanLineLegacy": "{plan}. Your monthly price stays as agreed when you signed up.",
       "billingFirstChargeOn": "First monthly charge: {date}.",
+      "billingNextCharge": "Next monthly charge: {date}.",
+      "billingCancelsOn": "Your subscription ends on {date}. You keep full access until then.",
+      "billingStatusActive": "Subscription: active.",
+      "billingStatusPaymentNeeded": "Subscription: payment needed. Update your payment method to restore access.",
+      "billingStatusCanceled": "Subscription: canceled.",
+      "billingIncludedTitle": "What your plan includes",
+      "billingComparePlans": "Compare plans",
       "checkoutIntro": "Pay the one-time setup fee of {setup} CAD to start. Your first monthly charge of {monthly} CAD comes one month after setup, then every month after that.",
       "checkoutStart": "Pay the setup fee",
       "checkoutOpening": "Opening checkout…",
@@ -3555,9 +3558,9 @@
       "entitlement": "The receptionist voice is not available on your plan.",
       "unavailable": "Voice cloning isn't available right now. Your calls keep using the standard voice.",
       "locked": {
-        "badge": "Receptionist Plus",
-        "title": "Custom Voice Cloning is included with Receptionist Plus",
-        "body": "Upgrade to let your receptionist answer calls in your own voice. Until then your calls use the standard voice.",
+        "badge": "Not available",
+        "title": "Custom Voice Cloning is not available on your plan",
+        "body": "Your receptionist answers calls in the standard voice.",
         "cta": "See plans",
         "existing": "Your plan no longer includes a custom voice, so calls use the standard voice. You can still delete the voice you recorded."
       },
@@ -3664,7 +3667,7 @@
       },
       "errors": {
         "generic": "Something went wrong. Your calls keep using their current voice. Please try again.",
-        "not_entitled": "Custom voice is included with Receptionist Plus.",
+        "not_entitled": "Custom voice is not available on your plan.",
         "unavailable": "Voice cloning isn't available right now. Please try again later.",
         "consent_required": "Please accept the consent statement and type your name.",
         "consent_outdated": "The consent wording was updated. Reload the page and accept it again.",
@@ -4508,25 +4511,16 @@
   },
   "plans": {
     "names": {
-      "starter": "Starter",
-      "growth": "Growth",
-      "receptionist": "Receptionist Plus",
       "essential": "Essential",
       "professional": "Professional"
     },
     "kind": {
-      "starter": "SMS Receptionist",
-      "growth": "Limited Receptionist",
-      "receptionist": "Complete Receptionist",
       "essential": "Answers calls and captures customers",
       "professional": "Answers calls and manages appointments"
     },
     "channels": {
       "voice-answering": "Answers calls day and night in French or English, and records every caller’s details and request.",
-      "voice-booking": "Does everything Essential does, and also books appointments straight into your Google Calendar.",
-      "sms": "Automated texts for missed calls, website inquiries and quotes that went quiet. Does not answer the phone.",
-      "voice-essentials": "Answers calls in French or English, qualifies the job, answers from your approved information and sends your team a summary.",
-      "voice-complete": "Full receptionist: answers, qualifies, books on the call and keeps transcripts when enabled."
+      "voice-booking": "Does everything Essential does, and also books appointments straight into your Google Calendar."
     },
     "availability": {
       "included": "Included",

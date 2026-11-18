@@ -5,9 +5,11 @@ import { BillingPortalButton } from "@/components/app/BillingPortalButton";
 import { InstallationCheckoutButton } from "@/components/app/InstallationCheckoutButton";
 import { FullMessagesProvider } from "@/components/FullMessagesProvider";
 import { Link } from "@/i18n/navigation";
-import { PLAN_DISPLAY_NAMES } from "@/product/saas/entitlements";
-import { PLAN_PRICES, formatPlanMoney } from "@/lib/plans";
-import { ADD_ONS } from "@/product/saas/plan-catalog";
+import { orgHasFeature } from "@/product/saas/entitlements";
+import { PLAN_PRICES, formatPlanPrice } from "@/lib/plans";
+import { ADD_ONS, describePlan } from "@/product/saas/plan-catalog";
+import { getSubscriptionSummary } from "@/product/saas/billing-summary";
+import { billingPlanCard } from "@/product/saas/billing-view";
 import { getInstallationStatus } from "@/product/saas/stripe-checkout";
 import { listOverages, usageSummary } from "@/product/saas/usage-metering";
 import { UsageOverageConfirm } from "@/components/app/UsageOverageConfirm";
@@ -24,24 +26,45 @@ export default async function BillingPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("app.account");
+  const settingsT = await getTranslations("app.settings");
+  const plansT = await getTranslations("plans");
   const access = await requireBillingContext();
   if (!access.ok && access.status === 401) {
     redirect(locale === "fr" ? "/fr/connexion" : "/login");
   }
   const org = access.ok ? access.ctx.organization : null;
-  const [installation, usage, overages] = org
+  const [installation, subscription, usage, overages] = org
     ? await Promise.all([
         getInstallationStatus(org.id).catch(() => null),
+        getSubscriptionSummary(org.id).catch(() => null),
         usageSummary(org.id, org.plan).catch(() => []),
         listOverages(org.id).catch(() => []),
       ])
-    : [null, [], []];
+    : [null, null, [], []];
+  // Name, price and features come from the same catalog the website uses.
+  const plan = org ? describePlan(org.plan) : null;
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  // Every decision about what this card says lives in billingPlanCard (tested).
+  const card =
+    org && plan
+      ? billingPlanCard({
+          plan,
+          subscription,
+          installation,
+          hasAppointments: orgHasFeature(org.plan, "APPOINTMENT_BOOKING"),
+        })
+      : null;
   // Setup and the monthly price are shown separately, in Canadian dollars, with the date of the first monthly charge.
-  const websitePrice = formatPlanMoney(ADD_ONS.websiteService.priceCad, locale);
-  const checkoutFigures = org
+  const websitePrice = formatPlanPrice(ADD_ONS.websiteService.priceCad, locale);
+  const checkoutFigures = plan?.price
     ? {
-        setup: formatPlanMoney(PLAN_PRICES[org.plan].setup, locale),
-        monthly: formatPlanMoney(PLAN_PRICES[org.plan].monthly, locale),
+        setup: formatPlanPrice(plan.price.setup, locale),
+        monthly: formatPlanPrice(plan.price.monthly, locale),
       }
     : { setup: "", monthly: "" };
   return (
@@ -54,7 +77,7 @@ export default async function BillingPage({
       ) : null}
       <div className="mx-auto flex max-w-xl flex-col gap-5 px-4 py-12">
         <h1 className="text-2xl font-bold text-navy">{t("billingHeadline")}</h1>
-        {access.ok && org ? (
+        {access.ok && org && plan && card ? (
           <>
             <p className="text-navy/80">
               {org.status === "active"
@@ -64,39 +87,66 @@ export default async function BillingPage({
 
             <div className="rounded-lg border border-navy/15 p-4">
               <p className="text-sm font-semibold text-navy">
-                {t("billingPlanLine", {
-                  plan: PLAN_DISPLAY_NAMES[org.plan],
-                  amount: formatPlanMoney(
-                    PLAN_PRICES[org.plan].monthly,
-                    locale,
-                  ),
-                })}
+                {card.planLine.kind === "priced"
+                  ? t("billingPlanLine", {
+                      plan: plan.name,
+                      amount: formatPlanPrice(card.planLine.monthly, locale),
+                    })
+                  : t("billingPlanLineLegacy", { plan: plan.name })}
               </p>
-              {installation?.status === "subscribed" &&
-              installation.billingStartAt ? (
+              {card.status ? (
                 <p className="mt-1 text-sm text-navy/70">
-                  {t("billingFirstChargeOn", {
-                    date: new Date(
-                      installation.billingStartAt,
-                    ).toLocaleDateString(locale === "fr" ? "fr-CA" : "en-CA", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }),
-                  })}
+                  {card.status === "active"
+                    ? t("billingStatusActive")
+                    : card.status === "payment_needed"
+                      ? t("billingStatusPaymentNeeded")
+                      : t("billingStatusCanceled")}
                 </p>
               ) : null}
-              {!installation ||
-              installation.status === "none" ||
-              installation.status === "failed" ||
-              installation.status === "canceled" ? (
+              {card.date ? (
+                <p className="mt-1 text-sm text-navy/70">
+                  {card.date.kind === "nextCharge"
+                    ? t("billingNextCharge", { date: formatDate(card.date.iso) })
+                    : card.date.kind === "cancelsOn"
+                      ? t("billingCancelsOn", { date: formatDate(card.date.iso) })
+                      : t("billingFirstChargeOn", {
+                          date: formatDate(card.date.iso),
+                        })}
+                </p>
+              ) : null}
+              {card.featureIds.length ? (
+                <details className="mt-3 text-sm text-navy/80">
+                  <summary className="cursor-pointer font-semibold text-navy">
+                    {t("billingIncludedTitle")}
+                  </summary>
+                  <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
+                    {card.featureIds.map((id) => (
+                      <li key={id}>{plansT(`capabilities.${id}.label`)}</li>
+                    ))}
+                  </ul>
+                </details>
+              ) : null}
+              {card.professionalNote ? (
+                <p className="mt-3 text-sm text-navy/70">
+                  {settingsT("planProfessionalNote", {
+                    amount: formatPlanPrice(
+                      PLAN_PRICES.professional.monthly,
+                      locale,
+                    ),
+                  })}{" "}
+                  <Link href="/pricing" className="text-navy underline">
+                    {t("billingComparePlans")}
+                  </Link>
+                </p>
+              ) : null}
+              {card.checkout === "start" ? (
                 <div className="mt-3">
                   <p className="mb-2 text-sm text-navy/70">
                     {t("checkoutIntro", checkoutFigures)}
                   </p>
                   <InstallationCheckoutButton websitePrice={websitePrice} />
                 </div>
-              ) : installation.status === "pending" ? (
+              ) : card.checkout === "pending" ? (
                 <div className="mt-3">
                   <p className="mb-2 text-sm text-navy/70">
                     {t("checkoutPendingNote")}
