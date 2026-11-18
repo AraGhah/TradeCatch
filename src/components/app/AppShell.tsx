@@ -5,12 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { SessionKeeper } from "@/components/app/SessionKeeper";
-
-/** The plan names an owner can see. Plans sold before launch keep their own label. */
-const KNOWN_PLANS = ["essential", "professional", "starter", "growth", "receptionist"];
-function planLabelKey(plan: string): string {
-  return KNOWN_PLANS.includes(plan) ? plan : "essential";
-}
+import { planNameOrNull } from "@/lib/plan-names";
 
 /**
  * The Account Center menu, in the order owners use it. Appointments belong to
@@ -76,6 +71,8 @@ export function AppShell({
   const t = useTranslations("app");
   const pathname = usePathname();
   const isDemo = accountType === "demo";
+  // One name per plan, shared with the website and the billing page.
+  const planName = planNameOrNull(plan);
   const [navOpen, setNavOpen] = useState(false);
   // Close the mobile menu after navigating. Adjusted during render rather than in an effect.
   const [menuPath, setMenuPath] = useState(pathname);
@@ -107,7 +104,7 @@ export function AppShell({
             </p>
             <p className="mt-1 text-lg font-semibold text-heading">{orgName}</p>
             <p className="text-sm text-muted">
-              {userName} · {t(`plan.${planLabelKey(plan)}`)}
+              {planName ? `${userName} · ${planName}` : userName}
             </p>
           </div>
           <button

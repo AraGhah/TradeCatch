@@ -393,7 +393,7 @@ const BASE_UI = {
     callCustomer: "Call customer",
 
     // Quote follow-up
-    estimatePipeline: "Quote follow-up · Starter",
+    estimatePipeline: "Quote follow-up",
     awaiting: "Awaiting response",
     reactivated: "Opportunity reactivated",
     moved: "Moved →",
@@ -508,7 +508,7 @@ const BASE_UI = {
     ownerNotified: "Propriétaire avisé par texto",
     callCustomer: "Appeler la cliente",
 
-    estimatePipeline: "Relance de soumission · Starter",
+    estimatePipeline: "Relance de soumission",
     awaiting: "En attente de réponse",
     reactivated: "Opportunité réactivée",
     moved: "Déplacé →",
