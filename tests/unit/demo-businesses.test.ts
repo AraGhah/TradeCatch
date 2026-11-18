@@ -12,6 +12,10 @@ import { getSaasStore } from "../../src/product/saas/runtime";
 import { resetStarterRuntimeForTests } from "../../src/product/starter/runtime";
 import { resetGrowthRuntimeForTests } from "../../src/product/growth/runtime";
 import { isPlatformAdminUser } from "../../src/product/saas/platform-admin";
+import {
+  getSchedulingService,
+  resetSchedulingRuntimeForTests,
+} from "../../src/product/scheduling/runtime";
 
 const KEYS = [
   "NODE_ENV",
@@ -41,6 +45,7 @@ beforeEach(() => {
   resetSaasRuntimeForTests();
   resetStarterRuntimeForTests();
   resetGrowthRuntimeForTests();
+  resetSchedulingRuntimeForTests();
   const g = globalThis as unknown as { __tradecatchMissedCall?: unknown };
   delete g.__tradecatchMissedCall;
 });
@@ -161,6 +166,89 @@ describe("demo contractor account system", () => {
     );
     assert.equal(membership?.role, "owner");
   });
+
+  it("CAL-01 the demo's sample visits are on the calendar, inside the business's hours, and a reset clears them", async () => {
+    const created = await createDemoBusiness({
+      businessName: "Calendar Demo",
+      industry: "hvac",
+      ownerEmail: "calendar@example.demo",
+      language: "en",
+      idempotencyKey: "idem-calendar-demo",
+    });
+    const id = created.organization.id;
+    await seedDemoBusiness(id);
+
+    const scheduling = getSchedulingService();
+    const visits = await scheduling.list(id);
+    // They used to be saved in a table the calendar never reads.
+    assert.equal(visits.length, 4);
+    assert.ok(visits.every((row) => row.simulated && row.status === "confirmed"));
+    assert.equal(new Set(visits.map((row) => row.startAt.slice(0, 10))).size, 4, "on four different days");
+    const rules = await scheduling.getRules(id);
+    for (const row of visits) {
+      const local = new Intl.DateTimeFormat("en-CA", {
+        timeZone: rules.timezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).format(new Date(row.startAt));
+      assert.ok(local >= "08:00" && local < "17:00", `${row.startAt} is ${local} in ${rules.timezone}`);
+    }
+
+    await resetDemoBusiness(id, { reseed: false });
+    assert.deepEqual(await scheduling.list(id), []);
+  });
+
+  // The seed used to take the first 48 open times (two and a half days) and
+  // then the last one left on a day that was already half over, so the answer
+  // depended on when it ran: late in the afternoon it gave three visits, one
+  // of them at closing time.
+  for (const [label, now] of [
+    ["early on a weekday morning", "2026-11-18T13:00:00Z"],
+    ["in the middle of a weekday afternoon", "2026-11-18T18:46:00Z"],
+    ["after closing on a Friday", "2026-11-20T23:30:00Z"],
+    ["on a Saturday", "2026-11-21T17:00:00Z"],
+    ["at the end of the year, across a month and year change", "2026-12-29T20:00:00Z"],
+  ] as const) {
+    it(`CAL-01 the sample visits are four mid-morning visits whenever the demo is seeded: ${label}`, async (t) => {
+      t.mock.timers.enable({ apis: ["Date"], now: Date.parse(now) });
+      const created = await createDemoBusiness({
+        businessName: "Clock Demo",
+        industry: "hvac",
+        ownerEmail: "clock@example.demo",
+        language: "en",
+        idempotencyKey: "idem-clock-demo",
+      });
+      const id = created.organization.id;
+      await seedDemoBusiness(id);
+
+      const scheduling = getSchedulingService();
+      const visits = await scheduling.list(id);
+      const rules = await scheduling.getRules(id);
+      assert.equal(visits.length, 4);
+      const local = (startAt: string) =>
+        new Intl.DateTimeFormat("en-CA", {
+          timeZone: rules.timezone,
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23",
+        })
+          .formatToParts(new Date(startAt))
+          .reduce<Record<string, string>>((all, part) => ({ ...all, [part.type]: part.value }), {});
+      const days = new Set<string>();
+      for (const row of visits) {
+        assert.ok(Date.parse(row.startAt) > Date.parse(now), `${row.startAt} is in the future`);
+        const parts = local(row.startAt);
+        const time = `${parts.hour}:${parts.minute}`;
+        assert.ok(time >= "09:00" && time < "12:00", `${row.startAt} is ${time}, not mid-morning`);
+        days.add(`${parts.year}-${parts.month}-${parts.day}`);
+      }
+      assert.equal(days.size, 4, "on four different days of the business");
+    });
+  }
 
   it("deletes one demo business without removing another", async () => {
     const keep = await createDemoBusiness({

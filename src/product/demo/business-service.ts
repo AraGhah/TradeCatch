@@ -235,11 +235,102 @@ export async function listDemoBusinesses(): Promise<DemoBusinessProfile[]> {
   return profiles;
 }
 
+/** The visits the demo seed puts on the calendar are marked so a reset finds exactly those. */
+const DEMO_VISIT_PREFIX = "[SIMULATED] Visit";
+
+/** The open time closest to 10:00 local, if the day has one from 09:00 up to noon. */
+function midMorningStart(
+  slots: { startAt: string; time: string }[],
+): string | undefined {
+  const minutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+  let best: { startAt: string; distance: number } | undefined;
+  for (const slot of slots) {
+    const at = minutes(slot.time);
+    if (at < 9 * 60 || at >= 12 * 60) continue;
+    const distance = Math.abs(at - 10 * 60);
+    if (!best || distance < best.distance) best = { startAt: slot.startAt, distance };
+  }
+  return best?.startAt;
+}
+
+/**
+ * Sample visits go through the same scheduling engine as every real booking,
+ * so the demo calendar shows them in the business's own hours and time zone.
+ * They are practice bookings: nothing is texted and no outside calendar is
+ * touched.
+ */
+async function seedDemoCalendar(
+  organizationId: string,
+  customers: { name: string; phone?: string; city: string }[],
+): Promise<void> {
+  try {
+    const { getSchedulingService } = await import("@/product/scheduling/runtime");
+    const scheduling = getSchedulingService();
+    // One mid-morning time on each of the next few open days. The open
+    // times come grouped by the business's own days (not UTC days) and are
+    // not capped, so the picks do not depend on what time of day the demo is
+    // seeded: a day that is already half over simply has no mid-morning left
+    // and is skipped, instead of putting a visit at closing time.
+    const thisMonth = await scheduling.availabilityMonth({ organizationId });
+    const [year, month] = thisMonth.month.split("-").map(Number) as [number, number];
+    const nextMonth = await scheduling.availabilityMonth({
+      organizationId,
+      month: month === 12 ? `${year + 1}-01` : `${year}-${String(month + 1).padStart(2, "0")}`,
+    });
+    const days = { ...thisMonth.days, ...nextMonth.days };
+    const picks = Object.keys(days)
+      .sort()
+      .map((day) => midMorningStart(days[day] ?? []))
+      .filter((startAt): startAt is string => Boolean(startAt))
+      .slice(0, customers.length);
+    for (const [i, startAt] of picks.entries()) {
+      const c = customers[i]!;
+      await scheduling.book({
+        organizationId,
+        serviceName: `${DEMO_VISIT_PREFIX} · ${c.city}`,
+        startAt,
+        customerName: c.name,
+        customerPhoneE164: c.phone,
+        source: "simulation",
+        simulated: true,
+        requestIfUnavailable: false,
+        idempotencyKey: `demo-visit:${organizationId}:${startAt}`,
+      });
+    }
+  } catch (err) {
+    // A demo without sample visits is still a working demo.
+    console.warn("[demo] sample calendar seed skipped", err);
+  }
+}
+
+/** Takes the demo's sample visits off the calendar. Real bookings are never touched. */
+async function clearDemoCalendar(organizationId: string): Promise<void> {
+  try {
+    const { getSchedulingStore } = await import("@/product/scheduling/runtime");
+    const store = getSchedulingStore();
+    for (const row of await store.listAppointments(organizationId)) {
+      if (
+        row.simulated &&
+        row.status !== "canceled" &&
+        row.serviceName.startsWith(DEMO_VISIT_PREFIX)
+      ) {
+        row.status = "canceled";
+        row.cancelReason = "demo_reset";
+        row.updatedAt = new Date().toISOString();
+        await store.saveAppointment(row);
+      }
+    }
+  } catch (err) {
+    console.warn("[demo] sample calendar wipe skipped", err);
+  }
+}
+
 async function wipeOrgScopedDemoData(organizationId: string): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL?.trim();
   const durable = process.env.MISSED_CALL_DURABLE_STORE === "1";
 
   if (databaseUrl && durable) {
+    await clearDemoCalendar(organizationId);
     const pool = getPgPool(databaseUrl);
     // Strictly scoped by organization_id — never touches other businesses.
     await pool.query(
@@ -289,6 +380,7 @@ async function wipeOrgScopedDemoData(organizationId: string): Promise<void> {
   }
 
   // Memory / local: close what we can so dashboards look empty-ish.
+  await clearDemoCalendar(organizationId);
   const growth = getGrowthStore();
   const starter = getStarterStore();
   for (const appt of await growth.listAppointments(organizationId)) {
@@ -415,23 +507,12 @@ export async function seedDemoBusiness(
     });
   }
 
-  for (let i = 0; i < DEMO_SEED_TARGETS.appointments; i += 1) {
-    const c = DEMO_CUSTOMERS[i]!;
-    const starts = new Date(now + (i + 1) * 24 * 60 * 60 * 1000);
-    await growth.createAppointment({
-      organizationId,
-      customerName: c.name,
-      customerPhoneE164: c.phone,
-      customerEmail: undefined,
-      title: `[SIMULATED] Visit · ${c.city}`,
-      startsAt: starts.toISOString(),
-      endsAt: new Date(starts.getTime() + 90 * 60 * 1000).toISOString(),
-      status: "scheduled",
-      source: "manual",
-      sourceRefId: undefined,
-      notes: "Simulated demo appointment. No real customer contact.",
-    });
-  }
+  // The appointments live where the calendar, the dashboard and the
+  // receptionist all look: the scheduling store, under its rules.
+  await seedDemoCalendar(
+    organizationId,
+    DEMO_CUSTOMERS.slice(0, DEMO_SEED_TARGETS.appointments),
+  );
 
   for (let i = 0; i < DEMO_SEED_TARGETS.quotes; i += 1) {
     const c = DEMO_CUSTOMERS[i]!;
