@@ -193,6 +193,15 @@ test("calendar picker: rescheduling uses the same calendar and confirm step (en)
   expect(booked.status()).toBe(201);
 
   await page.goto(c.path);
+  // The calendar opens on this Sunday-to-Saturday week. Late in the week the
+  // first free time belongs to the next one: page forward to the booked day
+  // (its column is drawn whether or not the appointments have loaded yet).
+  const bookedDay = page.locator(
+    `[data-testid="calendar-day"][data-date="${firstDay}"]`,
+  );
+  await expect(page.getByTestId("calendar-grid")).toBeVisible();
+  for (let step = 0; step < 6 && (await bookedDay.count()) === 0; step += 1)
+    await page.getByRole("button", { name: "Next dates" }).click();
   await page.getByRole("button", { name: /Move Me/ }).click();
   const details = page
     .locator("section")
