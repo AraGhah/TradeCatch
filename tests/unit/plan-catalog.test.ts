@@ -185,9 +185,15 @@ describe("plan catalog", () => {
         assert.equal(messages.plans.names[id], PLAN_DISPLAY_NAMES[id]);
       }
     }
-    // Retired plan names stay available for existing customers' billing pages.
-    assert.equal(fr.plans.names.receptionist, "Réceptionniste Plus");
-    assert.equal(en.plans.names.receptionist, "Receptionist Plus");
+    // KAN-18: retired plan ids are never shown under their old names. Customers
+    // on one see the public plan it maps to (src/lib/plan-names.ts), so the
+    // message files hold the two public names and nothing else.
+    for (const messages of [en, fr]) {
+      assert.deepEqual(Object.keys(messages.plans.names).sort(), ["essential", "professional"]);
+    }
+    for (const id of ["starter", "growth", "receptionist"] as const) {
+      assert.match(PLAN_DISPLAY_NAMES[id], /^(Essential|Professional)$/, id);
+    }
   });
 
   it("every catalog capability has an EN and FR label, and none sells a removed feature", () => {

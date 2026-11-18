@@ -12,6 +12,7 @@ import {
   featuresForPlan,
   orgHasFeature,
   PLAN_DISPLAY_NAMES,
+  PLAN_IDS,
 } from "../../src/product/saas/entitlements";
 import { computeStarterDashboardMetrics } from "../../src/product/saas/analytics";
 import { createMemorySaasStore } from "../../src/product/saas/memory-store";
@@ -54,13 +55,17 @@ describe("entitlements", () => {
     assert.ok(growth.every((f) => orgHasFeature("receptionist", f)));
   });
 
-  it("keeps the internal plan id `receptionist` mapped to the public name \"Receptionist Plus\"", () => {
+  it("keeps every internal plan id stable and shows each one under a public name (KAN-18)", () => {
+    // Database rows, Stripe Price mappings and entitlements keep the retired ids;
+    // only the customer-facing label changed: Starter -> Essential, Growth and
+    // Receptionist Plus -> Professional (src/lib/plan-names.ts).
+    assert.deepEqual([...PLAN_IDS], ["essential", "professional", "starter", "growth", "receptionist"]);
     assert.deepEqual(PLAN_DISPLAY_NAMES, {
       essential: "Essential",
       professional: "Professional",
-      starter: "Starter",
-      growth: "Growth",
-      receptionist: "Receptionist Plus",
+      starter: "Essential",
+      growth: "Professional",
+      receptionist: "Professional",
     });
   });
 });

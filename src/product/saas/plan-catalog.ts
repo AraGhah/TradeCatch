@@ -19,6 +19,7 @@
  * referral page and dashboard follow without further edits.
  */
 import { PLAN_PRICES } from "@/lib/plans";
+import { isLegacyPlan, planDisplayName, publicPlanFor } from "@/lib/plan-names";
 import {
   PLAN_FEATURES,
   PLAN_IDS,
@@ -192,6 +193,49 @@ export function listPlans() {
     price: PLAN_PRICES[id],
     features: PLAN_FEATURES[id],
   }));
+}
+
+/**
+ * Everything a customer-facing surface may say about a plan: its name, price and
+ * features. The pricing page's comparison table, the billing page, the settings
+ * card and the app shell all read this (or the same maps it reads), so the
+ * website and the dashboard cannot disagree.
+ */
+export type PlanView = {
+  /** Internal id. Stable (Stripe mappings and database rows use it); never shown. */
+  id: PlanId;
+  /** The public plan the customer is told they have. */
+  publicId: PublicPlanId;
+  /** "Essential" or "Professional". */
+  name: string;
+  /** True for a retired plan id. */
+  legacy: boolean;
+  /**
+   * The catalog price in CAD. `null` for a legacy plan: those customers keep the
+   * price they signed up at, so the catalog price of the plan they are labelled
+   * with would be a statement about their bill that nobody has made.
+   */
+  price: { monthly: number; setup: number } | null;
+  /**
+   * What the plan really includes today, in display order. Derived from the
+   * enforced entitlements of `id` itself, so a legacy plan lists what it has,
+   * not what the public plan it is labelled with has.
+   */
+  capabilityIds: CapabilityId[];
+};
+
+export function describePlan(plan: PlanId): PlanView {
+  const legacy = isLegacyPlan(plan);
+  return {
+    id: plan,
+    publicId: publicPlanFor(plan),
+    name: planDisplayName(plan),
+    legacy,
+    price: legacy ? null : PLAN_PRICES[plan],
+    capabilityIds: CAPABILITIES.filter(
+      (capability) => capabilityAvailability(plan, capability) === "included",
+    ).map((capability) => capability.id),
+  };
 }
 
 /** The previous plan in the ladder, or null for the entry plan. */

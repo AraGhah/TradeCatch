@@ -9,6 +9,7 @@
  * plan, and nothing sells a legacy plan on the public site.
  */
 import { launchFlagEnabled, type LaunchFlag } from "@/lib/launch-flags";
+import { planDisplayName } from "@/lib/plan-names";
 
 /** The plans sold on the public site, cheapest first. */
 export const PUBLIC_PLAN_IDS = ["essential", "professional"] as const;
@@ -35,23 +36,15 @@ export function isLegacyPlanId(value: unknown): value is LegacyPlanId {
 }
 
 /**
- * Public-facing tier names. The internal id stays `receptionist` for
- * backward compatibility with existing Stripe price mappings and database
- * rows (see plan-tiers.sql).
- *
- * The premium tier is shown publicly as "Receptionist Plus" (confirmed
- * rebrand; tests/unit/receptionist-naming.test.ts enforces that every surface
- * uses this exact name). The feature itself — the voice receptionist the
- * business owner configures under /app/receptionist — is still just "the
- * Receptionist"; only the plan carries the "Plus".
+ * Customer-facing plan name for every internal id. The ids themselves never
+ * change (existing Stripe price mappings and database rows depend on them, see
+ * plan-tiers.sql), but customers only ever see "Essential" or "Professional":
+ * a legacy id is shown under the public plan it maps to. The names and that
+ * mapping are defined once, in src/lib/plan-names.ts.
  */
-export const PLAN_DISPLAY_NAMES: Record<PlanId, string> = {
-  essential: "Essential",
-  professional: "Professional",
-  starter: "Starter",
-  growth: "Growth",
-  receptionist: "Receptionist Plus",
-};
+export const PLAN_DISPLAY_NAMES: Record<PlanId, string> = Object.fromEntries(
+  PLAN_IDS.map((id) => [id, planDisplayName(id)]),
+) as Record<PlanId, string>;
 
 export const FEATURE_IDS = [
   "MISSED_CALL_RECOVERY",
@@ -211,6 +204,15 @@ export function orgHasFeature(
   feature: FeatureId,
 ): boolean {
   return PLAN_FEATURES[plan].includes(feature) && featureIsLaunchEnabled(feature);
+}
+
+/**
+ * The cheapest plan sold today that includes `feature`, or null when no sold
+ * plan does. Upgrade hints in API responses come from here, so they can never
+ * point at a retired plan.
+ */
+export function soldPlanWith(feature: FeatureId): PublicPlanId | null {
+  return PUBLIC_PLAN_IDS.find((plan) => orgHasFeature(plan, feature)) ?? null;
 }
 
 export function assertFeature(
