@@ -66,13 +66,17 @@ function deps(): AutomationDeps {
     async smsFrom(organizationId) {
       const org = await getSaasStore().getOrganization(organizationId);
       if (!org?.missedCallClientId) return null;
-      try {
-        const { store } = await ensureMissedCallReady();
-        const client = await store.getClient(org.missedCallClientId);
-        return client?.smsFromNumber ?? null;
-      } catch {
-        return null;
-      }
+      // A database error is not "no sender": it throws, and the job is tried again
+      // later instead of being failed for good because of a passing outage.
+      const { store } = await ensureMissedCallReady();
+      const client = await store.getClient(org.missedCallClientId);
+      return client?.smsFromNumber ?? null;
+    },
+    async isSuppressedElsewhere(organizationId, phoneE164) {
+      const org = await getSaasStore().getOrganization(organizationId);
+      if (!org?.missedCallClientId) return false;
+      const { store } = await ensureMissedCallReady();
+      return store.isSmsSuppressed(org.missedCallClientId, phoneE164);
     },
     async quoteStatus(organizationId, threadId) {
       const thread = await getStarterStore().getQuoteThread(threadId, organizationId);

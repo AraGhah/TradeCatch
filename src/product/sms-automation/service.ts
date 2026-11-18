@@ -1,10 +1,12 @@
 import { createId } from "@/lib/id";
+import { shouldStartRecovery } from "@/product/missed-call/call-handling";
 import { isOptOut } from "@/product/missed-call/messaging";
 import {
   missedCallRecoveryMaxAgeMs,
   missedCallRecoverySmsDisabled,
 } from "@/product/missed-call/recovery-switch";
-import type { ClientAccount } from "@/product/missed-call/types";
+import { SmsDeliveryError, SmsRateLimitError } from "@/product/missed-call/twilio";
+import type { CallDisposition, ClientAccount } from "@/product/missed-call/types";
 import { normalizeE164, phoneKey } from "@/product/crm/phone";
 import type { AutomationStore } from "./store";
 import {
@@ -18,6 +20,8 @@ import type {
   AutomationConfig,
   AutomationRecord,
   ConsentBasis,
+  ConsentRecord,
+  ExecutionRecord,
   HistoryRow,
   JobPayload,
   JobRecord,
@@ -31,11 +35,19 @@ import { isInsideSendingWindow, nextWindowStart } from "./window";
 
 const MAX_PROVIDER_ATTEMPTS = 3;
 const OPT_OUT_CLIENT = { optOutKeywords: [] } as unknown as ClientAccount;
+/** Minutes to wait before attempt 2, 3, ... after a failure that is safe to retry. */
+const RETRY_BACKOFF_MINUTES = [1, 5, 15];
+/** A quote reminder this far past its due time is not sent: the moment has gone. */
+const LATE_REMINDER_LIMIT_MS = 14 * 24 * 60 * 60 * 1000;
+/** Tries to write down that a text was sent, before giving up and flagging it. */
+const RECORD_SEND_TRIES = 3;
 
 export class AutomationError extends Error {
   constructor(
     message: string,
     readonly status = 400,
+    /** Which settings were refused, for the screen to name them. */
+    readonly fields: string[] = [],
   ) {
     super(message);
     this.name = "AutomationError";
@@ -92,6 +104,11 @@ export type AutomationDeps = {
     threadId: string,
     reason: "won" | "lost" | "customer_reply" | "opt_out" | "manual_pause",
   ) => Promise<void>;
+  /**
+   * True when this number has opted out through another channel (the missed-call
+   * workflow's own list). Checked next to the automation's own list.
+   */
+  isSuppressedElsewhere?: (organizationId: string, phoneE164: string) => Promise<boolean>;
   onPermanentFailure?: (organizationId: string, detail: string) => Promise<void>;
   onCustomerMessage?: (input: {
     organizationId: string;
@@ -137,16 +154,37 @@ function basisFor(category: MessageCategory): ConsentBasis {
   return "requested_service";
 }
 
-function uncertainError(err: unknown): boolean {
-  const msg = err instanceof Error ? err.message : String(err);
-  return /timeout|aborted|network|ECONNRESET|fetch failed|socket/i.test(msg);
+/**
+ * What a failed send means for the next step. The telephone port says it itself
+ * (`SmsDeliveryError.disposition`): "retry" means the provider did not take the message,
+ * "dead" that it never will, "uncertain" that it may have. Anything the port did not
+ * classify is treated as uncertain, because a timeout or a dropped connection can come
+ * after the provider already accepted the text, and sending again would text the
+ * customer twice.
+ */
+function providerFailure(err: unknown, now: number): {
+  kind: "retry" | "permanent" | "uncertain";
+  /** Earliest time to try again (retry only). */
+  notBefore?: number;
+} {
+  if (err instanceof SmsRateLimitError) {
+    return { kind: "retry", notBefore: Math.max(err.resetAt, now + 5_000) };
+  }
+  if (err instanceof SmsDeliveryError) {
+    if (err.disposition === "retry") return { kind: "retry" };
+    if (err.disposition === "dead") return { kind: "permanent" };
+    return { kind: "uncertain" };
+  }
+  return { kind: "uncertain" };
 }
 
-function providerFailure(message: string): "retry" | "permanent" | "uncertain" {
-  if (uncertainError(new Error(message))) return "uncertain";
-  if (/Twilio SMS failed: 4/.test(message) && !/\b429\b/.test(message)) return "permanent";
-  return "retry";
+function retryDelayMs(attempt: number): number {
+  const minutes = RETRY_BACKOFF_MINUTES[attempt - 1] ?? RETRY_BACKOFF_MINUTES.at(-1)!;
+  // Up to 20% later, so a burst of jobs that failed together does not come back together.
+  return minutes * 60_000 * (1 + Math.random() * 0.2);
 }
+
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 const RANK: Partial<Record<JobStatus, number>> = {
   processing: 1,
@@ -225,47 +263,62 @@ export function createAutomationService(deps: AutomationDeps) {
     return org;
   }
 
+  /**
+   * Makes sure the business has its default automations and templates, then lists the
+   * automations in a fixed order (the stores order differently). One insert-only call:
+   * it never changes a row that exists, so it is safe to run on every request, and two
+   * of them at once cannot reset a setting.
+   */
   async function seed(organizationId: string): Promise<AutomationRecord[]> {
     const now = deps.now().toISOString();
-    for (const type of AUTOMATION_TYPES) {
-      const existing = await deps.store.getAutomationByType(organizationId, type);
-      if (!existing) {
-        await deps.store.upsertAutomation({
-          id: createId("auto"),
-          organizationId,
-          type,
-          enabled: false,
-          config: defaultConfig(type),
-          successCount: 0,
-          failureCount: 0,
-          responseCount: 0,
-          createdAt: now,
-          updatedAt: now,
-        });
-      }
-    }
-    for (const templateKey of TEMPLATE_KEYS) {
-      for (const locale of ["en", "fr"] as const) {
-        const existing = await deps.store.getTemplate(
+    await deps.store.ensureDefaults({
+      automations: AUTOMATION_TYPES.map((type) => ({
+        id: createId("auto"),
+        organizationId,
+        type,
+        enabled: false,
+        config: defaultConfig(type),
+        successCount: 0,
+        failureCount: 0,
+        responseCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      })),
+      templates: TEMPLATE_KEYS.flatMap((templateKey) =>
+        (["en", "fr"] as const).map((locale) => ({
+          id: createId("tpl"),
           organizationId,
           templateKey,
           locale,
-        );
-        if (!existing) {
-          await deps.store.upsertTemplate({
-            id: createId("tpl"),
-            organizationId,
-            templateKey,
-            locale,
-            body: DEFAULT_TEMPLATES[templateKey][locale],
-            customized: false,
-            createdAt: now,
-            updatedAt: now,
-          });
-        }
-      }
+          body: DEFAULT_TEMPLATES[templateKey][locale],
+          customized: false,
+          createdAt: now,
+          updatedAt: now,
+        })),
+      ),
+    });
+    const rows = await deps.store.listAutomations(organizationId);
+    return rows.sort(
+      (a, b) => AUTOMATION_TYPES.indexOf(a.type) - AUTOMATION_TYPES.indexOf(b.type),
+    );
+  }
+
+  /** Bookkeeping that must never undo or hide what already happened (a text that went out). */
+  async function safely(label: string, task: () => Promise<unknown>) {
+    try {
+      await task();
+    } catch (err) {
+      console.error(
+        `[sms-automation] ${label} failed`,
+        err instanceof Error ? err.message : String(err),
+      );
     }
-    return deps.store.listAutomations(organizationId);
+  }
+
+  /** The suppression lists that apply: this automation's own, and the call workflow's. */
+  async function isOptedOut(organizationId: string, phone: string): Promise<boolean> {
+    if (await deps.store.isSuppressed(organizationId, phone)) return true;
+    return Boolean(await deps.isSuppressedElsewhere?.(organizationId, phone));
   }
 
   async function placeJob(input: {
@@ -328,8 +381,82 @@ export function createAutomationService(deps: AutomationDeps) {
     await record(deps, job, failure ? "failure" : "skipped", reason, { error: reason });
   }
 
+  /**
+   * Runs one claimed job. It never throws and never leaves a claimed job behind without a
+   * decision: whatever goes wrong inside `run` is turned into a recorded outcome here.
+   *  - Before the provider was called, the job goes back in the queue (with a growing wait,
+   *    and a limit), or fails for good.
+   *  - Once the send may have started, the job is `uncertain` and is never sent again.
+   */
   async function processJob(claimed: JobRecord, clock = deps.now()): Promise<JobRecord> {
-    const job = claimed;
+    try {
+      return await run(claimed, clock);
+    } catch (err) {
+      return settleAfterError(claimed, err);
+    }
+  }
+
+  async function settleAfterError(job: JobRecord, err: unknown): Promise<JobRecord> {
+    const message = `unexpected_error: ${err instanceof Error ? err.message : String(err)}`.slice(0, 500);
+    // No phone number or message text in logs.
+    console.error("[sms-automation] job failed unexpectedly", {
+      jobId: job.id,
+      organizationId: job.organizationId,
+      error: message,
+    });
+    try {
+      job.updatedAt = deps.now().toISOString();
+      job.lastError = message;
+      job.claimToken = undefined;
+      if (job.payload.sendStartedAt || job.providerMessageSid) {
+        // The provider may have the text already. Do not send it again.
+        job.status = job.providerMessageSid ? "submitted" : "uncertain";
+        await deps.store.saveJob(job);
+        if (job.status === "uncertain") await record(deps, job, "failure", "uncertain", { error: message });
+        return job;
+      }
+      job.attempts += 1;
+      if (job.attempts >= MAX_PROVIDER_ATTEMPTS) {
+        job.status = "failed";
+        await deps.store.saveJob(job);
+        await record(deps, job, "failure", "failed", { error: message });
+        await safely("failure notice", async () =>
+          deps.onPermanentFailure?.(job.organizationId, "automation_failed"),
+        );
+        return job;
+      }
+      job.status = "pending";
+      job.claimedAt = undefined;
+      job.scheduledAt = new Date(deps.now().getTime() + retryDelayMs(job.attempts)).toISOString();
+      await deps.store.saveJob(job);
+      await record(deps, job, "retry", "retry", { error: message });
+    } catch (inner) {
+      // The database is not answering. The job stays claimed; after ten minutes it is
+      // released (or, if a send had started, flagged), never sent twice.
+      console.error(
+        "[sms-automation] could not settle a failed job",
+        inner instanceof Error ? inner.message : String(inner),
+      );
+    }
+    return job;
+  }
+
+  /** Writes down that the provider took the text. Retried, because losing this is how a duplicate is born. */
+  async function recordSubmitted(job: JobRecord) {
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= RECORD_SEND_TRIES; attempt++) {
+      try {
+        await deps.store.saveJob(job);
+        return;
+      } catch (err) {
+        lastError = err;
+        if (attempt < RECORD_SEND_TRIES) await sleep(50 * attempt * attempt);
+      }
+    }
+    throw lastError;
+  }
+
+  async function run(job: JobRecord, clock: Date): Promise<JobRecord> {
     const org = await deps.loadOrg(job.organizationId);
     const automation = await deps.store.getAutomation(job.organizationId, job.automationId);
     const now = clock;
@@ -346,7 +473,7 @@ export function createAutomationService(deps: AutomationDeps) {
       await finish(job, "failed", "invalid_phone", true);
       return job;
     }
-    if (await deps.store.isSuppressed(job.organizationId, job.customerPhoneE164)) {
+    if (await isOptedOut(job.organizationId, job.customerPhoneE164)) {
       await finish(job, "canceled", "opted_out");
       return job;
     }
@@ -391,25 +518,10 @@ export function createAutomationService(deps: AutomationDeps) {
       return job;
     }
 
-    if (job.payload.quoteThreadId && (config.stopOnQuoteAccepted || config.stopOnQuoteRejected)) {
-      let quote = job.simulated ? job.payload.quoteStatus : undefined;
-      if (!job.simulated && deps.quoteStatus) {
-        const live = await deps.quoteStatus(job.organizationId, job.payload.quoteThreadId);
-        if (live === "won") quote = "accepted";
-        else if (live === "lost") quote = "rejected";
-        else if (live && live !== "active") quote = "replied";
-        else if (live === "active") quote = "open";
-      }
-      if (quote === "accepted" && config.stopOnQuoteAccepted) {
-        await finish(job, "canceled", "quote_accepted");
-        return job;
-      }
-      if (quote === "rejected" && config.stopOnQuoteRejected) {
-        await finish(job, "canceled", "quote_rejected");
-        return job;
-      }
-      if (quote === "replied" && config.stopOnCustomerReply) {
-        await finish(job, "canceled", "customer_reply");
+    if (job.payload.quoteThreadId) {
+      const stop = await quoteStopReason(job, config);
+      if (stop) {
+        await finish(job, "canceled", stop);
         return job;
       }
     }
@@ -427,10 +539,12 @@ export function createAutomationService(deps: AutomationDeps) {
     }
 
     // "Sorry we missed your call" answers the caller's own call, so it goes out right away
-    // and is never held for the contractor's marketing-style sending window (that held
-    // evening calls until 8 a.m.). The operator can still switch it off, and a text that
-    // has waited too long is useless, so it is dropped rather than sent hours late.
+    // and is not held for the sending window (that held evening calls until 8 a.m.). The
+    // operator can still switch it off, and a text that has waited too long is useless, so
+    // it is dropped rather than sent hours late. An owner who wants no texts during quiet
+    // hours can ask for that: the text is then skipped, never delayed.
     const immediate = job.automationType === "missed_call_recovery";
+    const timezone = org.timezone || "America/Toronto";
     if (immediate && !job.simulated) {
       if (missedCallRecoverySmsDisabled()) {
         await finish(job, "canceled", "recovery_sms_disabled");
@@ -442,11 +556,12 @@ export function createAutomationService(deps: AutomationDeps) {
         return job;
       }
     }
+    if (immediate && config.respectQuietHours && !isInsideSendingWindow(now, timezone, config)) {
+      await finish(job, "skipped", "quiet_hours");
+      return job;
+    }
 
-    if (
-      !immediate &&
-      !isInsideSendingWindow(now, org.timezone || "America/Toronto", config)
-    ) {
+    if (!immediate && !isInsideSendingWindow(now, timezone, config)) {
       job.status = "pending";
       job.claimToken = undefined;
       job.claimedAt = undefined;
@@ -520,25 +635,49 @@ export function createAutomationService(deps: AutomationDeps) {
       return job;
     }
 
+    // Last gate before the provider. This records that a send has started, and only if
+    // this worker still holds the job: a job turned off, canceled or taken over since it
+    // was claimed is not sent. Past this line a crash can no longer put the job back in
+    // the queue; it is flagged for a person instead.
+    const startedAt = deps.now().toISOString();
+    if (!(await deps.store.beginSend(job, startedAt))) {
+      await deps.store.addEvent({
+        organizationId: job.organizationId,
+        automationId: job.automationId,
+        jobId: job.id,
+        kind: "claim_lost",
+        at: startedAt,
+      });
+      return job;
+    }
+    job.payload.sendStartedAt = startedAt;
+
+    let sent: { sid: string };
     try {
-      const sent = await deps.sms.send({
+      sent = await deps.sms.send({
         toE164: job.customerPhoneE164,
         fromE164: from,
         body: rendered.body,
       });
-      const at = deps.now().toISOString();
-      job.status = "submitted";
-      job.providerMessageSid = sent.sid;
-      job.submittedAt = at;
-      job.responseStatus = "awaiting";
-      job.claimToken = undefined;
-      job.updatedAt = at;
-      await deps.store.saveJob(job);
-      await record(deps, job, "success", "submitted", {
-        body: rendered.body,
-        sid: sent.sid,
-      });
-      await deps.onCustomerMessage?.({
+    } catch (err) {
+      return settleSendFailure(job, err);
+    }
+
+    const at = deps.now().toISOString();
+    job.status = "submitted";
+    job.providerMessageSid = sent.sid;
+    job.submittedAt = at;
+    job.responseStatus = "awaiting";
+    job.claimToken = undefined;
+    job.updatedAt = at;
+    await recordSubmitted(job);
+    // The text is out and the job says so. What follows is bookkeeping: a failure there is
+    // logged, and must not turn a delivered text into a failed or repeated one.
+    await safely("execution log", () =>
+      record(deps, job, "success", "submitted", { body: rendered.body, sid: sent.sid }),
+    );
+    await safely("customer record", async () =>
+      deps.onCustomerMessage?.({
         organizationId: job.organizationId,
         phoneE164: job.customerPhoneE164,
         body: rendered.body,
@@ -551,41 +690,89 @@ export function createAutomationService(deps: AutomationDeps) {
         providerMessageSid: sent.sid,
         optOut: false,
         serviceName: job.payload.serviceName,
-      });
-      return job;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const kind = providerFailure(message);
-      job.attempts += 1;
-      job.lastError = message.slice(0, 500);
-      job.updatedAt = deps.now().toISOString();
-      if (kind === "uncertain" || (kind === "retry" && job.attempts >= MAX_PROVIDER_ATTEMPTS) || kind === "permanent") {
-        job.status = kind === "uncertain" ? "uncertain" : "failed";
-        job.claimToken = undefined;
-        await deps.store.saveJob(job);
-        await record(deps, job, "failure", job.status, { error: job.lastError });
-        if (job.status === "failed") {
-          await deps.onPermanentFailure?.(job.organizationId, job.lastError || "automation_failed");
-        }
-        return job;
-      }
-      const backoff = [1, 5, 15][job.attempts - 1] ?? 15;
-      job.status = "pending";
+      }),
+    );
+    return job;
+  }
+
+  async function settleSendFailure(job: JobRecord, err: unknown): Promise<JobRecord> {
+    const nowMs = deps.now().getTime();
+    const failure = providerFailure(err, nowMs);
+    // Only the error's class is kept: provider text can carry phone numbers.
+    const detail =
+      err instanceof SmsDeliveryError
+        ? err.message
+        : err instanceof SmsRateLimitError
+          ? "rate_limited"
+          : "send_outcome_unknown";
+    job.attempts += 1;
+    job.lastError = detail.slice(0, 500);
+    job.updatedAt = new Date(nowMs).toISOString();
+
+    if (failure.kind === "uncertain") {
+      job.status = "uncertain";
       job.claimToken = undefined;
-      job.claimedAt = undefined;
-      job.scheduledAt = new Date(deps.now().getTime() + backoff * 60 * 1000).toISOString();
       await deps.store.saveJob(job);
-      await record(deps, job, "retry", "retry", { error: job.lastError });
+      await record(deps, job, "failure", "uncertain", { error: job.lastError });
       return job;
     }
+    if (failure.kind === "permanent" || job.attempts >= MAX_PROVIDER_ATTEMPTS) {
+      delete job.payload.sendStartedAt;
+      job.status = "failed";
+      job.claimToken = undefined;
+      await deps.store.saveJob(job);
+      await record(deps, job, "failure", "failed", { error: job.lastError });
+      await safely("failure notice", async () =>
+        deps.onPermanentFailure?.(job.organizationId, "automation_failed"),
+      );
+      return job;
+    }
+    // The provider did not take the text, so asking again cannot duplicate it.
+    delete job.payload.sendStartedAt;
+    job.status = "pending";
+    job.claimToken = undefined;
+    job.claimedAt = undefined;
+    job.scheduledAt = new Date(
+      Math.max(nowMs + retryDelayMs(job.attempts), failure.notBefore ?? 0),
+    ).toISOString();
+    await deps.store.saveJob(job);
+    await record(deps, job, "retry", "retry", { error: job.lastError });
+    return job;
+  }
+
+  /**
+   * Why a quote reminder must not go out, from the quote itself, or null when it may.
+   * An accepted, rejected, stopped or vanished quote always stops it: the owner's
+   * settings only decide what to do when the customer replies or a person takes over.
+   */
+  async function quoteStopReason(
+    job: JobRecord,
+    config: AutomationConfig,
+  ): Promise<string | null> {
+    if (job.simulated) {
+      const quote = job.payload.quoteStatus;
+      if (quote === "accepted") return "quote_accepted";
+      if (quote === "rejected") return "quote_rejected";
+      if (quote === "replied" && config.stopOnCustomerReply) return "customer_reply";
+      return null;
+    }
+    if (!deps.quoteStatus) return null;
+    const live = await deps.quoteStatus(job.organizationId, job.payload.quoteThreadId!);
+    if (live === null || live === undefined) return "quote_not_found";
+    if (live === "won") return "quote_accepted";
+    if (live === "lost") return "quote_rejected";
+    if (live === "stopped") return "quote_stopped";
+    if (live !== "active" && (config.stopOnCustomerReply || config.stopOnHumanContact)) {
+      return "customer_reply";
+    }
+    return null;
   }
 
   return {
     ensureDefaults: seed,
 
     async list(organizationId: string) {
-      await seed(organizationId);
-      return deps.store.listAutomations(organizationId);
+      return seed(organizationId);
     },
 
     async update(
@@ -594,20 +781,32 @@ export function createAutomationService(deps: AutomationDeps) {
       patch: Partial<AutomationConfig>,
     ) {
       await seed(organizationId);
-      const current = await deps.store.getAutomation(organizationId, automationId);
-      if (!current) throw new AutomationError("Automation not found.", 404);
-      const merged = mergeConfig(current.type, { ...current.config, ...patch });
-      if (merged.errors.length > 0) {
-        throw new AutomationError(`Invalid settings: ${merged.errors.join(", ")}`);
-      }
-      const saved = await deps.store.upsertAutomation({
-        ...current,
-        config: merged.config,
-        updatedAt: deps.now().toISOString(),
-      });
+      // Replaces the settings only, under a row lock: a toggle that lands at the same
+      // moment keeps its value, and two saves cannot interleave halfway.
+      const saved = await deps.store.updateAutomationConfig(
+        organizationId,
+        automationId,
+        (current) => {
+          const merged = mergeConfig(current.type, { ...current.config, ...patch });
+          if (merged.errors.length > 0) {
+            throw new AutomationError(
+              `Invalid settings: ${merged.errors.join(", ")}`,
+              400,
+              merged.errors,
+            );
+          }
+          return merged.config;
+        },
+        deps.now().toISOString(),
+      );
+      if (!saved) throw new AutomationError("Automation not found.", 404);
       return saved;
     },
 
+    /**
+     * Turns the automation on. Safe to repeat: a second call finds it already on and does
+     * nothing but make sure the open quotes are scheduled.
+     */
     async activate(organizationId: string, automationId: string) {
       await seed(organizationId);
       const current = await deps.store.getAutomation(organizationId, automationId);
@@ -615,58 +814,82 @@ export function createAutomationService(deps: AutomationDeps) {
       if (!OPERATIONAL_AUTOMATION_TYPES.includes(current.type)) {
         throw new AutomationError("This workflow is not operational yet.", 409);
       }
-      const saved = await deps.store.upsertAutomation({
-        ...current,
-        enabled: true,
-        updatedAt: deps.now().toISOString(),
-      });
-      await deps.store.addEvent({
+      const result = await deps.store.setAutomationEnabled(
         organizationId,
-        automationId: saved.id,
-        kind: "activated",
-        at: deps.now().toISOString(),
-      });
-      if (saved.type === "quote_followup" && deps.listOpenQuotes) {
-        const quotes = await deps.listOpenQuotes(organizationId);
-        for (const quote of quotes) {
-          if (quote.status !== "active") continue;
-          await this.scheduleQuoteFollowUps({
-            organizationId,
-            threadId: quote.id,
-            phoneE164: quote.customerPhoneE164,
-            customerName: quote.customerName,
-            quoteRef: quote.quoteRef,
-            locale: quote.locale,
-            quoteSentAt: quote.quoteSentAt,
-            serviceName: quote.serviceName,
-            simulated: false,
-          });
+        automationId,
+        true,
+        deps.now().toISOString(),
+      );
+      if (!result) throw new AutomationError("Automation not found.", 404);
+      if (result.changed) {
+        await deps.store.addEvent({
+          organizationId,
+          automationId,
+          kind: "activated",
+          at: deps.now().toISOString(),
+        });
+      }
+      if (result.automation.type === "quote_followup" && deps.listOpenQuotes) {
+        try {
+          const quotes = await deps.listOpenQuotes(organizationId);
+          for (const quote of quotes) {
+            if (quote.status !== "active") continue;
+            await this.scheduleQuoteFollowUps({
+              organizationId,
+              threadId: quote.id,
+              phoneE164: quote.customerPhoneE164,
+              customerName: quote.customerName,
+              quoteRef: quote.quoteRef,
+              locale: quote.locale,
+              quoteSentAt: quote.quoteSentAt,
+              serviceName: quote.serviceName,
+              simulated: false,
+            });
+          }
+        } catch (err) {
+          // Do not leave it half on: the owner is told it failed, so it must be off.
+          if (result.changed) {
+            await safely("activation rollback", () =>
+              deps.store.setAutomationEnabled(
+                organizationId,
+                automationId,
+                false,
+                deps.now().toISOString(),
+              ),
+            );
+          }
+          throw err;
         }
       }
-      return saved;
+      return result.automation;
     },
 
+    /** Turns the automation off and cancels what it had not sent. Safe to repeat. */
     async deactivate(organizationId: string, automationId: string) {
-      const current = await deps.store.getAutomation(organizationId, automationId);
-      if (!current) throw new AutomationError("Automation not found.", 404);
-      const saved = await deps.store.upsertAutomation({
-        ...current,
-        enabled: false,
-        updatedAt: deps.now().toISOString(),
-      });
+      const result = await deps.store.setAutomationEnabled(
+        organizationId,
+        automationId,
+        false,
+        deps.now().toISOString(),
+      );
+      if (!result) throw new AutomationError("Automation not found.", 404);
+      // Always, not only when the switch changed: if a previous call died half way, a
+      // second one finishes the job.
       const canceled = await deps.store.cancelPending({
         organizationId,
-        automationId: saved.id,
+        automationId,
         reason: "automation_disabled",
       });
-      await deps.store.addEvent({
-        organizationId,
-        automationId: saved.id,
-        kind: "deactivated",
-        detail: String(canceled),
-        at: deps.now().toISOString(),
-      });
-      return { automation: saved, canceled };
+      if (result.changed || canceled > 0) {
+        await deps.store.addEvent({
+          organizationId,
+          automationId,
+          kind: "deactivated",
+          detail: String(canceled),
+          at: deps.now().toISOString(),
+        });
+      }
+      return { automation: result.automation, canceled };
     },
 
     async listTemplates(organizationId: string) {
@@ -760,6 +983,11 @@ export function createAutomationService(deps: AutomationDeps) {
       return deps.store.listHistory(organizationId, 100);
     },
 
+    /** The execution log: one row for every attempt, skip, retry and failure, newest first. */
+    async executions(organizationId: string, limit = 100): Promise<ExecutionRecord[]> {
+      return deps.store.listExecutions(organizationId, Math.min(Math.max(limit, 1), 500));
+    },
+
     async scheduleMissedCall(input: {
       organizationId: string;
       callId: string;
@@ -778,15 +1006,25 @@ export function createAutomationService(deps: AutomationDeps) {
       if (!automation?.enabled) {
         return { deferred: false, scheduled: false, reason: "disabled" as const };
       }
-      const handled =
-        input.disposition === "answered" || input.disposition === "abandoned";
-      if (handled) {
+      // Only a call nobody answered qualifies. An answered or abandoned call is handled
+      // (the automation still owns the opening text, so nothing else is sent either);
+      // any other kind of event is not a missed call at all.
+      if (input.disposition === "answered" || input.disposition === "abandoned") {
         return { deferred: true, scheduled: false, reason: "call_handled" as const, job: null };
+      }
+      if (!input.callId.trim() || !shouldStartRecovery(input.disposition as CallDisposition)) {
+        return { deferred: true, scheduled: false, reason: "ineligible" as const, job: null };
       }
       const org = await requireOrg(input.organizationId);
       const phone = normalizeE164(input.callerE164);
-      if (!isE164(phone) || (await deps.store.isSuppressed(input.organizationId, phone))) {
+      if (!isE164(phone) || (await isOptedOut(input.organizationId, phone))) {
         return { deferred: true, scheduled: false, reason: "ineligible" as const, job: null };
+      }
+      const idempotencyKey = `mcr:${input.callId}`;
+      // The same call reported twice (a provider retry, a restarted worker) is one text.
+      const existing = await deps.store.getJobByIdempotency(input.organizationId, idempotencyKey);
+      if (existing) {
+        return { deferred: true, scheduled: false, reason: "duplicate" as const, job: existing };
       }
       if (automation.config.duplicateProtection) {
         const since = new Date(deps.now().getTime() - 24 * 60 * 60 * 1000).toISOString();
@@ -805,13 +1043,6 @@ export function createAutomationService(deps: AutomationDeps) {
           };
         }
       }
-      const existing = await deps.store.getJobByIdempotency(
-        input.organizationId,
-        `mcr:${input.callId}`,
-      );
-      if (existing) {
-        return { deferred: true, scheduled: false, reason: "duplicate" as const, job: existing };
-      }
       const locale = resolveLocale(automation.config, org, input.language);
       const templateKey: TemplateKey =
         input.disposition === "after_hours_missed" ? "after_hours" : "missed_call_recovery";
@@ -821,7 +1052,7 @@ export function createAutomationService(deps: AutomationDeps) {
         category: "inquiry_response",
         evidence: `Inbound call ${input.callId} was not answered. Recovery is a direct response to that inquiry, not a promotion.`,
       });
-      // Not snapped to the sending window: see processJob.
+      // Not snapped to the sending window: see `run`.
       const when = new Date(
         deps.now().getTime() + automation.config.initialDelayMinutes * 60 * 1000,
       ).toISOString();
@@ -829,7 +1060,7 @@ export function createAutomationService(deps: AutomationDeps) {
         organizationId: input.organizationId,
         automation,
         phone,
-        idempotencyKey: `mcr:${input.callId}`,
+        idempotencyKey,
         scheduledAt: when,
         simulated: Boolean(input.simulated),
         payload: {
@@ -850,7 +1081,17 @@ export function createAutomationService(deps: AutomationDeps) {
           disposition: input.disposition,
         },
       });
-      return { deferred: true, scheduled: Boolean(job), reason: "scheduled" as const, job };
+      if (!job) {
+        // Another worker scheduled the same call between the check and the insert. That
+        // job will send the text; this lookup is only to say which one. If it fails, the
+        // answer is still "duplicate": throwing here would make the caller fall back to
+        // its own opening text, and the customer would get two.
+        const winner = await deps.store
+          .getJobByIdempotency(input.organizationId, idempotencyKey)
+          .catch(() => null);
+        return { deferred: true, scheduled: false, reason: "duplicate" as const, job: winner };
+      }
+      return { deferred: true, scheduled: true, reason: "scheduled" as const, job };
     },
 
     async scheduleQuoteFollowUps(input: {
@@ -872,20 +1113,16 @@ export function createAutomationService(deps: AutomationDeps) {
       if (!automation?.enabled) return { scheduled: false as const, jobs: [] as JobRecord[] };
       const org = await requireOrg(input.organizationId);
       const phone = normalizeE164(input.phoneE164);
-      if (!isE164(phone) || (await deps.store.isSuppressed(input.organizationId, phone))) {
+      if (!isE164(phone) || (await isOptedOut(input.organizationId, phone))) {
         if (!input.threadId.startsWith("sim_")) {
           await deps.clearQuoteSchedule?.(input.organizationId, input.threadId);
         }
         return { scheduled: true as const, jobs: [] as JobRecord[] };
       }
       const locale = resolveLocale(automation.config, org, input.locale);
-      const recorded = await consent({
-        organizationId: input.organizationId,
-        phone,
-        category: "requested_estimate",
-        evidence: `Quote ${input.quoteRef ?? input.threadId} was sent to the customer. Reminders are limited service follow-ups for that estimate.`,
-      });
-      const sentAt = Date.parse(input.quoteSentAt);
+      const nowMs = deps.now().getTime();
+      const parsedSentAt = Date.parse(input.quoteSentAt);
+      const sentAt = Number.isFinite(parsedSentAt) ? parsedSentAt : nowMs;
       const delays = [automation.config.initialDelayMinutes];
       if (automation.config.maxAttempts >= 2) {
         delays.push(
@@ -894,21 +1131,55 @@ export function createAutomationService(deps: AutomationDeps) {
         );
       }
       const keys: TemplateKey[] = ["quote_followup_1", "quote_followup_2"];
+      const steps = delays
+        .slice(0, automation.config.maxAttempts)
+        .map((delay, index) => ({ index, dueAt: sentAt + delay * 60 * 1000 }));
+      // Turning the automation on for a quote sent long ago must not send every step it
+      // missed in one go. Of the steps already past due, only the latest is kept, and
+      // not at all when its moment is long gone. Steps still ahead keep their time.
+      const overdue = steps.filter((step) => step.dueAt < nowMs);
+      const lastOverdue = overdue.at(-1);
+      const wanted = steps.filter((step) =>
+        step.dueAt >= nowMs
+          ? true
+          : step === lastOverdue && nowMs - step.dueAt <= LATE_REMINDER_LIMIT_MS,
+      );
+
+      let consentRow: ConsentRecord | undefined;
       const jobs: JobRecord[] = [];
-      for (let i = 0; i < Math.min(delays.length, automation.config.maxAttempts); i++) {
-        let at = new Date(sentAt + delays[i]! * 60 * 1000);
-        if (at.getTime() < deps.now().getTime()) at = deps.now();
+      for (const step of wanted) {
+        const idempotencyKey = `qf:${input.threadId}:${step.index + 1}`;
+        const at = new Date(Math.max(step.dueAt, nowMs));
         const scheduledAt = snap(at, org, automation.config);
+        // A job from an earlier scheduling stays as it is, except one canceled only
+        // because the automation was off: turning it back on brings it back.
+        const existing = await deps.store.getJobByIdempotency(input.organizationId, idempotencyKey);
+        if (existing) {
+          const revived = await deps.store.requeueDisabledJob(
+            input.organizationId,
+            idempotencyKey,
+            scheduledAt,
+            deps.now().toISOString(),
+          );
+          if (revived) jobs.push(revived);
+          continue;
+        }
+        consentRow ??= await consent({
+          organizationId: input.organizationId,
+          phone,
+          category: "requested_estimate",
+          evidence: `Quote ${input.quoteRef ?? input.threadId} was sent to the customer. Reminders are limited service follow-ups for that estimate.`,
+        });
         const created = await placeJob({
           organizationId: input.organizationId,
           automation,
           phone,
-          idempotencyKey: `qf:${input.threadId}:${i + 1}`,
+          idempotencyKey,
           scheduledAt,
           simulated: Boolean(input.simulated),
           payload: {
             customerName: input.customerName,
-            templateKey: keys[i] ?? "quote_followup_2",
+            templateKey: keys[step.index] ?? "quote_followup_2",
             locale,
             vars: {
               customer_name: input.customerName ?? "",
@@ -918,9 +1189,9 @@ export function createAutomationService(deps: AutomationDeps) {
             },
             leadId: input.leadId,
             quoteThreadId: input.threadId,
-            attemptIndex: i + 1,
+            attemptIndex: step.index + 1,
             messageCategory: "requested_estimate",
-            consentId: recorded.id,
+            consentId: consentRow.id,
             serviceName: input.serviceName,
             quoteStatus: "open",
           },
@@ -941,6 +1212,10 @@ export function createAutomationService(deps: AutomationDeps) {
       });
     },
 
+    /**
+     * Sends what is due. Several workers may call this at the same time: each job is
+     * claimed by exactly one of them, and one job failing never stops the others.
+     */
     async processDue(input?: { organizationId?: string; limit?: number }) {
       const limit = input?.limit ?? 25;
       const processed: JobRecord[] = [];
@@ -978,10 +1253,15 @@ export function createAutomationService(deps: AutomationDeps) {
       priceUnit?: string;
       eventId: string;
     }) {
+      // Find the job before claiming the event. A callback that arrives before the job
+      // records its sid is not ours yet: claiming it first would mark it processed, and
+      // the provider's retry of the same event would then be thrown away.
+      const found = await deps.store.getJobByProviderSid(input.providerSid);
+      if (!found) return { duplicate: false as const, job: null };
       const fresh = await deps.store.claimWebhook("twilio_status", input.eventId);
       if (!fresh) return { duplicate: true as const, job: null };
-      const job = await deps.store.getJobByProviderSid(input.providerSid);
-      if (!job) return { duplicate: false as const, job: null };
+      // Re-read after the claim: another worker may have moved the job on meanwhile.
+      const job = (await deps.store.getJobByProviderSid(input.providerSid)) ?? found;
       const next = nextDeliveryStatus(job.status, input.providerStatus);
       if (!next) return { duplicate: false as const, job };
       job.status = next;
@@ -1035,10 +1315,11 @@ export function createAutomationService(deps: AutomationDeps) {
           createdAt: now,
         });
         await deps.mirrorSuppression?.(input.organizationId, phone);
-        const from = await deps.smsFrom(input.organizationId);
-        if (from) {
-          await deps.sms.syncOptOut?.({ phoneE164: phone, fromE164: from });
-        }
+        // The opt-out is already recorded above; telling the carrier is best effort.
+        await safely("opt-out sync", async () => {
+          const from = await deps.smsFrom(input.organizationId);
+          if (from) await deps.sms.syncOptOut?.({ phoneE164: phone, fromE164: from });
+        });
       }
       let paused = 0;
       const pending = await deps.store.listPendingByPhone(input.organizationId, phone);
@@ -1236,7 +1517,7 @@ export function createAutomationService(deps: AutomationDeps) {
       if (!automation?.enabled) return { scheduled: false as const, jobs: [] as JobRecord[] };
       const org = await requireOrg(input.organizationId);
       const phone = normalizeE164(input.phoneE164);
-      if (!isE164(phone) || (await deps.store.isSuppressed(input.organizationId, phone))) {
+      if (!isE164(phone) || (await isOptedOut(input.organizationId, phone))) {
         return { scheduled: false as const, jobs: [] as JobRecord[] };
       }
       const locale = resolveLocale(automation.config, org, input.locale);
@@ -1339,7 +1620,9 @@ export function createAutomationService(deps: AutomationDeps) {
         language: org.localeDefault,
         simulated: false,
       });
-      if (!result.job) return result;
+      // Only a job this call created is brought forward. A duplicate answer carries the
+      // job that already exists, and that one is left exactly as it is.
+      if (!result.scheduled || !result.job) return result;
       result.job.scheduledAt = deps.now().toISOString();
       await deps.store.saveJob(result.job);
       const claimed = await deps.store.claimNext({

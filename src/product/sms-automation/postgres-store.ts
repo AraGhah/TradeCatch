@@ -1,3 +1,4 @@
+import type { Pool } from "pg";
 import { phoneKey } from "@/product/crm/phone";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import type { AutomationStore } from "./store";
@@ -6,6 +7,7 @@ import type {
   AutomationRecord,
   AutomationType,
   ConsentBasis,
+  ExecutionRecord,
   HistoryRow,
   JobPayload,
   JobRecord,
@@ -97,38 +99,137 @@ function mapJob(r: Record<string, unknown>): JobRecord {
   };
 }
 
-export function createPostgresAutomationStore(databaseUrl: string): AutomationStore {
-  const pool = getPgPool(databaseUrl);
+function mapExecution(r: Record<string, unknown>): ExecutionRecord {
+  return {
+    id: String(r.id),
+    organizationId: String(r.organization_id),
+    automationId: String(r.automation_id),
+    jobId: String(r.job_id),
+    status: String(r.status),
+    result: (r.result as string) || undefined,
+    error: (r.error as string) || undefined,
+    providerMessageSid: (r.provider_message_sid as string) || undefined,
+    messageBody: (r.message_body as string) || undefined,
+    simulated: Boolean(r.simulated),
+    at: iso(r.at),
+  };
+}
+
+/** `databaseUrl` for the app; a ready pool lets tests run the same SQL on PGlite. */
+export function createPostgresAutomationStore(
+  databaseUrlOrPool: string | Pool,
+): AutomationStore {
+  const pool =
+    typeof databaseUrlOrPool === "string"
+      ? getPgPool(databaseUrlOrPool)
+      : databaseUrlOrPool;
 
   return {
-    async upsertAutomation(row) {
+    async ensureDefaults(input) {
+      // Insert-only. An upsert here is how two first requests used to reset an
+      // enabled automation, or a customised template, to its defaults.
+      if (input.automations.length > 0) {
+        const params: unknown[] = [];
+        const values = input.automations.map((row) => {
+          const base = params.length;
+          params.push(
+            row.id,
+            row.organizationId,
+            row.type,
+            row.enabled,
+            JSON.stringify(row.config),
+            row.createdAt,
+            row.updatedAt,
+          );
+          return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5}::jsonb,$${base + 6},$${base + 7})`;
+        });
+        await pool.query(
+          `INSERT INTO tc_sms_automations (
+             id, organization_id, type, enabled, config_json, created_at, updated_at
+           ) VALUES ${values.join(",")}
+           ON CONFLICT (organization_id, type) DO NOTHING`,
+          params,
+        );
+      }
+      if (input.templates.length > 0) {
+        const params: unknown[] = [];
+        const values = input.templates.map((row) => {
+          const base = params.length;
+          params.push(
+            row.id,
+            row.organizationId,
+            row.templateKey,
+            row.locale,
+            row.body,
+            row.customized,
+            row.createdAt,
+            row.updatedAt,
+          );
+          return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6},$${base + 7},$${base + 8})`;
+        });
+        await pool.query(
+          `INSERT INTO tc_sms_templates (
+             id, organization_id, template_key, locale, body, customized, created_at, updated_at
+           ) VALUES ${values.join(",")}
+           ON CONFLICT (organization_id, template_key, locale) DO NOTHING`,
+          params,
+        );
+      }
+    },
+    async setAutomationEnabled(organizationId, id, enabled, at) {
+      // One statement: the row is locked, read, and written together, so two clicks
+      // cannot both see "off" and both think they turned it on.
       const { rows } = await pool.query(
-        `INSERT INTO tc_sms_automations (
-           id, organization_id, type, enabled, config_json,
-           success_count, failure_count, response_count,
-           last_execution_status, last_execution_at, created_at, updated_at
-         ) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12)
-         ON CONFLICT (organization_id, type) DO UPDATE
-           SET enabled = EXCLUDED.enabled,
-               config_json = EXCLUDED.config_json,
-               updated_at = EXCLUDED.updated_at
-         RETURNING *`,
-        [
-          row.id,
-          row.organizationId,
-          row.type,
-          row.enabled,
-          JSON.stringify(row.config),
-          row.successCount,
-          row.failureCount,
-          row.responseCount,
-          row.lastExecutionStatus ?? null,
-          row.lastExecutionAt ?? null,
-          row.createdAt,
-          row.updatedAt,
-        ],
+        `WITH prev AS (
+           SELECT enabled FROM tc_sms_automations
+           WHERE organization_id = $1 AND id = $2
+           FOR UPDATE
+         )
+         UPDATE tc_sms_automations a
+         SET enabled = $3::boolean,
+             updated_at = CASE WHEN prev.enabled IS DISTINCT FROM $3::boolean
+                               THEN $4::timestamptz ELSE a.updated_at END
+         FROM prev
+         WHERE a.organization_id = $1 AND a.id = $2
+         RETURNING a.*, prev.enabled AS was_enabled`,
+        [organizationId, id, enabled, at],
       );
-      return mapAutomation(rows[0]);
+      if (!rows[0]) return null;
+      return {
+        automation: mapAutomation(rows[0]),
+        changed: Boolean(rows[0].was_enabled) !== enabled,
+      };
+    },
+    async updateAutomationConfig(organizationId, id, change, at) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const found = await client.query(
+          `SELECT * FROM tc_sms_automations
+           WHERE organization_id = $1 AND id = $2
+           FOR UPDATE`,
+          [organizationId, id],
+        );
+        if (!found.rows[0]) {
+          await client.query("ROLLBACK");
+          return null;
+        }
+        const next = change(mapAutomation(found.rows[0]));
+        const saved = await client.query(
+          `UPDATE tc_sms_automations
+           SET config_json = $3::jsonb, updated_at = $4::timestamptz
+           WHERE organization_id = $1 AND id = $2
+           RETURNING *`,
+          [organizationId, id, JSON.stringify(next), at],
+        );
+        await client.query("COMMIT");
+        return mapAutomation(saved.rows[0]);
+      } catch (err) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw err;
+      } finally {
+        client.release();
+      }
     },
     async getAutomation(organizationId, id) {
       const { rows } = await pool.query(
@@ -279,20 +380,27 @@ export function createPostgresAutomationStore(databaseUrl: string): AutomationSt
       return rows[0] ? mapJob(rows[0]) : null;
     },
     async claimNext(input) {
+      // A worker that died mid-job leaves it `processing`. If a send may have reached the
+      // provider (it has a provider id, or the send-started marker) the job is never sent
+      // again: it becomes `uncertain` for a person to look at. Only a job that never
+      // got as far as the provider goes back in the queue.
       await pool.query(
         `UPDATE tc_sms_jobs
          SET status = 'uncertain',
              last_error = 'provider_outcome_unreconciled',
+             claim_token = NULL,
              updated_at = now()
          WHERE status = 'processing'
-           AND provider_message_sid IS NOT NULL
-           AND claimed_at < now() - interval '10 minutes'`,
+           AND claimed_at < now() - interval '10 minutes'
+           AND (provider_message_sid IS NOT NULL
+                OR payload_json->>'sendStartedAt' IS NOT NULL)`,
       );
       await pool.query(
         `UPDATE tc_sms_jobs
          SET status = 'pending', claim_token = NULL, claimed_at = NULL, updated_at = now()
          WHERE status = 'processing'
            AND provider_message_sid IS NULL
+           AND payload_json->>'sendStartedAt' IS NULL
            AND claimed_at < now() - interval '10 minutes'`,
       );
       const { rows } = await pool.query(
@@ -314,7 +422,7 @@ export function createPostgresAutomationStore(databaseUrl: string): AutomationSt
          )
          RETURNING *`,
         [
-          `claim_${Date.now()}`,
+          `claim_${crypto.randomUUID()}`,
           input.nowIso,
           input.organizationId ?? null,
           input.simulatedOnly ?? false,
@@ -363,13 +471,52 @@ export function createPostgresAutomationStore(databaseUrl: string): AutomationSt
         ],
       );
     },
+    async beginSend(job, at) {
+      // Only the worker that still holds the claim may start the send. A job canceled
+      // (or taken over) since it was claimed matches no row, and nothing is sent.
+      const { rows } = await pool.query(
+        `UPDATE tc_sms_jobs
+         SET payload_json = jsonb_set(payload_json, '{sendStartedAt}', to_jsonb($3::text)),
+             updated_at = $4::timestamptz
+         WHERE id = $1 AND organization_id = $2
+           AND status = 'processing'
+           AND claim_token = $5
+           AND provider_message_sid IS NULL
+         RETURNING id`,
+        [job.id, job.organizationId, at, at, job.claimToken ?? null],
+      );
+      return rows.length > 0;
+    },
+    async requeueDisabledJob(organizationId, idempotencyKey, scheduledAt, at) {
+      const { rows } = await pool.query(
+        `UPDATE tc_sms_jobs
+         SET status = 'pending',
+             cancel_reason = NULL,
+             last_error = NULL,
+             claim_token = NULL,
+             claimed_at = NULL,
+             attempts = 0,
+             scheduled_at = $3::timestamptz,
+             updated_at = $4::timestamptz,
+             payload_json = payload_json - 'sendStartedAt'
+         WHERE organization_id = $1
+           AND idempotency_key = $2
+           AND status = 'canceled'
+           AND cancel_reason = 'automation_disabled'
+           AND provider_message_sid IS NULL
+         RETURNING *`,
+        [organizationId, idempotencyKey, scheduledAt, at],
+      );
+      return rows[0] ? mapJob(rows[0]) : null;
+    },
     async cancelPending(input) {
       const { rowCount } = await pool.query(
         `UPDATE tc_sms_jobs
          SET status = 'canceled', cancel_reason = $2, updated_at = now()
          WHERE organization_id = $1
-           AND status IN ('pending', 'processing', 'uncertain')
+           AND status IN ('pending', 'processing')
            AND provider_message_sid IS NULL
+           AND NOT (status = 'processing' AND payload_json->>'sendStartedAt' IS NOT NULL)
            AND ($3::text IS NULL OR automation_id = $3)
            AND ($4::text IS NULL OR ${PHONE_KEY_SQL("customer_phone_e164")} = $4)
            AND ($5::text IS NULL OR payload_json->>'quoteThreadId' = $5)
@@ -417,6 +564,16 @@ export function createPostgresAutomationStore(databaseUrl: string): AutomationSt
           row.at,
         ],
       );
+    },
+    async listExecutions(organizationId, limit) {
+      const { rows } = await pool.query(
+        `SELECT * FROM tc_sms_executions
+         WHERE organization_id = $1
+         ORDER BY at DESC
+         LIMIT $2`,
+        [organizationId, limit],
+      );
+      return rows.map(mapExecution);
     },
     async listHistory(organizationId, limit) {
       const { rows } = await pool.query(

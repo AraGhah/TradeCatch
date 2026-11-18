@@ -71,6 +71,12 @@ export type AutomationConfig = {
   stopOnQuoteAccepted: boolean;
   stopOnQuoteRejected: boolean;
   messageCategory: MessageCategory;
+  /**
+   * Missed-call recovery only. Off (the default) texts the caller right away, because
+   * the text answers their own call. On, a text that would go out during the quiet
+   * hours (outside the sending window) is skipped instead, never sent late.
+   */
+  respectQuietHours?: boolean;
 };
 
 export type JobStatus =
@@ -129,6 +135,12 @@ export type JobPayload = {
   renderedBody?: string;
   disposition?: string;
   appointmentId?: string;
+  /**
+   * Written, and confirmed, before the provider is called. A job that is still
+   * `processing` with this set and no provider id may already have been sent, so it
+   * is never sent again: it becomes `uncertain`.
+   */
+  sendStartedAt?: string;
 };
 
 export type JobRecord = {

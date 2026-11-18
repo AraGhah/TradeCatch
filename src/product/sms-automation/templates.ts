@@ -20,6 +20,7 @@ export function defaultConfig(type: AutomationType): AutomationConfig {
         stopOnQuoteAccepted: false,
         stopOnQuoteRejected: false,
         messageCategory: "inquiry_response",
+        respectQuietHours: false,
       };
     case "quote_followup":
       return {
@@ -252,13 +253,21 @@ export function mergeConfig(
     errors.push("sending_window");
   }
   if (!["en", "fr", "customer"].includes(base.language)) errors.push("language");
-  const categories: MessageCategory[] = [
-    "inquiry_response",
-    "requested_estimate",
-    "appointment_service",
-    "marketing",
-  ];
-  if (!categories.includes(base.messageCategory)) errors.push("category");
+  // The category decides which consent a text needs (a reply to a call is not a promotion),
+  // so it belongs to the kind of automation. It is not a setting: whatever a request or an
+  // older saved row says, it is set back to the type's own.
+  base.messageCategory = defaultConfig(type).messageCategory;
   base.trigger = String(base.trigger || defaultConfig(type).trigger).slice(0, 60);
+  if (type === "quote_followup") {
+    // A customer who accepted or turned down the estimate must never be chased about it,
+    // whatever an older saved setting says.
+    base.stopOnQuoteAccepted = true;
+    base.stopOnQuoteRejected = true;
+  }
+  if (type === "missed_call_recovery") {
+    base.respectQuietHours = base.respectQuietHours === true;
+  } else {
+    delete base.respectQuietHours;
+  }
   return { config: base, errors };
 }

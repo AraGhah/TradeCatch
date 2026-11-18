@@ -1,6 +1,7 @@
 import { createId } from "@/lib/id";
 import { phoneKey } from "@/product/crm/phone";
 import type {
+  AutomationConfig,
   AutomationRecord,
   AutomationType,
   ConsentRecord,
@@ -14,7 +15,37 @@ import type {
 } from "./types";
 
 export type AutomationStore = {
-  upsertAutomation(row: AutomationRecord): Promise<AutomationRecord>;
+  /**
+   * Creates whatever default rows are missing and touches nothing that exists. Two requests
+   * seeding the same business at once must never reset a setting or a customised template,
+   * so this is insert-only (`ON CONFLICT DO NOTHING`), never an upsert.
+   */
+  ensureDefaults(input: {
+    automations: AutomationRecord[];
+    templates: TemplateRecord[];
+  }): Promise<void>;
+  /**
+   * Sets only the on/off switch, in place. `changed` is false when it already had that
+   * value, so repeating a request does nothing. Null when the automation is not this
+   * business's. The settings are never written here, so a toggle cannot undo a save.
+   */
+  setAutomationEnabled(
+    organizationId: string,
+    id: string,
+    enabled: boolean,
+    at: string,
+  ): Promise<{ automation: AutomationRecord; changed: boolean } | null>;
+  /**
+   * Replaces only the settings. `change` receives the stored row, locked against other
+   * writers, and returns the new settings (or throws to refuse). The switch is never
+   * written here, so a save cannot undo a toggle. Null when not this business's.
+   */
+  updateAutomationConfig(
+    organizationId: string,
+    id: string,
+    change: (current: AutomationRecord) => AutomationConfig,
+    at: string,
+  ): Promise<AutomationRecord | null>;
   getAutomation(organizationId: string, id: string): Promise<AutomationRecord | null>;
   getAutomationByType(
     organizationId: string,
@@ -53,6 +84,22 @@ export type AutomationStore = {
     forceJobId?: string;
   }): Promise<JobRecord | null>;
   saveJob(job: JobRecord): Promise<void>;
+  /**
+   * The last step before the provider is called. Records that a send has started, only if
+   * this worker still holds the job (still `processing`, same claim). False means the job
+   * was canceled or taken over meanwhile: the caller must not send.
+   */
+  beginSend(job: JobRecord, at: string): Promise<boolean>;
+  /**
+   * Puts a job that was canceled only because its automation was turned off back in the
+   * queue, when the automation is turned on again. Null for any other job.
+   */
+  requeueDisabledJob(
+    organizationId: string,
+    idempotencyKey: string,
+    scheduledAt: string,
+    at: string,
+  ): Promise<JobRecord | null>;
   cancelPending(input: {
     organizationId: string;
     automationId?: string;
@@ -67,6 +114,7 @@ export type AutomationStore = {
     phoneE164: string,
   ): Promise<JobRecord[]>;
   addExecution(row: ExecutionRecord): Promise<void>;
+  listExecutions(organizationId: string, limit: number): Promise<ExecutionRecord[]>;
   listHistory(organizationId: string, limit: number): Promise<HistoryRow[]>;
   bumpStats(
     organizationId: string,
@@ -118,15 +166,40 @@ export function createMemoryAutomationStore(): AutomationStore {
   }
 
   return {
-    async upsertAutomation(row) {
-      const existing = [...automations.values()].find(
-        (a) => a.organizationId === row.organizationId && a.type === row.type,
-      );
-      const saved = existing
-        ? { ...row, id: existing.id, createdAt: existing.createdAt }
-        : row;
-      automations.set(saved.id, clone(saved));
-      return clone(saved);
+    async ensureDefaults(input) {
+      for (const row of input.automations) {
+        const exists = [...automations.values()].some(
+          (a) => a.organizationId === row.organizationId && a.type === row.type,
+        );
+        if (!exists) automations.set(row.id, clone(row));
+      }
+      for (const row of input.templates) {
+        const exists = [...templates.values()].some(
+          (t) =>
+            t.organizationId === row.organizationId &&
+            t.templateKey === row.templateKey &&
+            t.locale === row.locale,
+        );
+        if (!exists) templates.set(row.id, clone(row));
+      }
+    },
+    async setAutomationEnabled(organizationId, id, enabled, at) {
+      const row = automations.get(id);
+      if (!row || row.organizationId !== organizationId) return null;
+      const changed = row.enabled !== enabled;
+      if (changed) {
+        row.enabled = enabled;
+        row.updatedAt = at;
+      }
+      return { automation: clone(row), changed };
+    },
+    async updateAutomationConfig(organizationId, id, change, at) {
+      const row = automations.get(id);
+      if (!row || row.organizationId !== organizationId) return null;
+      // No await between the read and the write: nothing else can run in between.
+      row.config = clone(change(clone(row)));
+      row.updatedAt = at;
+      return clone(row);
     },
     async getAutomation(organizationId, id) {
       const row = automations.get(id);
@@ -229,9 +302,11 @@ export function createMemoryAutomationStore(): AutomationStore {
         if (job.status !== "processing" || !job.claimedAt || job.claimedAt >= staleBefore) {
           continue;
         }
-        if (job.providerMessageSid) {
+        if (job.providerMessageSid || job.payload.sendStartedAt) {
+          // A send may have reached the provider: it is never sent again.
           job.status = "uncertain";
           job.lastError = "provider_outcome_unreconciled";
+          job.claimToken = undefined;
         } else {
           job.status = "pending";
           job.claimToken = undefined;
@@ -262,12 +337,54 @@ export function createMemoryAutomationStore(): AutomationStore {
       if (!current || current.organizationId !== job.organizationId) return;
       jobs.set(job.id, clone(job));
     },
+    async beginSend(job, at) {
+      const stored = jobs.get(job.id);
+      if (
+        !stored ||
+        stored.organizationId !== job.organizationId ||
+        stored.status !== "processing" ||
+        !stored.claimToken ||
+        stored.claimToken !== job.claimToken ||
+        stored.providerMessageSid
+      ) {
+        return false;
+      }
+      stored.payload.sendStartedAt = at;
+      stored.updatedAt = at;
+      return true;
+    },
+    async requeueDisabledJob(organizationId, idempotencyKey, scheduledAt, at) {
+      const job = [...jobs.values()].find(
+        (j) =>
+          j.organizationId === organizationId &&
+          j.idempotencyKey === idempotencyKey &&
+          j.status === "canceled" &&
+          j.cancelReason === "automation_disabled" &&
+          !j.providerMessageSid,
+      );
+      if (!job) return null;
+      job.status = "pending";
+      job.cancelReason = undefined;
+      job.lastError = undefined;
+      job.claimToken = undefined;
+      job.claimedAt = undefined;
+      job.attempts = 0;
+      job.scheduledAt = scheduledAt;
+      job.updatedAt = at;
+      delete job.payload.sendStartedAt;
+      return clone(job);
+    },
     async cancelPending(input) {
       let count = 0;
       for (const job of jobs.values()) {
         if (job.organizationId !== input.organizationId) continue;
-        if (!OPEN.has(job.status) && job.status !== "uncertain") continue;
+        // `uncertain` stays as it is: the text may have gone out, and a person has to
+        // look. Rewriting it as "canceled" would hide that.
+        if (!OPEN.has(job.status)) continue;
         if (job.status === "processing" && job.providerMessageSid) continue;
+        // A send is in flight. It cannot be taken back and the worker records how it
+        // ended, so the job is left alone.
+        if (job.status === "processing" && job.payload.sendStartedAt) continue;
         if (input.automationId && job.automationId !== input.automationId) continue;
         if (input.phoneE164 && !jobMatchesPhone(job, input.phoneE164)) continue;
         if (
@@ -300,6 +417,13 @@ export function createMemoryAutomationStore(): AutomationStore {
     },
     async addExecution(row) {
       executions.push(clone(row));
+    },
+    async listExecutions(organizationId, limit) {
+      return executions
+        .filter((row) => row.organizationId === organizationId)
+        .sort((a, b) => b.at.localeCompare(a.at))
+        .slice(0, limit)
+        .map(clone);
     },
     async listHistory(organizationId, limit) {
       return [...jobs.values()]

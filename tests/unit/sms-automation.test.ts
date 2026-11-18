@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createMemorySmsPort } from "../../src/product/missed-call/twilio";
+import { createMemorySmsPort, SmsDeliveryError } from "../../src/product/missed-call/twilio";
 import { createAutomationService, nextDeliveryStatus } from "../../src/product/sms-automation/service";
 import { createMemoryAutomationStore } from "../../src/product/sms-automation/store";
 import { renderTemplate, validateTemplate } from "../../src/product/sms-automation/templates";
@@ -30,7 +30,8 @@ function harness(options?: { fail?: "timeout" | "retry" | "none"; orgStatus?: st
           throw new Error("The operation was aborted due to timeout");
         }
         if (options?.fail === "retry" && sends === 1) {
-          throw new Error("Twilio SMS failed: 503 upstream");
+          // The port classifies a 5xx before the text is accepted as safe to retry.
+          throw new SmsDeliveryError("retry", "http_503");
         }
         return sms.send(message);
       },
