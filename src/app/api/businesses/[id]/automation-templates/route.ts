@@ -2,7 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAutomationAccess } from "@/product/sms-automation/access";
-import { AutomationError } from "@/product/sms-automation/service";
+import { automationFailure } from "@/product/sms-automation/http";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 import { TEMPLATE_KEYS } from "@/product/sms-automation/types";
 
@@ -27,8 +27,12 @@ export async function GET(_request: NextRequest, { params }: Params) {
       { status: access.status },
     );
   }
-  const templates = await getAutomationServices().listTemplates(id);
-  return NextResponse.json({ ok: true, templates });
+  try {
+    const templates = await getAutomationServices().listTemplates(id);
+    return NextResponse.json({ ok: true, templates });
+  } catch (err) {
+    return automationFailure(err, "templates");
+  }
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -60,9 +64,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     });
     return NextResponse.json({ ok: true, preview });
   } catch (err) {
-    if (err instanceof AutomationError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    throw err;
+    return automationFailure(err, "templates");
   }
 }
