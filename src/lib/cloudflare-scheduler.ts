@@ -111,7 +111,7 @@ export async function runCloudflareCron(
           result.ok === false ||
           (typeof result.failed === "number" && result.failed > 0) ||
           result.outcomes?.some((row) =>
-            ["failed", "dead", "retry"].includes(row.status || ""),
+            ["failed", "dead", "retry", "uncertain"].includes(row.status || ""),
           )
         ) {
           stage = "work";

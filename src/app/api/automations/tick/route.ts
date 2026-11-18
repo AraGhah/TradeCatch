@@ -25,7 +25,10 @@ async function tick(request: NextRequest) {
     processed: result.processed,
     outcomes: result.jobs.map((job) => ({
       id: job.id,
-      status: job.status,
+      // A job put back in the queue after a failed attempt is reported as a retry, so the
+      // scheduler's monitoring sees it. A failed or uncertain send is reported as such and
+      // is never folded into a success.
+      status: job.status === "pending" && job.lastError ? "retry" : job.status,
       reason: job.cancelReason || job.lastError || job.responseStatus,
       simulated: job.simulated,
     })),

@@ -124,6 +124,41 @@ describe("Cloudflare scheduler", () => {
     );
     assert.ok(results.length > 0 && results.every((ok) => !ok));
   });
+  for (const status of ["failed", "uncertain", "retry"]) {
+    it(`does not treat a ${status} automation send as a successful job`, async () => {
+      const results: boolean[] = [];
+      await assert.rejects(
+        runCloudflareCron(
+          "* * * * *",
+          async () => Response.json({ ok: true, processed: 1, outcomes: [{ id: "job_1", status }] }),
+          async (_path, ok) => {
+            results.push(ok);
+          },
+        ),
+        /failed for/,
+      );
+      assert.ok(results.length > 0 && results.every((ok) => !ok));
+    });
+  }
+  it("treats submitted and canceled automation outcomes as healthy", async () => {
+    const results: boolean[] = [];
+    await runCloudflareCron(
+      "* * * * *",
+      async () =>
+        Response.json({
+          ok: true,
+          processed: 2,
+          outcomes: [
+            { id: "job_1", status: "submitted" },
+            { id: "job_2", status: "canceled" },
+          ],
+        }),
+      async (_path, ok) => {
+        results.push(ok);
+      },
+    );
+    assert.ok(results.length > 0 && results.every(Boolean));
+  });
   it("records each actual result and continues after invocation failures", async () => {
     const results: { path: string; ok: boolean }[] = [];
     await assert.rejects(
