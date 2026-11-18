@@ -31,9 +31,13 @@ export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
 const scenarioSchema = z
-  .enum([...LIVE_TEST_SCENARIOS, ...(Object.keys(LEGACY_SCENARIOS) as [string])])
-  .transform((value): LiveTestScenario =>
-    (LEGACY_SCENARIOS[value] ?? value) as LiveTestScenario,
+  .enum([
+    ...LIVE_TEST_SCENARIOS,
+    ...(Object.keys(LEGACY_SCENARIOS) as [string]),
+  ])
+  .transform(
+    (value): LiveTestScenario =>
+      (LEGACY_SCENARIOS[value] ?? value) as LiveTestScenario,
   );
 
 const bodySchema = z.object({
@@ -72,7 +76,11 @@ async function context(request: NextRequest, id: string) {
   const client = await loadClientForOrg(access.organization);
   if (!client) {
     return {
-      response: problem(409, "phone_client_not_linked", "Phone client is not linked."),
+      response: problem(
+        409,
+        "phone_client_not_linked",
+        "Phone client is not linked.",
+      ),
     } as const;
   }
   return { access, client } as const;
@@ -86,7 +94,10 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   const runtime = getReceptionistRuntime();
   const scope = { organizationId: id, clientAccountId: ctx.client.id };
-  const stores = { events: getTelephonyRuntime().events, sessions: runtime.store };
+  const stores = {
+    events: getTelephonyRuntime().events,
+    sessions: runtime.store,
+  };
   try {
     const callSid = request.nextUrl.searchParams.get("callSid")?.trim();
     if (callSid) {
@@ -96,11 +107,18 @@ export async function GET(request: NextRequest, { params }: Params) {
       const loaded = await loadSimulation(scope, stores, callSid);
       if (!loaded) return problem(404, "not_found", "Not found.");
       if (!loaded.complete) {
-        return problem(409, "simulation_incomplete", "This simulation did not finish saving.");
+        return problem(
+          409,
+          "simulation_incomplete",
+          "This simulation did not finish saving.",
+        );
       }
       return NextResponse.json({ ok: true, run: loaded.run });
     }
-    return NextResponse.json({ ok: true, runs: await listSimulations(scope, stores) });
+    return NextResponse.json({
+      ok: true,
+      runs: await listSimulations(scope, stores),
+    });
   } catch {
     return problem(
       503,
@@ -162,7 +180,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const scope = { organizationId: id, clientAccountId: client.id };
-  const stores = { events: getTelephonyRuntime().events, sessions: runtime.store };
+  const stores = {
+    events: getTelephonyRuntime().events,
+    sessions: runtime.store,
+  };
 
   try {
     // The same click sent twice (a retry after a dropped response) is one run.
