@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { ReferralLinkCard } from "@/components/app/ReferralLinkCard";
 import { getPathname } from "@/i18n/pathname";
+import { planNameOrNull } from "@/lib/plan-names";
 import { formatPlanMoney } from "@/lib/plans";
 import { referralUrl } from "@/product/referrals/links";
 import { logReferralFailure } from "@/product/referrals/log";
@@ -23,7 +24,6 @@ export default async function AppReferralsPage({
   setRequestLocale(locale);
   const lang = locale === "fr" ? "fr" : "en";
   const t = await getTranslations("referrals.app");
-  const plans = await getTranslations("plans");
 
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
@@ -70,7 +70,8 @@ export default async function AppReferralsPage({
     new Intl.DateTimeFormat(lang === "fr" ? "fr-CA" : "en-CA", { dateStyle: "medium" }).format(
       new Date(iso),
     );
-  const planName = (plan: string) => plans(`names.${plan}`);
+  // A stored reward can carry a retired plan id; it is shown under its public name.
+  const planName = (plan: string) => planNameOrNull(plan) ?? plan;
   const initialLinks = overview.code
     ? { en: referralUrl(overview.code, "en"), fr: referralUrl(overview.code, "fr") }
     : null;

@@ -21,6 +21,7 @@ import {
 import { localizedAnchor } from "@/lib/anchors";
 import { schedulingVerified } from "@/lib/launch-flags";
 import { comparisonRowsFromCatalog } from "@/lib/plan-marketing";
+import { planDisplayName } from "@/lib/plan-names";
 import { formatPlanMoney } from "@/lib/plans";
 import { buildMetadata } from "@/lib/seo";
 import {
@@ -127,7 +128,7 @@ export default async function PricingPage({
   };
   const planNames = Object.fromEntries(
     (["essential", "professional", "starter", "growth", "receptionist"] as PlanId[]).map(
-      (id) => [id, plans(`names.${id}`)],
+      (id) => [id, planDisplayName(id)],
     ),
   ) as Record<PlanId, string>;
   const referralCopy: ReferralProgramTeaserCopy = {
