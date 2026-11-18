@@ -225,6 +225,12 @@ export const POLICIES = {
     per: "business+user",
     why: "Voice consent revocation.",
   },
+  "sensitive.automation-settings": {
+    ...perWindow(30, 5 * MIN),
+    group: "sensitive",
+    per: "business+user",
+    why: "Turning customer texts on or off, and changing their settings or wording.",
+  },
 
   // --- Admin --------------------------------------------------------------
   "admin.installations": {

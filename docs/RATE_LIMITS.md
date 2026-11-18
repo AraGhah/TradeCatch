@@ -101,6 +101,7 @@ Both SMS buckets are checked inside the one adapter every text goes through ([sr
 | `sensitive.voice-mode` | 30 | 1 per 20 s | business+user | same | Switching between the standard and a cloned voice. |
 | `sensitive.voice-delete` | 20 | 1 per 30 s | business+user | same | Deleting a cloned voice. |
 | `sensitive.voice-revoke` | 20 | 1 per 30 s | business+user | same | Voice consent revocation. |
+| `sensitive.automation-settings` | 30 | 1 per 10 s | business+user | same | Turning customer texts on or off, and changing their settings or wording. |
 
 ### admin
 
