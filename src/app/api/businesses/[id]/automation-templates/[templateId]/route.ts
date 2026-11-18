@@ -2,7 +2,10 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireAutomationAccess } from "@/product/sms-automation/access";
-import { AutomationError } from "@/product/sms-automation/service";
+import {
+  automationFailure,
+  limitAutomationWrite,
+} from "@/product/sms-automation/http";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +26,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
       { status: access.status },
     );
   }
+  const limited = await limitAutomationWrite(id, access.ctx.user.id);
+  if (limited) return limited;
   let json: unknown;
   try {
     json = await readJsonBounded(request);
@@ -44,9 +49,6 @@ export async function PUT(request: NextRequest, { params }: Params) {
     );
     return NextResponse.json({ ok: true, template });
   } catch (err) {
-    if (err instanceof AutomationError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    throw err;
+    return automationFailure(err, "template");
   }
 }
