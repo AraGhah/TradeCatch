@@ -260,15 +260,16 @@ export function createMemorySchedulingStore(): SchedulingStore {
         ) {
           return false;
         }
-        const start = new Date(Date.parse(row.startAt) - pad).toISOString();
-        const end = new Date(Date.parse(row.endAt) + pad).toISOString();
+        // Only the existing booking carries the buffer, exactly like the SQL
+        // in the Postgres store and like `listSlots`: padding both rows would
+        // double the gap, so a time offered as free could not be booked.
         const otherStart = new Date(
           Date.parse(existing.startAt) - pad,
         ).toISOString();
         const otherEnd = new Date(
           Date.parse(existing.endAt) + pad,
         ).toISOString();
-        return overlaps(start, end, otherStart, otherEnd);
+        return overlaps(row.startAt, row.endAt, otherStart, otherEnd);
       });
       if (clash) return null;
       if (row.idempotencyKey) {

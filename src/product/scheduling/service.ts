@@ -1,9 +1,11 @@
 import { createId } from "@/lib/id";
+import { parseInstant, parseRange } from "./instant";
 import {
   defaultDays,
   listSlots,
   localKey,
   localTime,
+  isValidTimeZone,
   rulesProblem,
   slotIsFree,
   usableTimeZone,
@@ -42,6 +44,8 @@ const INTERNAL_CANCEL_REASONS = new Set([
   "reschedule_hold",
   "approval_hold",
   "booking_timed_out",
+  // A demo business wiped back to empty: its sample visits are not history.
+  "demo_reset",
 ]);
 
 export function isInternalAppointment(
@@ -94,6 +98,17 @@ export type CalendarPort = {
 export type SchedulingDeps = {
   store: SchedulingStore;
   now: () => Date;
+  /**
+   * The business's own IANA timezone (its organization record). It seeds the
+   * availability rules the first time they are created, so a Vancouver business
+   * is not scheduled in Toronto time until someone finds the setting.
+   */
+  businessTimeZone?: (organizationId: string) => Promise<string | undefined>;
+  /** The availability rules moved to a new zone: the business record follows. */
+  businessTimeZoneChanged?: (
+    organizationId: string,
+    timeZone: string,
+  ) => Promise<void>;
   /**
    * `hint.eventId` is the calendar event an operation is about. A booking made
    * with one provider is changed through that provider, whatever the business
@@ -222,6 +237,16 @@ const DEFAULT_SERVICES: Omit<ServiceType, "id" | "organizationId">[] = [
   },
 ];
 
+/**
+ * First-time setups in progress, by business. Kept on `globalThis` like the
+ * store itself, so it is one map however the modules were bundled.
+ */
+const settingUp = ((
+  globalThis as typeof globalThis & {
+    __tradecatchSchedulingSetup?: Map<string, Promise<AvailabilityRules>>;
+  }
+).__tradecatchSchedulingSetup ??= new Map());
+
 function localParts(iso: string, timeZone: string) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: usableTimeZone(timeZone),
@@ -324,17 +349,26 @@ export function createSchedulingService(deps: SchedulingDeps) {
       return false;
     }
   }
-  async function ensure(organizationId: string): Promise<AvailabilityRules> {
-    const existing = await deps.store.getRules(organizationId);
-    if (existing) {
-      // A zone Intl does not know would throw on every availability request.
-      existing.timezone = usableTimeZone(existing.timezone);
-      return existing;
-    }
+  /**
+   * A business's first setup: its hours, its default services and its one
+   * technician. It must happen once. Every technician is another person who
+   * can take the same hour, so a second copy of the default one lets two
+   * customers be confirmed for the same time.
+   */
+  async function seed(organizationId: string): Promise<AvailabilityRules> {
+    // Another request may have finished the setup while this one waited.
+    const raced = await deps.store.getRules(organizationId);
+    if (raced) return raced;
     const now = deps.now().toISOString();
+    let seededZone: string | undefined;
+    try {
+      seededZone = await deps.businessTimeZone?.(organizationId);
+    } catch {
+      // The organization record is a convenience here: scheduling must work without it.
+    }
     const rules: AvailabilityRules = {
       organizationId,
-      timezone: "America/Toronto",
+      timezone: usableTimeZone(seededZone),
       days: defaultDays(),
       defaultDurationMinutes: 60,
       bufferMinutes: 30,
@@ -346,21 +380,45 @@ export function createSchedulingService(deps: SchedulingDeps) {
       calendarMode: "simulated",
       updatedAt: now,
     };
-    await deps.store.saveRules(rules);
-    for (const service of DEFAULT_SERVICES) {
-      await deps.store.saveService({
-        ...service,
-        id: createId("svc"),
-        organizationId,
-      });
-    }
+    // The rows have fixed ids, so a second server instance that also found
+    // the business empty writes the very same rows instead of adding copies.
+    // The rules go last: they are what marks the business as set up, so a
+    // setup cut short is simply done again.
     await deps.store.saveTechnician({
-      id: createId("tech"),
+      id: `tech_${organizationId}_default`,
       organizationId,
       name: "On-call technician",
       active: true,
     });
+    for (const [index, service] of DEFAULT_SERVICES.entries()) {
+      await deps.store.saveService({
+        ...service,
+        id: `svc_${organizationId}_${index + 1}`,
+        organizationId,
+      });
+    }
+    await deps.store.saveRules(rules);
     return rules;
+  }
+
+  async function ensure(organizationId: string): Promise<AvailabilityRules> {
+    const existing = await deps.store.getRules(organizationId);
+    if (existing) {
+      // A zone Intl does not know would throw on every availability request.
+      existing.timezone = usableTimeZone(existing.timezone);
+      return existing;
+    }
+    // The first requests on a new calendar arrive together (the dashboard
+    // asks four questions at once, and every request builds its own service
+    // object): they share one setup rather than each running their own.
+    let setup = settingUp.get(organizationId);
+    if (!setup) {
+      setup = seed(organizationId).finally(() => {
+        settingUp.delete(organizationId);
+      });
+      settingUp.set(organizationId, setup);
+    }
+    return structuredClone(await setup);
   }
 
   async function slotsFor(input: {
@@ -522,7 +580,37 @@ export function createSchedulingService(deps: SchedulingDeps) {
       const problem = rulesProblem(rules);
       if (problem)
         throw new SchedulingError("Invalid availability.", 400, problem);
-      return deps.store.saveRules(rules);
+      const previous = await deps.store.getRules(rules.organizationId);
+      const saved = await deps.store.saveRules(rules);
+      // The business has one zone: when the hours screen moves it, the
+      // business record follows, so reminders and quiet hours agree with the
+      // calendar.
+      if (previous && previous.timezone !== rules.timezone)
+        await deps.businessTimeZoneChanged?.(
+          rules.organizationId,
+          rules.timezone,
+        );
+      return saved;
+    },
+
+    /**
+     * The business changed its own time zone: scheduling follows. Existing
+     * appointments keep their UTC instant (so nothing moves in time); only the
+     * way the calendar reads and draws them changes. Rules that do not exist
+     * yet are seeded from the business when first needed.
+     */
+    async setTimeZone(organizationId: string, timeZone: string) {
+      if (!isValidTimeZone(timeZone))
+        throw new SchedulingError(
+          "Invalid timezone.",
+          400,
+          "invalid_timezone",
+        );
+      const rules = await deps.store.getRules(organizationId);
+      if (!rules || rules.timezone === timeZone) return;
+      rules.timezone = timeZone;
+      rules.updatedAt = deps.now().toISOString();
+      await deps.store.saveRules(rules);
     },
 
     async listServices(organizationId: string) {
@@ -606,10 +694,14 @@ export function createSchedulingService(deps: SchedulingDeps) {
       const service = input.serviceId
         ? services.find((row) => row.id === input.serviceId)
         : undefined;
-      const from = input.from ? new Date(input.from) : deps.now();
+      const from = input.from ? parseInstant(input.from) : deps.now();
+      if (!from)
+        throw new SchedulingError("Invalid start time.", 400, "invalid_start");
       const until = input.until
-        ? new Date(input.until)
+        ? parseInstant(input.until)
         : new Date(from.getTime() + 7 * 24 * 60 * 60 * 1000);
+      if (!until || until.getTime() <= from.getTime())
+        throw new SchedulingError("Invalid date range.", 400, "invalid_range");
       const slots = await slotsFor({
         organizationId: input.organizationId,
         service,
@@ -698,12 +790,31 @@ export function createSchedulingService(deps: SchedulingDeps) {
 
     async list(
       organizationId: string,
-      filter?: { status?: string; technicianId?: string; q?: string },
+      filter?: {
+        status?: string;
+        technicianId?: string;
+        q?: string;
+        /** Only appointments that overlap [from, to): ISO instants with an offset. */
+        from?: string;
+        to?: string;
+      },
     ) {
       await ensure(organizationId);
+      let range: { from: number; to: number } | null = null;
+      if (filter?.from || filter?.to) {
+        const parsed = parseRange(filter.from, filter.to);
+        if (!parsed)
+          throw new SchedulingError("Invalid date range.", 400, "invalid_range");
+        range = { from: parsed.from.getTime(), to: parsed.to.getTime() };
+      }
       const rows = await deps.store.listAppointments(organizationId);
       return rows.filter((row) => {
         if (isInternalAppointment(row)) return false;
+        if (
+          range &&
+          !(Date.parse(row.endAt) > range.from && Date.parse(row.startAt) < range.to)
+        )
+          return false;
         if (filter?.status && row.status !== filter.status) return false;
         if (filter?.technicianId && row.technicianId !== filter.technicianId)
           return false;
@@ -766,9 +877,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
         const duration =
           chosen?.durationMinutes ?? rules.defaultDurationMinutes;
         const buffer = chosen?.bufferMinutes ?? rules.bufferMinutes;
-        const start = new Date(input.startAt);
-        if (Number.isNaN(start.getTime()))
-          throw new SchedulingError("Invalid start time.");
+        const start = parseInstant(input.startAt);
+        if (!start)
+          throw new SchedulingError("Invalid start time.", 400, "invalid_start");
         const end = new Date(start.getTime() + duration * 60_000);
         const windowFrom = new Date(start.getTime() - 60_000);
         const windowUntil = new Date(end.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -979,6 +1090,10 @@ export function createSchedulingService(deps: SchedulingDeps) {
         if ("error" in created) {
           reserved.status = "canceled";
           reserved.cancelReason = "calendar_sync_failed";
+          // The key moves to the request saved below. A retry then finds that
+          // request instead of this dead hold, so it is never answered with a
+          // canceled row dressed up as a success, and never piles up copies.
+          reserved.idempotencyKey = undefined;
           reserved.updatedAt = deps.now().toISOString();
           await deps.store.saveAppointment(reserved);
           await record(reserved, "calendar_failed", created.error);
@@ -1002,7 +1117,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
               id: createId("appt"),
               status: "pending",
               appointmentKind: "request",
-              idempotencyKey: undefined,
+              idempotencyKey: input.idempotencyKey,
             },
             0,
           );
@@ -1071,9 +1186,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
         const service = services.find((row) => row.id === current.serviceId);
         const duration =
           Date.parse(current.endAt) - Date.parse(current.startAt);
-        const start = new Date(startAt);
-        if (Number.isNaN(start.getTime()))
-          throw new SchedulingError("Invalid start time.");
+        const start = parseInstant(startAt);
+        if (!start)
+          throw new SchedulingError("Invalid start time.", 400, "invalid_start");
         const end = new Date(start.getTime() + duration);
         const alternatives = await slotsFor({
           organizationId,
@@ -1218,13 +1333,23 @@ export function createSchedulingService(deps: SchedulingDeps) {
       appointmentId: string,
       reason?: string,
     ) {
+      // Under the same lock as a move or an approval: a cancel that lands in
+      // the middle of a reschedule must not be overwritten by it.
+      return withOrgLock(organizationId, async () => {
       const current = await deps.store.getAppointment(
         organizationId,
         appointmentId,
       );
-      if (!current) throw new SchedulingError("Appointment not found.", 404);
+      if (!current || isInternalAppointment(current))
+        throw new SchedulingError("Appointment not found.", 404);
       if (current.status === "canceled")
         return { ok: true, appointment: current };
+      if (current.status === "completed")
+        throw new SchedulingError(
+          "A completed appointment cannot be canceled.",
+          409,
+          "already_completed",
+        );
       if (current.calendarEventId) {
         const calendar = current.simulated
           ? createSimulatedCalendar()
@@ -1259,6 +1384,7 @@ export function createSchedulingService(deps: SchedulingDeps) {
         ...noticeDetails(current),
       });
       return { ok: true as const, appointment: current };
+      });
     },
 
     /**
@@ -1370,18 +1496,29 @@ export function createSchedulingService(deps: SchedulingDeps) {
       patch: {
         technicianId?: string;
         customerName?: string;
+        /** A new number, or null to remove it. The caller has already normalized it to E.164. */
+        customerPhoneE164?: string | null;
         serviceAddress?: string;
         status?: "completed";
       },
     ) {
+      // Serialized with bookings and moves: handing the job to another
+      // technician is a booking decision, not a field edit.
+      return withOrgLock(organizationId, async () => {
       const current = await deps.store.getAppointment(
         organizationId,
         appointmentId,
       );
-      if (!current) throw new SchedulingError("Appointment not found.", 404);
+      if (!current || isInternalAppointment(current))
+        throw new SchedulingError("Appointment not found.", 404);
+      const previousPhone = current.customerPhoneE164;
       if (patch.customerName) current.customerName = patch.customerName;
-      if (patch.serviceAddress) current.serviceAddress = patch.serviceAddress;
-      if (patch.technicianId) {
+      // An emptied address is a removed address; an emptied name is ignored.
+      if (patch.serviceAddress !== undefined)
+        current.serviceAddress = patch.serviceAddress.trim() || undefined;
+      if (patch.customerPhoneE164 !== undefined)
+        current.customerPhoneE164 = patch.customerPhoneE164 || undefined;
+      if (patch.technicianId && patch.technicianId !== current.technicianId) {
         const technicians = await deps.store.listTechnicians(organizationId);
         const tech = technicians.find(
           (row) =>
@@ -1389,6 +1526,40 @@ export function createSchedulingService(deps: SchedulingDeps) {
             row.organizationId === organizationId,
         );
         if (!tech) throw new SchedulingError("Unknown technician.", 404);
+        if (current.status === "canceled" || current.status === "completed")
+          throw new SchedulingError(
+            "This appointment can no longer be reassigned.",
+            409,
+            "not_open",
+          );
+        if (current.status === "confirmed") {
+          // The new technician must be free for the whole job, buffers
+          // included: the same atomic guard a booking uses.
+          const services = await deps.store.listServices(organizationId);
+          const rules = await ensure(organizationId);
+          const service = services.find((row) => row.id === current.serviceId);
+          const hold = await deps.store.insertIfFree(
+            {
+              ...current,
+              id: `${current.id}_assign`,
+              technicianId: tech.id,
+              idempotencyKey: undefined,
+              status: "hold",
+              holdExpiresAt: new Date(deps.now().getTime() + 60_000).toISOString(),
+            },
+            service?.bufferMinutes ?? rules.bufferMinutes,
+            current.id,
+          );
+          if (!hold)
+            throw new SchedulingError(
+              "That technician is busy at this time.",
+              409,
+              "technician_busy",
+            );
+          hold.status = "canceled";
+          hold.cancelReason = "reschedule_hold";
+          await deps.store.saveAppointment(hold);
+        }
         current.technicianId = tech.id;
         current.technicianName = tech.name;
       }
@@ -1415,7 +1586,32 @@ export function createSchedulingService(deps: SchedulingDeps) {
       }
       current.updatedAt = deps.now().toISOString();
       await deps.store.saveAppointment(current);
+      // Reminders go to the number on the record: when it changes, the texts
+      // already queued for the old one stop and the new one is queued.
+      if (
+        current.customerPhoneE164 !== previousPhone &&
+        current.status === "confirmed" &&
+        Date.parse(current.startAt) > deps.now().getTime()
+      ) {
+        await deps.cancelNotices?.(organizationId, current.id, "contact_changed");
+        if (current.customerPhoneE164) {
+          const when = localParts(current.startAt, current.timezone);
+          await deps.scheduleNotices?.({
+            organizationId,
+            appointmentId: current.id,
+            phoneE164: current.customerPhoneE164,
+            customerName: current.customerName,
+            serviceName: current.serviceName,
+            appointmentDate: when.slice(0, 10),
+            appointmentTime: when,
+            startAt: current.startAt,
+            simulated: current.simulated,
+            leadId: current.leadId,
+          });
+        }
+      }
       return current;
+      });
     },
 
     async connectionStatus(

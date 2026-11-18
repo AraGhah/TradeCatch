@@ -135,7 +135,10 @@ export function createPostgresSchedulingStore(
         simulated = EXCLUDED.simulated,
         hold_expires_at = EXCLUDED.hold_expires_at,
         confirmation_notices_pending = EXCLUDED.confirmation_notices_pending,
-        updated_at = EXCLUDED.updated_at`,
+        updated_at = EXCLUDED.updated_at
+      -- A save can only ever change a row of its own business, whatever id it
+      -- is given: the memory store has always refused the same thing.
+      WHERE tc_schedule_appointments.organization_id = EXCLUDED.organization_id`,
       [
         row.id,
         row.organizationId,

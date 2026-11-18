@@ -211,6 +211,13 @@ export function getSchedulingService() {
     store: getSchedulingStore(),
     now: () => new Date(),
     calendar: calendarFor,
+    // The business's own zone seeds its availability rules.
+    async businessTimeZone(organizationId) {
+      return (await getSaasStore().getOrganization(organizationId))?.timezone;
+    },
+    async businessTimeZoneChanged(organizationId, timezone) {
+      await getSaasStore().updateOrganization(organizationId, { timezone });
+    },
     async scheduleNotices(input) {
       await getAutomationServices().scheduleAppointmentNotices(input);
     },
