@@ -8,12 +8,13 @@ import { useState } from "react";
 export function OnboardingWizard({
   initialNotifyEmail,
   initialGoogleReviewUrl,
-  isGrowth,
+  reviewsIncluded,
   alreadyComplete,
 }: {
   initialNotifyEmail?: string;
   initialGoogleReviewUrl?: string;
-  isGrowth: boolean;
+  /** The plan includes review automation, so the Google review link step is shown. */
+  reviewsIncluded: boolean;
   alreadyComplete: boolean;
 }) {
   const t = useTranslations("app");
@@ -45,7 +46,7 @@ export function OnboardingWizard({
         setError(data?.error || t("onboarding.error"));
         return;
       }
-      setStep(isGrowth ? 1 : 2);
+      setStep(reviewsIncluded ? 1 : 2);
     } catch {
       setError(t("onboarding.error"));
     } finally {

@@ -4,6 +4,7 @@ import { getGrowthStore } from "@/product/growth";
 import { OnboardingWizard } from "@/components/app/OnboardingWizard";
 import { OnboardingWebsiteOffer } from "@/components/app/OnboardingWebsiteOffer";
 import { canManageBilling } from "@/product/saas/billing-access";
+import { orgHasFeature } from "@/product/saas/entitlements";
 
 export default async function AppOnboardingPage({
   params,
@@ -33,7 +34,10 @@ export default async function AppOnboardingPage({
       <OnboardingWizard
         initialNotifyEmail={settings.notifyEmail}
         initialGoogleReviewUrl={settings.googleReviewUrl}
-        isGrowth={auth.ctx.organization.plan === "growth"}
+        reviewsIncluded={orgHasFeature(
+          auth.ctx.organization.plan,
+          "REVIEW_AUTOMATION",
+        )}
         alreadyComplete={Boolean(settings.onboardingCompletedAt)}
       />
 
