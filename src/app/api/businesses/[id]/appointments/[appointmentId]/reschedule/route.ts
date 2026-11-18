@@ -2,8 +2,8 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
+import { refusalStatus, schedulingFailure } from "@/product/scheduling/http";
 import { getSchedulingService } from "@/product/scheduling/runtime";
-import { SchedulingError } from "@/product/scheduling/service";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string; appointmentId: string }> };
@@ -27,14 +27,12 @@ export async function POST(request: NextRequest, { params }: Params) {
       appointmentId,
       parsed.data.startAt,
     );
-    return NextResponse.json(result, { status: result.ok ? 200 : 409 });
+    return NextResponse.json(result, {
+      status: result.ok
+        ? 200
+        : refusalStatus("reason" in result ? result.reason : undefined),
+    });
   } catch (error) {
-    if (error instanceof SchedulingError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.status },
-      );
-    }
-    throw error;
+    return schedulingFailure(error, "reschedule appointment");
   }
 }

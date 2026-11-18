@@ -1,9 +1,10 @@
 import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { parsePhoneInput } from "@/product/crm/phone";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
+import { schedulingFailure } from "@/product/scheduling/http";
 import { getSchedulingService } from "@/product/scheduling/runtime";
-import { SchedulingError } from "@/product/scheduling/service";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,8 @@ const patchSchema = z.object({
   status: z.literal("completed").optional(),
   technicianId: z.string().optional(),
   customerName: z.string().max(160).optional(),
+  // An empty string removes the number.
+  customerPhoneE164: z.string().max(40).optional(),
   serviceAddress: z.string().max(300).optional(),
 });
 
@@ -26,15 +29,12 @@ export async function GET(_request: NextRequest, { params }: Params) {
     );
   try {
     const detail = await getSchedulingService().get(id, appointmentId);
-    return NextResponse.json({ ok: true, ...detail });
+    return NextResponse.json(
+      { ok: true, ...detail },
+      { headers: { "Cache-Control": "no-store" } },
+    );
   } catch (error) {
-    if (error instanceof SchedulingError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.status },
-      );
-    }
-    throw error;
+    return schedulingFailure(error, "read appointment");
   }
 }
 
@@ -51,20 +51,28 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   );
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid update." }, { status: 400 });
+  // Reminders are texted to this number: store it only when it is one.
+  const { customerPhoneE164: typed, ...rest } = parsed.data;
+  let phone: string | null | undefined;
+  if (typed !== undefined) {
+    if (typed.trim() === "") phone = null;
+    else {
+      phone = parsePhoneInput(typed.trim());
+      if (!phone)
+        return NextResponse.json(
+          { error: "Enter a valid phone number.", code: "invalid_phone" },
+          { status: 400 },
+        );
+    }
+  }
   try {
     const appointment = await getSchedulingService().updateDetails(
       id,
       appointmentId,
-      parsed.data,
+      { ...rest, ...(phone === undefined ? {} : { customerPhoneE164: phone }) },
     );
     return NextResponse.json({ ok: true, appointment });
   } catch (error) {
-    if (error instanceof SchedulingError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.status },
-      );
-    }
-    throw error;
+    return schedulingFailure(error, "update appointment");
   }
 }
