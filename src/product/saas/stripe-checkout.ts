@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { stripeSecretKey } from "./stripe-key";
 import { getPgPool } from "@/product/missed-call/postgres-store";
+import { PLAN_PRICES } from "@/lib/plans";
 import { newId } from "./ids";
 import {
   referralInstallationPaid,
@@ -115,42 +116,65 @@ async function stripeGetJson(path: string, key: string): Promise<unknown> {
   return response.json();
 }
 
-const websitePriceSchema = z.object({
+const stripePriceSchema = z.object({
   unit_amount: z.number().nullable(),
   currency: z.string(),
   active: z.boolean(),
   type: z.string().optional(),
-  recurring: z.unknown().nullish(),
+  recurring: z
+    .object({
+      interval: z.string(),
+      interval_count: z.number().optional(),
+    })
+    .nullish(),
 });
+
+/** What a catalog price must look like in Stripe. */
+type ExpectedStripePrice = {
+  /** Which price this is, for the log line only. */
+  label: string;
+  /** CAD, in cents. */
+  cents: number;
+  /** "month" for a monthly subscription price, null for a one-time price. */
+  interval: "month" | null;
+};
+
+const toCents = (amount: number) => Math.round(amount * 100);
 
 /**
  * Stripe prices cannot be edited, so a catalog price change needs a new Stripe
  * Price and a new environment variable. Refuse a configured price that is not
- * exactly the published website price: the displayed amount and the charged
- * amount must never differ. Fails closed (misconfigured), never silently charges.
+ * exactly the published catalog price (amount, CAD, one-time or monthly,
+ * active): the displayed amount and the charged amount must never differ.
+ * Fails closed (misconfigured), never silently charges.
  */
-async function assertWebsitePriceMatchesCatalog(
+async function assertPriceMatchesCatalog(
   priceId: string,
   key: string,
+  expected: ExpectedStripePrice,
 ): Promise<void> {
-  let parsed: z.infer<typeof websitePriceSchema>;
+  let parsed: z.infer<typeof stripePriceSchema>;
   try {
-    parsed = websitePriceSchema.parse(
+    parsed = stripePriceSchema.parse(
       await stripeGetJson(`prices/${encodeURIComponent(priceId)}`, key),
     );
   } catch {
     throw new CheckoutError("unavailable");
   }
-  const expectedCents = Math.round(ADD_ONS.websiteService.priceCad * 100);
+  const intervalMatches =
+    expected.interval === null
+      ? !parsed.recurring
+      : parsed.recurring?.interval === expected.interval &&
+        (parsed.recurring.interval_count ?? 1) === 1;
   if (
     !parsed.active ||
     parsed.currency.toLowerCase() !== "cad" ||
-    parsed.unit_amount !== expectedCents ||
-    parsed.recurring
+    parsed.unit_amount !== expected.cents ||
+    !intervalMatches
   ) {
     console.error(
-      "[checkout] website service Stripe price does not match the catalog price",
-      { expectedCents, actualCents: parsed.unit_amount },
+      `[checkout] ${expected.label} Stripe price does not match the catalog price`,
+      { expectedCents: expected.cents, actualCents: parsed.unit_amount },
     );
     throw new CheckoutError("misconfigured");
   }
@@ -226,9 +250,29 @@ export async function createInstallationCheckoutSession(
 
     const key = stripeSecretKey(livemode);
     const origin = siteOrigin();
+    // Both prices are checked BEFORE the customer is sent to pay: the setup fee
+    // is charged now and the monthly price is billed from the subscription the
+    // webhook creates afterwards, so a wrong monthly price must stop the
+    // checkout here, not after the setup payment has been taken.
+    const setupPriceId = installationPriceId(organization.plan, livemode);
+    const catalogPrice = PLAN_PRICES[organization.plan];
+    await assertPriceMatchesCatalog(setupPriceId, key, {
+      label: `${organization.plan} setup`,
+      cents: toCents(catalogPrice.setup),
+      interval: null,
+    });
+    await assertPriceMatchesCatalog(
+      recurringPriceId(organization.plan, livemode),
+      key,
+      {
+        label: `${organization.plan} monthly`,
+        cents: toCents(catalogPrice.monthly),
+        interval: "month",
+      },
+    );
     const body = new URLSearchParams({
       mode: "payment",
-      "line_items[0][price]": installationPriceId(organization.plan, livemode),
+      "line_items[0][price]": setupPriceId,
       "line_items[0][quantity]": "1",
       "payment_intent_data[setup_future_usage]": "off_session",
       success_url: `${origin}/billing?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -239,7 +283,11 @@ export async function createInstallationCheckoutSession(
     });
     if (websiteService) {
       const websitePrice = websiteServicePriceId(livemode);
-      await assertWebsitePriceMatchesCatalog(websitePrice, key);
+      await assertPriceMatchesCatalog(websitePrice, key, {
+        label: "website service",
+        cents: toCents(ADD_ONS.websiteService.priceCad),
+        interval: null,
+      });
       body.set("line_items[1][price]", websitePrice);
       body.set("line_items[1][quantity]", "1");
       body.set("metadata[website_service]", "1");

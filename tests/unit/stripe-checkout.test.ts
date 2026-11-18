@@ -8,6 +8,7 @@ import {
   checkoutSessionEventSchema,
   oneCalendarMonthLater,
 } from "../../src/product/saas/stripe-checkout";
+import { PLAN_PRICES } from "../../src/lib/plans";
 
 const names = [
   "DATABASE_URL",
@@ -17,6 +18,8 @@ const names = [
   "STRIPE_SECRET_KEY",
   "STRIPE_TEST_PRICE_INSTALL_STARTER",
   "STRIPE_TEST_PRICE_STARTER",
+  "STRIPE_TEST_PRICE_INSTALL_ESSENTIAL",
+  "STRIPE_TEST_PRICE_ESSENTIAL",
   "NEXT_PUBLIC_SITE_URL",
 ];
 const saved = new Map(names.map((name) => [name, process.env[name]]));
@@ -41,6 +44,15 @@ let deferral: { billing_start_at: string } | undefined;
 let requests: { path: string; method: string; body?: string; idempotencyKey?: string | null }[];
 let subscriptionAlreadyExists: boolean;
 let fetchOverride: ((path: string) => Response | null) | null;
+/** Stripe's view of each price id, served for GET prices/<id>. Defaults to the catalog. */
+type StripePrice = {
+  unit_amount: number;
+  recurring: { interval: string; interval_count?: number } | null;
+  currency?: string;
+  active?: boolean;
+};
+let stripePrices: Record<string, StripePrice>;
+const cents = (amount: number) => Math.round(amount * 100);
 
 function handleQuery(sql: string, values: unknown[] = []): { rows: unknown[]; rowCount: number } {
   if (sql.startsWith("INSERT INTO tc_installation_checkouts")) {
@@ -176,6 +188,13 @@ beforeEach(() => {
   requests = [];
   subscriptionAlreadyExists = false;
   fetchOverride = null;
+  stripePrices = {
+    price_install_starter: { unit_amount: cents(PLAN_PRICES.starter.setup), recurring: null },
+    price_starter_recurring: {
+      unit_amount: cents(PLAN_PRICES.starter.monthly),
+      recurring: { interval: "month" },
+    },
+  };
   mock.method(Pool.prototype, "query", async (sql: string, values?: unknown[]) =>
     handleQuery(sql, values ?? []),
   );
@@ -211,6 +230,13 @@ beforeEach(() => {
       }
       if (path === "subscriptions") {
         return Response.json({ id: "sub_new", status: "trialing" });
+      }
+      if (path.startsWith("prices/")) {
+        const id = path.slice("prices/".length);
+        const price = stripePrices[id];
+        return price
+          ? Response.json({ id, currency: "cad", active: true, ...price })
+          : Response.json({}, { status: 404 });
       }
       return Response.json({}, { status: 404 });
     },
@@ -385,7 +411,77 @@ describe("createInstallationCheckoutSession", () => {
 
     it("never looks up the website price when the box is not ticked", async () => {
       await createInstallationCheckoutSession({ id: "org_1", plan: "starter", accountType: "demo" });
-      assert.equal(requests.some((r) => r.path.startsWith("prices/")), false);
+      assert.equal(requests.some((r) => r.path === "prices/price_website_service"), false);
+    });
+  });
+
+  // KAN-18: the amount a customer is shown must be the amount Stripe charges.
+  describe("plan prices must equal the catalog before any money is taken", () => {
+    const essential = { id: "org_1", plan: "essential", accountType: "demo" } as const;
+    function essentialPricesAre(setup: StripePrice, monthly: StripePrice) {
+      process.env.STRIPE_TEST_PRICE_INSTALL_ESSENTIAL = "price_install_essential";
+      process.env.STRIPE_TEST_PRICE_ESSENTIAL = "price_essential_recurring";
+      stripePrices.price_install_essential = setup;
+      stripePrices.price_essential_recurring = monthly;
+    }
+    const exactSetup: StripePrice = { unit_amount: 199_999, recurring: null };
+    const exactMonthly: StripePrice = { unit_amount: 24_900, recurring: { interval: "month" } };
+
+    it("starts Essential checkout when Stripe holds exactly $1,999.99 setup and $249 a month", async () => {
+      essentialPricesAre(exactSetup, exactMonthly);
+      const url = await createInstallationCheckoutSession(essential);
+      assert.equal(url, "https://checkout.stripe.com/c/pay/cs_test_1");
+      const body = new URLSearchParams(requests.find((r) => r.path === "checkout/sessions")!.body);
+      assert.equal(body.get("line_items[0][price]"), "price_install_essential");
+    });
+
+    it("refuses the $249.99 monthly price the live Stripe account holds today, and takes no payment", async () => {
+      essentialPricesAre(exactSetup, { unit_amount: 24_999, recurring: { interval: "month" } });
+      await assert.rejects(
+        () => createInstallationCheckoutSession(essential),
+        (err: unknown) => err instanceof CheckoutError && err.code === "misconfigured",
+      );
+      assert.equal(requests.some((r) => r.path === "checkout/sessions"), false);
+      assert.equal(checkouts[0]?.status, "failed");
+    });
+
+    it("refuses a setup price that is not $1,999.99", async () => {
+      essentialPricesAre({ unit_amount: 249_999, recurring: null }, exactMonthly);
+      await assert.rejects(
+        () => createInstallationCheckoutSession(essential),
+        (err: unknown) => err instanceof CheckoutError && err.code === "misconfigured",
+      );
+      assert.equal(requests.some((r) => r.path === "checkout/sessions"), false);
+    });
+
+    it("refuses a monthly price that bills yearly, in another currency or while archived", async () => {
+      for (const bad of [
+        { ...exactMonthly, recurring: { interval: "year" } },
+        { ...exactMonthly, recurring: { interval: "month", interval_count: 3 } },
+        { ...exactMonthly, currency: "usd" },
+        { ...exactMonthly, active: false },
+        { ...exactMonthly, recurring: null },
+      ]) {
+        checkouts = [];
+        essentialPricesAre(exactSetup, bad);
+        await assert.rejects(
+          () => createInstallationCheckoutSession(essential),
+          (err: unknown) => err instanceof CheckoutError && err.code === "misconfigured",
+          JSON.stringify(bad),
+        );
+      }
+      assert.equal(requests.some((r) => r.path === "checkout/sessions"), false);
+    });
+
+    it("fails closed, as unavailable, when Stripe cannot confirm the price", async () => {
+      process.env.STRIPE_TEST_PRICE_INSTALL_ESSENTIAL = "price_install_essential";
+      process.env.STRIPE_TEST_PRICE_ESSENTIAL = "price_not_in_this_account";
+      stripePrices.price_install_essential = exactSetup;
+      await assert.rejects(
+        () => createInstallationCheckoutSession(essential),
+        (err: unknown) => err instanceof CheckoutError && err.code === "unavailable",
+      );
+      assert.equal(requests.some((r) => r.path === "checkout/sessions"), false);
     });
   });
 });
