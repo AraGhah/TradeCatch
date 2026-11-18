@@ -1,6 +1,8 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { PLAN_DISPLAY_NAMES, orgHasFeature } from "@/product/saas/entitlements";
+import { PLAN_PRICES, formatPlanPrice } from "@/lib/plans";
+import { orgHasFeature } from "@/product/saas/entitlements";
+import { describePlan } from "@/product/saas/plan-catalog";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { ApiKeyCreateButton } from "@/components/app/ApiKeyCreateButton";
 import { BusinessFeaturesForm } from "@/components/app/BusinessFeaturesForm";
@@ -48,6 +50,7 @@ export default async function AppSettingsPage({
   const { organization } = auth.ctx;
   const settings = await getGrowthStore().getOrgSettings(organization.id);
   const appointments = orgHasFeature(organization.plan, "APPOINTMENT_BOOKING");
+  const plan = describePlan(organization.plan);
   const gmailAccount = await getGmailStore()
     .getAccount(organization.id, auth.ctx.user.id)
     .catch(() => null);
@@ -95,8 +98,13 @@ export default async function AppSettingsPage({
         <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">
           {t("plan")}
         </h2>
-        <p className="mt-2 text-lg font-semibold text-navy">
-          {PLAN_DISPLAY_NAMES[organization.plan]}
+        <p className="mt-2 text-lg font-semibold text-navy">{plan.name}</p>
+        <p className="mt-1 text-sm text-navy/70">
+          {plan.price
+            ? t("planMonthly", {
+                amount: formatPlanPrice(plan.price.monthly, locale),
+              })
+            : t("planLegacyPrice")}
         </p>
         <p className="mt-1 text-sm text-navy/70">
           {organization.name} · {auth.ctx.user.email}
@@ -118,7 +126,11 @@ export default async function AppSettingsPage({
           </Link>
         </p>
         {!appointments ? (
-          <p className="mt-3 text-sm text-navy/70">{t("planProfessionalNote")}</p>
+          <p className="mt-3 text-sm text-navy/70">
+            {t("planProfessionalNote", {
+              amount: formatPlanPrice(PLAN_PRICES.professional.monthly, locale),
+            })}
+          </p>
         ) : null}
       </section>
 
