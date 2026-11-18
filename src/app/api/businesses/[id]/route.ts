@@ -6,6 +6,9 @@ import { authorizeAdminRequest } from "@/lib/admin-auth";
 import { toDemoBusinessProfile } from "@/product/demo/business-service";
 import { getSaasStore } from "@/product/saas/runtime";
 import { requireTenantContext } from "@/product/saas/tenant";
+import { schedulingFailure } from "@/product/scheduling/http";
+import { getSchedulingService } from "@/product/scheduling/runtime";
+import { isValidTimeZone } from "@/product/scheduling/slots";
 import { PLAN_IDS } from "@/product/saas/entitlements";
 
 export const dynamic = "force-dynamic";
@@ -142,6 +145,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     );
   }
 
+  // A zone Intl does not know would break every time the calendar draws.
+  if (parsed.data.timezone && !isValidTimeZone(parsed.data.timezone)) {
+    return NextResponse.json(
+      { error: "Choose a valid timezone.", code: "invalid_timezone" },
+      { status: 400 },
+    );
+  }
+
   const saas = getSaasStore();
   const updated = await saas.updateOrganization(id, {
     name: parsed.data.name,
@@ -158,6 +169,15 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   if (!updated) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // One zone for the business: the calendar and the receptionist follow it.
+  if (parsed.data.timezone) {
+    try {
+      await getSchedulingService().setTimeZone(id, parsed.data.timezone);
+    } catch (error) {
+      return schedulingFailure(error, "update timezone");
+    }
   }
 
   return NextResponse.json({

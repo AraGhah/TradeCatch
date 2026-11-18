@@ -8,12 +8,9 @@ import {
   tenantHasFeature,
   unauthorizedTenantResponse,
 } from "@/product/saas/tenant";
-import { getGrowthServices, getGrowthStore } from "@/product/growth";
 import { parsePhoneInput } from "@/product/crm/phone";
-import {
-  resolveBusinessNameForOrganization,
-  resolveSmsFromForOrganization,
-} from "@/product/starter/org-context";
+import { schedulingFailure } from "@/product/scheduling/http";
+import { getSchedulingService } from "@/product/scheduling/runtime";
 
 export const dynamic = "force-dynamic";
 
@@ -33,10 +30,18 @@ export async function GET() {
     return forbiddenFeatureResponse("APPOINTMENT_BOOKING");
   }
 
-  const appointments = await getGrowthStore().listAppointments(
-    auth.ctx.organization.id,
-  );
-  return NextResponse.json({ ok: true, appointments });
+  // The same appointments the calendar shows: one table, one set of rules.
+  try {
+    const appointments = await getSchedulingService().list(
+      auth.ctx.organization.id,
+    );
+    return NextResponse.json(
+      { ok: true, appointments },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    return schedulingFailure(error, "list bookings");
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -76,23 +81,55 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const orgId = auth.ctx.organization.id;
-  const [smsFromE164, businessName] = await Promise.all([
-    resolveSmsFromForOrganization(orgId),
-    resolveBusinessNameForOrganization(orgId),
-  ]);
+  // An end before the start is a typo, not an appointment. The length of the
+  // visit itself follows the service's duration (the response carries the
+  // `endAt` that was booked), so the end is only checked, never trusted.
+  if (
+    parsed.data.endsAt &&
+    Date.parse(parsed.data.endsAt) <= Date.parse(parsed.data.startsAt)
+  ) {
+    return NextResponse.json(
+      { error: "The end must be after the start.", code: "invalid_range" },
+      { status: 400 },
+    );
+  }
 
-  const appointment = await getGrowthServices().bookAppointment({
-    organizationId: orgId,
-    title: parsed.data.title,
-    startsAt: parsed.data.startsAt,
-    endsAt: parsed.data.endsAt,
-    customerName: parsed.data.customerName,
-    customerPhoneE164: phone ?? undefined,
-    notes: parsed.data.notes,
-    businessName,
-    smsFromE164: smsFromE164 ?? undefined,
-  });
-
-  return NextResponse.json({ ok: true, appointment });
+  // One booking path. It used to save into a table the calendar, the
+  // dashboard and the receptionist never read, with none of the business's
+  // hours, notice, buffer or overlap rules. Now it is the same booking
+  // everywhere: same rules, same conflict answer, same reminders.
+  try {
+    const result = await getSchedulingService().book({
+      organizationId: auth.ctx.organization.id,
+      serviceName: parsed.data.title,
+      startAt: parsed.data.startsAt,
+      customerName: parsed.data.customerName,
+      customerPhoneE164: phone ?? undefined,
+      source: "manual",
+      requestIfUnavailable: false,
+    });
+    if (result.reason === "conflict") {
+      return NextResponse.json(
+        {
+          ...result,
+          error:
+            "This time is no longer available. Please select another time.",
+        },
+        { status: 409 },
+      );
+    }
+    if (!result.appointment) {
+      return schedulingFailure(
+        new Error(result.reason ?? "not booked"),
+        "book",
+      );
+    }
+    return NextResponse.json({
+      ok: result.ok,
+      confirmed: result.confirmed,
+      appointment: result.appointment,
+    });
+  } catch (error) {
+    return schedulingFailure(error, "book");
+  }
 }

@@ -2,8 +2,8 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
+import { schedulingFailure } from "@/product/scheduling/http";
 import { getSchedulingService } from "@/product/scheduling/runtime";
-import { SchedulingError } from "@/product/scheduling/service";
 import type { AvailabilityRules } from "@/product/scheduling/types";
 
 export const dynamic = "force-dynamic";
@@ -44,30 +44,36 @@ export async function GET(request: NextRequest, { params }: Params) {
         technicianId: url.searchParams.get("technicianId") || undefined,
         excludeAppointmentId: url.searchParams.get("exclude") || undefined,
       });
-      return NextResponse.json({ ok: true, ...availability });
+      return NextResponse.json(
+        { ok: true, ...availability },
+        { headers: { "Cache-Control": "no-store" } },
+      );
     } catch (error) {
-      if (error instanceof SchedulingError) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: error.status },
-        );
-      }
-      throw error;
+      return schedulingFailure(error, "read availability");
     }
   }
   if (url.searchParams.get("slots") === "1") {
-    const result = await getSchedulingService().availability({
-      organizationId: id,
-      serviceId: url.searchParams.get("serviceId") || undefined,
-      from: url.searchParams.get("from") || undefined,
-      until: url.searchParams.get("until") || undefined,
-      serviceAddress: url.searchParams.get("address") || undefined,
-      technicianId: url.searchParams.get("technicianId") || undefined,
-    });
-    return NextResponse.json({ ok: true, slots: result.slots });
+    try {
+      const result = await getSchedulingService().availability({
+        organizationId: id,
+        serviceId: url.searchParams.get("serviceId") || undefined,
+        from: url.searchParams.get("from") || undefined,
+        until: url.searchParams.get("until") || undefined,
+        serviceAddress: url.searchParams.get("address") || undefined,
+        technicianId: url.searchParams.get("technicianId") || undefined,
+      });
+      return NextResponse.json({ ok: true, slots: result.slots });
+    } catch (error) {
+      // A bad `from` or `until` is the caller's mistake (400), not a crash.
+      return schedulingFailure(error, "read slots");
+    }
   }
-  const rules = await getSchedulingService().getRules(id);
-  return NextResponse.json({ ok: true, rules });
+  try {
+    const rules = await getSchedulingService().getRules(id);
+    return NextResponse.json({ ok: true, rules });
+  } catch (error) {
+    return schedulingFailure(error, "read rules");
+  }
 }
 
 export async function PUT(request: NextRequest, { params }: Params) {
@@ -97,12 +103,6 @@ export async function PUT(request: NextRequest, { params }: Params) {
     const rules = await getSchedulingService().saveRules(next);
     return NextResponse.json({ ok: true, rules });
   } catch (error) {
-    if (error instanceof SchedulingError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.status },
-      );
-    }
-    throw error;
+    return schedulingFailure(error, "save rules");
   }
 }
