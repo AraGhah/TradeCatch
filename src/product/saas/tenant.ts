@@ -1,7 +1,12 @@
 import { cookies } from "next/headers";
 import { canManageBilling } from "./billing-access";
 import { isPlatformAdminUser } from "@/product/saas/platform-admin";
-import { featuresForPlan, orgHasFeature, type FeatureId } from "./entitlements";
+import {
+  featuresForPlan,
+  orgHasFeature,
+  soldPlanWith,
+  type FeatureId,
+} from "./entitlements";
 import { getSaasStore } from "./runtime";
 import { getAuthSecret } from "./auth/secret";
 import { SESSION_COOKIE, verifySessionClaims } from "./auth/session-token";
@@ -123,7 +128,7 @@ export function forbiddenFeatureResponse(feature: FeatureId) {
     {
       error: "Feature not included in your plan.",
       feature,
-      upgrade: "growth",
+      upgrade: soldPlanWith(feature),
     },
     { status: 402 },
   );

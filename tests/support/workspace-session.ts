@@ -1,11 +1,16 @@
 import { expect, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
+import type { PlanId } from "../../src/product/saas/entitlements";
 
-/** Synthetic, isolated organization in the localhost-only E2E harness. */
+/**
+ * Synthetic, isolated organization in the localhost-only E2E harness. Any plan
+ * id can be provisioned; `growth` stays the default so existing specs are
+ * unaffected.
+ */
 export async function workspaceSession(
   page: Page,
   locale: "en" | "fr" = "en",
-  plan: "growth" | "professional" = "growth",
+  plan: PlanId = "growth",
 ) {
   const email = `workspace-${randomUUID()}@example.invalid`;
   // Independent documentation-range identity per session, not per worker:

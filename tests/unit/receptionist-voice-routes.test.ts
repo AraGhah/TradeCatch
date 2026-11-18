@@ -199,9 +199,10 @@ describe("receptionist voice API — access", () => {
 
     const challenge = await call(challengeRoute, req("POST", f.cookie, "/challenge", { locale: "en" }));
     assert.equal(challenge.status, 403);
-    const body = (await challenge.json()) as { code: string; upgrade?: string };
+    const body = (await challenge.json()) as { code: string; upgrade?: string | null };
     assert.equal(body.code, "not_entitled");
-    assert.equal(body.upgrade, "receptionist");
+    // No plan sold today includes custom voice, so there is nothing to upgrade to.
+    assert.equal(body.upgrade, null);
 
     const mode = await call(PUT, req("PUT", f.cookie, "", { mode: "custom" }));
     assert.equal(mode.status, 403);

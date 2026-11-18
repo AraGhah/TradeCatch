@@ -3,6 +3,7 @@ import { enforcePolicy } from "@/lib/rate-limit-response";
 import type { PolicyId } from "@/lib/rate-limit-policy";
 import type { VoiceError } from "@/product/receptionist/custom-voice/model";
 import type { VoiceActor } from "@/product/receptionist/custom-voice/service";
+import { soldPlanWith } from "@/product/saas/entitlements";
 import {
   requireTenantContext,
   unauthorizedTenantResponse,
@@ -41,7 +42,9 @@ export function voiceErrorResponse(error: VoiceError) {
     {
       error: "The request could not be completed.",
       code: error,
-      ...(error === "not_entitled" ? { upgrade: "receptionist" } : {}),
+      ...(error === "not_entitled"
+        ? { upgrade: soldPlanWith("AI_CUSTOM_VOICE") }
+        : {}),
     },
     STATUS[error],
   );
