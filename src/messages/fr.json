@@ -1614,6 +1614,38 @@
       "none": "Aucun pour le moment",
       "later": "Disponible après les deux flux principaux",
       "simulated": "simulation",
+      "saving": "Enregistrement…",
+      "unchanged": "Il n'y a rien de nouveau à enregistrer.",
+      "unsaved": "Non enregistré",
+      "quoteAlwaysStops": "Les rappels s'arrêtent toujours quand la soumission est acceptée, refusée ou annulée.",
+      "quietHours": {
+        "label": "Aucun texto de rappel pendant les heures de silence",
+        "help": "Désactivé : l'appelant reçoit le texto tout de suite, à toute heure. Activé : un appel manqué en dehors de la plage d'envoi ci-dessous ne reçoit aucun texto, plutôt qu'un texto qui arrive des heures plus tard."
+      },
+      "toggle": {
+        "enabling": "Activation…",
+        "disabling": "Désactivation…",
+        "enabled": "Activé et enregistré. Il fonctionne désormais seul.",
+        "disabled": "{count, plural, =0 {Désactivé et enregistré.} one {Désactivé et enregistré. 1 texto en attente a été annulé.} other {Désactivé et enregistré. # textos en attente ont été annulés.}}"
+      },
+      "failures": {
+        "generic": "L'enregistrement a échoué. La page affiche ce qui est enregistré.",
+        "rateLimited": "Trop de changements en peu de temps. Réessayez dans {seconds, plural, one {# seconde} other {# secondes}}.",
+        "offline": "Le serveur n'a pas pu être joint, le changement n'est donc pas confirmé. La page affiche ce qui est enregistré.",
+        "unavailable": "Le service est brièvement indisponible. Réessayez dans un instant.",
+        "denied": "Vous n'avez pas la permission de modifier les automatisations.",
+        "signedOut": "Votre session a pris fin. Reconnectez-vous, puis réessayez.",
+        "unconfirmed": "Le serveur n'a pas confirmé le changement. La page affiche ce qui est enregistré."
+      },
+      "invalid": {
+        "number": "Utilisez uniquement des nombres entiers.",
+        "initial_delay": "Le premier délai doit être un nombre de minutes entre 0 et 43 200.",
+        "second_delay": "Le deuxième délai doit être au moins égal au premier, et d'au plus 86 400 minutes.",
+        "max_attempts": "Le nombre maximal de tentatives doit être entre 1 et 5.",
+        "sending_window": "La plage d'envoi doit commencer avant de se terminer, entre 0 et 24.",
+        "language": "Choisissez une langue de message.",
+        "category": "Ce réglage ne peut pas être modifié."
+      },
       "pendingTitle": "Rappels planifiés",
       "pendingEmpty": "Aucun rappel de soumission n'est planifié.",
       "templatesTitle": "Modèles de message",

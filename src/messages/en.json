@@ -1614,6 +1614,38 @@
       "none": "None yet",
       "later": "Available after the two primary workflows",
       "simulated": "simulation",
+      "saving": "Saving…",
+      "unchanged": "There is nothing new to save.",
+      "unsaved": "Not saved",
+      "quoteAlwaysStops": "Reminders always stop when the quote is accepted, rejected or canceled.",
+      "quietHours": {
+        "label": "No recovery text during quiet hours",
+        "help": "Off: the caller gets the text right away, at any hour. On: a call missed outside the sending window below gets no text, rather than one that arrives hours later."
+      },
+      "toggle": {
+        "enabling": "Turning on…",
+        "disabling": "Turning off…",
+        "enabled": "Turned on and saved. It runs on its own from now on.",
+        "disabled": "{count, plural, =0 {Turned off and saved.} one {Turned off and saved. 1 pending text was canceled.} other {Turned off and saved. # pending texts were canceled.}}"
+      },
+      "failures": {
+        "generic": "This could not be saved. The page shows what is stored.",
+        "rateLimited": "Too many changes in a short time. Try again in {seconds, plural, one {# second} other {# seconds}}.",
+        "offline": "The server could not be reached, so the change is not confirmed. The page shows what is stored.",
+        "unavailable": "The service is briefly unavailable. Try again in a moment.",
+        "denied": "You do not have permission to change automations.",
+        "signedOut": "Your session ended. Sign in again, then retry.",
+        "unconfirmed": "The server did not confirm the change. The page shows what is stored."
+      },
+      "invalid": {
+        "number": "Use whole numbers only.",
+        "initial_delay": "The first delay must be a number of minutes from 0 to 43,200.",
+        "second_delay": "The second delay must be at least as long as the first, and at most 86,400 minutes.",
+        "max_attempts": "Maximum attempts must be between 1 and 5.",
+        "sending_window": "The sending window must start before it ends, between 0 and 24.",
+        "language": "Choose a message language.",
+        "category": "This setting cannot be changed."
+      },
       "pendingTitle": "Scheduled reminders",
       "pendingEmpty": "No quote reminders are scheduled.",
       "templatesTitle": "Message templates",
