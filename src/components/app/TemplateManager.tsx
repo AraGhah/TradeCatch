@@ -1,8 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
+import { ApiError, requestJson } from "@/lib/client/request";
 import type { TemplateKey, TemplateRecord } from "@/product/sms-automation/types";
 import { TEMPLATE_VARIABLES } from "@/product/sms-automation/types";
+import { describeFailure, useFailureText, useKeyedSingleFlight } from "./automation-client";
 
 type Preview = {
   body: string;
@@ -12,6 +15,8 @@ type Preview = {
   chars: number;
   missing: string[];
 };
+
+const draftKey = (key: TemplateKey, locale: "en" | "fr") => `${key}:${locale}`;
 
 export function TemplateManager({
   organizationId,
@@ -37,19 +42,28 @@ export function TemplateManager({
     names: Record<TemplateKey, string>;
   };
 }) {
+  const t = useTranslations("app.automations");
+  const failureText = useFailureText();
+  // The saved templates as the server last confirmed them. A save replaces its row here,
+  // so going to another template and back shows what was saved, not the page's first load.
+  const [rows, setRows] = useState(templates);
   const [key, setKey] = useState<TemplateKey>(templates[0]?.templateKey ?? "missed_call_recovery");
   const [locale, setLocale] = useState<"en" | "fr">("fr");
-  const current = templates.find((t) => t.templateKey === key && t.locale === locale) ?? templates[0];
-  const [body, setBody] = useState(current?.body ?? "");
-  const [selectedId, setSelectedId] = useState(current?.id ?? "");
+  // Text typed but not saved yet, per template, so switching templates loses nothing.
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [preview, setPreview] = useState<Preview | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const flight = useKeyedSingleFlight();
+  const busy = flight.anyPending;
+
+  const current = rows.find((row) => row.templateKey === key && row.locale === locale) ?? rows[0];
+  const body = drafts[draftKey(key, locale)] ?? current?.body ?? "";
+  const unsaved = current !== undefined && body !== current.body;
 
   const keys = useMemo(
-    () => [...new Set(templates.map((t) => t.templateKey))],
-    [templates],
+    () => [...new Set(rows.map((row) => row.templateKey))],
+    [rows],
   );
 
   /** The validator answers with short codes; the owner reads sentences. */
@@ -57,67 +71,74 @@ export function TemplateManager({
     const lines = codes.map((code) => labels.errors[code.trim()]).filter(Boolean);
     return lines.length > 0 ? [...new Set(lines)].join(" ") : labels.error;
   }
-  function describe(error: string | undefined): string {
-    const rejected = /^Template rejected:\s*(.+)$/.exec(error ?? "");
-    return rejected ? reasons(rejected[1].split(",")) : labels.error;
+  function describeError(err: unknown): string {
+    if (err instanceof ApiError && err.kind === "client") {
+      const detail = (err.body as { error?: unknown } | undefined)?.error;
+      const rejected = /^Template rejected:\s*(.+)$/.exec(typeof detail === "string" ? detail : "");
+      if (rejected) return reasons(rejected[1].split(","));
+    }
+    return failureText(describeFailure(err));
   }
 
   function choose(nextKey: TemplateKey, nextLocale: "en" | "fr") {
-    const row = templates.find((t) => t.templateKey === nextKey && t.locale === nextLocale);
     setKey(nextKey);
     setLocale(nextLocale);
-    setBody(row?.body ?? "");
-    setSelectedId(row?.id ?? "");
     setPreview(null);
     setMessage(null);
     setError(null);
   }
 
+  function edit(next: string) {
+    setMessage(null);
+    setDrafts((all) => ({ ...all, [draftKey(key, locale)]: next }));
+  }
+
   function insertVariable(name: string) {
-    setBody((value) => `${value}{{${name}}}`);
+    edit(`${body}{{${name}}}`);
   }
 
   async function runPreview() {
-    setBusy(true);
-    setError(null);
-    const res = await fetch(`/api/businesses/${organizationId}/automation-templates`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "preview", templateKey: key, locale, body }),
+    await flight.run("preview", async () => {
+      setError(null);
+      try {
+        const data = await requestJson<{ preview?: Preview }>(
+          `/api/businesses/${organizationId}/automation-templates`,
+          { method: "POST", body: { action: "preview", templateKey: key, locale, body } },
+        );
+        if (!data?.preview) throw new ApiError("invalid_response", 200, "No preview.");
+        setPreview(data.preview);
+      } catch (err) {
+        setError(describeError(err));
+      }
     });
-    const data = (await res.json().catch(() => null)) as { error?: string; preview?: Preview } | null;
-    setBusy(false);
-    if (!res.ok || !data?.preview) {
-      setError(describe(data?.error));
-      return;
-    }
-    setPreview(data.preview);
   }
 
   async function save(reset = false) {
-    if (!selectedId) return;
-    setBusy(true);
-    setError(null);
-    setMessage(null);
-    const res = await fetch(
-      `/api/businesses/${organizationId}/automation-templates/${selectedId}`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(reset ? { reset: true } : { body }),
-      },
-    );
-    const data = (await res.json().catch(() => null)) as {
-      error?: string;
-      template?: TemplateRecord;
-    } | null;
-    setBusy(false);
-    if (!res.ok || !data?.template) {
-      setError(describe(data?.error));
-      return;
-    }
-    setBody(data.template.body);
-    setMessage(labels.saved);
+    if (!current) return;
+    await flight.run("save", async () => {
+      setError(null);
+      setMessage(null);
+      const sent = draftKey(current.templateKey, current.locale);
+      try {
+        const data = await requestJson<{ template?: TemplateRecord }>(
+          `/api/businesses/${organizationId}/automation-templates/${current.id}`,
+          { method: "PUT", body: reset ? { reset: true } : { body } },
+        );
+        const saved = data?.template;
+        if (!saved) throw new ApiError("invalid_response", 200, "No template.");
+        setRows((all) => all.map((row) => (row.id === saved.id ? saved : row)));
+        setDrafts((all) => {
+          const next = { ...all };
+          delete next[sent];
+          return next;
+        });
+        setPreview(null);
+        setMessage(labels.saved);
+      } catch (err) {
+        // The text stays on screen, marked unsaved: nothing was confirmed.
+        setError(describeError(err));
+      }
+    });
   }
 
   return (
@@ -155,6 +176,7 @@ export function TemplateManager({
             <button
               key={name}
               type="button"
+              disabled={busy}
               onClick={() => insertVariable(name)}
               className="rounded-md border border-navy/15 px-2 py-1 font-mono text-xs text-navy"
             >
@@ -164,21 +186,27 @@ export function TemplateManager({
         </div>
         <textarea
           value={body}
-          onChange={(event) => setBody(event.target.value)}
+          disabled={busy}
+          onChange={(event) => edit(event.target.value)}
           rows={8}
           className="w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
         />
         <p className="text-xs text-navy/60">
           {labels.chars}: {body.length}
+          {unsaved ? (
+            <span data-testid="template-unsaved" className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-900">
+              {t("unsaved")}
+            </span>
+          ) : null}
         </p>
         <div className="flex flex-wrap gap-2">
-          <button type="button" disabled={busy} onClick={() => void runPreview()} className="rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy">
+          <button type="button" disabled={busy} aria-busy={flight.isPending("preview")} onClick={() => void runPreview()} className="rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy disabled:opacity-60">
             {labels.preview}
           </button>
-          <button type="button" disabled={busy} onClick={() => void save(false)} className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white">
-            {labels.save}
+          <button type="button" disabled={busy} aria-busy={flight.isPending("save")} onClick={() => void save(false)} className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">
+            {flight.isPending("save") ? t("saving") : labels.save}
           </button>
-          <button type="button" disabled={busy} onClick={() => void save(true)} className="rounded-md border border-navy/20 px-3 py-2 text-sm text-navy">
+          <button type="button" disabled={busy} onClick={() => void save(true)} className="rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:opacity-60">
             {labels.reset}
           </button>
         </div>

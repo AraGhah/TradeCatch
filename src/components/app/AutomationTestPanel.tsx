@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { requestJson } from "@/lib/client/request";
+import { describeFailure, useFailureText, useKeyedSingleFlight } from "./automation-client";
 
 type Job = {
   id?: string;
@@ -90,7 +92,10 @@ export function AutomationTestPanel({
     return out;
   }
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
+  const failureText = useFailureText();
+  // One test action at a time: a second click while one runs is dropped, not queued.
+  const flight = useKeyedSingleFlight();
+  const busy = flight.anyPending;
 
   async function run(
     automationId: string | undefined,
@@ -98,33 +103,34 @@ export function AutomationTestPanel({
     extra?: Record<string, string>,
   ) {
     if (!automationId) return;
-    setBusy(true);
-    setError(null);
-    const res = await fetch(
-      `/api/businesses/${organizationId}/automations/${automationId}/test`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action,
-          phoneE164: phone,
-          customerName: name,
-          threadId: threadId || undefined,
-          ...extra,
-        }),
-      },
-    );
-    const data = (await res.json().catch(() => null)) as TestResult | null;
-    setBusy(false);
-    if (!res.ok || !data) {
-      setLines([]);
-      setError(labels.error);
-      return;
-    }
-    const created = data.jobs?.[0]?.payload?.quoteThreadId;
-    if (created) setThreadId(created);
-    setLines(describe(data));
-    router.refresh();
+    await flight.run("test", async () => {
+      setError(null);
+      try {
+        const data = await requestJson<TestResult>(
+          `/api/businesses/${organizationId}/automations/${automationId}/test`,
+          {
+            method: "POST",
+            body: {
+              action,
+              phoneE164: phone,
+              customerName: name,
+              threadId: threadId || undefined,
+              ...extra,
+            },
+          },
+        );
+        if (!data) throw new Error("empty answer");
+        const created = data.jobs?.[0]?.payload?.quoteThreadId;
+        if (created) setThreadId(created);
+        setLines(describe(data));
+        router.refresh();
+      } catch (err) {
+        // Say what the server said (for example "Enable missed-call recovery before
+        // simulating"), not a bare "something went wrong".
+        setLines([]);
+        setError(failureText(describeFailure(err)));
+      }
+    });
   }
 
   return (

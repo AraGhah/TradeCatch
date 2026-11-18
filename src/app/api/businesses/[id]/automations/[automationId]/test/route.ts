@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { enforcePolicy } from "@/lib/rate-limit-response";
 import { z } from "zod";
 import { requireAutomationAccess } from "@/product/sms-automation/access";
-import { AutomationError } from "@/product/sms-automation/service";
+import { automationFailure } from "@/product/sms-automation/http";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 
 export const dynamic = "force-dynamic";
@@ -138,9 +138,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     const result = await services.sendLiveTest({ organizationId: id });
     return NextResponse.json({ ok: true, ...result });
   } catch (err) {
-    if (err instanceof AutomationError) {
-      return NextResponse.json({ error: err.message }, { status: err.status });
-    }
-    throw err;
+    return automationFailure(err, "test");
   }
 }
