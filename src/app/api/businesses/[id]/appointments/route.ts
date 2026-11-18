@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { parsePhoneInput } from "@/product/crm/phone";
 import { requireSchedulingAccess } from "@/product/scheduling/access";
+import { schedulingFailure } from "@/product/scheduling/http";
 import { getSchedulingService } from "@/product/scheduling/runtime";
-import { SchedulingError } from "@/product/scheduling/service";
 
 export const dynamic = "force-dynamic";
 
@@ -37,21 +37,38 @@ export async function GET(request: NextRequest, { params }: Params) {
     );
   const url = new URL(request.url);
   const service = getSchedulingService();
-  const [appointments, technicians, connection] = await Promise.all([
-    service.list(id, {
-      status: url.searchParams.get("status") || undefined,
-      technicianId: url.searchParams.get("technicianId") || undefined,
-      q: url.searchParams.get("q") || undefined,
-    }),
-    service.listTechnicians(id),
-    service.connectionStatus(id),
-  ]);
-  return NextResponse.json({
-    ok: true,
-    appointments,
-    technicians,
-    calendar: connection,
-  });
+  try {
+    const [appointments, technicians, connection, rules] = await Promise.all([
+      service.list(id, {
+        status: url.searchParams.get("status") || undefined,
+        technicianId: url.searchParams.get("technicianId") || undefined,
+        q: url.searchParams.get("q") || undefined,
+        from: url.searchParams.get("from") || undefined,
+        to: url.searchParams.get("to") || undefined,
+      }),
+      service.listTechnicians(id),
+      service.connectionStatus(id),
+      service.getRules(id),
+    ]);
+    return NextResponse.json(
+      {
+        ok: true,
+        appointments,
+        technicians,
+        calendar: connection,
+        // The calendar draws every time in the business's own zone, and its
+        // hour grid follows the business's own opening hours. Neither is
+        // guessed from the browser.
+        timezone: rules.timezone,
+        hours: rules.days,
+        calendarMode: rules.calendarMode,
+      },
+      // A calendar that is out of date is a wrong calendar.
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    return schedulingFailure(error, "list appointments");
+  }
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -97,12 +114,6 @@ export async function POST(request: NextRequest, { params }: Params) {
     }
     return NextResponse.json(result, { status: result.confirmed ? 201 : 200 });
   } catch (error) {
-    if (error instanceof SchedulingError) {
-      return NextResponse.json(
-        { error: error.message, code: error.code },
-        { status: error.status },
-      );
-    }
-    throw error;
+    return schedulingFailure(error, "create appointment");
   }
 }
