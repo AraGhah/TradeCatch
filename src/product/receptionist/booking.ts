@@ -34,6 +34,12 @@ export type ReserveResult =
 
 /** What the engine needs from the scheduling backend. */
 export type ReceptionistScheduler = {
+  /**
+   * The zone the business's availability is defined in. A caller's "tomorrow
+   * at 2" must be read in this zone, because it is the zone the offered times
+   * (and the dashboard calendar) are shown in. Null when it is not known.
+   */
+  timeZone?(config: ReceptionistConfig): Promise<string | null>;
   listOpenings(input: {
     config: ReceptionistConfig;
     issue?: string;

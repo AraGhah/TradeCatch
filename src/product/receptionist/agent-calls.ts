@@ -448,10 +448,17 @@ export function createAgentCallService(deps: AgentCallDeps) {
       const knownAddress = input.serviceAddress ?? confirmedOf(session).serviceAddress;
 
       const now = clock.now();
+      // The caller's "tomorrow at 2" is read in the zone the availability (and
+      // the dashboard calendar) is defined in, not the profile's own zone.
+      const zone = input.preferredTime
+        ? ((await withinBudget(
+            async () => (await deps.scheduler?.timeZone?.(config)) ?? null,
+          )) ?? config.timezone)
+        : config.timezone;
       const pref = input.preferredTime
-        ? parseTimePreference(input.preferredTime, now, config.timezone)
+        ? parseTimePreference(input.preferredTime, now, zone)
         : {};
-      const day = pref.dateKey ? localDayWindow(pref.dateKey, config.timezone) : null;
+      const day = pref.dateKey ? localDayWindow(pref.dateKey, zone) : null;
 
       const ask = (extra: { serviceId?: string; from: Date; until?: Date }) =>
         withinBudget(() =>

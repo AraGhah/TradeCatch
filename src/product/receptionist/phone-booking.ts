@@ -142,6 +142,12 @@ export function createPhoneScheduler(
   deps: PhoneSchedulerDeps,
 ): ReceptionistScheduler {
   return {
+    async timeZone(config) {
+      const organizationId = await deps.findOrganizationId(config);
+      if (!organizationId) return null;
+      return (await (await deps.scheduling()).getRules(organizationId)).timezone;
+    },
+
     async listOpenings(input) {
       const organizationId = await deps.findOrganizationId(input.config);
       if (!organizationId) return { ok: false, reason: "not_bookable" };

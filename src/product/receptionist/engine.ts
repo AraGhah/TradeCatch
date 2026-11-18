@@ -1196,6 +1196,19 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     }
   }
 
+  /**
+   * The zone the business's availability is defined in. What a caller says
+   * ("tomorrow morning", "Friday at 2") is read in it, because that is the
+   * zone the offered times and the dashboard calendar are shown in. The
+   * receptionist profile's own zone is only the fallback.
+   */
+  async function bookingZone(config: ReceptionistConfig): Promise<string> {
+    const zone = await withinBudget(
+      async () => (await deps.scheduler?.timeZone?.(config)) ?? null,
+    );
+    return zone ?? config.timezone;
+  }
+
   /** Owner opted in, the caller wants an appointment and the details are in. */
   function bookingReady(
     config: ReceptionistConfig,
@@ -1312,10 +1325,9 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     wish?: string,
   ): Promise<{ session: CallSession; plan: VoicePlan }> {
     const now = clock.now();
-    const pref = wish ? parseTimePreference(wish, now, config.timezone) : {};
-    const day = pref.dateKey
-      ? localDayWindow(pref.dateKey, config.timezone)
-      : null;
+    const zone = wish ? await bookingZone(config) : config.timezone;
+    const pref = wish ? parseTimePreference(wish, now, zone) : {};
+    const day = pref.dateKey ? localDayWindow(pref.dateKey, zone) : null;
 
     const first = await openingsFor(config, session, {
       from: day && day.from > now ? day.from : now,
