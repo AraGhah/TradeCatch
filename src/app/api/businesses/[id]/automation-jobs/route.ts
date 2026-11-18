@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAutomationAccess } from "@/product/sms-automation/access";
+import { automationFailure } from "@/product/sms-automation/http";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,10 @@ export async function GET(_request: Request, { params }: Params) {
       { status: access.status },
     );
   }
-  const jobs = await getAutomationServices().listJobs(id);
-  return NextResponse.json({ ok: true, jobs });
+  try {
+    const jobs = await getAutomationServices().listJobs(id);
+    return NextResponse.json({ ok: true, jobs });
+  } catch (err) {
+    return automationFailure(err, "jobs");
+  }
 }
