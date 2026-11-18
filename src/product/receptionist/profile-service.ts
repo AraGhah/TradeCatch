@@ -77,7 +77,7 @@ export async function saveOwnerSettings(
         status: 403,
         body: {
           error:
-            "Booking appointments during the call is part of Receptionist Plus.",
+            "Booking appointments during the call is part of the Professional plan.",
           code: "plan_upgrade_required",
           feature: "AI_PHONE_BOOKING",
         },
@@ -316,7 +316,7 @@ export async function activateProfile(
       status: 403,
       body: {
         error:
-          "The voice receptionist is included in Growth and Receptionist Plus.",
+          "The voice receptionist is not part of your current plan.",
         code: "plan_upgrade_required",
         feature: "AI_RECEPTIONIST_VOICE",
       },

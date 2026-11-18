@@ -247,7 +247,7 @@ export function accountExportSources(org: Organization): ExportSource[] {
     ),
     source(
       "legacy_appointments",
-      "Older Growth appointment records; may overlap scheduling appointments",
+      "Older appointment records; may overlap scheduling appointments",
       "id customerName customerPhoneE164 customerEmail title startsAt endsAt status source sourceRefId notes createdAt updatedAt",
       async () =>
         scoped(
