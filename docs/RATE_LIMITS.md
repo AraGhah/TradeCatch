@@ -110,6 +110,7 @@ Both SMS buckets are checked inside the one adapter every text goes through ([sr
 | `admin.installations` | 30 | 1 per 2 s | user | same | Installation approvals. |
 | `admin.account-recovery` | 30 | 1 per 20 s | user | same | Identity verification and account email changes by an administrator. |
 | `admin.referrals` | 60 | 1 per 1 s | user | same | Referral reward administration. |
+| `admin.console-write` | 60 | 1 per 1 s | user | same | Changes made from the administration console (customers, subscriptions, website requests). |
 
 ### public
 

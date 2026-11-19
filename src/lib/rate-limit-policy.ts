@@ -251,6 +251,12 @@ export const POLICIES = {
     per: "user",
     why: "Referral reward administration.",
   },
+  "admin.console-write": {
+    ...perWindow(60, MIN),
+    group: "admin",
+    per: "user",
+    why: "Changes made from the administration console (businesses, subscriptions, website requests).",
+  },
 
   // --- Public forms and anonymous endpoints -------------------------------
   "public.book-audit": {
