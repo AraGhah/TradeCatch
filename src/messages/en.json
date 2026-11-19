@@ -158,13 +158,13 @@
       "tiers": [
         {
           "name": "Essential",
-          "price": "$249 / month",
+          "price": "$249.99 / month",
           "cadence": "$1,999.99 setup, paid once",
           "idealFor": "Answers your calls and captures your customers."
         },
         {
           "name": "Professional",
-          "price": "$349 / month",
+          "price": "$349.99 / month",
           "cadence": "$1,999.99 setup, paid once",
           "idealFor": "Everything in Essential, plus appointment scheduling."
         }
@@ -235,7 +235,7 @@
         },
         {
           "q": "What do I pay in the first month?",
-          "a": "At checkout you pay the one-time setup fee of $1,999.99. Your first monthly charge ($249 for Essential, $349 for Professional) comes one month later. All prices are in Canadian dollars."
+          "a": "At checkout you pay the one-time setup fee of $1,999.99. Your first monthly charge ($249.99 for Essential, $349.99 for Professional) comes one month later. All prices are in Canadian dollars."
         },
         {
           "q": "Does it book appointments?",
@@ -591,7 +591,7 @@
     "headline": "Two plans. One simple choice.",
     "intro": "Essential answers your calls and captures your customers. Professional also books your appointments. All prices are in Canadian dollars.",
     "reassurance": "Month to month after setup. Cancel with notice.",
-    "metaDescription": "TradeCatch pricing in CAD: Essential at $249 a month and Professional at $349 a month, each with a one-time $1,999.99 setup fee. Optional website service for $699.99.",
+    "metaDescription": "TradeCatch pricing in CAD: Essential at $249.99 a month and Professional at $349.99 a month, each with a one-time $1,999.99 setup fee. Optional website service for $699.99.",
     "principles": [
       "Essential: we answer your calls and capture your customers",
       "Professional: we answer your calls and book your appointments",
@@ -605,10 +605,10 @@
         "outcome": "Every call is answered, day or night, in French or English. You get the caller’s name, number and what they need, so no job slips away.",
         "price": "$1,999.99 setup",
         "setupAmount": "$1,999.99",
-        "cadence": "$249 / month",
-        "monthlyAmount": "$249",
+        "cadence": "$249.99 / month",
+        "monthlyAmount": "$249.99",
         "idealFor": "For contractors who want every call answered and every opportunity captured.",
-        "reassuranceLine": "Setup is paid once, at checkout. Your first $249 monthly charge comes one month after setup.",
+        "reassuranceLine": "Setup is paid once, at checkout. Your first $249.99 monthly charge comes one month after setup.",
         "groups": [
           {
             "title": "Answers your calls",
@@ -656,10 +656,10 @@
         "outcome": "Everything in Essential, plus automatic scheduling with your Google Calendar. Callers are offered a time that is actually free, and you see it on your calendar.",
         "price": "$1,999.99 setup",
         "setupAmount": "$1,999.99",
-        "cadence": "$349 / month",
-        "monthlyAmount": "$349",
+        "cadence": "$349.99 / month",
+        "monthlyAmount": "$349.99",
         "idealFor": "For contractors who want confirmed appointments, not just requests.",
-        "reassuranceLine": "Setup is paid once, at checkout. Your first $349 monthly charge comes one month after setup.",
+        "reassuranceLine": "Setup is paid once, at checkout. Your first $349.99 monthly charge comes one month after setup.",
         "includesPrevious": "Everything in Essential, plus:",
         "stepUp": "Adds appointment scheduling for $100 more a month. The setup fee is the same.",
         "groups": [
@@ -715,7 +715,7 @@
       },
       {
         "title": "When do I pay?",
-        "body": "At checkout you pay the one-time setup fee of $1,999.99 CAD. Your first monthly charge ($249 for Essential, $349 for Professional) comes one month after your setup payment, then every month. Setup is charged once per business."
+        "body": "At checkout you pay the one-time setup fee of $1,999.99 CAD. Your first monthly charge ($249.99 for Essential, $349.99 for Professional) comes one month after your setup payment, then every month. Setup is charged once per business."
       },
       {
         "title": "Are there any other fees?",
@@ -1140,7 +1140,7 @@
       },
       {
         "q": "How much does it cost?",
-        "a": "Essential is $249 a month and Professional is $349 a month, plus a one-time setup fee of $1,999.99 on either plan. You pay the setup fee at checkout and your first monthly charge comes one month later. All prices are in Canadian dollars."
+        "a": "Essential is $249.99 a month and Professional is $349.99 a month, plus a one-time setup fee of $1,999.99 on either plan. You pay the setup fee at checkout and your first monthly charge comes one month later. All prices are in Canadian dollars."
       },
       {
         "q": "What is the difference between Essential and Professional?",
@@ -1452,7 +1452,7 @@
       "We watch the launch and look after it every month"
     ],
     "pricingTitle": "Prices",
-    "pricing": "Essential: $1,999.99 setup, then $249 / month. Answers your calls and captures your customers. Professional: $1,999.99 setup, then $349 / month. Everything in Essential plus appointment scheduling. Optional website service: $699.99, paid once, only if you choose it. All prices are in Canadian dollars. Call and text usage is subject to each plan’s monthly allowance.",
+    "pricing": "Essential: $1,999.99 setup, then $249.99 / month. Answers your calls and captures your customers. Professional: $1,999.99 setup, then $349.99 / month. Everything in Essential plus appointment scheduling. Optional website service: $699.99, paid once, only if you choose it. All prices are in Canadian dollars. Call and text usage is subject to each plan’s monthly allowance.",
     "ctaTitle": "Next step",
     "cta": "Book a free 20-minute demo. No system access required.",
     "contact": "contact@tradecatch.ca · tradecatch.ca",
@@ -1490,7 +1490,7 @@
     "headline": "A call you can’t take. Here is what happens next.",
     "intro": "A short dramatization with a fictional plumbing company. It has captions, and sound plays only when you press play.",
     "note": "A dramatization with a fictional business, not a customer story. It shows the receptionist answering and taking the request. Your team confirms the appointment.",
-    "watchLabel": "Watch the video: {title}",
+    "watchLabel": "Watch the video:",
     "cards": {
       "underTheSink": {
         "tag": "Receptionist",
@@ -4447,6 +4447,12 @@
       "navInstallations": "Installation approvals",
       "navBusinesses": "Businesses",
       "navBilling": "Billing",
+      "navSubscriptions": "Subscriptions",
+      "navPayments": "Payments",
+      "navWebsiteRequests": "Website requests",
+      "navAuditLogs": "Audit logs",
+      "navReliability": "Reliability desk",
+      "navMenu": "Admin menu",
       "navAnalytics": "Analytics",
       "navReceptionist": "Receptionist",
       "navHealth": "System health",

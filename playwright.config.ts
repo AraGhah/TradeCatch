@@ -12,6 +12,19 @@ export const E2E_PORT = Number(process.env.TRADECATCH_E2E_PORT || 3100);
  * (`ERR_TOO_MANY_REDIRECTS`). See vercel/next.js#94745.
  */
 export const E2E_ORIGIN = `http://localhost:${E2E_PORT}`;
+/**
+ * Synthetic administrators for tests/admin-dashboard.spec.ts. Roles live here, in
+ * the operator-controlled list, exactly as in production: a plain entry is a
+ * super administrator, "email:role" restricts it.
+ */
+const ADMIN_CONSOLE_ADMINS = [
+  ...Array.from(
+    { length: 30 },
+    (_, index) => `adm-${String(index + 1).padStart(2, "0")}@example.test`,
+  ),
+  "adm-support@example.test:support",
+  "adm-readonly@example.test:read_only",
+].join(",");
 /** Where tests/gmail.spec.ts serves its stand-in for Google. */
 export const GMAIL_E2E_PORT = Number(
   process.env.TRADECATCH_GMAIL_E2E_PORT || 4010,
@@ -31,7 +44,10 @@ export default defineConfig({
   reporter: [["list"]],
   timeout: 60_000,
   webServer: {
-    command: `npm run build && npx next start --port ${E2E_PORT}`,
+    // Keep idle connections open well past the pauses between a test's requests. With Node's 5 s default the
+    // server closes a socket that Playwright's request client is about to reuse, which surfaces as a rare
+    // "read ECONNRESET" in an otherwise correct test.
+    command: `npx next build --webpack && npx next start --port ${E2E_PORT} --keepAliveTimeout 65000`,
     url: `${E2E_ORIGIN}/api/health`,
     reuseExistingServer: false,
     timeout: 300_000,
@@ -66,7 +82,7 @@ export default defineConfig({
       SAAS_DEV_LOGIN: "1",
       // Synthetic platform identity for exercising real admin MFA/session gates.
       TRADECATCH_ADMIN_EMAILS:
-        "sales-admin@example.test,installation-admin-en@example.test,installation-admin-fr@example.test,auth-session-admin@example.test",
+        `sales-admin@example.test,installation-admin-en@example.test,installation-admin-fr@example.test,auth-session-admin@example.test,${ADMIN_CONSOLE_ADMINS}`,
       // A second approved frontend (CORS_ALLOWED_ORIGINS) for tests/cors.spec.ts;
       // the built-in development list already covers localhost:3000/3001/3100.
       CORS_ALLOWED_ORIGINS: "http://localhost:3101",
@@ -88,5 +104,10 @@ export default defineConfig({
   use: {
     baseURL: E2E_ORIGIN,
     ...devices["Desktop Chrome"],
+    // Local Windows worktrees may use a system Chrome when Playwright's own
+    // browser bundle is unavailable; CI keeps its installed Playwright browser.
+    ...(process.env.TRADECATCH_E2E_CHROME_PATH
+      ? { launchOptions: { executablePath: process.env.TRADECATCH_E2E_CHROME_PATH } }
+      : {}),
   },
 });

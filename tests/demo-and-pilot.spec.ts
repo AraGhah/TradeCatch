@@ -67,7 +67,7 @@ test.describe("first-demo journeys", () => {
     await rejectCookiesIfVisible(page);
 
     const card = page.getByRole("button", {
-      name: "Watch the video: Under the sink",
+      name: /Watch the video.*Under the sink/,
     });
     await card.scrollIntoViewIfNeeded();
     await card.click();
@@ -101,7 +101,7 @@ test.describe("first-demo journeys", () => {
       .catch(() => undefined);
 
     const card = page.getByRole("button", {
-      name: "Regarder la vidéo : Sous l’évier",
+      name: /Regarder la vidéo.*Sous l’évier/,
     });
     await card.scrollIntoViewIfNeeded();
     await card.click();
@@ -129,11 +129,11 @@ test.describe("first-demo journeys", () => {
     await page.goto("/receptionist");
     await rejectCookiesIfVisible(page);
     await expect(
-      page.getByRole("button", { name: "Watch the video: Under the sink" }),
+      page.getByRole("button", { name: /Watch the video.*Under the sink/ }),
     ).toBeVisible();
     for (const retired of ["After hours", "On the ladder"]) {
       await expect(
-        page.getByRole("button", { name: `Watch the video: ${retired}` }),
+        page.getByRole("button", { name: new RegExp(`Watch the video.*${retired}`) }),
       ).toHaveCount(0);
     }
     await expect(
@@ -188,7 +188,7 @@ test.describe("first-demo journeys", () => {
     expect(consent).toMatchObject({ version: 1, analytics: false });
 
     await page
-      .locator('button[aria-label="Passer au français"]:visible')
+      .locator('button[aria-label="FR, passer au français"]:visible')
       .click();
     await expect(page).toHaveURL(/\/fr\/?$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "fr");
@@ -197,7 +197,7 @@ test.describe("first-demo journeys", () => {
     ).toHaveCount(0);
 
     await page
-      .locator('button[aria-label="Switch to English"]:visible')
+      .locator('button[aria-label="EN, switch to English"]:visible')
       .click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.locator("html")).toHaveAttribute("lang", "en");

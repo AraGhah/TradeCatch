@@ -30,16 +30,16 @@ test.describe("pricing page", () => {
 
     const essential = planCard(page, "Essential");
     await expect(essential).toContainText("$1,999.99");
-    await expect(essential).toContainText("$249");
+    await expect(essential).toContainText("$249.99");
     await expect(essential).toContainText(
-      "Your first $249 monthly charge comes one month after setup.",
+      "Your first $249.99 monthly charge comes one month after setup.",
     );
 
     const professional = planCard(page, "Professional");
     await expect(professional).toContainText("$1,999.99");
-    await expect(professional).toContainText("$349");
+    await expect(professional).toContainText("$349.99");
     await expect(professional).toContainText(
-      "Your first $349 monthly charge comes one month after setup.",
+      "Your first $349.99 monthly charge comes one month after setup.",
     );
 
     // Currency and billing order are stated once, high on the page.
@@ -68,8 +68,8 @@ test.describe("pricing page", () => {
     const text = (await main.innerText()).replace(/[  ]/g, " ");
 
     expect(text).toContain("1 999,99 $");
-    expect(text).toContain("249 $");
-    expect(text).toContain("349 $");
+    expect(text).toContain("249,99 $");
+    expect(text).toContain("349,99 $");
     expect(text).toContain("699,99 $");
     expect(text).toContain("Tous les prix sont en dollars canadiens");
     expect(text).not.toMatch(/949,99|1 499,99|649,99|799,99/);

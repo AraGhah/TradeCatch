@@ -158,13 +158,13 @@
       "tiers": [
         {
           "name": "Essential",
-          "price": "249 $ / mois",
+          "price": "249,99 $ / mois",
           "cadence": "1 999,99 $ d’installation, payés une seule fois",
           "idealFor": "Répond à vos appels et saisit vos clients."
         },
         {
           "name": "Professional",
-          "price": "349 $ / mois",
+          "price": "349,99 $ / mois",
           "cadence": "1 999,99 $ d’installation, payés une seule fois",
           "idealFor": "Tout ce qu’inclut Essential, plus la prise de rendez-vous."
         }
@@ -235,7 +235,7 @@
         },
         {
           "q": "Que paie-t-on le premier mois?",
-          "a": "À la caisse, vous payez les frais d’installation uniques de 1 999,99 $. Votre premier paiement mensuel (249 $ pour Essential, 349 $ pour Professional) a lieu un mois plus tard. Tous les prix sont en dollars canadiens."
+          "a": "À la caisse, vous payez les frais d’installation uniques de 1 999,99 $. Votre premier paiement mensuel (249,99 $ pour Essential, 349,99 $ pour Professional) a lieu un mois plus tard. Tous les prix sont en dollars canadiens."
         },
         {
           "q": "Prend-il des rendez-vous?",
@@ -591,7 +591,7 @@
     "headline": "Deux forfaits. Un choix simple.",
     "intro": "Essential répond à vos appels et capte vos clients. Professional prend aussi vos rendez-vous. Tous les prix sont en dollars canadiens.",
     "reassurance": "Mois par mois après l’installation. Annulation avec préavis.",
-    "metaDescription": "Tarifs TradeCatch en CAD : Essential à 249 $ par mois et Professional à 349 $ par mois, avec des frais d’installation uniques de 1 999,99 $. Service de site web facultatif à 699,99 $.",
+    "metaDescription": "Tarifs TradeCatch en CAD : Essential à 249,99 $ par mois et Professional à 349,99 $ par mois, avec des frais d’installation uniques de 1 999,99 $. Service de site web facultatif à 699,99 $.",
     "principles": [
       "Essential : nous répondons à vos appels et captons vos clients",
       "Professional : nous répondons à vos appels et prenons vos rendez-vous",
@@ -605,10 +605,10 @@
         "outcome": "Chaque appel reçoit une réponse, jour et nuit, en français ou en anglais. Vous recevez le nom, le numéro et le besoin de l’appelant, pour qu’aucun travail ne vous file entre les doigts.",
         "price": "1 999,99 $ d’installation",
         "setupAmount": "1 999,99 $",
-        "cadence": "249 $ / mois",
-        "monthlyAmount": "249 $",
+        "cadence": "249,99 $ / mois",
+        "monthlyAmount": "249,99 $",
         "idealFor": "Pour les entrepreneurs qui veulent que chaque appel reçoive une réponse et que chaque occasion soit saisie.",
-        "reassuranceLine": "L’installation est payée une seule fois, à la caisse. Le premier paiement mensuel de 249 $ a lieu un mois après l’installation.",
+        "reassuranceLine": "L’installation est payée une seule fois, à la caisse. Le premier paiement mensuel de 249,99 $ a lieu un mois après l’installation.",
         "groups": [
           {
             "title": "Répond à vos appels",
@@ -656,10 +656,10 @@
         "outcome": "Tout ce qui est dans Essential, plus la prise de rendez-vous automatique avec votre Google Agenda. L’appelant se voit offrir une plage réellement libre, et vous la voyez dans votre agenda.",
         "price": "1 999,99 $ d’installation",
         "setupAmount": "1 999,99 $",
-        "cadence": "349 $ / mois",
-        "monthlyAmount": "349 $",
+        "cadence": "349,99 $ / mois",
+        "monthlyAmount": "349,99 $",
         "idealFor": "Pour les entrepreneurs qui veulent des rendez-vous confirmés, pas seulement des demandes.",
-        "reassuranceLine": "L’installation est payée une seule fois, à la caisse. Le premier paiement mensuel de 349 $ a lieu un mois après l’installation.",
+        "reassuranceLine": "L’installation est payée une seule fois, à la caisse. Le premier paiement mensuel de 349,99 $ a lieu un mois après l’installation.",
         "includesPrevious": "Tout ce qui est dans Essential, plus :",
         "stepUp": "Ajoute la prise de rendez-vous pour 100 $ de plus par mois. Les frais d’installation sont les mêmes.",
         "groups": [
@@ -715,7 +715,7 @@
       },
       {
         "title": "Quand est-ce que je paie?",
-        "body": "À la caisse, vous payez les frais d’installation uniques de 1 999,99 $ CAD. Votre premier paiement mensuel (249 $ pour Essential, 349 $ pour Professional) a lieu un mois après le paiement de l’installation, puis chaque mois. L’installation est facturée une seule fois par entreprise."
+        "body": "À la caisse, vous payez les frais d’installation uniques de 1 999,99 $ CAD. Votre premier paiement mensuel (249,99 $ pour Essential, 349,99 $ pour Professional) a lieu un mois après le paiement de l’installation, puis chaque mois. L’installation est facturée une seule fois par entreprise."
       },
       {
         "title": "Y a-t-il d’autres frais?",
@@ -1140,7 +1140,7 @@
       },
       {
         "q": "Combien ça coûte?",
-        "a": "Essential coûte 249 $ par mois et Professional 349 $ par mois, plus des frais d’installation uniques de 1 999,99 $ avec l’un ou l’autre. Vous payez les frais d’installation à la caisse et votre premier paiement mensuel a lieu un mois plus tard. Tous les prix sont en dollars canadiens."
+        "a": "Essential coûte 249,99 $ par mois et Professional 349,99 $ par mois, plus des frais d’installation uniques de 1 999,99 $ avec l’un ou l’autre. Vous payez les frais d’installation à la caisse et votre premier paiement mensuel a lieu un mois plus tard. Tous les prix sont en dollars canadiens."
       },
       {
         "q": "Quelle est la différence entre Essential et Professional?",
@@ -1452,7 +1452,7 @@
       "Nous suivons le lancement et nous nous occupons du service chaque mois"
     ],
     "pricingTitle": "Tarifs",
-    "pricing": "Essential : 1 999,99 $ d’installation, puis 249 $ / mois. Répond à vos appels et saisit vos clients. Professional : 1 999,99 $ d’installation, puis 349 $ / mois. Tout ce qu’inclut Essential, plus la prise de rendez-vous. Service de site web en option : 699,99 $, payé une seule fois, seulement si vous le choisissez. Tous les prix sont en dollars canadiens. L’utilisation des appels et des textos est assujettie à l’allocation mensuelle de chaque forfait.",
+    "pricing": "Essential : 1 999,99 $ d’installation, puis 249,99 $ / mois. Répond à vos appels et saisit vos clients. Professional : 1 999,99 $ d’installation, puis 349,99 $ / mois. Tout ce qu’inclut Essential, plus la prise de rendez-vous. Service de site web en option : 699,99 $, payé une seule fois, seulement si vous le choisissez. Tous les prix sont en dollars canadiens. L’utilisation des appels et des textos est assujettie à l’allocation mensuelle de chaque forfait.",
     "ctaTitle": "Prochaine étape",
     "cta": "Réservez une démo gratuite de 20 minutes. Aucun accès à vos systèmes requis.",
     "contact": "contact@tradecatch.ca · tradecatch.ca",
@@ -1490,7 +1490,7 @@
     "headline": "Un appel que vous ne pouvez pas prendre. Voici la suite.",
     "intro": "Une courte mise en scène avec une entreprise de plomberie fictive. Elle est sous-titrée, et le son ne joue que si vous appuyez sur lecture.",
     "note": "Une mise en scène avec une entreprise fictive, pas un témoignage de client. Elle montre la réceptionniste qui répond et prend la demande. Votre équipe confirme le rendez-vous.",
-    "watchLabel": "Regarder la vidéo : {title}",
+    "watchLabel": "Regarder la vidéo :",
     "cards": {
       "underTheSink": {
         "tag": "Réceptionniste",
@@ -4447,6 +4447,12 @@
       "navInstallations": "Approbation des installations",
       "navBusinesses": "Entreprises",
       "navBilling": "Facturation",
+      "navSubscriptions": "Abonnements",
+      "navPayments": "Paiements",
+      "navWebsiteRequests": "Demandes de site Web",
+      "navAuditLogs": "Journaux d’audit",
+      "navReliability": "Bureau de fiabilité",
+      "navMenu": "Menu admin",
       "navAnalytics": "Analytique",
       "navReceptionist": "Réceptionniste",
       "navHealth": "Santé du système",

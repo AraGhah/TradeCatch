@@ -1,7 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
-import { waitForFormHydration } from "./support/hydration";
+import { waitForElementHydration, waitForFormHydration } from "./support/hydration";
+
+// A click on the button before React has attached to it does nothing, which shows up on a busy machine.
+const GET_LINK_BUTTON = '[data-testid="referral-get-link"]';
 
 /**
  * "Get your link": the journey a customer actually takes. Runs against the
@@ -117,6 +120,7 @@ test.describe("referral link", () => {
     await expect(page.locator("#referral-link")).toHaveCount(0);
 
     // Two fast clicks create one link.
+    await waitForElementHydration(page, GET_LINK_BUTTON);
     await getLink.dblclick();
     const field = page.locator("#referral-link");
     await expect(field).toBeVisible();
@@ -170,6 +174,7 @@ test.describe("referral link", () => {
         : route.continue(),
     );
     const getLink = page.getByTestId("referral-get-link");
+    await waitForElementHydration(page, GET_LINK_BUTTON);
     await getLink.click();
     await expect(
       page
@@ -210,6 +215,7 @@ test.describe("referral link", () => {
     await page.goto("/app/referrals");
     await dismissCookies(page);
     await signInThroughLoginPage(page, email);
+    await waitForElementHydration(page, GET_LINK_BUTTON);
     await page.getByTestId("referral-get-link").click();
     const link = await page.locator("#referral-link").inputValue();
     const code = new URL(link).searchParams.get("ref")!;
