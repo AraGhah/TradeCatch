@@ -172,9 +172,9 @@ export function AdminDemoBusinesses() {
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy md:text-3xl">
+          <h2 className="font-[family-name:var(--font-archivo)] text-xl font-extrabold text-navy">
             {t("headline")}
-          </h1>
+          </h2>
           <p className="mt-2 max-w-2xl text-navy/70">{t("intro")}</p>
         </div>
         <button

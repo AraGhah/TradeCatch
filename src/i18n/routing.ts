@@ -113,6 +113,23 @@ export const routing = defineRouting({
       en: "/admin/billing",
       fr: "/admin/billing",
     },
+    "/admin/subscriptions": {
+      en: "/admin/subscriptions",
+      fr: "/admin/subscriptions",
+    },
+    "/admin/payments": { en: "/admin/payments", fr: "/admin/payments" },
+    "/admin/website-requests": {
+      en: "/admin/website-requests",
+      fr: "/admin/website-requests",
+    },
+    "/admin/system-health": {
+      en: "/admin/system-health",
+      fr: "/admin/system-health",
+    },
+    "/admin/audit-logs": {
+      en: "/admin/audit-logs",
+      fr: "/admin/audit-logs",
+    },
     "/admin/analytics": {
       en: "/admin/analytics",
       fr: "/admin/analytics",

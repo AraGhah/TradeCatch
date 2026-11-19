@@ -1,9 +1,9 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AdminDemoBusinesses } from "@/components/admin/AdminDemoBusinesses";
+import { AdminOverviewPanel } from "@/components/admin/console/OverviewPanel";
 import { AdminSystemAlerts } from "@/components/admin/AdminSystemAlerts";
 import { MonthChart, StatGrid } from "@/components/admin/PlatformWidgets";
 import { Link } from "@/i18n/navigation";
-import { formatPlanMoney } from "@/lib/plans";
 import { loadPlatformSnapshot } from "@/product/admin/platform-snapshot";
 
 export const dynamic = "force-dynamic";
@@ -25,23 +25,14 @@ export default async function AdminHomePage({
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy md:text-3xl">
-          {t("headline")}
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-navy/70">{t("intro")}</p>
-      </header>
+      {/* The headline figures (customers, subscriptions, MRR, failed payments, calls,
+          alerts) come from the live admin API; the tiles below are the usage
+          figures it does not cover. */}
+      <AdminOverviewPanel />
       {snapshot ? (
         <>
           <StatGrid
             items={[
-              { label: t("businesses"), value: String(snapshot.businesses) },
-              {
-                label: t("active"),
-                value: String(snapshot.activeSubscriptions),
-              },
-              { label: t("mrr"), value: formatPlanMoney(snapshot.mrr, locale) },
-              { label: t("calls"), value: String(snapshot.calls) },
               { label: t("ai"), value: String(snapshot.aiCompleted) },
               { label: t("leads"), value: String(snapshot.leads) },
               {

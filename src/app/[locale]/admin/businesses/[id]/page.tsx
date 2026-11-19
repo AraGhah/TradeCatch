@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { BusinessControls } from "@/components/admin/BusinessControls";
+import { BusinessProfile } from "@/components/admin/console/BusinessProfile";
 import { Link } from "@/i18n/navigation";
-import { formatPlanMoney } from "@/lib/plans";
 import { loadPlatformSnapshot } from "@/product/admin/platform-snapshot";
 import { ReceptionistSettingsForm } from "@/components/app/ReceptionistSettingsForm";
 import { getMissedCallReadStore } from "@/product/missed-call/runtime";
@@ -61,19 +61,13 @@ export default async function AdminBusinessPage({
       <section className="rounded-md border border-navy/10 bg-white p-4 text-sm text-navy">
         <h2 className="font-semibold">{t("profile")}</h2>
         <p className="mt-2">
-          {org.plan} · {org.status} ·{" "}
-          {formatPlanMoney(usage?.monthly ?? 0, locale)}
-        </p>
-        <p>
-          {[org.city, org.industry, org.phoneE164].filter(Boolean).join(" · ")}
-        </p>
-        <p className="mt-2">
           {recording ? t("recordingOn") : t("recordingOff")}
         </p>
         <Link href="/admin/support" className="mt-3 inline-block underline">
           {t("supportLink")}
         </Link>
       </section>
+      <BusinessProfile organizationId={org.id} />
       <section className="grid gap-3 sm:grid-cols-3">
         <p className="rounded-md border border-navy/10 bg-white px-4 py-3 text-sm">
           {t("leads")}: {usage?.leads ?? 0}
