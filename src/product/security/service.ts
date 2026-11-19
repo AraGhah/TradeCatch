@@ -1,8 +1,12 @@
 import { encryptSecret, decryptSecret } from "@/product/scheduling/crypto";
 import { allows, maskPhone, type SecurityAction } from "./permissions";
+import { sanitizeChanges, type AuditChange } from "./audit-changes";
 import {
   securityId,
   safeDetail,
+  type AuditEvent,
+  type AuditFilter,
+  type AuditOutcome,
   type RecordingSettings,
   type SecurityStore,
 } from "./store";
@@ -53,17 +57,25 @@ export function createSecurityService(deps: SecurityDeps) {
   async function audit(input: {
     organizationId?: string;
     actorUserId?: string;
+    actorEmail?: string;
+    actorRole?: string;
     action: string;
     target?: string;
     detail?: string;
+    outcome?: AuditOutcome;
+    changes?: AuditChange[];
   }) {
-    const row = {
+    const row: AuditEvent = {
       id: securityId("aud"),
       organizationId: input.organizationId,
       actorUserId: input.actorUserId,
+      actorEmail: input.actorEmail?.trim().toLowerCase().slice(0, 200) || undefined,
+      actorRole: input.actorRole?.slice(0, 40),
       action: input.action,
       target: input.target,
       detail: safeDetail(input.detail),
+      outcome: input.outcome,
+      changes: sanitizeChanges(input.changes),
       createdAt: deps.now().toISOString(),
     };
     await deps.store.saveAudit(row);
@@ -356,6 +368,10 @@ export function createSecurityService(deps: SecurityDeps) {
 
     async listIncidents() {
       return deps.store.listIncidents();
+    },
+
+    async searchAudit(filter: AuditFilter) {
+      return deps.store.searchAudit(filter);
     },
 
     async listAudit(organizationId?: string) {

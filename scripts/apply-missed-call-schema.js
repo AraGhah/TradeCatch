@@ -233,6 +233,14 @@ async function main() {
       ["src", "product", "privacy", "privacy-settings.sql"],
       "040_privacy_settings",
     );
+    // Administration console: append-only audit log, billing events, website
+    // request approvals/payment tracking/history. Must run after its
+    // dependencies: security (audit), website_service (034) and billing (030).
+    await applyFile(
+      client,
+      ["src", "product", "admin-console", "schema.sql"],
+      "041_admin_console",
+    );
   } finally {
     await client.end();
   }

@@ -1,8 +1,16 @@
+import type { Pool } from "pg";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import { getSaasStore } from "@/product/saas/runtime";
 import { requireSealingSecret } from "@/product/saas/auth/secret";
+import { sanitizeChanges } from "./audit-changes";
 import { createSecurityService } from "./service";
-import { createMemorySecurityStore, type SecurityStore } from "./store";
+import {
+  clampAuditPage,
+  createMemorySecurityStore,
+  type AuditEvent,
+  type AuditOutcome,
+  type SecurityStore,
+} from "./store";
 
 const globalForSecurity = globalThis as unknown as { __tradecatchSecurity?: SecurityStore };
 
@@ -29,26 +37,76 @@ export function resetSecurityRuntimeForTests() {
   delete globalForSecurity.__tradecatchSecurity;
 }
 
-function createPostgresSecurityStore(connectionString: string): SecurityStore {
-  const pool = getPgPool(connectionString);
+/** `pool` is injectable so tests can run the real SQL against an embedded Postgres. */
+export function createPostgresSecurityStore(
+  connectionString: string,
+  pool: Pick<Pool, "query"> = getPgPool(connectionString),
+): SecurityStore {
   return {
     async saveAudit(row) {
-      await pool.query(
-        `INSERT INTO tc_audit_logs (id, organization_id, actor_user_id, action, target, detail, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [row.id, row.organizationId ?? null, row.actorUserId ?? null, row.action, row.target ?? null, row.detail ?? null, row.createdAt],
-      );
+      try {
+        await pool.query(
+          `INSERT INTO tc_audit_logs (id, organization_id, actor_user_id, actor_email, actor_role, action, target, detail, outcome, changes, created_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11)`,
+          [
+            row.id,
+            row.organizationId ?? null,
+            row.actorUserId ?? null,
+            row.actorEmail ?? null,
+            row.actorRole ?? null,
+            row.action,
+            row.target ?? null,
+            row.detail ?? null,
+            row.outcome ?? "success",
+            row.changes?.length ? JSON.stringify(row.changes) : null,
+            row.createdAt,
+          ],
+        );
+      } catch (error) {
+        // 42703 = undefined_column: the database has not had migration
+        // 041_admin_console yet. Keep recording the original fields rather
+        // than silently losing the audit trail during a rollout.
+        if ((error as { code?: string }).code !== "42703") throw error;
+        await pool.query(
+          `INSERT INTO tc_audit_logs (id, organization_id, actor_user_id, action, target, detail, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [row.id, row.organizationId ?? null, row.actorUserId ?? null, row.action, row.target ?? null, row.detail ?? null, row.createdAt],
+        );
+      }
     },
     async listAudit(organizationId) {
       const res = await pool.query(`SELECT * FROM tc_audit_logs WHERE ($1::text IS NULL OR organization_id = $1) ORDER BY created_at DESC LIMIT 200`, [organizationId ?? null]);
-      return res.rows.map((row) => ({
-        id: String(row.id),
-        organizationId: row.organization_id ? String(row.organization_id) : undefined,
-        actorUserId: row.actor_user_id ? String(row.actor_user_id) : undefined,
-        action: String(row.action),
-        target: row.target ? String(row.target) : undefined,
-        detail: row.detail ? String(row.detail) : undefined,
-        createdAt: new Date(String(row.created_at)).toISOString(),
-      }));
+      return res.rows.map(auditRowFrom);
+    },
+    async searchAudit(filter) {
+      const { limit, offset } = clampAuditPage(filter);
+      const where: string[] = [];
+      const params: unknown[] = [];
+      const add = (sql: string, value: unknown) => {
+        params.push(value);
+        where.push(sql.replace("?", `$${params.length}`));
+      };
+      if (filter.action) add("action = ?", filter.action);
+      if (filter.actorUserId) add("actor_user_id = ?", filter.actorUserId);
+      if (filter.organizationId) add("organization_id = ?", filter.organizationId);
+      if (filter.outcome) add("outcome = ?", filter.outcome);
+      if (filter.from) add("created_at >= ?::date", filter.from);
+      if (filter.to) add("created_at < (?::date + 1)", filter.to);
+      const q = filter.q?.trim();
+      if (q) {
+        // Escape LIKE wildcards so a search for "100%" matches literally.
+        params.push(`%${q.replace(/[\\%_]/g, (c) => `\\${c}`)}%`);
+        const p = `$${params.length}`;
+        where.push(
+          `(action ILIKE ${p} OR target ILIKE ${p} OR detail ILIKE ${p} OR actor_email ILIKE ${p} OR organization_id ILIKE ${p})`,
+        );
+      }
+      const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+      const total = await pool.query(`SELECT count(*)::int AS n FROM tc_audit_logs ${clause}`, params);
+      const res = await pool.query(
+        `SELECT * FROM tc_audit_logs ${clause} ORDER BY created_at DESC, id DESC LIMIT ${limit} OFFSET ${offset}`,
+        params,
+      );
+      return { rows: res.rows.map(auditRowFrom), total: Number(total.rows[0]?.n || 0) };
     },
     async saveAttempt(email, at) {
       await pool.query(`INSERT INTO tc_login_attempts (id, email, created_at) VALUES ($1,$2,$3)`, [`att_${crypto.randomUUID()}`, email, at]);
@@ -159,6 +217,23 @@ function createPostgresSecurityStore(connectionString: string): SecurityStore {
       );
       return Boolean(res.rows[0]);
     },
+  };
+}
+
+function auditRowFrom(row: Record<string, unknown>): AuditEvent {
+  const changes = Array.isArray(row.changes) ? sanitizeChanges(row.changes) : undefined;
+  return {
+    id: String(row.id),
+    organizationId: row.organization_id ? String(row.organization_id) : undefined,
+    actorUserId: row.actor_user_id ? String(row.actor_user_id) : undefined,
+    actorEmail: row.actor_email ? String(row.actor_email) : undefined,
+    actorRole: row.actor_role ? String(row.actor_role) : undefined,
+    action: String(row.action),
+    target: row.target ? String(row.target) : undefined,
+    detail: row.detail ? String(row.detail) : undefined,
+    outcome: row.outcome ? (String(row.outcome) as AuditOutcome) : undefined,
+    changes,
+    createdAt: new Date(String(row.created_at)).toISOString(),
   };
 }
 
