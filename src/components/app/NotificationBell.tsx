@@ -41,11 +41,16 @@ export function NotificationBell({ organizationId }: { organizationId: string })
     <Link
       href="/app/notifications"
       className="relative rounded-md px-3 py-2 text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
-      aria-label={t("headline")}
     >
+      {/* No aria-label: the link is named from what is on screen (WCAG 2.5.3), so the unread count is
+          part of its name instead of being hidden from screen readers. */}
       {t("headline")}
       {count > 0 ? (
-        <span className="ml-1 rounded-full bg-red-700 px-1.5 text-xs text-white">{count}</span>
+        <>
+          {" "}
+          <span className="rounded-full bg-red-700 px-1.5 text-xs text-white">{count}</span>
+          <span className="sr-only"> {t("unread")}</span>
+        </>
       ) : null}
     </Link>
   );

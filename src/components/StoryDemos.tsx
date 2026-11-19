@@ -104,9 +104,10 @@ export async function StoryDemos({
           <div className="mx-auto w-full max-w-[264px] sm:max-w-[300px] md:mx-0 lg:max-w-[360px]">
             <WatchDemoButton
               video={DEFAULT_STORY_ID}
-              ariaLabel={t("watchLabel", { title })}
               className="group block h-full w-full overflow-hidden rounded-[14px] border border-[rgb(var(--ink-rgb)/0.12)] bg-surface text-left transition-[translate,box-shadow] duration-200 hover:-translate-y-[2px] hover:shadow-[0_18px_40px_-22px_rgba(12,20,30,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
             >
+              {/* The button is named from its content (WCAG 2.5.3: the name contains the visible text); this cue says what it does. */}
+              <span className="sr-only">{t("watchLabel")} </span>
               <span className="relative block aspect-[4/5] overflow-hidden bg-navy">
                 <Image
                   src={media.poster}

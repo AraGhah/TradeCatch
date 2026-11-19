@@ -4,7 +4,7 @@ export type WebsiteServiceAddOnCopy = {
   eyebrow: string;
   title: string;
   intro: string;
-  /** "Starting at $349 CAD" — the number comes from the plan catalog (tests enforce it). */
+  /** The fixed one-time price, e.g. "$699.99 CAD" — the number comes from the plan catalog (tests enforce it). */
   price: string;
   priceNote: string;
   availableOn: string;

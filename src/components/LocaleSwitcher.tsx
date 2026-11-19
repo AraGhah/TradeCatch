@@ -37,7 +37,8 @@ export function LocaleSwitcher({ inverted = false }: { inverted?: boolean }) {
             type="button"
             onClick={() => switchTo(code)}
             aria-current={active ? "true" : undefined}
-            aria-label={code === "en" ? "Switch to English" : "Passer au français"}
+            // WCAG 2.5.3 (label in name): the name starts with the visible "EN" / "FR".
+            aria-label={code === "en" ? "EN, switch to English" : "FR, passer au français"}
             className={`rounded-full px-2.5 py-1 font-mono text-[12px] font-medium tracking-wide transition-colors ${
               active
                 ? inverted
