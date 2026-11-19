@@ -8,8 +8,8 @@
  * and Stripe mappings stay correct; they are never shown on the public site.
  */
 export const PLAN_PRICES = {
-  essential: { setup: 1999.99, monthly: 249 },
-  professional: { setup: 1999.99, monthly: 349 },
+  essential: { setup: 1999.99, monthly: 249.99 },
+  professional: { setup: 1999.99, monthly: 349.99 },
   starter: { setup: 799.99, monthly: 349.99 },
   growth: { setup: 1499.99, monthly: 649.99 },
   receptionist: { setup: 1999.99, monthly: 949.99 },

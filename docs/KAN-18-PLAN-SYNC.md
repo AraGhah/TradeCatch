@@ -1,5 +1,10 @@
 # KAN-18: plans synchronized across the website, the dashboard and Stripe
 
+Historical record: KAN-20 subsequently changed the launch catalog to $249.99 /
+$349.99 per month. See `docs/KAN-20-ADMIN-DASHBOARD.md` and
+`docs/STRIPE_BILLING.md` for the current prices. The figures below describe the
+KAN-18 state before that change.
+
 Status (2026-11-18): **code work done and verified; KAN-18 is not complete.** Live
 Stripe still charges $249.99 / $349.99 and the live Worker has no live billing
 configuration. Both need owner action (see [Not done](#not-done-needs-the-owner)).

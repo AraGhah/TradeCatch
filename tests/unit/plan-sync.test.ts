@@ -88,15 +88,15 @@ describe("PLAN-01 Essential plan", () => {
     assert.equal(view.legacy, false);
   });
 
-  it("PLAN-01 costs $249 a month and $1,999.99 to set up, in CAD", () => {
-    assert.deepEqual(view.price, { monthly: 249, setup: 1999.99 });
+  it("PLAN-01 costs $249.99 a month and $1,999.99 to set up, in CAD", () => {
+    assert.deepEqual(view.price, { monthly: 249.99, setup: 1999.99 });
     for (const [lang, messages] of LANGS) {
       const tier = messages.pricing.tiers[0]!;
       assert.equal(tier.name, "Essential", lang);
-      assert.equal(tier.monthlyAmount, formatPlanPrice(249, lang), lang);
+      assert.equal(tier.monthlyAmount, formatPlanPrice(249.99, lang), lang);
       assert.equal(tier.setupAmount, formatPlanPrice(1999.99, lang), lang);
     }
-    assert.equal(formatPlanPrice(249, "en"), "$249");
+    assert.equal(formatPlanPrice(249.99, "en"), "$249.99");
     assert.equal(formatPlanPrice(1999.99, "en"), "$1,999.99");
   });
 
@@ -120,12 +120,12 @@ describe("PLAN-02 Professional plan", () => {
     assert.equal(view.legacy, false);
   });
 
-  it("PLAN-02 costs $349 a month and $1,999.99 to set up, in CAD", () => {
-    assert.deepEqual(view.price, { monthly: 349, setup: 1999.99 });
+  it("PLAN-02 costs $349.99 a month and $1,999.99 to set up, in CAD", () => {
+    assert.deepEqual(view.price, { monthly: 349.99, setup: 1999.99 });
     for (const [lang, messages] of LANGS) {
       const tier = messages.pricing.tiers[1]!;
       assert.equal(tier.name, "Professional", lang);
-      assert.equal(tier.monthlyAmount, formatPlanPrice(349, lang), lang);
+      assert.equal(tier.monthlyAmount, formatPlanPrice(349.99, lang), lang);
       assert.equal(tier.setupAmount, formatPlanPrice(1999.99, lang), lang);
     }
   });
@@ -473,7 +473,7 @@ describe("PLAN-03 dashboard billing card shows the plan the customer actually ha
 
   it("PLAN-03 an active Professional shows its price, status, next charge and every feature, and offers no second checkout", () => {
     const c = card("professional", summary());
-    assert.deepEqual(c.planLine, { kind: "priced", monthly: 349 });
+    assert.deepEqual(c.planLine, { kind: "priced", monthly: 349.99 });
     assert.equal(c.status, "active");
     assert.deepEqual(c.date, { kind: "nextCharge", iso: PERIOD });
     assert.equal(c.checkout, null, "a paying customer is never sent to pay the setup fee again");
@@ -482,9 +482,9 @@ describe("PLAN-03 dashboard billing card shows the plan the customer actually ha
     assert.ok(c.featureIds.includes("googleCalendar"));
   });
 
-  it("PLAN-03 an active Essential shows $249, no calendar features, and the Professional pointer", () => {
+  it("PLAN-03 an active Essential shows $249.99, no calendar features, and the Professional pointer", () => {
     const c = card("essential", summary({ plan: "essential" }));
-    assert.deepEqual(c.planLine, { kind: "priced", monthly: 249 });
+    assert.deepEqual(c.planLine, { kind: "priced", monthly: 249.99 });
     assert.equal(c.professionalNote, true);
     assert.equal(c.featureIds.includes("googleCalendar"), false);
     assert.equal(c.featureIds.includes("calendarView"), false);
@@ -685,6 +685,17 @@ describe("Stripe webhook sync on real SQL (PGlite)", { skip: !pgliteAvailable() 
     for (const file of ["stripe-billing.sql", "plan-tiers.sql", "billing-v2.sql"]) {
       await db.exec(readFileSync(path.join(process.cwd(), "src", "product", "saas", file), "utf8"));
     }
+    // The webhook now records payment outcomes in migration 041. Apply the
+    // billing-events section of the real schema; this focused fixture does not
+    // create the unrelated audit and website-request tables from that migration.
+    const adminSchema = readFileSync(
+      path.join(process.cwd(), "src", "product", "admin-console", "schema.sql"),
+      "utf8",
+    );
+    const billingStart = adminSchema.indexOf("CREATE TABLE IF NOT EXISTS tc_billing_events");
+    const billingEnd = adminSchema.indexOf("-- 3. Website requests", billingStart);
+    assert.ok(billingStart >= 0 && billingEnd > billingStart);
+    await db.exec(adminSchema.slice(billingStart, billingEnd));
     setPgPoolForTests(pool);
   });
   after(async () => {
@@ -704,7 +715,7 @@ describe("Stripe webhook sync on real SQL (PGlite)", { skip: !pgliteAvailable() 
     // Referral bookkeeping after a sync is best effort; keep it in memory here.
     runtime.__tradecatchSaas = { store: createMemorySaasStore(), durable: false };
     await pool.query(
-      "TRUNCATE tc_stripe_subscriptions, tc_stripe_events, tc_stripe_customers, tc_installation_checkouts, tc_billing_deferrals, tc_organizations CASCADE",
+      "TRUNCATE tc_billing_events, tc_stripe_subscriptions, tc_stripe_events, tc_stripe_customers, tc_installation_checkouts, tc_billing_deferrals, tc_organizations CASCADE",
     );
     await pool.query(
       "INSERT INTO tc_organizations (id,name,slug,plan,status,account_type) VALUES ($1,'Plan sync','plan-sync','essential','suspended','demo')",
@@ -943,7 +954,7 @@ describe("Stripe webhook sync on real SQL (PGlite)", { skip: !pgliteAvailable() 
       deliver(event("invoice.paid")),
       deliver(event("invoice.payment_succeeded")),
     ]);
-    assert.ok(results.every((r) => r.status === 200));
+    assert.ok(results.every((r) => r.status === 200), `statuses: ${results.map((r) => r.status).join(", ")}`);
     const bodies = (await Promise.all(results.map((r) => r.json()))) as { duplicate?: boolean }[];
     assert.equal(bodies.filter((b) => b.duplicate).length, 2, "the two repeats of one event id are deduplicated");
     assert.equal(await rows("tc_stripe_events"), 4, "one receipt per distinct event id");

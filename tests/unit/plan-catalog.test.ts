@@ -153,8 +153,8 @@ describe("plan catalog", () => {
   });
 
   it("the website service does not change any subscription price", () => {
-    assert.equal(PLAN_PRICES.essential.monthly, 249);
-    assert.equal(PLAN_PRICES.professional.monthly, 349);
+    assert.equal(PLAN_PRICES.essential.monthly, 249.99);
+    assert.equal(PLAN_PRICES.professional.monthly, 349.99);
     assert.equal(PLAN_PRICES.essential.setup, 1999.99);
     assert.equal(PLAN_PRICES.professional.setup, 1999.99);
   });

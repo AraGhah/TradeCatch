@@ -72,8 +72,8 @@ Two plans are on sale, each with the same one-time setup fee. All amounts are CA
 
 | Customer-facing name | Internal id    | Monthly | Setup     | Env (monthly / setup)                                             |
 | -------------------- | -------------- | ------- | --------- | ----------------------------------------------------------------- |
-| Essential            | `essential`    | $249    | $1,999.99 | `STRIPE_PRICE_ESSENTIAL` / `STRIPE_PRICE_INSTALL_ESSENTIAL`       |
-| Professional         | `professional` | $349    | $1,999.99 | `STRIPE_PRICE_PROFESSIONAL` / `STRIPE_PRICE_INSTALL_PROFESSIONAL` |
+| Essential            | `essential`    | $249.99 | $1,999.99 | `STRIPE_PRICE_ESSENTIAL` / `STRIPE_PRICE_INSTALL_ESSENTIAL`       |
+| Professional         | `professional` | $349.99 | $1,999.99 | `STRIPE_PRICE_PROFESSIONAL` / `STRIPE_PRICE_INSTALL_PROFESSIONAL` |
 
 The single source for these amounts is `PLAN_PRICES` in `src/lib/plans.ts`; names
 and the legacy mapping live in `src/lib/plan-names.ts`; features in

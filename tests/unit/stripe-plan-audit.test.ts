@@ -1,9 +1,8 @@
 /**
  * KAN-18: the read-only Stripe/plan audit. The "live as found" cases reproduce
- * the real defects found in the live account on 2026-11-18 (monthly Prices of
- * $249.99 / $349.99 instead of $249 / $349, a webhook endpoint without
- * checkout.session.completed, a misspelt secret name), so the tool is proven to
- * catch them.
+ * defects found during the 2026-11-18 audit (a webhook endpoint without
+ * checkout.session.completed and a misspelt secret name). The price cases now
+ * use the current $249.99 / $349.99 catalog and prove old amounts are caught.
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -66,8 +65,8 @@ const oneTime = (id: string, amount: number, live: boolean, extra: Partial<Price
 
 function healthyPrices(live: boolean) {
   return new Map<string, PriceView | null>([
-    [ids.essential, monthly(ids.essential, 24900, live)],
-    [ids.professional, monthly(ids.professional, 34900, live)],
+    [ids.essential, monthly(ids.essential, 24999, live)],
+    [ids.professional, monthly(ids.professional, 34999, live)],
     [ids.essentialSetup, oneTime(ids.essentialSetup, 199999, live)],
     [ids.professionalSetup, oneTime(ids.professionalSetup, 199999, live)],
     [ids.website, oneTime(ids.website, 69999, live)],
@@ -88,15 +87,15 @@ describe("billing audit: a correct setup", () => {
 });
 
 describe("billing audit: prices that disagree with the catalog", () => {
-  it("catches the live account as found: monthly Prices of $249.99 and $349.99", () => {
+  it("catches outdated monthly Prices of $249 and $349", () => {
     const prices = healthyPrices(true);
-    prices.set(ids.essential, monthly(ids.essential, 24999, true));
-    prices.set(ids.professional, monthly(ids.professional, 34999, true));
+    prices.set(ids.essential, monthly(ids.essential, 24900, true));
+    prices.set(ids.professional, monthly(ids.professional, 34900, true));
     const findings = auditPrices(env(true), true, prices);
     assert.deepEqual(codes(findings), ["price-mismatch", "price-mismatch"]);
     const message = errors(findings)[0]!.message;
-    assert.match(message, /\$249\.99/);
     assert.match(message, /\$249\.00/);
+    assert.match(message, /\$249\.99/);
     assert.match(message, /cannot be edited/i, "tells the owner a new Price is needed, not an edit");
     assert.match(message, /stripe-setup-plan-prices/);
     assert.match(message, /Existing subscriptions keep their old Price/i);
@@ -106,8 +105,8 @@ describe("billing audit: prices that disagree with the catalog", () => {
     const prices = healthyPrices(false);
     prices.set(ids.essentialSetup, oneTime(ids.essentialSetup, 79999, false));
     prices.set(ids.professionalSetup, oneTime(ids.professionalSetup, 199999, false, { active: false }));
-    prices.set(ids.essential, monthly(ids.essential, 24900, true)); // a live Price used in test mode
-    prices.set(ids.professional, monthly(ids.professional, 34900, false, { currency: "usd" }));
+    prices.set(ids.essential, monthly(ids.essential, 24999, true)); // a live Price used in test mode
+    prices.set(ids.professional, monthly(ids.professional, 34999, false, { currency: "usd" }));
     prices.set(ids.website, monthly(ids.website, 69999, false)); // recurring, but one-time expected
     const findings = errors(auditPrices(env(false), false, prices));
     assert.equal(findings.length, 5);
@@ -121,8 +120,8 @@ describe("billing audit: prices that disagree with the catalog", () => {
 
   it("catches a Price that is not monthly or has an interval count of more than one", () => {
     const prices = healthyPrices(false);
-    prices.set(ids.essential, monthly(ids.essential, 24900, false, { recurring: { interval: "year" } }));
-    prices.set(ids.professional, monthly(ids.professional, 34900, false, { recurring: { interval: "month", interval_count: 3 } }));
+    prices.set(ids.essential, monthly(ids.essential, 24999, false, { recurring: { interval: "year" } }));
+    prices.set(ids.professional, monthly(ids.professional, 34999, false, { recurring: { interval: "month", interval_count: 3 } }));
     assert.deepEqual(codes(auditPrices(env(false), false, prices)), ["price-mismatch", "price-mismatch"]);
   });
 

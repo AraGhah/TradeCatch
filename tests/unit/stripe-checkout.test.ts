@@ -425,9 +425,9 @@ describe("createInstallationCheckoutSession", () => {
       stripePrices.price_essential_recurring = monthly;
     }
     const exactSetup: StripePrice = { unit_amount: 199_999, recurring: null };
-    const exactMonthly: StripePrice = { unit_amount: 24_900, recurring: { interval: "month" } };
+    const exactMonthly: StripePrice = { unit_amount: 24_999, recurring: { interval: "month" } };
 
-    it("starts Essential checkout when Stripe holds exactly $1,999.99 setup and $249 a month", async () => {
+    it("starts Essential checkout when Stripe holds exactly $1,999.99 setup and $249.99 a month", async () => {
       essentialPricesAre(exactSetup, exactMonthly);
       const url = await createInstallationCheckoutSession(essential);
       assert.equal(url, "https://checkout.stripe.com/c/pay/cs_test_1");
@@ -435,8 +435,8 @@ describe("createInstallationCheckoutSession", () => {
       assert.equal(body.get("line_items[0][price]"), "price_install_essential");
     });
 
-    it("refuses the $249.99 monthly price the live Stripe account holds today, and takes no payment", async () => {
-      essentialPricesAre(exactSetup, { unit_amount: 24_999, recurring: { interval: "month" } });
+    it("refuses an outdated $249 monthly price and takes no payment", async () => {
+      essentialPricesAre(exactSetup, { unit_amount: 24_900, recurring: { interval: "month" } });
       await assert.rejects(
         () => createInstallationCheckoutSession(essential),
         (err: unknown) => err instanceof CheckoutError && err.code === "misconfigured",

@@ -28,8 +28,9 @@ function pricingTiers(messages: typeof en | typeof fr): Tier[] {
 
 describe("plan prices", () => {
   it("uses the agreed launch prices", () => {
-    assert.deepEqual(PLAN_PRICES.essential, { setup: 1999.99, monthly: 249 });
-    assert.deepEqual(PLAN_PRICES.professional, { setup: 1999.99, monthly: 349 });
+    // These are the amounts of the live Stripe prices; the admin console flags any drift from them.
+    assert.deepEqual(PLAN_PRICES.essential, { setup: 1999.99, monthly: 249.99 });
+    assert.deepEqual(PLAN_PRICES.professional, { setup: 1999.99, monthly: 349.99 });
     assert.equal(ADD_ONS.websiteService.priceCad, 699.99);
   });
 
@@ -53,8 +54,10 @@ describe("plan prices", () => {
         `${code} must quote ${quoted}`,
       );
       // Any other website-service amount would put a displayed price ahead of the charged one.
+      // $349.99 is the Professional plan's monthly price now, so only a string that talks about
+      // the website service, quotes $349.99 and never names the plan can be the retired website price.
       assert.deepEqual(
-        all.filter((s) => /349[.,]99/.test(s)),
+        all.filter((s) => /349[.,]99/.test(s) && /website|site web/i.test(s) && !/Professional/.test(s)),
         [],
         `${code} still quotes the retired website price`,
       );
@@ -77,6 +80,16 @@ describe("plan prices", () => {
     // Québec French groups with a non-breaking space and puts $ last.
     assert.equal(formatPlanMoney(1999.99, "fr"), "1 999,99 $");
     assert.equal(formatPlanMoney(999.99, "fr"), "999,99 $");
+  });
+
+  it("shows both launch plans' monthly prices with cents, never rounded to a whole dollar", () => {
+    assert.equal(formatPlanPrice(PLAN_PRICES.essential.monthly, "en"), "$249.99");
+    assert.equal(formatPlanPrice(PLAN_PRICES.professional.monthly, "en"), "$349.99");
+    assert.equal(formatPlanPrice(PLAN_PRICES.essential.monthly, "fr"), "249,99 $");
+    assert.equal(formatPlanPrice(PLAN_PRICES.professional.monthly, "fr"), "349,99 $");
+    // Stripe stores cents; the catalog must convert to exactly those integers.
+    assert.equal(Math.round(PLAN_PRICES.essential.monthly * 100), 24_999);
+    assert.equal(Math.round(PLAN_PRICES.professional.monthly * 100), 34_999);
   });
 
   it("writes whole amounts without cents and the rest with two decimals", () => {

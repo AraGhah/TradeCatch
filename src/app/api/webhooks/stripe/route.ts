@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BodyTooLargeError, readBodyText } from "@/lib/request-body";
+import {
+  billingEventFromWebhook,
+  recordBillingEvent,
+} from "@/product/admin-console/billing-db";
+import { recordFailure } from "@/product/reliability/hooks";
 import { verifyStripeSignature } from "@/product/security/stripe-webhook";
 import {
   BILLING_EVENTS,
@@ -17,6 +22,40 @@ import {
 } from "@/product/saas/stripe-checkout";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Webhook failures are shown to administrators (System Health). A bad signature
+ * is something anyone on the internet can cause, so it is recorded at most once
+ * a minute per server instance and at low severity: visible, but it can neither
+ * flood storage nor raise a false incident.
+ */
+const SIGNATURE_RECORD_INTERVAL_MS = 60_000;
+let lastSignatureRecordAt = 0;
+async function recordRejectedSignature() {
+  const now = Date.now();
+  if (now - lastSignatureRecordAt < SIGNATURE_RECORD_INTERVAL_MS) return;
+  lastSignatureRecordAt = now;
+  await recordFailure({
+    service: "stripe",
+    operation: "webhook.signature",
+    errorCode: "invalid_signature",
+    severity: "low",
+    retryable: false,
+    detail: "A webhook delivery failed signature verification.",
+  });
+}
+
+/** Never fails the webhook: the console record is best effort, Stripe state is the truth. */
+async function recordSyncFailure(type: string, eventId: string) {
+  await recordFailure({
+    service: "stripe",
+    operation: `webhook.${type}`,
+    errorCode: "sync_failed",
+    severity: "high",
+    retryable: true,
+    detail: `Event ${eventId} could not be synchronized; Stripe will retry.`,
+  });
+}
 
 export async function POST(request: NextRequest) {
   let payload: string;
@@ -39,6 +78,8 @@ export async function POST(request: NextRequest) {
   const testSigned =
     !!testSecret && verifyStripeSignature(payload, signature, testSecret);
   if (!liveSigned && !testSigned) {
+    // Only a delivery that carried a signature is worth recording; bare probes are noise.
+    if (signature) await recordRejectedSignature();
     return NextResponse.json(
       { error: "Invalid webhook signature." },
       { status: 401 },
@@ -80,6 +121,7 @@ export async function POST(request: NextRequest) {
         eventId: event.id,
         type: event.type,
       });
+      await recordSyncFailure(event.type, event.id);
       return NextResponse.json(
         { error: "Billing synchronization unavailable. Retry later." },
         { status: 503 },
@@ -126,6 +168,18 @@ export async function POST(request: NextRequest) {
   }
   if (!BILLING_EVENTS.has(event.type))
     return NextResponse.json({ ok: true, ignored: true });
+  // Keep a record of how each payment went (failed, action required, paid) so
+  // the console can show it. Recorded from the verified event before the sync,
+  // idempotent by event id, and never allowed to fail the webhook.
+  try {
+    const payment = billingEventFromWebhook(parsed);
+    if (payment) await recordBillingEvent(payment);
+  } catch {
+    console.error("[stripe] Could not record payment outcome", {
+      eventId: event.id,
+      type: event.type,
+    });
+  }
   try {
     const outcome = await synchronizeStripeBilling(event);
     return NextResponse.json({ ok: true, ...outcome, type: event.type });
@@ -135,6 +189,7 @@ export async function POST(request: NextRequest) {
       eventId: event.id,
       type: event.type,
     });
+    await recordSyncFailure(event.type, event.id);
     return NextResponse.json(
       { error: "Billing synchronization unavailable. Retry later." },
       { status: 503 },

@@ -21,8 +21,8 @@ const PATHS = {
 } as const;
 
 const PLAN = {
-  essential: { name: "Essential", en: "$249", fr: /249\s?\$/ },
-  professional: { name: "Professional", en: "$349", fr: /349\s?\$/ },
+  essential: { name: "Essential", en: "$249.99", fr: /249,99\s?\$/ },
+  professional: { name: "Professional", en: "$349.99", fr: /349,99\s?\$/ },
 } as const;
 
 /** The plan card on the pricing page: heading, then the first "$N" amount it shows. */
@@ -41,7 +41,8 @@ for (const locale of ["en", "fr"] as const) {
       test(`PLAN-0${plan === "essential" ? 1 : 2}/03/04: the dashboard names the plan and shows the same monthly price as the website`, async ({ page }) => {
         const expected = PLAN[plan];
         const pricingText = await websitePrice(page, locale, expected.name);
-        expect(pricingText).toMatch(locale === "en" ? new RegExp(`\\${expected.en}\\b`) : expected.fr);
+        if (locale === "en") expect(pricingText).toContain(expected.en);
+        else expect(pricingText).toMatch(expected.fr);
 
         await workspaceSession(page, locale, plan);
 
@@ -102,7 +103,7 @@ for (const locale of ["en", "fr"] as const) {
           await page.goto(PATHS[locale].settings);
           await expect(calendarLink).toHaveCount(0);
           // Essential is pointed at Professional, with its price.
-          await expect(page.locator("body")).toContainText(locale === "en" ? "$349" : /349\s?\$/);
+          await expect(page.locator("body")).toContainText(locale === "en" ? "$349.99" : /349,99\s?\$/);
         }
       });
     });
@@ -123,7 +124,7 @@ for (const locale of ["en", "fr"] as const) {
         expect(text, `${legacy} on ${path}`).not.toMatch(RETIRED);
       }
       // A retired plan keeps the price it was sold at: the card must not claim
-      // the catalog price of the plan it is labelled with ("Essential: $249").
+      // the catalog price of the plan it is labelled with ("Essential: $249.99").
       await page.goto(PATHS[locale].billing);
       const billing = await page.locator("body").innerText();
       expect(billing).not.toMatch(new RegExp(`${publicName}\\s*:\\s*[\\d$]`));

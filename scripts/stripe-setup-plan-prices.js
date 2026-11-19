@@ -3,8 +3,8 @@
  * Creates (or verifies) the Stripe Prices for the two launch plans and the
  * optional website service:
  *
- *   Essential      $249.00 CAD / month   + $1,999.99 CAD one-time setup
- *   Professional   $349.00 CAD / month   + $1,999.99 CAD one-time setup
+ *   Essential      $249.99 CAD / month   + $1,999.99 CAD one-time setup
+ *   Professional   $349.99 CAD / month   + $1,999.99 CAD one-time setup
  *   Website service $699.99 CAD one-time (optional add-on, only charged when the
  *                  customer ticks it at checkout)
  *
@@ -35,8 +35,8 @@
  * It does not write to .env itself.
  */
 const PLANS = {
-  ESSENTIAL: { product: "TradeCatch Essential", installCents: 199999, monthlyCents: 24900 },
-  PROFESSIONAL: { product: "TradeCatch Professional", installCents: 199999, monthlyCents: 34900 },
+  ESSENTIAL: { product: "TradeCatch Essential", installCents: 199999, monthlyCents: 24999 },
+  PROFESSIONAL: { product: "TradeCatch Professional", installCents: 199999, monthlyCents: 34999 },
 };
 const WEBSITE = { product: "TradeCatch Website Service", oneTimeCents: 69999 };
 
