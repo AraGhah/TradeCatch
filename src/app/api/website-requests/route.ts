@@ -8,9 +8,9 @@ import {
   getProductionConfigErrors,
   requiresProductionLeadProtection,
 } from "@/lib/config";
-import { sendWebsiteRequestEmail } from "@/lib/email";
 import { publicWebsiteRequestSchema } from "@/lib/validation/website-request";
 import { requireTenantContext } from "@/product/saas/tenant";
+import { notifyTeamOfWebsiteRequest } from "@/product/website-services/notify";
 import { getWebsiteRequestService } from "@/product/website-services/runtime";
 
 export const dynamic = "force-dynamic";
@@ -106,8 +106,9 @@ export async function POST(request: NextRequest) {
       { organizationId, source: "pricing", idempotencyKey, createdByUserId },
     );
     if (created) {
-      // The row is the record; the email only prompts the team to answer it.
-      await sendWebsiteRequestEmail(saved, idempotencyKey);
+      // The row is the record; the email only prompts the team to answer it,
+      // and what happened to it is recorded on the request.
+      await notifyTeamOfWebsiteRequest(saved, idempotencyKey);
     }
     console.info("[website-requests] request recorded", {
       request: saved.id,

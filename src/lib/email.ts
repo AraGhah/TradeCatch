@@ -1,6 +1,8 @@
 import { Resend } from "resend";
 import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
 import type { ReferralSubmissionDetails } from "@/lib/validation/referral-submission";
+import { formatPlanMoney } from "@/lib/plans";
+import { ADD_ONS } from "@/product/saas/plan-catalog";
 import type { WebsiteRequest } from "@/product/website-services/model";
 
 let client: Resend | null = null;
@@ -210,7 +212,7 @@ export async function sendWebsiteRequestEmail(
     request.requestType === "new" ? "New website" : "Improve existing website";
   const html = brandedShell(
     `Website request: ${request.businessName}`,
-    `<p style="margin:0 0 12px;">A website service request came in (${escapeHtml(kind)}). It is a separate one-time project starting at $349 CAD: confirm the scope and final price in writing before any payment.</p>
+    `<p style="margin:0 0 12px;">A website service request came in (${escapeHtml(kind)}). It is a separate one-time project at a fixed ${escapeHtml(formatPlanMoney(ADD_ONS.websiteService.priceCad, "en"))} CAD: confirm the scope in writing before any payment.</p>
     <table style="border-collapse:collapse;width:100%;font-size:14px;">
       ${row("Business", request.businessName)}
       ${row("Contact", request.contactName)}

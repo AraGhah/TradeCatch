@@ -38,9 +38,11 @@ export type WebsiteRequestSource = (typeof WEBSITE_REQUEST_SOURCES)[number];
 export const WEBSITE_REQUEST_STATUSES = [
   "submitted",
   "in_review",
+  "approved",
   "quoted",
   "in_progress",
   "delivered",
+  "rejected",
   "cancelled",
 ] as const;
 export type WebsiteRequestStatus = (typeof WEBSITE_REQUEST_STATUSES)[number];
@@ -48,7 +50,72 @@ export type WebsiteRequestStatus = (typeof WEBSITE_REQUEST_STATUSES)[number];
 /** Statuses a request can no longer leave. */
 export const TERMINAL_WEBSITE_STATUSES: readonly WebsiteRequestStatus[] = [
   "delivered",
+  "rejected",
   "cancelled",
+];
+
+/**
+ * The names the administration console shows. The five the team works with
+ * (Pending, Under Review, Approved, Rejected, Completed) map one-to-one onto
+ * submitted, in_review, approved, rejected and delivered; quoted and
+ * in_progress are the existing steps between approval and delivery, and
+ * cancelled is the customer (or team) withdrawing an open request.
+ */
+export const WEBSITE_STATUS_LABELS: Record<WebsiteRequestStatus, string> = {
+  submitted: "Pending",
+  in_review: "Under review",
+  approved: "Approved",
+  quoted: "Quote sent",
+  in_progress: "In progress",
+  delivered: "Completed",
+  rejected: "Rejected",
+  cancelled: "Cancelled",
+};
+
+/**
+ * Where payment stands. Nothing here charges anyone: it records what the team
+ * has asked the customer for and whether they have confirmed receiving it.
+ * Money is only ever collected through a Stripe flow the customer completes.
+ */
+export const WEBSITE_PAYMENT_STATUSES = [
+  "not_requested",
+  "requested",
+  "paid",
+  "waived",
+] as const;
+export type WebsitePaymentStatus = (typeof WEBSITE_PAYMENT_STATUSES)[number];
+
+/** Whether the team was told about the request. */
+export const WEBSITE_NOTIFICATION_STATUSES = [
+  "sent",
+  "not_configured",
+  "failed",
+] as const;
+export type WebsiteNotificationStatus =
+  (typeof WEBSITE_NOTIFICATION_STATUSES)[number];
+
+const PAYMENT_TRANSITIONS: Record<
+  WebsitePaymentStatus,
+  readonly WebsitePaymentStatus[]
+> = {
+  not_requested: ["requested", "waived"],
+  requested: ["not_requested", "paid", "waived"],
+  paid: [],
+  waived: [],
+};
+
+export function canTransitionWebsitePayment(
+  from: WebsitePaymentStatus,
+  to: WebsitePaymentStatus,
+): boolean {
+  return from === to || PAYMENT_TRANSITIONS[from].includes(to);
+}
+
+/** A payment can only be asked for once the team has approved or quoted the work. */
+export const PAYMENT_REQUEST_STATUSES: readonly WebsiteRequestStatus[] = [
+  "approved",
+  "quoted",
+  "in_progress",
 ];
 
 export type WebsiteRequest = {
@@ -70,6 +137,12 @@ export type WebsiteRequest = {
   quotedPriceCad: number | null;
   /** The scope the team wrote back, shown to the customer. */
   scopeSummary: string | null;
+  /** Internal to the team, never shown to the customer. */
+  paymentStatus: WebsitePaymentStatus;
+  /** Why the team rejected it, or any other internal note. Never shown to the customer. */
+  reviewNote: string | null;
+  /** Whether the team notification went out when the request arrived. */
+  notificationStatus: WebsiteNotificationStatus | null;
   createdAt: string;
   updatedAt: string;
   statusChangedAt: string;
@@ -119,12 +192,36 @@ export function toWebsiteRequestView(request: WebsiteRequest): WebsiteRequestVie
  * step back from `quoted` to `in_review` when the customer asks for changes.
  */
 const TRANSITIONS: Record<WebsiteRequestStatus, readonly WebsiteRequestStatus[]> = {
-  submitted: ["in_review", "quoted", "cancelled"],
-  in_review: ["quoted", "cancelled"],
-  quoted: ["in_review", "in_progress", "cancelled"],
+  submitted: ["in_review", "quoted", "rejected", "cancelled"],
+  // Approval always follows a review: a request cannot jump from Pending to Approved.
+  in_review: ["approved", "quoted", "rejected", "cancelled"],
+  approved: ["in_review", "quoted", "in_progress", "rejected", "cancelled"],
+  quoted: ["in_review", "approved", "in_progress", "rejected", "cancelled"],
   in_progress: ["delivered", "cancelled"],
   delivered: [],
+  rejected: [],
   cancelled: [],
+};
+
+/** One line of a request's history. Append-only, newest last. */
+export type WebsiteRequestEvent = {
+  id: string;
+  requestId: string;
+  kind:
+    | "submitted"
+    | "notified"
+    | "status_changed"
+    | "quote_updated"
+    | "payment_updated"
+    | "note";
+  /** An administrator's email, "ops:<name>", or "customer". */
+  actor: string | null;
+  fromStatus: WebsiteRequestStatus | null;
+  toStatus: WebsiteRequestStatus | null;
+  fromPayment: WebsitePaymentStatus | null;
+  toPayment: WebsitePaymentStatus | null;
+  note: string | null;
+  createdAt: string;
 };
 
 export function canTransitionWebsiteStatus(

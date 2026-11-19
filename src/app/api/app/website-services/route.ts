@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { sendWebsiteRequestEmail } from "@/lib/email";
 import { enforcePolicy } from "@/lib/rate-limit-response";
 import { readJsonBody } from "@/lib/request-body";
 import { websiteRequestSchema } from "@/lib/validation/website-request";
@@ -10,6 +9,7 @@ import {
   unauthorizedTenantResponse,
 } from "@/product/saas/tenant";
 import { toWebsiteRequestView } from "@/product/website-services/model";
+import { notifyTeamOfWebsiteRequest } from "@/product/website-services/notify";
 import { getWebsiteRequestService } from "@/product/website-services/runtime";
 
 export const dynamic = "force-dynamic";
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
         createdByUserId: user.id,
       },
     );
-    if (created) await sendWebsiteRequestEmail(saved, idempotencyKey);
+    if (created) await notifyTeamOfWebsiteRequest(saved, idempotencyKey);
     return reply(
       { ok: true, request: toWebsiteRequestView(saved) },
       created ? 201 : 200,

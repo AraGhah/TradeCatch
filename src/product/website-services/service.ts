@@ -6,18 +6,31 @@ import {
 } from "@/lib/validation/website-request";
 import { ADD_ONS } from "@/product/saas/plan-catalog";
 import {
+  PAYMENT_REQUEST_STATUSES,
   TERMINAL_WEBSITE_STATUSES,
+  canTransitionWebsitePayment,
   canTransitionWebsiteStatus,
   isValidQuotedPrice,
+  type WebsiteNotificationStatus,
+  type WebsitePaymentStatus,
   type WebsiteRequest,
+  type WebsiteRequestEvent,
   type WebsiteRequestSource,
   type WebsiteRequestStatus,
 } from "./model";
-import type { WebsiteRequestPatch, WebsiteRequestStore } from "./store";
+import type {
+  WebsiteRequestHistoryEntry,
+  WebsiteRequestListFilter,
+  WebsiteRequestPatch,
+  WebsiteRequestStore,
+} from "./store";
 
 export type WebsiteRequestUpdateError =
   | "not_found"
   | "invalid_transition"
+  | "invalid_payment_transition"
+  | "payment_not_allowed"
+  | "review_note_required"
   | "locked"
   | "price_mismatch"
   | "price_too_low"
@@ -40,18 +53,29 @@ export type WebsiteRequestService = {
     },
   ): Promise<{ created: boolean; request: WebsiteRequest }>;
   listForOrganization(organizationId: string): Promise<WebsiteRequest[]>;
-  listAll(filter?: {
-    status?: WebsiteRequestStatus;
-    limit?: number;
-  }): Promise<WebsiteRequest[]>;
+  listAll(filter?: WebsiteRequestListFilter): Promise<WebsiteRequest[]>;
+  countAll(filter?: WebsiteRequestListFilter): Promise<number>;
   /** A customer sees only their own business's requests. */
   getForOrganization(
     id: string,
     organizationId: string,
   ): Promise<WebsiteRequest | null>;
+  /** For administrators: any request, by id. */
+  getAny(id: string): Promise<WebsiteRequest | null>;
+  /** The request's history, oldest first. For administrators. */
+  history(id: string): Promise<WebsiteRequestEvent[]>;
+  recordNotification(
+    id: string,
+    status: WebsiteNotificationStatus,
+  ): Promise<void>;
+  /**
+   * `actor` is recorded in the request's history: an administrator's email, or
+   * "ops:<name>". It is never shown to the customer.
+   */
   adminUpdate(
     id: string,
     update: WebsiteRequestUpdate,
+    actor?: string,
   ): Promise<
     | { ok: true; request: WebsiteRequest }
     | { ok: false; error: WebsiteRequestUpdateError }
@@ -88,6 +112,9 @@ export function createWebsiteRequestService(
         language: input.language,
         quotedPriceCad: null,
         scopeSummary: null,
+        paymentStatus: "not_requested",
+        reviewNote: null,
+        notificationStatus: null,
         createdAt: at,
         updatedAt: at,
         statusChangedAt: at,
@@ -103,6 +130,8 @@ export function createWebsiteRequestService(
 
     listAll: (filter) => store.listAll(filter),
 
+    countAll: (filter) => store.countAll(filter),
+
     async getForOrganization(id, organizationId) {
       const found = await store.get(id);
       // The organization check is the tenant boundary: another business's id
@@ -110,7 +139,14 @@ export function createWebsiteRequestService(
       return found && found.organizationId === organizationId ? found : null;
     },
 
-    async adminUpdate(id, update) {
+    getAny: (id) => store.get(id),
+
+    history: (id) => store.listEvents(id),
+
+    recordNotification: (id, status) =>
+      store.recordNotification(id, status, now().toISOString()),
+
+    async adminUpdate(id, update, actor = "admin") {
       const current = await store.get(id);
       if (!current) return { ok: false, error: "not_found" };
 
@@ -161,16 +197,75 @@ export function createWebsiteRequestService(
         return { ok: false, error: "quote_required" };
       }
 
+      const note =
+        update.reviewNote !== undefined
+          ? update.reviewNote?.trim() || null
+          : current.reviewNote;
+      // A rejection always says why, so the next person reading the history
+      // (and any later conversation with the customer) has the reason.
+      if (nextStatus === "rejected" && !note) {
+        return { ok: false, error: "review_note_required" };
+      }
+
+      // Payment is recorded here, never collected here: nothing on this path
+      // can create a charge. Asking for payment needs approved work and a price.
+      let payment: WebsitePaymentStatus =
+        update.paymentStatus ?? current.paymentStatus;
+      if (
+        update.paymentStatus !== undefined &&
+        !canTransitionWebsitePayment(current.paymentStatus, update.paymentStatus)
+      ) {
+        return { ok: false, error: "invalid_payment_transition" };
+      }
+      if (payment === "requested" && current.paymentStatus !== "requested") {
+        if (!PAYMENT_REQUEST_STATUSES.includes(nextStatus)) {
+          return { ok: false, error: "payment_not_allowed" };
+        }
+        if (price === null) return { ok: false, error: "quote_required" };
+      }
+      // A request that will never be built has nothing left to pay for.
+      if (
+        (nextStatus === "rejected" || nextStatus === "cancelled") &&
+        payment === "requested"
+      ) {
+        payment = "not_requested";
+      }
+
       const patch: WebsiteRequestPatch = {};
       if (nextStatus !== current.status) patch.status = nextStatus;
       if (update.quotedPriceCad !== undefined) patch.quotedPriceCad = price;
       if (update.scopeSummary !== undefined) patch.scopeSummary = scope;
+      if (payment !== current.paymentStatus) patch.paymentStatus = payment;
+      if (update.reviewNote !== undefined) patch.reviewNote = note;
+
+      const history: WebsiteRequestHistoryEntry[] = [];
+      if (patch.status) {
+        history.push({
+          kind: "status_changed",
+          actor,
+          note: nextStatus === "rejected" ? note : null,
+        });
+      }
+      if (quoteChanged) {
+        history.push({
+          kind: "quote_updated",
+          actor,
+          note: price === null ? "price cleared" : `CAD ${price.toFixed(2)}`,
+        });
+      }
+      if (patch.paymentStatus) {
+        history.push({ kind: "payment_updated", actor, note: payment });
+      }
+      if (patch.reviewNote !== undefined && !patch.status) {
+        history.push({ kind: "note", actor, note: note?.slice(0, 200) ?? null });
+      }
 
       const updated = await store.update(
         id,
         current.status,
         patch,
         now().toISOString(),
+        history,
       );
       return updated
         ? { ok: true, request: updated }
@@ -178,3 +273,5 @@ export function createWebsiteRequestService(
     },
   };
 }
+
+export type { WebsiteRequestStatus };

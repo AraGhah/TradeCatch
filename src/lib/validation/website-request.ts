@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   WEBSITE_FOCUS_AREAS,
+  WEBSITE_PAYMENT_STATUSES,
   WEBSITE_REQUEST_STATUSES,
   WEBSITE_REQUEST_TYPES,
 } from "@/product/website-services/model";
@@ -113,13 +114,18 @@ export const websiteRequestUpdateSchema = z
     status: z.enum(WEBSITE_REQUEST_STATUSES).optional(),
     quotedPriceCad: z.number().finite().nullable().optional(),
     scopeSummary: z.string().trim().max(2000).nullable().optional(),
+    paymentStatus: z.enum(WEBSITE_PAYMENT_STATUSES).optional(),
+    /** Internal: the reason for a rejection, or any note for the team. */
+    reviewNote: z.string().trim().max(1000).nullable().optional(),
   })
   .strict()
   .refine(
     (value) =>
       value.status !== undefined ||
       value.quotedPriceCad !== undefined ||
-      value.scopeSummary !== undefined,
+      value.scopeSummary !== undefined ||
+      value.paymentStatus !== undefined ||
+      value.reviewNote !== undefined,
     { message: "empty_update" },
   );
 
