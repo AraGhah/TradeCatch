@@ -458,6 +458,13 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       });
     },
 
+    /** Every recorded failed operation, newest first. Read-only. */
+    async listFailedOperations() {
+      return (await deps.store.listOperations()).sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt),
+      );
+    },
+
     async jobs() {
       const operations = await deps.store.listOperations();
       return {
