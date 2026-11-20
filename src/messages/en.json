@@ -36,7 +36,11 @@
     "demo": "Demo",
     "login": "Login",
     "more": "More",
-    "emailUs": "Email us"
+    "emailUs": "Email us",
+    "account": "Account",
+    "accountDashboard": "My dashboard",
+    "accountAdmin": "Admin dashboard",
+    "accountBilling": "Billing"
   },
   "cta": {
     "primary": "Book a Free Demo",

@@ -2,7 +2,7 @@ import { canManageBilling } from "../billing-access";
 import { hashToken, newId, randomToken } from "../ids";
 import { isPlatformAdminUser } from "../platform-admin";
 import { getSaasStore } from "../runtime";
-import type { Organization, Session, User } from "../types";
+import type { Organization, RefreshToken, Session, User } from "../types";
 import { getAuthSecret } from "./secret";
 import {
   ACCESS_TOKEN_TTL_SECONDS,
@@ -112,6 +112,46 @@ export type RefreshResult =
     }
   | { ok: false; error: "invalid" | "reused" | "unavailable" };
 
+/** The session a refresh token points at, or null when it has ended (revoked, expired, someone else's). */
+async function usableSession(
+  found: RefreshToken,
+  nowMs: number,
+): Promise<Session | null> {
+  const session = await getSaasStore().getSession(found.sessionId);
+  if (
+    !session ||
+    session.revokedAt ||
+    session.userId !== found.userId ||
+    Date.parse(session.expiresAt) <= nowMs ||
+    Date.parse(found.expiresAt) <= nowMs
+  ) {
+    return null;
+  }
+  return session;
+}
+
+/**
+ * The person and business behind a session, or null when they may no longer
+ * sign in (membership removed, or a suspended business whose person cannot
+ * manage billing). `billingOnly` is a suspended business that may still pay.
+ */
+async function accountOf(session: Session): Promise<{
+  user: User;
+  organization: Organization;
+  billingOnly: boolean;
+} | null> {
+  const store = getSaasStore();
+  const [user, organization, membership] = await Promise.all([
+    store.getUser(session.userId),
+    store.getOrganization(session.organizationId),
+    store.getMembership(session.organizationId, session.userId),
+  ]);
+  if (!user || !organization || !membership) return null;
+  const billingOnly = organization.status !== "active";
+  if (billingOnly && !canManageBilling(membership.role)) return null;
+  return { user, organization, billingOnly };
+}
+
 /**
  * Exchanges a refresh token for a new access token and a new refresh token
  * (rotation). The session row is re-checked every time, so a revoked session,
@@ -135,16 +175,8 @@ export async function refreshSession(input: {
   const found = await store.findRefreshToken(tokenHash);
   if (!found) return { ok: false, error: "invalid" };
 
-  const session = await store.getSession(found.sessionId);
-  if (
-    !session ||
-    session.revokedAt ||
-    session.userId !== found.userId ||
-    Date.parse(session.expiresAt) <= nowMs ||
-    Date.parse(found.expiresAt) <= nowMs
-  ) {
-    return { ok: false, error: "invalid" };
-  }
+  const session = await usableSession(found, nowMs);
+  if (!session) return { ok: false, error: "invalid" };
 
   const rotated = await store.rotateRefreshToken(tokenHash, nowIso);
   if (!rotated) {
@@ -164,18 +196,9 @@ export async function refreshSession(input: {
     }
   }
 
-  const [user, organization, membership] = await Promise.all([
-    store.getUser(session.userId),
-    store.getOrganization(session.organizationId),
-    store.getMembership(session.organizationId, session.userId),
-  ]);
-  if (!user || !organization || !membership) {
-    return { ok: false, error: "invalid" };
-  }
-  const billingOnly = organization.status !== "active";
-  if (billingOnly && !canManageBilling(membership.role)) {
-    return { ok: false, error: "invalid" };
-  }
+  const account = await accountOf(session);
+  if (!account) return { ok: false, error: "invalid" };
+  const { user, organization, billingOnly } = account;
 
   const tokens = await issueSessionTokens({
     session,
@@ -191,6 +214,46 @@ export async function refreshSession(input: {
     organization,
     billingOnly,
     isPlatformAdmin: isPlatformAdminUser(user),
+  };
+}
+
+export type RefreshPeek = {
+  session: Session;
+  user: User;
+  organization: Organization;
+  billingOnly: boolean;
+  isPlatformAdmin: boolean;
+};
+
+/**
+ * Who a refresh token belongs to, WITHOUT using it. Read-only on purpose:
+ * nothing is rotated, revoked or audited, so any number of tabs can ask at any
+ * time without racing the session keeper's real renewal. Answers null for a
+ * token that refreshSession would refuse (unknown, ended session, expired, or
+ * already rotated beyond the grace period). It may throw when the store is
+ * unavailable; a caller must not read that as "signed out".
+ */
+export async function peekRefreshToken(
+  rawToken: string,
+  nowMs = Date.now(),
+): Promise<RefreshPeek | null> {
+  if (!TOKEN_SHAPE.test(rawToken)) return null;
+  const found = await getSaasStore().findRefreshToken(hashToken(rawToken));
+  if (!found) return null;
+  if (
+    found.rotatedAt &&
+    !(nowMs - Date.parse(found.rotatedAt) <= REFRESH_REUSE_GRACE_MS)
+  ) {
+    return null;
+  }
+  const session = await usableSession(found, nowMs);
+  if (!session) return null;
+  const account = await accountOf(session);
+  if (!account) return null;
+  return {
+    session,
+    ...account,
+    isPlatformAdmin: isPlatformAdminUser(account.user),
   };
 }
 
