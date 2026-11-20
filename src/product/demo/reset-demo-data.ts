@@ -62,6 +62,8 @@ export const DEMO_RESET_TABLES = [
   "tc_sms_jobs",
   "tc_sms_templates",
   "tc_sms_automations",
+  "tc_gcal_event_links",
+  "tc_gcal_events",
   "tc_calendar_sync_state",
   "tc_calendar_busy",
   "tc_calendar_connections",

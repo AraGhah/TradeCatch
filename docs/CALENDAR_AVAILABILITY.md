@@ -4,9 +4,12 @@
 
 - In-app scheduling and simulations exist independently of external calendars.
 - Google has OAuth, encrypted token storage/refresh, writable-calendar selection,
-  free/busy reads and event create/update/delete. Tests verify provider contracts
-  with mocks; this is **not evidence of successful live Google delivery**.
-- Google is a separately approved Growth technical pilot, not generally released
+  free/busy reads and event create/update/delete, and since KAN-22 **two-way
+  synchronization** (push notifications plus a polling safety net, retries with
+  backoff, a visible status panel). See `docs/KAN-22-GOOGLE-CALENDAR-SYNC.md`.
+  Tests run against a fake Google; this is **not evidence of successful live
+  Google delivery**.
+- Google is a separately approved technical pilot (Professional), not generally released
   or automatically included with a subscription. Outlook has no adapter and is
   planned, not available. The external marketing booking link is a separate CTA.
 
@@ -14,7 +17,9 @@
 
 `GOOGLE_CALENDAR_PILOT_ORG_IDS` is an operator-controlled comma-separated list of
 exact organization IDs. Empty means no live access. An enrolled business must
-also be active, account type `pilot`, Growth, and have appointment booking enabled.
+also be active, not a demo account, on a plan that includes appointment booking
+(Professional; earlier Growth customers keep it), and have appointment booking
+enabled.
 Customers cannot enroll themselves through editable business features.
 
 Connect, OAuth callback, calendar listing/selection and runtime Google access
@@ -25,7 +30,11 @@ Existing records and encrypted tokens are not deleted by this release gate.
 
 ## Deployment and rollback
 
-No schema migration or production-data change is required. Before rollout,
+KAN-22 adds the additive, idempotent migration `062_scheduling_google_sync`
+(columns on the calendar connection/sync-state tables and two new tables); apply
+the scheduling schema and take a backup first. It rewrites no appointment, and it
+blanks the old clear-text notification channel token. `GOOGLE_CALENDAR_WEBHOOK_TOKEN`
+is no longer used (each business has its own channel secret). Before rollout,
 inventory any existing live Google businesses and agree their pilot enrollment;
 unenrolled connections will no longer execute live Google operations. Set the
 allowlist in the intended Worker environment, not in client/public variables.
@@ -39,4 +48,6 @@ Google account was supplied for this task, so that acceptance remains pending.
 
 Rollback: redeploy the prior application revision and restore the prior
 environment configuration. This reverts enforcement; review the wider access
-implications first. No database rollback or record deletion is necessary.
+implications first. The KAN-22 migration is additive, so the previous revision
+still runs on the migrated database (it ignores the new columns and tables); no
+database rollback or record deletion is necessary.

@@ -1,11 +1,15 @@
 import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { afterEach, beforeEach, describe, it } from "node:test";
 import { NextRequest } from "next/server";
 import { POST as calendarHook } from "../../src/app/api/webhooks/google-calendar/route";
 import { safeEqual } from "../../src/lib/safe-compare";
 import { parseGmailPush } from "../../src/product/gmail/push";
 import { verifyStripeSignature } from "../../src/product/security/stripe-webhook";
+import {
+  getSchedulingStore,
+  resetSchedulingRuntimeForTests,
+} from "../../src/product/scheduling/runtime";
 
 const NOW = Date.parse("2026-10-16T18:00:00.000Z");
 const SECRET = "whsec_test";
@@ -91,38 +95,68 @@ describe("safeEqual", () => {
 });
 
 describe("Google Calendar notifications", () => {
-  const previous = process.env.GOOGLE_CALENDAR_WEBHOOK_TOKEN;
-  beforeEach(() => {
-    process.env.GOOGLE_CALENDAR_WEBHOOK_TOKEN = "calendar-secret";
+  // The business is identified by a channel id and a secret token TradeCatch
+  // created for it (stored only as a hash). There is no shared secret.
+  const CHANNEL = "channel-id-for-org-1-abcdef";
+  const TOKEN = "secret-token-for-that-channel-0123456789";
+  const hash = (value: string) => createHash("sha256").update(value).digest("hex");
+
+  beforeEach(async () => {
+    resetSchedulingRuntimeForTests();
+    await getSchedulingStore().saveSyncState({
+      organizationId: "org_hook",
+      calendarId: "primary",
+      channelId: CHANNEL,
+      channelTokenHash: hash(TOKEN),
+      consecutiveFailures: 0,
+    });
   });
-  afterEach(() => {
-    if (previous === undefined) delete process.env.GOOGLE_CALENDAR_WEBHOOK_TOKEN;
-    else process.env.GOOGLE_CALENDAR_WEBHOOK_TOKEN = previous;
-  });
+  afterEach(() => resetSchedulingRuntimeForTests());
 
   function call(headers: Record<string, string>) {
     return calendarHook(new NextRequest("http://localhost/api/webhooks/google-calendar", { method: "POST", headers }));
   }
 
-  it("refuses a missing or wrong token before looking at anything else", async () => {
-    assert.equal((await call({ "x-goog-channel-id": "org_1" })).status, 401);
-    assert.equal((await call({ "x-goog-channel-token": "nope", "x-goog-channel-id": "org_1" })).status, 401);
-    assert.equal((await call({ "x-goog-channel-token": "calendar-secre", "x-goog-channel-id": "org_1" })).status, 401);
+  it("refuses a missing, malformed or wrong token before doing anything", async () => {
+    assert.equal((await call({ "x-goog-channel-id": CHANNEL })).status, 401);
+    assert.equal((await call({ "x-goog-channel-id": CHANNEL, "x-goog-channel-token": "short" })).status, 401);
+    assert.equal(
+      (await call({ "x-goog-channel-id": CHANNEL, "x-goog-channel-token": TOKEN.slice(0, -1) + "x" })).status,
+      401,
+    );
   });
 
-  it("refuses everything when no token is configured, even an empty one", async () => {
-    delete process.env.GOOGLE_CALENDAR_WEBHOOK_TOKEN;
-    assert.equal((await call({ "x-goog-channel-token": "", "x-goog-channel-id": "org_1" })).status, 401);
-    process.env.GOOGLE_CALENDAR_WEBHOOK_TOKEN = "   ";
-    assert.equal((await call({ "x-goog-channel-token": "", "x-goog-channel-id": "org_1" })).status, 401);
+  it("answers the same 401 for a channel it does not know (no way to probe for tenants)", async () => {
+    const res = await call({ "x-goog-channel-id": "unknown-channel-id-123456", "x-goog-channel-token": TOKEN });
+    assert.equal(res.status, 401);
   });
 
-  it("refuses a channel id that is not an organization id", async () => {
-    for (const id of ["", "a b", "org_1; drop table", "x".repeat(81), "../etc"]) {
-      const res = await call({ "x-goog-channel-token": "calendar-secret", "x-goog-channel-id": id });
-      assert.equal(res.status, 400, JSON.stringify(id));
+  it("refuses a channel id that is not one TradeCatch generated", async () => {
+    for (const id of ["", "a b", "org_1; drop table", "x".repeat(101), "../etc", "short"]) {
+      const res = await call({ "x-goog-channel-token": TOKEN, "x-goog-channel-id": id });
+      assert.equal(res.status, 401, JSON.stringify(id));
     }
-    assert.equal((await call({ "x-goog-channel-token": "calendar-secret" })).status, 400);
+  });
+
+  it("accepts the right channel and token, and ignores a repeated message number", async () => {
+    const headers = { "x-goog-channel-id": CHANNEL, "x-goog-channel-token": TOKEN, "x-goog-resource-state": "exists" };
+    const first = await call({ ...headers, "x-goog-message-number": "5" });
+    assert.equal(first.status, 200);
+    const repeated = await call({ ...headers, "x-goog-message-number": "5" });
+    assert.equal(repeated.status, 200);
+    assert.equal(((await repeated.json()) as { status: string }).status, "duplicate");
+    const older = await call({ ...headers, "x-goog-message-number": "4" });
+    assert.equal(((await older.json()) as { status: string }).status, "duplicate");
+  });
+
+  it("acknowledges Google's first 'sync' handshake without reading anything", async () => {
+    const res = await call({
+      "x-goog-channel-id": CHANNEL,
+      "x-goog-channel-token": TOKEN,
+      "x-goog-resource-state": "sync",
+    });
+    assert.equal(res.status, 200);
+    assert.equal(((await res.json()) as { status: string }).status, "ignored");
   });
 });
 

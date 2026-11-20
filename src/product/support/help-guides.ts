@@ -152,15 +152,15 @@ export const HELP_GUIDES: Record<string, HelpGuide> = {
         "Open Settings → Calendar and check the status. Google Calendar comes with the Professional plan and is switched on by our team after it has been tested with your calendar; Outlook is not available. If you see that it is not switched on yet, email contact@tradecatch.ca rather than trying to connect.",
         "Select Connect Google Calendar. If connection is not configured or not included in your access, ask support; do not enter Google credentials into a support ticket.",
         "When redirected to Google, select the authorized business account and review the requested permissions. Return to TradeCatch after granting access.",
-        "Choose the business calendar using its calendar ID and summary, then save the selection. Review Hours and availability separately.",
-        "Check that the status is Connected and run an authorized appointment test. Verify the resulting event in the selected business calendar.",
+        "Choose the business calendar from the list of calendars you can add events to, then select Use this calendar. Review Hours and availability separately.",
+        "Check that the status is Connected and that Last successful sync shows a time. Run an authorized appointment test and verify the resulting event in the selected business calendar. Sync now sends anything that is waiting; Disconnect stops synchronization and keeps every appointment.",
       ],
       fr: [
         "Ouvrez Paramètres → Calendrier et vérifiez l’état. Google Agenda est inclus avec le forfait Professional et activé par notre équipe après avoir été testé avec votre calendrier; Outlook n’est pas offert. S’il n’est pas encore activé, écrivez à contact@tradecatch.ca avant de tenter une connexion.",
         "Sélectionnez Connecter Google Calendar (Google Agenda). Si la connexion n’est pas configurée ou permise, contactez le soutien; ne mettez pas vos identifiants Google dans un billet.",
         "Après redirection vers Google, choisissez le compte professionnel autorisé et vérifiez les autorisations demandées. Revenez à TradeCatch après avoir accordé l’accès.",
-        "Choisissez le calendrier professionnel avec son identifiant et son nom, puis enregistrez. Vérifiez séparément Heures et disponibilités.",
-        "Vérifiez l’état Connecté et faites un essai de rendez-vous autorisé. Contrôlez l’événement dans le calendrier professionnel choisi.",
+        "Choisissez le calendrier professionnel dans la liste des calendriers auxquels vous pouvez ajouter des événements, puis sélectionnez Utiliser ce calendrier. Vérifiez séparément Heures et disponibilités.",
+        "Vérifiez l’état Connecté et que Dernière synchronisation réussie affiche une heure. Faites un essai de rendez-vous autorisé et contrôlez l’événement dans le calendrier professionnel choisi. Synchroniser maintenant envoie ce qui attend; Déconnecter arrête la synchronisation et conserve tous les rendez-vous.",
       ],
     },
     expected: {
@@ -170,11 +170,13 @@ export const HELP_GUIDES: Record<string, HelpGuide> = {
     troubleshooting: {
       en: [
         "Disconnected or expired: reconnect with an account allowed to edit the business calendar, then recheck the selected calendar.",
-        "Wrong or missing events: verify the calendar ID, business hours and timezone. Escalate with the appointment reference, not an OAuth token.",
+        "Wrong or missing events: verify the selected calendar, business hours and timezone. TradeCatch never moves or cancels an appointment because of a change in Google; appointments you changed there are listed under Changed in Google on the Calendar page. Escalate with the appointment reference, not an OAuth token.",
+        "Changes waiting or failed: select Sync now. If Google reports that access was removed, reconnect; your appointments are kept either way.",
       ],
       fr: [
         "Déconnecté ou expiré : reconnectez un compte autorisé à modifier le calendrier professionnel, puis vérifiez la sélection.",
-        "Événements absents ou incorrects : vérifiez l’identifiant, les heures et le fuseau. Transmettez la référence du rendez-vous, jamais un jeton OAuth.",
+        "Événements absents ou incorrects : vérifiez le calendrier choisi, les heures et le fuseau. TradeCatch ne déplace ni n’annule jamais un rendez-vous à cause d’un changement dans Google; les rendez-vous modifiés là-bas sont listés sous Modifié dans Google, sur la page Calendrier. Transmettez la référence du rendez-vous, jamais un jeton OAuth.",
+        "Changements en attente ou en échec : sélectionnez Synchroniser maintenant. Si Google indique que l’accès a été retiré, reconnectez; vos rendez-vous sont conservés dans les deux cas.",
       ],
     },
     screenshot: {

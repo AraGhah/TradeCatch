@@ -13,11 +13,33 @@ import type {
   CalcomLedgerState,
 } from "./calcom/types";
 import { overlaps } from "./slots";
+import type {
+  CancelPolicy,
+  EventDetail,
+  EventLink,
+  ExternalEvent,
+  SyncState,
+} from "./gcal/types";
 
 export type StoredConnection = CalendarConnectionPublic & {
   organizationId: string;
   tokenCiphertext?: string;
   scope?: string;
+  /** How much of the customer reaches the owner's Google event. Default: minimal. */
+  eventDetail?: EventDetail;
+  /** What happens to the Google event when its appointment is canceled. Default: remove. */
+  cancelPolicy?: CancelPolicy;
+  connectedAt?: string;
+};
+
+/** Which event links a caller wants claimed for sending. */
+export type ClaimQuery = {
+  organizationId?: string;
+  appointmentId?: string;
+  now: Date;
+  limit: number;
+  /** How long a claim holds: a worker that dies lets the link come due again. */
+  leaseMs: number;
 };
 
 export type SchedulingStore = {
@@ -70,6 +92,60 @@ export type SchedulingStore = {
   saveConnection(row: StoredConnection): Promise<void>;
   replaceBusy(organizationId: string, blocks: BusyBlock[]): Promise<void>;
   listBusy(organizationId: string): Promise<BusyBlock[]>;
+
+  // Google Calendar two-way synchronization. Every method is scoped by
+  // organization: a tenant can never read or overwrite another's rows.
+  getEventLink(
+    organizationId: string,
+    appointmentId: string,
+  ): Promise<EventLink | null>;
+  findEventLinkByEventId(
+    organizationId: string,
+    calendarId: string,
+    eventId: string,
+  ): Promise<EventLink | null>;
+  saveEventLink(link: EventLink): Promise<void>;
+  listEventLinks(organizationId: string): Promise<EventLink[]>;
+  /**
+   * Atomically takes the links whose turn has come and pushes their next
+   * attempt out by the lease, so two workers never send the same change at
+   * once. Safe across Worker instances and poolers.
+   */
+  claimEventLinks(query: ClaimQuery): Promise<EventLink[]>;
+  getSyncState(organizationId: string): Promise<SyncState | null>;
+  /** Does not touch the lease or the rerun flag, which have their own methods. */
+  saveSyncState(state: SyncState): Promise<void>;
+  findSyncStateByChannel(channelId: string): Promise<SyncState | null>;
+  /** Businesses that have a calendar selected and so have something to pull. */
+  listSyncStates(): Promise<SyncState[]>;
+  /** One pull at a time per business. False means someone else holds it. */
+  tryLease(organizationId: string, now: Date, until: Date): Promise<boolean>;
+  releaseLease(organizationId: string): Promise<void>;
+  /** A notification arrived while a pull was running: the holder goes round again. */
+  requestRerun(organizationId: string): Promise<void>;
+  consumeRerun(organizationId: string): Promise<boolean>;
+  listMirror(
+    organizationId: string,
+    calendarId: string,
+  ): Promise<ExternalEvent[]>;
+  /** A full sync replaces what was mirrored. */
+  replaceMirror(
+    organizationId: string,
+    calendarId: string,
+    events: ExternalEvent[],
+  ): Promise<void>;
+  /** An incremental sync changes only what Google said changed. */
+  applyMirror(
+    organizationId: string,
+    calendarId: string,
+    upserts: ExternalEvent[],
+    deletedEventIds: string[],
+  ): Promise<void>;
+  /**
+   * Disconnect: forget the pull state and the mirror, stop the push channel
+   * record and detach every link. Appointments are never touched.
+   */
+  clearGoogleSync(organizationId: string, now: Date): Promise<void>;
 
   // Cal.com provider. The connection holds the sealed credential; the ledger
   // records every booking attempt so none can be lost or duplicated.
@@ -143,8 +219,140 @@ export function createMemorySchedulingStore(): SchedulingStore {
   const calcomBookings = new Map<string, CalcomBookingRecord>();
   const ledgerKey = (organizationId: string, appointmentId: string) =>
     `${organizationId}\u0000${appointmentId}`;
+  // Google synchronization.
+  const eventLinks = new Map<string, EventLink>();
+  const syncStates = new Map<string, SyncState>();
+  const leases = new Map<string, string>();
+  const reruns = new Set<string>();
+  const mirror = new Map<string, Map<string, ExternalEvent>>();
+  const mirrorKey = (organizationId: string, calendarId: string) =>
+    `${organizationId}\u0000${calendarId}`;
 
   return {
+    async getEventLink(organizationId, appointmentId) {
+      const row = eventLinks.get(ledgerKey(organizationId, appointmentId));
+      return row ? structuredClone(row) : null;
+    },
+    async findEventLinkByEventId(organizationId, calendarId, eventId) {
+      const row = [...eventLinks.values()].find(
+        (link) =>
+          link.organizationId === organizationId &&
+          link.calendarId === calendarId &&
+          link.eventId === eventId,
+      );
+      return row ? structuredClone(row) : null;
+    },
+    async saveEventLink(link) {
+      eventLinks.set(
+        ledgerKey(link.organizationId, link.appointmentId),
+        structuredClone(link),
+      );
+    },
+    async listEventLinks(organizationId) {
+      return [...eventLinks.values()]
+        .filter((link) => link.organizationId === organizationId)
+        .map((link) => structuredClone(link));
+    },
+    async claimEventLinks(query) {
+      const now = query.now.getTime();
+      const due = [...eventLinks.values()]
+        .filter(
+          (link) =>
+            link.state === "pending" &&
+            link.pendingOp !== null &&
+            (!query.organizationId ||
+              link.organizationId === query.organizationId) &&
+            (!query.appointmentId ||
+              link.appointmentId === query.appointmentId) &&
+            (!link.nextAttemptAt || Date.parse(link.nextAttemptAt) <= now),
+        )
+        .sort((a, b) =>
+          (a.nextAttemptAt ?? a.updatedAt).localeCompare(
+            b.nextAttemptAt ?? b.updatedAt,
+          ),
+        )
+        .slice(0, query.limit);
+      for (const link of due) {
+        link.nextAttemptAt = new Date(now + query.leaseMs).toISOString();
+      }
+      return due.map((link) => structuredClone(link));
+    },
+    async getSyncState(organizationId) {
+      const row = syncStates.get(organizationId);
+      return row ? structuredClone(row) : null;
+    },
+    async saveSyncState(state) {
+      const current = syncStates.get(state.organizationId);
+      syncStates.set(state.organizationId, {
+        ...structuredClone(state),
+        leaseUntil: current?.leaseUntil,
+      });
+    },
+    async findSyncStateByChannel(channelId) {
+      const row = [...syncStates.values()].find(
+        (state) => state.channelId === channelId,
+      );
+      return row ? structuredClone(row) : null;
+    },
+    async listSyncStates() {
+      return [...syncStates.values()]
+        .filter((state) => state.calendarId)
+        .map((state) => structuredClone(state));
+    },
+    async tryLease(organizationId, now, until) {
+      const held = leases.get(organizationId);
+      if (held && Date.parse(held) > now.getTime()) return false;
+      leases.set(organizationId, until.toISOString());
+      return true;
+    },
+    async releaseLease(organizationId) {
+      leases.delete(organizationId);
+    },
+    async requestRerun(organizationId) {
+      reruns.add(organizationId);
+    },
+    async consumeRerun(organizationId) {
+      return reruns.delete(organizationId);
+    },
+    async listMirror(organizationId, calendarId) {
+      return [...(mirror.get(mirrorKey(organizationId, calendarId))?.values() ?? [])].map(
+        (event) => structuredClone(event),
+      );
+    },
+    async replaceMirror(organizationId, calendarId, events) {
+      mirror.set(
+        mirrorKey(organizationId, calendarId),
+        new Map(events.map((event) => [event.eventId, structuredClone(event)])),
+      );
+    },
+    async applyMirror(organizationId, calendarId, upserts, deletedEventIds) {
+      const key = mirrorKey(organizationId, calendarId);
+      const rows = mirror.get(key) ?? new Map<string, ExternalEvent>();
+      for (const id of deletedEventIds) rows.delete(id);
+      for (const event of upserts)
+        rows.set(event.eventId, structuredClone(event));
+      mirror.set(key, rows);
+    },
+    async clearGoogleSync(organizationId, now) {
+      syncStates.delete(organizationId);
+      leases.delete(organizationId);
+      reruns.delete(organizationId);
+      busy.delete(organizationId);
+      for (const key of [...mirror.keys()]) {
+        if (key.startsWith(`${organizationId}\u0000`)) mirror.delete(key);
+      }
+      for (const link of eventLinks.values()) {
+        if (link.organizationId !== organizationId) continue;
+        link.state = "detached";
+        link.pendingOp = null;
+        link.attempts = 0;
+        link.nextAttemptAt = undefined;
+        link.lastError = undefined;
+        link.externalStartAt = undefined;
+        link.externalEndAt = undefined;
+        link.updatedAt = now.toISOString();
+      }
+    },
     async getCalcomConnection(organizationId) {
       const row = calcomConnections.get(organizationId);
       return row ? structuredClone(row) : null;

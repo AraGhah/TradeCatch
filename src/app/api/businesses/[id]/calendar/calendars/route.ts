@@ -6,10 +6,9 @@ import {
   hasGoogleCalendarPilot,
   calendarPilotDenied,
 } from "@/product/scheduling/availability";
-import { listGoogleCalendars, openTokens } from "@/product/scheduling/google";
 import {
   getSchedulingService,
-  getSchedulingStore,
+  listGoogleCalendarsFor,
 } from "@/product/scheduling/runtime";
 import { SchedulingError } from "@/product/scheduling/service";
 
@@ -25,20 +24,23 @@ export async function GET(_request: NextRequest, { params }: Params) {
       { status: access.status },
     );
   if (!(await hasGoogleCalendarPilot(id))) return calendarPilotDenied();
-  const connection = await getSchedulingStore().getConnection(id);
-  if (!connection?.tokenCiphertext)
-    return NextResponse.json({ ok: true, calendars: [] });
-  try {
-    const calendars = await listGoogleCalendars(
-      openTokens(connection.tokenCiphertext),
-    );
-    return NextResponse.json({ ok: true, calendars });
-  } catch {
+  const listed = await listGoogleCalendarsFor(id);
+  if (!listed.ok) {
+    if (listed.reason === "not_connected")
+      return NextResponse.json({ ok: true, calendars: [] });
     return NextResponse.json(
-      { ok: false, calendars: [], error: "calendar_unavailable" },
+      { ok: false, calendars: [], error: listed.error },
       { status: 409 },
     );
   }
+  // Only the name the owner knows each calendar by, never anything else.
+  return NextResponse.json({
+    ok: true,
+    calendars: listed.calendars.map(({ id: calendarId, summary }) => ({
+      id: calendarId,
+      summary,
+    })),
+  });
 }
 
 export async function POST(request: NextRequest, { params }: Params) {
@@ -52,31 +54,34 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!(await hasGoogleCalendarPilot(id))) return calendarPilotDenied();
   const parsed = z
     .object({
-      calendarId: z.string().min(1),
-      summary: z.string().min(1).max(200),
+      calendarId: z.string().min(1).max(320),
+      // Accepted for older clients, never trusted: the name comes from Google.
+      summary: z.string().max(200).optional(),
     })
     .safeParse(await readJsonBounded(request).catch(() => null));
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid calendar." }, { status: 400 });
   try {
-    const connection = await getSchedulingStore().getConnection(id);
-    if (connection?.tokenCiphertext) {
-      const calendars = await listGoogleCalendars(
-        openTokens(connection.tokenCiphertext),
+    const listed = await listGoogleCalendarsFor(id);
+    if (!listed.ok) {
+      return NextResponse.json(
+        { error: listed.error, code: listed.reason },
+        { status: 409 },
       );
-      const allowed = calendars.some(
-        (calendar) => calendar.id === parsed.data.calendarId,
-      );
-      if (!allowed)
-        return NextResponse.json(
-          { error: "Calendar is not writable." },
-          { status: 403 },
-        );
     }
+    // Only a calendar this account can write to, taken from Google's own list.
+    const chosen = listed.calendars.find(
+      (calendar) => calendar.id === parsed.data.calendarId,
+    );
+    if (!chosen)
+      return NextResponse.json(
+        { error: "Calendar is not writable." },
+        { status: 403 },
+      );
     const calendar = await getSchedulingService().selectCalendar(
       id,
-      parsed.data.calendarId,
-      parsed.data.summary,
+      chosen.id,
+      chosen.summary,
     );
     return NextResponse.json({ ok: true, calendar });
   } catch (error) {

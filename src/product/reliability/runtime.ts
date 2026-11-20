@@ -1,7 +1,6 @@
 import { isE2eHarness } from "@/lib/config";
 import { providerProbes } from "./probes";
 import { scheduledJobFailures } from "./job-health";
-import { openTokens } from "@/product/scheduling/google";
 import { getPgPool } from "@/product/missed-call/postgres-store";
 import { createPostgresReliabilityStore } from "./postgres-store";
 import { createReliabilityService, type Probe } from "./service";
@@ -94,51 +93,36 @@ export async function probe(): Promise<Probe[]> {
   if (database && url) {
     const pool = getPgPool(url);
     try {
-      const r = await pool.query(
-        "SELECT calendar_id,token_ciphertext FROM tc_calendar_connections WHERE status='connected' AND token_ciphertext IS NOT NULL AND calendar_id IS NOT NULL ORDER BY updated_at DESC LIMIT 1",
+      // What the synchronization itself last recorded, not a fresh call with a
+      // stored token: counts only, never a business, an address or an event.
+      const r = await pool.query(`SELECT
+        count(*) FILTER (WHERE c.status = 'connected')::int AS connected,
+        count(*) FILTER (WHERE c.status = 'connected'
+          AND s.last_synced_at > now() - interval '30 minutes'
+          AND s.last_error IS NULL)::int AS healthy,
+        count(*) FILTER (WHERE c.status = 'expired')::int AS revoked,
+        max(s.last_synced_at) FILTER (WHERE s.last_error IS NULL) AS last_ok
+        FROM tc_calendar_connections c
+        LEFT JOIN tc_calendar_sync_state s ON s.organization_id = c.organization_id
+        WHERE c.token_ciphertext IS NOT NULL AND c.calendar_id IS NOT NULL`);
+      const links = await pool.query(
+        `SELECT count(*)::int AS failed FROM tc_gcal_event_links WHERE state = 'failed'`,
       );
-      if (r.rows[0] && !isE2eHarness()) {
-        const row = r.rows[0],
-          tokens = openTokens(row.token_ciphertext);
-        const response = await fetch(
-          "https://www.googleapis.com/calendar/v3/freeBusy",
-          {
-            method: "POST",
-            redirect: "error",
-            signal: AbortSignal.timeout(4000),
-            headers: {
-              authorization: `Bearer ${tokens.accessToken}`,
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({
-              timeMin: new Date().toISOString(),
-              timeMax: new Date(Date.now() + 60_000).toISOString(),
-              items: [{ id: row.calendar_id }],
-            }),
-          },
-        );
-        const data = response.ok
-          ? ((await response.json()) as {
-              calendars?: Record<
-                string,
-                { busy?: unknown[]; errors?: unknown[] }
-              >;
-              account_sid?: string;
-              status?: string;
-            })
-          : null;
-        if (!response.ok) await response.body?.cancel();
-        const item = data?.calendars?.[row.calendar_id];
-        calendar.status =
-          response.ok && Array.isArray(item?.busy) && !item.errors?.length
-            ? "healthy"
-            : "degraded";
-        calendar.state =
-          calendar.status === "healthy" ? "operational" : "configured";
-        calendar.detail =
-          calendar.status === "healthy"
-            ? "One connected calendar availability read succeeded; other calendars and writes not verified"
-            : "Connected calendar availability check failed";
+      const row = r.rows[0];
+      const lagging = row.connected - row.healthy;
+      const failed = links.rows[0]?.failed ?? 0;
+      if (row.connected === 0) {
+        calendar.detail = "No business has Google Calendar connected";
+      } else if (lagging > 0 || failed > 0) {
+        calendar.status = "degraded";
+        calendar.detail = `${lagging} of ${row.connected} connected calendar(s) behind or failing; ${failed} change(s) not delivered`;
+      } else {
+        calendar.status = "healthy";
+        calendar.state = "operational";
+        if (row.last_ok) calendar.evidenceAt = new Date(row.last_ok).toISOString();
+        calendar.detail = `${row.connected} connected calendar(s) synchronized in the last 30 minutes${
+          row.revoked ? `; ${row.revoked} need to be reconnected by their owner` : ""
+        }`;
       }
     } catch {
       calendar.status = "degraded";
