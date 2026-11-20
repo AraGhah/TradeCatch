@@ -2,9 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { PasswordField } from "@/components/PasswordField";
 
-const inputClass =
-  "rounded-md border border-navy/15 bg-white px-3 py-2.5 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange";
 const buttonClass =
   "self-start rounded-md bg-orange px-4 py-2.5 text-[15px] font-semibold text-navy transition hover:bg-orange-dark disabled:opacity-60";
 
@@ -115,43 +114,31 @@ export function PasswordSettings({
       {hasPassword ? (
         <form onSubmit={onChange} className="flex flex-col gap-3">
           <p className="text-sm text-navy/70">{t("intro")}</p>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-            {t("current")}
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              maxLength={256}
-              value={current}
-              onChange={(e) => setCurrent(e.target.value)}
-              className={inputClass}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-            {t("new")}
-            <input
-              type="password"
-              required
-              autoComplete="new-password"
-              minLength={10}
-              maxLength={128}
-              value={next}
-              onChange={(e) => setNext(e.target.value)}
-              className={inputClass}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-            {t("confirm")}
-            <input
-              type="password"
-              required
-              autoComplete="new-password"
-              maxLength={128}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className={inputClass}
-            />
-          </label>
+          <PasswordField
+            label={t("current")}
+            required
+            autoComplete="current-password"
+            maxLength={256}
+            value={current}
+            onChange={setCurrent}
+          />
+          <PasswordField
+            label={t("new")}
+            required
+            autoComplete="new-password"
+            minLength={10}
+            maxLength={128}
+            value={next}
+            onChange={setNext}
+          />
+          <PasswordField
+            label={t("confirm")}
+            required
+            autoComplete="new-password"
+            maxLength={128}
+            value={confirm}
+            onChange={setConfirm}
+          />
           <p className="text-sm text-navy/70">{t("rules")}</p>
           <button type="submit" disabled={busy} className={buttonClass}>
             {busy ? t("saving") : t("submit")}

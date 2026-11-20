@@ -2,9 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
-
-const inputClass =
-  "rounded-md border border-navy/15 bg-white px-3 py-2.5 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange";
+import { PasswordField } from "@/components/PasswordField";
 
 const PROBLEMS = ["too_short", "too_long", "common", "contains_email"] as const;
 type Problem = (typeof PROBLEMS)[number];
@@ -68,32 +66,24 @@ export function SetPasswordForm({ token }: { token: string }) {
       onSubmit={onSubmit}
       className="mx-auto flex w-full max-w-md flex-col gap-4"
     >
-      <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-        {t("password")}
-        <input
-          type="password"
-          required
-          autoComplete="new-password"
-          minLength={10}
-          maxLength={128}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          aria-describedby="password-rules"
-          className={inputClass}
-        />
-      </label>
-      <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-        {t("confirm")}
-        <input
-          type="password"
-          required
-          autoComplete="new-password"
-          maxLength={128}
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          className={inputClass}
-        />
-      </label>
+      <PasswordField
+        label={t("password")}
+        required
+        autoComplete="new-password"
+        minLength={10}
+        maxLength={128}
+        value={password}
+        onChange={setPassword}
+        describedBy="password-rules"
+      />
+      <PasswordField
+        label={t("confirm")}
+        required
+        autoComplete="new-password"
+        maxLength={128}
+        value={confirm}
+        onChange={setConfirm}
+      />
       <p id="password-rules" className="text-sm text-navy/70">
         {t("rules")}
       </p>

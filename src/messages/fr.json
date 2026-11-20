@@ -1538,6 +1538,10 @@
     "passwordSaved": "Votre mot de passe est enregistré. Connectez-vous ci-dessous.",
     "errorOutage": "La connexion est temporairement indisponible. Votre courriel et votre mot de passe ne sont pas en cause. Réessayez dans quelques minutes ou écrivez à contact@tradecatch.ca."
   },
+  "passwordToggle": {
+    "show": "Afficher le mot de passe",
+    "hide": "Masquer le mot de passe"
+  },
   "app": {
     "demoAccountBadge": "Compte démo",
     "nav": {
