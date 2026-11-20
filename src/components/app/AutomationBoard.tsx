@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import type { AutomationRecord, AutomationType } from "@/product/sms-automation/types";
 import { OPERATIONAL_AUTOMATION_TYPES } from "@/product/sms-automation/types";
+import { isKnownResult } from "@/product/sms-automation/status";
+import { StatusHelp, StatusPill, stateOf, type StatusInputs } from "./AutomationStatus";
 import {
   describeFailure,
   readStored,
@@ -21,38 +24,27 @@ const EDIT: Partial<Record<AutomationType, "/app/automations/missed-call" | "/ap
 
 type Notice = { kind: "ok" | "error"; text: string };
 
+const BUTTON =
+  "rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-60";
+
 export function AutomationBoard({
   organizationId,
   automations,
-  labels,
+  status,
+  schedule,
+  lastAt,
 }: {
   organizationId: string;
   automations: AutomationRecord[];
-  labels: {
-    automation: string;
-    status: string;
-    trigger: string;
-    action: string;
-    active: string;
-    inactive: string;
-    enable: string;
-    disable: string;
-    edit: string;
-    test: string;
-    history: string;
-    last: string;
-    success: string;
-    failures: string;
-    responses: string;
-    none: string;
-    later: string;
-    names: Record<AutomationType, string>;
-    triggers: Record<AutomationType, string>;
-    actions: Record<AutomationType, string>;
-    error: string;
-  };
+  /** What the status is worked out from: the queue, whether the business can text, and the clock. */
+  status: StatusInputs;
+  /** The "When it runs" lines, written from each automation's real settings. */
+  schedule: Record<AutomationType, string[]>;
+  /** Time of the last activity, already written for the business's time zone and language. */
+  lastAt: Record<AutomationType, string | null>;
 }) {
   const t = useTranslations("app.automations");
+  const router = useRouter();
   const failureText = useFailureText();
   // What the server last confirmed. The switch changes only when the server says so.
   const [rows, setRows] = useState(automations);
@@ -85,6 +77,8 @@ export function AutomationBoard({
           kind: "ok",
           text: enabled ? t("toggle.enabled") : t("toggle.disabled", { count: canceled }),
         });
+        // The queue changes with the switch (texts canceled, or brought back): ask for it again.
+        router.refresh();
       } catch (err) {
         // Show what is stored, not what was asked for: the request may or may not have landed.
         const stored = await readStored(organizationId, row.id);
@@ -101,93 +95,128 @@ export function AutomationBoard({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto rounded-md border border-navy/10 bg-white">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b border-navy/10 text-xs uppercase tracking-wide text-navy/50">
-            <tr>
-              <th className="px-4 py-3">{labels.automation}</th>
-              <th className="px-4 py-3">{labels.status}</th>
-              <th className="px-4 py-3">{labels.trigger}</th>
-              <th className="px-4 py-3">{labels.action}</th>
-              <th className="px-4 py-3">{labels.last}</th>
-              <th className="px-4 py-3">{labels.success}</th>
-              <th className="px-4 py-3">{labels.failures}</th>
-              <th className="px-4 py-3">{labels.responses}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-navy/10">
-            {rows.map((row) => {
-              const operational = OPERATIONAL_AUTOMATION_TYPES.includes(row.type);
-              const edit = EDIT[row.type];
-              const busy = flight.isPending(row.id);
-              const notice = notices[row.id];
-              return (
-                <tr key={row.id} data-automation={row.type}>
-                  <td className="px-4 py-3 font-semibold text-navy">
-                    {labels.names[row.type]}
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-medium">
-                      {operational ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          aria-busy={busy}
-                          onClick={() => void setEnabled(row, !row.enabled)}
-                          className="rounded-md border border-navy/20 px-2 py-1 text-navy hover:bg-navy/5 disabled:opacity-60"
-                        >
-                          {busy
-                            ? target[row.id]
-                              ? t("toggle.enabling")
-                              : t("toggle.disabling")
-                            : row.enabled
-                              ? labels.disable
-                              : labels.enable}
-                        </button>
-                      ) : (
-                        <span className="text-navy/50">{labels.later}</span>
-                      )}
-                      {edit ? (
-                        <Link href={edit} className="rounded-md border border-navy/20 px-2 py-1">
-                          {labels.edit}
-                        </Link>
-                      ) : null}
-                      {edit ? (
-                        <Link href={edit} className="rounded-md border border-navy/20 px-2 py-1">
-                          {labels.test}
-                        </Link>
-                      ) : null}
-                      <Link href="/app/automations/history" className="rounded-md border border-navy/20 px-2 py-1">
-                        {labels.history}
-                      </Link>
-                    </div>
-                    <div aria-live="polite" className="mt-2 min-h-0 text-xs font-normal">
-                      {notice ? (
-                        <p
-                          role={notice.kind === "error" ? "alert" : "status"}
-                          className={notice.kind === "error" ? "text-red-800" : "text-green-800"}
-                        >
-                          {notice.text}
-                        </p>
-                      ) : null}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3" data-testid={`status-${row.type}`}>
-                    {row.enabled ? labels.active : labels.inactive}
-                  </td>
-                  <td className="px-4 py-3 text-navy/70">{labels.triggers[row.type]}</td>
-                  <td className="px-4 py-3 text-navy/70">{labels.actions[row.type]}</td>
-                  <td className="px-4 py-3 text-navy/70">
-                    {row.lastExecutionStatus || labels.none}
-                  </td>
-                  <td className="px-4 py-3">{row.successCount}</td>
-                  <td className="px-4 py-3">{row.failureCount}</td>
-                  <td className="px-4 py-3">{row.responseCount}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+    <div className="grid gap-4 lg:grid-cols-2">
+      {rows.map((row) => {
+        const operational = OPERATIONAL_AUTOMATION_TYPES.includes(row.type);
+        const edit = EDIT[row.type];
+        const busy = flight.isPending(row.id);
+        const notice = notices[row.id];
+        const state = stateOf(row, status);
+        const lines = schedule[row.type] ?? [];
+        const lastResult = isKnownResult(row.lastExecutionStatus) ? row.lastExecutionStatus : null;
+        const lastTime = lastAt[row.type];
+        const headingId = `automation-${row.type}`;
+
+        return (
+          <article
+            key={row.id}
+            data-automation={row.type}
+            aria-labelledby={headingId}
+            className="flex min-w-0 flex-col gap-3 rounded-md border border-navy/10 bg-white p-4"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <h2 id={headingId} className="min-w-0 font-semibold text-navy">
+                {t(`names.${row.type}`)}
+              </h2>
+              <StatusPill state={state} testId={`status-${row.type}`} />
+            </div>
+
+            <p className="text-sm text-navy/80">{t(`descriptions.${row.type}`)}</p>
+
+            {state ? (
+              <StatusHelp state={state} testId={`status-help-${row.type}`} />
+            ) : (
+              <p className="text-sm font-medium text-navy">{t(`soon.${row.type}`)}</p>
+            )}
+
+            {lines.length > 0 ? (
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-navy/60">{t("card.when")}</p>
+                <ul className="mt-1 flex list-none flex-col gap-1 p-0 text-sm text-navy/80">
+                  {lines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+
+            {operational ? (
+              <dl className="m-0 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                <div>
+                  <dt className="text-xs text-navy/60">{t("card.sent")}</dt>
+                  <dd className="m-0 font-semibold text-navy">{row.successCount}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-navy/60">{t("card.replies")}</dt>
+                  <dd className="m-0 font-semibold text-navy">{row.responseCount}</dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-navy/60">{t("card.failed")}</dt>
+                  <dd className="m-0 font-semibold text-navy">{row.failureCount}</dd>
+                </div>
+                <div className="min-w-0 basis-full">
+                  <dt className="text-xs text-navy/60">{t("card.lastActivity")}</dt>
+                  <dd className="m-0 text-navy/80">
+                    {lastResult || lastTime
+                      ? [lastResult ? t(`results.${lastResult}`) : null, lastTime].filter(Boolean).join(" · ")
+                      : t("card.noActivity")}
+                  </dd>
+                </div>
+              </dl>
+            ) : null}
+
+            <div className="mt-auto flex flex-wrap gap-2 pt-1">
+              {operational ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  aria-busy={busy}
+                  aria-describedby={headingId}
+                  onClick={() => void setEnabled(row, !row.enabled)}
+                  className={
+                    row.enabled
+                      ? BUTTON
+                      : "rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                  }
+                >
+                  {busy
+                    ? target[row.id]
+                      ? t("actions.enabling")
+                      : t("actions.pausing")
+                    : row.enabled
+                      ? t("actions.pause")
+                      : t("actions.enable")}
+                </button>
+              ) : null}
+              {edit ? (
+                <Link href={edit} aria-describedby={headingId} className={BUTTON}>
+                  {t("actions.settings")}
+                </Link>
+              ) : null}
+              {edit ? (
+                <Link href={edit} aria-describedby={headingId} className={BUTTON}>
+                  {t("actions.test")}
+                </Link>
+              ) : null}
+              {operational ? (
+                <Link href="/app/automations/history" aria-describedby={headingId} className={BUTTON}>
+                  {t("actions.history")}
+                </Link>
+              ) : null}
+            </div>
+            <div aria-live="polite" className="min-h-0 text-sm">
+              {notice ? (
+                <p
+                  role={notice.kind === "error" ? "alert" : "status"}
+                  className={notice.kind === "error" ? "text-red-800" : "text-green-800"}
+                >
+                  {notice.text}
+                </p>
+              ) : null}
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }
