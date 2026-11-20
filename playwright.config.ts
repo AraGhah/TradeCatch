@@ -57,8 +57,15 @@ export default defineConfig({
       PORT: String(E2E_PORT),
       NEXT_PUBLIC_SITE_URL: E2E_ORIGIN,
       TRADECATCH_E2E: "1",
+      // Never read .env, .env.local or .env.production.local, for `next build` or `next start`. A developer
+      // checkout keeps PRODUCTION values there: blanking the few names listed below left dozens of others
+      // (live Bland/OpenAI/Anthropic keys, SAAS_REQUIRE_DURABLE=1, ...) flowing into the test server, and
+      // SAAS_REQUIRE_DURABLE=1 alone made every database-less test fail with a 500 on its first write.
+      // @next/env skips every dotenv file when this flag is set (Next sets it itself for child processes);
+      // tests/unit/e2e-harness-isolation.test.ts proves that on the installed Next.
+      __NEXT_PROCESSED_ENV: "true",
       // The default harness exercises storage-disabled behavior. Never inherit
-      // a developer's production database or provider keys from .env.local.
+      // a developer's production database or provider keys from the shell.
       DATABASE_URL: "",
       MISSED_CALL_DURABLE_STORE: "",
       SAAS_DURABLE_STORE: "",
