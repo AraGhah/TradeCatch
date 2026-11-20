@@ -1538,6 +1538,10 @@
     "passwordSaved": "Your password is saved. Sign in below.",
     "errorOutage": "Sign-in is temporarily unavailable. This is not a problem with your email or password. Try again in a few minutes, or email contact@tradecatch.ca."
   },
+  "passwordToggle": {
+    "show": "Show password",
+    "hide": "Hide password"
+  },
   "app": {
     "demoAccountBadge": "Demo account",
     "nav": {

@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { PasswordField } from "@/components/PasswordField";
 import { Link } from "@/i18n/navigation";
 
 const inputClass =
@@ -171,18 +172,14 @@ export function LoginForm({
       </label>
       {mode === "password" ? (
         <>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-            {t("password")}
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              maxLength={256}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputClass}
-            />
-          </label>
+          <PasswordField
+            label={t("password")}
+            required
+            autoComplete="current-password"
+            maxLength={256}
+            value={password}
+            onChange={setPassword}
+          />
           <button
             type="submit"
             disabled={status === "loading"}
