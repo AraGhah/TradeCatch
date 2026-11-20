@@ -11,6 +11,7 @@ import {
   reconcileCalcomAll,
   reconcileCalcomFor,
   reconcileGoogleBusy,
+  runGoogleSyncTick,
 } from "@/product/scheduling/runtime";
 
 export const dynamic = "force-dynamic";
@@ -26,10 +27,14 @@ async function tick(request: NextRequest) {
   // moved or cancelled there is followed, and a request that never answered
   // is settled. Counts only; nothing about a customer leaves this handler.
   const calcom = await reconcileCalcomAll().catch(() => ({ failed: true }));
+  // Google Calendar has its own once-a-minute tick; this is the fallback that
+  // keeps it moving if that schedule ever stops.
+  const google = await runGoogleSyncTick().catch(() => ({ failed: true }));
   return NextResponse.json({
     ok: true,
     confirmations,
     calcom,
+    google,
     note: "Per-business reconcile runs when a calendar is connected.",
     ready: Boolean(getSchedulingStore()),
   });

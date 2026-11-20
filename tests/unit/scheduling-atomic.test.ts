@@ -10,7 +10,7 @@ import {
   createSchedulingService,
   createSimulatedCalendar,
 } from "../../src/product/scheduling/service";
-import { createGoogleCalendarPort } from "../../src/product/scheduling/google";
+import { createGoogleSyncPort } from "../../src/product/scheduling/gcal/port";
 
 test("a reservation remains a hold until its calendar event is created", async () => {
   const store = createMemorySchedulingStore();
@@ -53,33 +53,28 @@ test("a reservation remains a hold until its calendar event is created", async (
   assert.equal(result.appointment?.calendarEventId, "test-event");
 });
 
-test("unknown calendar availability is never treated as a free calendar", async () => {
-  const original = globalThis.fetch;
-  try {
-    for (const response of [
-      Response.json({ error: "private detail" }, { status: 503 }),
-      Response.json({
-        calendars: { primary: { errors: [{ reason: "forbidden" }] } },
-      }),
-      Response.json({}),
-    ]) {
-      globalThis.fetch = async () => response;
-      const port = createGoogleCalendarPort({
-        tokens: {
-          accessToken: "test",
-          refreshToken: "test",
-          expiresAt: "2099-01-01T00:00:00Z",
-        },
-        calendarId: "primary",
-      });
-      await assert.rejects(
-        port.freeBusy("2026-10-19T12:00:00Z", "2026-10-19T16:00:00Z"),
-        /availability/,
-      );
-    }
-  } finally {
-    globalThis.fetch = original;
-  }
+test("a Google calendar that has never been read is never treated as a free calendar", async () => {
+  const store = createMemorySchedulingStore();
+  const port = createGoogleSyncPort({
+    organizationId: "org_unread",
+    store,
+    sync: {} as never,
+  });
+  await assert.rejects(
+    port.freeBusy("2026-10-19T12:00:00Z", "2026-10-19T16:00:00Z"),
+    /availability/,
+  );
+  // Once a read has completed, the mirror speaks for the calendar.
+  await store.saveSyncState({
+    organizationId: "org_unread",
+    calendarId: "primary",
+    syncToken: "st-1",
+    consecutiveFailures: 0,
+  });
+  assert.deepEqual(
+    await port.freeBusy("2026-10-19T12:00:00Z", "2026-10-19T16:00:00Z"),
+    [],
+  );
 });
 
 test("a calendar result after the phone deadline is canceled without confirming or sending a notice", async () => {

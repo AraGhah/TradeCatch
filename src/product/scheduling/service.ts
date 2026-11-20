@@ -80,6 +80,12 @@ export type CalendarPort = {
   externalCalls: number;
   freeBusy(fromIso: string, untilIso: string): Promise<BusyBlock[]>;
   /**
+   * Providers whose availability is a mirror of an outside calendar bring the
+   * mirror up to date just before a time is confirmed. `ok: false` means the
+   * mirror is too old (or has never been read) to say a time is free.
+   */
+  prepare?(): Promise<{ ok: boolean; stale: boolean }>;
+  /**
    * Providers that decide availability themselves return the start times they
    * would accept. TradeCatch's own rules and bookings are applied on top, so
    * a time is offered only when both agree.
@@ -118,6 +124,14 @@ export type SchedulingDeps = {
     organizationId: string,
     hint?: { eventId?: string },
   ) => Promise<CalendarPort>;
+  /**
+   * Called when a business disconnects, before its connection is wiped: stop
+   * pushing, revoke the grant, forget the mirror. Failures here never block the
+   * disconnect.
+   */
+  beforeDisconnect?: (organizationId: string) => Promise<void>;
+  /** A calendar was chosen: start synchronizing it. Failures never block the choice. */
+  afterCalendarSelected?: (organizationId: string) => Promise<void>;
   scheduleNotices?: (input: {
     organizationId: string;
     appointmentId: string;
@@ -886,6 +900,21 @@ export function createSchedulingService(deps: SchedulingDeps) {
         const calendar = input.simulated
           ? createSimulatedCalendar(Boolean(input.simulateCalendarFailure))
           : await deps.calendar(input.organizationId);
+        // A Google calendar is mirrored. Read what changed just before the time
+        // is checked, so an event the owner added a moment ago is seen, and
+        // refuse to confirm when the mirror is too old to be trusted.
+        let mirrorUntrusted = false;
+        if (
+          !input.simulated &&
+          rules.calendarMode === "google" &&
+          calendar.kind === "google" &&
+          calendar.prepare
+        ) {
+          const ready = await calendar
+            .prepare()
+            .catch(() => ({ ok: false, stale: true }));
+          mirrorUntrusted = !ready.ok;
+        }
         // A Cal.com outage must not stop a request from being saved, so the
         // two lookups treat "calendar unreachable" as "no times" and remember
         // it: the booking is then recorded as a request, never confirmed.
@@ -933,7 +962,9 @@ export function createSchedulingService(deps: SchedulingDeps) {
         const calendarBlocksConfirmation =
           !input.simulated &&
           ((rules.calendarMode === "google" &&
-            (!calendar.connected || calendar.kind !== "google")) ||
+            (!calendar.connected ||
+              calendar.kind !== "google" ||
+              mirrorUntrusted)) ||
             (rules.calendarMode === "calcom" &&
               (!calendar.connected ||
                 calendar.kind !== "calcom" ||
@@ -1182,6 +1213,25 @@ export function createSchedulingService(deps: SchedulingDeps) {
             "already_completed",
           );
         const rules = await ensure(organizationId);
+        if (!current.simulated && rules.calendarMode === "google") {
+          const mirror = await deps.calendar(organizationId, {
+            eventId: current.calendarEventId,
+          });
+          if (mirror.kind === "google" && mirror.prepare) {
+            const ready = await mirror
+              .prepare()
+              .catch(() => ({ ok: false, stale: true }));
+            if (!ready.ok) {
+              return {
+                ok: false as const,
+                confirmed: false,
+                reason: "calendar_error",
+                alternatives: [],
+                appointment: current,
+              };
+            }
+          }
+        }
         const services = await deps.store.listServices(organizationId);
         const service = services.find((row) => row.id === current.serviceId);
         const duration =
@@ -1619,6 +1669,27 @@ export function createSchedulingService(deps: SchedulingDeps) {
     ): Promise<CalendarConnectionPublic> {
       const rules = await ensure(organizationId);
       if (rules.calendarMode !== "google") {
+        // Google has been authorized but no calendar has been chosen yet. This
+        // is read from what is stored, so a refresh (or a new login) still
+        // shows the owner the step they were in the middle of.
+        const pending = await deps.store.getConnection(organizationId);
+        if (
+          pending &&
+          pending.status === "error" &&
+          pending.lastError === "select_calendar"
+        ) {
+          return {
+            provider: "google",
+            status: "error",
+            lastError: "select_calendar",
+            accountEmail: pending.accountEmail,
+          };
+        }
+        // An owner who pressed Disconnect is told so, not "simulated": the
+        // stored row records what they did. A business that never connected
+        // has no row and stays "simulated".
+        if (pending?.status === "disconnected")
+          return { provider: "google", status: "disconnected" };
         return { provider: "google", status: "simulated" };
       }
       const row = await deps.store.getConnection(organizationId);
@@ -1631,11 +1702,32 @@ export function createSchedulingService(deps: SchedulingDeps) {
         accountEmail: row.accountEmail,
         expiresAt: row.expiresAt,
         lastError: row.lastError,
+        eventDetail: row.eventDetail ?? "minimal",
+        cancelPolicy: row.cancelPolicy ?? "remove",
+        connectedAt: row.connectedAt,
       };
+    },
+    async updateCalendarSettings(
+      organizationId: string,
+      settings: {
+        eventDetail?: "minimal" | "standard";
+        cancelPolicy?: "remove" | "mark_canceled";
+      },
+    ) {
+      const row = await deps.store.getConnection(organizationId);
+      if (!row || row.status === "disconnected")
+        throw new SchedulingError("Calendar is not connected.", 409);
+      if (settings.eventDetail) row.eventDetail = settings.eventDetail;
+      if (settings.cancelPolicy) row.cancelPolicy = settings.cancelPolicy;
+      await deps.store.saveConnection(row);
+      return this.connectionStatus(organizationId);
     },
 
     async disconnect(organizationId: string) {
       const rules = await ensure(organizationId);
+      // Stop the push channel, revoke the grant and forget the mirror. A
+      // failure here must never leave the owner unable to disconnect.
+      await deps.beforeDisconnect?.(organizationId).catch(() => undefined);
       rules.calendarMode = "simulated";
       await deps.store.saveRules(rules);
       await deps.store.saveConnection({
@@ -1657,10 +1749,13 @@ export function createSchedulingService(deps: SchedulingDeps) {
       row.calendarId = calendarId;
       row.calendarSummary = summary;
       row.status = "connected";
+      row.lastError = undefined;
+      row.connectedAt = row.connectedAt ?? deps.now().toISOString();
       await deps.store.saveConnection(row);
       const rules = await ensure(organizationId);
       rules.calendarMode = "google";
       await deps.store.saveRules(rules);
+      await deps.afterCalendarSelected?.(organizationId).catch(() => undefined);
       return this.connectionStatus(organizationId);
     },
 

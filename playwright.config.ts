@@ -29,6 +29,9 @@ const ADMIN_CONSOLE_ADMINS = [
 export const GMAIL_E2E_PORT = Number(
   process.env.TRADECATCH_GMAIL_E2E_PORT || 4010,
 );
+export const GCAL_E2E_PORT = Number(
+  process.env.TRADECATCH_GCAL_E2E_PORT || 4011,
+);
 
 /**
  * Playwright boots a production server on a reserved port.
@@ -106,6 +109,11 @@ export default defineConfig({
       GMAIL_PUSH_AUDIENCE: `${E2E_ORIGIN}/api/webhooks/gmail`,
       GMAIL_PUSH_SERVICE_ACCOUNT: "gmail-push@e2e.iam.gserviceaccount.com",
       GMAIL_PUBSUB_TOPIC: "projects/e2e/topics/gmail",
+      // Google Calendar: the app talks to tests/support/fake-google-calendar instead of Google.
+      GOOGLE_CALENDAR_CLIENT_ID: "e2e-calendar-client-id",
+      GOOGLE_CALENDAR_CLIENT_SECRET: "e2e-calendar-client-secret",
+      GOOGLE_CALENDAR_REDIRECT_URI: `${E2E_ORIGIN}/api/calendar/oauth/callback`,
+      GCAL_TEST_GOOGLE_BASE: `http://127.0.0.1:${GCAL_E2E_PORT}`,
     },
   },
   use: {

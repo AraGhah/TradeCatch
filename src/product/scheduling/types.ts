@@ -85,6 +85,11 @@ export type CalendarConnectionPublic = {
   accountEmail?: string;
   expiresAt?: string;
   lastError?: string;
+  /** How much of the customer reaches the owner's Google event. */
+  eventDetail?: "minimal" | "standard";
+  /** What happens to the Google event when its appointment is canceled. */
+  cancelPolicy?: "remove" | "mark_canceled";
+  connectedAt?: string;
 };
 
 export type Slot = {
