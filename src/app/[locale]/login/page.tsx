@@ -1,8 +1,13 @@
+import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { LoginForm, type LoginNotice } from "@/components/app/LoginForm";
 import { Container } from "@/components/Container";
 import { FullMessagesProvider } from "@/components/FullMessagesProvider";
+import { resolveAccountState } from "@/product/saas/auth/account-destination";
 import { safeReturnPath } from "@/product/saas/auth/return-path";
+
+// Every public page now links here from the header, so keep it out of search results.
+export const metadata = { robots: { index: false, follow: false } };
 
 /** Turns the code a sign-in route put in the address into one of our own messages. */
 function noticeFrom(
@@ -38,6 +43,24 @@ export default async function LoginPage({
   const returnTo = safeReturnPath(
     typeof query.next === "string" ? query.next : undefined,
   );
+
+  // Someone who is already signed in has no use for this form: send them where
+  // their account lives (or on to the page they were heading to). Skipped when
+  // a message is waiting (a rejected sign-in link, a saved password), which
+  // they should see. Judged on the access token alone: the page is not sent
+  // the refresh cookie. This is the same check the dashboards make, so the two
+  // can never send a person back and forth.
+  if (!notice) {
+    const account = await resolveAccountState({
+      locale: locale === "fr" ? "fr" : "en",
+      hasCredentials: false,
+    }).catch(() => null);
+    if (account?.state === "signed_in") {
+      redirect(
+        returnTo && account.role !== "billing" ? returnTo : account.destination,
+      );
+    }
+  }
 
   return (
     <section className="border-b border-navy/10 bg-[var(--color-surface)] py-16 md:py-24">

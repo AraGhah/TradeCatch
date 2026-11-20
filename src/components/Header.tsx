@@ -10,13 +10,16 @@ import { LocaleSwitcher } from "@/components/LocaleSwitcher";
 import { MobileNav } from "@/components/MobileNav";
 import { BrandLockup } from "@/components/BrandLockup";
 import { EmailContactLink } from "@/components/EmailContactLink";
+import { AccountLink } from "@/components/AccountLink";
+import { useAccountNav } from "@/components/useAccountNav";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
 
 // Header = the pages that sell. About, FAQ, Help and Receptionist live in the
 // footer so no page is linked from both places on desktop. Mobile drawer is a
-// shorter conversion path (demo / pricing / FAQ / login).
+// shorter conversion path (demo / pricing / FAQ), ending in the account entry
+// (login or dashboard), which is not a fixed link: see useAccountNav.
 type DesktopNavHref =
   | "/services"
   | "/how-it-works"
@@ -24,18 +27,14 @@ type DesktopNavHref =
   | "/pricing"
   | "/referral";
 
-type MobileNavHref =
-  | "/how-it-works"
-  | "/receptionist"
-  | "/pricing"
-  | "/faq"
-  | "/login";
+type MobileNavHref = "/how-it-works" | "/receptionist" | "/pricing" | "/faq";
 
 export function Header() {
   const t = useTranslations("nav");
   const cta = useTranslations("cta");
   const site = useTranslations("site");
   const pathname = usePathname();
+  const account = useAccountNav();
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -62,7 +61,6 @@ export function Header() {
     { href: "/receptionist", label: t("demo") },
     { href: "/pricing", label: t("pricing") },
     { href: "/faq", label: t("faq") },
-    { href: "/login", label: t("login") },
   ];
 
   return (
@@ -75,7 +73,7 @@ export function Header() {
       style={{ backdropFilter: "blur(14px)", WebkitBackdropFilter: "blur(14px)" }}
     >
       <Container className="flex h-(--header-h) items-center justify-between gap-4">
-        <div className="flex h-full w-full items-center justify-between gap-4">
+        <div className="flex h-full w-full items-center justify-between gap-4 max-[420px]:gap-2">
           <Link href="/" className={`flex items-center rounded-md py-2.5 ${FOCUS_RING}`}>
             <BrandLockup />
           </Link>
@@ -103,34 +101,47 @@ export function Header() {
             })}
           </nav>
 
-          <div className="hidden items-center gap-4 min-[1080px]:flex">
-            <EmailContactLink
-              email={site("email")}
-              className={`flex items-center rounded-md px-1 py-2.5 text-[14px] font-medium text-heading transition-colors hover:text-ember-text ${FOCUS_RING}`}
-            >
-              {t("emailUs")}
-            </EmailContactLink>
-            <LocaleSwitcher />
-            <CTAButton href="/book-audit" variant="ink" size="sm">
-              {cta("bookFreeDemo")}
-            </CTAButton>
-          </div>
+          {/* One cluster at every width, so there is exactly one profile icon:
+              the last item on desktop, between the demo button and the menu on phones.
+              The icon takes 52px of a phone header that had little to spare, so the small
+              demo button stays on ONE line by giving way in steps (never a two-line pill):
+              420px and up is the original look plus the icon; 385-419px has slightly
+              tighter spacing and a slightly smaller button; below 385px the button leaves
+              the bar (the menu still has the full-width one). */}
+          <div className="flex items-center gap-2.5 max-[420px]:gap-1.5 min-[1080px]:gap-4">
+            <div className="hidden items-center gap-4 min-[1080px]:flex">
+              <EmailContactLink
+                email={site("email")}
+                className={`flex items-center rounded-md px-1 py-2.5 text-[14px] font-medium text-heading transition-colors hover:text-ember-text ${FOCUS_RING}`}
+              >
+                {t("emailUs")}
+              </EmailContactLink>
+              <LocaleSwitcher />
+              <CTAButton href="/book-audit" variant="ink" size="sm">
+                {cta("bookFreeDemo")}
+              </CTAButton>
+            </div>
 
-          <div className="flex items-center gap-2.5 min-[1080px]:hidden">
             <CTAButton
               href="/book-audit"
               variant="ink"
               size="sm"
-              className="!px-3.5 !py-2.5 text-[13px]"
+              className="whitespace-nowrap !px-3.5 !py-2.5 text-[13px] max-[420px]:!px-2.5 max-[420px]:text-[12px] max-[385px]:hidden min-[1080px]:hidden"
             >
               {cta("bookAuditShort")}
             </CTAButton>
-            <MobileNav
-              links={mobileLinks}
-              ctaLabel={cta("bookFreeDemo")}
-              email={site("email")}
-              emailLabel={t("emailUs")}
-            />
+
+            <AccountLink account={account} />
+
+            <div className="min-[1080px]:hidden">
+              <MobileNav
+                links={mobileLinks}
+                account={account}
+                ctaLabel={cta("bookFreeDemo")}
+                email={site("email")}
+                emailLabel={t("emailUs")}
+              />
+            </div>
           </div>
         </div>
       </Container>

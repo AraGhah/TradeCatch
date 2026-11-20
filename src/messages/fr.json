@@ -36,7 +36,11 @@
     "demo": "Démo",
     "login": "Connexion",
     "more": "Plus",
-    "emailUs": "Nous écrire"
+    "emailUs": "Nous écrire",
+    "account": "Compte",
+    "accountDashboard": "Mon tableau de bord",
+    "accountAdmin": "Tableau de bord admin",
+    "accountBilling": "Facturation"
   },
   "cta": {
     "primary": "Réserver une démo gratuite",
