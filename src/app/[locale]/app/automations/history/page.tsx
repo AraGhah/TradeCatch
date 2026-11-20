@@ -1,7 +1,10 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AutomationSubnav } from "@/components/app/AutomationSubnav";
+import { formatWhen } from "@/components/app/automation-copy";
+import { usableTimeZone } from "@/product/scheduling/slots";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
+import { isKnownResult } from "@/product/sms-automation/status";
 
 export default async function AutomationHistoryPage({
   params,
@@ -14,6 +17,16 @@ export default async function AutomationHistoryPage({
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
   const history = await getAutomationServices().history(auth.ctx.organization.id);
+  const timeZone = usableTimeZone(auth.ctx.organization.timezone);
+
+  /** What happened to a text, in plain words. A code the screen does not know is never shown as it is. */
+  function whatHappened(row: (typeof history)[number]): string[] {
+    const lines: string[] = [];
+    const reason = row.cancelReason ?? row.error;
+    if (reason) lines.push(isKnownResult(reason) ? t(`results.${reason}`) : t("results.unknownError"));
+    if (row.responseStatus !== "none") lines.push(t(`response.${row.responseStatus}`));
+    return lines;
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -60,22 +73,32 @@ export default async function AutomationHistoryPage({
                   </td>
                   <td className="px-4 py-3">{t(`names.${row.automationType}`)}</td>
                   <td className="px-4 py-3">
-                    {row.status}
+                    {t(`jobStatus.${row.status}`)}
                     {row.simulated ? ` · ${t("simulated")}` : ""}
                   </td>
                   <td className="px-4 py-3 text-navy/70">
-                    {row.cancelReason || row.responseStatus}
-                    {row.error ? ` · ${row.error}` : ""}
-                    {row.providerMessageSid ? ` · ${row.providerMessageSid}` : ""}
-                    {row.price ? ` · ${row.price} ${row.priceUnit ?? ""}` : ""}
+                    {whatHappened(row).map((line) => (
+                      <p key={line} className="m-0">
+                        {line}
+                      </p>
+                    ))}
+                    {row.providerMessageSid ? (
+                      <p className="m-0 mt-1 text-xs text-navy/50">
+                        {t("historyCols.reference")}: {row.providerMessageSid}
+                      </p>
+                    ) : null}
+                    {row.price ? (
+                      <p className="m-0 text-xs text-navy/50">
+                        {t("historyCols.cost")}: {row.price} {row.priceUnit ?? ""}
+                      </p>
+                    ) : null}
                   </td>
                   <td className="max-w-xs px-4 py-3 text-navy/70">
                     {row.messageBody || "—"}
                     <p className="mt-1 text-xs text-navy/40">
-                      {t("historyCols.scheduled")}{" "}
-                      {new Date(row.scheduledAt).toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}
+                      {t("historyCols.scheduled")} {formatWhen(row.scheduledAt, locale, timeZone)}
                       {row.submittedAt
-                        ? ` · ${t("historyCols.sent")} ${new Date(row.submittedAt).toLocaleString(locale === "fr" ? "fr-CA" : "en-CA")}`
+                        ? ` · ${t("historyCols.sent")} ${formatWhen(row.submittedAt, locale, timeZone)}`
                         : ""}
                     </p>
                   </td>

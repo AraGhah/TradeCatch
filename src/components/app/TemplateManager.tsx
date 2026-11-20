@@ -178,12 +178,15 @@ export function TemplateManager({
               type="button"
               disabled={busy}
               onClick={() => insertVariable(name)}
-              className="rounded-md border border-navy/15 px-2 py-1 font-mono text-xs text-navy"
+              className="rounded-md border border-navy/15 px-2 py-1 text-xs text-navy"
             >
-              {`{{${name}}}`}
+              {t(`templateUi.variableNames.${name}`)}
             </button>
           ))}
         </div>
+        <p className="text-xs text-navy/60">
+          {t("templateUi.variablesHint", { example: "{{business_name}}" })}
+        </p>
         <textarea
           value={body}
           disabled={busy}
@@ -204,7 +207,7 @@ export function TemplateManager({
             {labels.preview}
           </button>
           <button type="button" disabled={busy} aria-busy={flight.isPending("save")} onClick={() => void save(false)} className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">
-            {flight.isPending("save") ? t("saving") : labels.save}
+            {flight.isPending("save") ? t("actions.saving") : labels.save}
           </button>
           <button type="button" disabled={busy} onClick={() => void save(true)} className="rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:opacity-60">
             {labels.reset}
@@ -214,14 +217,20 @@ export function TemplateManager({
           <div className="rounded-md bg-[var(--color-surface,#f7f5f1)] p-3 text-sm text-navy">
             <p>{preview.body}</p>
             <p className="mt-2 text-xs text-navy/60">
-              {labels.chars}: {preview.chars} · {labels.segments}: {preview.segments} ({preview.encoding})
+              {labels.chars}: {preview.chars} · {labels.segments}: {preview.segments}
             </p>
             {preview.segments > 1 ? (
               <p className="mt-1 text-xs text-navy">{labels.segmentWarning}</p>
             ) : null}
+            {preview.encoding === "ucs2" ? (
+              <p className="mt-1 text-xs text-navy/60">{t("templateUi.shorterParts")}</p>
+            ) : null}
             {preview.missing.length > 0 ? (
               <p className="mt-1 text-xs text-red-800">
-                {labels.missing}: {preview.missing.join(", ")}
+                {labels.missing}:{" "}
+                {preview.missing
+                  .map((name) => (t.has(`templateUi.variableNames.${name}`) ? t(`templateUi.variableNames.${name}`) : name))
+                  .join(", ")}
               </p>
             ) : null}
             {preview.errors.length > 0 ? (

@@ -49,6 +49,8 @@ export function AutomationTestPanel({
 }) {
   const router = useRouter();
   const t = useTranslations("app.automations.testPanel");
+  // Job statuses are shared with the History screen, so they live one level up.
+  const statuses = useTranslations("app.automations.jobStatus");
   const dateLocale = useLocale() === "fr" ? "fr-CA" : "en-CA";
   const [phone, setPhone] = useState("+15145550199");
   const [name, setName] = useState("Alex Martin");
@@ -63,10 +65,7 @@ export function AutomationTestPanel({
       out.push(t(`reasons.${data.reason}` as "reasons.duplicate"));
     const jobs = [...(data.jobs ?? []), ...(data.job ? [data.job] : [])];
     for (const job of jobs) {
-      const status =
-        job.status && t.has(`jobStatus.${job.status}`)
-          ? t(`jobStatus.${job.status}` as "jobStatus.pending")
-          : (job.status ?? "");
+      const status = job.status && statuses.has(job.status) ? statuses(job.status as "pending") : "";
       const at = job.scheduledAt ? new Date(job.scheduledAt) : null;
       const when =
         at && !Number.isNaN(at.getTime())
