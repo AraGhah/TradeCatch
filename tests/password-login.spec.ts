@@ -94,7 +94,10 @@ test.describe("customer passwords", () => {
       page.getByRole("heading", { name: "Choose a new password" }),
     ).toBeVisible();
     await waitForFormHydration(page);
-    const token = new URL(page.url()).searchParams.get("token") ?? "";
+    // The secret travels in the address fragment, which no server ever receives.
+    const link = new URL(page.url());
+    expect(link.search).toBe("");
+    const token = new URLSearchParams(link.hash.slice(1)).get("token") ?? "";
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
     await page.getByLabel("New password").fill("password123");
     await page.getByLabel("Confirm password").fill("password123");
@@ -255,17 +258,19 @@ test.describe("customer passwords", () => {
   test("a used or invented link shows a clear message and offers a new one", async ({
     page,
   }) => {
-    await page.goto(`/set-password?token=${"A".repeat(43)}`);
+    await page.goto(`/set-password#token=${"A".repeat(43)}`);
     await expect(
-      page.getByText("invalid, expired, or already used").first(),
+      page
+        .getByText("This password reset link has expired or has already been used.")
+        .first(),
     ).toBeVisible();
     await expect(
-      page.getByRole("link", { name: "Request a new link" }),
+      page.getByRole("link", { name: "Request a New Link" }),
     ).toBeVisible();
     await expect(page.getByLabel("New password")).toHaveCount(0);
     await page.goto("/set-password");
     await expect(
-      page.getByRole("link", { name: "Request a new link" }),
+      page.getByRole("link", { name: "Request a New Link" }),
     ).toBeVisible();
   });
 
