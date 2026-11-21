@@ -6,6 +6,9 @@ export const CLOUDFLARE_CRON_ROUTES = {
     "/api/missed-call/escalations/tick",
     "/api/automations/tick",
     "/api/notifications/tick",
+    // Last on purpose: monitoring must never delay the customer-facing jobs
+    // above, and a failure in any of them does not stop it from running.
+    "/api/monitoring/watch",
   ],
   "*/15 * * * *": [
     "/api/starter/quotes/tick",
@@ -43,7 +46,7 @@ export function cloudflareSchedulerSecret(
   )
     throw new Error("Unknown scheduled route");
   const dedicated =
-    path === "/api/monitoring/tick"
+    path === "/api/monitoring/tick" || path === "/api/monitoring/watch"
       ? env.MONITORING_SECRET
       : path === "/api/book-audit/notifications/tick"
         ? env.BOOK_AUDIT_RETRY_SECRET

@@ -42,6 +42,7 @@ describe("Cloudflare scheduler", () => {
       ["/api/notifications/tick", "notifications"],
       ["/api/notifications/daily-summary/tick", "notifications"],
       ["/api/monitoring/tick", "monitoring"],
+      ["/api/monitoring/watch", "monitoring"],
       ["/api/automations/tick", "ops"],
     ])
       assert.equal(cloudflareSchedulerSecret(env, path), expected);
@@ -187,6 +188,8 @@ describe("Cloudflare scheduler", () => {
       "/api/missed-call/escalations/tick",
       "/api/automations/tick",
       "/api/notifications/tick",
+      // Last, so monitoring can never delay the customer-facing jobs before it.
+      "/api/monitoring/watch",
     ]);
     assert.deepEqual(routesForCloudflareCron("*/15 * * * *"), [
       "/api/starter/quotes/tick",
@@ -243,6 +246,7 @@ describe("Cloudflare scheduler", () => {
       "/api/missed-call/escalations/tick",
       "/api/automations/tick",
       "/api/notifications/tick",
+      "/api/monitoring/watch",
     ]);
   });
 });

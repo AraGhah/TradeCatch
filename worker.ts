@@ -10,6 +10,11 @@ import {
 import { withPostgresRequestScope } from "./src/lib/postgres-pool";
 import { guardWorkerFetch } from "./src/lib/worker-fetch-guard";
 import { recordScheduledJob } from "./src/product/reliability/job-health";
+import { createObserver } from "./src/product/reliability/observations";
+import {
+  createIngestSink,
+  observeRequest,
+} from "./src/product/reliability/worker-observer";
 import { workerLoginPreview } from "./src/product/saas/auth/login-preview";
 import {
   enforceInstallationRequest,
@@ -54,6 +59,23 @@ function schedulerOrigin(env: TradeCatchWorkerEnv): string {
   return new URL(configured || "https://tradecatch.ca").origin;
 }
 
+/**
+ * Real request outcomes (KAN-28). One recorder per isolate counts each finished
+ * response into per-minute buckets in memory (no I/O on the request path) and
+ * writes them out, a few at a time, after the response has gone. It can fail in
+ * any way without changing what a customer receives; see worker-observer.ts.
+ */
+const requestObserver = createObserver();
+
+/** The secret the scheduler already uses for the monitoring routes, if any. */
+function monitoringSecret(env: TradeCatchWorkerEnv): string | undefined {
+  try {
+    return cloudflareSchedulerSecret(env, "/api/monitoring/watch");
+  } catch {
+    return undefined;
+  }
+}
+
 export default {
   fetch(request, env, ctx) {
     // The Next proxy answers CORS for everything it handles (src/proxy.ts).
@@ -68,15 +90,35 @@ export default {
       selfHosts: [url.host],
       env: corsEnv(env),
     });
-    return guardWorkerFetch(request, () =>
-      withPostgresRequestScope(async () => {
-        const denied = await enforceInstallationRequest(request, env);
-        if (denied) return denied;
-        const preview = workerLoginPreview(request, env);
-        if (preview) return preview;
-        return openNextWorker.fetch(request, env, ctx);
-      }),
-    ).then((response) => withCors(response, cors));
+    return observeRequest({
+      observer: requestObserver,
+      request,
+      handle: () =>
+        guardWorkerFetch(request, () =>
+          withPostgresRequestScope(async () => {
+            const denied = await enforceInstallationRequest(request, env);
+            if (denied) return denied;
+            const preview = workerLoginPreview(request, env);
+            if (preview) return preview;
+            return openNextWorker.fetch(request, env, ctx);
+          }),
+        ).then((response) => withCors(response, cors)),
+      schedule: (work) => ctx.waitUntil(work),
+      // A scope of its own: the request's has closed by the time this runs.
+      flush: () =>
+        withPostgresRequestScope(
+          () =>
+            requestObserver.flush(
+              createIngestSink({
+                origin: schedulerOrigin(env),
+                secret: monitoringSecret(env),
+                fetchInternal: (internal) =>
+                  openNextWorker.fetch(internal, env, ctx),
+              }),
+            ),
+          { independent: true },
+        ),
+    });
   },
 
   async scheduled(controller, env, ctx) {
