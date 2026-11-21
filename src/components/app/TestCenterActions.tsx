@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 export function TestCenterActions({
   organizationId,
   isDemo,
@@ -16,10 +18,11 @@ export function TestCenterActions({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function seed() {
+  const seed = useGuarded(seedHandler);
+  async function seedHandler() {
     setError(null);
     setMessage(null);
-    const res = await fetch(
+    const res = await timedFetch(
       `/api/admin/demo-businesses/${organizationId}/seed`,
       { method: "POST" },
     );
@@ -31,14 +34,16 @@ export function TestCenterActions({
     setMessage(t("seedOk"));
   }
 
-  async function reset() {
+  const reset = useGuarded(resetHandler);
+  async function resetHandler() {
     if (!window.confirm(t("confirmReset"))) return;
     setError(null);
     setMessage(null);
-    const res = await fetch(
+    const res = await timedFetch(
       `/api/admin/demo-businesses/${organizationId}/reset`,
       {
         method: "POST",
+        timeoutMs: 60_000,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ confirm: "RESET_DEMO_ACCOUNT", reseed: true }),
       },

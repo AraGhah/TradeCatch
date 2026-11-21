@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 export function PilotFeedbackForm({ organizationId }: { organizationId: string }) {
   const [description, setDescription] = useState("");
   const [message, setMessage] = useState("");
 
-  async function submit() {
-    const response = await fetch(`/api/businesses/${organizationId}/feedback`, {
+  const submit = useGuarded(submitHandler);
+  async function submitHandler() {
+    const response = await timedFetch(`/api/businesses/${organizationId}/feedback`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ category: "ai", description, priority: "medium" }),

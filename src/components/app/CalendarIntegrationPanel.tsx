@@ -4,6 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Status = {
   status: string;
   calendarId?: string;
@@ -206,6 +209,20 @@ export function CalendarIntegrationPanel({
     if (busy) return;
     setBusy(kind);
     setMessage(null);
+    void load().catch(() => {
+      setIsError(true);
+      setMessage(t("connectionError"));
+    });
+  }
+
+  const connect = useGuarded(connectHandler);
+  async function connectHandler() {
+    if (busy) return;
+    setActing("connect");
+    setIsError(false);
+    setMessage(null);
+    // Once the browser is on its way to Google the button stays busy: a second click would start a second sign-in.
+    let leaving = false;
     try {
       await action();
     } catch {
@@ -220,6 +237,7 @@ export function CalendarIntegrationPanel({
       const res = await fetch(`${base}/connect`, { method: "POST" });
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
+        leaving = true;
         window.location.href = data.url;
         return;
       }

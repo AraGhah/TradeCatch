@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import type { AiReceptionistOverview } from "@/product/receptionist/ai-receptionist-service";
 
+import { BusyLabel } from "@/components/ui/Spinner";
+import { timedFetch } from "@/lib/client/timed-fetch";
 const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
 const BUTTON_STOP =
   "inline-flex items-center gap-2 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600/60 focus-visible:ring-offset-2";
@@ -78,7 +80,7 @@ export function ReceptionistOverview({
       ? `/api/businesses/${organizationId}/ai-receptionist/activate`
       : `/api/businesses/${organizationId}/ai-receptionist/deactivate`;
     try {
-      const res = await fetch(path, { method: "POST" });
+      const res = await timedFetch(path, { method: "POST" });
       const data = (await res.json().catch(() => null)) as {
         ok?: boolean;
         activated?: boolean;
@@ -186,19 +188,12 @@ export function ReceptionistOverview({
           aria-busy={working !== null}
           onClick={() => void toggleActivation()}
         >
-          {working !== null ? (
-            <span
-              aria-hidden
-              className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-current border-t-transparent"
-            />
-          ) : null}
-          {working === "deactivate"
-            ? t("deactivating")
-            : working === "activate"
-              ? t("activating")
-              : activated
-                ? t("deactivate")
-                : t("activate")}
+          <BusyLabel
+            pending={working !== null}
+            busyLabel={working === "deactivate" ? t("deactivating") : t("activating")}
+          >
+            {activated ? t("deactivate") : t("activate")}
+          </BusyLabel>
         </button>
         <button type="button" className={BUTTON_GHOST} onClick={onEdit}>
           {t("editConfig")}

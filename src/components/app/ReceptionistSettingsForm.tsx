@@ -13,6 +13,10 @@ import {
   renderPromptTemplate,
 } from "@/product/receptionist/system-prompt";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { RequestTimeoutError, timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
+
 type Hours = { start: string; end: string; days: number[] };
 
 type DeptRow = { name: string; phoneE164: string; keywords: string };
@@ -58,6 +62,7 @@ export function ReceptionistSettingsForm({
   voiceCapabilities?: VoiceCapabilities;
 }) {
   const t = useTranslations("app.receptionist");
+  const tFeedback = useTranslations("feedback");
   const router = useRouter();
   const canPhoneBook = voiceCapabilities?.phoneBooking !== false;
   const canTransfer = voiceCapabilities?.transfer !== false;
@@ -205,7 +210,8 @@ export function ReceptionistSettingsForm({
     });
   }
 
-  async function onSubmit(e: React.FormEvent) {
+  const onSubmit = useGuarded(onSubmitHandler);
+  async function onSubmitHandler(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setSaved(false);
@@ -295,7 +301,7 @@ export function ReceptionistSettingsForm({
       const url = organizationId
         ? `/api/businesses/${organizationId}/ai-receptionist`
         : "/api/app/receptionist";
-      const res = await fetch(url, {
+      const res = await timedFetch(url, {
         method: organizationId ? "PATCH" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -313,8 +319,16 @@ export function ReceptionistSettingsForm({
       }
       setSaved(true);
       router.refresh();
-    } catch {
-      setError(t("error"));
+    } catch (cause) {
+      // No answer (timeout, dropped connection): the save may have gone
+      // through. Say that, never "Saved" and never a flat "failed".
+      setError(
+        tFeedback(
+          cause instanceof RequestTimeoutError
+            ? "errors.timeoutUnknown"
+            : "errors.networkUnknown",
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -1200,8 +1214,8 @@ export function ReceptionistSettingsForm({
       ) : null}
 
       <div>
-        <button type="submit" disabled={dis} className={BUTTON}>
-          {busy ? t("saving") : t("save")}
+        <button aria-busy={busy} type="submit" disabled={dis} className={BUTTON}>
+          <BusyLabel pending={busy} busyLabel={t("saving")}>{t("save")}</BusyLabel>
         </button>
       </div>
     </form>

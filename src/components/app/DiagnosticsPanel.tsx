@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
+import { InlineStatus } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 const CHECKS = [
   "ai",
   "phone",
@@ -27,15 +30,17 @@ export function DiagnosticsPanel({ organizationId }: { organizationId: string })
   const [failed, setFailed] = useState(false);
   const [running, setRunning] = useState<Check | null>(null);
 
-  async function run(check: Check) {
+  const run = useGuarded(runHandler);
+  async function runHandler(check: Check) {
     if (running) return;
     setRunning(check);
     setFailed(false);
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/diagnostics`,
         {
           method: "POST",
+          timeoutMs: 60_000,
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ check }),
         },
@@ -68,6 +73,7 @@ export function DiagnosticsPanel({ organizationId }: { organizationId: string })
             type="button"
             disabled={running !== null}
             aria-pressed={report?.check === check}
+            aria-busy={running === check}
             className="min-h-9 rounded-md border border-navy/15 bg-white px-3 py-2 text-sm text-navy disabled:opacity-50"
             onClick={() => void run(check)}
           >
@@ -75,11 +81,7 @@ export function DiagnosticsPanel({ organizationId }: { organizationId: string })
           </button>
         ))}
       </div>
-      {running ? (
-        <p role="status" className="text-sm text-navy/70">
-          {t("checkRunning")}
-        </p>
-      ) : null}
+      {running ? <InlineStatus>{t("checkRunning")}</InlineStatus> : null}
       {failed ? (
         <p role="alert" className="text-sm text-red-700">
           {t("checkFailed")}

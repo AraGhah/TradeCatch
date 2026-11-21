@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { BusyLabel } from "@/components/ui/Spinner";
 import type { AutomationConfig, AutomationRecord } from "@/product/sms-automation/types";
 import { StatusHelp, StatusPill, stateOf, type StatusInputs } from "./AutomationStatus";
 import { formatDuration, formatHour, type Translate } from "./automation-copy";
@@ -217,16 +218,16 @@ export function AutomationSettingsForm({
         <button
           type="button"
           disabled={busy}
+          aria-busy={flight.isPending("toggle")}
           onClick={() => void setEnabled(!stored.enabled)}
           className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {flight.isPending("toggle")
-            ? stored.enabled
-              ? t("actions.pausing")
-              : t("actions.enabling")
-            : stored.enabled
-              ? t("actions.pause")
-              : t("actions.enable")}
+          <BusyLabel
+            pending={flight.isPending("toggle")}
+            busyLabel={stored.enabled ? t("actions.pausing") : t("actions.enabling")}
+          >
+            {stored.enabled ? t("actions.pause") : t("actions.enable")}
+          </BusyLabel>
         </button>
       </div>
 
@@ -390,7 +391,7 @@ export function AutomationSettingsForm({
           aria-busy={flight.isPending("save")}
           className="w-fit rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy disabled:opacity-60"
         >
-          {flight.isPending("save") ? t("actions.saving") : t("actions.save")}
+          <BusyLabel pending={flight.isPending("save")} busyLabel={t("actions.saving")}>{t("actions.save")}</BusyLabel>
         </button>
         {unsaved && !busy ? (
           <span data-testid="unsaved" className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-900">

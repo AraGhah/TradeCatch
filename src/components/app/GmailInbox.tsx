@@ -6,6 +6,9 @@ import { Link } from "@/i18n/navigation";
 import { GMAIL_EVENT } from "@/components/app/GmailSyncBadge";
 import type { GmailMessageSummary } from "@/product/gmail/types";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 type Filter = "all" | "unread" | "customers" | "attachments";
 const FILTERS: Filter[] = ["all", "unread", "customers", "attachments"];
 
@@ -75,7 +78,7 @@ export function GmailInbox({
     if (next.query) params.set("q", next.query);
     if (next.before) params.set("before", next.before);
     try {
-      const response = await fetch(`/api/app/gmail/messages?${params.toString()}`, { cache: "no-store" });
+      const response = await timedFetch(`/api/app/gmail/messages?${params.toString()}`, { cache: "no-store" });
       if (!response.ok) throw new Error(String(response.status));
       const body = (await response.json()) as Page;
       if (ticket !== latest.current) return;
@@ -112,12 +115,13 @@ export function GmailInbox({
     return () => window.removeEventListener(GMAIL_EVENT, onSync);
   }, [load]);
 
-  async function refresh() {
+  const refresh = useGuarded(refreshHandler);
+  async function refreshHandler() {
     setSyncing(true);
     setActionError(null);
     setNotice(null);
     try {
-      const response = await fetch("/api/app/gmail/sync?mode=manual", { method: "POST" });
+      const response = await timedFetch("/api/app/gmail/sync?mode=manual", { method: "POST" });
       const body = (await response.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
@@ -164,13 +168,13 @@ export function GmailInbox({
           />
         </div>
         {connected ? (
-          <button
+          <button aria-busy={syncing}
             type="button"
             disabled={syncing}
             onClick={() => void refresh()}
             className={`rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 ${FOCUS_RING}`}
           >
-            {syncing ? t("syncing") : t("sync")}
+            <BusyLabel pending={syncing} busyLabel={t("syncing")}>{t("sync")}</BusyLabel>
           </button>
         ) : null}
       </div>
@@ -270,10 +274,13 @@ export function GmailInbox({
         <button
           type="button"
           disabled={more}
+          aria-busy={more}
           onClick={() => void loadMore()}
           className={`self-center rounded-md border border-navy/25 px-4 py-2 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-60 ${FOCUS_RING}`}
         >
-          {more ? t("loading") : t("loadMore")}
+          <BusyLabel pending={more} busyLabel={t("loading")}>
+            {t("loadMore")}
+          </BusyLabel>
         </button>
       ) : null}
     </div>

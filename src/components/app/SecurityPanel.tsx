@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type SessionRow = { id: string; createdAt: string; userAgent?: string };
 
 export function SecurityPanel({
@@ -23,7 +25,7 @@ export function SecurityPanel({
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   function fetchSessions() {
-    return fetch(`/api/businesses/${organizationId}/security`)
+    return timedFetch(`/api/businesses/${organizationId}/security`)
       .then((response) => {
         if (!response.ok) throw new Error("Security sessions unavailable");
         return response.json();
@@ -60,13 +62,14 @@ export function SecurityPanel({
     });
   }
 
-  async function revoke(sessionId: string) {
+  const revoke = useGuarded(revokeHandler);
+  async function revokeHandler(sessionId: string) {
     if (revokingId) return;
     setRevokingId(sessionId);
     setMessage("");
     setMessageError(false);
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/security/sessions/${sessionId}`,
         { method: "POST" },
       );

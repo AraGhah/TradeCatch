@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 const DESCRIPTION_MAX = 2000;
 
 export function NewLeadForm({ organizationId }: { organizationId: string }) {
@@ -19,12 +22,13 @@ export function NewLeadForm({ organizationId }: { organizationId: string }) {
   // Set when the number already belongs to a customer with another name.
   const [existingName, setExistingName] = useState("");
 
-  async function submit(existingCustomer?: "keep" | "rename") {
+  const submit = useGuarded(submitHandler);
+  async function submitHandler(existingCustomer?: "keep" | "rename") {
     if (busy) return;
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`/api/businesses/${organizationId}/leads`, {
+      const res = await timedFetch(`/api/businesses/${organizationId}/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -173,12 +177,12 @@ export function NewLeadForm({ organizationId }: { organizationId: string }) {
         </div>
       ) : null}
       <div className="flex gap-2 sm:col-span-2">
-        <button
+        <button aria-busy={busy}
           type="submit"
           disabled={busy}
           className="rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {busy ? t("saving") : t("save")}
+          <BusyLabel pending={busy} busyLabel={t("saving")}>{t("save")}</BusyLabel>
         </button>
         <button
           type="button"

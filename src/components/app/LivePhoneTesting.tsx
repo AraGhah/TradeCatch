@@ -2,6 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
+import { BusyLabel } from "@/components/ui/Spinner";
 import {
   formatCallDuration,
   formatCallTime,
@@ -12,6 +13,8 @@ import type {
   SimulationRun,
 } from "@/product/telephony/live-test";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
 const BUTTON =
   "rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
@@ -92,8 +95,9 @@ export function LivePhoneTesting({
   }
 
   async function post(body: Record<string, unknown>) {
-    const res = await fetch(`/api/businesses/${organizationId}/calls/test`, {
+    const res = await timedFetch(`/api/businesses/${organizationId}/calls/test`, {
       method: "POST",
+      timeoutMs: 60_000,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
@@ -103,7 +107,8 @@ export function LivePhoneTesting({
     return { ok: res.ok && data !== null && data.ok !== false, data };
   }
 
-  async function runSimulation() {
+  const runSimulation = useGuarded(runSimulationHandler);
+  async function runSimulationHandler() {
     setBusy("simulation");
     setProblem(null);
     try {
@@ -128,8 +133,9 @@ export function LivePhoneTesting({
     }
   }
 
+  const recheckLive = useGuarded(recheckLiveHandler);
   /** Re-reads the line's readiness. This never places a call. */
-  async function recheckLive() {
+  async function recheckLiveHandler() {
     setBusy("live");
     setProblem(null);
     try {
@@ -209,7 +215,9 @@ export function LivePhoneTesting({
             aria-busy={busy === "simulation"}
             onClick={() => void runSimulation()}
           >
-            {busy === "simulation" ? t("running") : t("startSimulation")}
+            <BusyLabel pending={busy === "simulation"} busyLabel={t("running")}>
+              {t("startSimulation")}
+            </BusyLabel>
           </button>
         </div>
       </section>
@@ -339,7 +347,9 @@ export function LivePhoneTesting({
             aria-busy={busy === "live"}
             onClick={() => void recheckLive()}
           >
-            {busy === "live" ? t("checking") : t("liveInstructions")}
+            <BusyLabel pending={busy === "live"} busyLabel={t("checking")}>
+              {t("liveInstructions")}
+            </BusyLabel>
           </button>
         </div>
       </section>

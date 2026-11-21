@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { ReferralShare } from "@/components/app/ReferralShare";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Links = { en: string; fr: string };
 
 type Labels = {
@@ -89,12 +91,13 @@ export function ReferralLinkCard({
   );
   const inFlight = useRef(false);
 
-  async function create() {
+  const create = useGuarded(createHandler);
+  async function createHandler() {
     if (inFlight.current) return;
     inFlight.current = true;
     setState({ phase: "creating" });
     try {
-      const res = await fetch("/api/app/referrals/link", {
+      const res = await timedFetch("/api/app/referrals/link", {
         method: "POST",
         headers: { Accept: "application/json" },
         cache: "no-store",

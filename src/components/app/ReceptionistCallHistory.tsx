@@ -1,7 +1,7 @@
 "use client";
 
 import { useLocale, useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CustomerRecordCard, type RecordPriority } from "./CustomerRecordCard";
 import { isWithheldCaller } from "@/lib/phone";
 import { cleanProblemText, formatPhoneDisplay } from "@/product/crm/record-quality";
@@ -10,6 +10,9 @@ import {
   formatCallTime,
 } from "@/product/receptionist/call-format";
 
+import { LoadingRegion, SkeletonRows } from "@/components/ui/Skeleton";
+import { BusyLabel } from "@/components/ui/Spinner";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type CallRow = {
   id: string;
   callSid: string;
@@ -75,10 +78,15 @@ function Conversation({
     "idle" | "loading" | "error" | { turns: TurnRow[] }
   >("idle");
 
+  // One load at a time: the button is disabled while it runs, and this closes the
+  // gap before React re-renders for a burst of clicks in the same instant.
+  const loadingNow = useRef(false);
   async function load() {
+    if (loadingNow.current) return;
+    loadingNow.current = true;
     setState("loading");
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/ai-receptionist/calls/${encodeURIComponent(callId)}`,
       );
       const data = (await res.json().catch(() => null)) as {
@@ -88,6 +96,8 @@ function Conversation({
       setState({ turns: data?.call?.transcript ?? [] });
     } catch {
       setState("error");
+    } finally {
+      loadingNow.current = false;
     }
   }
 
@@ -98,13 +108,16 @@ function Conversation({
           type="button"
           className="font-semibold text-navy underline disabled:opacity-50"
           disabled={state === "loading"}
+          aria-busy={state === "loading"}
           onClick={() => void load()}
         >
-          {t("conversation")}
+          <BusyLabel pending={state === "loading"} busyLabel={t("conversationLoading")}>
+            {t("conversation")}
+          </BusyLabel>
         </button>
         {state === "error" ? (
           <p role="alert" className="mt-1 text-red-700">
-            {t("conversationEmpty")}
+            {t("conversationError")}
           </p>
         ) : null}
       </div>
@@ -137,19 +150,22 @@ export function ReceptionistCallHistory({
   const t = useTranslations("app.receptionist.history");
   const tr = useTranslations("app.record");
   const tc = useTranslations("app.calls");
+  const tFeedback = useTranslations("feedback");
   const lang = useLocale() === "fr" ? "fr" : "en";
   const [calls, setCalls] = useState<CallRow[]>([]);
   // Calls are stored in UTC and shown in the business's own time zone.
   const [timeZone, setTimeZone] = useState("America/Toronto");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Bumped by "Try again" to read the list once more (a read, so safe to repeat).
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setLoading(true);
       try {
-        const res = await fetch(
+        const res = await timedFetch(
           `/api/businesses/${organizationId}/ai-receptionist/calls`,
         );
         const data = (await res.json().catch(() => null)) as {
@@ -174,16 +190,30 @@ export function ReceptionistCallHistory({
     return () => {
       cancelled = true;
     };
-  }, [organizationId, t]);
+  }, [organizationId, t, reloadKey]);
 
   if (loading) {
-    return <p className="text-sm text-navy/60">{t("loading")}</p>;
+    return (
+      <LoadingRegion label={t("loading")}>
+        <SkeletonRows rows={3} columns={3} />
+      </LoadingRegion>
+    );
   }
   if (error) {
     return (
-      <p role="alert" className="text-sm text-red-700">
-        {error}
-      </p>
+      <div role="alert" className="flex flex-col items-start gap-2 text-sm text-red-700">
+        <p className="m-0">{error}</p>
+        <button
+          type="button"
+          className="rounded-md border border-red-300 px-3 py-1.5 font-semibold"
+          onClick={() => {
+            setError(null);
+            setReloadKey((n) => n + 1);
+          }}
+        >
+          {tFeedback("retry")}
+        </button>
+      </div>
     );
   }
   if (calls.length === 0) {

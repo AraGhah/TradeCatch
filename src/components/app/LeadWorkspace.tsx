@@ -11,6 +11,9 @@ import type {
   LeadWithCustomer,
 } from "@/product/crm/types";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 type Person = { id: string; name: string };
 
 const STATUSES: LeadStatus[] = [
@@ -83,11 +86,12 @@ export function LeadWorkspace({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function saveLead() {
+  const saveLead = useGuarded(saveLeadHandler);
+  async function saveLeadHandler() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/leads/${lead.id}`,
         {
           method: "PATCH",
@@ -114,10 +118,11 @@ export function LeadWorkspace({
     }
   }
 
-  async function saveControl(next: ConversationControl) {
+  const saveControl = useGuarded(saveControlHandler);
+  async function saveControlHandler(next: ConversationControl) {
     setMode(next);
     if (!lead.conversationId) return;
-    await fetch(
+    await timedFetch(
       `/api/businesses/${organizationId}/conversations/${lead.conversationId}`,
       {
         method: "PATCH",
@@ -128,12 +133,13 @@ export function LeadWorkspace({
     router.refresh();
   }
 
-  async function send() {
+  const send = useGuarded(sendHandler);
+  async function sendHandler() {
     if (!draft.trim()) return;
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/leads/${lead.id}/messages`,
         {
           method: "POST",
@@ -242,13 +248,13 @@ export function LeadWorkspace({
           {t("source")}: {t(`sources.${lead.source}`)}
         </p>
         {error ? <p className="text-sm text-red-700">{error}</p> : null}
-        <button
+        <button aria-busy={busy}
           type="button"
           disabled={busy}
           onClick={() => void saveLead()}
           className="self-start rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {busy ? t("saving") : t("save")}
+          <BusyLabel pending={busy} busyLabel={t("saving")}>{t("save")}</BusyLabel>
         </button>
         <h3 className="mt-2 font-semibold text-navy">{t("events")}</h3>
         <ul className="flex flex-col gap-2 text-sm text-navy/80">

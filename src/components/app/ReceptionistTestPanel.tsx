@@ -3,6 +3,11 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { useFailureText } from "@/components/ui/FeedbackMessage";
+import { BusyLabel } from "@/components/ui/Spinner";
+import { classifyFailure } from "@/lib/client/use-action";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Msg = { role: "agent" | "system" | "user"; text: string };
 
 const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
@@ -19,24 +24,30 @@ export function ReceptionistTestPanel({
   organizationId: string;
 }) {
   const t = useTranslations("app.receptionist.test");
+  const tFeedback = useTranslations("feedback");
+  const failureText = useFailureText();
   const [language, setLanguage] = useState<"fr" | "en">("fr");
   const [scenario, setScenario] = useState<"open" | "after_hours">("open");
   const [state, setState] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [speech, setSpeech] = useState("");
   const [ended, setEnded] = useState(false);
-  const [busy, setBusy] = useState(false);
+  // "start" or "say" while a request runs: only that button shows its spinner.
+  const [acting, setActing] = useState<"start" | "say" | null>(null);
+  const busy = acting !== null;
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<string | null>(null);
 
-  async function callApi(body: Record<string, unknown>) {
-    setBusy(true);
+  const callApi = useGuarded(callApiHandler);
+  async function callApiHandler(body: Record<string, unknown>): Promise<boolean> {
+    setActing(body.action === "say" ? "say" : "start");
     setError(null);
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/ai-receptionist/test`,
         {
           method: "POST",
+          timeoutMs: 60_000,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         },
@@ -50,7 +61,7 @@ export function ReceptionistTestPanel({
       } | null;
       if (!res.ok || !data) {
         setError(data?.error || t("error"));
-        return;
+        return false;
       }
       setMessages((prev) => [
         ...prev,
@@ -69,10 +80,14 @@ export function ReceptionistTestPanel({
             null,
         );
       }
-    } catch {
-      setError(t("error"));
+      return true;
+    } catch (err) {
+      // Without an answer the step may still have run: say so rather than "failed".
+      const failure = classifyFailure(err, { write: true });
+      setError(failure.outcomeUnknown ? failureText(failure) : t("error"));
+      return false;
     } finally {
-      setBusy(false);
+      setActing(null);
     }
   }
 
@@ -86,11 +101,16 @@ export function ReceptionistTestPanel({
 
   async function say(e: React.FormEvent) {
     e.preventDefault();
-    if (!state || !speech.trim()) return;
+    if (busy || !state || !speech.trim()) return;
     const text = speech.trim();
     setMessages((prev) => [...prev, { role: "user", text }]);
     setSpeech("");
-    await callApi({ action: "say", state, speech: text });
+    const ok = await callApi({ action: "say", state, speech: text });
+    if (ok === false) {
+      // Keep what was typed: take the unanswered line back out of the conversation and into the box.
+      setMessages((prev) => prev.slice(0, -1));
+      setSpeech((current) => current || text);
+    }
   }
 
   return (
@@ -134,9 +154,12 @@ export function ReceptionistTestPanel({
             type="button"
             className={BUTTON}
             disabled={busy}
+            aria-busy={acting === "start"}
             onClick={() => void start()}
           >
-            {t("start")}
+            <BusyLabel pending={acting === "start"} busyLabel={tFeedback("working")}>
+              {t("start")}
+            </BusyLabel>
           </button>
         </div>
       ) : null}
@@ -180,8 +203,15 @@ export function ReceptionistTestPanel({
             disabled={busy}
             maxLength={400}
           />
-          <button type="submit" className={BUTTON} disabled={busy || !speech.trim()}>
-            {t("send")}
+          <button
+            type="submit"
+            className={BUTTON}
+            disabled={busy || !speech.trim()}
+            aria-busy={acting === "say"}
+          >
+            <BusyLabel pending={acting === "say"} busyLabel={tFeedback("sending")}>
+              {t("send")}
+            </BusyLabel>
           </button>
         </form>
       ) : null}

@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { requireBillingContext } from "@/product/saas/tenant";
 import { BillingPortalButton } from "@/components/app/BillingPortalButton";
+import { CheckoutReturnWatcher } from "@/components/app/CheckoutReturnWatcher";
 import { InstallationCheckoutButton } from "@/components/app/InstallationCheckoutButton";
 import { FullMessagesProvider } from "@/components/FullMessagesProvider";
 import { Link } from "@/i18n/navigation";
@@ -20,10 +21,14 @@ export const metadata = { robots: { index: false, follow: false } };
 
 export default async function BillingPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ checkout?: string }>;
 }) {
   const { locale } = await params;
+  // Where Stripe sent the customer back from: only a hint. What the page says about payment comes from the server's own record.
+  const { checkout: returned } = await searchParams;
   setRequestLocale(locale);
   const t = await getTranslations("app.account");
   const settingsT = await getTranslations("app.settings");
@@ -59,6 +64,10 @@ export default async function BillingPage({
           hasAppointments: orgHasFeature(org.plan, "APPOINTMENT_BOOKING"),
         })
       : null;
+  // Back from Stripe's page, but our server has not recorded the payment yet (its webhook is still on its way).
+  const confirming = returned === "success" && card !== null && card.checkout !== null;
+  const confirmed = returned === "success" && card !== null && card.checkout === null;
+  const canceledReturn = returned === "canceled" && card !== null && card.checkout !== null;
   // Setup and the monthly price are shown separately, in Canadian dollars, with the date of the first monthly charge.
   const websitePrice = formatPlanPrice(ADD_ONS.websiteService.priceCad, locale);
   const checkoutFigures = plan?.price
@@ -139,7 +148,21 @@ export default async function BillingPage({
                   </Link>
                 </p>
               ) : null}
-              {card.checkout === "start" ? (
+              {confirmed ? (
+                <p role="status" className="mt-3 text-sm font-semibold text-green-800">
+                  {t("checkoutConfirmed")}
+                </p>
+              ) : null}
+              {canceledReturn ? (
+                <p role="status" className="mt-3 text-sm text-navy/80">
+                  {t("checkoutCanceledNote")}
+                </p>
+              ) : null}
+              {confirming ? (
+                <div className="mt-3">
+                  <CheckoutReturnWatcher />
+                </div>
+              ) : card.checkout === "start" ? (
                 <div className="mt-3">
                   <p className="mb-2 text-sm text-navy/70">
                     {t("checkoutIntro", checkoutFigures)}

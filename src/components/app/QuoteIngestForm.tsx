@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 export function QuoteIngestForm({
   locale,
   wordingApproved,
@@ -20,13 +23,14 @@ export function QuoteIngestForm({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
+  const onSubmit = useGuarded(onSubmitHandler);
+  async function onSubmitHandler(e: React.FormEvent) {
     e.preventDefault();
     if (busy || !wordingApproved) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/app/quotes", {
+      const res = await timedFetch("/api/app/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -109,12 +113,12 @@ export function QuoteIngestForm({
           {error}
         </p>
       ) : null}
-      <button
+      <button aria-busy={busy}
         type="submit"
         disabled={busy || !wordingApproved}
         className="mt-3 rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
       >
-        {busy ? t("quotes.saving") : t("quotes.submit")}
+        <BusyLabel pending={busy} busyLabel={t("quotes.saving")}>{t("quotes.submit")}</BusyLabel>
       </button>
     </form>
   );

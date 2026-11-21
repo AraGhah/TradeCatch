@@ -7,6 +7,8 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 import { SessionKeeper } from "@/components/app/SessionKeeper";
 import { planNameOrNull } from "@/lib/plan-names";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 /**
  * The Account Center menu, in the order owners use it. Appointments belong to
  * Professional, so Essential accounts never see that entry. Everything else
@@ -81,8 +83,9 @@ export function AppShell({
     setNavOpen(false);
   }
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+  const logout = useGuarded(logoutHandler);
+  async function logoutHandler() {
+    await timedFetch("/api/auth/logout", { method: "POST" });
     window.location.href = locale === "fr" ? "/fr/connexion" : "/login";
   }
 

@@ -3,6 +3,11 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { useFailureText } from "@/components/ui/FeedbackMessage";
+import { BusyLabel } from "@/components/ui/Spinner";
+import { classifyFailure } from "@/lib/client/use-action";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type FeatureFlags = {
   aiReceptionist: boolean;
   appointmentBooking: boolean;
@@ -28,38 +33,43 @@ export function BusinessFeaturesForm({
   canEdit: boolean;
 }) {
   const t = useTranslations("app.settings");
+  const failureText = useFailureText();
   const [features, setFeatures] = useState(initial);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  async function save(event: React.FormEvent) {
+  const save = useGuarded(saveHandler);
+  async function saveHandler(event: React.FormEvent) {
     event.preventDefault();
     if (!canEdit) return;
     setSaving(true);
     setError(null);
     setMessage(null);
     try {
-      const res = await fetch(`/api/businesses/${organizationId}`, {
+      const res = await timedFetch(`/api/businesses/${organizationId}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ features }),
       });
-      const json = (await res.json()) as { error?: string };
+      // A 2xx is the server's confirmation; an unreadable body does not undo it.
+      const json = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
         setError(json.error || t("featuresSaveFailed"));
         return;
       }
       setMessage(t("featuresSaved"));
-    } catch {
-      setError(t("featuresSaveFailed"));
+    } catch (err) {
+      // No answer is not the same as "not saved": say so when the change may have gone through.
+      const failure = classifyFailure(err, { write: true });
+      setError(failure.outcomeUnknown ? failureText(failure) : t("featuresSaveFailed"));
     } finally {
       setSaving(false);
     }
   }
 
   return (
-    <form onSubmit={(e) => void save(e)} className="flex flex-col gap-3">
+    <form onSubmit={(e) => void save(e)} aria-busy={saving} className="flex flex-col gap-3">
       <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">
         {t("featuresHeading")}
       </h2>
@@ -85,13 +95,24 @@ export function BusinessFeaturesForm({
         <button
           type="submit"
           disabled={saving}
+          aria-busy={saving}
           className="w-fit rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {t("saveFeatures")}
+          <BusyLabel pending={saving} busyLabel={t("saving")}>
+            {t("saveFeatures")}
+          </BusyLabel>
         </button>
       ) : null}
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
-      {message ? <p className="text-sm text-emerald-800">{message}</p> : null}
+      {error ? (
+        <p role="alert" className="text-sm text-red-700">
+          {error}
+        </p>
+      ) : null}
+      {message ? (
+        <p role="status" className="text-sm text-emerald-800">
+          {message}
+        </p>
+      ) : null}
     </form>
   );
 }

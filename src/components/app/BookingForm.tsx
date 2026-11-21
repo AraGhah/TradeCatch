@@ -5,6 +5,9 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { parsePhoneInput } from "@/product/crm/phone";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 export function BookingForm() {
   const t = useTranslations("app");
   const router = useRouter();
@@ -17,7 +20,8 @@ export function BookingForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function onSubmit(e: React.FormEvent) {
+  const onSubmit = useGuarded(onSubmitHandler);
+  async function onSubmitHandler(e: React.FormEvent) {
     e.preventDefault();
     if (busy) return;
     setBusy(true);
@@ -37,7 +41,7 @@ export function BookingForm() {
         setError(t("bookings.errorPhone"));
         return;
       }
-      const res = await fetch("/api/app/bookings", {
+      const res = await timedFetch("/api/app/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -142,12 +146,12 @@ export function BookingForm() {
           {error}
         </p>
       ) : null}
-      <button
+      <button aria-busy={busy}
         type="submit"
         disabled={busy}
         className="mt-3 rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
       >
-        {busy ? t("bookings.saving") : t("bookings.submit")}
+        <BusyLabel pending={busy} busyLabel={t("bookings.saving")}>{t("bookings.submit")}</BusyLabel>
       </button>
     </form>
   );

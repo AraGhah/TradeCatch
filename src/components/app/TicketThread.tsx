@@ -2,8 +2,13 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { useFailureText } from "@/components/ui/FeedbackMessage";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
+import { classifyFailure } from "@/lib/client/use-action";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Message = {
   id: string;
   body: string;
@@ -28,6 +33,8 @@ export function TicketThread({
   ticketId: string;
 }) {
   const t = useTranslations("app.support");
+  const tFeedback = useTranslations("feedback");
+  const failureText = useFailureText();
   const locale = useLocale() === "fr" ? "fr-CA" : "en-CA";
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -37,7 +44,9 @@ export function TicketThread({
   const [body, setBody] = useState("");
   const [note, setNote] = useState("");
   const [noteError, setNoteError] = useState(false);
-  const [busy, setBusy] = useState(false);
+  // Which request is running: only that button shows its busy words.
+  const [acting, setActing] = useState<"refresh" | "reply" | null>(null);
+  const busy = acting !== null;
   const inFlight = useRef(false);
 
   const when = (iso?: string) =>
@@ -52,7 +61,7 @@ export function TicketThread({
 
   const load = useCallback(
     () =>
-      fetch(`/api/businesses/${organizationId}/support/tickets/${ticketId}`, {
+      timedFetch(`/api/businesses/${organizationId}/support/tickets/${ticketId}`, {
         cache: "no-store",
       })
         .then(async (response) => {
@@ -85,26 +94,27 @@ export function TicketThread({
   async function refresh() {
     if (inFlight.current) return;
     inFlight.current = true;
-    setBusy(true);
+    setActing("refresh");
     setNote("");
     setNoteError(false);
     try {
       await load();
     } finally {
       inFlight.current = false;
-      setBusy(false);
+      setActing(null);
     }
   }
 
-  async function reply(event: React.FormEvent) {
+  const reply = useGuarded(replyHandler);
+  async function replyHandler(event: React.FormEvent) {
     event.preventDefault();
     if (inFlight.current || !body.trim()) return;
     inFlight.current = true;
-    setBusy(true);
+    setActing("reply");
     setNote("");
     setNoteError(false);
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/support/tickets/${ticketId}/messages`,
         {
           method: "POST",
@@ -118,12 +128,16 @@ export function TicketThread({
         setBody("");
         await load();
       }
-    } catch {
+    } catch (err) {
+      // No answer: the reply may have been sent. The text stays in the box; re-read the thread so a
+      // reply that did arrive shows up before it is sent again.
+      const failure = classifyFailure(err, { write: true });
       setNoteError(true);
-      setNote(t("error"));
+      setNote(failure.outcomeUnknown ? failureText(failure) : t("error"));
+      if (failure.outcomeUnknown) void load();
     } finally {
       inFlight.current = false;
-      setBusy(false);
+      setActing(null);
     }
   }
 
@@ -152,9 +166,12 @@ export function TicketThread({
           type="button"
           disabled={busy}
           className="min-h-9 w-fit text-sm font-semibold text-navy underline disabled:opacity-50"
-          onClick={() => void refresh()}
+          aria-busy={acting === "refresh"}
+            onClick={() => void refresh()}
         >
-          {t("refresh")}
+          <BusyLabel pending={acting === "refresh"} busyLabel={tFeedback("loading")}>
+              {t("refresh")}
+            </BusyLabel>
         </button>
       </div>
       {!loaded ? (
@@ -223,9 +240,12 @@ export function TicketThread({
           <button
             type="submit"
             disabled={busy}
+            aria-busy={acting === "reply"}
             className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
           >
-            {t("reply")}
+            <BusyLabel pending={acting === "reply"} busyLabel={tFeedback("sending")}>
+              {t("reply")}
+            </BusyLabel>
           </button>
         </form>
       ) : null}

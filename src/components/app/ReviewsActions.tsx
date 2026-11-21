@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 export function ReviewsActions({
   googleReviewUrl,
   appointmentIds,
@@ -20,12 +23,13 @@ export function ReviewsActions({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function saveUrl(e: React.FormEvent) {
+  const saveUrl = useGuarded(saveUrlHandler);
+  async function saveUrlHandler(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/app/reviews", {
+      const res = await timedFetch("/api/app/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -46,13 +50,14 @@ export function ReviewsActions({
     }
   }
 
-  async function complete(e: React.FormEvent) {
+  const complete = useGuarded(completeHandler);
+  async function completeHandler(e: React.FormEvent) {
     e.preventDefault();
     if (!appointmentId) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/app/reviews", {
+      const res = await timedFetch("/api/app/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,12 +102,12 @@ export function ReviewsActions({
             className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
           />
         </label>
-        <button
+        <button aria-busy={busy}
           type="submit"
           disabled={busy}
           className="mt-3 rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
         >
-          {busy ? t("reviews.saving") : t("reviews.saveUrl")}
+          <BusyLabel pending={busy} busyLabel={t("reviews.saving")}>{t("reviews.saveUrl")}</BusyLabel>
         </button>
       </form>
 
@@ -128,12 +133,12 @@ export function ReviewsActions({
               ))}
             </select>
           </label>
-          <button
+          <button aria-busy={busy}
             type="submit"
             disabled={busy || !appointmentId}
             className="mt-3 rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
           >
-            {busy ? t("reviews.saving") : t("reviews.markComplete")}
+            <BusyLabel pending={busy} busyLabel={t("reviews.saving")}>{t("reviews.markComplete")}</BusyLabel>
           </button>
         </form>
       ) : null}

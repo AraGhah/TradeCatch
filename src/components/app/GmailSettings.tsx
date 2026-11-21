@@ -8,6 +8,9 @@ import { GMAIL_EVENT } from "@/components/app/GmailSyncBadge";
 import type { GmailNotice } from "@/product/gmail/http";
 import type { GmailPublicStatus } from "@/product/gmail/types";
 
+import { BusyLabel } from "@/components/ui/Spinner";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
 
@@ -60,12 +63,13 @@ export function GmailSettings({
     (status === "not_connected" ? null : asProblem(lastError));
   const connectHref = `/api/app/gmail/connect?locale=${lang}`;
 
-  async function disconnect() {
+  const disconnect = useGuarded(disconnectHandler);
+  async function disconnectHandler() {
     if (!window.confirm(t("disconnectConfirm"))) return;
     setPending("disconnect");
     setMessage(null);
     try {
-      const response = await fetch("/api/app/gmail/disconnect", {
+      const response = await timedFetch("/api/app/gmail/disconnect", {
         method: "POST",
       });
       if (!response.ok) throw new Error(String(response.status));
@@ -80,11 +84,12 @@ export function GmailSettings({
     }
   }
 
-  async function checkNow() {
+  const checkNow = useGuarded(checkNowHandler);
+  async function checkNowHandler() {
     setPending("sync");
     setMessage(null);
     try {
-      const response = await fetch("/api/app/gmail/sync?mode=manual", {
+      const response = await timedFetch("/api/app/gmail/sync?mode=manual", {
         method: "POST",
       });
       const body = (await response.json().catch(() => ({}))) as {
@@ -186,10 +191,13 @@ export function GmailSettings({
           <button
             type="button"
             disabled={pending !== null}
-            onClick={() => void checkNow()}
+            aria-busy={pending === "sync"}
+              onClick={() => void checkNow()}
             className={`rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60 ${FOCUS_RING}`}
           >
-            {pending === "sync" ? t("checking") : t("checkNow")}
+            <BusyLabel pending={pending === "sync"} busyLabel={t("checking")}>
+                {t("checkNow")}
+              </BusyLabel>
           </button>
         ) : null}
         {status === "connected" && configured ? (
@@ -204,10 +212,13 @@ export function GmailSettings({
           <button
             type="button"
             disabled={pending !== null}
-            onClick={() => void disconnect()}
+            aria-busy={pending === "disconnect"}
+              onClick={() => void disconnect()}
             className={`rounded-md border border-navy/25 px-3 py-2 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-60 ${FOCUS_RING}`}
           >
-            {pending === "disconnect" ? t("disconnecting") : t("disconnect")}
+            <BusyLabel pending={pending === "disconnect"} busyLabel={t("disconnecting")}>
+                {t("disconnect")}
+              </BusyLabel>
           </button>
         ) : null}
       </div>

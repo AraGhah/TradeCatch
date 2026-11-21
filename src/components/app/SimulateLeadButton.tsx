@@ -5,6 +5,9 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 export function SimulateLeadButton({
   organizationId,
 }: {
@@ -16,11 +19,12 @@ export function SimulateLeadButton({
   const [leadId, setLeadId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  async function run() {
+  const run = useGuarded(runHandler);
+  async function runHandler() {
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/leads/simulate`,
         { method: "POST" },
       );
@@ -41,13 +45,13 @@ export function SimulateLeadButton({
 
   return (
     <div className="flex flex-col gap-2">
-      <button
+      <button aria-busy={busy}
         type="button"
         disabled={busy}
         onClick={() => void run()}
         className="self-start rounded-md border border-navy/15 bg-white px-4 py-3 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-50"
       >
-        {busy ? t("saving") : t("simulate")}
+        <BusyLabel pending={busy} busyLabel={t("saving")}>{t("simulate")}</BusyLabel>
       </button>
       {leadId ? (
         <p className="text-sm text-navy/80">

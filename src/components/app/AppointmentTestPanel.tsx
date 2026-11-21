@@ -9,6 +9,10 @@ import {
   tidySentence,
 } from "./schedule-picker-utils";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { InlineStatus } from "@/components/ui/Spinner";
+
 type Slot = { startAt: string; localLabel: string };
 type Result = {
   error?: string;
@@ -21,6 +25,7 @@ type Result = {
 
 export function AppointmentTestPanel({ organizationId }: { organizationId: string }) {
   const t = useTranslations("app.schedule");
+  const tFeedback = useTranslations("feedback");
   const [slots, setSlots] = useState<Slot[]>([]);
   const [serviceId, setServiceId] = useState("");
   const [services, setServices] = useState<{ id: string; name: string }[]>([]);
@@ -56,7 +61,7 @@ export function AppointmentTestPanel({ organizationId }: { organizationId: strin
   }
 
   useEffect(() => {
-    void fetch(`/api/businesses/${organizationId}/service-types`, { cache: "no-store" })
+    void timedFetch(`/api/businesses/${organizationId}/service-types`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         // A service that was switched off cannot be booked, so it is not offered.
@@ -65,13 +70,18 @@ export function AppointmentTestPanel({ organizationId }: { organizationId: strin
         ).filter((service) => service.active !== false);
         setServices(services);
         setServiceId(services[0]?.id ?? "");
-      });
+      })
+      // A failed list just leaves the picker empty; it must not throw out of the effect.
+      .catch(() => undefined);
   }, [organizationId]);
 
+  // `post` is not itself guarded: "try the same time twice" sends two requests
+  // in parallel on purpose. The guard is on `run`, the button handler, below.
   async function post(action: string, extra?: Record<string, string>): Promise<Result> {
     try {
-      const res = await fetch(`/api/businesses/${organizationId}/appointments/test`, {
+      const res = await timedFetch(`/api/businesses/${organizationId}/appointments/test`, {
         method: "POST",
+        timeoutMs: 60_000,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action, serviceId, ...extra }),
       });
@@ -84,7 +94,8 @@ export function AppointmentTestPanel({ organizationId }: { organizationId: strin
   }
 
   /** Runs one or more practice calls and shows one sentence per answer. */
-  async function run(action: string, extras: (Record<string, string> | undefined)[]) {
+  const run = useGuarded(runHandler);
+  async function runHandler(action: string, extras: (Record<string, string> | undefined)[]) {
     if (busy) return;
     if (action !== "availability" && !slots[0]) {
       setLines([t("testCheckFirst")]);
@@ -117,6 +128,7 @@ export function AppointmentTestPanel({ organizationId }: { organizationId: strin
     <section className="flex flex-col gap-3 rounded-md border border-navy/10 bg-white p-4">
       <h2 className="font-semibold text-navy">{t("testTitle")}</h2>
       <p className="text-sm text-navy/70">{t("testIntro")}</p>
+      {busy ? <InlineStatus>{tFeedback("working")}</InlineStatus> : null}
       <select aria-label={t("service")} value={serviceId} onChange={(event) => setServiceId(event.target.value)} className="max-w-sm rounded-md border border-navy/15 px-2 py-1.5 text-sm">
         {services.map((service) => (
           <option key={service.id} value={service.id}>{service.name}</option>

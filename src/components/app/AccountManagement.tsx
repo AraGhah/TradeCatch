@@ -7,6 +7,9 @@ import { Link } from "@/i18n/navigation";
 import { z } from "zod";
 import type { AccountRequest } from "@/product/support/types";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 const requestSchema = z.object({
   id: z.string(),
   kind: z.enum(["suspension", "reactivation", "deletion"]),
@@ -91,14 +94,15 @@ export function AccountManagement({
     viewer: t("roleViewer"),
   };
 
-  async function save(event: React.FormEvent) {
+  const save = useGuarded(saveHandler);
+  async function saveHandler(event: React.FormEvent) {
     event.preventDefault();
     if (saving) return;
     setSaving(true);
     setSaveError(false);
     setMessage("");
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/account/profile`,
         {
           method: "POST",
@@ -142,7 +146,8 @@ export function AccountManagement({
     }
   }
 
-  async function request(kind: AccountRequest["kind"]) {
+  const request = useGuarded(requestHandler);
+  async function requestHandler(kind: AccountRequest["kind"]) {
     if (requesting || !canRequestAccountChange) return;
     let confirm: string | undefined;
     if (kind === "deletion") {
@@ -164,7 +169,7 @@ export function AccountManagement({
     setExportError(false);
     setMessage("");
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/account/${kind === "deletion" ? "deletion-request" : "lifecycle"}`,
         {
           method: "POST",
@@ -193,14 +198,15 @@ export function AccountManagement({
     }
   }
 
-  async function withdraw(requestId: string) {
+  const withdraw = useGuarded(withdrawHandler);
+  async function withdrawHandler(requestId: string) {
     if (withdrawingId || requesting || !canRequestAccountChange) return;
     if (!window.confirm(t("requestWithdrawConfirm"))) return;
     setWithdrawingId(requestId);
     setRequestError(false);
     setMessage("");
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/account/requests/${requestId}/withdraw`,
         { method: "POST" },
       );
@@ -228,7 +234,7 @@ export function AccountManagement({
     setExportError(false);
     setMessage("");
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/account/export`,
         { cache: "no-store" },
       );
@@ -357,7 +363,7 @@ export function AccountManagement({
           aria-busy={saving}
           className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
         >
-          {saving ? t("saving") : t("save")}
+          <BusyLabel pending={saving} busyLabel={t("saving")}>{t("save")}</BusyLabel>
         </button>
       </form>
 

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { Link } from "@/i18n/navigation";
 import { useLocale, useTranslations } from "next-intl";
+import { LoadingRegion, SkeletonRows } from "@/components/ui/Skeleton";
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
 import { createPoller } from "@/lib/client/poller";
 import { requestJson } from "@/lib/client/request";
 import { NOTIFICATIONS_CHANGED } from "./NotificationBell";
@@ -37,6 +39,7 @@ export function NotificationCenter({
 
 function BusinessNotifications({ organizationId }: { organizationId: string }) {
   const t = useTranslations("app.alerts");
+  const tFeedback = useTranslations("feedback");
   const dateLocale = useLocale() === "fr" ? "fr-CA" : "en-CA";
   const [rows, setRows] = useState<Row[]>([]);
   const [status, setStatus] = useState("");
@@ -47,14 +50,20 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [actionError, setActionError] = useState(false);
-  const [acting, setActing] = useState(false);
+  // Which change is running ("all", or "<id>:read" / "<id>:acknowledge"): only that button shows "Saving…".
+  const [acting, setActing] = useState<string | null>(null);
   const pending = useRef<AbortController | null>(null);
+  // One change at a time, held synchronously: `acting` only disables the buttons after React re-renders, too late for a burst of clicks in one instant.
+  const inFlight = useRef(false);
 
-  const load = useCallback(async () => {
+  // `quiet` is for the background refresh every ~20 s: it updates the list
+  // without flashing "Loading…" or a spinner, so the page does not shift or
+  // announce anything the person did not ask for.
+  const load = useCallback(async (options?: { quiet?: boolean }) => {
     pending.current?.abort();
     const controller = new AbortController();
     pending.current = controller;
-    setLoading(true);
+    if (!options?.quiet) setLoading(true);
     setLoadError(false);
     const params = new URLSearchParams();
     if (status) params.set("status", status);
@@ -84,7 +93,17 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
   useEffect(() => {
     // Refreshes every ~20 s while visible; backs off when the server is
     // struggling or refusing (src/lib/client/poller.ts).
-    const poller = createPoller(() => load(), { intervalMs: 20_000 });
+    // The first read for these filters is one the person asked for, so it says "Loading…". Only the
+    // timer's later refreshes are quiet.
+    let first = true;
+    const poller = createPoller(
+      () => {
+        const quiet = !first;
+        first = false;
+        return load({ quiet });
+      },
+      { intervalMs: 20_000 },
+    );
     poller.start({ immediate: true });
     return () => {
       poller.stop();
@@ -93,8 +112,9 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
   }, [load]);
 
   async function act(id?: string, action: "read" | "acknowledge" = "read") {
-    if (acting) return;
-    setActing(true);
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setActing(id ? `${id}:${action}` : "all");
     setMessage(null);
     setActionError(false);
     try {
@@ -111,7 +131,8 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
       setActionError(true);
       setMessage(t("error"));
     } finally {
-      setActing(false);
+      inFlight.current = false;
+      setActing(null);
     }
   }
 
@@ -150,18 +171,24 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
         <button
           type="button"
           disabled={loading}
+          aria-busy={loading}
           onClick={() => void load()}
           className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold"
         >
-          {t("refresh")}
+          <BusyLabel pending={loading} busyLabel={tFeedback("loading")}>
+            {t("refresh")}
+          </BusyLabel>
         </button>
         <button
           type="button"
-          disabled={acting}
+          disabled={acting !== null}
+          aria-busy={acting === "all"}
           onClick={() => void act()}
           className="rounded-md border border-navy/20 px-3 py-1.5 text-sm font-semibold"
         >
-          {t("markAll")}
+          <BusyLabel pending={acting === "all"} busyLabel={tFeedback("saving")}>
+            {t("markAll")}
+          </BusyLabel>
         </button>
         <Link
           href="/app/settings/notifications"
@@ -176,7 +203,14 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
           {t("escalation")}
         </Link>
       </div>
-      {loading ? <p role="status">{t("loading")}</p> : null}
+      {loading && !loaded ? (
+        <LoadingRegion label={t("loading")}>
+          <SkeletonRows rows={4} columns={3} />
+        </LoadingRegion>
+      ) : loading ? (
+        // A filter or search changed (or Refresh was pressed): the list stays, dimmed, and the line says so.
+        <InlineStatus>{t("loading")}</InlineStatus>
+      ) : null}
       {loadError ? (
         <div role="alert" className="text-sm text-red-700">
           <p>
@@ -197,7 +231,10 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
           {t("empty")}
         </p>
       ) : rows.length > 0 ? (
-        <ul className="divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white">
+        <ul
+          aria-busy={loading}
+          className={`divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white ${loading ? "opacity-60" : ""}`}
+        >
           {rows.map((row) => (
             <li
               key={row.id}
@@ -241,19 +278,25 @@ function BusinessNotifications({ organizationId }: { organizationId: string }) {
                 ) : null}
                 <button
                   type="button"
-                  disabled={acting}
+                  disabled={acting !== null}
+                  aria-busy={acting === `${row.id}:read`}
                   onClick={() => void act(row.id, "read")}
                   className="min-h-11 rounded-md border border-navy/15 px-3 text-sm font-semibold text-navy disabled:opacity-50"
                 >
-                  {t("markRead")}
+                  <BusyLabel pending={acting === `${row.id}:read`} busyLabel={tFeedback("saving")}>
+                    {t("markRead")}
+                  </BusyLabel>
                 </button>
                 <button
                   type="button"
-                  disabled={acting}
+                  disabled={acting !== null}
+                  aria-busy={acting === `${row.id}:acknowledge`}
                   onClick={() => void act(row.id, "acknowledge")}
                   className="min-h-11 rounded-md border border-navy/15 px-3 text-sm font-semibold text-navy disabled:opacity-50"
                 >
-                  {t("acknowledge")}
+                  <BusyLabel pending={acting === `${row.id}:acknowledge`} busyLabel={tFeedback("saving")}>
+                    {t("acknowledge")}
+                  </BusyLabel>
                 </button>
               </div>
             </li>

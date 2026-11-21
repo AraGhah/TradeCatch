@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
 import type { AutomationRecord, AutomationType } from "@/product/sms-automation/types";
 import { OPERATIONAL_AUTOMATION_TYPES } from "@/product/sms-automation/types";

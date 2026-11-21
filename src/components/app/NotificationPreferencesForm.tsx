@@ -10,6 +10,11 @@ import {
   quietHours,
 } from "@/product/notifications/preferences";
 
+import { RequestTimeoutError, timedFetch } from "@/lib/client/timed-fetch";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { LoadingRegion, SkeletonRows } from "@/components/ui/Skeleton";
+import { BusyLabel } from "@/components/ui/Spinner";
+
 const KEYS = Object.keys(DEFAULT_CHANNELS) as PreferenceCategory[];
 
 type Prefs = {
@@ -46,15 +51,61 @@ export function NotificationPreferencesForm({
   organizationId: string;
 }) {
   const t = useTranslations("app.alerts");
+  const tFeedback = useTranslations("feedback");
   const [prefs, setPrefs] = useState<Prefs | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ text: string; error: boolean } | null>(
+    null,
+  );
+  const setMessage = (text: string | null, error = true) =>
+    setNotice(text ? { text, error } : null);
   const [load, setLoad] = useState({ organizationId, status: "loading" });
   const [retry, setRetry] = useState(0);
   const [saving, setSaving] = useState(false);
 
+  // Declared before the early returns below: hooks run on every render. Guarded
+  // so fifty fast clicks (or Enter held down) send one request, not fifty.
+  const submit = useGuarded(async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!prefs) return;
+    if (!quietHours.safeParse(prefs).success) {
+      setMessage(t("invalidQuietHours"));
+      return;
+    }
+    if (!notificationTimezone.safeParse(prefs.timezone).success) {
+      setMessage(t("invalidTimezone"));
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await timedFetch(
+        `/api/businesses/${organizationId}/notification-preferences`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(prefs),
+        },
+      );
+      // "Saved" only once the server said so.
+      if (res.ok) setMessage(t("saved"), false);
+      else setMessage(t("error"));
+    } catch (cause) {
+      // No answer: it may have been saved. The choices stay on screen.
+      setMessage(
+        tFeedback(
+          cause instanceof RequestTimeoutError
+            ? "errors.timeoutUnknown"
+            : "errors.networkUnknown",
+        ),
+      );
+    } finally {
+      setSaving(false);
+    }
+  });
+
   useEffect(() => {
     const controller = new AbortController();
-    void fetch(`/api/businesses/${organizationId}/notification-preferences`, {
+    void timedFetch(`/api/businesses/${organizationId}/notification-preferences`, {
       signal: controller.signal,
     })
       .then(async (res) => {
@@ -76,7 +127,11 @@ export function NotificationPreferencesForm({
   }, [organizationId, retry]);
 
   if (load.organizationId !== organizationId || load.status === "loading")
-    return <p role="status">{t("preferencesLoading")}</p>;
+    return (
+      <LoadingRegion label={t("preferencesLoading")}>
+        <SkeletonRows rows={6} columns={2} />
+      </LoadingRegion>
+    );
   if (load.status === "error" || !prefs)
     return (
       <div role="alert">
@@ -96,35 +151,8 @@ export function NotificationPreferencesForm({
   return (
     <form
       className="flex max-w-2xl flex-col gap-3"
-      onSubmit={async (event) => {
-        event.preventDefault();
-        if (saving) return;
-        if (!quietHours.safeParse(prefs).success) {
-          setMessage(t("invalidQuietHours"));
-          return;
-        }
-        if (!notificationTimezone.safeParse(prefs.timezone).success) {
-          setMessage(t("invalidTimezone"));
-          return;
-        }
-        setSaving(true);
-        setMessage(null);
-        try {
-          const res = await fetch(
-            `/api/businesses/${organizationId}/notification-preferences`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(prefs),
-            },
-          );
-          setMessage(res.ok ? t("saved") : t("error"));
-        } catch {
-          setMessage(t("error"));
-        } finally {
-          setSaving(false);
-        }
-      }}
+      aria-busy={saving}
+      onSubmit={(event) => void submit(event)}
     >
       {KEYS.map((key) => (
         <fieldset
@@ -275,13 +303,17 @@ export function NotificationPreferencesForm({
       <button
         type="submit"
         disabled={saving}
+        aria-busy={saving}
         className="w-fit rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white"
       >
-        {t("save")}
+        <BusyLabel pending={saving} busyLabel={tFeedback("saving")}>
+          {t("save")}
+        </BusyLabel>
       </button>
-      {message ? (
-        <p role="status" className="text-sm">
-          {message}
+      {/* A live region either way: the result is announced, and it was already one. */}
+      {notice ? (
+        <p role="status" data-tone={notice.error ? "error" : "success"} className="text-sm">
+          {notice.text}
         </p>
       ) : null}
     </form>

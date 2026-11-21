@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { useState } from "react";
 import type { AiCallHandlingView } from "@/product/telephony/ai-call-handling-service";
 import type {
@@ -11,6 +12,7 @@ import type {
   UnknownCallerPolicy,
 } from "@/product/telephony/types";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
 const INPUT =
   "mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:bg-navy/5";
 const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
@@ -81,7 +83,7 @@ export function AiCallHandlingSection({
     methodName: "PUT" | "POST",
     body: unknown,
   ): Promise<{ ok: boolean; data: Record<string, unknown> | null }> {
-    const res = await fetch(`/api/businesses/${organizationId}/ai-call-handling`, {
+    const res = await timedFetch(`/api/businesses/${organizationId}/ai-call-handling`, {
       method: methodName,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -451,8 +453,8 @@ export function AiCallHandlingSection({
         ) : null}
         {readOnly ? <p className="text-xs text-navy/60">{t("readOnly")}</p> : null}
 
-        <button type="submit" disabled={disabled} className={`${BUTTON} self-start`}>
-          {busy === "save" ? t("saving") : t("save")}
+        <button type="submit" disabled={disabled} aria-busy={busy === "save"} className={`${BUTTON} self-start`}>
+          <BusyLabel pending={busy === "save"} busyLabel={t("saving")}>{t("save")}</BusyLabel>
         </button>
       </form>
 
@@ -466,25 +468,28 @@ export function AiCallHandlingSection({
             type="button"
             className={SECONDARY}
             disabled={disabled}
+            aria-busy={busy === "test"}
             onClick={() => void onAction("start_test")}
           >
-            {busy === "test" ? t("test.starting") : t("test.start")}
+            <BusyLabel pending={busy === "test"} busyLabel={t("test.starting")}>{t("test.start")}</BusyLabel>
           </button>
           <button
             type="button"
             className={SECONDARY}
             disabled={disabled || !view.routingTestStartedAt}
+            aria-busy={busy === "check"}
             onClick={() => void onAction("check_test")}
           >
-            {busy === "check" ? t("test.checking") : t("test.check")}
+            <BusyLabel pending={busy === "check"} busyLabel={t("test.checking")}>{t("test.check")}</BusyLabel>
           </button>
           <button
             type="button"
             className={SECONDARY}
             disabled={disabled || !tc}
+            aria-busy={busy === "number"}
             onClick={() => void onAction("check_number")}
           >
-            {busy === "number" ? t("test.checking") : t("test.number")}
+            <BusyLabel pending={busy === "number"} busyLabel={t("test.checking")}>{t("test.number")}</BusyLabel>
           </button>
         </div>
         {test ? (

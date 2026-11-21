@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 type TechnicianRosterEntry = {
   id: string;
   name: string;
@@ -82,12 +85,13 @@ export function SmsReceptionistSettingsForm({
     });
   }
 
-  async function save() {
+  const save = useGuarded(saveHandler);
+  async function saveHandler() {
     setSaving(true);
     setError(null);
     setSaved(false);
     try {
-      const response = await fetch("/api/app/sms-receptionist", {
+      const response = await timedFetch("/api/app/sms-receptionist", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -328,13 +332,13 @@ export function SmsReceptionistSettingsForm({
 
       {canEdit ? (
         <div>
-          <button
+          <button aria-busy={saving}
             type="button"
             disabled={saving}
             onClick={() => void save()}
             className="rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {saving ? t("saving") : t("save")}
+            <BusyLabel pending={saving} busyLabel={t("saving")}>{t("save")}</BusyLabel>
           </button>
           {saved ? (
             <span className="ml-3 text-sm text-navy/70">{t("saved")}</span>

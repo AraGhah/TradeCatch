@@ -4,6 +4,9 @@ import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { PasswordField } from "@/components/PasswordField";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 const buttonClass =
   "self-start rounded-md bg-orange px-4 py-2.5 text-[15px] font-semibold text-navy transition hover:bg-orange-dark disabled:opacity-60";
 
@@ -37,7 +40,8 @@ export function PasswordSettings({
     null,
   );
 
-  async function onChange(e: FormEvent) {
+  const onChange = useGuarded(onChangeHandler);
+  async function onChangeHandler(e: FormEvent) {
     e.preventDefault();
     setMessage(null);
     if (next !== confirm) {
@@ -46,7 +50,7 @@ export function PasswordSettings({
     }
     setBusy(true);
     try {
-      const res = await fetch("/api/auth/change-password", {
+      const res = await timedFetch("/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword: current, newPassword: next }),
@@ -79,11 +83,12 @@ export function PasswordSettings({
     }
   }
 
-  async function onSendLink() {
+  const onSendLink = useGuarded(onSendLinkHandler);
+  async function onSendLinkHandler() {
     setBusy(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await timedFetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, locale }),
@@ -140,21 +145,21 @@ export function PasswordSettings({
             onChange={setConfirm}
           />
           <p className="text-sm text-navy/70">{t("rules")}</p>
-          <button type="submit" disabled={busy} className={buttonClass}>
-            {busy ? t("saving") : t("submit")}
+          <button aria-busy={busy} type="submit" disabled={busy} className={buttonClass}>
+            <BusyLabel pending={busy} busyLabel={t("saving")}>{t("submit")}</BusyLabel>
           </button>
         </form>
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm font-semibold text-navy">{t("noneTitle")}</p>
           <p className="text-sm text-navy/70">{t("noneBody")}</p>
-          <button
+          <button aria-busy={busy}
             type="button"
             disabled={busy}
             onClick={() => void onSendLink()}
             className={buttonClass}
           >
-            {busy ? t("linkSending") : t("sendLink")}
+            <BusyLabel pending={busy} busyLabel={t("linkSending")}>{t("sendLink")}</BusyLabel>
           </button>
         </div>
       )}

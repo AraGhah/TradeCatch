@@ -16,6 +16,9 @@ import {
   weekdayNames,
 } from "./schedule-picker-utils";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { LoadingRegion, SkeletonCalendar } from "@/components/ui/Skeleton";
+import { BusyLabel } from "@/components/ui/Spinner";
 const FOCUS =
   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy";
 
@@ -98,7 +101,7 @@ export function SchedulePicker({
     if (serviceId) params.set("serviceId", serviceId);
     if (address.trim()) params.set("address", address.trim());
     if (excludeAppointmentId) params.set("exclude", excludeAppointmentId);
-    fetch(`/api/businesses/${organizationId}/availability?${params}`, {
+    timedFetch(`/api/businesses/${organizationId}/availability?${params}`, {
       signal: controller.signal,
       cache: "no-store",
     })
@@ -187,9 +190,10 @@ export function SchedulePicker({
         ) : null}
 
         {!shown && !failed ? (
-          <p role="status" className="mt-2 text-sm text-navy/60">
-            {t("loadingTimes")}
-          </p>
+          // The month grid's own shape, so the picker does not jump when times arrive.
+          <LoadingRegion label={t("loadingTimes")} className="mt-2">
+            <SkeletonCalendar weeks={5} />
+          </LoadingRegion>
         ) : null}
 
         {shown ? (
@@ -386,10 +390,13 @@ export function SlotConfirmPanel({
         <button
           type="button"
           disabled={busy || disabled}
+          aria-busy={busy}
           onClick={onConfirm}
           className={`min-h-11 rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS}`}
         >
-          {busy ? busyLabel : confirmLabel}
+          <BusyLabel pending={busy} busyLabel={busyLabel}>
+            {confirmLabel}
+          </BusyLabel>
         </button>
         <button
           type="button"

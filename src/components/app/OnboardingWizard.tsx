@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 export function OnboardingWizard({
   initialNotifyEmail,
   initialGoogleReviewUrl,
@@ -27,12 +30,13 @@ export function OnboardingWizard({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function saveNotify() {
+  const saveNotify = useGuarded(saveNotifyHandler);
+  async function saveNotifyHandler() {
     if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/app/settings", {
+      const res = await timedFetch("/api/app/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -54,7 +58,8 @@ export function OnboardingWizard({
     }
   }
 
-  async function saveReviewUrl() {
+  const saveReviewUrl = useGuarded(saveReviewUrlHandler);
+  async function saveReviewUrlHandler() {
     if (busy) return;
     setBusy(true);
     setError(null);
@@ -65,7 +70,7 @@ export function OnboardingWizard({
       } else {
         body.googleReviewUrl = null;
       }
-      const res = await fetch("/api/app/settings", {
+      const res = await timedFetch("/api/app/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -85,12 +90,13 @@ export function OnboardingWizard({
     }
   }
 
-  async function complete() {
+  const complete = useGuarded(completeHandler);
+  async function completeHandler() {
     if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/app/settings", {
+      const res = await timedFetch("/api/app/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -137,13 +143,13 @@ export function OnboardingWizard({
               className="mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy"
             />
           </label>
-          <button
+          <button aria-busy={busy}
             type="button"
             disabled={busy}
             onClick={() => void saveNotify()}
             className="self-start rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
           >
-            {busy ? t("onboarding.saving") : t("onboarding.next")}
+            <BusyLabel pending={busy} busyLabel={t("onboarding.saving")}>{t("onboarding.next")}</BusyLabel>
           </button>
         </div>
       ) : null}
@@ -165,13 +171,13 @@ export function OnboardingWizard({
             />
           </label>
           <div className="flex flex-wrap gap-2">
-            <button
+            <button aria-busy={busy}
               type="button"
               disabled={busy}
               onClick={() => void saveReviewUrl()}
               className="rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
             >
-              {busy ? t("onboarding.saving") : t("onboarding.next")}
+              <BusyLabel pending={busy} busyLabel={t("onboarding.saving")}>{t("onboarding.next")}</BusyLabel>
             </button>
             <button
               type="button"
@@ -191,13 +197,13 @@ export function OnboardingWizard({
             {t("onboarding.stepFinish")}
           </h2>
           <p className="text-sm text-navy/70">{t("onboarding.stepFinishIntro")}</p>
-          <button
+          <button aria-busy={busy}
             type="button"
             disabled={busy}
             onClick={() => void complete()}
             className="self-start rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
           >
-            {busy ? t("onboarding.saving") : t("onboarding.complete")}
+            <BusyLabel pending={busy} busyLabel={t("onboarding.saving")}>{t("onboarding.complete")}</BusyLabel>
           </button>
         </div>
       ) : null}

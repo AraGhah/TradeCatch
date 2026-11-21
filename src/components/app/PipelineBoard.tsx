@@ -2,9 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { PipelineCard, PipelineStage } from "@/product/growth";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
 const STAGES: PipelineStage[] = [
   "new",
   "contacted",
@@ -17,15 +18,22 @@ const STAGES: PipelineStage[] = [
 
 export function PipelineBoard({ cards }: { cards: PipelineCard[] }) {
   const t = useTranslations("app");
+  const tFeedback = useTranslations("feedback");
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // One move per card at a time, held synchronously: `busyId` only disables the
+  // buttons after React re-renders, which is too late for a same-tick burst.
+  // Other cards stay free to move meanwhile.
+  const moving = useRef(new Set<string>());
 
   async function move(cardId: string, stage: PipelineStage) {
+    if (moving.current.has(cardId)) return;
+    moving.current.add(cardId);
     setBusyId(cardId);
     setError(null);
     try {
-      const res = await fetch("/api/app/pipeline", {
+      const res = await timedFetch("/api/app/pipeline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -42,7 +50,11 @@ export function PipelineBoard({ cards }: { cards: PipelineCard[] }) {
         return;
       }
       router.refresh();
+    } catch {
+      // No answer: the card may or may not have moved. It is not shown as moved.
+      setError(tFeedback("errors.networkUnknown"));
     } finally {
+      moving.current.delete(cardId);
       setBusyId(null);
     }
   }
@@ -84,6 +96,7 @@ export function PipelineBoard({ cards }: { cards: PipelineCard[] }) {
                   key={stage}
                   type="button"
                   disabled={busyId === card.id}
+                  aria-busy={busyId === card.id}
                   onClick={() => void move(card.id, stage)}
                   className="rounded-md border border-navy/20 px-2 py-1 text-xs font-medium text-navy hover:bg-navy/5 disabled:opacity-50"
                 >

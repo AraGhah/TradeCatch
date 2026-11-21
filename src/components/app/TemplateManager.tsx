@@ -5,8 +5,10 @@ import { useTranslations } from "next-intl";
 import { ApiError, requestJson } from "@/lib/client/request";
 import type { TemplateKey, TemplateRecord } from "@/product/sms-automation/types";
 import { TEMPLATE_VARIABLES } from "@/product/sms-automation/types";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { describeFailure, useFailureText, useKeyedSingleFlight } from "./automation-client";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
 type Preview = {
   body: string;
   errors: string[];
@@ -43,6 +45,7 @@ export function TemplateManager({
   };
 }) {
   const t = useTranslations("app.automations");
+  const tFeedback = useTranslations("feedback");
   const failureText = useFailureText();
   // The saved templates as the server last confirmed them. A save replaces its row here,
   // so going to another template and back shows what was saved, not the page's first load.
@@ -97,7 +100,8 @@ export function TemplateManager({
     edit(`${body}{{${name}}}`);
   }
 
-  async function runPreview() {
+  const runPreview = useGuarded(runPreviewHandler);
+  async function runPreviewHandler() {
     await flight.run("preview", async () => {
       setError(null);
       try {
@@ -113,9 +117,10 @@ export function TemplateManager({
     });
   }
 
-  async function save(reset = false) {
+  const save = useGuarded(saveHandler);
+  async function saveHandler(reset = false) {
     if (!current) return;
-    await flight.run("save", async () => {
+    await flight.run(reset ? "reset" : "save", async () => {
       setError(null);
       setMessage(null);
       const sent = draftKey(current.templateKey, current.locale);
@@ -204,13 +209,13 @@ export function TemplateManager({
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={busy} aria-busy={flight.isPending("preview")} onClick={() => void runPreview()} className="rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy disabled:opacity-60">
-            {labels.preview}
+            <BusyLabel pending={flight.isPending("preview")} busyLabel={tFeedback("working")}>{labels.preview}</BusyLabel>
           </button>
           <button type="button" disabled={busy} aria-busy={flight.isPending("save")} onClick={() => void save(false)} className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">
-            {flight.isPending("save") ? t("actions.saving") : labels.save}
+            <BusyLabel pending={flight.isPending("save")} busyLabel={t("actions.saving")}>{labels.save}</BusyLabel>
           </button>
-          <button type="button" disabled={busy} onClick={() => void save(true)} className="rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:opacity-60">
-            {labels.reset}
+          <button type="button" disabled={busy} aria-busy={flight.isPending("reset")} onClick={() => void save(true)} className="rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:opacity-60">
+            <BusyLabel pending={flight.isPending("reset")} busyLabel={t("saving")}>{labels.reset}</BusyLabel>
           </button>
         </div>
         {preview ? (
