@@ -137,7 +137,7 @@ test("MON-14 System Health lists every area, and never calls an unmeasured one h
 });
 
 test("MON-14 the page words every monitor and area state (UI contract)", async ({ page }) => {
-  await adminSession(page, ADMINS.super("26"));
+  await adminSession(page, ADMINS.super("31"));
   let mode: "never" | "stale" | "measured" = "never";
   await patchHealth(page, (body) => {
     if (mode === "never") {
@@ -281,7 +281,7 @@ test("MON-13 monitoring data and actions are denied without credentials, and to 
   expect([401, 403]).toContain(wrong.status());
 
   // Support and read-only administrators may read incidents, but not change them.
-  await adminSession(page, ADMINS.super("24"));
+  await adminSession(page, ADMINS.super("33"));
   const id = await openIncident(page);
 
   for (const email of [MON_SUPPORT, MON_READ_ONLY]) {
@@ -313,7 +313,7 @@ test("System Health is readable in French and usable on a phone", async ({ brows
     deviceScaleFactor: 3,
   });
   const page = await context.newPage();
-  await adminSession(page, ADMINS.super("25"), "fr");
+  await adminSession(page, ADMINS.super("34"), "fr");
   await openIncident(page);
   // Whether the monitor has run depends on what ran before; pin it so the wording is what is asserted.
   await patchHealth(page, (body) => {

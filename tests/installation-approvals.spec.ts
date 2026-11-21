@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { totpCode } from "../src/product/security/totp";
 import { workspaceSession } from "./support/workspace-session";
+import { freshIp } from "./support/admin-session";
 
 test("ordinary customer owners cannot manage installation approvals", async ({
   page,
@@ -28,6 +29,7 @@ for (const locale of ["en", "fr"] as const) {
   test(`installation approval authorization and safe actions (${locale})`, async ({
     page,
   }, info) => {
+    await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
     const fr = locale === "fr";
     const endpoint = "/api/admin/installations";
     expect((await page.request.get(endpoint)).status()).toBe(401);

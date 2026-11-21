@@ -558,7 +558,7 @@ test("LOAD-10: privacy shows 'saved' only after the server confirmed it, never o
 });
 
 test("LOAD-11: an admin action shows its progress and its result, once", async ({ page }) => {
-  await adminSession(page, ADMINS.super("26"));
+  await adminSession(page, ADMINS.super("32"));
   const suffix = uniqueSuffix();
   const created = await page.request.post("/api/admin/businesses", {
     data: {

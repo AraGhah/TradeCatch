@@ -19,7 +19,7 @@ export const E2E_ORIGIN = `http://localhost:${E2E_PORT}`;
  */
 const ADMIN_CONSOLE_ADMINS = [
   ...Array.from(
-    { length: 30 },
+    { length: 40 },
     (_, index) => `adm-${String(index + 1).padStart(2, "0")}@example.test`,
   ),
   "adm-support@example.test:support",
