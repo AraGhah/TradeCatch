@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Check = { component: string; status: string; detail: string };
 
 export function LaunchReadinessPanel() {
@@ -9,7 +10,7 @@ export function LaunchReadinessPanel() {
   const [checks, setChecks] = useState<Check[]>([]);
 
   useEffect(() => {
-    fetch("/api/admin/launch-readiness")
+    timedFetch("/api/admin/launch-readiness")
       .then((response) => response.json())
       .then((body) => {
         const parsed = body as { overall?: string; checks?: Check[] };

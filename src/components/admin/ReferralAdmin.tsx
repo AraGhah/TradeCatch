@@ -9,6 +9,9 @@ import type {
   RewardRecord,
 } from "@/product/referrals/model";
 
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Snapshot = {
   settings: ReferralSettings;
   rows: { referral: ReferralRecord; reward: RewardRecord | null }[];
@@ -69,6 +72,9 @@ const copy = {
     hideHistory: "Hide history",
     saved: "Saved.",
     failed: "The change could not be saved. Refresh before retrying.",
+    unconfirmed: "We could not confirm whether the change was saved, so it may have gone through. Refresh to check before trying again.",
+    saving: "Saving…",
+    refreshing: "Refreshing…",
     flags: {
       same_email_domain: "Same company email domain as the referrer",
       same_business_name: "Same business name as the referrer",
@@ -146,6 +152,9 @@ const copy = {
     hideHistory: "Masquer l’historique",
     saved: "Enregistré.",
     failed: "Le changement n’a pas pu être enregistré. Actualisez avant de réessayer.",
+    unconfirmed: "Nous n’avons pas pu confirmer si le changement a été enregistré : il a peut-être été effectué. Actualisez pour vérifier avant de réessayer.",
+    saving: "Enregistrement…",
+    refreshing: "Actualisation…",
     flags: {
       same_email_domain: "Même domaine de courriel d’entreprise que le parrain",
       same_business_name: "Même nom d’entreprise que le parrain",
@@ -187,7 +196,9 @@ export function ReferralAdmin() {
   const [data, setData] = useState<Snapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [busy, setBusy] = useState(false);
+  // Which change is running ("settings", "approve:<reward>", ...), so only that button shows "Saving…"; the rest wait.
+  const [acting, setActing] = useState<string | null>(null);
+  const busy = acting !== null;
   const [message, setMessage] = useState("");
   const [draft, setDraft] = useState<ReferralSettings | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -201,7 +212,7 @@ export function ReferralAdmin() {
     setLoading(true);
     setError(false);
     try {
-      const response = await fetch("/api/admin/referrals", { cache: "no-store" });
+      const response = await timedFetch("/api/admin/referrals", { cache: "no-store" });
       if (!response.ok) throw new Error();
       const body = (await response.json()) as Snapshot;
       setData(body);
@@ -219,11 +230,12 @@ export function ReferralAdmin() {
     void load();
   }, [load]);
 
-  async function send(command: Record<string, unknown>, okMessage: string | ((body: Record<string, unknown>) => string)) {
-    setBusy(true);
+  const send = useGuarded(sendHandler);
+  async function sendHandler(command: Record<string, unknown>, okMessage: string | ((body: Record<string, unknown>) => string)) {
+    setActing([command.action, command.rewardId].filter((part) => typeof part === "string").join(":"));
     setMessage("");
     try {
-      const response = await fetch("/api/admin/referrals", {
+      const response = await timedFetch("/api/admin/referrals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(command),
@@ -237,9 +249,10 @@ export function ReferralAdmin() {
       }
       await load();
     } catch {
-      setMessage(t.failed);
+      // No answer (offline, or none in time): the change may have been made.
+      setMessage(t.unconfirmed);
     } finally {
-      setBusy(false);
+      setActing(null);
     }
   }
 
@@ -248,12 +261,16 @@ export function ReferralAdmin() {
       setEvents((prev) => ({ ...prev, [rewardId]: null }));
       return;
     }
-    const response = await fetch(`/api/admin/referrals?rewardId=${encodeURIComponent(rewardId)}`, {
-      cache: "no-store",
-    });
-    if (!response.ok) return;
-    const body = (await response.json()) as { events: ReferralEvent[] };
-    setEvents((prev) => ({ ...prev, [rewardId]: body.events }));
+    try {
+      const response = await timedFetch(`/api/admin/referrals?rewardId=${encodeURIComponent(rewardId)}`, {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const body = (await response.json()) as { events: ReferralEvent[] };
+      setEvents((prev) => ({ ...prev, [rewardId]: body.events }));
+    } catch {
+      // The history simply stays closed; the button can be pressed again.
+    }
   }
 
   function saveSettings(event: FormEvent<HTMLFormElement>) {
@@ -286,7 +303,7 @@ export function ReferralAdmin() {
   const money = (cents: number) =>
     new Intl.NumberFormat(locale === "fr" ? "fr-CA" : "en-CA", { style: "currency", currency: "CAD" }).format(cents / 100);
 
-  if (loading && !data) return <p className="text-navy/70">{t.load}</p>;
+  if (loading && !data) return <InlineStatus>{t.load}</InlineStatus>;
   if (error || !data || !draft) {
     return (
       <div className="flex flex-col gap-3">
@@ -303,7 +320,9 @@ export function ReferralAdmin() {
           <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t.title}</h1>
           <p className="mt-2 max-w-[48em] text-sm text-navy/70">{t.notice}</p>
         </div>
-        <button type="button" className={BUTTON} onClick={() => void load()} disabled={loading}>{t.refresh}</button>
+        <button type="button" className={BUTTON} onClick={() => void load()} disabled={loading} aria-busy={loading}>
+          <BusyLabel pending={loading} busyLabel={t.refreshing}>{t.refresh}</BusyLabel>
+        </button>
       </header>
 
       <p className="min-h-5 text-sm text-navy" role="status" aria-live="polite">{message}</p>
@@ -411,10 +430,12 @@ export function ReferralAdmin() {
           {t.requireReferrer}
         </label>
         <div className="flex gap-2">
-          <button type="submit" className={BUTTON} disabled={busy}>{t.saveSettings}</button>
-          <button type="button" className={BUTTON} disabled={busy}
+          <button type="submit" className={BUTTON} disabled={busy} aria-busy={acting === "settings"}>
+            <BusyLabel pending={acting === "settings"} busyLabel={t.saving}>{t.saveSettings}</BusyLabel>
+          </button>
+          <button type="button" className={BUTTON} disabled={busy} aria-busy={acting === "reconcile"}
             onClick={() => void send({ action: "reconcile" }, (body) => t.reconcileDone(Number(body.qualified) || 0))}>
-            {t.reconcile}
+            <BusyLabel pending={acting === "reconcile"} busyLabel={t.saving}>{t.reconcile}</BusyLabel>
           </button>
         </div>
       </form>
@@ -429,7 +450,9 @@ export function ReferralAdmin() {
           {t.code}
           <input className={`${INPUT} font-mono`} value={linkCode} maxLength={10} onChange={(e) => setLinkCode(e.target.value.toUpperCase())} required />
         </label>
-        <button type="submit" className={BUTTON} disabled={busy}>{t.link}</button>
+        <button type="submit" className={BUTTON} disabled={busy} aria-busy={acting === "link"}>
+          <BusyLabel pending={acting === "link"} busyLabel={t.saving}>{t.link}</BusyLabel>
+        </button>
       </form>
 
       <section className="rounded-md border border-navy/10 bg-white px-5 py-4">
@@ -485,9 +508,9 @@ export function ReferralAdmin() {
                                     {t.acknowledge}
                                   </label>
                                 ) : null}
-                                <button type="button" className={BUTTON} disabled={busy}
+                                <button type="button" className={BUTTON} disabled={busy} aria-busy={acting === `approve:${reward.id}`}
                                   onClick={() => void send({ action: "approve", rewardId: reward.id, acknowledgeFlags: !!acknowledged[reward.id] }, t.saved)}>
-                                  {t.approve}
+                                  <BusyLabel pending={acting === `approve:${reward.id}`} busyLabel={t.saving}>{t.approve}</BusyLabel>
                                 </button>
                               </>
                             ) : null}
@@ -495,9 +518,9 @@ export function ReferralAdmin() {
                               <div className="flex flex-col gap-1">
                                 <input className={INPUT} aria-label={t.reference} placeholder={t.reference} maxLength={80}
                                   value={references[reward.id] ?? ""} onChange={(e) => setReferences({ ...references, [reward.id]: e.target.value })} />
-                                <button type="button" className={BUTTON} disabled={busy || !(references[reward.id] ?? "").trim()}
+                                <button type="button" className={BUTTON} disabled={busy || !(references[reward.id] ?? "").trim()} aria-busy={acting === `issue:${reward.id}`}
                                   onClick={() => void send({ action: "issue", rewardId: reward.id, giftCardReference: references[reward.id] ?? "" }, t.saved)}>
-                                  {t.issue}
+                                  <BusyLabel pending={acting === `issue:${reward.id}`} busyLabel={t.saving}>{t.issue}</BusyLabel>
                                 </button>
                               </div>
                             ) : null}
@@ -505,9 +528,9 @@ export function ReferralAdmin() {
                               <div className="flex flex-col gap-1">
                                 <input className={INPUT} aria-label={t.note} placeholder={t.note} maxLength={500}
                                   value={notes[reward.id] ?? ""} onChange={(e) => setNotes({ ...notes, [reward.id]: e.target.value })} />
-                                <button type="button" className={BUTTON} disabled={busy || (notes[reward.id] ?? "").trim().length < 5}
+                                <button type="button" className={BUTTON} disabled={busy || (notes[reward.id] ?? "").trim().length < 5} aria-busy={acting === `reject:${reward.id}`}
                                   onClick={() => void send({ action: "reject", rewardId: reward.id, note: notes[reward.id] ?? "" }, t.saved)}>
-                                  {t.reject}
+                                  <BusyLabel pending={acting === `reject:${reward.id}`} busyLabel={t.saving}>{t.reject}</BusyLabel>
                                 </button>
                               </div>
                             ) : null}

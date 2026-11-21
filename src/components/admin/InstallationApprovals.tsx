@@ -11,6 +11,9 @@ import {
   installationReceipt,
 } from "@/product/installations/model";
 
+import { BusyLabel } from "@/components/ui/Spinner";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 const copy = {
   en: {
     title: "Installation approvals",
@@ -20,6 +23,8 @@ const copy = {
     error: "Installation registry could not be loaded.",
     retry: "Retry",
     refresh: "Refresh",
+    refreshing: "Refreshing…",
+    saving: "Saving…",
     empty: "No domains registered.",
     label: "Installation name",
     origin: "Exact origin",
@@ -50,6 +55,8 @@ const copy = {
     error: "Le registre des installations n’a pas pu être chargé.",
     retry: "Réessayer",
     refresh: "Actualiser",
+    refreshing: "Actualisation…",
+    saving: "Enregistrement…",
     empty: "Aucun domaine enregistré.",
     label: "Nom de l’installation",
     origin: "Origine exacte",
@@ -75,6 +82,13 @@ const copy = {
   },
 };
 
+/** Names the change a command makes, e.g. "decide:<domain>:approved", so its own button can show it is running. */
+function changeKey(command: Record<string, unknown>): string {
+  return [command.action, command.domainId, command.status, command.installationId]
+    .filter((part) => typeof part === "string" && part)
+    .join(":");
+}
+
 export function InstallationApprovals() {
   const t = copy[useLocale() === "fr" ? "fr" : "en"];
   const [data, setData] = useState<{
@@ -83,7 +97,9 @@ export function InstallationApprovals() {
     enforcement: string;
   } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  // Which change is running, so only that button shows "Saving…"; the rest wait.
+  const [acting, setActing] = useState<string | null>(null);
+  const busy = acting !== null;
   const [error, setError] = useState(false);
   const [message, setMessage] = useState("");
   const [credential, setCredential] = useState<{
@@ -95,7 +111,7 @@ export function InstallationApprovals() {
     setLoading(true);
     setError(false);
     try {
-      const response = await fetch("/api/admin/installations", {
+      const response = await timedFetch("/api/admin/installations", {
         cache: "no-store",
       });
       if (!response.ok) throw new Error();
@@ -112,11 +128,12 @@ export function InstallationApprovals() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
-  async function change(command: Record<string, unknown>) {
-    setBusy(true);
+  const change = useGuarded(changeHandler);
+  async function changeHandler(command: Record<string, unknown>) {
+    setActing(changeKey(command));
     setMessage("");
     try {
-      const response = await fetch("/api/admin/installations", {
+      const response = await timedFetch("/api/admin/installations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...command, reason }),
@@ -133,7 +150,7 @@ export function InstallationApprovals() {
     } catch {
       setMessage(t.failed);
     } finally {
-      setBusy(false);
+      setActing(null);
     }
   }
   function register(event: FormEvent<HTMLFormElement>) {
@@ -158,9 +175,12 @@ export function InstallationApprovals() {
       <button
         type="button"
         disabled={loading || busy}
+        aria-busy={loading}
         onClick={() => void load()}
       >
-        {t.refresh}
+        <BusyLabel pending={loading} busyLabel={t.refreshing}>
+          {t.refresh}
+        </BusyLabel>
       </button>
       {loading && <p role="status">{t.load}</p>}
       {error && (
@@ -220,8 +240,14 @@ export function InstallationApprovals() {
             reason.trim().length < 5
           }
           type="submit"
+          aria-busy={acting !== null && /^(register|add_domain)/.test(acting)}
         >
-          {t.save}
+          <BusyLabel
+            pending={acting !== null && /^(register|add_domain)/.test(acting)}
+            busyLabel={t.saving}
+          >
+            {t.save}
+          </BusyLabel>
         </button>
       </form>
       {message && (
@@ -279,11 +305,16 @@ export function InstallationApprovals() {
                     })
                   }
                 >
-                  {status === "approved"
-                    ? t.approve
-                    : status === "rejected"
-                      ? t.reject
-                      : t.revoke}
+                  <BusyLabel
+                    pending={acting === `decide:${domain.id}:${status}`}
+                    busyLabel={t.saving}
+                  >
+                    {status === "approved"
+                      ? t.approve
+                      : status === "rejected"
+                        ? t.reject
+                        : t.revoke}
+                  </BusyLabel>
                 </button>
               ))}
             <button
@@ -297,9 +328,14 @@ export function InstallationApprovals() {
                 })
               }
             >
-              {t === copy.fr
-                ? "Révoquer tous les domaines de cette installation"
-                : "Revoke all domains of this installation"}
+              <BusyLabel
+                pending={acting === `revoke_installation:${domain.installationId}`}
+                busyLabel={t.saving}
+              >
+                {t === copy.fr
+                  ? "Révoquer tous les domaines de cette installation"
+                  : "Revoke all domains of this installation"}
+              </BusyLabel>
             </button>
           </li>
         ))}

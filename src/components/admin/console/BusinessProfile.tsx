@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
 import type { BusinessDetail } from "@/product/admin-console/businesses";
 import { adminFetch, useAdminAction, useAdminData, useAdminPermissions } from "./api";
@@ -254,8 +255,8 @@ function EditForm({ business, onSaved }: { business: BusinessDetail; onSaved: ()
       ) : null}
       {message === "none" ? <Notice tone="neutral">{t.noChange}</Notice> : null}
       <div className="flex flex-wrap gap-2">
-        <button type="submit" className={primaryButton} disabled={!writable || !dirty || action.pending}>
-          {action.pending ? t.saving : t.save}
+        <button type="submit" className={primaryButton} disabled={!writable || !dirty || action.pending} aria-busy={action.pending}>
+          <BusyLabel pending={action.pending} busyLabel={t.saving}>{t.save}</BusyLabel>
         </button>
         <button type="button" className={secondaryButton} disabled={!dirty || action.pending} onClick={() => { setForm(initial); setFieldErrors([]); action.reset(); }}>
           {t.reset}

@@ -7,6 +7,7 @@ import {
   type SalesLeadPage,
 } from "@/product/sales-crm/types";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
 export function AdminSalesLeads() {
   const t = useTranslations("admin.sales");
   const locale = useLocale();
@@ -18,7 +19,7 @@ export function AdminSalesLeads() {
     const controller = new AbortController();
     void (async () => {
       try {
-        const response = await fetch(`/api/admin/sales-leads?page=${page}`, {
+        const response = await timedFetch(`/api/admin/sales-leads?page=${page}`, {
           signal: controller.signal,
           cache: "no-store",
         });

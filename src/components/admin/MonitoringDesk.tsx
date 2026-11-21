@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type ServiceCard = {
   state?: string;
   evidenceAt?: string;
@@ -110,15 +112,17 @@ export function MonitoringDesk({
                 : section === "costs"
                   ? "/api/admin/monitoring/costs"
                   : "/api/admin/deployments";
-    fetch(path)
+    timedFetch(path)
       .then((response) => response.json())
       .then((body) => setData(body as Overview))
       .catch(() => setMessage("Monitoring data could not be loaded."));
   }, [section]);
 
-  async function simulate(scenario: string) {
-    const response = await fetch("/api/admin/monitoring/test", {
+  const simulate = useGuarded(simulateHandler);
+  async function simulateHandler(scenario: string) {
+    const response = await timedFetch("/api/admin/monitoring/test", {
       method: "POST",
+      timeoutMs: 60_000,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ scenario }),
     });

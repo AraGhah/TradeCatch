@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Ticket = { id: string; organizationId: string; subject: string; category: string; priority: string; status: string; assignedTo?: string };
 type Detail = { ticket: Ticket & { description: string }; messages: { id: string; body: string; internal: boolean; authorRole: string }[]; relatedLogs: { id: string; service: string; errorCode: string }[] };
 
@@ -13,19 +15,20 @@ export function AdminSupportDesk() {
   const [message, setMessage] = useState("");
 
   async function load() {
-    const response = await fetch("/api/admin/support/tickets");
+    const response = await timedFetch("/api/admin/support/tickets");
     const body = (await response.json()) as { tickets?: Ticket[] };
     setTickets(body.tickets ?? []);
   }
 
   async function open(id: string) {
-    const response = await fetch(`/api/admin/support/tickets/${id}`);
+    const response = await timedFetch(`/api/admin/support/tickets/${id}`);
     setDetail((await response.json()) as Detail);
   }
 
-  async function update(status: string) {
+  const update = useGuarded(updateHandler);
+  async function updateHandler(status: string) {
     if (!detail) return;
-    const response = await fetch(`/api/admin/support/tickets/${detail.ticket.id}`, {
+    const response = await timedFetch(`/api/admin/support/tickets/${detail.ticket.id}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ status, assignedTo: "founder" }),
@@ -35,9 +38,10 @@ export function AdminSupportDesk() {
     await load();
   }
 
-  async function send(internal: boolean) {
+  const send = useGuarded(sendHandler);
+  async function sendHandler(internal: boolean) {
     if (!detail) return;
-    const response = await fetch(`/api/admin/support/tickets/${detail.ticket.id}/messages`, {
+    const response = await timedFetch(`/api/admin/support/tickets/${detail.ticket.id}/messages`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ body: internal ? note : reply, internal }),

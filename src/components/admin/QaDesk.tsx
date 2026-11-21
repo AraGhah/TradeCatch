@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Result = {
   id: string;
   suite: string;
@@ -45,7 +47,7 @@ export function QaDesk() {
 
   const load = useCallback(
     () =>
-      fetch("/api/admin/qa")
+      timedFetch("/api/admin/qa")
         .then(async (response) => ({
           response,
           body: (await response.json()) as { runs?: Run[]; error?: string },
@@ -62,10 +64,12 @@ export function QaDesk() {
     void load();
   }, [load]);
 
-  async function run(suite: string) {
+  const run = useGuarded(runHandler);
+  async function runHandler(suite: string) {
     setMessage("Running…");
-    const response = await fetch("/api/admin/qa", {
+    const response = await timedFetch("/api/admin/qa", {
       method: "POST",
+      timeoutMs: 60_000,
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ suite }),
     });

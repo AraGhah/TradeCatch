@@ -2,6 +2,9 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { BusyLabel } from "@/components/ui/Spinner";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Business = { id: string; name: string; phone: string | null; plan: string; status: string };
 type RecoveryRequest = {
   id: string;
@@ -48,15 +51,18 @@ function RequestCard({ request, onDone }: { request: RecoveryRequest; onDone: (n
   const [notes, setNotes] = useState("");
   const [rejectNotes, setRejectNotes] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const [busy, setBusy] = useState(false);
+  // Which of the three actions is running ("verify", "complete", "reject"), so only that button shows "…ing".
+  const [acting, setActing] = useState<string | null>(null);
+  const busy = acting !== null;
   const [message, setMessage] = useState<string | null>(null);
 
-  async function act(body: Record<string, unknown>) {
+  const act = useGuarded(actHandler);
+  async function actHandler(body: Record<string, unknown>) {
     if (busy) return;
-    setBusy(true);
+    setActing(String(body.action));
     setMessage(null);
     try {
-      const res = await fetch(`/api/admin/account-recovery/${request.id}`, {
+      const res = await timedFetch(`/api/admin/account-recovery/${request.id}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
@@ -75,9 +81,10 @@ function RequestCard({ request, onDone }: { request: RecoveryRequest; onDone: (n
         setMessage(ERRORS[data.error ?? ""] ?? data.error ?? "Could not save.");
       }
     } catch {
-      setMessage("Could not save.");
+      // No answer (offline, dropped, or no reply in time): the server may have processed it.
+      setMessage("The server did not answer in time, so this may already have been saved. Refresh the list to check before trying again.");
     } finally {
-      setBusy(false);
+      setActing(null);
     }
   }
 
@@ -162,10 +169,13 @@ function RequestCard({ request, onDone }: { request: RecoveryRequest; onDone: (n
           <button
             type="button"
             disabled={busy || !confirmed || notes.trim().length < 20}
+            aria-busy={acting === "verify"}
             className="w-fit rounded-md bg-navy px-3 py-2 text-white disabled:opacity-50"
             onClick={() => void act({ action: "verify", method, notes, confirmed: true })}
           >
-            Record identity verification
+            <BusyLabel pending={acting === "verify"} busyLabel="Recording…">
+              Record identity verification
+            </BusyLabel>
           </button>
         </div>
       ) : null}
@@ -179,10 +189,13 @@ function RequestCard({ request, onDone }: { request: RecoveryRequest; onDone: (n
           <button
             type="button"
             disabled={busy || !confirmed}
+            aria-busy={acting === "complete"}
             className="w-fit rounded-md bg-orange px-3 py-2 font-semibold text-navy disabled:opacity-50"
             onClick={() => void act({ action: "complete", confirmed: true })}
           >
-            Change account email
+            <BusyLabel pending={acting === "complete"} busyLabel="Changing email…">
+              Change account email
+            </BusyLabel>
           </button>
         </div>
       ) : null}
@@ -196,10 +209,13 @@ function RequestCard({ request, onDone }: { request: RecoveryRequest; onDone: (n
           <button
             type="button"
             disabled={busy || rejectNotes.trim().length < 5}
+            aria-busy={acting === "reject"}
             className="w-fit rounded-md border border-navy/20 px-3 py-2 disabled:opacity-50"
             onClick={() => void act({ action: "reject", notes: rejectNotes })}
           >
-            Reject request
+            <BusyLabel pending={acting === "reject"} busyLabel="Rejecting…">
+              Reject request
+            </BusyLabel>
           </button>
         </div>
       ) : null}
@@ -221,7 +237,7 @@ export function AdminAccountRecovery() {
   const load = useCallback(async () => {
     setError(null);
     try {
-      const res = await fetch("/api/admin/account-recovery");
+      const res = await timedFetch("/api/admin/account-recovery");
       const data = (await res.json().catch(() => ({}))) as { requests?: RecoveryRequest[]; error?: string };
       if (!res.ok) {
         setError(data.error ?? "Could not load requests.");

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Pilot = {
   id: string;
   businessName: string;
@@ -30,7 +32,7 @@ export function PilotDesk() {
 
   const load = useCallback(
     () =>
-      fetch("/api/admin/pilots")
+      timedFetch("/api/admin/pilots")
         .then(async (response) => ({
           response,
           body: (await response.json()) as { pilots?: Pilot[] },
@@ -47,16 +49,17 @@ export function PilotDesk() {
 
   async function open(id: string) {
     setSelected(id);
-    const response = await fetch(`/api/admin/pilots/${id}`);
+    const response = await timedFetch(`/api/admin/pilots/${id}`);
     const body = (await response.json()) as { tests?: TestRow[] };
     setTests(body.tests ?? []);
-    const reportResponse = await fetch(`/api/admin/pilots/${id}?view=report`);
+    const reportResponse = await timedFetch(`/api/admin/pilots/${id}?view=report`);
     const reportBody = (await reportResponse.json()) as { report?: Report };
     setReport(reportBody.report ?? null);
   }
 
-  async function createPilot() {
-    const response = await fetch("/api/admin/pilots", {
+  const createPilot = useGuarded(createPilotHandler);
+  async function createPilotHandler() {
+    const response = await timedFetch("/api/admin/pilots", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({

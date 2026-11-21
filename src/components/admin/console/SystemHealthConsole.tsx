@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import type { SystemHealth } from "@/product/admin-console/health";
 import type { FailedOperation, Incident, ServiceHealth, SystemError } from "@/product/reliability/types";
 import { Link } from "@/i18n/navigation";
+import { SkeletonTiles } from "@/components/ui/Skeleton";
 import { queryString, useAdminData } from "./api";
 import {
   Badge,
@@ -311,7 +312,14 @@ export function SystemHealthConsole() {
         ) : null}
       </FilterBar>
 
-      <DataState loading={loading} error={error} hasData={Boolean(data)} onRetry={refresh} errorText={loadError(error, t.loadError)}>
+      <DataState
+        loading={loading}
+        error={error}
+        hasData={Boolean(data)}
+        onRetry={refresh}
+        errorText={loadError(error, t.loadError)}
+        skeleton={<SkeletonTiles count={4} />}
+      >
         {data ? (
           <>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

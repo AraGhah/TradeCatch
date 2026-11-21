@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Alert = { id: string; component: string; severity: string; message: string; correlationId: string; createdAt: string };
 
 export function AdminSystemAlerts() {
@@ -10,7 +11,7 @@ export function AdminSystemAlerts() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
-    void fetch("/api/admin/system-alerts")
+    void timedFetch("/api/admin/system-alerts")
       .then((res) => (res.ok ? res.json() : { alerts: [] }))
       .then((data) => setAlerts((data as { alerts?: Alert[] }).alerts ?? []));
   }, []);

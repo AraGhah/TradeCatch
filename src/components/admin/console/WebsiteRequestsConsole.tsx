@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BusyLabel } from "@/components/ui/Spinner";
 import {
   PAYMENT_REQUEST_STATUSES,
   WEBSITE_PAYMENT_STATUSES,
@@ -464,8 +465,8 @@ function DetailBody({
       </div>
       {writable ? (
         <div>
-          <button type="button" className={secondaryButton} disabled={!patchDirty || priceInvalid || action.pending} onClick={() => void send(detailsPatch())}>
-            {action.pending && !step ? t.saving : t.saveDetails}
+          <button type="button" className={secondaryButton} disabled={!patchDirty || priceInvalid || action.pending} aria-busy={action.pending && !step} onClick={() => void send(detailsPatch())}>
+            <BusyLabel pending={action.pending && !step} busyLabel={t.saving}>{t.saveDetails}</BusyLabel>
           </button>
         </div>
       ) : null}

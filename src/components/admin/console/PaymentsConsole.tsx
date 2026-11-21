@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Link } from "@/i18n/navigation";
+import { SkeletonTiles } from "@/components/ui/Skeleton";
 import type { BillingEventRow } from "@/product/admin-console/billing-db";
 import type { PaymentsResult } from "@/product/admin-console/billing-views";
 import { queryString, useAdminData } from "./api";
@@ -247,7 +248,14 @@ export function PaymentsConsole() {
         </div>
       </FilterBar>
 
-      <DataState loading={loading} error={error} hasData={Boolean(data)} onRetry={refresh} errorText={loadError(error, t.loadError)}>
+      <DataState
+        loading={loading}
+        error={error}
+        hasData={Boolean(data)}
+        onRetry={refresh}
+        errorText={loadError(error, t.loadError)}
+        skeleton={<SkeletonTiles count={3} />}
+      >
         {data ? (
           <>
             {invoices?.note ? <Notice tone={invoices.stripe.configured ? "info" : "warn"}>{invoices.note}</Notice> : null}

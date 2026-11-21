@@ -3,15 +3,18 @@
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 export function AnnouncementForm() {
   const t = useTranslations("admin.platform");
   const [message, setMessage] = useState("");
   const [confirm, setConfirm] = useState("");
   const [result, setResult] = useState<string | null>(null);
 
-  async function submit(event: FormEvent) {
+  const submit = useGuarded(submitHandler);
+  async function submitHandler(event: FormEvent) {
     event.preventDefault();
-    const res = await fetch("/api/admin/announcements", {
+    const res = await timedFetch("/api/admin/announcements", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ message, confirm }),

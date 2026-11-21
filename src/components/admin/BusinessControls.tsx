@@ -3,30 +3,35 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 
+import { BusyLabel } from "@/components/ui/Spinner";
+import { timedFetch } from "@/lib/client/timed-fetch";
 const ERRORS = new Set(["status", "confirm", "own-session", "role", "last-owner", "member", "missing", "session"]);
 
 /**
  * Runs one request at a time. The ref closes the gap a `disabled` button leaves
  * open: two clicks in the same frame both see the old state, but only one can
  * take the ref. A thrown request (offline, aborted) is reported like any other
- * failure instead of leaving the form silent.
+ * failure instead of leaving the form silent. `active` says which button's
+ * request is running, so only that one shows "Saving…".
  */
 function useSingleFlight() {
   const running = useRef(false);
-  const [pending, setPending] = useState(false);
-  async function run<T>(work: () => Promise<T>): Promise<T | undefined> {
+  const [active, setActive] = useState<string | null>(null);
+  async function run<T>(key: string, work: () => Promise<T>): Promise<T | undefined> {
     if (running.current) return undefined;
     running.current = true;
-    setPending(true);
+    setActive(key);
     try {
       return await work();
     } finally {
       running.current = false;
-      setPending(false);
+      setActive(null);
     }
   }
-  return { pending, run };
+  return { pending: active !== null, active, run };
 }
+
+type Notice = { text: string; error: boolean };
 
 export function BusinessControls({
   organizationId,
@@ -40,46 +45,59 @@ export function BusinessControls({
   const t = useTranslations("admin.platform");
   const [nextStatus, setNextStatus] = useState(status);
   const [confirm, setConfirm] = useState("");
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<Notice | null>(null);
   const flight = useSingleFlight();
 
   async function post(path: string, payload: unknown) {
     try {
-      const res = await fetch(`/api/admin/businesses/${encodeURIComponent(organizationId)}/${path}`, {
+      const res = await timedFetch(`/api/admin/businesses/${encodeURIComponent(organizationId)}/${path}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
       const body = (await res.json().catch(() => null)) as { error?: string } | null;
-      return { ok: res.ok, error: body?.error };
+      // A 5xx means the server failed after taking the request: whether the
+      // change was applied is not known, so it is not reported as "not applied".
+      return { ok: res.ok, error: body?.error, unknown: res.status >= 500 };
     } catch {
-      return { ok: false, error: undefined };
+      // No answer (offline, dropped, or no reply within the time limit): the
+      // request may have been processed.
+      return { ok: false, error: undefined, unknown: true };
     }
   }
+
+  const outcome = (result: { ok: boolean; unknown: boolean }): Notice =>
+    result.ok
+      ? { text: t("saved"), error: false }
+      : { text: result.unknown ? t("unconfirmed") : t("error"), error: true };
 
   async function saveStatus(event: FormEvent) {
     event.preventDefault();
     setMessage(null);
-    const result = await flight.run(() => post("status", { status: nextStatus, confirm }));
+    const result = await flight.run("status", () => post("status", { status: nextStatus, confirm }));
     if (!result) return;
-    setMessage(result.ok ? t("saved") : t("error"));
+    setMessage(outcome(result));
     if (!result.ok && result.error && ERRORS.has(result.error)) setConfirm("");
     if (result.ok) setConfirm("");
   }
 
   async function saveRole(userId: string, role: string, confirmed: boolean) {
     if (!confirmed) {
-      setMessage(t("error"));
+      setMessage({ text: t("error"), error: true });
       return;
     }
     setMessage(null);
-    const result = await flight.run(() => post("role", { userId, role, confirm: true }));
-    if (result) setMessage(result.ok ? t("saved") : t("error"));
+    const result = await flight.run(`role:${userId}`, () => post("role", { userId, role, confirm: true }));
+    if (result) setMessage(outcome(result));
   }
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={(event) => void saveStatus(event)} className="flex flex-col gap-3 rounded-md border border-navy/10 bg-white p-4">
+      <form
+        onSubmit={(event) => void saveStatus(event)}
+        aria-busy={flight.active === "status"}
+        className="flex flex-col gap-3 rounded-md border border-navy/10 bg-white p-4"
+      >
         <h2 className="font-semibold text-navy">{t("statusTitle")}</h2>
         <select
           aria-label={t("statusTitle")}
@@ -105,22 +123,40 @@ export function BusinessControls({
         <button
           type="submit"
           disabled={flight.pending}
-          className="min-h-10 w-fit rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          aria-busy={flight.active === "status"}
+          className="min-h-10 min-w-28 w-fit rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {t("save")}
+          <BusyLabel pending={flight.active === "status"} busyLabel={t("saving")}>
+            {t("save")}
+          </BusyLabel>
         </button>
       </form>
       <div className="rounded-md border border-navy/10 bg-white p-4">
         <h2 className="font-semibold text-navy">{t("members")}</h2>
         <ul className="mt-3 flex flex-col gap-3">
           {members.map((member) => (
-            <MemberRole key={member.userId} member={member} onSave={saveRole} label={t("roleTitle")} save={t("save")} busy={flight.pending} />
+            <MemberRole
+              key={member.userId}
+              member={member}
+              onSave={saveRole}
+              label={t("roleTitle")}
+              save={t("save")}
+              saving={t("saving")}
+              busy={flight.pending}
+              running={flight.active === `role:${member.userId}`}
+            />
           ))}
         </ul>
       </div>
+      {/* Success is announced politely, a failure assertively; both stay in the page so nothing jumps. */}
       <p role="status" aria-live="polite" className="min-h-5 text-sm text-navy">
-        {message}
+        {message && !message.error ? message.text : null}
       </p>
+      {message?.error ? (
+        <p role="alert" className="text-sm font-medium text-red-800">
+          {message.text}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -130,13 +166,19 @@ function MemberRole({
   onSave,
   label,
   save,
+  saving,
   busy,
+  running,
 }: {
   member: { userId: string; name: string; email: string; role: string };
   onSave: (userId: string, role: string, confirmed: boolean) => Promise<void>;
   label: string;
   save: string;
+  saving: string;
+  /** Some request is running: every control waits. */
   busy: boolean;
+  /** This row's own request is the one running. */
+  running: boolean;
 }) {
   const [role, setRole] = useState(member.role);
   const [confirmed, setConfirmed] = useState(false);
@@ -162,11 +204,14 @@ function MemberRole({
       <button
         type="button"
         disabled={busy}
+        aria-busy={running}
         aria-label={`${save}: ${member.name || member.email}`}
         onClick={() => void onSave(member.userId, role, confirmed)}
-        className="min-h-10 rounded-md border border-navy/20 px-2 py-1 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+        className="min-h-10 min-w-24 rounded-md border border-navy/20 px-2 py-1 font-semibold disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {save}
+        <BusyLabel pending={running} busyLabel={saving}>
+          {save}
+        </BusyLabel>
       </button>
     </li>
   );
