@@ -2,51 +2,59 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
+import { requestJson } from "@/lib/client/request";
+import { useAction } from "@/lib/client/use-action";
 
 export function ForgotPasswordForm() {
   const t = useTranslations("forgotPassword");
   const locale = useLocale() === "fr" ? "fr" : "en";
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">(
-    "idle",
-  );
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [devLink, setDevLink] = useState<string | null>(null);
+  // One request at a time, however fast the button is pressed; it always ends, so the button always comes back.
+  const action = useAction();
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    setStatus("loading");
     setError(null);
     setDevLink(null);
-    try {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, locale }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        error?: string;
-        devToken?: string;
-      };
-      if (!res.ok || !data.ok) {
-        setStatus("error");
-        setError(
-          data.error === "rate_limited" ? t("rateLimited") : t("errorGeneric"),
-        );
-        return;
-      }
-      if (data.devToken) {
-        const path =
-          locale === "fr" ? "/fr/definir-mot-de-passe" : "/set-password";
-        setDevLink(`${path}?token=${encodeURIComponent(data.devToken)}`);
-      }
-      setStatus("sent");
-    } catch {
-      setStatus("error");
-      setError(t("errorGeneric"));
+    setSent(false);
+    const outcome = await action.run(
+      (signal) =>
+        requestJson<{ ok?: boolean; error?: string; devToken?: string }>(
+          "/api/auth/forgot-password",
+          { method: "POST", body: { email, locale }, signal },
+        ),
+      { write: true },
+    );
+    if (outcome.status === "dropped" || outcome.status === "cancelled") return;
+    if (outcome.status === "failed") {
+      const { failure } = outcome;
+      // After a timeout or a dropped connection the email may well be on its
+      // way: say that it is unconfirmed, not that it failed.
+      setError(
+        failure.outcomeUnknown
+          ? t("unconfirmed")
+          : failure.kind === "rate_limited"
+            ? t("rateLimited")
+            : t("errorGeneric"),
+      );
+      return;
     }
+    const data = outcome.value;
+    if (!data?.ok) {
+      setError(t("errorGeneric"));
+      return;
+    }
+    if (data.devToken) {
+      const path =
+        locale === "fr" ? "/fr/definir-mot-de-passe" : "/set-password";
+      setDevLink(`${path}?token=${encodeURIComponent(data.devToken)}`);
+    }
+    setSent(true);
   }
 
   return (
@@ -67,12 +75,15 @@ export function ForgotPasswordForm() {
       </label>
       <button
         type="submit"
-        disabled={status === "loading"}
+        disabled={action.pending}
+        aria-busy={action.pending}
         className="rounded-md bg-orange px-4 py-3 text-[15px] font-semibold text-navy transition hover:bg-orange-dark disabled:opacity-60"
       >
-        {status === "loading" ? t("sending") : t("submit")}
+        <BusyLabel pending={action.pending} busyLabel={t("sending")}>
+          {t("submit")}
+        </BusyLabel>
       </button>
-      {status === "sent" ? (
+      {sent ? (
         <p className="text-sm text-navy/80" role="status">
           {t("sent")}
         </p>

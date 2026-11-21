@@ -10,6 +10,9 @@ import {
 } from "@/components/TurnstileWidget";
 import { referralSubmissionSchema } from "@/lib/validation/referral-submission";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 type Values = {
   referrerName: string;
   referrerEmail: string;
@@ -119,7 +122,8 @@ export function ReferralForm() {
     return found;
   }
 
-  async function onSubmit(event: FormEvent) {
+  const onSubmit = useGuarded(onSubmitHandler);
+  async function onSubmitHandler(event: FormEvent) {
     event.preventDefault();
     if (status === "submitting") return;
 
@@ -134,7 +138,7 @@ export function ReferralForm() {
     setStatus("submitting");
     setSubmitError(null);
     try {
-      const response = await fetch("/api/referrals/submit", {
+      const response = await timedFetch("/api/referrals/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -385,7 +389,7 @@ export function ReferralForm() {
           aria-busy={status === "submitting"}
           className="inline-flex items-center justify-center gap-3 rounded-[12px] bg-orange px-7 py-[15px] text-[16px] font-bold tracking-[-0.015em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
         >
-          {status === "submitting" ? t("submitting") : t("submit")}
+          <BusyLabel pending={status === "submitting"} busyLabel={t("submitting")}>{t("submit")}</BusyLabel>
         </button>
       </div>
     </form>

@@ -3,7 +3,10 @@
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { PasswordField } from "@/components/PasswordField";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
+import { requestJson } from "@/lib/client/request";
+import { useAction, type Failure } from "@/lib/client/use-action";
 
 const inputClass =
   "rounded-md border border-navy/15 bg-white px-3 py-2.5 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange";
@@ -11,10 +14,30 @@ const buttonClass =
   "rounded-md bg-orange px-4 py-3 text-[15px] font-semibold text-navy transition hover:bg-orange-dark disabled:opacity-60";
 
 type Mode = "password" | "link";
-type Status = "idle" | "loading" | "sent" | "error";
 
 /** Messages for the codes the sign-in routes can send back to this page. */
 export type LoginNotice = "linkInvalid" | "linkRateLimited" | "passwordSaved";
+
+type SignInAnswer = { ok?: boolean; next?: string; error?: string; devToken?: string };
+
+/** The `error` code the sign-in route put in its JSON answer, if any. */
+function codeOf(failure: Failure): string | undefined {
+  const code = (failure.body as { error?: unknown } | undefined)?.error;
+  return typeof code === "string" ? code : undefined;
+}
+
+/**
+ * The sign-in service itself failed (it did not answer, or answered with an
+ * error of its own), which says nothing about the person's details.
+ */
+function serviceFailed(failure: Failure): boolean {
+  return (
+    failure.kind === "timeout" ||
+    failure.kind === "network" ||
+    failure.kind === "unavailable" ||
+    failure.kind === "server"
+  );
+}
 
 export function LoginForm({
   notice,
@@ -29,15 +52,20 @@ export function LoginForm({
   const [mode, setMode] = useState<Mode>("password");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState<Status>("idle");
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [devLink, setDevLink] = useState<string | null>(null);
   // The sign-in service itself failed (not the person's details): keep what they typed and offer a way around it.
   const [outage, setOutage] = useState(false);
+  // True once the browser is on its way to the workspace: signing in again from here would be a second sign-in.
+  const [redirecting, setRedirecting] = useState(false);
+  // One sign-in request at a time, however fast the button is pressed; it always ends (30 s), so the button always comes back.
+  const action = useAction();
+  const busy = action.pending || redirecting;
 
   function switchMode(next: Mode) {
     setMode(next);
-    setStatus("idle");
+    setSent(false);
     setError(null);
     setDevLink(null);
     setOutage(false);
@@ -46,91 +74,98 @@ export function LoginForm({
 
   async function onPasswordSubmit(e: FormEvent) {
     e.preventDefault();
-    if (status === "loading") return;
-    setStatus("loading");
+    if (busy) return;
     setError(null);
     setOutage(false);
-    try {
-      const res = await fetch("/api/auth/password-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          password,
-          locale,
-          ...(returnTo ? { next: returnTo } : {}),
+    const outcome = await action.run(
+      (signal) =>
+        requestJson<SignInAnswer>("/api/auth/password-login", {
+          method: "POST",
+          body: {
+            email,
+            password,
+            locale,
+            ...(returnTo ? { next: returnTo } : {}),
+          },
+          signal,
         }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        next?: string;
-        error?: string;
-      };
-      if (res.ok && data.ok && data.next) {
+      { write: true },
+    );
+    if (outcome.status === "dropped" || outcome.status === "cancelled") return;
+    if (outcome.status === "ok") {
+      if (outcome.value?.ok && outcome.value.next) {
         // A full navigation, so the new session cookie is used for the first page.
-        window.location.assign(data.next);
+        setRedirecting(true);
+        window.location.assign(outcome.value.next);
         return;
       }
-      setStatus("error");
-      // 503 means the sign-in service could not be reached, which says nothing
-      // about the account; 403 is an account that cannot be used right now.
-      const serviceDown = res.status >= 500;
-      setOutage(serviceDown);
-      setError(
-        serviceDown
-          ? t("errorOutage")
-          : data.error === "invalid_credentials"
-            ? t("errorInvalid")
-            : data.error === "rate_limited"
-              ? t("errorRateLimited")
-              : data.error === "unavailable"
-                ? t("errorUnavailable")
-                : t("errorGeneric"),
-      );
-    } catch {
-      setStatus("error");
-      setOutage(true);
-      setError(t("errorOutage"));
+      setError(t("errorGeneric"));
+      return;
     }
+    const failure = outcome.failure;
+    const code = codeOf(failure);
+    // 5xx and no answer mean the sign-in service could not be reached, which
+    // says nothing about the account; a refused account cannot be used right now.
+    const down = serviceFailed(failure);
+    setOutage(down);
+    setError(
+      down
+        ? t("errorOutage")
+        : code === "invalid_credentials"
+          ? t("errorInvalid")
+          : code === "rate_limited" || failure.kind === "rate_limited"
+            ? t("errorRateLimited")
+            : code === "unavailable"
+              ? t("errorUnavailable")
+              : t("errorGeneric"),
+    );
   }
 
   async function onLinkSubmit(e: FormEvent) {
     e.preventDefault();
-    if (status === "loading") return;
-    setStatus("loading");
+    if (busy) return;
     setError(null);
     setDevLink(null);
-    try {
-      const res = await fetch("/api/auth/magic-link", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email,
-          locale,
-          ...(returnTo ? { next: returnTo } : {}),
+    setSent(false);
+    const outcome = await action.run(
+      (signal) =>
+        requestJson<SignInAnswer>("/api/auth/magic-link", {
+          method: "POST",
+          body: {
+            email,
+            locale,
+            ...(returnTo ? { next: returnTo } : {}),
+          },
+          signal,
         }),
-      });
-      const data = (await res.json()) as {
-        ok?: boolean;
-        error?: string;
-        devToken?: string;
-      };
-      if (!res.ok || !data.ok) {
-        setStatus("error");
-        setError(data.error || t("errorGeneric"));
-        return;
-      }
-      if (data.devToken) {
-        // The same address the emailed link has, return path included.
-        setDevLink(
-          `/api/auth/callback?token=${encodeURIComponent(data.devToken)}&locale=${locale}${returnTo ? `&next=${encodeURIComponent(returnTo)}` : ""}`,
-        );
-      }
-      setStatus("sent");
-    } catch {
-      setStatus("error");
-      setError(t("errorGeneric"));
+      { write: true },
+    );
+    if (outcome.status === "dropped" || outcome.status === "cancelled") return;
+    if (outcome.status === "failed") {
+      const failure = outcome.failure;
+      // Whether the email went out is not known after a timeout or a dropped
+      // connection: say so instead of "failed".
+      setError(
+        failure.outcomeUnknown
+          ? t("linkUnconfirmed")
+          : failure.kind === "rate_limited"
+            ? t("linkRateLimited")
+            : t("errorGeneric"),
+      );
+      return;
     }
+    const data = outcome.value;
+    if (!data?.ok) {
+      setError(t("errorGeneric"));
+      return;
+    }
+    if (data.devToken) {
+      // The same address the emailed link has, return path included.
+      setDevLink(
+        `/api/auth/callback?token=${encodeURIComponent(data.devToken)}&locale=${locale}${returnTo ? `&next=${encodeURIComponent(returnTo)}` : ""}`,
+      );
+    }
+    setSent(true);
   }
 
   const noticeText =
@@ -145,6 +180,7 @@ export function LoginForm({
   return (
     <form
       onSubmit={mode === "password" ? onPasswordSubmit : onLinkSubmit}
+      aria-busy={busy}
       className="mx-auto flex w-full max-w-md flex-col gap-4"
     >
       {noticeText ? (
@@ -182,10 +218,13 @@ export function LoginForm({
           />
           <button
             type="submit"
-            disabled={status === "loading"}
+            disabled={busy}
+            aria-busy={busy}
             className={buttonClass}
           >
-            {status === "loading" ? t("passwordSending") : t("passwordSubmit")}
+            <BusyLabel pending={busy} busyLabel={t("passwordSending")}>
+              {t("passwordSubmit")}
+            </BusyLabel>
           </button>
           <p className="text-sm text-navy/70">
             <Link href="/forgot-password" className="font-semibold underline">
@@ -198,14 +237,17 @@ export function LoginForm({
           <p className="text-sm text-navy/70">{t("linkIntro")}</p>
           <button
             type="submit"
-            disabled={status === "loading"}
+            disabled={busy}
+            aria-busy={busy}
             className={buttonClass}
           >
-            {status === "loading" ? t("sending") : t("submit")}
+            <BusyLabel pending={busy} busyLabel={t("sending")}>
+              {t("submit")}
+            </BusyLabel>
           </button>
         </>
       )}
-      {status === "sent" ? (
+      {sent ? (
         <p className="text-sm text-navy/80" role="status">
           {t("sent")}
         </p>
@@ -227,6 +269,7 @@ export function LoginForm({
               <button
                 type="button"
                 onClick={() => switchMode("link")}
+                disabled={busy}
                 className="font-semibold underline"
               >
                 {t("useLink")}
@@ -238,7 +281,8 @@ export function LoginForm({
       <button
         type="button"
         onClick={() => switchMode(mode === "password" ? "link" : "password")}
-        className="self-start text-sm font-semibold text-navy underline"
+        disabled={busy}
+        className="self-start text-sm font-semibold text-navy underline disabled:opacity-60"
       >
         {mode === "password" ? t("useLink") : t("usePassword")}
       </button>
