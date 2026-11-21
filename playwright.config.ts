@@ -24,6 +24,10 @@ const ADMIN_CONSOLE_ADMINS = [
   ),
   "adm-support@example.test:support",
   "adm-readonly@example.test:read_only",
+  // tests/monitoring-health.spec.ts (KAN-28) has its own role identities, so it never
+  // shares a session or an organization with ADM-15.
+  "adm-mon-support@example.test:support",
+  "adm-mon-readonly@example.test:read_only",
 ].join(",");
 /** Where tests/gmail.spec.ts serves its stand-in for Google. */
 export const GMAIL_E2E_PORT = Number(
