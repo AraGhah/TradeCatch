@@ -2,6 +2,10 @@ import path from "path";
 import type { NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 import { loginConfirmationHeaders } from "./src/product/saas/auth/login-confirmation";
+import {
+  PASSWORD_LINK_PAGE_PATHS,
+  passwordLinkPageHeaders,
+} from "./src/product/saas/auth/password-link-headers";
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
@@ -88,6 +92,14 @@ const nextConfig: NextConfig = {
           ([key, value]) => ({ key, value }),
         ),
       },
+      // The emailed password link opens this page. Listed after the catch-all
+      // above, because the last matching rule wins for a repeated header key.
+      ...PASSWORD_LINK_PAGE_PATHS.map((source) => ({
+        source,
+        headers: Object.entries(passwordLinkPageHeaders).map(
+          ([key, value]) => ({ key, value }),
+        ),
+      })),
     ];
   },
   // The receptionist page used to live under a different path. Keep old links,

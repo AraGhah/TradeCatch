@@ -14,8 +14,19 @@ function isProblem(value: unknown): value is Problem {
   return PROBLEMS.includes(value as Problem);
 }
 
-/** Choose a password from an activation or reset link, then land signed in. */
-export function SetPasswordForm({ token }: { token: string }) {
+/**
+ * Choose a password from an activation or reset link, then land signed in.
+ * `onInvalid` runs when the server says the link has meanwhile expired or been
+ * used (another tab, another device), so the page can show the expired-link
+ * message and the way to ask for a new one.
+ */
+export function SetPasswordForm({
+  token,
+  onInvalid,
+}: {
+  token: string;
+  onInvalid: () => void;
+}) {
   const t = useTranslations("setPassword");
   const problems = useTranslations("passwordProblems");
   const locale = useLocale() === "fr" ? "fr" : "en";
@@ -62,7 +73,7 @@ export function SetPasswordForm({ token }: { token: string }) {
     } else if (body?.error === "weak_password" && isProblem(body.problem)) {
       setError(problems(body.problem));
     } else if (body?.error === "invalid_link") {
-      setError(t("invalidLink"));
+      onInvalid();
     } else if (body?.error === "rate_limited" || failure.kind === "rate_limited") {
       setError(t("rateLimited"));
     } else {

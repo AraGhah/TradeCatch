@@ -52,7 +52,7 @@ export function ForgotPasswordForm() {
     if (data.devToken) {
       const path =
         locale === "fr" ? "/fr/definir-mot-de-passe" : "/set-password";
-      setDevLink(`${path}?token=${encodeURIComponent(data.devToken)}`);
+      setDevLink(`${path}#token=${encodeURIComponent(data.devToken)}`);
     }
     setSent(true);
   }
