@@ -28,9 +28,15 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSchedulingAccess(id, "read");
   if (!access.ok)
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   if (!(await hasGoogleCalendarPilot(id))) return calendarPilotDenied();
-  return NextResponse.json({ ok: true, sync: await getGoogleSync().summary(id) });
+  return NextResponse.json({
+    ok: true,
+    sync: await getGoogleSync().summary(id),
+  });
 }
 
 /**
@@ -42,9 +48,14 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params;
   const access = await requireSchedulingAccess(id, "write");
   if (!access.ok)
-    return NextResponse.json({ error: access.error }, { status: access.status });
+    return NextResponse.json(
+      { error: access.error },
+      { status: access.status },
+    );
   if (!(await hasGoogleCalendarPilot(id))) return calendarPilotDenied();
-  const parsed = body.safeParse(await readJsonBounded(request).catch(() => null));
+  const parsed = body.safeParse(
+    await readJsonBounded(request).catch(() => null),
+  );
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   const sync = getGoogleSync();
@@ -71,7 +82,11 @@ export async function POST(request: NextRequest, { params }: Params) {
       await sync.requeueAll(id);
       await sync.push({ organizationId: id, limit: 25 }).catch(() => undefined);
     }
-    return NextResponse.json({ ok: true, calendar, sync: await sync.summary(id) });
+    return NextResponse.json({
+      ok: true,
+      calendar,
+      sync: await sync.summary(id),
+    });
   } catch (error) {
     if (error instanceof SchedulingError) {
       return NextResponse.json(

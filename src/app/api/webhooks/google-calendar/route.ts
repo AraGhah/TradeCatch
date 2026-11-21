@@ -34,7 +34,8 @@ export async function POST(request: NextRequest) {
     channelId,
     token,
     resourceState: request.headers.get("x-goog-resource-state") ?? undefined,
-    messageNumber: Number.isSafeInteger(number) && number > 0 ? number : undefined,
+    messageNumber:
+      Number.isSafeInteger(number) && number > 0 ? number : undefined,
   });
   if (result.status === "unauthorized") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -215,7 +215,7 @@ export function TemplateManager({
             <BusyLabel pending={flight.isPending("save")} busyLabel={t("actions.saving")}>{labels.save}</BusyLabel>
           </button>
           <button type="button" disabled={busy} aria-busy={flight.isPending("reset")} onClick={() => void save(true)} className="rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:opacity-60">
-            <BusyLabel pending={flight.isPending("reset")} busyLabel={t("saving")}>{labels.reset}</BusyLabel>
+            <BusyLabel pending={flight.isPending("reset")} busyLabel={t("actions.saving")}>{labels.reset}</BusyLabel>
           </button>
         </div>
         {preview ? (

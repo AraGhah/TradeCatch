@@ -54,7 +54,7 @@ function recordingClient() {
     return response;
   };
   // stripe-mock only accepts letters and digits after "sk_test_".
-  return { http: createStripeHttp("sk_test_mockkey1234567890", mockFetch), exchanges };
+  return { http: createStripeHttp("sk_test_mockkey1234567890", mockFetch), exchanges }; // secret-scan: allow — stripe-mock fixture
 }
 
 // The price on stripe-mock's canned subscription, so that subscription reads as "essential".

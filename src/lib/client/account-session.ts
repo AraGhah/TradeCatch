@@ -65,7 +65,8 @@ export function parseAccountAnswer(status: number, body: unknown): AccountView {
     return { state: "unavailable" };
   }
   const answer = body as Record<string, unknown>;
-  if (!isAccountDestination(answer.destination)) return { state: "unavailable" };
+  if (!isAccountDestination(answer.destination))
+    return { state: "unavailable" };
   if (answer.state === "anonymous") {
     return { state: "anonymous", destination: answer.destination };
   }

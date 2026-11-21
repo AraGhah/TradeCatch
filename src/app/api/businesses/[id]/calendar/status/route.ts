@@ -24,8 +24,12 @@ export async function GET(_request: Request, { params }: Params) {
   // read from what is stored, so it survives a refresh or a new login. It
   // holds appointment ids and times, never an event title or a token.
   const sync =
-    googlePilot && calendar.status !== "simulated" && calendar.status !== "disconnected"
-      ? await getGoogleSync().summary(id).catch(() => null)
+    googlePilot &&
+    calendar.status !== "simulated" &&
+    calendar.status !== "disconnected"
+      ? await getGoogleSync()
+          .summary(id)
+          .catch(() => null)
       : null;
   // Times on this page are shown in the business's own zone, as in the calendar.
   const { timezone } = await getSchedulingService().getRules(id);

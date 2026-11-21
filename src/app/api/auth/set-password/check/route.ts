@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const check = await inspectPasswordToken(parsed.data.token);
-    return authJson(check.valid ? { valid: true, kind: check.kind } : { valid: false });
+    return authJson(
+      check.valid ? { valid: true, kind: check.kind } : { valid: false },
+    );
   } catch {
     // Not "expired": the check itself could not run, so the page says so and
     // lets the person try again instead of telling them the link is dead.

@@ -67,7 +67,13 @@ function plausible(row: z.infer<typeof rowSchema>, now: number): boolean {
   if (!Number.isFinite(at) || at % MINUTE !== 0) return false;
   if (at < now - MAX_AGE_MS || at > now + MAX_FUTURE_MS) return false;
   const statuses =
-    row.s2xx + row.s3xx + row.s401 + row.s403 + row.s429 + row.s4xxOther + row.s5xx;
+    row.s2xx +
+    row.s3xx +
+    row.s401 +
+    row.s403 +
+    row.s429 +
+    row.s4xxOther +
+    row.s5xx;
   const latencies = row.lat.reduce((sum, n) => sum + n, 0);
   return statuses <= row.total && latencies <= row.total;
 }

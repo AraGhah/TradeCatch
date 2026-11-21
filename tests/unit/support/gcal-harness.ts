@@ -33,7 +33,7 @@ export const OWNER = "owner@example.test";
 export function useGoogleEnv(): () => void {
   const keys = ["AUTH_SECRET", "GOOGLE_CALENDAR_CLIENT_ID", "GOOGLE_CALENDAR_CLIENT_SECRET"] as const;
   const saved = Object.fromEntries(keys.map((key) => [key, process.env[key]]));
-  process.env.AUTH_SECRET = "test-auth-secret-for-calendar-sync-0123456789";
+  process.env.AUTH_SECRET = "test-auth-secret-for-calendar-sync-0123456789"; // secret-scan: allow — local test fixture
   process.env.GOOGLE_CALENDAR_CLIENT_ID = "client-id.test";
   process.env.GOOGLE_CALENDAR_CLIENT_SECRET = "client-secret";
   return () => {

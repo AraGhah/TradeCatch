@@ -120,8 +120,10 @@ export function failureFromStatus(
   if (status === 403) return build("forbidden", status, options, extra);
   if (status === 409) return build("conflict", status, options, extra);
   if (status === 429) return build("rate_limited", status, options, extra);
-  if (status === 408 || status === 504) return build("timeout", status, options, extra);
-  if (status === 502 || status === 503) return build("unavailable", status, options, extra);
+  if (status === 408 || status === 504)
+    return build("timeout", status, options, extra);
+  if (status === 502 || status === 503)
+    return build("unavailable", status, options, extra);
   if (status >= 500) return build("server", status, options, extra);
   if (status >= 400) return build("invalid", status, options, extra);
   return build("unknown", status, options, extra);
@@ -132,7 +134,10 @@ export function classifyFailure(
   error: unknown,
   options: ActionOptions = {},
 ): Failure {
-  if (error instanceof ActionTimeoutError || error instanceof RequestTimeoutError) {
+  if (
+    error instanceof ActionTimeoutError ||
+    error instanceof RequestTimeoutError
+  ) {
     return build("timeout", 0, options);
   }
   if (error instanceof ApiError) {
@@ -159,7 +164,11 @@ export function classifyFailure(
         const failure = build("server", error.status, options, extra);
         const answeredOk = error.status >= 200 && error.status < 300;
         if (!options.write || !answeredOk) return failure;
-        return { ...failure, outcomeUnknown: true, retrySafe: options.idempotent === true };
+        return {
+          ...failure,
+          outcomeUnknown: true,
+          retrySafe: options.idempotent === true,
+        };
       }
       default:
         return failureFromStatus(error.status, { ...options, ...extra });
@@ -216,9 +225,7 @@ export function createActionRunner() {
           // The race is what guarantees an end: a task that ignores its signal
           // and never settles still loses to the timer.
           const value = await Promise.race([task(controller.signal), timeout]);
-          return cancelled
-            ? { status: "cancelled" }
-            : { status: "ok", value };
+          return cancelled ? { status: "cancelled" } : { status: "ok", value };
         } catch (error) {
           if (cancelled) return { status: "cancelled" };
           return { status: "failed", failure: classifyFailure(error, options) };
@@ -265,7 +272,7 @@ export function useAction() {
   }, []);
 
   const run = useCallback(
-    async <T,>(
+    async <T>(
       task: (signal: AbortSignal) => Promise<T>,
       options?: ActionOptions,
     ): Promise<ActionOutcome<T>> => {

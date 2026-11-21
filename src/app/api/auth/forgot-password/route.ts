@@ -41,7 +41,11 @@ export async function POST(request: NextRequest) {
     // Spent for every address typed, whether or not it has an account, so this
     // refusal does not reveal which addresses do.
     if (!result.ok) {
-      return tooManyRequests(result.budget, { error: "rate_limited" }, NO_STORE);
+      return tooManyRequests(
+        result.budget,
+        { error: "rate_limited" },
+        NO_STORE,
+      );
     }
     // The same answer whether or not the email has an account.
     return authJson({

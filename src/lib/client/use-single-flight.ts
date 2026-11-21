@@ -55,7 +55,8 @@ export function useSingleFlight() {
 
 /** A submit event: dropping it must still stop the browser's own form submission. */
 function stopNativeSubmit(args: unknown[]) {
-  const event = args[0] as { type?: unknown; preventDefault?: unknown } | undefined;
+  const event = args[0] as
+    { type?: unknown; preventDefault?: unknown } | undefined;
   if (event?.type === "submit" && typeof event.preventDefault === "function") {
     (event.preventDefault as () => void).call(event);
   }

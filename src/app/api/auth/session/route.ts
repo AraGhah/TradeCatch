@@ -25,7 +25,8 @@ export const dynamic = "force-dynamic";
  * store cannot be reached it answers 503 and removes nothing.
  */
 export async function GET(request: NextRequest) {
-  const locale = request.nextUrl.searchParams.get("locale") === "fr" ? "fr" : "en";
+  const locale =
+    request.nextUrl.searchParams.get("locale") === "fr" ? "fr" : "en";
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
   const hasCredentials =
     Boolean(refreshToken) || request.cookies.has(SESSION_COOKIE);
