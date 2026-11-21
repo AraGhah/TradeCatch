@@ -14,6 +14,7 @@ import {
 import { clearPlatformSnapshot } from "@/product/admin/platform-snapshot";
 import { maskContact } from "@/product/security/audit-changes";
 import { sendActivationInvite } from "@/product/saas/auth/magic-link";
+import { trustedSiteOrigin } from "@/product/saas/auth/site-origin";
 import { getSaasStore } from "@/product/saas/runtime";
 
 export const dynamic = "force-dynamic";
@@ -74,9 +75,7 @@ export async function POST(request: Request) {
       400,
     );
   }
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    new URL(request.url).origin;
+  const origin = trustedSiteOrigin(new URL(request.url).origin);
 
   try {
     const result = await createBusiness(parsed.data, {

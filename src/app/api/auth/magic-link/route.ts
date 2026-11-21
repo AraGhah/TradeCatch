@@ -5,6 +5,7 @@ import { getClientIp } from "@/lib/rate-limit";
 import { consumePolicy } from "@/lib/rate-limit-policy";
 import { tooManyRequests } from "@/lib/rate-limit-response";
 import { requestMagicLink } from "@/product/saas/auth/magic-link";
+import { trustedSiteOrigin } from "@/product/saas/auth/site-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -34,9 +35,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid form data." }, { status: 400 });
   }
 
-  const origin =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    request.nextUrl.origin;
+  const origin = trustedSiteOrigin(request.nextUrl.origin);
 
   let result: Awaited<ReturnType<typeof requestMagicLink>>;
   try {

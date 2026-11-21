@@ -85,12 +85,25 @@ export const POLICIES = {
     per: "ip",
     why: "Reset e-mails sent to other people.",
   },
+  "auth.forgot-password-account": {
+    ...perWindow(5, HOUR),
+    group: "auth",
+    per: "other",
+    why: "E-mail bombing one address with reset links, from many addresses. Spent for every address typed, so a refusal reveals nothing about accounts.",
+  },
   "auth.set-password": {
     ...perWindow(20, 15 * MIN),
     unknown: perWindow(200, 15 * MIN),
     group: "auth",
     per: "ip",
     why: "Guessing reset tokens.",
+  },
+  "auth.set-password-check": {
+    ...perWindow(30, 15 * MIN),
+    unknown: perWindow(300, 15 * MIN),
+    group: "auth",
+    per: "ip",
+    why: "Guessing reset tokens through the link check that runs when the page opens.",
   },
   "auth.callback": {
     ...perWindow(60, 10 * MIN),

@@ -38,13 +38,20 @@ export async function POST(request: NextRequest) {
       locale: parsed.data.locale,
       origin: authOrigin(request),
     });
+    // Spent for every address typed, whether or not it has an account, so this
+    // refusal does not reveal which addresses do.
+    if (!result.ok) {
+      return tooManyRequests(result.budget, { error: "rate_limited" }, NO_STORE);
+    }
     // The same answer whether or not the email has an account.
     return authJson({
       ok: true,
       ...(result.devToken ? { devToken: result.devToken } : {}),
     });
   } catch {
+    // Never a false "ok": the form tells the person to try again. The body
+    // carries nothing about the address or the failure.
     console.error("[auth/forgot-password] request failed");
-    return authJson({ ok: true });
+    return authJson({ error: "unavailable" }, 503);
   }
 }

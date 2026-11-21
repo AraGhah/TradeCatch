@@ -14,6 +14,7 @@ import { getSaasStore } from "@/product/saas/runtime";
 import { normalizeEmail } from "@/product/saas/store";
 import { PLAN_IDS } from "@/product/saas/entitlements";
 import { sendActivationInvite } from "@/product/saas/auth/magic-link";
+import { trustedSiteOrigin } from "@/product/saas/auth/site-origin";
 
 export const dynamic = "force-dynamic";
 
@@ -102,9 +103,7 @@ export async function POST(request: NextRequest) {
       : undefined;
     let invite: { sent: boolean } | undefined;
     if (input.sendInvite) {
-      const origin =
-        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-        request.nextUrl.origin;
+      const origin = trustedSiteOrigin(request.nextUrl.origin);
       const result = await sendActivationInvite({
         email,
         locale: input.locale,
