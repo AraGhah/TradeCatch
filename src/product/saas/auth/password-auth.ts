@@ -3,7 +3,10 @@ import { getSaasStore } from "../runtime";
 import { normalizeEmail } from "../store";
 import type { PasswordToken, User } from "../types";
 import { runAfterResponse } from "@/lib/after-response";
+import { consumePolicy } from "@/lib/rate-limit-policy";
+import type { RateLimitResult } from "@/lib/rate-limit";
 import { devTokenAllowed, sendAuthEmail } from "./mailer";
+import { trustedSiteOrigin } from "./site-origin";
 import {
   checkPasswordStrength,
   hashPassword,
@@ -19,7 +22,9 @@ type Locale = "en" | "fr";
 
 /** Single-use links: an invite is read later than a reset, so it lives longer. */
 const ACTIVATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const RESET_TTL_MS = 30 * 60 * 1000;
+/** A reset link stops working 30 minutes after it was made. Never extended. */
+export const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
+const RESET_TTL_MS = PASSWORD_RESET_TTL_MS;
 
 /** randomToken(32) is 43 base64url characters; anything else cannot be ours. */
 const TOKEN_SHAPE = /^[A-Za-z0-9_-]{43}$/;
@@ -32,15 +37,45 @@ export function setPasswordPath(locale: Locale): string {
   return locale === "fr" ? "/fr/definir-mot-de-passe" : "/set-password";
 }
 
+/**
+ * The link emailed to choose a password. The secret sits in the URL fragment
+ * (`#token=`), not the query string: a fragment is never sent to a server, so
+ * it cannot land in Cloudflare's request logs or traces, in a Referer header,
+ * or in a proxy log. The page reads it in the browser and posts it in a body.
+ * The address always comes from the configured site (see site-origin.ts).
+ */
 export function setPasswordUrl(
   origin: string,
   locale: Locale,
   rawToken: string,
 ): string {
-  return `${origin.replace(/\/$/, "")}${setPasswordPath(locale)}?token=${encodeURIComponent(rawToken)}`;
+  return `${trustedSiteOrigin(origin)}${setPasswordPath(locale)}#token=${encodeURIComponent(rawToken)}`;
 }
 
-/** Creates a single-use link token and returns the raw value. Only its hash is stored. */
+/** Error text that is safe to log: anything shaped like one of our tokens is masked. */
+export function safeErrorText(error: unknown): string {
+  const text =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "unknown";
+  return text.replace(/[A-Za-z0-9_-]{32,}/g, "[redacted]").slice(0, 300);
+}
+
+/** Password storage (migration 037) not being in the database yet, as opposed to any other failure. */
+function isMissingRelation(error: unknown): boolean {
+  if ((error as { code?: unknown } | null)?.code === "42P01") return true;
+  return (
+    error instanceof Error && /relation ".*" does not exist/i.test(error.message)
+  );
+}
+
+/**
+ * Creates a single-use link token and returns the raw value. Only its hash is
+ * stored. Any earlier unused link of the same kind for this person stops
+ * working at the same moment, so only the newest link is ever live.
+ */
 export async function issuePasswordToken(input: {
   userId: string;
   kind: PasswordToken["kind"];
@@ -50,7 +85,7 @@ export async function issuePasswordToken(input: {
   const now = new Date();
   const ttl =
     input.ttlMs ?? (input.kind === "activation" ? ACTIVATION_TTL_MS : RESET_TTL_MS);
-  await getSaasStore().createPasswordToken({
+  await getSaasStore().replacePasswordToken({
     id: newId("pwt"),
     userId: input.userId,
     tokenHash: hashToken(rawToken),
@@ -129,10 +164,18 @@ export async function sendActivationInvite(input: {
   try {
     rawToken = await issuePasswordToken({ userId: user.id, kind: "activation" });
   } catch (error) {
+    if (!isMissingRelation(error)) {
+      // A real failure (not the missing migration): say so instead of quietly
+      // sending a different kind of link.
+      console.error("[saas-auth] activation link not created", {
+        error: safeErrorText(error),
+      });
+      return { ok: false, error: "Could not create the activation link." };
+    }
     // Password storage (migration 037) is not in the database yet: invite with
     // the email sign-in link so a new customer is never locked out by deploy order.
     console.error("[saas-auth] password tokens unavailable, using email link", {
-      error: error instanceof Error ? error.message : "unknown",
+      error: safeErrorText(error),
     });
     return sendLegacyActivationLink({
       email,
@@ -192,7 +235,7 @@ async function sendLegacyActivationLink(input: {
     expiresAt: new Date(now.getTime() + ttlMs).toISOString(),
     createdAt: now.toISOString(),
   });
-  const url = `${input.origin.replace(/\/$/, "")}/api/auth/callback?token=${encodeURIComponent(rawToken)}&locale=${input.locale}`;
+  const url = `${trustedSiteOrigin(input.origin)}/api/auth/callback?token=${encodeURIComponent(rawToken)}&locale=${input.locale}`;
   return sendAuthEmail({
     to: input.email,
     subject:
@@ -227,21 +270,32 @@ The link works once and expires in ${validFor.en}.
  * address has an account either. Only a local or test run (where the link is
  * handed back instead of emailed) does the work before answering.
  */
+export type PasswordResetRequestResult =
+  | { ok: true; devToken?: string }
+  | { ok: false; error: "rate_limited"; budget: RateLimitResult };
+
 export async function requestPasswordReset(input: {
   email: string;
   locale: Locale;
   origin: string;
-}): Promise<{ ok: true; devToken?: string }> {
+}): Promise<PasswordResetRequestResult> {
   const email = normalizeEmail(input.email);
   if (!email.includes("@")) return { ok: true };
 
+  // One atomic budget per address (the per-IP budget is spent by the route).
+  // It is spent for every address typed, whether or not an account exists, so
+  // a refusal here says nothing about who has an account. The address is only
+  // ever stored hashed.
+  const budget = await consumePolicy("auth.forgot-password-account", {
+    subject: hashToken(`pwreset:${email}`),
+  });
   const limiter = await throttle();
-  const key = `pwreset:${email}`;
-  if (!(await limiter.allowed(key))) {
-    await limiter.audit({ action: "password_reset_rate_limited" });
-    return { ok: true };
+  if (!budget.allowed) {
+    await limiter
+      .audit({ action: "password_reset_rate_limited" })
+      .catch(() => undefined);
+    return { ok: false, error: "rate_limited", budget };
   }
-  await limiter.note(key);
 
   if (!devTokenAllowed(false)) {
     await runAfterResponse(async () => {
@@ -269,11 +323,26 @@ async function deliverPasswordReset(
   try {
     rawToken = await issuePasswordToken({ userId: user.id, kind: "reset" });
   } catch (error) {
+    if (!isMissingRelation(error)) {
+      // A real failure: nothing was created, nothing is sent, and no sign-in
+      // link is substituted. The person can ask again.
+      console.error("[saas-auth] password reset link not created", {
+        error: safeErrorText(error),
+      });
+      await limiter
+        .audit({
+          organizationId: home.organization.id,
+          actorUserId: user.id,
+          action: "password_reset_failed",
+        })
+        .catch(() => undefined);
+      return undefined;
+    }
     // Password storage (migration 037) is not in the database yet. Never
     // leave a locked-out customer with a silent "email sent": send them a
     // single-use sign-in link instead, the way invitations already do.
     console.error("[saas-auth] password tokens unavailable, sending a sign-in link", {
-      error: error instanceof Error ? error.message : "unknown",
+      error: safeErrorText(error),
     });
     await sendLegacyActivationLink({
       email,
@@ -324,7 +393,7 @@ The link works once and expires in 30 minutes. If you did not ask for this, igno
   const allowDev = devTokenAllowed(sent.ok);
   if (!sent.ok && !allowDev) {
     console.error("[saas-auth] password reset delivery failed", {
-      error: sent.error || "send failed",
+      error: safeErrorText(sent.error || "send failed"),
     });
   }
   return allowDev ? rawToken : undefined;
@@ -336,9 +405,15 @@ export type CompletePasswordResult =
   | { ok: false; error: "weak_password"; problem: PasswordProblem };
 
 /**
- * Finishes an activation or reset link: checks the new password, spends the
- * link, stores the hash, cancels every other open link and every other session
- * for the user, and signs this browser in.
+ * Finishes an activation or reset link: checks the new password, then in ONE
+ * all-or-nothing step spends the link, stores the hash, cancels every other
+ * open link and signs the user out of every session (their refresh tokens die
+ * with them), and finally signs this browser in.
+ *
+ * Two simultaneous submissions of the same link: exactly one succeeds. If the
+ * database fails part way, the link is not spent and the password is
+ * unchanged, so the person can submit again; success is never reported
+ * unless the whole step committed.
  */
 export async function completePassword(input: {
   rawToken: string;
@@ -367,20 +442,19 @@ export async function completePassword(input: {
   const problem = checkPasswordStrength(input.password, user.email);
   if (problem) return { ok: false, error: "weak_password", problem };
 
+  // Hash before the step below so no database lock is held while scrypt runs.
+  const passwordHash = await hashPassword(input.password);
   const now = new Date().toISOString();
-  const consumed = await store.consumePasswordToken(tokenHash, now);
+  const consumed = await store.completePasswordReset({
+    tokenHash,
+    atIso: now,
+    passwordHash,
+  });
+  // Null: used, replaced or expired between the check above and now (or by a
+  // simultaneous submission that won). Nothing was changed.
   if (!consumed || consumed.userId !== user.id) {
     return { ok: false, error: "invalid_link" };
   }
-
-  await store.setPasswordCredential({
-    userId: user.id,
-    hash: await hashPassword(input.password),
-    updatedAt: now,
-  });
-  await store.invalidatePasswordTokens(user.id, now);
-  // Anyone holding an older session (a lost laptop, a shared computer) is signed out.
-  await store.revokeUserSessions(user.id, now);
 
   const limiter = await throttle();
   const home = await firstOrganization(user.id);
@@ -411,7 +485,7 @@ async function notifyPasswordChanged(
     const sent = await sendPasswordChangedEmail({ to: user.email, locale: user.locale });
     if (!sent.ok) {
       console.error("[saas-auth] password change notice not sent", {
-        error: sent.error || "send failed",
+        error: safeErrorText(sent.error || "send failed"),
       });
     }
     await limiter.audit({

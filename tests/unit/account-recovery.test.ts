@@ -65,7 +65,7 @@ function captureEmail() {
 
 const mailTo = (address: string) => mail.filter((m) => m.to === address);
 const linkToken = (text: string) => {
-  const match = text.match(/(?:set-password|definir-mot-de-passe)\?token=([A-Za-z0-9_%-]+)/);
+  const match = text.match(/(?:set-password|definir-mot-de-passe)#token=([A-Za-z0-9_%-]+)/);
   return match ? decodeURIComponent(match[1]!) : null;
 };
 
@@ -209,7 +209,7 @@ describe("password reset email", () => {
     assert.equal(sent.length, 1);
     assert.match(sent[0]!.subject, /reset your tradecatch password/i);
     assert.match(sent[0]!.text, /30 minutes/);
-    assert.match(sent[0]!.text, /https:\/\/tradecatch\.test\/set-password\?token=/);
+    assert.match(sent[0]!.text, /https:\/\/tradecatch\.test\/set-password#token=/);
     const raw = linkToken(sent[0]!.text);
     assert.ok(raw && raw.length === 43);
 
@@ -257,7 +257,7 @@ describe("password reset email", () => {
     assert.deepEqual(withAccount, { ok: true });
     assert.deepEqual(without, { ok: true });
     assert.equal(mailTo(known.email).length, 1);
-    assert.match(mailTo(known.email)[0]!.text, /definir-mot-de-passe\?token=/);
+    assert.match(mailTo(known.email)[0]!.text, /definir-mot-de-passe#token=/);
   });
 
   it("never reveals the token in the response, even when sending fails", async () => {
