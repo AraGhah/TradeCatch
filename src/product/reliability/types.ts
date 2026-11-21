@@ -1,11 +1,29 @@
 const SECRET =
   /(?:sk_(?:live|test)_[A-Za-z0-9]+|Bearer\s+\S+|ya29\.[A-Za-z0-9._-]+|AKIA[0-9A-Z]{16}|whsec_[A-Za-z0-9]+)/gi;
 
+/**
+ * Everything that must never be stored or sent from the monitoring system: a
+ * credential, a payment card, a person's contact detail. Applied to the whole
+ * string before it is shortened, so a long value cannot hide a secret past the
+ * cut.
+ */
+export const SENSITIVE_PATTERNS: [RegExp, string][] = [
+  [/\b[a-z][a-z0-9+.-]*:\/\/[^\s/@]+:[^\s/@]*@[^\s]+/gi, "[redacted-url]"],
+  [/\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]*/g, "[redacted-token]"],
+  [/\b(?:sk|rk|pk|whsec)_[A-Za-z0-9_]+/g, "[redacted-key]"],
+  [/\bBearer\s+\S+/gi, "[redacted]"],
+  [/\b(?:AC|SK)[a-f0-9]{32}\b/gi, "[redacted-sid]"],
+  [/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, "[redacted-email]"],
+  [/(?<![\w.])\+?\d[\d\s().-]{8,}\d(?![\w])/g, "[redacted-number]"],
+  [/\b[a-f0-9]{32,}\b/gi, "[redacted-token]"],
+];
+
 export function redactDiagnostic(value: string): string {
-  return value
+  let out = value
     .replace(SECRET, "[redacted]")
-    .replace(/\b(?:\d[ -]*?){13,19}\b/g, "[redacted]")
-    .slice(0, 300);
+    .replace(/\b(?:\d[ -]*?){13,19}\b/g, "[redacted]");
+  for (const [pattern, replacement] of SENSITIVE_PATTERNS) out = out.replace(pattern, replacement);
+  return out.slice(0, 300);
 }
 
 export type ServiceName =
@@ -22,6 +40,27 @@ export type ServiceName =
 export type HealthStatus = "healthy" | "degraded" | "unavailable" | "unknown";
 export type Severity = "low" | "medium" | "high" | "critical";
 
+/** Alert priority (KAN-28). Warning is stored as severity "medium". */
+export type Priority = "critical" | "high" | "warning";
+export const PRIORITY_RANK: Record<Priority, number> = {
+  warning: 0,
+  high: 1,
+  critical: 2,
+};
+export const priorityToSeverity = (priority: Priority): Severity =>
+  priority === "warning" ? "medium" : priority;
+export const severityToPriority = (severity: Severity): Priority =>
+  severity === "critical" ? "critical" : severity === "high" ? "high" : "warning";
+
+/**
+ * Incident lifecycle as administrators see it. The stored status keeps its
+ * original values (open / investigating / resolved) so existing rows and
+ * clients keep working; this is the one place that names them.
+ */
+export type IncidentState = "active" | "acknowledged" | "resolved";
+export const incidentState = (status: Incident["status"]): IncidentState =>
+  status === "open" ? "active" : status === "investigating" ? "acknowledged" : "resolved";
+
 export type SystemError = {
   id: string;
   requestId: string;
@@ -37,6 +76,8 @@ export type SystemError = {
   environment: string;
   simulated: boolean;
   createdAt: string;
+  /** Groups identical failures; see fingerprint.ts. Absent on older rows. */
+  fingerprint?: string;
 };
 
 export type Incident = {
@@ -50,6 +91,68 @@ export type Incident = {
   createdAt: string;
   acknowledgedAt?: string;
   resolvedAt?: string;
+  /* KAN-28. All optional: incidents created before it have none of these. */
+  fingerprint?: string;
+  category?: string;
+  priority?: Priority;
+  /** Counts and thresholds only; never an error message. */
+  summary?: string;
+  occurrenceCount?: number;
+  firstSeenAt?: string;
+  lastSeenAt?: string;
+  acknowledgedBy?: string;
+  /** "auto" when the condition cleared on its own, otherwise the administrator. */
+  resolvedBy?: string;
+  affectedBusinesses?: number;
+  /** Condition must stay clear this long before the incident resolves itself. */
+  quietMs?: number;
+  reopenCount?: number;
+  lastAlertedAt?: string;
+  /** Highest priority an alert has been sent (or queued) for. */
+  alertedPriority?: Priority;
+  simulated?: boolean;
+};
+
+export type AlertKind = "opened" | "escalated" | "reminder" | "recovered" | "digest";
+export type AlertDeliveryStatus = "pending" | "sent" | "exhausted";
+
+/** One administrator alert email and its bounded delivery attempts. */
+export type AlertDelivery = {
+  id: string;
+  incidentId: string | null;
+  kind: AlertKind;
+  priority: Priority;
+  status: AlertDeliveryStatus;
+  attempts: number;
+  nextAttemptAt: string;
+  /** A short code (send_failed, timeout, not_configured...); never raw provider text. */
+  lastError?: string;
+  idempotencyKey: string;
+  createdAt: string;
+  sentAt?: string;
+};
+
+export type ProbeRecord = {
+  at: string;
+  target: string;
+  ok: boolean;
+  statusCode?: number;
+  durationMs: number;
+};
+
+/** Counts to add to one (minute, scope) request bucket. */
+export type BucketDelta = {
+  at: string;
+  scope: "api" | "page";
+  total: number;
+  s2xx: number;
+  s3xx: number;
+  s401: number;
+  s403: number;
+  s429: number;
+  s4xxOther: number;
+  s5xx: number;
+  lat: number[];
 };
 
 export type FailedOperation = {
