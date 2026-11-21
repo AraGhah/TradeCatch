@@ -1240,7 +1240,8 @@ describe("SIM-12 the live test button never places a call", () => {
     const component = readFileSync(join(process.cwd(), "src/components/app/LivePhoneTesting.tsx"), "utf8");
     assert.doesNotMatch(component, /useEffect|useLayoutEffect|setInterval|setTimeout/);
     assert.doesNotMatch(component, /tel:|sms:|window\.location|navigator\./);
-    assert.equal((component.match(/\bfetch\(/g) ?? []).length, 1);
+    // KAN-26: the one request goes through timedFetch (it always ends), still exactly one call site.
+    assert.equal((component.match(/\b(?:timedFetch|fetch)\(/g) ?? []).length, 1);
     assert.equal((component.match(/\bpost\(/g) ?? []).length, 3, "the helper and its two callers");
     // Each request is made by a handler that only a button's onClick reaches.
     assert.match(component, /onClick=\{\(\) => void runSimulation\(\)\}/);

@@ -156,6 +156,9 @@ async function chooseView(page: Page, view: "Day" | "Week" | "Month") {
 
 /** Pages forward until the given business-local day is on screen. */
 async function reveal(page: Page, dayKey: string, next = "Next dates") {
+  // While the calendar is still loading it shows a skeleton and no day cells: wait for it, rather than
+  // mistaking "not loaded yet" for "not in this range" and paging away.
+  await expect(grid(page)).toBeVisible();
   const cell = page.locator(
     `[data-testid="calendar-day"][data-date="${dayKey}"]`,
   );
