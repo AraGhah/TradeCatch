@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { InlineStatus } from "@/components/ui/Spinner";
 
-import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
-import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { useGuarded } from "@/lib/client/use-single-flight";
 type Status = {
   status: string;
   calendarId?: string;
@@ -89,6 +89,7 @@ export function CalendarIntegrationPanel({
   organizationId: string;
 }) {
   const t = useTranslations("app.schedule");
+  const feedback = useTranslations("feedback");
   const locale = useLocale();
   const base = `/api/businesses/${organizationId}/calendar`;
 
@@ -123,7 +124,7 @@ export function CalendarIntegrationPanel({
 
   const load = useCallback(
     () =>
-      fetch(`${base}/status`)
+      timedFetch(`${base}/status`)
         .then(async (response) => ({
           response,
           data: (await response.json()) as {
@@ -178,7 +179,7 @@ export function CalendarIntegrationPanel({
   useEffect(() => {
     if (!choosing || calendars !== null || calendarsFailed) return;
     let live = true;
-    void fetch(`${base}/calendars`)
+    void timedFetch(`${base}/calendars`)
       .then(async (response) => ({
         ok: response.ok,
         data: (await response.json()) as { calendars?: CalendarOption[] },
@@ -205,24 +206,10 @@ export function CalendarIntegrationPanel({
     };
   }, [choosing, calendars, calendarsFailed, base, calendar?.calendarId]);
 
-  async function run(kind: Exclude<Busy, null>, action: () => Promise<void>) {
+  const run = useGuarded(async (kind: Exclude<Busy, null>, action: () => Promise<void>) => {
     if (busy) return;
     setBusy(kind);
     setMessage(null);
-    void load().catch(() => {
-      setIsError(true);
-      setMessage(t("connectionError"));
-    });
-  }
-
-  const connect = useGuarded(connectHandler);
-  async function connectHandler() {
-    if (busy) return;
-    setActing("connect");
-    setIsError(false);
-    setMessage(null);
-    // Once the browser is on its way to Google the button stays busy: a second click would start a second sign-in.
-    let leaving = false;
     try {
       await action();
     } catch {
@@ -230,14 +217,13 @@ export function CalendarIntegrationPanel({
     } finally {
       setBusy(null);
     }
-  }
+  });
 
   const connect = () =>
     run("connect", async () => {
-      const res = await fetch(`${base}/connect`, { method: "POST" });
+      const res = await timedFetch(`${base}/connect`, { method: "POST" });
       const data = (await res.json()) as { url?: string; error?: string };
       if (data.url) {
-        leaving = true;
         window.location.href = data.url;
         return;
       }
@@ -246,7 +232,7 @@ export function CalendarIntegrationPanel({
 
   const disconnect = () =>
     run("disconnect", async () => {
-      const res = await fetch(`${base}/disconnect`, { method: "POST" });
+      const res = await timedFetch(`${base}/disconnect`, { method: "POST" });
       if (!res.ok) throw new Error("Disconnect failed");
       setConfirmDisconnect(false);
       setChanging(false);
@@ -257,7 +243,7 @@ export function CalendarIntegrationPanel({
 
   const syncNow = () =>
     run("sync", async () => {
-      const res = await fetch(`${base}/sync`, {
+      const res = await timedFetch(`${base}/sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "retry" }),
@@ -271,7 +257,7 @@ export function CalendarIntegrationPanel({
 
   const saveSettings = () =>
     run("save", async () => {
-      const res = await fetch(`${base}/sync`, {
+      const res = await timedFetch(`${base}/sync`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "settings", eventDetail, cancelPolicy }),
@@ -286,7 +272,7 @@ export function CalendarIntegrationPanel({
 
   const chooseCalendar = () =>
     run("choose", async () => {
-      const res = await fetch(`${base}/calendars`, {
+      const res = await timedFetch(`${base}/calendars`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ calendarId: selected }),
@@ -352,6 +338,7 @@ export function CalendarIntegrationPanel({
       data-testid="calendar-availability"
       className="flex max-w-xl flex-col gap-5 rounded-md border border-navy/10 bg-white p-4"
     >
+      {busy ? <InlineStatus>{feedback("working")}</InlineStatus> : null}
       <div className="flex flex-col gap-1">
         <h2 className="text-sm font-semibold">{t("calendarPilotTitle")}</h2>
         <p className="text-sm text-navy/70">{t("calendarIntro")}</p>

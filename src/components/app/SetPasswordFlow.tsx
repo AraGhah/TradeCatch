@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { SetPasswordForm } from "@/components/app/SetPasswordForm";
 import { Link } from "@/i18n/navigation";
+import { timedFetch } from "@/lib/client/timed-fetch";
 import {
   moveTokenToFragment,
   readPasswordLinkToken,
@@ -58,7 +59,7 @@ export function SetPasswordFlow() {
     const controller = new AbortController();
     (async () => {
       try {
-        const res = await fetch("/api/auth/set-password/check", {
+        const res = await timedFetch("/api/auth/set-password/check", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ token: link.token }),

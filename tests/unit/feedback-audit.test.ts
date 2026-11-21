@@ -47,6 +47,7 @@ const GUARD =
 
 /** A client file that writes with no guard of its own, each for a stated reason. */
 const WRITE_UNGUARDED_ALLOWED: Record<string, string> = {
+  "src/components/app/SetPasswordFlow.tsx": "read-only token check; effect aborts when the link changes",
   "src/app/global-error.tsx": "error-boundary reporting, not a user action",
   "src/app/[locale]/error.tsx": "error-boundary reporting, not a user action",
   "src/components/useDemoVoice.ts": "audio request made by the voice hook, one per spoken line",

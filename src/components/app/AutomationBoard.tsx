@@ -180,13 +180,9 @@ export function AutomationBoard({
                       : "rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
                   }
                 >
-                  {busy
-                    ? target[row.id]
-                      ? t("actions.enabling")
-                      : t("actions.pausing")
-                    : row.enabled
-                      ? t("actions.pause")
-                      : t("actions.enable")}
+                  <BusyLabel pending={busy} busyLabel={target[row.id] ? t("actions.enabling") : t("actions.pausing")}>
+                    {row.enabled ? t("actions.pause") : t("actions.enable")}
+                  </BusyLabel>
                 </button>
               ) : null}
               {edit ? (
