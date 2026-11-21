@@ -192,9 +192,7 @@ test.describe("receptionist demo: speak with your voice", () => {
     });
 
     await section.getByRole("button", { name: /During business hours/ }).click();
-    await expect(section.getByRole("status")).toContainText(
-      "The microphone is blocked",
-    );
+    await expect(section.getByRole("status").filter({ hasText: "The microphone is blocked" })).toBeVisible();
     await expect(
       section.getByRole("button", { name: "Start speaking" }),
     ).toHaveAttribute("aria-pressed", "false");

@@ -16,6 +16,7 @@ export async function workspaceSession(
   // Independent documentation-range identity per session, not per worker:
   // repeated logins in a large suite must not exhaust one worker's quota.
   const clientIp = `2001:db8:${randomUUID().replaceAll("-", "").match(/.{4}/g)!.slice(0, 6).join(":")}`;
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": clientIp });
   const provision = await page.request.post(
     "/api/missed-call/ops/provision-organization",
     {
@@ -44,6 +45,7 @@ export async function signInAs(
   clientIp: string,
   locale: "en" | "fr" = "en",
 ) {
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": clientIp });
   const login = await page.request.post("/api/auth/magic-link", {
     data: { email, locale },
     headers: {
