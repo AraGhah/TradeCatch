@@ -51,7 +51,8 @@ export async function POST(request: Request) {
     });
   }
   if (parsed.data.scenario === "api_failure") {
-    await service.recordRequest(500, 1200);
+    // Records a simulated error only. It must never add a request to the traffic
+    // the dashboard reports: that is real Worker data, never simulated.
     const error = await service.recordError({
       organizationId,
       service: "api",

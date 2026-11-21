@@ -21,7 +21,7 @@ type Overview = {
   clientErrors?: number;
   serverErrors?: number;
   errorRate?: number;
-  averageMs?: number;
+  p50Ms?: number;
   p95Ms?: number;
   incidents?: {
     id: string;
@@ -219,9 +219,9 @@ export function MonitoringDesk({
             <dd>{Math.round((data?.errorRate || 0) * 100)}%</dd>
           </div>
           <div>
-            <dt className="text-navy/50">Average / p95</dt>
+            <dt className="text-navy/50">Median / p95 (within)</dt>
             <dd>
-              {data?.averageMs ?? 0} ms / {data?.p95Ms ?? 0} ms
+              {data?.p50Ms ?? 0} ms / {data?.p95Ms ?? 0} ms
             </dd>
           </div>
         </dl>
