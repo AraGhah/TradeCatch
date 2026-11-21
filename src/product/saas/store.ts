@@ -101,6 +101,25 @@ export type SaasStore = {
   ): Promise<PasswordToken | null>;
   /** Cancels every unused token for the user (after a password is set, older links must stop working). */
   invalidatePasswordTokens(userId: string, atIso: string): Promise<void>;
+  /**
+   * Stores a new link and, in the same step, cancels every unused link of the
+   * same kind for that user, so a newer request always replaces the older one.
+   * Two requests at the same moment still leave exactly one live link.
+   */
+  replacePasswordToken(token: PasswordToken): Promise<void>;
+  /**
+   * Finishes a link all or nothing: spends the still-valid link, stores the
+   * password hash, cancels the user's other unused links and signs the user out
+   * everywhere. Returns the spent link, or null when it is unknown, used or
+   * expired (nothing changed). If anything fails the link is not spent and the
+   * password is unchanged. Of two simultaneous calls with the same link, one
+   * wins and the other gets null.
+   */
+  completePasswordReset(input: {
+    tokenHash: string;
+    atIso: string;
+    passwordHash: string;
+  }): Promise<PasswordToken | null>;
   createRefreshToken(token: RefreshToken): Promise<void>;
   findRefreshToken(tokenHash: string): Promise<RefreshToken | null>;
   /**
