@@ -2,9 +2,14 @@ import { isE2eHarness } from "@/lib/config";
 import { providerProbes } from "./probes";
 import { scheduledJobFailures } from "./job-health";
 import { getPgPool } from "@/product/missed-call/postgres-store";
+import type { AlertPayload } from "./alerts";
+import { collectSignals, createWebsiteCheck, probeDatabase } from "./collectors";
+import { createAdminAlertNotifier } from "./notify";
 import { createPostgresReliabilityStore } from "./postgres-store";
 import { createReliabilityService, type Probe } from "./service";
 import { createMemoryReliabilityStore, type ReliabilityStore } from "./store";
+import { resolveThresholds } from "./thresholds";
+import { runMonitor } from "./watch";
 import type { ServiceName } from "./types";
 
 const globalForReliability = globalThis as unknown as {
@@ -202,36 +207,81 @@ export async function probe(): Promise<Probe[]> {
   return probes;
 }
 
+function environmentName(): string {
+  return isE2eHarness()
+    ? "staging"
+    : process.env.TRADECATCH_ENV?.trim() ||
+        process.env.NODE_ENV ||
+        "development";
+}
+
+/** Sends one administrator alert email. Needs no database. */
+async function notifyAdmin(payload: AlertPayload): Promise<void> {
+  const { sendBusinessNotifyEmail } = await import("@/lib/business-notifications");
+  return createAdminAlertNotifier({
+    env: process.env,
+    send: sendBusinessNotifyEmail,
+  })(payload);
+}
+
 export function getReliabilityService() {
   return createReliabilityService({
     store: store(),
     now: () => new Date(),
-    environment: () =>
-      isE2eHarness()
-        ? "staging"
-        : process.env.TRADECATCH_ENV?.trim() ||
-          process.env.NODE_ENV ||
-          "development",
+    environment: environmentName,
     probe,
     version: () => process.env.TRADECATCH_VERSION?.trim() || "0.1.0",
-    async notifyAdmin(input) {
-      if (input.simulated) return;
-      const to =
-        process.env.ADMIN_ALERT_EMAIL?.trim() ||
-        process.env.RESEND_NOTIFY_EMAIL?.trim();
-      if (!to)
-        throw new Error("Administrator alert destination not configured");
-      const { sendBusinessNotifyEmail } =
-        await import("@/lib/business-notifications");
-      const result = await sendBusinessNotifyEmail({
-        toEmail: to,
-        subject: `TradeCatch incident: ${input.title}`,
-        title: input.title,
-        lines: [{ label: "Severity", value: input.severity }],
-      });
-      if (!result.sent) throw new Error("Administrator alert delivery failed");
-    },
+    thresholds: resolveThresholds(),
+    siteUrl: () => process.env.NEXT_PUBLIC_SITE_URL?.trim() || undefined,
+    notifyAdmin,
   });
+}
+
+/**
+ * One run of the once-a-minute monitor against the real system. The database
+ * checks and signal queries need PostgreSQL; without it (local development,
+ * the e2e harness) they are reported as "not measured" rather than faked, and
+ * the site is only probed when it has a real public address.
+ */
+export async function runMonitorOnce() {
+  const service = getReliabilityService();
+  const thresholds = service.thresholds;
+  const now = () => new Date();
+  const url = process.env.DATABASE_URL?.trim();
+  const durable =
+    process.env.MISSED_CALL_DURABLE_STORE === "1" ||
+    process.env.SAAS_DURABLE_STORE === "1";
+  const db = url && durable ? getPgPool(url) : undefined;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || undefined;
+  return runMonitor({
+    store: store(),
+    engine: {
+      report: service.reportIncident,
+      sweepRecovered: service.sweepRecovered,
+      recordPastOutage: service.recordPastOutage,
+    },
+    deliverAlerts: service.deliverAlerts,
+    checkWebsite: isE2eHarness()
+      ? undefined
+      : createWebsiteCheck({
+          siteUrl,
+          fetchImpl: fetch,
+          now,
+          timeoutMs: thresholds.website.probeTimeoutMs,
+        }),
+    checkDatabase: db ? () => probeDatabase(db, thresholds) : undefined,
+    collectSignals: db ? () => collectSignals(db, now(), thresholds) : undefined,
+    emergencyNotify: notifyAdmin,
+    thresholds,
+    now,
+    siteUrl,
+    simulated: environmentName() !== "production",
+  });
+}
+
+/** The shared reliability store (PostgreSQL when durable storage is enabled, otherwise memory). */
+export function getReliabilityStore(): ReliabilityStore {
+  return store();
 }
 
 export function resetReliabilityRuntimeForTests() {

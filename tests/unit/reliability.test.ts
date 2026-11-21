@@ -81,15 +81,19 @@ describe("reliability", () => {
     let notifications = 0;
     const previous = process.env.RELIABILITY_BUDGET_CENTS;
     process.env.RELIABILITY_BUDGET_CENTS = "1000";
-    const monitor = service(healthy, async (input) => {
+    const monitor = service(healthy, async () => {
       notifications += 1;
-      assert.equal(input.simulated, true);
     });
     const cost = await monitor.recordUsage({ service: "sms", units: 200, centsPerUnit: 4, simulated: true });
     process.env.RELIABILITY_BUDGET_CENTS = previous;
     assert.equal(cost.confirmed, false);
     assert.equal(cost.estimatedCents, 800);
-    assert.equal(notifications, 1);
+    // KAN-28: a simulated incident is recorded for the console but never queued
+    // or sent, so the notifier is not even called (it used to be called and then
+    // drop the alert itself).
+    assert.equal((await monitor.listIncidents()).length, 1);
+    await monitor.deliverAlerts();
+    assert.equal(notifications, 0);
     const summary = await monitor.costs();
     assert.equal(summary.estimated, true);
     assert.equal(summary.confirmed, false);
