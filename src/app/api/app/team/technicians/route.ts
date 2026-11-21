@@ -2,12 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { forbiddenUnless } from "@/product/security/access";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { getSchedulingService } from "@/product/scheduling/runtime";
 import { SchedulingError } from "@/product/scheduling/service";
 import { USAGE_ALLOWANCES } from "@/lib/plans";
@@ -31,11 +26,8 @@ const upsertSchema = z
  * UI hiding the page is not enough.
  */
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "MULTI_CREW_CALENDARS")) {
-    return forbiddenFeatureResponse("MULTI_CREW_CALENDARS");
-  }
+  const auth = await requireTenantFeature("MULTI_CREW_CALENDARS");
+  if (!auth.ok) return auth.response;
   const technicians = await getSchedulingService().listTechnicians(
     auth.ctx.organization.id,
   );
@@ -43,11 +35,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "MULTI_CREW_CALENDARS")) {
-    return forbiddenFeatureResponse("MULTI_CREW_CALENDARS");
-  }
+  const auth = await requireTenantFeature("MULTI_CREW_CALENDARS");
+  if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(
     auth.ctx.membership.role,
     "manage_settings",

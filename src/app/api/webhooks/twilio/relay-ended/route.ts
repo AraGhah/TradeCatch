@@ -1,33 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
+import { readVerifiedTwilioForm } from "@/product/missed-call/twilio-webhook-auth";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 import { renderTwiml } from "@/product/receptionist/voice";
 import { callEventId } from "@/product/telephony/call-events";
 import { getTelephonyRuntime } from "@/product/telephony/runtime";
-import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
 
 export const dynamic = "force-dynamic";
-
-const MAX_FORM_BODY_BYTES = 32_768;
 
 /**
  * ConversationRelay <Connect action> callback.
  * If the AI handed off a dial, return <Dial>; otherwise finalize.
  */
 export async function POST(request: NextRequest) {
-  let form: Record<string, string>;
-  try {
-    form = await readFormParamsBounded(request, MAX_FORM_BODY_BYTES);
-  } catch (err) {
-    if (err instanceof BodyTooLargeError) {
-      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
-    }
-    return NextResponse.json({ error: "Invalid form" }, { status: 400 });
-  }
-
-  if (!(await assertTwilioWebhook(request, form))) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
-  }
+  const verified = await readVerifiedTwilioForm(request);
+  if (!verified.ok) return verified.response;
+  const form = verified.params;
 
   const runtime = getReceptionistRuntime();
   await runtime.refresh();

@@ -1,20 +1,12 @@
 import { NextResponse } from "next/server";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { getStarterStore } from "@/product/starter/runtime";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "WEBSITE_LEAD_CAPTURE")) {
-    return forbiddenFeatureResponse("WEBSITE_LEAD_CAPTURE");
-  }
+  const auth = await requireTenantFeature("WEBSITE_LEAD_CAPTURE");
+  if (!auth.ok) return auth.response;
 
   const leads = await getStarterStore().listWebsiteLeads(
     auth.ctx.organization.id,

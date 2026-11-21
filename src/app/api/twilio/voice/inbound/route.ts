@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
-import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
+import { readVerifiedTwilioForm } from "@/product/missed-call/twilio-webhook-auth";
 import {
   getEscalationChain,
   resolveOnCallTechnicianId,
 } from "@/product/missed-call/technicians";
-import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
 import { getSaasStore } from "@/product/saas/runtime";
 import { orgHasFeature } from "@/product/saas/entitlements";
 import type { ClientAccount } from "@/product/missed-call/types";
@@ -68,12 +67,6 @@ async function resolveOrgPlanForClient(
   return orgHasFeature(org.plan, "ADVANCED_CALL_ROUTING");
 }
 
-async function parseForm(
-  request: NextRequest,
-): Promise<Record<string, string>> {
-  return readFormParamsBounded(request, MAX_FORM_BODY_BYTES);
-}
-
 /**
  * Twilio VoiceUrl for Module A numbers: forwards the call to whichever
  * technician is on call right now, resolved per-organization by the
@@ -82,20 +75,9 @@ async function parseForm(
  * logs only the "To" number) when no organization claims the number.
  */
 export async function POST(request: NextRequest) {
-  let params: Record<string, string>;
-  try {
-    params = await parseForm(request);
-  } catch (err) {
-    if (err instanceof BodyTooLargeError) {
-      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
-    }
-    return NextResponse.json({ error: "Invalid form" }, { status: 400 });
-  }
-
-  const ok = await assertTwilioWebhook(request, params);
-  if (!ok) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
-  }
+  const form = await readVerifiedTwilioForm(request, MAX_FORM_BODY_BYTES);
+  if (!form.ok) return form.response;
+  const { params } = form;
 
   const to = params.To ?? "";
   if (!to) return twimlReject();

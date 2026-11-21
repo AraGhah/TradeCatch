@@ -1,5 +1,4 @@
-import type { Pool } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import { createPostgresPoolCache } from "@/lib/postgres-pool";
 import type { StarterStore } from "./memory-store";
 import type {
   InboxItem,
@@ -9,16 +8,7 @@ import type {
 } from "./types";
 import { createId } from "./types";
 
-const pools = new Map<string, Pool>();
-
-function getPool(url: string) {
-  let pool = pools.get(url);
-  if (!pool) {
-    pool = createPostgresPool({ connectionString: url, max: 5 });
-    pools.set(url, pool);
-  }
-  return pool;
-}
+const getPool = createPostgresPoolCache({ max: 5 });
 
 function mapWebsite(row: Record<string, unknown>): WebsiteLead {
   const payload =

@@ -2,12 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { z } from "zod";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { EmailAutomationError } from "@/product/email-automation/services";
 import {
   getEmailAutomationServices,
@@ -93,11 +88,8 @@ const ERROR_STATUS: Record<EmailAutomationError["code"], number> = {
 };
 
 async function auth() {
-  const result = await requireTenantContext();
-  if (!result.ok) return { error: unauthorizedTenantResponse(result.error) };
-  if (!tenantHasFeature(result.ctx, "EMAIL_AUTOMATION")) {
-    return { error: forbiddenFeatureResponse("EMAIL_AUTOMATION") };
-  }
+  const result = await requireTenantFeature("EMAIL_AUTOMATION");
+  if (!result.ok) return { error: result.response };
   return { orgId: result.ctx.organization.id, ctx: result.ctx };
 }
 

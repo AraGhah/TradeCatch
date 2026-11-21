@@ -3,25 +3,8 @@
  * at the call site. Never invents success if Resend is unset.
  */
 
-import { Resend } from "resend";
-
-let client: Resend | null = null;
-
-function getClient(): Resend | null {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return null;
-  if (!client) client = new Resend(apiKey);
-  return client;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+import { escapeHtml } from "@/lib/escape";
+import { getResendClient } from "@/lib/resend-client";
 
 export type BusinessNotifyInput = {
   toEmail: string;
@@ -65,7 +48,7 @@ function plainText(input: BusinessNotifyInput): string {
 export async function sendBusinessNotifyEmail(
   input: BusinessNotifyInput,
 ): Promise<{ sent: boolean; reason?: string }> {
-  const resend = getClient();
+  const resend = getResendClient();
   const fromEmail = process.env.RESEND_FROM_EMAIL?.trim();
   if (!resend || !fromEmail) {
     return { sent: false, reason: "resend_not_configured" };

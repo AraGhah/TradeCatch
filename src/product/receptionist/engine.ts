@@ -16,18 +16,33 @@ import { isAfterHours } from "@/product/missed-call/call-handling";
 import { shouldAnswerCall } from "./call-handling";
 import { resolveInboundRouting } from "@/product/telephony/call-routing";
 import { livekitHandoffReady } from "@/product/telephony/livekit-handoff";
-import {
-  personalCallMessage,
-  screeningPrompt,
-} from "@/product/telephony/caller-policy";
+import { screeningPrompt } from "@/product/telephony/caller-policy";
 import { classifyUrgency } from "@/product/missed-call/urgency";
-import type { Clock, UrgencyClassification } from "@/product/missed-call/types";
+import type { Clock } from "@/product/missed-call/types";
 import {
   nextMissingStep,
   questionForStep,
   wrapUpOutcome,
   wrapUpReply,
 } from "./brain-rules";
+import {
+  cleanDuration,
+  bareSession,
+  mergeFlags,
+  mergeUrgency,
+  emergencyTransferAllowed,
+} from "./call-session";
+import {
+  voiceOf,
+  listen,
+  say,
+  openingFor,
+  afterHoursNotice,
+  appendEnglishHint,
+  hangupPlan,
+  sipHandoffPlan,
+  policyMessagePlan,
+} from "./voice-plans";
 import {
   localDayWindow,
   matchOffered,
@@ -42,18 +57,14 @@ import {
 } from "./booking";
 import {
   detectLanguageSwitch,
-  firstLanguage,
   isGreetingOnly,
   languageForDigits,
-  languageSelectTimeoutSeconds,
   looksEnglish,
 } from "./language-select";
 import type { LlmClient } from "./llm";
 import type { ReceptionistNotifier } from "./notifications";
 import {
-  afterHoursFor,
   greetingStatement,
-  hintsFor,
   languageMenuPrompts,
   openingQuestion,
   phrase,
@@ -65,7 +76,6 @@ import type {
   AgentDecision,
   CallBooking,
   CallContext,
-  CallFlags,
   CallSession,
   CallSlots,
   CallStep,
@@ -79,7 +89,6 @@ import type {
   VoiceVerb,
 } from "./types";
 import { transferRingTimeoutSeconds } from "./transfer-policy";
-import { gatherTuning } from "./voice";
 
 export type ReceptionistEngineDeps = {
   store: ReceptionistStore;
@@ -197,8 +206,6 @@ const EMERGENCY_SCREEN_STEPS = new Set([
   "anything_else",
 ]);
 
-const URGENCY_RANK = { routine: 0, priority: 1, critical: 2 } as const;
-
 /** Schedules work after the response (Next `after`, Workers `waitUntil`). */
 export type DeferFn = (task: () => Promise<void>) => void;
 
@@ -211,6 +218,39 @@ function compactRouting(
   return Object.keys(out).length > 0
     ? (out as NonNullable<CallSession["routing"]>)
     : undefined;
+}
+
+/** Record a failed phone booking for the reliability dashboard; never throws. */
+function reportBookingFailure(errorCode: string) {
+  void import("@/product/reliability/hooks")
+    .then(({ recordFailure }) =>
+      recordFailure({
+        service: "ai_receptionist",
+        operation: "book_appointment",
+        errorCode,
+        severity: "medium",
+        retryable: true,
+      }),
+    )
+    .catch(() => undefined);
+}
+
+/** A scheduling call that answers inside the webhook budget, or null. */
+async function withinBudget<T>(task: () => Promise<T>): Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      task(),
+      new Promise<null>((resolve) => {
+        timer = setTimeout(() => resolve(null), SCHEDULER_TIMEOUT_MS);
+      }),
+    ]);
+  } catch (err) {
+    console.error("[receptionist] scheduling call failed", err);
+    return null;
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
 }
 
 export type ReceptionistEngine = ReturnType<typeof createReceptionistEngine>;
@@ -237,51 +277,6 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
 
   function configFor(session: CallSession): ReceptionistConfig | null {
     return deps.configs().find((c) => c.id === session.configId) ?? null;
-  }
-
-  /** A duration a provider reported, or undefined when it cannot be a real one. */
-  function cleanDuration(seconds: number | undefined): number | undefined {
-    return typeof seconds === "number" &&
-      Number.isFinite(seconds) &&
-      seconds >= 0 &&
-      seconds <= 24 * 3600
-      ? Math.round(seconds)
-      : undefined;
-  }
-
-  /** A record with nothing in it but who called, when, and how it ended. */
-  function bareSession(
-    config: ReceptionistConfig,
-    input: { callSid: string; fromE164: string; toE164: string },
-    at: Date,
-    extra: Partial<CallSession>,
-  ): CallSession {
-    const iso = at.toISOString();
-    return {
-      id: `rcs_${randomUUID()}`,
-      callSid: input.callSid,
-      configId: config.id,
-      clientAccountId: config.clientAccountId,
-      fromE164: normalizeProviderNumber(input.fromE164),
-      toE164: normalizeProviderNumber(input.toE164),
-      language: config.defaultLanguage,
-      status: "in_progress",
-      step: "reason",
-      afterHours: isAfterHours(config, at),
-      slots: {},
-      turns: [],
-      silenceCount: 0,
-      callerTurnCount: 0,
-      transfers: [],
-      notifications: [],
-      // Nobody follows up a call the receptionist never handled: no summary,
-      // no text to the caller, no lead.
-      routing: { quiet: true },
-      startedAt: iso,
-      updatedAt: iso,
-      version: 1,
-      ...extra,
-    };
   }
 
   /**
@@ -404,117 +399,6 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     }
   }
 
-  function voiceOf(config: ReceptionistConfig, lang: ReceptionistLanguage) {
-    return config.voices[lang];
-  }
-
-  function listen(
-    config: ReceptionistConfig,
-    session: CallSession,
-    prompts: { text: string; lang?: ReceptionistLanguage }[],
-    opts: { dtmfDigits?: number } = {},
-  ): VoiceVerb {
-    const inLanguageMenu = session.step === "language";
-    // After "For English, press 1" was repeated, a lone key is still listened for.
-    const englishHint = Boolean(session.flags?.englishHinted);
-    const allowDtmf =
-      Boolean(opts.dtmfDigits) ||
-      englishHint ||
-      session.step === "callback_number" ||
-      session.step === "callback" ||
-      session.step === "offer_slot" ||
-      inLanguageMenu;
-    return {
-      verb: "gather",
-      next: "gather",
-      language: session.language,
-      prompts: prompts
-        .filter((p) => p.text.trim())
-        .map((p) => ({
-          text: p.text,
-          voice: voiceOf(config, p.lang ?? session.language),
-          language: p.lang ?? session.language,
-          speed: config.speakingSpeed,
-        })),
-      input: allowDtmf ? ["speech", "dtmf"] : ["speech"],
-      // The language menu waits only briefly: no key means "stay in French".
-      timeoutSeconds: inLanguageMenu
-        ? languageSelectTimeoutSeconds()
-        : gatherTuning().timeoutSeconds,
-      numDigits:
-        opts.dtmfDigits ??
-        (session.step === "callback_number"
-          ? 10
-          : inLanguageMenu || session.step === "offer_slot"
-            ? 1
-            : undefined),
-      hints: hintsFor(config),
-    };
-  }
-
-  function say(
-    config: ReceptionistConfig,
-    lang: ReceptionistLanguage,
-    text: string,
-  ): VoiceVerb {
-    return {
-      verb: "say",
-      text,
-      language: lang,
-      voice: voiceOf(config, lang),
-      speed: config.speakingSpeed,
-    };
-  }
-
-  /**
-   * What starts a call: the greeting, then (bilingual line) the language menu in
-   * French first, or (one language) the after-hours notice and the opening question.
-   */
-  function openingFor(
-    config: ReceptionistConfig,
-    afterHours: boolean,
-  ): {
-    language: ReceptionistLanguage;
-    step: CallStep;
-    prompts: { text: string; lang?: ReceptionistLanguage }[];
-  } {
-    const language = firstLanguage(config.languages, config.defaultLanguage);
-    if (config.languages.length > 1) {
-      return {
-        language,
-        step: "language",
-        prompts: [
-          { text: greetingStatement(config, language), lang: language },
-          ...languageMenuPrompts(),
-        ],
-      };
-    }
-    return {
-      language,
-      step: "reason",
-      prompts: [
-        { text: greetingStatement(config, language) },
-        ...(afterHours ? [{ text: afterHoursFor(config, language) }] : []),
-        { text: openingQuestion(config, language) },
-      ],
-    };
-  }
-
-  /** The words that go with the notice owed to an after-hours caller, once. */
-  function afterHoursNotice(
-    config: ReceptionistConfig,
-    session: CallSession,
-  ): string {
-    return session.afterHours ? afterHoursFor(config, session.language) : "";
-  }
-
-  function mergeFlags(
-    session: CallSession,
-    flags: Partial<CallFlags> | undefined,
-  ): CallFlags | undefined {
-    return flags ? { ...session.flags, ...flags } : session.flags;
-  }
-
   /** Ask a question (one or two short prompts) and record what was said. */
   function askPlan(
     config: ReceptionistConfig,
@@ -588,18 +472,6 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       { text: phrase("unclear", "fr"), lang: "fr" },
       { text: phrase("pressForEnglish", "en"), lang: "en" },
     ]);
-  }
-
-  /** Add "For English, press 1." (in the English voice) after the question being asked. */
-  function appendEnglishHint(config: ReceptionistConfig, plan: VoicePlan): void {
-    const gather = plan.verbs.findLast((v) => v.verb === "gather");
-    if (gather?.verb !== "gather") return;
-    gather.prompts.push({
-      text: phrase("pressForEnglish", "en"),
-      voice: voiceOf(config, "en"),
-      language: "en",
-      speed: config.speakingSpeed,
-    });
   }
 
   /** The caller asked, out loud, to continue in another language. */
@@ -700,49 +572,10 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
     return null;
   }
 
-  function hangupPlan(sessionId: string | null): VoicePlan {
-    return { sessionId, verbs: [{ verb: "hangup" }] };
-  }
-
   /** The LiveKit agent answers this call's AI leg (falls back when unset). */
   function usesLivekit(config: ReceptionistConfig): boolean {
     if (config.voiceEngine !== "livekit") return false;
     return (deps.livekitHandoffReady ?? livekitHandoffReady)();
-  }
-
-  function sipHandoffPlan(
-    config: ReceptionistConfig,
-    session: CallSession,
-  ): VoicePlan {
-    return {
-      sessionId: session.id,
-      verbs: [
-        {
-          verb: "sip_handoff",
-          next: "dial",
-          target: "livekit",
-          calledE164: config.phoneNumberE164,
-          timeoutSeconds: 20,
-        },
-      ],
-    };
-  }
-
-  /** The words for a personal / withheld caller, then the end of the call. */
-  function policyMessagePlan(
-    config: ReceptionistConfig,
-    sessionId: string | null,
-    kind: "personal" | "unknown",
-  ): VoicePlan {
-    return {
-      sessionId,
-      verbs: [
-        ...personalCallMessage(config, kind).map((m) =>
-          say(config, m.lang, m.text),
-        ),
-        { verb: "hangup" },
-      ],
-    };
   }
 
   /**
@@ -929,27 +762,6 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
       );
     }
     return { sessionId, verbs };
-  }
-
-  function mergeUrgency(
-    current: UrgencyClassification | undefined,
-    next: UrgencyClassification,
-  ): UrgencyClassification {
-    if (!current) return next;
-    return URGENCY_RANK[next.level] > URGENCY_RANK[current.level]
-      ? next
-      : current;
-  }
-
-  function emergencyTransferAllowed(
-    config: ReceptionistConfig,
-    session: CallSession,
-  ) {
-    if (!config.emergencyTransferE164) return false;
-    return (
-      !session.afterHours ||
-      config.afterHoursMode === "take_message_emergency_transfer"
-    );
   }
 
   function startTransfer(
@@ -1163,38 +975,6 @@ export function createReceptionistEngine(deps: ReceptionistEngineDeps) {
   /* backend, and "booked" is spoken only after it returns `confirmed`. The  */
   /* brain (rules or LLM) never reaches this stage.                          */
   /* ---------------------------------------------------------------------- */
-
-  function reportBookingFailure(errorCode: string) {
-    void import("@/product/reliability/hooks")
-      .then(({ recordFailure }) =>
-        recordFailure({
-          service: "ai_receptionist",
-          operation: "book_appointment",
-          errorCode,
-          severity: "medium",
-          retryable: true,
-        }),
-      )
-      .catch(() => undefined);
-  }
-
-  /** A scheduling call that answers inside the webhook budget, or null. */
-  async function withinBudget<T>(task: () => Promise<T>): Promise<T | null> {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    try {
-      return await Promise.race([
-        task(),
-        new Promise<null>((resolve) => {
-          timer = setTimeout(() => resolve(null), SCHEDULER_TIMEOUT_MS);
-        }),
-      ]);
-    } catch (err) {
-      console.error("[receptionist] scheduling call failed", err);
-      return null;
-    } finally {
-      if (timer) clearTimeout(timer);
-    }
-  }
 
   /**
    * The zone the business's availability is defined in. What a caller says

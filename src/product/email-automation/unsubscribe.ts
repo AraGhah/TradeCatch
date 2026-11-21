@@ -4,21 +4,10 @@
  */
 
 import { createHmac, timingSafeEqual } from "node:crypto";
-
-function b64url(buf: Buffer): string {
-  return buf
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-function fromB64url(value: string): Buffer {
-  return Buffer.from(value.replace(/-/g, "+").replace(/_/g, "/"), "base64");
-}
+import { decodeBase64Url, encodeBase64Url } from "@/lib/base64url";
 
 function sign(payload: string, secret: string): string {
-  return b64url(
+  return encodeBase64Url(
     createHmac("sha256", secret).update(`unsubscribe:${payload}`).digest(),
   );
 }
@@ -27,7 +16,7 @@ export function createUnsubscribeToken(
   input: { organizationId: string; email: string },
   secret: string,
 ): string {
-  const payload = b64url(
+  const payload = encodeBase64Url(
     Buffer.from(
       `${input.organizationId}\n${input.email.trim().toLowerCase()}`,
       "utf8",
@@ -46,7 +35,7 @@ export function verifyUnsubscribeToken(
   const a = Buffer.from(sig);
   const b = Buffer.from(expected);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
-  const [organizationId, email] = fromB64url(payload)
+  const [organizationId, email] = decodeBase64Url(payload)
     .toString("utf8")
     .split("\n");
   if (!organizationId || !email) return null;

@@ -7,6 +7,7 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { PricingPreview } from "@/components/PricingPreview";
 import { HomeMobile } from "@/components/home/HomeMobile";
+import { accentHeadline } from "@/components/home/accent-headline";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { StoryDemos } from "@/components/StoryDemos";
 import { localizedAnchor } from "@/lib/anchors";
@@ -25,18 +26,6 @@ export async function generateMetadata({
     title: t("hero.headline"),
     description: t("hero.subheadline"),
   });
-}
-
-function accentHeadline(headline: string, accentWord: string) {
-  const idx = headline.lastIndexOf(accentWord);
-  if (idx === -1) return headline;
-  return (
-    <>
-      {headline.slice(0, idx)}
-      <span className="text-orange">{accentWord}</span>
-      {headline.slice(idx + accentWord.length)}
-    </>
-  );
 }
 
 export default async function HomePage({

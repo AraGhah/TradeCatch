@@ -186,8 +186,10 @@ export function featureIsLaunchEnabled(feature: FeatureId): boolean {
   return flag === undefined || launchFlagEnabled(flag);
 }
 
-export function isPlanId(value: string): value is PlanId {
-  return (PLAN_IDS as readonly string[]).includes(value);
+export function isPlanId(value: unknown): value is PlanId {
+  return (
+    typeof value === "string" && (PLAN_IDS as readonly string[]).includes(value)
+  );
 }
 
 export function isFeatureId(value: string): value is FeatureId {

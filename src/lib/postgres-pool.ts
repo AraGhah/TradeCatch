@@ -152,3 +152,22 @@ export function createPostgresPool(options: PoolConfig): Pool {
     },
   });
 }
+
+/**
+ * A lazily filled `connection string -> pool` cache for one store module.
+ * Each call returns its own cache, so every store keeps its own pool (and its
+ * own `max` connections) exactly as when each module kept a private Map.
+ */
+export function createPostgresPoolCache(
+  options: Omit<PoolConfig, "connectionString"> = {},
+): (connectionString: string) => Pool {
+  const pools = new Map<string, Pool>();
+  return (connectionString) => {
+    let pool = pools.get(connectionString);
+    if (!pool) {
+      pool = createPostgresPool({ ...options, connectionString });
+      pools.set(connectionString, pool);
+    }
+    return pool;
+  };
+}

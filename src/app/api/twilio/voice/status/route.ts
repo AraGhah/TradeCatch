@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
-import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
-import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
+import { readVerifiedTwilioForm } from "@/product/missed-call/twilio-webhook-auth";
 
 export const dynamic = "force-dynamic";
-
-const MAX_FORM_BODY_BYTES = 32_768;
 
 function twimlEmpty() {
   return new NextResponse(
@@ -17,32 +14,15 @@ function twimlEmpty() {
   );
 }
 
-async function parseForm(
-  request: NextRequest,
-): Promise<Record<string, string>> {
-  return readFormParamsBounded(request, MAX_FORM_BODY_BYTES);
-}
-
 /**
  * Twilio StatusCallback / voice webhook for Module A.
  * Expects CallStatus, From, To, CallSid, CallDuration (optional).
  * Resolves client by Twilio To-number (multi-tenant) with MISSED_CALL_CLIENT_ID fallback.
  */
 export async function POST(request: NextRequest) {
-  let params: Record<string, string>;
-  try {
-    params = await parseForm(request);
-  } catch (err) {
-    if (err instanceof BodyTooLargeError) {
-      return NextResponse.json({ error: "Payload too large" }, { status: 413 });
-    }
-    return NextResponse.json({ error: "Invalid form" }, { status: 400 });
-  }
-
-  const ok = await assertTwilioWebhook(request, params);
-  if (!ok) {
-    return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
-  }
+  const form = await readVerifiedTwilioForm(request);
+  if (!form.ok) return form.response;
+  const { params } = form;
 
   const status = (
     params.DialCallStatus ||

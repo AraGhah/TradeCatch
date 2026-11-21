@@ -1,5 +1,5 @@
-import type { Pool, PoolClient, QueryResultRow } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import type { PoolClient, QueryResultRow } from "pg";
+import { createPostgresPoolCache } from "@/lib/postgres-pool";
 import { newId, slugify } from "./ids";
 import {
   mapOrgRow,
@@ -144,16 +144,7 @@ function mapRecovery(row: RecoveryRow): AccountRecoveryRequest {
   };
 }
 
-const pools = new Map<string, Pool>();
-
-function getPool(connectionString: string): Pool {
-  let pool = pools.get(connectionString);
-  if (!pool) {
-    pool = createPostgresPool({ connectionString, max: 5 });
-    pools.set(connectionString, pool);
-  }
-  return pool;
-}
+const getPool = createPostgresPoolCache({ max: 5 });
 
 export function createPostgresSaasStore(connectionString: string): SaasStore {
   const pool = getPool(connectionString);

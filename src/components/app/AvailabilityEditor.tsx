@@ -5,6 +5,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { pickerLocale } from "./schedule-picker-utils";
 
 import { useGuarded } from "@/lib/client/use-single-flight";
+import { isValidTimeZone } from "@/lib/time-zone";
 import { timedFetch } from "@/lib/client/timed-fetch";
 import { BusyLabel } from "@/components/ui/Spinner";
 type Day = { open: string; close: string } | null;
@@ -54,15 +55,6 @@ const PROBLEM_MESSAGE = {
   invalid_values: "errorValues",
 } as const;
 const INPUT = "mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5";
-
-function isZone(timeZone: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-CA", { timeZone }).format();
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 function otherZones(): string[] {
   try {
@@ -167,7 +159,7 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
       .split(/[,\s]+/)
       .map((item) => item.trim())
       .filter(Boolean);
-    if (!isZone(rules.timezone)) return fail("invalid_timezone");
+    if (!isValidTimeZone(rules.timezone)) return fail("invalid_timezone");
     const badHours = DAY_KEYS.some((key) => {
       const hours = rules.days[key];
       return (

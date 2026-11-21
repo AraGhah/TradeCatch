@@ -1,30 +1,16 @@
 import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { saveSmsReceptionistSettings } from "@/product/missed-call/owner-settings";
 
 export const dynamic = "force-dynamic";
 
-async function context() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return { error: unauthorizedTenantResponse(auth.error) };
-  if (!tenantHasFeature(auth.ctx, "MISSED_CALL_RECOVERY")) {
-    return { error: forbiddenFeatureResponse("MISSED_CALL_RECOVERY") };
-  }
-  return { ctx: auth.ctx };
-}
-
 /** Current SMS receptionist business details, hours, and roster, if linked. */
 export async function GET() {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("MISSED_CALL_RECOVERY");
+  if (!c.ok) return c.response;
   const { organization } = c.ctx;
 
   if (!organization.missedCallClientId) {
@@ -51,8 +37,8 @@ export async function GET() {
 
 /** Owner / admin saves business details, hours, and technician roster. */
 export async function PUT(request: NextRequest) {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("MISSED_CALL_RECOVERY");
+  if (!c.ok) return c.response;
   const { organization, membership } = c.ctx;
 
   const denied = forbiddenUnless(

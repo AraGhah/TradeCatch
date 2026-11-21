@@ -1,27 +1,10 @@
-import { Resend } from "resend";
+import { escapeHtml } from "@/lib/escape";
+import { getResendClient } from "@/lib/resend-client";
 import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
 import type { ReferralSubmissionDetails } from "@/lib/validation/referral-submission";
 import { formatPlanMoney } from "@/lib/plans";
 import { ADD_ONS } from "@/product/saas/plan-catalog";
 import type { WebsiteRequest } from "@/product/website-services/model";
-
-let client: Resend | null = null;
-
-function getClient(): Resend | null {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return null;
-  if (!client) client = new Resend(apiKey);
-  return client;
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 function row(
   label: string,
@@ -50,7 +33,7 @@ export async function sendBookAuditNotifyEmail(
   payload: BookAuditContactPayload,
   idempotencyKey?: string,
 ): Promise<{ sent: boolean }> {
-  const resend = getClient();
+  const resend = getResendClient();
   const fromEmail = process.env.RESEND_FROM_EMAIL;
   const notifyEmail =
     process.env.RESEND_NOTIFY_EMAIL?.trim() ||
@@ -132,7 +115,7 @@ export async function sendReferralSubmissionEmail(
   details: ReferralSubmissionDetails,
   idempotencyKey?: string,
 ): Promise<{ sent: boolean }> {
-  const resend = getClient();
+  const resend = getResendClient();
   const fromEmail = process.env.RESEND_FROM_EMAIL;
   const notifyEmail =
     process.env.RESEND_NOTIFY_EMAIL?.trim() ||
@@ -195,7 +178,7 @@ export async function sendWebsiteRequestEmail(
   request: WebsiteRequest,
   idempotencyKey?: string,
 ): Promise<{ sent: boolean }> {
-  const resend = getClient();
+  const resend = getResendClient();
   const fromEmail = process.env.RESEND_FROM_EMAIL;
   const notifyEmail =
     process.env.RESEND_NOTIFY_EMAIL?.trim() ||
@@ -256,7 +239,7 @@ export async function sendBookAuditCustomerEmail(
   payload: BookAuditContactPayload,
   idempotencyKey?: string,
 ): Promise<{ sent: boolean }> {
-  const resend = getClient();
+  const resend = getResendClient();
   const fromEmail = process.env.RESEND_FROM_EMAIL;
 
   if (!resend || !fromEmail) {

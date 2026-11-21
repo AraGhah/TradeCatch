@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import { createPostgresPoolCache } from "@/lib/postgres-pool";
 import {
   ReceptionistConflictError,
   isConflictError,
@@ -8,16 +8,7 @@ import {
 } from "./store";
 import type { CallSession } from "./types";
 
-const pools = new Map<string, Pool>();
-
-function getPool(url: string) {
-  let pool = pools.get(url);
-  if (!pool) {
-    pool = createPostgresPool({ connectionString: url, max: 5 });
-    pools.set(url, pool);
-  }
-  return pool;
-}
+const getPool = createPostgresPoolCache({ max: 5 });
 
 function mapRow(row: Record<string, unknown>): CallSession {
   const data = (

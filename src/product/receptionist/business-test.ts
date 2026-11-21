@@ -8,15 +8,20 @@
  */
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { decodeBase64Url, encodeBase64Url } from "@/lib/base64url";
 import { randomUUID } from "@/lib/id";
-import { createRuleBrain } from "./brain-rules";
-import { createReceptionistEngine } from "./engine";
 import type { VoiceCapabilities } from "./plan-limits";
 import {
   buildProfileConfig,
   type ReceptionistProfile,
 } from "./profile";
-import { createMemoryReceptionistStore } from "./store";
+import {
+  createSimulationEngine,
+  planMessages,
+  type SimulationEngine,
+  type SimulationMessage,
+  type SimulationScenario,
+} from "./simulation";
 import type { ClientAccount } from "@/product/missed-call/types";
 import type {
   CallSession,
@@ -27,12 +32,9 @@ import type {
   VoicePlan,
 } from "./types";
 
-export type BusinessTestScenario = "open" | "after_hours";
+export type BusinessTestScenario = SimulationScenario;
 
-export type BusinessTestMessage = {
-  role: "agent" | "system";
-  text: string;
-};
+export type BusinessTestMessage = SimulationMessage;
 
 export type BusinessTestResponse = {
   state: string | null;
@@ -63,11 +65,6 @@ const MAX_AGE_MS = 30 * 60 * 1000;
 export const MAX_TEST_UTTERANCE = 400;
 export const MAX_TEST_STATE_CHARS = 60_000;
 
-const CLOCK: Record<BusinessTestScenario, Date> = {
-  open: new Date("2026-03-04T15:00:00Z"),
-  after_hours: new Date("2026-03-04T03:00:00Z"),
-};
-
 type SignedPayload = {
   iat: number;
   organizationId: string;
@@ -75,20 +72,8 @@ type SignedPayload = {
   session: CallSession;
 };
 
-function b64url(buf: Buffer): string {
-  return buf
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-function fromB64url(value: string): Buffer {
-  return Buffer.from(value.replace(/-/g, "+").replace(/_/g, "/"), "base64");
-}
-
 function sign(payload: string, secret: string): string {
-  return b64url(
+  return encodeBase64Url(
     createHmac("sha256", secret)
       .update(`receptionist-biz-test:${payload}`)
       .digest(),
@@ -100,7 +85,7 @@ export function signBusinessTestState(
   secret: string,
   now = Date.now(),
 ): string {
-  const body = b64url(
+  const body = encodeBase64Url(
     Buffer.from(
       JSON.stringify({ ...payload, iat: payload.iat ?? now }),
       "utf8",
@@ -127,7 +112,7 @@ export function verifyBusinessTestState(
   }
   let parsed: SignedPayload;
   try {
-    parsed = JSON.parse(fromB64url(payload).toString("utf8"));
+    parsed = JSON.parse(decodeBase64Url(payload).toString("utf8"));
   } catch {
     throw new BusinessTestError("Malformed state", "invalid_state");
   }
@@ -144,55 +129,21 @@ export function verifyBusinessTestState(
   return parsed;
 }
 
-function noopNotifier() {
-  return {
-    async deliverSummary() {
-      return [];
-    },
-    async alertEmergency() {
-      return [];
-    },
-  };
-}
-
 function makeEngine(
   config: ReceptionistConfig,
   scenario: BusinessTestScenario,
   language?: ReceptionistLanguage,
 ) {
-  const store = createMemoryReceptionistStore();
-  const engine = createReceptionistEngine({
-    store,
-    // The practice caller speaks the chosen language from the first word.
-    configs: () => [
-      {
-        ...config,
-        enabled: true,
-        callHandlingMode: "always",
-        ...(language
-          ? { languages: [language], defaultLanguage: language }
-          : {}),
-      },
-    ],
-    brain: createRuleBrain(),
-    notifier: noopNotifier(),
-    llm: null,
-    clock: { now: () => CLOCK[scenario] },
-  });
-  return { store, engine };
-}
-
-function planMessages(plan: VoicePlan): BusinessTestMessage[] {
-  const out: BusinessTestMessage[] = [];
-  const push = (text: string) => {
-    const t = text.trim();
-    if (t && out.at(-1)?.text !== t) out.push({ role: "agent", text: t });
-  };
-  for (const verb of plan.verbs) {
-    if (verb.verb === "say") push(verb.text);
-    else if (verb.verb === "gather") verb.prompts.forEach((p) => push(p.text));
-  }
-  return out;
+  // The practice caller speaks the chosen language from the first word.
+  return createSimulationEngine(
+    {
+      ...config,
+      enabled: true,
+      callHandlingMode: "always",
+      ...(language ? { languages: [language], defaultLanguage: language } : {}),
+    },
+    scenario,
+  );
 }
 
 function transferNote(
@@ -212,8 +163,8 @@ function transferNote(
 }
 
 async function settle(
-  engine: ReturnType<typeof makeEngine>["engine"],
-  store: ReturnType<typeof makeEngine>["store"],
+  engine: SimulationEngine["engine"],
+  store: SimulationEngine["store"],
   first: VoicePlan,
   language: ReceptionistLanguage,
   callSid: string,

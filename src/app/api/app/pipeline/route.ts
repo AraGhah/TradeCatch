@@ -2,12 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { z } from "zod";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { getGrowthServices, getGrowthStore } from "@/product/growth";
 
 export const dynamic = "force-dynamic";
@@ -28,22 +23,16 @@ const moveSchema = z.object({
 });
 
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "ADVANCED_PIPELINE")) {
-    return forbiddenFeatureResponse("ADVANCED_PIPELINE");
-  }
+  const auth = await requireTenantFeature("ADVANCED_PIPELINE");
+  if (!auth.ok) return auth.response;
 
   const cards = await getGrowthStore().listPipeline(auth.ctx.organization.id);
   return NextResponse.json({ ok: true, cards });
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "ADVANCED_PIPELINE")) {
-    return forbiddenFeatureResponse("ADVANCED_PIPELINE");
-  }
+  const auth = await requireTenantFeature("ADVANCED_PIPELINE");
+  if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(
     auth.ctx.membership.role,
     "write_leads",

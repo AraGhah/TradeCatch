@@ -2,22 +2,16 @@ import { NextResponse } from "next/server";
 import { computeStarterDashboardMetrics } from "@/product/saas/analytics";
 import {
   forbiddenFeatureResponse,
-  requireTenantContext,
   tenantHasFeature,
-  unauthorizedTenantResponse,
+  requireTenantFeature,
 } from "@/product/saas/tenant";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) {
-    return unauthorizedTenantResponse(auth.error);
-  }
-  if (!tenantHasFeature(auth.ctx, "BASIC_ANALYTICS")) {
-    return forbiddenFeatureResponse("BASIC_ANALYTICS");
-  }
+  const auth = await requireTenantFeature("BASIC_ANALYTICS");
+  if (!auth.ok) return auth.response;
 
   const clientId = auth.ctx.organization.missedCallClientId;
   if (!clientId) {

@@ -21,7 +21,11 @@
  * The percentages are a starting point to tune on real calls, not a measurement.
  */
 
+import { escapeXml } from "@/lib/escape";
 import type { SpeakingSpeed } from "./types";
+
+/** SSML is XML: the same five-entity escape as TwiML. */
+export const escapeSsmlText = escapeXml;
 
 /** Percent of the voice's default rate for each owner setting. */
 export const BASE_RATE_PERCENT: Record<SpeakingSpeed, number> = {
@@ -39,15 +43,6 @@ const MAX_RATE = 115;
 const DIGIT_GROUP_BREAK_MS = 280;
 /** Pause after a one-or-two-word acknowledgement. */
 const ACK_BREAK_MS = 140;
-
-export function escapeSsmlText(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
 
 export function ssmlEnabled(env: Record<string, string | undefined> = process.env): boolean {
   return env.RECEPTIONIST_SSML?.trim() !== "0";

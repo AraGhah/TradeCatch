@@ -3,12 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { publicHttpsUrl } from "@/lib/safe-url";
 import { forbiddenUnless } from "@/product/security/access";
 import { z } from "zod";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { getGrowthServices, getGrowthStore } from "@/product/growth";
 
 export const dynamic = "force-dynamic";
@@ -24,11 +19,8 @@ const setUrlSchema = z.object({
 });
 
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "REVIEW_AUTOMATION")) {
-    return forbiddenFeatureResponse("REVIEW_AUTOMATION");
-  }
+  const auth = await requireTenantFeature("REVIEW_AUTOMATION");
+  if (!auth.ok) return auth.response;
 
   const store = getGrowthStore();
   const orgId = auth.ctx.organization.id;
@@ -45,11 +37,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "REVIEW_AUTOMATION")) {
-    return forbiddenFeatureResponse("REVIEW_AUTOMATION");
-  }
+  const auth = await requireTenantFeature("REVIEW_AUTOMATION");
+  if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(
     auth.ctx.membership.role,
     "write_leads",

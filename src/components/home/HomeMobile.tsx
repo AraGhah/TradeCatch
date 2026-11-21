@@ -7,21 +7,10 @@ import { StickyAuditCta } from "@/components/StickyAuditCta";
 import { StoryDemos } from "@/components/StoryDemos";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { WebsiteServiceAddOn } from "@/components/WebsiteServiceAddOn";
+import { accentHeadline } from "@/components/home/accent-headline";
 import { formatPlanPrice, PLAN_PRICES } from "@/lib/plans";
 import { localizedAnchor } from "@/lib/anchors";
 import { websiteServiceAddOn } from "@/lib/plan-marketing";
-
-function accentHeadline(headline: string, accentWord: string) {
-  const idx = headline.lastIndexOf(accentWord);
-  if (idx === -1) return headline;
-  return (
-    <>
-      {headline.slice(0, idx)}
-      <span className="text-orange">{accentWord}</span>
-      {headline.slice(idx + accentWord.length)}
-    </>
-  );
-}
 
 const SECTION =
   "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-6 sm:py-8";

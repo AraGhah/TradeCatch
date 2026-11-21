@@ -2,12 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { z } from "zod";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { getStarterStore } from "@/product/starter/runtime";
 import { getStarterServices } from "@/product/starter/org-context";
@@ -47,11 +42,8 @@ async function syncMissedCallInbox(
 }
 
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "HUMAN_TAKEOVER")) {
-    return forbiddenFeatureResponse("HUMAN_TAKEOVER");
-  }
+  const auth = await requireTenantFeature("HUMAN_TAKEOVER");
+  if (!auth.ok) return auth.response;
 
   await syncMissedCallInbox(
     auth.ctx.organization.id,
@@ -76,11 +68,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "HUMAN_TAKEOVER")) {
-    return forbiddenFeatureResponse("HUMAN_TAKEOVER");
-  }
+  const auth = await requireTenantFeature("HUMAN_TAKEOVER");
+  if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(
     auth.ctx.membership.role,
     "write_leads",

@@ -2,12 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { z } from "zod";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { parsePhoneInput } from "@/product/crm/phone";
 import { schedulingFailure } from "@/product/scheduling/http";
 import { getSchedulingService } from "@/product/scheduling/runtime";
@@ -24,11 +19,8 @@ const createSchema = z.object({
 });
 
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "APPOINTMENT_BOOKING")) {
-    return forbiddenFeatureResponse("APPOINTMENT_BOOKING");
-  }
+  const auth = await requireTenantFeature("APPOINTMENT_BOOKING");
+  if (!auth.ok) return auth.response;
 
   // The same appointments the calendar shows: one table, one set of rules.
   try {
@@ -45,11 +37,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "APPOINTMENT_BOOKING")) {
-    return forbiddenFeatureResponse("APPOINTMENT_BOOKING");
-  }
+  const auth = await requireTenantFeature("APPOINTMENT_BOOKING");
+  if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(
     auth.ctx.membership.role,
     "write_leads",
