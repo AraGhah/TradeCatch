@@ -49,6 +49,9 @@ unreachable, a turn fails), `relay-ended` continues the call on the classic
 3. Deploy the Worker with the `VOICE_RELAY` binding and the
    `v1-voice-relay` migration from `wrangler.jsonc`. The migration only
    creates the Durable Object class; it touches no data.
+   The release script builds OpenNext and deploys the custom `worker.ts`
+   entry directly with Wrangler. It stops if cache population or skew
+   protection is enabled and the release workflow has not been updated.
 4. Set `CONVERSATION_RELAY_MODE`:
    - `opt_in`: only businesses whose voice engine is `conversation_relay`.
    - `all`: those plus every business on the default `gather` engine.

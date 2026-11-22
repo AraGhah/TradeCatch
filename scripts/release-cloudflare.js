@@ -29,10 +29,20 @@ if (approved.head_sha !== final.head_sha)
     "Revision changed during the build; rebuild the tested revision.",
   );
 checkWorkerDatabase({ staging });
-// The immutable Cloudflare version annotation binds the uploaded code to its reviewed GitHub revision.
-run(cli, [
-  mode,
-  "--message",
-  `git:${final.head_sha},ci:${final.id}`,
-  ...(staging ? ["--env", "staging"] : []),
-]);
+// OpenNext's deploy command constructs a local platform proxy before deploying.
+// That proxy cannot load same-Worker Durable Objects and emits misleading
+// warnings. This project uses dummy caches, so deploy the built custom Worker
+// directly; fail closed if a future cache configuration needs population.
+import("./release-worker-artifact.mjs")
+  .then(({ releaseArgs, assertNoCachePopulation }) =>
+    assertNoCachePopulation().then(() =>
+      run(
+        path.resolve("node_modules/wrangler/bin/wrangler.js"),
+        releaseArgs({ mode, staging, sha: final.head_sha, runId: final.id }),
+      ),
+    ),
+  )
+  .catch((error) => {
+    console.error(error.message);
+    process.exitCode = 1;
+  });
