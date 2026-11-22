@@ -7,8 +7,10 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 import { SessionKeeper } from "@/components/app/SessionKeeper";
 import { planNameOrNull } from "@/lib/plan-names";
 
-import { useGuarded } from "@/lib/client/use-single-flight";
+import { useSingleFlight } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
+import { LinkPendingHint } from "@/components/ui/LinkPendingHint";
 /**
  * The Account Center menu, in the order owners use it. Appointments belong to
  * Professional, so Essential accounts never see that entry. Everything else
@@ -83,7 +85,7 @@ export function AppShell({
     setNavOpen(false);
   }
 
-  const logout = useGuarded(logoutHandler);
+  const logoutFlight = useSingleFlight();
   async function logoutHandler() {
     await timedFetch("/api/auth/logout", { method: "POST" });
     window.location.href = locale === "fr" ? "/fr/connexion" : "/login";
@@ -130,9 +132,10 @@ export function AppShell({
             {isPlatformAdmin ? (
               <Link
                 href="/admin"
-                className={`w-fit rounded-md px-3 py-2.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
+                className={`inline-flex w-fit items-center rounded-md px-3 py-2.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
               >
                 {t("nav.admin")}
+                <LinkPendingHint />
               </Link>
             ) : null}
             <ul className="flex flex-col">
@@ -145,13 +148,14 @@ export function AppShell({
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
-                      className={`block min-h-11 rounded-md px-3 py-2.5 text-sm ${FOCUS_RING} ${
+                      className={`inline-flex min-h-11 w-full items-center rounded-md px-3 py-2.5 text-sm ${FOCUS_RING} ${
                         active
                           ? "bg-navy text-white"
                           : "text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
                       }`}
                     >
                       {t(`nav.${item.key}`)}
+                      <LinkPendingHint />
                     </Link>
                   </li>
                 );
@@ -160,10 +164,17 @@ export function AppShell({
           </nav>
           <button
             type="button"
-            onClick={() => void logout()}
-            className={`w-fit rounded-md px-2 py-1.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
+            disabled={logoutFlight.pending}
+            aria-busy={logoutFlight.pending || undefined}
+            onClick={() => void logoutFlight.run(logoutHandler)}
+            className={`w-fit rounded-md px-2 py-1.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] disabled:cursor-not-allowed disabled:opacity-60 ${FOCUS_RING}`}
           >
-            {t("nav.logout")}
+            <BusyLabel
+              pending={logoutFlight.pending}
+              busyLabel={t("nav.loggingOut")}
+            >
+              {t("nav.logout")}
+            </BusyLabel>
           </button>
           </div>
         </aside>

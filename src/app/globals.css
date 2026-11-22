@@ -437,3 +437,78 @@ body.demo-video-active .sticky-audit-cta {
 body.demo-video-active {
   overflow: hidden;
 }
+
+/* Subtle navigation progress (KAN-26): only after a short delay, never blocks clicks. */
+.tc-nav-progress {
+  height: 100%;
+  width: 0;
+  background: var(--color-orange);
+  opacity: 0;
+  transform-origin: left center;
+}
+
+.tc-nav-progress--active {
+  opacity: 1;
+  animation: tc-nav-progress-run 1.1s ease-in-out infinite;
+}
+
+@keyframes tc-nav-progress-run {
+  0% {
+    width: 0;
+  }
+  40% {
+    width: 55%;
+  }
+  100% {
+    width: 85%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-nav-progress--active {
+    animation: none;
+    width: 40%;
+  }
+}
+
+/* Inline hint inside a Link while a slow navigation is pending. */
+.tc-link-hint {
+  display: inline-block;
+  width: 0.45em;
+  height: 0.45em;
+  margin-left: 0.35em;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0;
+  visibility: hidden;
+  vertical-align: middle;
+}
+
+.tc-link-hint--pending {
+  visibility: visible;
+  animation-name: tc-link-hint-fade, tc-link-hint-pulse;
+  animation-duration: 200ms, 1s;
+  animation-delay: 120ms, 120ms;
+  animation-timing-function: ease, ease-in-out;
+  animation-iteration-count: 1, infinite;
+  animation-fill-mode: forwards, none;
+}
+
+@keyframes tc-link-hint-fade {
+  to {
+    opacity: 0.4;
+  }
+}
+
+@keyframes tc-link-hint-pulse {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tc-link-hint--pending {
+    animation: none;
+    opacity: 0.35;
+  }
+}
