@@ -7,6 +7,7 @@ import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
 import { classifyFailure } from "@/lib/client/use-action";
 
+import { useAttemptKey } from "@/lib/client/attempt-key";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 type Message = {
@@ -48,6 +49,7 @@ export function TicketThread({
   const [acting, setActing] = useState<"refresh" | "reply" | null>(null);
   const busy = acting !== null;
   const inFlight = useRef(false);
+  const attempt = useAttemptKey();
 
   const when = (iso?: string) =>
     iso
@@ -119,12 +121,16 @@ export function TicketThread({
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ body: body.trim() }),
+          body: JSON.stringify({
+            body: body.trim(),
+            idempotencyKey: attempt.for(body.trim()),
+          }),
         },
       );
       setNoteError(!response.ok);
       setNote(response.ok ? t("sent") : t("error"));
       if (response.ok) {
+        attempt.done();
         setBody("");
         await load();
       }

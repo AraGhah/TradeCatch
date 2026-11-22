@@ -8,6 +8,7 @@ import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
 import { classifyFailure } from "@/lib/client/use-action";
 
+import { useAttemptKey } from "@/lib/client/attempt-key";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 type Ticket = {
@@ -43,6 +44,7 @@ export function SupportHome({
   const [message, setMessage] = useState("");
   const [messageError, setMessageError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const attempt = useAttemptKey();
 
   const load = useCallback(
     () =>
@@ -75,24 +77,29 @@ export function SupportHome({
     setMessage("");
     setMessageError(false);
     try {
+      const ticket = {
+        subject: subject.trim(),
+        description: description.trim(),
+        category,
+        priority,
+        kind,
+        contactEmail,
+      };
       const response = await timedFetch(
         `/api/businesses/${organizationId}/support/tickets`,
         {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            subject: subject.trim(),
-            description: description.trim(),
-            category,
-            priority,
-            kind,
-            contactEmail,
+            ...ticket,
+            idempotencyKey: attempt.for(JSON.stringify(ticket)),
           }),
         },
       );
       setMessageError(!response.ok);
       setMessage(response.ok ? t("sent") : t("error"));
       if (response.ok) {
+        attempt.done();
         setSubject("");
         setDescription("");
         await load();
