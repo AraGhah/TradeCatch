@@ -22,7 +22,10 @@ export async function POST(request: NextRequest, { params }: Params) {
       { status: 403 },
     );
   const parsed = z
-    .object({ body: z.string().min(1).max(4000) })
+    .object({
+      body: z.string().min(1).max(4000),
+      idempotencyKey: z.string().trim().min(8).max(100).optional(),
+    })
     .safeParse(await readJsonBounded(request).catch(() => null));
   if (!parsed.success)
     return NextResponse.json({ error: "Invalid message." }, { status: 400 });
@@ -32,6 +35,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       ticketId,
       body: parsed.data.body,
       authorRole: "contractor",
+      idempotencyKey: parsed.data.idempotencyKey,
     });
     return NextResponse.json({ ok: true, message: { id: message.id } });
   } catch (error) {

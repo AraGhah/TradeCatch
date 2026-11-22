@@ -21,6 +21,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     .object({
       body: z.string().min(1).max(4000),
       internal: z.boolean().optional(),
+      idempotencyKey: z.string().trim().min(8).max(100).optional(),
     })
     .safeParse(await readJsonBounded(request).catch(() => null));
   if (!parsed.success)
@@ -33,6 +34,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       body: parsed.data.body,
       authorRole: "admin",
       internal: parsed.data.internal,
+      idempotencyKey: parsed.data.idempotencyKey,
     });
     await recordSecurityEvent({
       organizationId: existing.ticket.organizationId,

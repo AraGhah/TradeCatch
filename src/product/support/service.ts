@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { redactAuditDetail } from "@/product/security/permissions";
 import type { PlanId } from "@/product/saas/entitlements";
 import { diagnoseConfiguration } from "./diagnostics";
@@ -17,7 +18,19 @@ type CreateTicketInput = {
   relatedCallId?: string;
   kind?: TicketKind;
   attachmentNames?: string[];
+  /** The client's key for this attempt: sending it again returns the same ticket. */
+  idempotencyKey?: string;
 };
+
+/**
+ * The id a retried request resolves to. Scoped (to the organization for a
+ * ticket, to the ticket for a message) so one tenant's key can never name
+ * another tenant's row.
+ */
+function idempotentId(prefix: string, scope: string, key: string) {
+  const digest = createHash("sha256").update(`${scope}\u0000${key}`).digest("hex");
+  return `${prefix}_${digest.slice(0, 32)}`;
+}
 
 const PRIORITIES = new Set<TicketPriority>(["normal", "high", "critical"]);
 const NOTIFY_STATUSES = new Set<TicketStatus>(["resolved", "investigating", "closed"]);
@@ -48,12 +61,18 @@ export function createSupportService(deps: {
         priority: input.priority,
         contactEmail: input.contactEmail,
         relatedCallId: input.relatedCallId,
-        id: supportId("tkt"),
+        id: input.idempotencyKey
+          ? idempotentId("tkt", input.organizationId, input.idempotencyKey)
+          : supportId("tkt"),
         status: "open",
         createdAt: now,
         updatedAt: now,
       };
-      await deps.store.saveTicket(ticket);
+      if (!(await deps.store.insertTicket(ticket))) {
+        // A repeat of a request that already opened this ticket: answer with it,
+        // without attaching, logging or notifying a second time.
+        return requireTicket(ticket.id, input.organizationId);
+      }
       await saveAttachments(deps.store, ticket.id, input.attachmentNames ?? [], now);
       await deps.store.saveEvent({ id: supportId("evt"), ticketId: ticket.id, action: "opened", createdAt: now });
       if (ticket.kind === "feature") {
@@ -63,18 +82,23 @@ export function createSupportService(deps: {
       return ticket;
     },
 
-    async reply(input: { organizationId: string; ticketId: string; body: string; authorRole: "contractor" | "admin"; internal?: boolean }) {
+    async reply(input: { organizationId: string; ticketId: string; body: string; authorRole: "contractor" | "admin"; internal?: boolean; idempotencyKey?: string }) {
       const ticket = await requireTicket(input.ticketId, input.organizationId);
       if (input.internal && input.authorRole !== "admin") throw new SupportError("Insufficient permissions.", 403);
       const message: SupportMessage = {
-        id: supportId("msg"),
+        id: input.idempotencyKey
+          ? idempotentId("msg", ticket.id, input.idempotencyKey)
+          : supportId("msg"),
         ticketId: ticket.id,
         authorRole: input.authorRole,
         body: redactAuditDetail(input.body),
         internal: Boolean(input.internal),
         createdAt: deps.now().toISOString(),
       };
-      await deps.store.saveMessage(message);
+      if (!(await deps.store.insertMessage(message))) {
+        const existing = (await deps.store.listMessages(ticket.id)).find((row) => row.id === message.id);
+        return existing ?? message;
+      }
       if (input.authorRole === "admin" && !message.internal) {
         await markInvestigating(deps, ticket, message.createdAt);
       }
