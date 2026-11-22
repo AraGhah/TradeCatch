@@ -110,7 +110,8 @@ describe("feedback audit (KAN-26)", () => {
     // per-button wording is checked by the Playwright LOAD specs.
     const BUSY_DISABLED =
       /disabled=\{[^}]*\b(pending|busy|saving|sending|loading|submitting|working|running|inFlight|syncing|opening|redirecting|isPending|acting|flight\.pending|action\.pending)\b/;
-    const INDICATOR = /BusyLabel|<Spinner|InlineStatus|LoadingRegion|<Skeleton/;
+    // ActionButton wraps BusyLabel with aria-busy / disabled; importing it counts.
+    const INDICATOR = /BusyLabel|<Spinner|InlineStatus|LoadingRegion|<Skeleton|ActionButton/;
     const offenders = clientFiles
       .filter(({ text }) => BUSY_DISABLED.test(text) && !INDICATOR.test(text))
       .map(({ rel }) => rel)
@@ -178,11 +179,20 @@ describe("feedback audit (KAN-26)", () => {
   });
 
   it("the shared pieces are what the forms import (one implementation, not copies)", () => {
-    const uiKit = ["Spinner.tsx", "Skeleton.tsx", "FeedbackMessage.tsx"].map((name) =>
-      readFileSync(join(SRC, "components", "ui", name), "utf8"),
-    );
+    const uiKit = [
+      "Spinner.tsx",
+      "Skeleton.tsx",
+      "FeedbackMessage.tsx",
+      "ActionButton.tsx",
+      "NavigationProgress.tsx",
+      "LinkPendingHint.tsx",
+    ].map((name) => readFileSync(join(SRC, "components", "ui", name), "utf8"));
     assert.ok(uiKit.every((text) => text.length > 0));
-    const users = clientFiles.filter(({ text }) => text.includes('from "@/components/ui/Spinner"'));
-    assert.ok(users.length >= 40, `BusyLabel/InlineStatus used by only ${users.length} files`);
+    const users = clientFiles.filter(
+      ({ text }) =>
+        text.includes('from "@/components/ui/Spinner"') ||
+        text.includes('from "@/components/ui/ActionButton"'),
+    );
+    assert.ok(users.length >= 40, `BusyLabel/InlineStatus/ActionButton used by only ${users.length} files`);
   });
 });

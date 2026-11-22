@@ -225,10 +225,10 @@ scan of every other public client component found no other case.
   mutation 1, not by LOAD-02 alone.
 * **Fifteen of the 23 changed admin files have no translations at all** (no
   `useTranslations`), so their wording is English only and the French language
-  switch (LOAD-13) is not exercised on them. Five of those, `QaDesk`,
-  `MonitoringDesk`, `PilotDesk`, `LaunchReadinessPanel` and `AdminSupportDesk`,
-  got the 30 s ceiling and the lock, but their busy cue is still plain text
-  ("Running…", "Checking…") with no spinner. They were not converted further.
+  switch (LOAD-13) is not exercised on them. `QaDesk`, `MonitoringDesk`,
+  `PilotDesk`, `LaunchReadinessPanel` and `AdminSupportDesk` now use
+  `BusyLabel` / `InlineStatus` / `ActionButton` for visible busy cues (still
+  English-only copy, matching the rest of those desks).
 * **No real-network timeout.** Timeouts are tested with held and aborted
   requests and a fake clock, not a slow link.
 * **Latency was not measured**, and nothing here was run against production.
@@ -243,9 +243,8 @@ scan of every other public client component found no other case.
    imports no spinner itself: those buttons only open the confirm panel, and the
    panel's own button (`ConfirmPanel` in `admin/console/ui.tsx`) shows the
    spinner and "Working…". It is on the audit's allow-list with that reason.
-3. **The five English-only desks above** still show plain-text busy cues. Say if
-   they should get spinners and French wording too; it is mechanical but touches
-   five more files.
+3. **The five English-only desks** now show spinners; French wording for those
+   desks is still out of scope (they have no `useTranslations` at all).
 4. **CAL-04** fails on `ee470320` as well. Someone should decide whether to fix
    the test's slot assumption.
 5. **The harness 429 flake.** Giving `workspaceSession`'s provisioning call its

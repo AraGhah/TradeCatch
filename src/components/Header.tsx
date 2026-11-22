@@ -12,6 +12,7 @@ import { BrandLockup } from "@/components/BrandLockup";
 import { EmailContactLink } from "@/components/EmailContactLink";
 import { AccountLink } from "@/components/AccountLink";
 import { useAccountNav } from "@/components/useAccountNav";
+import { LinkPendingHint } from "@/components/ui/LinkPendingHint";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg";
@@ -91,6 +92,7 @@ export function Header() {
                   }`}
                 >
                   {link.label}
+                  <LinkPendingHint />
                   <span
                     className={`absolute inset-x-[14px] bottom-[2px] h-0.5 origin-left bg-orange transition-[scale] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
                       active ? "scale-x-100" : "scale-x-0 group-hover:scale-x-100"

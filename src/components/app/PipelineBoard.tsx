@@ -6,6 +6,8 @@ import { useRef, useState } from "react";
 import type { PipelineCard, PipelineStage } from "@/product/growth";
 
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { InlineStatus } from "@/components/ui/Spinner";
+
 const STAGES: PipelineStage[] = [
   "new",
   "contacted",
@@ -90,13 +92,16 @@ export function PipelineBoard({ cards }: { cards: PipelineCard[] }) {
               {card.source}
               {card.customerPhoneE164 ? ` · ${card.customerPhoneE164}` : ""}
             </p>
+            {busyId === card.id ? (
+              <InlineStatus className="mt-3">{tFeedback("working")}</InlineStatus>
+            ) : null}
             <div className="mt-3 flex flex-wrap gap-2">
               {STAGES.filter((s) => s !== card.stage).map((stage) => (
                 <button
                   key={stage}
                   type="button"
                   disabled={busyId === card.id}
-                  aria-busy={busyId === card.id}
+                  aria-busy={busyId === card.id || undefined}
                   onClick={() => void move(card.id, stage)}
                   className="rounded-md border border-navy/20 px-2 py-1 text-xs font-medium text-navy hover:bg-navy/5 disabled:opacity-50"
                 >

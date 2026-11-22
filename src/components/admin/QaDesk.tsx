@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
+
 type Result = {
   id: string;
   suite: string;
@@ -44,6 +46,8 @@ export function QaDesk() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [active, setActive] = useState<Run | null>(null);
   const [message, setMessage] = useState("");
+  const [runningSuite, setRunningSuite] = useState<string | null>(null);
+  const busy = runningSuite !== null;
 
   const load = useCallback(
     () =>
@@ -66,23 +70,30 @@ export function QaDesk() {
 
   const run = useGuarded(runHandler);
   async function runHandler(suite: string) {
-    setMessage("Running…");
-    const response = await timedFetch("/api/admin/qa", {
-      method: "POST",
-      timeoutMs: 60_000,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ suite }),
-    });
-    const body = (await response.json()) as { run?: Run; error?: string };
-    if (!response.ok || !body.run) {
-      setMessage(body.error || "The suite could not run.");
-      return;
+    setRunningSuite(suite);
+    setMessage("");
+    try {
+      const response = await timedFetch("/api/admin/qa", {
+        method: "POST",
+        timeoutMs: 60_000,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ suite }),
+      });
+      const body = (await response.json()) as { run?: Run; error?: string };
+      if (!response.ok || !body.run) {
+        setMessage(body.error || "The suite could not run.");
+        return;
+      }
+      setActive(body.run);
+      setMessage(
+        `${body.run.passed} passed, ${body.run.failed} failed, ${body.run.skipped} skipped.`,
+      );
+      await load();
+    } catch {
+      setMessage("The suite could not run. Check the connection and try again.");
+    } finally {
+      setRunningSuite(null);
     }
-    setActive(body.run);
-    setMessage(
-      `${body.run.passed} passed, ${body.run.failed} failed, ${body.run.skipped} skipped.`,
-    );
-    await load();
   }
 
   const shown = active ?? runs[0];
@@ -100,22 +111,34 @@ export function QaDesk() {
         </p>
       </header>
       <div className="flex flex-wrap gap-2">
-        {SUITES.map((suite) => (
-          <button
-            key={suite}
-            type="button"
-            className="rounded-md bg-navy px-3 py-2 text-sm text-white"
-            onClick={() => run(suite)}
-          >
-            {suite === "all"
-              ? "Run all tests"
-              : suite === "ai"
-                ? "receptionist"
-                : suite}
-          </button>
-        ))}
+        {SUITES.map((suite) => {
+          const thisBusy = runningSuite === suite;
+          return (
+            <button
+              key={suite}
+              type="button"
+              disabled={busy}
+              aria-busy={thisBusy || undefined}
+              className="rounded-md bg-navy px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+              onClick={() => void run(suite)}
+            >
+              <BusyLabel pending={thisBusy} busyLabel="Running…">
+                {suite === "all"
+                  ? "Run all tests"
+                  : suite === "ai"
+                    ? "receptionist"
+                    : suite}
+              </BusyLabel>
+            </button>
+          );
+        })}
       </div>
-      {message ? <p className="text-sm text-navy">{message}</p> : null}
+      {busy ? <InlineStatus>Running suite…</InlineStatus> : null}
+      {message ? (
+        <p className="text-sm text-navy" role="status">
+          {message}
+        </p>
+      ) : null}
       {shown ? (
         <section className="rounded-md bg-white p-4 ring-1 ring-navy/10">
           <p className="text-sm text-navy">
