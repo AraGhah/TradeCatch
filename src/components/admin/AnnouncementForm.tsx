@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useTranslations } from "next-intl";
 
+import { useAttemptKey } from "@/lib/client/attempt-key";
 import { useSingleFlight } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 import { ActionButton } from "@/components/ui/ActionButton";
@@ -15,6 +16,7 @@ export function AnnouncementForm() {
   const [resultError, setResultError] = useState(false);
   const [queued, setQueued] = useState(false);
   const flight = useSingleFlight();
+  const attempt = useAttemptKey();
 
   async function submitHandler() {
     setResult(null);
@@ -24,7 +26,13 @@ export function AnnouncementForm() {
       const res = await timedFetch("/api/admin/announcements", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ message, confirm }),
+        // Never `done()`: the same words sent again, even after success, are the
+        // same announcement and must not reach every business a second time.
+        body: JSON.stringify({
+          message,
+          confirm,
+          idempotencyKey: attempt.for(message.trim()),
+        }),
       });
       const body = (await res.json().catch(() => null)) as {
         queued?: number;

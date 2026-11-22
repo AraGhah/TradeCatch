@@ -1,5 +1,6 @@
 import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 import { forbiddenUnless } from "@/product/security/access";
 import { shouldUseDryRunSms } from "@/lib/environment";
 import { isCrmError, getCrmService } from "@/product/crm/runtime";
@@ -8,6 +9,8 @@ import { authorizeBusinessMemberOrAdmin } from "../../../_shared";
 export const dynamic = "force-dynamic";
 
 type Params = { params: Promise<{ id: string; leadId: string }> };
+
+const idempotencyKeySchema = z.string().trim().min(8).max(120).optional();
 
 export async function POST(request: NextRequest, { params }: Params) {
   const { id, leadId } = await params;
@@ -20,11 +23,15 @@ export async function POST(request: NextRequest, { params }: Params) {
   );
   if (denied) return denied;
 
-  let body: { body?: string };
+  let body: { body?: string; idempotencyKey?: string };
   try {
     body = await readJsonBounded(request);
   } catch {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+  }
+  const key = idempotencyKeySchema.safeParse(body?.idempotencyKey);
+  if (!key.success) {
+    return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
   const lead = await getCrmService().getLead(id, leadId);
@@ -40,6 +47,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       actor: access.userEmail,
       simulated:
         shouldUseDryRunSms() || access.organization.accountType === "demo",
+      idempotencyKey: key.data,
     });
     return NextResponse.json({ ok: true, message });
   } catch (err) {
