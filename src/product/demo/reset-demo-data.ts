@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { demoClientAccount } from "@/product/missed-call/fixtures";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 

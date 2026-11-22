@@ -1,7 +1,7 @@
 import { isE2eHarness } from "@/lib/config";
 import { providerProbes } from "./probes";
 import { scheduledJobFailures } from "./job-health";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type { AlertPayload } from "./alerts";
 import { collectSignals, createWebsiteCheck, probeDatabase } from "./collectors";
 import { createAdminAlertNotifier } from "./notify";

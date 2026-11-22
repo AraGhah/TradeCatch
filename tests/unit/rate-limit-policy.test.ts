@@ -190,9 +190,11 @@ describe("which routes the default limit covers", () => {
     // signature or a shared secret. /api/health is public on purpose.
     const proofs = [
       "assertTwilioWebhook",
+      "readVerifiedTwilioForm",
       "verifyStripeSignature",
       "authorizeGmailPush",
       "authorizeOpsRequest",
+      "guardOpsRequest",
       "handleAgentRequest",
       // Bland: bearer BLAND_TOOL_SECRET (tools) / HMAC signature (webhook).
       "handleBlandRequest",

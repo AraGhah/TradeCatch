@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authorizeOpsRequest, unauthorizedOpsResponse } from "@/lib/ops-auth";
 import { isDurableMissedCallStoreConfigured } from "@/lib/config";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { purgeExpiredRecords } from "@/product/missed-call/retention";
 import { applyPrivacyRetention } from "@/product/privacy/retention";
 

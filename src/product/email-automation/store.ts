@@ -1,10 +1,13 @@
 import { createId } from "@/lib/id";
+import { normalizeEmail } from "@/product/saas/store";
 import type {
   EmailEnrollment,
   EmailSequence,
   EmailSuppression,
   EmailTemplate,
 } from "./types";
+
+export { normalizeEmail };
 
 export type EmailAutomationStore = {
   upsertTemplate(
@@ -75,10 +78,6 @@ export type EmailOrgSettings = {
   /** Sequence new website leads (with email + consent) are enrolled into. */
   autoEnrollSequenceId?: string;
 };
-
-export function normalizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
 
 export function createMemoryEmailAutomationStore(): EmailAutomationStore {
   const templates = new Map<string, EmailTemplate>();

@@ -6,7 +6,7 @@ import {
   priorityRank,
   escalationOutcome,
 } from "./delivery-policy";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type { NotificationStore } from "./store";
 import { TYPE_PRIORITY } from "./types";
 import type {

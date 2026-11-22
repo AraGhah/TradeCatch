@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { runQaSuite } from "./runner";
 import { createMemoryQaStore, type QaRun, type QaStore } from "./store";
 

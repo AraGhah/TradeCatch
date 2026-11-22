@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  authorizeOpsRequest,
-  logOpsAccess,
-  missingOpsActorResponse,
-  unauthorizedOpsResponse,
-} from "@/lib/ops-auth";
+import { guardOpsRequest } from "@/lib/ops-auth";
 import { isDurableMissedCallStoreConfigured } from "@/lib/config";
 import { getMissedCallMaintenanceRuntime } from "@/product/missed-call/runtime";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { safeDatabaseErrorCode } from "@/lib/postgres-pool";
 import {
   getSmsInbox,
@@ -55,14 +50,8 @@ async function drainInbound() {
 
 /** Process escalation timers (cron or manual). Requires ops bearer auth. */
 async function tick(request: NextRequest) {
-  if (!authorizeOpsRequest(request)) {
-    return unauthorizedOpsResponse();
-  }
-  const audit = logOpsAccess(request, "escalations.tick");
-  const isCron = Boolean(request.headers.get("x-vercel-cron"));
-  if (audit.missingActor && !isCron) {
-    return missingOpsActorResponse();
-  }
+  const refusal = guardOpsRequest(request, "escalations.tick");
+  if (refusal) return refusal;
 
   const { engine, store } = getMissedCallMaintenanceRuntime();
   const inbox = await drainInbound();

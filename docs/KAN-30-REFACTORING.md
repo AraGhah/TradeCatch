@@ -27,6 +27,9 @@ reason.
 | Time-zone validators | 4 | 1 (`src/lib/time-zone.ts`) |
 | Tenant feature gates in `/api/app` | 29 hand-written blocks in 18 files | 1 helper (`requireTenantFeature`) |
 | Twilio webhook form prelude | 4 hand-written copies | 1 helper (`readVerifiedTwilioForm`) |
+| Ops/cron gate (bearer + audit + `X-Ops-Actor`) | 19 hand-written copies | 1 helper (`guardOpsRequest`) |
+| Modules importing the 1,000-line SMS store only for the shared pool | 37 | 0 (`getPgPool` lives in `src/lib/postgres-pool.ts`) |
+| `any` casts in `src` | 1 (`missed-call/crm.ts`) | 0 |
 | Dead modules | 4 | 0 (deleted) |
 | Unit tests | 3,663 | see [Test results](#test-results) |
 
@@ -196,6 +199,49 @@ A comment-by-comment diff against the original confirmed no comment was lost or 
 the wrong function. The engine's public API (`createReceptionistEngine` and its returned
 methods) did not change.
 
+### Ops and cron gate
+
+[`guardOpsRequest(request, action, authorized?)`](../src/lib/ops-auth.ts) replaces the
+block every scheduled endpoint repeated: `authorizeOpsRequest` → `logOpsAccess` → refuse
+a production request without `X-Ops-Actor` unless it carries `x-vercel-cron`. Responses are
+unchanged: **401** `{error:"Unauthorized"}`, **403** the `X-Ops-Actor` message. The old
+`audit.missingActor && !isCron` test was redundant (`missingActor` already excludes cron
+requests), so dropping it changes nothing. Routes with their own secret pass the result
+as `authorized`, evaluated before the audit entry as before: `notifications/tick` and
+`daily-summary/tick` (`authorizeNotificationJob`), `gmail/sync/tick`
+(`authorizeGmailCron`), `monitoring/tick` and `monitoring/watch` (`MONITORING_SECRET` or the
+ops bearer). Converted: `automations`, `billing/overage-invoices`, `calendar/google`,
+`gmail/sync`, the seven `growth/*` ticks, `missed-call/escalations`, `monitoring/tick`,
+`monitoring/watch`, both `notifications` ticks, `receptionist/tick`,
+`scheduling/reconcile` (GET), `starter/quotes`.
+
+Left alone: routes that read `audit.actor` afterwards or have no actor requirement
+(`missed-call/leads*`, `missed-call/ops/*`, `receptionist/calls*`, `ops/demo/reset`,
+`missed-call/retention/tick`, sandboxes). Adding the actor requirement there would change
+the ops contract.
+
+### Shared pool location
+
+`getPgPool`, `setPgPoolForTests` and `closePgPool` moved verbatim from
+`missed-call/postgres-store.ts` to [`src/lib/postgres-pool.ts`](../src/lib/postgres-pool.ts).
+Billing, rate limiting, health, notifications and 30 other modules imported the SMS
+store only to reach this pool. The store re-exports the three functions, so existing
+tests and scripts keep working and both paths share one singleton. `lib/rate-limit.ts`
+keeps its lazy `import()` (now of `./postgres-pool`) so `pg` stays out of the proxy path.
+
+### Small duplicates
+
+- `email-automation/store.ts` re-exports `normalizeEmail` from `saas/store.ts` (identical
+  body; `saas/store.ts` imports only types).
+- `notifications/daily-summary.ts` re-exports `usableTimeZone` from `scheduling/slots.ts`.
+  Same fallback (`America/Toronto`) and same result for every input: both reject an empty
+  value and both rely on `Intl` throwing for an unknown zone.
+- `missed-call/crm.ts`: `(lead as any)[field]` with an `eslint-disable` is now a
+  `Record<string, unknown>` cast. The field and value were already validated.
+
+Still **not** done, per owner decision 1: `email-automation/postgres-store.ts` keeps its
+raw `new Pool`.
+
 ### Deleted
 
 The four dead files above. `BookingForm`'s `app.bookings.*` i18n keys are now unused;
@@ -208,6 +254,7 @@ they were **kept** (FR/EN parity is still exact) pending an owner decision.
 | `tests/unit/twilio-webhook-prelude.test.ts` | 16 | 413 by body and by `Content-Length`, 400 on a broken stream, 403 on a forged signature in production, for the 4 routes |
 | `tests/unit/tenant-feature-gate.test.ts` | 55 (8 skipped: plans that include the feature, nothing to deny) | 401 without a session, 401 for a suspended organization, 402 body + `upgrade` plan for every gated method of the 18 routes |
 | `tests/unit/kan30-shared-helpers.test.ts` | 14 | escapers, base64url vs Node, time zones, pool-cache identity, plan guards, roster phones, `planMessages` |
+| `tests/unit/ops-auth.test.ts` (extended) | +5 | `guardOpsRequest`: 401 before auditing, 403 without actor in production, operator and cron pass, no actor needed outside production, default bearer check |
 | `tests/unit/receptionist-voice-plans.test.ts` | 18 | keypad rules per call step (10-digit callback number, 1-key menu/slot), prompt voices, fixed plans, English hint, opening, `cleanDuration`, urgency never downgrades, emergency-transfer matrix, `bareSession` |
 
 The first three were run against the unchanged code first. The voice-plan tests were
@@ -239,11 +286,50 @@ not a gap the move introduced.
 
 ## Test results
 
-_Filled in from the final verification run; see below._
+Run locally on 2026-11-21 in `.worktrees/kan-30-refactoring` (Windows, Node 24.13, ICU tz
+2025b), with all changes from both passes applied.
+
+| Check | Command | Result |
+| --- | --- | --- |
+| REF-01 TypeScript | `npx tsc --noEmit -p tsconfig.json` | pass, 0 errors (after deleting stale `.next/types` from an older build) |
+| Format (CI scope) | `npm run format:check` | pass |
+| Lint | `npm run lint` (`--max-warnings=0`) | pass |
+| i18n parity | `npm run check:i18n` | pass |
+| Committed secrets | `npm run check:secrets` | pass |
+| REF-03 Unit tests | `npm run test:unit` | 3,771 tests: 3,759 pass, 11 skipped (no test database URL), 1 failure, then fixed and re-run (below) |
+| QA suite | `npm run test:qa` | 2 / 2 pass |
+| REF-02 Production build | `npx next build --webpack` | pass: compiled, 195 / 195 pages generated |
+
+The one unit failure was `rate-limit-policy.test.ts` › "exempts only routes that prove who
+is calling". It checks route source text for a known authentication call.
+`twilio/sms/status` and `twilio/voice/status` now authenticate through
+`readVerifiedTwilioForm`, which calls `assertTwilioWebhook`, so the text no longer
+matched. `readVerifiedTwilioForm` and `guardOpsRequest` were added to the accepted
+proofs; the four affected files (`rate-limit-policy`, `ops-auth`,
+`twilio-webhook-prelude`, `twilio-webhook-auth`) then passed 57 / 57. No route lost its
+authentication.
 
 ## What was not verified
 
-_Filled in from the final verification run; see below._
+- **Browser and E2E** (`npm run test:e2e`, REF-05, REF-06, REF-12): not run in this pass.
+  No page, component or client code changed in the second pass.
+- **Turbopack build**: `npm run build` (Turbopack) stops before compiling in this worktree,
+  because its `node_modules` is a junction to the main checkout and Turbopack will not
+  resolve `next` outside the worktree root. That is a property of the local setup, not of
+  the code. The webpack build above compiles the same sources. CI builds from a normal
+  install.
+- **Cloudflare artifact** (`npm run build:cloudflare`, `check:cloudflare-bundle`): not
+  run. The shared-pool move keeps `createPostgresPool`, so the Worker request scope is
+  unchanged, but the bundle itself was not built.
+- **PostgreSQL integration suites**: the 11 skipped tests need the `*_TEST_DATABASE_URL`
+  databases that CI provisions (REF-04, REF-11). CI must be green before merge.
+- **Live providers** (Twilio, Bland, Stripe, Google, REF-07 to REF-10): no live call, SMS,
+  payment or calendar sync was made. Webhook contracts are covered only by unit tests.
+- **Performance** (REF-14): no benchmark. Nothing on a hot path gained work: the ops gate
+  runs the same three checks, and the pool move changes only where the module lives.
+- **Time-zone test on older ICU**: on the `Ara` branch, `call-activity.test.ts` expects
+  B.C.'s permanent UTC-7 from November 2026, which tz 2025b does not know yet. It
+  passed in this worktree. Use Node 22 with current ICU, as in CI.
 
 ## Owner decisions open
 
@@ -291,7 +377,8 @@ they are not edited here. When both land, update:
 | `contributing.md` (Large files) | "Prefer extracting a pure function…" | add: shared helpers live in `src/lib/escape.ts`, `time-zone.ts`, `base64url.ts`, `resend-client.ts`, and `createPostgresPoolCache`; use them instead of a local copy |
 | `api-reference.md` (auth table, `session` row) | lists `requireTenantContext` and module guards | add `requireTenantFeature` as the single-feature gate (same 401/402) |
 | `api-reference.md` + `integrations.md` (`twilio-signature`) | `assertTwilioWebhook` | add `readVerifiedTwilioForm` (413 / 400 / 403) as the route prelude that calls it |
-| `database.md` (pools) | "Pools are created only through `createPostgresPool`" | add `createPostgresPoolCache` for per-store caches; note the `email-automation` exception |
+| `database.md` (pools) | "Pools are created only through `createPostgresPool`" | add `createPostgresPoolCache` for per-store caches and `getPgPool` (now in `src/lib/postgres-pool.ts`) for the shared pool; note the `email-automation` exception |
+| `security.md` / `api-reference.md` (ops bearer) | `authorizeOpsRequest` + `logOpsAccess` | add `guardOpsRequest` as the gate scheduled endpoints use (401 / 403 `X-Ops-Actor`) |
 | `diagrams/sequences.md` (Twilio inbound/status) | `assertTwilioWebhook` | optionally `readVerifiedTwilioForm` |
 
 ## Files changed
@@ -310,3 +397,10 @@ Modified: 18 `/api/app` routes, 4 Twilio routes, 7 Postgres stores, `lib/postgre
 `saas/{tenant,entitlements,plan-catalog}.ts`, `app/[locale]/page.tsx`,
 `components/home/HomeMobile.tsx`, `components/app/AvailabilityEditor.tsx`, and the
 receptionist and SaaS module READMEs.
+
+Second pass: `lib/ops-auth.ts`, 19 ops/cron routes, `lib/postgres-pool.ts`,
+`missed-call/{postgres-store,crm}.ts`, `lib/rate-limit.ts`, the 36 modules that imported
+`getPgPool` from the SMS store, `email-automation/store.ts`,
+`notifications/daily-summary.ts`, `tests/unit/ops-auth.test.ts`,
+`tests/unit/rate-limit-policy.test.ts` (adds `guardOpsRequest` to the list of accepted
+authentication proofs for routes exempt from the address rate limit).

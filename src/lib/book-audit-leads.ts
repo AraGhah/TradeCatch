@@ -4,7 +4,7 @@ import {
   isLeadsWebhookConfigured,
 } from "@/lib/config";
 import { createId } from "@/lib/id";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 
 export type BookAuditConsentRecord = {
   wording: string;

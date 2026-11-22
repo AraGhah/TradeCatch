@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  authorizeOpsRequest,
-  logOpsAccess,
-  missingOpsActorResponse,
-  unauthorizedOpsResponse,
-} from "@/lib/ops-auth";
+import { guardOpsRequest } from "@/lib/ops-auth";
 import { getGrowthServices } from "@/product/growth";
 import {
   resolveBusinessNameForOrganization,
@@ -15,14 +10,8 @@ export const dynamic = "force-dynamic";
 
 /** Send due service-contract renewal reminder SMS (cron or manual ops). */
 async function tick(request: NextRequest) {
-  if (!authorizeOpsRequest(request)) {
-    return unauthorizedOpsResponse();
-  }
-  const audit = logOpsAccess(request, "growth.contract-renewals.tick");
-  const isCron = Boolean(request.headers.get("x-vercel-cron"));
-  if (audit.missingActor && !isCron) {
-    return missingOpsActorResponse();
-  }
+  const refusal = guardOpsRequest(request, "growth.contract-renewals.tick");
+  if (refusal) return refusal;
 
   const result = await getGrowthServices().processContractRenewalReminders({
     businessNameForOrg: resolveBusinessNameForOrganization,

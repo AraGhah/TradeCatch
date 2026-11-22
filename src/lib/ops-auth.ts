@@ -85,6 +85,23 @@ export function logOpsAccess(
   return { actor: entry.actor, ok: !missingActor, missingActor };
 }
 
+/**
+ * Gate for ops and cron endpoints: bearer auth, then the audit entry and the
+ * production `X-Ops-Actor` requirement (scheduled cron requests are exempt).
+ * Returns the refusal to send, or `null` when the request may proceed.
+ */
+export function guardOpsRequest(
+  request: Request,
+  action: string,
+  authorized: boolean = authorizeOpsRequest(request),
+): Response | null {
+  if (!authorized) return unauthorizedOpsResponse();
+  if (logOpsAccess(request, action).missingActor) {
+    return missingOpsActorResponse();
+  }
+  return null;
+}
+
 export function unauthorizedOpsResponse() {
   return Response.json({ error: "Unauthorized" }, { status: 401 });
 }

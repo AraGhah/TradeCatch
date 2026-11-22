@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { phoneKey } from "@/product/crm/phone";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type { AutomationStore } from "./store";
 import type {
   AutomationConfig,

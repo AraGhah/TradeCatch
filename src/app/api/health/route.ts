@@ -18,7 +18,7 @@ import {
   loadClientAccountFromEnv,
   validateClientConfig,
 } from "@/product/missed-call/client-config";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { OUTBOUND_STALE_SENDING_MS } from "@/product/missed-call/store";
 import { receptionistReadiness } from "@/product/receptionist/runtime";
 

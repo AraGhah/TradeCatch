@@ -1,5 +1,5 @@
 import { createId } from "@/lib/id";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { gmailReplyEvent } from "./notifications";
 import { clampLimit, type GmailAccountPatch, type GmailStore } from "./store";
 import type {

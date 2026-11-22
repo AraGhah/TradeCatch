@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { recordServerError } from "@/lib/api-error";
-import {
-  authorizeOpsRequest,
-  logOpsAccess,
-  missingOpsActorResponse,
-  unauthorizedOpsResponse,
-} from "@/lib/ops-auth";
+import { authorizeOpsRequest, guardOpsRequest } from "@/lib/ops-auth";
 import { safeEqual } from "@/lib/safe-compare";
 import { runMonitorOnce } from "@/product/reliability/runtime";
 
@@ -24,14 +19,13 @@ const NO_STORE = { "Cache-Control": "no-store" };
 async function watch(request: NextRequest) {
   const secret = process.env.MONITORING_SECRET?.trim();
   const bearer = request.headers.get("authorization") || "";
-  if (
-    !(secret && safeEqual(bearer, `Bearer ${secret}`)) &&
-    !authorizeOpsRequest(request)
-  )
-    return unauthorizedOpsResponse();
-  const audit = logOpsAccess(request, "monitoring.watch");
-  const isCron = Boolean(request.headers.get("x-vercel-cron"));
-  if (audit.missingActor && !isCron) return missingOpsActorResponse();
+  const refusal = guardOpsRequest(
+    request,
+    "monitoring.watch",
+    Boolean(secret && safeEqual(bearer, `Bearer ${secret}`)) ||
+      authorizeOpsRequest(request),
+  );
+  if (refusal) return refusal;
 
   try {
     const run = await runMonitorOnce();
