@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@/i18n/navigation";
 
+import { BusyLabel } from "@/components/ui/Spinner";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 type ServiceCard = {
@@ -96,6 +97,7 @@ export function MonitoringDesk({
 }) {
   const [data, setData] = useState<Overview | null>(null);
   const [message, setMessage] = useState("");
+  const [simulating, setSimulating] = useState<string | null>(null);
 
   useEffect(() => {
     const path =
@@ -120,19 +122,38 @@ export function MonitoringDesk({
 
   const simulate = useGuarded(simulateHandler);
   async function simulateHandler(scenario: string) {
-    const response = await timedFetch("/api/admin/monitoring/test", {
-      method: "POST",
-      timeoutMs: 60_000,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ scenario }),
-    });
-    const body = (await response.json()) as { ok?: boolean; error?: string };
-    setMessage(
-      body.ok
-        ? "Simulation recorded. No provider was contacted."
-        : body.error || "Simulation failed.",
-    );
+    setSimulating(scenario);
+    try {
+      const response = await timedFetch("/api/admin/monitoring/test", {
+        method: "POST",
+        timeoutMs: 60_000,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scenario }),
+      });
+      const body = (await response.json()) as { ok?: boolean; error?: string };
+      setMessage(
+        body.ok
+          ? "Simulation recorded. No provider was contacted."
+          : body.error || "Simulation failed.",
+      );
+    } catch {
+      setMessage("Simulation failed.");
+    } finally {
+      setSimulating(null);
+    }
   }
+
+  const simulateButton = (scenario: string, label: string) => (
+    <button
+      type="button"
+      className="rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
+      disabled={simulating !== null}
+      aria-busy={simulating === scenario}
+      onClick={() => simulate(scenario)}
+    >
+      <BusyLabel pending={simulating === scenario} busyLabel="Running…">{label}</BusyLabel>
+    </button>
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -269,27 +290,9 @@ export function MonitoringDesk({
       ) : null}
       {section === "overview" ? (
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="rounded-md bg-navy px-3 py-2 text-sm text-white"
-            onClick={() => simulate("ai_timeout")}
-          >
-            Simulate Receptionist timeout
-          </button>
-          <button
-            type="button"
-            className="rounded-md bg-navy px-3 py-2 text-sm text-white"
-            onClick={() => simulate("job_failure")}
-          >
-            Simulate job failure
-          </button>
-          <button
-            type="button"
-            className="rounded-md bg-navy px-3 py-2 text-sm text-white"
-            onClick={() => simulate("cost_threshold")}
-          >
-            Simulate cost threshold
-          </button>
+          {simulateButton("ai_timeout", "Simulate Receptionist timeout")}
+          {simulateButton("job_failure", "Simulate job failure")}
+          {simulateButton("cost_threshold", "Simulate cost threshold")}
         </div>
       ) : null}
     </div>

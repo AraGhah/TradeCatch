@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { BusyLabel } from "@/components/ui/Spinner";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 type Result = {
@@ -44,6 +45,7 @@ export function QaDesk() {
   const [runs, setRuns] = useState<Run[]>([]);
   const [active, setActive] = useState<Run | null>(null);
   const [message, setMessage] = useState("");
+  const [running, setRunning] = useState<string | null>(null);
 
   const load = useCallback(
     () =>
@@ -67,22 +69,29 @@ export function QaDesk() {
   const run = useGuarded(runHandler);
   async function runHandler(suite: string) {
     setMessage("Running…");
-    const response = await timedFetch("/api/admin/qa", {
-      method: "POST",
-      timeoutMs: 60_000,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ suite }),
-    });
-    const body = (await response.json()) as { run?: Run; error?: string };
-    if (!response.ok || !body.run) {
-      setMessage(body.error || "The suite could not run.");
-      return;
+    setRunning(suite);
+    try {
+      const response = await timedFetch("/api/admin/qa", {
+        method: "POST",
+        timeoutMs: 60_000,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ suite }),
+      });
+      const body = (await response.json()) as { run?: Run; error?: string };
+      if (!response.ok || !body.run) {
+        setMessage(body.error || "The suite could not run.");
+        return;
+      }
+      setActive(body.run);
+      setMessage(
+        `${body.run.passed} passed, ${body.run.failed} failed, ${body.run.skipped} skipped.`,
+      );
+      await load();
+    } catch {
+      setMessage("The suite could not run.");
+    } finally {
+      setRunning(null);
     }
-    setActive(body.run);
-    setMessage(
-      `${body.run.passed} passed, ${body.run.failed} failed, ${body.run.skipped} skipped.`,
-    );
-    await load();
   }
 
   const shown = active ?? runs[0];
@@ -104,14 +113,18 @@ export function QaDesk() {
           <button
             key={suite}
             type="button"
-            className="rounded-md bg-navy px-3 py-2 text-sm text-white"
+            className="rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
+            disabled={running !== null}
+            aria-busy={running === suite}
             onClick={() => run(suite)}
           >
-            {suite === "all"
-              ? "Run all tests"
-              : suite === "ai"
-                ? "receptionist"
-                : suite}
+            <BusyLabel pending={running === suite} busyLabel="Running…">
+              {suite === "all"
+                ? "Run all tests"
+                : suite === "ai"
+                  ? "receptionist"
+                  : suite}
+            </BusyLabel>
           </button>
         ))}
       </div>

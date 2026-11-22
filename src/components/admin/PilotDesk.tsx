@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { BusyLabel } from "@/components/ui/Spinner";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 type Pilot = {
@@ -29,6 +30,7 @@ export function PilotDesk() {
   const [selected, setSelected] = useState("");
   const [report, setReport] = useState<Report | null>(null);
   const [message, setMessage] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const load = useCallback(
     () =>
@@ -59,24 +61,32 @@ export function PilotDesk() {
 
   const createPilot = useGuarded(createPilotHandler);
   async function createPilotHandler() {
-    const response = await timedFetch("/api/admin/pilots", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({
-        organizationId,
-        businessName,
-        industry: "plumbing",
-        contactName: businessName,
-        contactEmail,
-        accountType: "live",
-      }),
-    });
-    const body = (await response.json()) as { error?: string };
-    setMessage(
-      response.ok
-        ? "Pilot created. Live tests stay pending until you record an authorized call."
-        : body.error || "Could not create the pilot.",
-    );
+    setCreating(true);
+    try {
+      const response = await timedFetch("/api/admin/pilots", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          organizationId,
+          businessName,
+          industry: "plumbing",
+          contactName: businessName,
+          contactEmail,
+          accountType: "live",
+        }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      setMessage(
+        response.ok
+          ? "Pilot created. Live tests stay pending until you record an authorized call."
+          : body.error || "Could not create the pilot.",
+      );
+    } catch {
+      // No answer: the pilot may exist. The list is re-read below before anyone tries again.
+      setMessage("No answer from the server. Check the list before trying again.");
+    } finally {
+      setCreating(false);
+    }
     await load();
   }
 
@@ -116,9 +126,11 @@ export function PilotDesk() {
         />
         <button
           type="submit"
-          className="rounded-md bg-navy px-3 py-2 text-sm text-white"
+          disabled={creating}
+          aria-busy={creating}
+          className="rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
         >
-          Create pilot
+          <BusyLabel pending={creating} busyLabel="Creating…">Create pilot</BusyLabel>
         </button>
       </form>
       {message ? <p className="text-sm text-navy">{message}</p> : null}
