@@ -37,6 +37,15 @@
       "service": "tradecatch",
     },
   ],
+  // One Durable Object per live ConversationRelay call: it holds Twilio's
+  // WebSocket (ElevenLabs voices). Bindings are not inherited by env.staging,
+  // so staging repeats it; the migration below creates the class (no data).
+  "durable_objects": {
+    "bindings": [{ "name": "VOICE_RELAY", "class_name": "VoiceRelaySession" }],
+  },
+  "migrations": [
+    { "tag": "v1-voice-relay", "new_sqlite_classes": ["VoiceRelaySession"] },
+  ],
   "env": {
     // Isolated staging / demo Worker. Deploy with:
     //   npm run deploy:staging
@@ -63,6 +72,11 @@
           "service": "tradecatch-staging",
         },
       ],
+      "durable_objects": {
+        "bindings": [
+          { "name": "VOICE_RELAY", "class_name": "VoiceRelaySession" },
+        ],
+      },
       "vars": {
         "TRADECATCH_ENV": "staging",
         "NEXT_PUBLIC_TRADECATCH_ENV": "staging",
