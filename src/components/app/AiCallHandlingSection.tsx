@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { BusyLabel } from "@/components/ui/Spinner";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { AiCallHandlingView } from "@/product/telephony/ai-call-handling-service";
 import type {
   AiCallMode,
@@ -67,6 +67,9 @@ export function AiCallHandlingSection({
     initial.unknownCallerPolicy,
   );
   const [busy, setBusy] = useState<null | "save" | "test" | "check" | "number">(null);
+  // One request at a time across the form and the test buttons, held synchronously:
+  // `busy` only disables them after React re-renders, too late for a same-tick burst.
+  const inFlight = useRef(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<string[]>([]);
@@ -103,6 +106,8 @@ export function AiCallHandlingSection({
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy("save");
     setSaved(false);
     setError(null);
@@ -135,11 +140,14 @@ export function AiCallHandlingSection({
     } catch {
       setError(t("errors.generic"));
     } finally {
+      inFlight.current = false;
       setBusy(null);
     }
   }
 
   async function onAction(action: "start_test" | "check_test" | "check_number") {
+    if (inFlight.current) return;
+    inFlight.current = true;
     setBusy(action === "start_test" ? "test" : action === "check_test" ? "check" : "number");
     setError(null);
     try {
@@ -154,6 +162,7 @@ export function AiCallHandlingSection({
     } catch {
       setError(t("errors.generic"));
     } finally {
+      inFlight.current = false;
       setBusy(null);
     }
   }

@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/app/NotificationBell";
 import { SessionKeeper } from "@/components/app/SessionKeeper";
 import { planNameOrNull } from "@/lib/plan-names";
 
+import { BusyLabel } from "@/components/ui/Spinner";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 /**
@@ -83,9 +84,18 @@ export function AppShell({
     setNavOpen(false);
   }
 
+  const tFeedback = useTranslations("feedback");
+  const [loggingOut, setLoggingOut] = useState(false);
   const logout = useGuarded(logoutHandler);
   async function logoutHandler() {
-    await timedFetch("/api/auth/logout", { method: "POST" });
+    setLoggingOut(true);
+    try {
+      await timedFetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      setLoggingOut(false);
+      return;
+    }
+    // Stays disabled while the browser leaves for the sign-in page.
     window.location.href = locale === "fr" ? "/fr/connexion" : "/login";
   }
 
@@ -161,9 +171,11 @@ export function AppShell({
           <button
             type="button"
             onClick={() => void logout()}
-            className={`w-fit rounded-md px-2 py-1.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
+            disabled={loggingOut}
+            aria-busy={loggingOut}
+            className={`w-fit rounded-md px-2 py-1.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] disabled:opacity-50 ${FOCUS_RING}`}
           >
-            {t("nav.logout")}
+            <BusyLabel pending={loggingOut} busyLabel={tFeedback("working")}>{t("nav.logout")}</BusyLabel>
           </button>
           </div>
         </aside>
