@@ -45,7 +45,9 @@ type Diagnostic = {
     | "webhook_completed"
     | "refresh_skipped_in_flight"
     | "activation_check_failed"
-    | "inactive_line_answered";
+    | "inactive_line_answered"
+    | "relay_turn_failed"
+    | "relay_fallback";
   code?: string;
   callSid?: string;
   step?: string;
