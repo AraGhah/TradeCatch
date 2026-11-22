@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { useGuarded, useSingleFlight } from "@/lib/client/use-single-flight";
+import { useAttemptKey } from "@/lib/client/attempt-key";
+import { useSingleFlight } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
 import { ActionButton } from "@/components/ui/ActionButton";
@@ -39,7 +40,9 @@ export function AdminSupportDesk() {
   const [savedNote, setSavedNote] = useState(false);
   const loadFlight = useSingleFlight();
   const openFlight = useSingleFlight();
-  const busy = acting !== null || loadFlight.pending || openFlight.pending;
+  const writeFlight = useSingleFlight();
+  const attempt = useAttemptKey();
+  const busy = writeFlight.pending || loadFlight.pending || openFlight.pending;
 
   async function loadHandler() {
     setMessage("");
@@ -59,7 +62,6 @@ export function AdminSupportDesk() {
     }
   }
 
-  const update = useGuarded(updateHandler);
   async function updateHandler(status: string) {
     if (!detail) return;
     setActing(`status:${status}`);
@@ -83,9 +85,9 @@ export function AdminSupportDesk() {
     }
   }
 
-  const send = useGuarded(sendHandler);
   async function sendHandler(internal: boolean) {
     if (!detail) return;
+    const body = internal ? note : reply;
     setActing(internal ? "note" : "reply");
     setSentReply(false);
     setSavedNote(false);
@@ -96,10 +98,15 @@ export function AdminSupportDesk() {
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ body: internal ? note : reply, internal }),
+          body: JSON.stringify({
+            body,
+            internal,
+            idempotencyKey: attempt.for(`${detail.ticket.id}:${internal}:${body}`),
+          }),
         },
       );
       if (response.ok) {
+        attempt.done();
         setMessage(internal ? "Note saved." : "Sent.");
         if (internal) setSavedNote(true);
         else setSentReply(true);
@@ -173,7 +180,7 @@ export function AdminSupportDesk() {
                   disabled={busy}
                   aria-busy={thisBusy || undefined}
                   className="rounded-md border border-navy/15 px-2 py-1 text-xs disabled:opacity-60"
-                  onClick={() => void update(status)}
+                  onClick={() => void writeFlight.run(() => updateHandler(status))}
                 >
                   <BusyLabel pending={thisBusy} busyLabel="Updating…">
                     {status}
@@ -207,7 +214,7 @@ export function AdminSupportDesk() {
             successLabel="Sent"
             disabled={busy && acting !== "reply"}
             className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white"
-            onClick={() => void send(false)}
+            onClick={() => void writeFlight.run(() => sendHandler(false))}
           >
             Send reply
           </ActionButton>
@@ -229,7 +236,7 @@ export function AdminSupportDesk() {
             successLabel="Saved"
             disabled={busy && acting !== "note"}
             className="w-fit rounded-md border border-navy/15 px-3 py-2 text-sm"
-            onClick={() => void send(true)}
+            onClick={() => void writeFlight.run(() => sendHandler(true))}
           >
             Save internal note
           </ActionButton>

@@ -21,6 +21,7 @@ const createSchema = z.object({
   customerName: z.string().trim().max(120).optional(),
   customerPhoneE164: z.string().trim().min(8).max(32).optional(),
   notes: z.string().trim().max(2000).optional(),
+  idempotencyKey: z.string().trim().min(8).max(100).optional(),
 });
 
 export async function GET() {
@@ -107,6 +108,11 @@ export async function POST(request: NextRequest) {
       customerPhoneE164: phone ?? undefined,
       source: "manual",
       requestIfUnavailable: false,
+      // Namespaced so a client key can never resolve to an appointment another
+      // booking path created under its own keys.
+      idempotencyKey: parsed.data.idempotencyKey
+        ? `manual:${parsed.data.idempotencyKey}`
+        : undefined,
     });
     if (result.reason === "conflict") {
       return NextResponse.json(

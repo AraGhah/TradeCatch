@@ -4,6 +4,7 @@ import { demoClientAccount } from "@/product/missed-call/fixtures";
 import type { GrowthStore } from "@/product/growth/memory-store";
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
 import { forwardProductEventToCrm } from "@/lib/product-crm";
+import { createId } from "@/lib/id";
 import {
   enabledQualification,
   promptForQualification,
@@ -157,13 +158,13 @@ export function createStarterServices(deps: {
 
   return {
     async ingestWebsiteLead(input) {
-      const before = input.idempotencyKey
-        ? (
-            await store.listWebsiteLeads(input.organizationId)
-          ).find((l) => l.idempotencyKey === input.idempotencyKey)
-        : null;
-
+      // The store answers a repeated key with the row it already has, so a
+      // different id means another request created this lead first. Deciding
+      // from a read made before the insert would let two concurrent requests
+      // both send the opening texts.
+      const id = createId("wlead");
       const lead = await store.createWebsiteLead({
+        id,
         organizationId: input.organizationId,
         name: input.name,
         email: input.email,
@@ -181,7 +182,7 @@ export function createStarterServices(deps: {
         qualificationAnswers: {},
       });
 
-      const duplicate = Boolean(before && before.id === lead.id);
+      const duplicate = lead.id !== id;
       if (!duplicate && lead.phoneE164) {
         try {
           const { syncWebsiteLeadToCrm } = await import("@/product/crm/bridge");

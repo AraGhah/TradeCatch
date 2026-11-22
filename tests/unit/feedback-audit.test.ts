@@ -61,9 +61,20 @@ const BUSY_WITHOUT_OWN_INDICATOR_ALLOWED: Record<string, string> = {
     "its row buttons only open the confirm panel and are disabled while that panel's request runs; the panel's own button (ConfirmPanel in admin/console/ui.tsx) shows the spinner and 'Working…'",
 };
 
+/** A client file that writes yet disables no control of its own, each for a stated reason. */
+const WRITE_WITHOUT_DISABLED_ALLOWED: Record<string, string> = {
+  ...WRITE_UNGUARDED_ALLOWED,
+  "src/components/app/automation-client.ts":
+    "request helpers only; the buttons that call them (AutomationBoard, AutomationSettingsForm, AutomationTestPanel) disable themselves",
+};
+
 const WRITE_METHOD = /method:\s*(?:[^"'`,}]*\?\s*)?["'`](POST|PUT|PATCH|DELETE)["'`]/;
 // `[^)]*` already spans newlines, so no dot-all flag is needed.
 const REQUEST_JSON_WRITE = /requestJson\([^)]*method:\s*["'](POST|PUT|PATCH|DELETE)/;
+// `method: methodName`: the verb is chosen at run time, so it is treated as a write.
+const DYNAMIC_METHOD = /method:\s*[A-Za-z_$][\w$]*\s*[,}\n]/;
+const writes = (text: string) =>
+  WRITE_METHOD.test(text) || REQUEST_JSON_WRITE.test(text) || DYNAMIC_METHOD.test(text);
 
 describe("feedback audit (KAN-26)", () => {
   it("finds the client files it is supposed to audit", () => {
@@ -84,7 +95,7 @@ describe("feedback audit (KAN-26)", () => {
 
   it("every client file that writes has a double-submit guard", () => {
     const offenders = clientFiles
-      .filter(({ text }) => WRITE_METHOD.test(text) || REQUEST_JSON_WRITE.test(text))
+      .filter(({ text }) => writes(text))
       .filter(({ text }) => !GUARD.test(text))
       .map(({ rel }) => rel)
       .filter((rel) => !WRITE_UNGUARDED_ALLOWED[rel]);
@@ -93,6 +104,25 @@ describe("feedback audit (KAN-26)", () => {
       [],
       `Wrap the handler in useGuarded() (or use useAction / useSingleFlight):\n${offenders.join("\n")}`,
     );
+  });
+
+  it("every client file that writes disables its control while the request runs", () => {
+    // The lock stops a second request; `disabled` is what tells the person the first one is running.
+    const offenders = clientFiles
+      .filter(({ text }) => writes(text))
+      .filter(({ text }) => !/disabled=|aria-disabled=/.test(text))
+      .map(({ rel }) => rel)
+      .filter((rel) => !WRITE_WITHOUT_DISABLED_ALLOWED[rel]);
+    assert.deepEqual(
+      offenders,
+      [],
+      `Disable the button while it works (disabled={pending} aria-busy={pending}):\n${offenders.join("\n")}`,
+    );
+  });
+
+  it("recognises a write whose verb is a variable", () => {
+    assert.ok(writes('timedFetch(url, { method: methodName, body })'));
+    assert.ok(!writes('timedFetch(url, { method: "GET" })'));
   });
 
   it("a busy button shows a spinner, not only different words", () => {
@@ -172,6 +202,7 @@ describe("feedback audit (KAN-26)", () => {
     for (const name of [
       ...Object.keys(RAW_FETCH_ALLOWED),
       ...Object.keys(WRITE_UNGUARDED_ALLOWED),
+      ...Object.keys(WRITE_WITHOUT_DISABLED_ALLOWED),
       ...Object.keys(BUSY_WITHOUT_OWN_INDICATOR_ALLOWED),
     ]) {
       assert.ok(known.has(name), `${name} is allow-listed but is not a client file any more`);

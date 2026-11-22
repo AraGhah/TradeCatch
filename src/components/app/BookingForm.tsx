@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { parsePhoneInput } from "@/product/crm/phone";
 
+import { useAttemptKey } from "@/lib/client/attempt-key";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 import { BusyLabel } from "@/components/ui/Spinner";
@@ -19,6 +20,7 @@ export function BookingForm() {
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const attempt = useAttemptKey();
 
   const onSubmit = useGuarded(onSubmitHandler);
   async function onSubmitHandler(e: React.FormEvent) {
@@ -41,16 +43,20 @@ export function BookingForm() {
         setError(t("bookings.errorPhone"));
         return;
       }
+      const booking = {
+        title,
+        startsAt: startsIso,
+        endsAt: endsIso,
+        customerName: customerName || undefined,
+        customerPhoneE164: phone,
+        notes: notes || undefined,
+      };
       const res = await timedFetch("/api/app/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title,
-          startsAt: startsIso,
-          endsAt: endsIso,
-          customerName: customerName || undefined,
-          customerPhoneE164: phone,
-          notes: notes || undefined,
+          ...booking,
+          idempotencyKey: attempt.for(JSON.stringify(booking)),
         }),
       });
       if (!res.ok) {
@@ -65,6 +71,7 @@ export function BookingForm() {
         );
         return;
       }
+      attempt.done();
       setTitle("");
       setStartsAt("");
       setEndsAt("");

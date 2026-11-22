@@ -10,12 +10,16 @@ import type {
 
 export type SupportStore = {
   saveTicket(row: SupportTicket): Promise<void>;
+  /** Adds a new ticket unless one with its id exists. True only for the call that added it. */
+  insertTicket(row: SupportTicket): Promise<boolean>;
   listTickets(
     organizationId?: string,
     limit?: number,
   ): Promise<SupportTicket[]>;
   getTicket(id: string): Promise<SupportTicket | null>;
   saveMessage(row: SupportMessage): Promise<void>;
+  /** Adds a new message unless one with its id exists. True only for the call that added it. */
+  insertMessage(row: SupportMessage): Promise<boolean>;
   listMessages(ticketId: string, limit?: number): Promise<SupportMessage[]>;
   saveAttachment(row: SupportAttachment): Promise<void>;
   listAttachments(
@@ -41,6 +45,11 @@ export function createMemorySupportStore(): SupportStore {
     async saveTicket(row) {
       tickets.set(row.id, structuredClone(row));
     },
+    async insertTicket(row) {
+      if (tickets.has(row.id)) return false;
+      tickets.set(row.id, structuredClone(row));
+      return true;
+    },
     async listTickets(organizationId, limit) {
       return [...tickets.values()]
         .filter(
@@ -55,6 +64,11 @@ export function createMemorySupportStore(): SupportStore {
     },
     async saveMessage(row) {
       messages.push(structuredClone(row));
+    },
+    async insertMessage(row) {
+      if (messages.some((existing) => existing.id === row.id)) return false;
+      messages.push(structuredClone(row));
+      return true;
     },
     async listMessages(ticketId, limit) {
       return messages

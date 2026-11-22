@@ -87,7 +87,11 @@ export function AppShell({
 
   const logoutFlight = useSingleFlight();
   async function logoutHandler() {
-    await timedFetch("/api/auth/logout", { method: "POST" });
+    try {
+      await timedFetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      return;
+    }
     window.location.href = locale === "fr" ? "/fr/connexion" : "/login";
   }
 

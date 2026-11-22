@@ -21,11 +21,12 @@ export function TestCenterActions({
   const [error, setError] = useState<string | null>(null);
   const [seeded, setSeeded] = useState(false);
   const [resetDone, setResetDone] = useState(false);
-  const seedFlight = useSingleFlight();
-  const resetFlight = useSingleFlight();
-  const busy = seedFlight.pending || resetFlight.pending;
+  const flight = useSingleFlight();
+  const [acting, setActing] = useState<"seed" | "reset" | null>(null);
+  const busy = flight.pending;
 
   async function seedHandler() {
+    setActing("seed");
     setError(null);
     setMessage(null);
     setSeeded(false);
@@ -44,11 +45,14 @@ export function TestCenterActions({
       setMessage(t("seedOk"));
     } catch {
       setError(t("seedFailed"));
+    } finally {
+      setActing(null);
     }
   }
 
   async function resetHandler() {
     if (!window.confirm(t("confirmReset"))) return;
+    setActing("reset");
     setError(null);
     setMessage(null);
     setSeeded(false);
@@ -72,6 +76,8 @@ export function TestCenterActions({
       setMessage(t("resetOk"));
     } catch {
       setError(t("resetFailed"));
+    } finally {
+      setActing(null);
     }
   }
 
@@ -112,24 +118,24 @@ export function TestCenterActions({
       <div className="flex flex-wrap gap-3">
         <ActionButton
           type="button"
-          pending={seedFlight.pending}
+          pending={acting === "seed"}
           busyLabel={t("generatingData")}
           success={seeded}
           successLabel={t("generated")}
-          disabled={busy && !seedFlight.pending}
-          onClick={() => void seedFlight.run(seedHandler)}
+          disabled={busy && acting !== "seed"}
+          onClick={() => void flight.run(seedHandler)}
           className="rounded-md bg-navy px-4 py-2.5 text-sm font-semibold text-white"
         >
           {t("generateData")}
         </ActionButton>
         <ActionButton
           type="button"
-          pending={resetFlight.pending}
+          pending={acting === "reset"}
           busyLabel={t("resettingAccount")}
           success={resetDone}
           successLabel={t("resetDone")}
-          disabled={busy && !resetFlight.pending}
-          onClick={() => void resetFlight.run(resetHandler)}
+          disabled={busy && acting !== "reset"}
+          onClick={() => void flight.run(resetHandler)}
           className="rounded-md border border-navy/20 px-4 py-2.5 text-sm font-semibold text-navy"
         >
           {t("resetAccount")}
