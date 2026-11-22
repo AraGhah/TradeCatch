@@ -106,7 +106,7 @@ was canceled and nothing was charged" and brings the pay button back.
 | Stripe Checkout | lock; 50 clicks give one request; a lost answer is not called a failure | pending-checkout claim |
 | SMS, notifications, test panels | lock; unknown-outcome wording | the central `/api` limiter |
 | Admin actions | lock; progress and result shown once | none added (the existing audit log records them) |
-| Support tickets and replies | lock; unknown-outcome wording; list re-read | **none** (see below) |
+| Support tickets and replies | lock; unknown-outcome wording; list re-read; an `idempotencyKey` per attempt (`useAttemptKey`) | the key names the row (`ON CONFLICT (id) DO NOTHING`), so a repeat returns the first ticket or reply |
 
 ## Tests
 
@@ -235,10 +235,10 @@ scan of every other public client component found no other case.
 
 ## Open decisions
 
-1. **Support tickets and replies have no server-side idempotency.** The client
-   lock, the unknown-outcome wording and a list refresh protect the common case;
-   a retry after a lost answer could still create a second ticket. A server key
-   would be a route and schema change, which is outside this ticket.
+1. **Support tickets and replies: resolved.** The forms send an `idempotencyKey`
+   per attempt; the service derives the row id from it (scoped to the
+   organization, or to the ticket for a reply), so a retry after a lost answer
+   returns the first ticket instead of opening a second. No schema change.
 2. **`SubscriptionsConsole`** disables its row buttons while a request runs but
    imports no spinner itself: those buttons only open the confirm panel, and the
    panel's own button (`ConfirmPanel` in `admin/console/ui.tsx`) shows the
