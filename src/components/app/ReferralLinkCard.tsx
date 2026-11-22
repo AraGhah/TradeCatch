@@ -5,6 +5,8 @@ import { ReferralShare } from "@/components/app/ReferralShare";
 
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
+
 type Links = { en: string; fr: string };
 
 type Labels = {
@@ -177,15 +179,13 @@ export function ReferralLinkCard({
           type="button"
           onClick={create}
           disabled={creating}
-          aria-busy={creating}
+          aria-busy={creating || undefined}
           data-testid="referral-get-link"
-          className="rounded-md bg-orange px-5 py-3 text-[15px] font-semibold text-navy transition hover:bg-orange-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
+          className="inline-flex min-h-11 items-center justify-center rounded-md bg-orange px-5 py-3 text-[15px] font-semibold text-navy transition hover:bg-orange-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-70"
         >
-          {creating
-            ? labels.creating
-            : state.phase === "error"
-              ? labels.retry
-              : labels.getLink}
+          <BusyLabel pending={creating} busyLabel={labels.creating}>
+            {state.phase === "error" ? labels.retry : labels.getLink}
+          </BusyLabel>
         </button>
         {state.phase === "error" && state.kind === "unauthorized" ? (
           <a className="text-sm font-semibold text-navy underline" href={loginHref}>

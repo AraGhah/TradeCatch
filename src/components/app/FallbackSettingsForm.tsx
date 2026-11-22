@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl";
 
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
-import { BusyLabel } from "@/components/ui/Spinner";
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
+
 type Settings = {
   aiUnavailable: "transfer" | "voicemail";
   calendarUnavailable: "collect_request";
@@ -98,7 +99,7 @@ export function FallbackSettingsForm({
   }
 
   if (loading || !settings)
-    return <p role="status" className="text-sm text-navy/70">{t("fallbackLoading")}</p>;
+    return <InlineStatus>{t("fallbackLoading")}</InlineStatus>;
 
   return (
     <form
