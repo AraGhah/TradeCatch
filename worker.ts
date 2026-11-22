@@ -17,6 +17,10 @@ import {
 } from "./src/product/reliability/worker-observer";
 import { workerLoginPreview } from "./src/product/saas/auth/login-preview";
 import {
+  routeRelayUpgrade,
+  VoiceRelaySession,
+} from "./src/product/telephony/relay-session";
+import {
   enforceInstallationRequest,
   type InstallationEnvironment,
 } from "./src/product/installations/gate";
@@ -31,6 +35,8 @@ type TradeCatchWorkerEnv = CloudflareEnv &
     NOTIFICATION_RETRY_SECRET?: string;
     MONITORING_SECRET?: string;
     TRADECATCH_ENV?: string;
+    TWILIO_AUTH_TOKEN?: string;
+    MISSED_CALL_PUBLIC_WEBHOOK_BASE?: string;
   };
 
 // Preserve any cache Durable Object exports produced by OpenNext.
@@ -40,6 +46,8 @@ export { DOQueueHandler } from "./.open-next/worker.js";
 export { DOShardedTagCache } from "./.open-next/worker.js";
 // @ts-ignore -- generated during `opennextjs-cloudflare build`.
 export { BucketCachePurge } from "./.open-next/worker.js";
+// One per live ConversationRelay call (ElevenLabs voices); see relay-session.ts.
+export { VoiceRelaySession };
 
 /**
  * Worker bindings as the plain string settings the CORS policy reads. This
@@ -100,6 +108,10 @@ export default {
             if (denied) return denied;
             const preview = workerLoginPreview(request, env);
             if (preview) return preview;
+            // Next cannot hold a WebSocket; Twilio's relay socket goes to a
+            // Durable Object instead.
+            const relay = await routeRelayUpgrade(request, env);
+            if (relay) return relay;
             return openNextWorker.fetch(request, env, ctx);
           }),
         ).then((response) => withCors(response, cors)),

@@ -193,6 +193,8 @@ describe("which routes the default limit covers", () => {
       "verifyStripeSignature",
       "authorizeGmailPush",
       "authorizeOpsRequest",
+      // ConversationRelay turns: HMAC from the VoiceRelaySession Durable Object.
+      "verifyRelayTurn",
       "handleAgentRequest",
       // Bland: bearer BLAND_TOOL_SECRET (tools) / HMAC signature (webhook).
       "handleBlandRequest",

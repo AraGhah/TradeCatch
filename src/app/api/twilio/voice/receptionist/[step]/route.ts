@@ -3,7 +3,6 @@ import { readFormParamsBounded } from "@/lib/request-body";
 import { withPostgresRequestScope } from "@/lib/postgres-pool";
 import { parsePhoneInput } from "@/product/crm/phone";
 import { assertTwilioWebhook } from "@/product/missed-call/twilio-webhook-auth";
-import { greetingFor } from "@/product/receptionist/prompts";
 import {
   logReceptionistDiagnostic,
   logWebhookPhaseEntered,
@@ -16,7 +15,13 @@ import {
   renderTwiml,
   type TwimlCallbackUrl,
 } from "@/product/receptionist/voice";
-import { renderConversationRelayTwiml } from "@/product/telephony/conversation-relay";
+import {
+  relayModeFromEnv,
+  relayVoicesFromEnv,
+  renderConversationRelayTwiml,
+  usesConversationRelay,
+} from "@/product/telephony/conversation-relay";
+import { planToRelay } from "@/product/telephony/relay-plan";
 import { callEventId } from "@/product/telephony/call-events";
 import {
   recordDialEvents,
@@ -283,9 +288,12 @@ async function handlePost(
           });
         }
 
-        // ConversationRelay path when configured and the plan is AI (not dial).
+        // ConversationRelay (ElevenLabs voices) when enabled for this business
+        // and the plan is AI (not dial). The opening prompts travel with the
+        // TwiML so the socket speaks them, each in its language's voice.
         if (
-          config?.voiceEngine === "conversation_relay" &&
+          config &&
+          usesConversationRelay(config.voiceEngine, relayModeFromEnv()) &&
           plan.sessionId &&
           plan.verbs.some((v) => v.verb === "gather")
         ) {
@@ -293,15 +301,16 @@ async function handlePost(
             process.env.MISSED_CALL_PUBLIC_WEBHOOK_BASE?.trim() ||
             request.nextUrl.origin
           ).replace(/\/$/, "");
-          const wsUrl = `${base.replace(/^http/, "ws")}/api/voice/socket`;
+          const wsUrl = `${base.replace(/^http/, "ws")}/api/voice/socket?session=${encodeURIComponent(plan.sessionId)}`;
           const lang = session?.language || config.defaultLanguage;
           return xml(
             renderConversationRelayTwiml({
               websocketUrl: wsUrl,
               language: lang,
-              welcomeGreeting: greetingFor(config, lang),
               actionUrl: `${base}/api/webhooks/twilio/relay-ended`,
               sessionId: plan.sessionId,
+              intro: planToRelay(plan),
+              voices: relayVoicesFromEnv(),
             }),
           );
         }

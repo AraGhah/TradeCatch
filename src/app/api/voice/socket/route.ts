@@ -14,9 +14,10 @@ export const dynamic = "force-dynamic";
 /**
  * ConversationRelay WebSocket endpoint.
  *
- * Cloudflare Workers need Durable Objects for production WebSocket fan-out.
- * Until a DO binding is configured, this route:
- * - Rejects native WS upgrades with a clear error (so Twilio/logs show why).
+ * On Cloudflare the Worker entry answers Twilio's WebSocket upgrade before it
+ * reaches Next (VoiceRelaySession Durable Object, relay-session.ts). An
+ * upgrade that does get here (local `next dev`, a Worker without the binding)
+ * is refused with a clear error, so Twilio's logs show why. This route also:
  * - Accepts POST JSON messages for staging/simulated relay turns (same protocol).
  *
  * The POST path runs against real client receptionist configs and echoes the
