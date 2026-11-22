@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isRealProductionRuntime, isStagingRuntime } from "@/lib/environment";
+import { isValidTimeZone } from "@/lib/time-zone";
 import { demoClientAccount } from "./fixtures";
 import { defaultApprovedQuestions } from "./messaging";
 import { defaultUrgencyRubric } from "./urgency";
@@ -18,15 +19,6 @@ const HH_MM_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 function isE164Phone(phone: string): boolean {
   return E164_PHONE.test(phone.trim());
-}
-
-function isValidTimeZone(timezone: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format();
-    return true;
-  } catch {
-    return false;
-  }
 }
 
 export function isReservedDemoPhone(phone: string): boolean {

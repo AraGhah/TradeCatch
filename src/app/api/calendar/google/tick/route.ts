@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  authorizeOpsRequest,
-  logOpsAccess,
-  missingOpsActorResponse,
-  unauthorizedOpsResponse,
-} from "@/lib/ops-auth";
+import { guardOpsRequest } from "@/lib/ops-auth";
 import { runGoogleSyncTick } from "@/product/scheduling/runtime";
 
 export const dynamic = "force-dynamic";
@@ -16,10 +11,8 @@ export const dynamic = "force-dynamic";
  * to be retried. It returns counts only.
  */
 async function tick(request: NextRequest) {
-  if (!authorizeOpsRequest(request)) return unauthorizedOpsResponse();
-  const audit = logOpsAccess(request, "calendar.google.tick");
-  const isCron = Boolean(request.headers.get("x-vercel-cron"));
-  if (audit.missingActor && !isCron) return missingOpsActorResponse();
+  const refusal = guardOpsRequest(request, "calendar.google.tick");
+  if (refusal) return refusal;
   const result = await runGoogleSyncTick();
   return NextResponse.json({ ok: true, ...result });
 }

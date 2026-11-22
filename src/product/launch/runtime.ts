@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { evaluateLaunchReadiness } from "./readiness";
 import { createLaunchService } from "./service";
 import { createMemoryLaunchStore, type LaunchStore, type PilotAccount, type PilotFeature } from "./store";
@@ -23,7 +23,7 @@ export async function currentReadiness() {
   const url = process.env.DATABASE_URL?.trim();
   if (url) {
     try {
-      const { getPgPool } = await import("@/product/missed-call/postgres-store");
+      const { getPgPool } = await import("@/lib/postgres-pool");
       await getPgPool(url).query("SELECT 1");
       database = { ok: true };
     } catch {

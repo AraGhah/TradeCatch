@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { getSecurityService } from "@/product/security/runtime";
 import { securityId } from "@/product/security/store";
 import type { PrivacyPatch, PrivacySettings } from "./settings";

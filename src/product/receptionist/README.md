@@ -243,6 +243,9 @@ the open question resumes. Where the pieces live:
 | `speech-style.ts` | Pacing markup: slower numbers/addresses, short pauses (kill switch `RECEPTIONIST_SSML=0`) |
 | `prompts.ts` | All spoken wording, French and English, varied acknowledgements |
 | `agent-api.ts`, `agent-calls.ts` | Server side of the LiveKit agent (availability, book, report) |
+| `voice-plans.ts` | Pure voice-plan pieces the engine builds from: `listen` (gather, keypad rules per step), `say`, the opening, hang-up / SIP hand-off / personal-caller plans |
+| `call-session.ts` | Pure call-record helpers: `bareSession`, `cleanDuration`, flag and urgency merging (urgency never downgrades), the emergency-transfer rule |
+| `simulation.ts` | In-memory engine (rule brain, silent notifier, fixed clock) shared by the website demo (`demo.ts`) and the owner's test call (`business-test.ts`) |
 
 Behaviours worth knowing:
 

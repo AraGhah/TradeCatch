@@ -1,25 +1,11 @@
 import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { getGrowthStore } from "@/product/growth";
 import { checkOutboundUrl } from "@/lib/safe-url";
 
 export const dynamic = "force-dynamic";
-
-async function context() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return { error: unauthorizedTenantResponse(auth.error) };
-  if (!tenantHasFeature(auth.ctx, "CRM_INTEGRATION_ADVANCED")) {
-    return { error: forbiddenFeatureResponse("CRM_INTEGRATION_ADVANCED") };
-  }
-  return { ctx: auth.ctx };
-}
 
 type PatchBody = {
   url?: unknown;
@@ -32,8 +18,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("CRM_INTEGRATION_ADVANCED");
+  if (!c.ok) return c.response;
   const { organization, membership } = c.ctx;
 
   const denied = forbiddenUnless(
@@ -111,8 +97,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("CRM_INTEGRATION_ADVANCED");
+  if (!c.ok) return c.response;
   const { organization, membership } = c.ctx;
 
   const denied = forbiddenUnless(

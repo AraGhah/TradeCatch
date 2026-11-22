@@ -1,20 +1,9 @@
 import { zonedParts } from "@/product/sms-automation/window";
 
+export { usableTimeZone } from "@/product/scheduling/slots";
+
 /** Local hour (in the recipient's chosen time zone) from which the summary is due. */
 export const DAILY_SUMMARY_HOUR = 18;
-
-/** Fallback when a stored time zone is not a valid IANA name. */
-const FALLBACK_ZONE = "America/Toronto";
-
-export function usableTimeZone(timeZone: string | undefined): string {
-  if (!timeZone) return FALLBACK_ZONE;
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone });
-    return timeZone;
-  } catch {
-    return FALLBACK_ZONE;
-  }
-}
 
 /** Calendar date at `at` in `timeZone`, e.g. "2026-10-21". Names the summary once per day. */
 export function localDateKey(at: Date, timeZone: string): string {

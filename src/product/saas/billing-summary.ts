@@ -4,7 +4,7 @@
  * webhook already keeps in tc_stripe_subscriptions (no new table), so the page
  * reports what Stripe last confirmed, never a guess from a cookie or the plan id.
  */
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type { PlanId } from "./entitlements";
 
 export type StripeSubscriptionStatus =

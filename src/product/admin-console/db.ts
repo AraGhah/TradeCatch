@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 
 /**
  * The database the administration console reads and writes, or null when the

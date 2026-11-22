@@ -1,5 +1,4 @@
-import type { Pool } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import { createPostgresPoolCache } from "@/lib/postgres-pool";
 import { createId } from "@/lib/id";
 import { phoneKey } from "./phone";
 import { searchFold } from "./record-quality";
@@ -23,16 +22,7 @@ import {
   type MessageDeliveryStatus,
 } from "./types";
 
-const pools = new Map<string, Pool>();
-
-function getPool(url: string) {
-  let pool = pools.get(url);
-  if (!pool) {
-    pool = createPostgresPool({ connectionString: url, max: 5 });
-    pools.set(url, pool);
-  }
-  return pool;
-}
+const getPool = createPostgresPoolCache({ max: 5 });
 
 function iso(value: unknown): string {
   if (value instanceof Date) return value.toISOString();

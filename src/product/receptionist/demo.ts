@@ -14,14 +14,18 @@
  */
 
 import { randomUUID } from "@/lib/id";
-import { createRuleBrain } from "./brain-rules";
 import { parseReceptionistConfig } from "./config";
-import { createReceptionistEngine } from "./engine";
 import {
   applyVoicePlanLimits,
   voiceCapabilitiesForPlan,
 } from "./plan-limits";
-import { createMemoryReceptionistStore } from "./store";
+import {
+  createSimulationEngine,
+  planMessages,
+  type SimulationEngine,
+  type SimulationMessage,
+  type SimulationScenario,
+} from "./simulation";
 import type {
   CallStep,
   CallSummary,
@@ -30,9 +34,9 @@ import type {
   VoicePlan,
 } from "./types";
 
-export type DemoScenario = "open" | "after_hours";
+export type DemoScenario = SimulationScenario;
 
-export type DemoMessage = { role: "agent" | "system"; text: string };
+export type DemoMessage = SimulationMessage;
 
 export type DemoResponse = {
   messages: DemoMessage[];
@@ -59,12 +63,6 @@ const DEMO_TO = "+14385597001";
 export const MAX_DEMO_UTTERANCE = 400;
 /** The demo config allows 10 caller turns; anything longer is not a real transcript. */
 export const MAX_DEMO_HISTORY = 12;
-
-// Wed 10:00 and Tue 22:00 in America/Toronto (Mon–Fri 08:00–17:00 hours).
-const CLOCK: Record<DemoScenario, Date> = {
-  open: new Date("2026-03-04T15:00:00Z"),
-  after_hours: new Date("2026-03-04T03:00:00Z"),
-};
 
 /**
  * The demo shows what the Essential plan does: the receptionist answers, takes
@@ -137,30 +135,6 @@ export function demoConfig(language: ReceptionistLanguage): ReceptionistConfig {
 
 /* ----------------------------------------------------------------- engine */
 
-function noopNotifier() {
-  return {
-    async deliverSummary() {
-      return [];
-    },
-    async alertEmergency() {
-      return [];
-    },
-  };
-}
-
-function makeEngine(config: ReceptionistConfig, scenario: DemoScenario) {
-  const store = createMemoryReceptionistStore();
-  const engine = createReceptionistEngine({
-    store,
-    configs: () => [config],
-    brain: createRuleBrain(),
-    notifier: noopNotifier(),
-    llm: null,
-    clock: { now: () => CLOCK[scenario] },
-  });
-  return { store, engine };
-}
-
 function transferNote(
   name: string,
   language: ReceptionistLanguage,
@@ -177,23 +151,10 @@ function transferNote(
     : `Simulated transfer to ${name}. On a real call the configured number would ring.`;
 }
 
-function planMessages(plan: VoicePlan): DemoMessage[] {
-  const out: DemoMessage[] = [];
-  const push = (text: string) => {
-    const t = text.trim();
-    if (t && out.at(-1)?.text !== t) out.push({ role: "agent", text: t });
-  };
-  for (const verb of plan.verbs) {
-    if (verb.verb === "say") push(verb.text);
-    else if (verb.verb === "gather") verb.prompts.forEach((p) => push(p.text));
-  }
-  return out;
-}
-
 /** Advance the call through any simulated dial / voicemail until it needs the caller. */
 async function settle(
-  engine: ReturnType<typeof makeEngine>["engine"],
-  store: ReturnType<typeof makeEngine>["store"],
+  engine: SimulationEngine["engine"],
+  store: SimulationEngine["store"],
   first: VoicePlan,
   language: ReceptionistLanguage,
   callSid: string,
@@ -276,7 +237,7 @@ export async function runDemoTurn(
 ): Promise<DemoResponse> {
   const { language, scenario } = request;
   const config = demoConfig(language);
-  const { store, engine } = makeEngine(config, scenario);
+  const { store, engine } = createSimulationEngine(config, scenario);
   const callSid = `demo_${randomUUID()}`;
 
   const plan = await engine.startCall({

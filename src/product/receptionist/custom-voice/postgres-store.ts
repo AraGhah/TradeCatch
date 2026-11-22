@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { createId } from "@/lib/id";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type { OrgVoiceRecord, VoiceEvent, VoiceEventAction, VoiceMode } from "./model";
 import type { OrgVoiceStore } from "./store";
 

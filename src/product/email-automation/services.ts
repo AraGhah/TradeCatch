@@ -1,7 +1,7 @@
+import { escapeHtml } from "@/lib/escape";
 import type { Clock } from "@/product/missed-call/types";
 import { normalizeEmail, type EmailAutomationStore } from "./store";
 import {
-  escapeHtml,
   renderTemplate,
   textToHtml,
   validateTemplate,

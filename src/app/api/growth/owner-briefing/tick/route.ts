@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  authorizeOpsRequest,
-  logOpsAccess,
-  missingOpsActorResponse,
-  unauthorizedOpsResponse,
-} from "@/lib/ops-auth";
+import { guardOpsRequest } from "@/lib/ops-auth";
 import { runOwnerBriefings } from "@/product/agent-tools/agents/owner-briefing";
 import { getSaasStore } from "@/product/saas/runtime";
 
@@ -15,14 +10,8 @@ export const dynamic = "force-dynamic";
  * organization that is due in its own local time zone. Read-only — no lead,
  * booking, or call record is written. Cron or manual ops only. */
 async function tick(request: NextRequest) {
-  if (!authorizeOpsRequest(request)) {
-    return unauthorizedOpsResponse();
-  }
-  const audit = logOpsAccess(request, "growth.owner-briefing.tick");
-  const isCron = Boolean(request.headers.get("x-vercel-cron"));
-  if (audit.missingActor && !isCron) {
-    return missingOpsActorResponse();
-  }
+  const refusal = guardOpsRequest(request, "growth.owner-briefing.tick");
+  if (refusal) return refusal;
 
   const organizations = (await getSaasStore().listOrganizations()).filter(
     (org) => org.status === "active",

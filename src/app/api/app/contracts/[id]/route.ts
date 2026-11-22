@@ -1,24 +1,10 @@
 import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { getGrowthServices, getGrowthStore } from "@/product/growth";
 
 export const dynamic = "force-dynamic";
-
-async function context() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return { error: unauthorizedTenantResponse(auth.error) };
-  if (!tenantHasFeature(auth.ctx, "CONTRACT_RENEWAL_AUTOMATION")) {
-    return { error: forbiddenFeatureResponse("CONTRACT_RENEWAL_AUTOMATION") };
-  }
-  return { ctx: auth.ctx };
-}
 
 type PatchBody = { action?: unknown };
 
@@ -27,8 +13,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("CONTRACT_RENEWAL_AUTOMATION");
+  if (!c.ok) return c.response;
   const { organization, membership } = c.ctx;
 
   const denied = forbiddenUnless(

@@ -3,7 +3,7 @@ import {
   isE2eHarness,
   isRealProductionRuntime,
 } from "@/lib/config";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import {
   createMemorySmsInbox,
   createPostgresSmsInbox,

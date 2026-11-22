@@ -11,7 +11,7 @@
  * Metering is wired into the live SMS port (missed-call/twilio.ts) and into
  * finalized receptionist calls (receptionist/runtime.ts).
  */
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { USAGE_ALLOWANCES, type PlanId, type UsageMetric } from "@/lib/plans";
 
 export type { UsageMetric };

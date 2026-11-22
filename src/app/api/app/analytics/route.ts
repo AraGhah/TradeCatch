@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { tenantHasFeature, requireTenantFeature } from "@/product/saas/tenant";
 import { getGrowthServices, getGrowthStore } from "@/product/growth";
 import { computeAdvancedRevenueAnalytics } from "@/product/missed-call/revenue-analytics";
 
@@ -25,11 +20,8 @@ function toCsv(rows: Record<string, string | number | undefined | null>[]) {
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "ADVANCED_ANALYTICS")) {
-    return forbiddenFeatureResponse("ADVANCED_ANALYTICS");
-  }
+  const auth = await requireTenantFeature("ADVANCED_ANALYTICS");
+  if (!auth.ok) return auth.response;
 
   const store = getGrowthStore();
   const orgId = auth.ctx.organization.id;

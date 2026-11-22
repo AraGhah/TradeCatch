@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { getSaasStore } from "@/product/saas/runtime";
 import { requireSealingSecret } from "@/product/saas/auth/secret";
 import { sanitizeChanges } from "./audit-changes";

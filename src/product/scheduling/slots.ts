@@ -1,3 +1,4 @@
+import { isValidTimeZone } from "@/lib/time-zone";
 import { zonedParts } from "@/product/sms-automation/window";
 import { addressesMatch } from "./address";
 import type { AvailabilityRules, BusyBlock, ScheduleAppointment, Slot } from "./types";
@@ -17,15 +18,7 @@ export function defaultDays(): AvailabilityRules["days"] {
 export const FALLBACK_TIME_ZONE = "America/Toronto";
 const HH_MM = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
-export function isValidTimeZone(timeZone: string | undefined): boolean {
-  if (!timeZone) return false;
-  try {
-    new Intl.DateTimeFormat("en-CA", { timeZone }).format();
-    return true;
-  } catch {
-    return false;
-  }
-}
+export { isValidTimeZone };
 
 /** A zone that is safe to hand to Intl: a stored bad value must never take the calendar down. */
 export function usableTimeZone(timeZone: string | undefined): string {

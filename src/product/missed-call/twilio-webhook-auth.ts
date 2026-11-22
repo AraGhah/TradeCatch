@@ -1,6 +1,54 @@
-﻿import { NextRequest } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { isRealProductionRuntime } from "@/lib/environment";
+import { BodyTooLargeError, readFormParamsBounded } from "@/lib/request-body";
 import { validateTwilioSignature } from "./twilio";
+
+/** Twilio status and voice callbacks are a few KB; this is the usual cap. */
+export const TWILIO_FORM_MAX_BYTES = 32_768;
+
+export type VerifiedTwilioForm =
+  | { ok: true; params: Record<string, string> }
+  | { ok: false; response: NextResponse };
+
+/**
+ * The shared webhook prelude: read a bounded form post, then verify the
+ * Twilio signature. On failure `response` is what these webhooks have always
+ * answered: 413 "Payload too large", 400 "Invalid form", 403 "Invalid
+ * signature" (pinned by tests/unit/twilio-webhook-prelude.test.ts).
+ */
+export async function readVerifiedTwilioForm(
+  request: NextRequest,
+  maxBytes: number = TWILIO_FORM_MAX_BYTES,
+): Promise<VerifiedTwilioForm> {
+  let params: Record<string, string>;
+  try {
+    params = await readFormParamsBounded(request, maxBytes);
+  } catch (err) {
+    if (err instanceof BodyTooLargeError) {
+      return {
+        ok: false,
+        response: NextResponse.json(
+          { error: "Payload too large" },
+          { status: 413 },
+        ),
+      };
+    }
+    return {
+      ok: false,
+      response: NextResponse.json({ error: "Invalid form" }, { status: 400 }),
+    };
+  }
+  if (!(await assertTwilioWebhook(request, params))) {
+    return {
+      ok: false,
+      response: NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 403 },
+      ),
+    };
+  }
+  return { ok: true, params };
+}
 
 /**
  * Validate Twilio webhook authenticity.

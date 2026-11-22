@@ -1,29 +1,15 @@
 import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { getGrowthStore } from "@/product/growth";
 import { getCrmRuntime } from "@/product/crm/runtime";
 
 export const dynamic = "force-dynamic";
 
-async function context() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return { error: unauthorizedTenantResponse(auth.error) };
-  if (!tenantHasFeature(auth.ctx, "CONTRACT_RENEWAL_AUTOMATION")) {
-    return { error: forbiddenFeatureResponse("CONTRACT_RENEWAL_AUTOMATION") };
-  }
-  return { ctx: auth.ctx };
-}
-
 export async function GET() {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("CONTRACT_RENEWAL_AUTOMATION");
+  if (!c.ok) return c.response;
   const contracts = await getGrowthStore().listServiceContracts(
     c.ctx.organization.id,
   );
@@ -40,8 +26,8 @@ type CreateBody = {
 };
 
 export async function POST(request: NextRequest) {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("CONTRACT_RENEWAL_AUTOMATION");
+  if (!c.ok) return c.response;
   const { organization, membership } = c.ctx;
 
   const denied = forbiddenUnless(

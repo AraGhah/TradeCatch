@@ -4,7 +4,7 @@
  */
 
 import type { Pool } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import { createPostgresPoolCache } from "@/lib/postgres-pool";
 import { randomUUID } from "@/lib/id";
 import type { CallEvent, CallEventKind } from "./types";
 
@@ -157,16 +157,7 @@ export function createMemoryCallEventStore(): CallEventStore {
   };
 }
 
-const pools = new Map<string, Pool>();
-
-function getPool(url: string) {
-  let pool = pools.get(url);
-  if (!pool) {
-    pool = createPostgresPool({ connectionString: url, max: 5 });
-    pools.set(url, pool);
-  }
-  return pool;
-}
+const getPool = createPostgresPoolCache({ max: 5 });
 
 function mapRow(r: Record<string, unknown>): CallEvent {
   const payload =

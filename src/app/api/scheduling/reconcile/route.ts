@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   authorizeOpsRequest,
-  logOpsAccess,
-  missingOpsActorResponse,
+  guardOpsRequest,
   unauthorizedOpsResponse,
 } from "@/lib/ops-auth";
 import {
@@ -17,10 +16,8 @@ import {
 export const dynamic = "force-dynamic";
 
 async function tick(request: NextRequest) {
-  if (!authorizeOpsRequest(request)) return unauthorizedOpsResponse();
-  const audit = logOpsAccess(request, "scheduling.reconcile");
-  const isCron = Boolean(request.headers.get("x-vercel-cron"));
-  if (audit.missingActor && !isCron) return missingOpsActorResponse();
+  const refusal = guardOpsRequest(request, "scheduling.reconcile");
+  if (refusal) return refusal;
   const confirmations =
     await getSchedulingService().retryPendingConfirmations();
   // Cal.com bookings are checked against the contractor's own account: a time

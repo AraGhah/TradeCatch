@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 
 export const dynamic = "force-dynamic";
 

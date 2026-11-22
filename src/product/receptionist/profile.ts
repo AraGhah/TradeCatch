@@ -31,6 +31,7 @@ import {
   renderPromptTemplate,
 } from "./system-prompt";
 import { applyVoicePlanLimits, type VoiceCapabilities } from "./plan-limits";
+import { ownerPhone, primaryPhone } from "./roster-phones";
 import { callRoutingForProfile } from "@/product/telephony/ai-call-handling";
 import type {
   CallHandlingMode,
@@ -405,19 +406,6 @@ function slug(name: string, index: number): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
   return `${s || "dept"}-${index + 1}`;
-}
-
-function ownerPhone(client: ClientAccount): string | undefined {
-  const id = client.ownerTechnicianId;
-  return id
-    ? client.technicianRoster.find((t) => t.id === id && t.active)?.phone
-    : undefined;
-}
-
-function primaryPhone(client: ClientAccount): string | undefined {
-  return client.technicianRoster.find(
-    (t) => t.id === client.mainTechnicianId && t.active,
-  )?.phone;
 }
 
 /** Turn owner-editable settings + the linked Module A client into a full config. */

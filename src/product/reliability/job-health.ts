@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { CLOUDFLARE_CRON_ROUTES } from "@/lib/cloudflare-scheduler";
 
 export type JobHealth = { service: string; status: string; checkedAt: string };

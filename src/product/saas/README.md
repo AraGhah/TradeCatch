@@ -9,7 +9,7 @@ Multi-tenant portal layered on Module A without replacing the missed-call engine
 | Schema | `schema.sql` (`tc_organizations`, `tc_users`, `tc_memberships`, `tc_sessions`, `tc_magic_links`) |
 | Entitlements | `entitlements.ts` — **only** place for plan → feature mapping |
 | Auth | `auth/magic-link.ts`, `auth/session-token.ts` |
-| Tenant guard | `tenant.ts` → `requireTenantContext()` |
+| Tenant guard | `tenant.ts` → `requireTenantContext()`; route handlers that need one plan feature use `requireTenantFeature(feature)` (401 without a session / inactive org, 402 `{error, feature, upgrade}` when the plan lacks it) |
 | Stores | `memory-store.ts` (tests/dev), `postgres-store.ts` (durable) |
 
 ## Apply DB

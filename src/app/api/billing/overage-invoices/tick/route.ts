@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  authorizeOpsRequest,
-  logOpsAccess,
-  missingOpsActorResponse,
-  unauthorizedOpsResponse,
-} from "@/lib/ops-auth";
+import { guardOpsRequest } from "@/lib/ops-auth";
 import {
   createPostgresOverageInvoicingDeps,
   overageInvoicingSettings,
@@ -21,14 +16,8 @@ const privateHeaders = { "Cache-Control": "private, no-store, max-age=0" };
  * (see overage-invoicing.ts). Safe to call repeatedly: a month is billed once.
  */
 async function tick(request: NextRequest) {
-  if (!authorizeOpsRequest(request)) {
-    return unauthorizedOpsResponse();
-  }
-  const audit = logOpsAccess(request, "billing.overage_invoices.tick");
-  const isCron = Boolean(request.headers.get("x-vercel-cron"));
-  if (audit.missingActor && !isCron) {
-    return missingOpsActorResponse();
-  }
+  const refusal = guardOpsRequest(request, "billing.overage_invoices.tick");
+  if (refusal) return refusal;
 
   const settings = overageInvoicingSettings();
   if (!settings.enabled) {
