@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { useGuarded } from "@/lib/client/use-single-flight";
+import { useSingleFlight } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { ActionButton } from "@/components/ui/ActionButton";
+
 export function TestCenterActions({
   organizationId,
   isDemo,
@@ -17,43 +19,60 @@ export function TestCenterActions({
   const t = useTranslations("app.testCenter");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [seeded, setSeeded] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
+  const seedFlight = useSingleFlight();
+  const resetFlight = useSingleFlight();
+  const busy = seedFlight.pending || resetFlight.pending;
 
-  const seed = useGuarded(seedHandler);
   async function seedHandler() {
     setError(null);
     setMessage(null);
-    const res = await timedFetch(
-      `/api/admin/demo-businesses/${organizationId}/seed`,
-      { method: "POST" },
-    );
-    const json = (await res.json()) as { error?: string };
-    if (!res.ok) {
-      setError(json.error || t("seedFailed"));
-      return;
+    setSeeded(false);
+    setResetDone(false);
+    try {
+      const res = await timedFetch(
+        `/api/admin/demo-businesses/${organizationId}/seed`,
+        { method: "POST" },
+      );
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(json.error || t("seedFailed"));
+        return;
+      }
+      setSeeded(true);
+      setMessage(t("seedOk"));
+    } catch {
+      setError(t("seedFailed"));
     }
-    setMessage(t("seedOk"));
   }
 
-  const reset = useGuarded(resetHandler);
   async function resetHandler() {
     if (!window.confirm(t("confirmReset"))) return;
     setError(null);
     setMessage(null);
-    const res = await timedFetch(
-      `/api/admin/demo-businesses/${organizationId}/reset`,
-      {
-        method: "POST",
-        timeoutMs: 60_000,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ confirm: "RESET_DEMO_ACCOUNT", reseed: true }),
-      },
-    );
-    const json = (await res.json()) as { error?: string };
-    if (!res.ok) {
-      setError(json.error || t("resetFailed"));
-      return;
+    setSeeded(false);
+    setResetDone(false);
+    try {
+      const res = await timedFetch(
+        `/api/admin/demo-businesses/${organizationId}/reset`,
+        {
+          method: "POST",
+          timeoutMs: 60_000,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ confirm: "RESET_DEMO_ACCOUNT", reseed: true }),
+        },
+      );
+      const json = (await res.json()) as { error?: string };
+      if (!res.ok) {
+        setError(json.error || t("resetFailed"));
+        return;
+      }
+      setResetDone(true);
+      setMessage(t("resetOk"));
+    } catch {
+      setError(t("resetFailed"));
     }
-    setMessage(t("resetOk"));
   }
 
   if (!isDemo) {
@@ -75,30 +94,46 @@ export function TestCenterActions({
   return (
     <div className="flex flex-col gap-4">
       {error ? (
-        <p className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <p
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+        >
           {error}
         </p>
       ) : null}
       {message ? (
-        <p className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+        <p
+          role="status"
+          className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+        >
           {message}
         </p>
       ) : null}
       <div className="flex flex-wrap gap-3">
-        <button
+        <ActionButton
           type="button"
-          onClick={() => void seed()}
+          pending={seedFlight.pending}
+          busyLabel={t("generatingData")}
+          success={seeded}
+          successLabel={t("generated")}
+          disabled={busy && !seedFlight.pending}
+          onClick={() => void seedFlight.run(seedHandler)}
           className="rounded-md bg-navy px-4 py-2.5 text-sm font-semibold text-white"
         >
           {t("generateData")}
-        </button>
-        <button
+        </ActionButton>
+        <ActionButton
           type="button"
-          onClick={() => void reset()}
+          pending={resetFlight.pending}
+          busyLabel={t("resettingAccount")}
+          success={resetDone}
+          successLabel={t("resetDone")}
+          disabled={busy && !resetFlight.pending}
+          onClick={() => void resetFlight.run(resetHandler)}
           className="rounded-md border border-navy/20 px-4 py-2.5 text-sm font-semibold text-navy"
         >
           {t("resetAccount")}
-        </button>
+        </ActionButton>
       </div>
       <p className="text-xs text-navy/50">{t("safetyNote")}</p>
     </div>
