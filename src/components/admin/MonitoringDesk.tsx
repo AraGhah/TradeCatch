@@ -5,6 +5,9 @@ import { Link } from "@/i18n/navigation";
 
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
+import { LinkPendingHint } from "@/components/ui/LinkPendingHint";
+
 type ServiceCard = {
   state?: string;
   evidenceAt?: string;
@@ -95,9 +98,13 @@ export function MonitoringDesk({
     | "costs";
 }) {
   const [data, setData] = useState<Overview | null>(null);
+  const [loadedSection, setLoadedSection] = useState<string | null>(null);
   const [message, setMessage] = useState("");
+  const [simulating, setSimulating] = useState<string | null>(null);
+  const loading = loadedSection !== section;
 
   useEffect(() => {
+    let cancelled = false;
     const path =
       section === "overview" || section === "database"
         ? "/api/admin/monitoring/overview"
@@ -114,25 +121,46 @@ export function MonitoringDesk({
                   : "/api/admin/deployments";
     timedFetch(path)
       .then((response) => response.json())
-      .then((body) => setData(body as Overview))
-      .catch(() => setMessage("Monitoring data could not be loaded."));
+      .then((body) => {
+        if (cancelled) return;
+        setData(body as Overview);
+        setLoadedSection(section);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setMessage("Monitoring data could not be loaded.");
+        setLoadedSection(section);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [section]);
 
   const simulate = useGuarded(simulateHandler);
   async function simulateHandler(scenario: string) {
-    const response = await timedFetch("/api/admin/monitoring/test", {
-      method: "POST",
-      timeoutMs: 60_000,
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ scenario }),
-    });
-    const body = (await response.json()) as { ok?: boolean; error?: string };
-    setMessage(
-      body.ok
-        ? "Simulation recorded. No provider was contacted."
-        : body.error || "Simulation failed.",
-    );
+    setSimulating(scenario);
+    setMessage("");
+    try {
+      const response = await timedFetch("/api/admin/monitoring/test", {
+        method: "POST",
+        timeoutMs: 60_000,
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ scenario }),
+      });
+      const body = (await response.json()) as { ok?: boolean; error?: string };
+      setMessage(
+        body.ok
+          ? "Simulation recorded. No provider was contacted."
+          : body.error || "Simulation failed.",
+      );
+    } catch {
+      setMessage("Simulation failed. Check the connection and try again.");
+    } finally {
+      setSimulating(null);
+    }
   }
+
+  const simBusy = simulating !== null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -150,13 +178,19 @@ export function MonitoringDesk({
           <Link
             key={item.href}
             href={item.href}
-            className="rounded-md bg-white px-3 py-2 text-navy ring-1 ring-navy/10"
+            className="inline-flex items-center rounded-md bg-white px-3 py-2 text-navy ring-1 ring-navy/10"
           >
             {item.label}
+            <LinkPendingHint />
           </Link>
         ))}
       </nav>
-      {message ? <p className="text-sm text-navy">{message}</p> : null}
+      {loading ? <InlineStatus>Loading monitoring…</InlineStatus> : null}
+      {message ? (
+        <p className="text-sm text-navy" role="status">
+          {message}
+        </p>
+      ) : null}
       {section === "overview" || section === "database" ? (
         <section className="grid gap-3 md:grid-cols-3">
           <article className="rounded-md bg-white p-4 ring-1 ring-navy/10">
@@ -164,7 +198,7 @@ export function MonitoringDesk({
               Overall
             </p>
             <p className="mt-2 text-lg font-semibold text-navy">
-              {data?.overall || "…"}
+              {data?.overall || (loading ? "…" : "—")}
             </p>
           </article>
           {(data?.services || []).map((service) => (
@@ -269,27 +303,29 @@ export function MonitoringDesk({
       ) : null}
       {section === "overview" ? (
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            className="rounded-md bg-navy px-3 py-2 text-sm text-white"
-            onClick={() => simulate("ai_timeout")}
-          >
-            Simulate Receptionist timeout
-          </button>
-          <button
-            type="button"
-            className="rounded-md bg-navy px-3 py-2 text-sm text-white"
-            onClick={() => simulate("job_failure")}
-          >
-            Simulate job failure
-          </button>
-          <button
-            type="button"
-            className="rounded-md bg-navy px-3 py-2 text-sm text-white"
-            onClick={() => simulate("cost_threshold")}
-          >
-            Simulate cost threshold
-          </button>
+          {(
+            [
+              ["ai_timeout", "Simulate Receptionist timeout"],
+              ["job_failure", "Simulate job failure"],
+              ["cost_threshold", "Simulate cost threshold"],
+            ] as const
+          ).map(([scenario, label]) => {
+            const thisBusy = simulating === scenario;
+            return (
+              <button
+                key={scenario}
+                type="button"
+                disabled={simBusy}
+                aria-busy={thisBusy || undefined}
+                className="rounded-md bg-navy px-3 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => void simulate(scenario)}
+              >
+                <BusyLabel pending={thisBusy} busyLabel="Running…">
+                  {label}
+                </BusyLabel>
+              </button>
+            );
+          })}
         </div>
       ) : null}
     </div>
