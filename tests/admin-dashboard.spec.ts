@@ -484,8 +484,9 @@ test("ADM-08 a new website request is saved, shown with its details, and the ema
   // Resubmitting the same form (a double click, a retry) does not create a second request.
 });
 
-test("ADM-09 reviewing a request updates its status; payment is only recorded, never charged", async ({ page }) => {
-  await adminSession(page, ADMINS.super("09"));
+test("ADM-09 reviewing a request updates its status; payment is only recorded, never charged", async ({ page }, testInfo) => {
+  // A retry shares the server's in-memory store with its first attempt.
+  await adminSession(page, ADMINS.super(testInfo.retry === 0 ? "09" : "39"));
   const suffix = uniqueSuffix();
   const business = `Review Roofing ${suffix}`;
   const key = crypto.randomUUID();
@@ -516,8 +517,9 @@ test("ADM-09 reviewing a request updates its status; payment is only recorded, n
   await row.getByRole("button", { name: "Review" }).click();
 
   // Work cannot be approved or paid for before it has been reviewed.
+  await expect(page.getByLabel("Scope of work")).toBeVisible();
   await expect(page.getByRole("button", { name: "Approve", exact: true })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Request payment" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Request payment" })).toBeDisabled();
   const early = await sendJson(page, "PATCH", `/api/admin/website-requests/${id}`, { status: "approved" });
   expect(early.status).toBe(409);
   const earlyPay = await sendJson(page, "PATCH", `/api/admin/website-requests/${id}`, { paymentStatus: "requested" });
