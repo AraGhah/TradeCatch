@@ -191,6 +191,7 @@ export type GrowthStore = {
   ): Promise<RevenueEvent>;
   listRevenue(organizationId: string): Promise<RevenueEvent[]>;
 
+  /** With an `id` that is already stored, returns that request unchanged. */
   createReviewRequest(
     input: Omit<ReviewRequest, "id" | "createdAt" | "updatedAt" | "status"> & {
       id?: string;
@@ -458,6 +459,8 @@ export function createMemoryGrowthStore(): GrowthStore {
     },
 
     async createReviewRequest(input) {
+      const existing = input.id ? reviews.get(input.id) : undefined;
+      if (existing) return existing;
       const createdAt = nowIso();
       const row: ReviewRequest = {
         id: input.id ?? createId("revq"),

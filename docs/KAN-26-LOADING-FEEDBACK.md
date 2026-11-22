@@ -107,6 +107,9 @@ was canceled and nothing was charged" and brings the pay button back.
 | SMS, notifications, test panels | lock; unknown-outcome wording | the central `/api` limiter |
 | Admin actions | lock; progress and result shown once | none added (the existing audit log records them) |
 | Support tickets and replies | lock; unknown-outcome wording; list re-read; an `idempotencyKey` per attempt (`useAttemptKey`) | the key names the row (`ON CONFLICT (id) DO NOTHING`), so a repeat returns the first ticket or reply |
+| Lead replies (`LeadWorkspace`) | lock; spinner and `aria-busy` on Send; unknown-outcome wording, typed text kept; an `idempotencyKey` per attempt | the key names the message (`idempotentId`, scoped to the conversation), so a repeat returns the first message without a second timeline event |
+| Completing an appointment (review request) | lock | one review request per appointment (`idempotentId` from the appointment), so completing twice texts the customer once |
+| Admin announcement | lock; an `idempotencyKey` tied to the words, kept after success | the outbox key carries it (unique per business and key), so the same announcement is queued once |
 
 ## Tests
 

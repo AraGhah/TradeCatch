@@ -1,4 +1,5 @@
 import { createId } from "@/lib/id";
+import { idempotentId } from "@/lib/idempotent-id";
 import { normalizeE164, phoneKey } from "./phone";
 import {
   cleanProblemText,
@@ -611,6 +612,8 @@ export function createCrmService(store: CrmStore) {
       body: string;
       actor?: string;
       simulated?: boolean;
+      /** The client's key for this attempt: sending it again returns the same message. */
+      idempotencyKey?: string;
     }) {
       const body = input.body.trim();
       if (!body) throw new CrmError("Message is empty.");
@@ -619,11 +622,25 @@ export function createCrmService(store: CrmStore) {
         input.conversationId,
       );
       if (!bundle) throw new CrmError("Conversation not found.", 404);
+      const id = input.idempotencyKey
+        ? idempotentId(
+            "msg",
+            `${input.organizationId}:${input.conversationId}`,
+            input.idempotencyKey,
+          )
+        : undefined;
+      if (id) {
+        // Checked before "closed": a repeat of a message that went out just
+        // before the conversation was closed still gets its first answer.
+        const earlier = bundle.messages.find((m) => m.id === id);
+        if (earlier) return earlier;
+      }
       if (bundle.conversation.control === "closed") {
         throw new CrmError("This conversation is closed.", 409);
       }
       const now = new Date().toISOString();
       const message = await store.appendMessage({
+        id,
         organizationId: input.organizationId,
         conversationId: input.conversationId,
         direction: "outbound",
@@ -634,6 +651,15 @@ export function createCrmService(store: CrmStore) {
         simulated: Boolean(input.simulated),
         at: now,
       });
+      if (!message && id) {
+        // The same request arrived twice at once and the other one stored it:
+        // answer with that message and leave the follow-up writes to it.
+        const stored = await store.listMessages(
+          input.organizationId,
+          input.conversationId,
+        );
+        return stored.find((m) => m.id === id) ?? null;
+      }
       await store.updateConversation(
         input.organizationId,
         input.conversationId,

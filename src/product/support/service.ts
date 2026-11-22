@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { idempotentId } from "@/lib/idempotent-id";
 import { redactAuditDetail } from "@/product/security/permissions";
 import type { PlanId } from "@/product/saas/entitlements";
 import { diagnoseConfiguration } from "./diagnostics";
@@ -21,16 +21,6 @@ type CreateTicketInput = {
   /** The client's key for this attempt: sending it again returns the same ticket. */
   idempotencyKey?: string;
 };
-
-/**
- * The id a retried request resolves to. Scoped (to the organization for a
- * ticket, to the ticket for a message) so one tenant's key can never name
- * another tenant's row.
- */
-function idempotentId(prefix: string, scope: string, key: string) {
-  const digest = createHash("sha256").update(`${scope}\u0000${key}`).digest("hex");
-  return `${prefix}_${digest.slice(0, 32)}`;
-}
 
 const PRIORITIES = new Set<TicketPriority>(["normal", "high", "critical"]);
 const NOTIFY_STATUSES = new Set<TicketStatus>(["resolved", "investigating", "closed"]);

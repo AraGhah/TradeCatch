@@ -2,7 +2,14 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { createAttemptKey } from "../../src/lib/client/attempt-key";
 import { createSingleFlight } from "../../src/lib/client/use-single-flight";
+import { idempotentId } from "../../src/lib/idempotent-id";
+import { queueAnnouncement } from "../../src/product/admin/announcements";
+import { createMemoryCrmStore } from "../../src/product/crm/memory-store";
+import { createCrmService } from "../../src/product/crm/service";
+import { createGrowthServices, createMemoryGrowthStore } from "../../src/product/growth";
 import { createMemorySmsPort } from "../../src/product/missed-call/twilio";
+import { createNotificationService } from "../../src/product/notifications/service";
+import { createMemoryNotificationStore } from "../../src/product/notifications/store";
 import { createMemoryStarterStore, createStarterServices } from "../../src/product/starter";
 import { createSupportService } from "../../src/product/support/service";
 import { createMemorySupportStore } from "../../src/product/support/store";
@@ -166,5 +173,176 @@ describe("website leads: concurrent requests with one key", () => {
     assert.deepEqual([a.duplicate, b.duplicate].sort(), [false, true]);
     assert.equal(sms.sent.length, 1);
     assert.equal((await store.listWebsiteLeads("org_a")).length, 1);
+  });
+});
+
+describe("idempotentId", () => {
+  it("names the same row for the same scope and key, and a different row otherwise", () => {
+    const id = idempotentId("msg", "org_a:conv_1", "attempt-0001");
+    assert.match(id, /^msg_[0-9a-f]{32}$/);
+    assert.equal(idempotentId("msg", "org_a:conv_1", "attempt-0001"), id);
+    assert.notEqual(idempotentId("msg", "org_b:conv_1", "attempt-0001"), id);
+    assert.notEqual(idempotentId("msg", "org_a:conv_1", "attempt-0002"), id);
+  });
+});
+
+async function crmConversation() {
+  const crm = createCrmService(createMemoryCrmStore());
+  const captured = await crm.capture({
+    organizationId: "org_a",
+    source: "manual",
+    phoneE164: "+15145550123",
+    displayName: "Marie",
+  });
+  const send = (idempotencyKey?: string, conversationId = captured.conversation.id) =>
+    crm.sendHumanMessage({
+      organizationId: "org_a",
+      conversationId,
+      body: "On arrive à 14 h",
+      actor: "owner",
+      simulated: true,
+      idempotencyKey,
+    });
+  const outbound = async () =>
+    (await crm.getConversationBundle("org_a", captured.conversation.id))!.messages.filter(
+      (m) => m.direction === "outbound",
+    );
+  const sentEvents = async () =>
+    (await crm.listEvents("org_a", captured.lead.id)).filter((e) => e.kind === "message_out");
+  return { crm, captured, send, outbound, sentEvents };
+}
+
+describe("lead replies: one message per idempotency key", () => {
+  it("answers a repeated send with the first message and records it once", async () => {
+    const { send, outbound, sentEvents } = await crmConversation();
+    const first = await send("reply-attempt-1");
+    const again = await send("reply-attempt-1");
+    assert.equal(again?.id, first?.id);
+    assert.equal((await outbound()).length, 1);
+    assert.equal((await sentEvents()).length, 1);
+  });
+
+  it("stores one message when the same send arrives twice at once", async () => {
+    const { send, outbound, sentEvents } = await crmConversation();
+    const [a, b] = await Promise.all([send("reply-attempt-2"), send("reply-attempt-2")]);
+    assert.ok(a && b);
+    assert.equal(a.id, b.id);
+    assert.equal((await outbound()).length, 1);
+    assert.equal((await sentEvents()).length, 1);
+  });
+
+  it("sends a new message for a new key, and for every request without one", async () => {
+    const { send, outbound } = await crmConversation();
+    await send("reply-attempt-3");
+    await send("reply-attempt-4");
+    await send();
+    await send();
+    assert.equal((await outbound()).length, 4);
+  });
+
+  it("still answers a repeat after the conversation was closed, but refuses a new message", async () => {
+    const { crm, captured, send } = await crmConversation();
+    const first = await send("reply-attempt-5");
+    await crm.setControl("org_a", captured.conversation.id, "closed", "owner");
+    assert.equal((await send("reply-attempt-5"))?.id, first?.id);
+    await assert.rejects(send("reply-attempt-6"), /closed/);
+  });
+});
+
+describe("review requests: one per completed appointment", () => {
+  async function completedTwice(parallel: boolean) {
+    const store = createMemoryGrowthStore();
+    const sms = createMemorySmsPort();
+    const services = createGrowthServices({ store, sms });
+    await store.upsertOrgSettings("org_g", { googleReviewUrl: "https://g.page/r/example" });
+    const appt = await store.createAppointment({
+      organizationId: "org_g",
+      title: "Job done",
+      startsAt: new Date().toISOString(),
+      status: "scheduled",
+      source: "manual",
+      customerPhoneE164: "+15145550202",
+      customerName: "Lee",
+    });
+    const complete = () =>
+      services.completeAppointmentAndMaybeReview({
+        organizationId: "org_g",
+        appointmentId: appt.id,
+        scheduleReviewHours: 0,
+      });
+    if (parallel) await Promise.all([complete(), complete()]);
+    else {
+      await complete();
+      await complete();
+    }
+    await services.processReviewRequests({
+      businessNameForOrg: async () => "Nord",
+      smsFromForOrg: async () => "+15145550999",
+    });
+    return { store, sms };
+  }
+
+  it("texts the customer once when the appointment is completed twice", async () => {
+    const { store, sms } = await completedTwice(false);
+    assert.equal((await store.listReviewRequests("org_g")).length, 1);
+    assert.equal(sms.sent.length, 1);
+  });
+
+  it("texts the customer once when both completions race", async () => {
+    const { store, sms } = await completedTwice(true);
+    assert.equal((await store.listReviewRequests("org_g")).length, 1);
+    assert.equal(sms.sent.length, 1);
+  });
+});
+
+describe("platform announcements: one per business per key", () => {
+  function notifications() {
+    const store = createMemoryNotificationStore();
+    const service = createNotificationService({
+      store,
+      now: () => new Date("2026-11-21T12:00:00.000Z"),
+      listMembers: async () => [],
+      loadOrg: async (id) => ({
+        id,
+        name: id,
+        status: "active",
+        timezone: "America/Toronto",
+        localeDefault: "en",
+        phoneE164: "+15145550999",
+        accountType: "production",
+      }),
+      sendSms: async () => ({ sent: true, sid: "SMtest" }),
+      sendEmail: async () => ({ sent: true }),
+    });
+    const announce = (idempotencyKey?: string) =>
+      queueAnnouncement({
+        organizationIds: ["org_a", "org_b"],
+        message: "Maintenance tonight",
+        idempotencyKey,
+        enqueue: (event) => service.enqueue(event),
+      });
+    const pending = async () =>
+      (await store.claimOutbox(100, "2026-11-21T12:00:00.000Z")).length;
+    return { announce, pending };
+  }
+
+  it("queues nothing new when the same announcement is sent again", async () => {
+    const { announce, pending } = notifications();
+    assert.deepEqual(await announce("announce-attempt-1"), { queued: 2, alreadyQueued: 0 });
+    assert.deepEqual(await announce("announce-attempt-1"), { queued: 0, alreadyQueued: 2 });
+    assert.equal(await pending(), 2);
+  });
+
+  it("queues once when both requests race", async () => {
+    const { announce, pending } = notifications();
+    await Promise.all([announce("announce-attempt-2"), announce("announce-attempt-2")]);
+    assert.equal(await pending(), 2);
+  });
+
+  it("treats a new key as a new announcement", async () => {
+    const { announce, pending } = notifications();
+    await announce("announce-attempt-3");
+    await announce("announce-attempt-4");
+    assert.equal(await pending(), 4);
   });
 });

@@ -11,8 +11,11 @@ import type {
   LeadWithCustomer,
 } from "@/product/crm/types";
 
+import { useAttemptKey } from "@/lib/client/attempt-key";
+import { classifyFailure } from "@/lib/client/use-action";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { useFailureText } from "@/components/ui/FeedbackMessage";
 import { BusyLabel } from "@/components/ui/Spinner";
 type Person = { id: string; name: string };
 
@@ -55,6 +58,7 @@ export function LeadWorkspace({
   timeZone?: string;
 }) {
   const t = useTranslations("app.crm");
+  const tFeedback = useTranslations("feedback");
   const dateLocale = useLocale() === "fr" ? "fr-CA" : "en-CA";
   const eventTime = (iso: string) => {
     const at = new Date(iso);
@@ -84,7 +88,12 @@ export function LeadWorkspace({
   const [draft, setDraft] = useState("");
   const [mode, setMode] = useState(control);
   const [busy, setBusy] = useState(false);
+  const [controlSaving, setControlSaving] = useState(false);
+  const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const [conversationError, setConversationError] = useState("");
+  const attempt = useAttemptKey();
+  const failureText = useFailureText();
 
   const saveLead = useGuarded(saveLeadHandler);
   async function saveLeadHandler() {
@@ -113,6 +122,8 @@ export function LeadWorkspace({
         return;
       }
       router.refresh();
+    } catch (err) {
+      setError(failureText(classifyFailure(err, { write: true, idempotent: true })));
     } finally {
       setBusy(false);
     }
@@ -120,42 +131,71 @@ export function LeadWorkspace({
 
   const saveControl = useGuarded(saveControlHandler);
   async function saveControlHandler(next: ConversationControl) {
+    const previous = mode;
     setMode(next);
     if (!lead.conversationId) return;
-    await timedFetch(
-      `/api/businesses/${organizationId}/conversations/${lead.conversationId}`,
-      {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ control: next }),
-      },
-    );
-    router.refresh();
+    setControlSaving(true);
+    setConversationError("");
+    try {
+      const res = await timedFetch(
+        `/api/businesses/${organizationId}/conversations/${lead.conversationId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ control: next }),
+        },
+      );
+      if (!res.ok) {
+        setMode(previous);
+        setConversationError(t("controlError"));
+        return;
+      }
+      router.refresh();
+    } catch (err) {
+      const failure = classifyFailure(err, { write: true, idempotent: true });
+      if (!failure.outcomeUnknown) setMode(previous);
+      setConversationError(
+        failure.outcomeUnknown ? failureText(failure) : t("controlError"),
+      );
+      if (failure.outcomeUnknown) router.refresh();
+    } finally {
+      setControlSaving(false);
+    }
   }
 
   const send = useGuarded(sendHandler);
   async function sendHandler() {
     if (!draft.trim()) return;
-    setBusy(true);
-    setError("");
+    setSending(true);
+    setConversationError("");
     try {
       const res = await timedFetch(
         `/api/businesses/${organizationId}/leads/${lead.id}/messages`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ body: draft }),
+          body: JSON.stringify({
+            body: draft,
+            idempotencyKey: attempt.for(draft.trim()),
+          }),
         },
       );
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        setError(data.error || t("error"));
+        setConversationError(data.error || t("error"));
         return;
       }
+      attempt.done();
       setDraft("");
       router.refresh();
+    } catch (err) {
+      // No answer: the message may have been saved. The text stays in the box
+      // and sending it again reuses the same key, so it is saved once.
+      const failure = classifyFailure(err, { write: true, idempotent: true });
+      setConversationError(failureText(failure));
+      if (failure.outcomeUnknown) router.refresh();
     } finally {
-      setBusy(false);
+      setSending(false);
     }
   }
 
@@ -277,8 +317,10 @@ export function LeadWorkspace({
             {t("control")}
             <select
               value={mode}
+              disabled={controlSaving}
+              aria-busy={controlSaving || undefined}
               onChange={(e) => void saveControl(e.target.value as ConversationControl)}
-              className="rounded-md border border-navy/20 px-2 py-1"
+              className="rounded-md border border-navy/20 px-2 py-1 disabled:opacity-50"
             >
               {CONTROLS.map((item) => (
                 <option key={item} value={item}>
@@ -325,13 +367,21 @@ export function LeadWorkspace({
           className="rounded-md border border-navy/20 px-2 py-2 text-sm"
         />
         <p className="text-xs text-navy/60">{t("manualNote")}</p>
+        {conversationError ? (
+          <p role="alert" className="text-sm text-red-700">
+            {conversationError}
+          </p>
+        ) : null}
         <button
           type="button"
-          disabled={busy || mode === "closed"}
+          disabled={sending || controlSaving || mode === "closed"}
+          aria-busy={sending || undefined}
           onClick={() => void send()}
           className="self-start rounded-md border border-navy/20 px-4 py-2 text-sm font-semibold text-navy disabled:opacity-50"
         >
-          {t("send")}
+          <BusyLabel pending={sending} busyLabel={tFeedback("sending")}>
+            {t("send")}
+          </BusyLabel>
         </button>
       </section>
     </div>
