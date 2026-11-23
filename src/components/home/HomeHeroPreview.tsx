@@ -1,8 +1,8 @@
-import { IllustrativeBadge } from "@/components/IllustrativeBadge";
 import { LogoMark } from "@/components/BrandLockup";
 
 export type HomeHeroPreviewCopy = {
-  badge: string;
+  /** Kept for i18n parity; not rendered (no watermark on the preview). */
+  badge?: string;
   workspaceLabel: string;
   navOverview: string;
   navCalls: string;
@@ -39,19 +39,11 @@ export function HomeHeroPreview({ copy }: { copy: HomeHeroPreviewCopy }) {
       className="mx-auto w-full max-w-[960px]"
       aria-label={copy.workspaceLabel}
     >
-      <div className="overflow-hidden rounded-2xl border border-[rgb(var(--ink-rgb)/0.12)] bg-white shadow-[0_28px_64px_-36px_rgb(var(--ink-rgb)/0.45)]">
-        <div className="flex items-center justify-between gap-3 border-b border-[rgb(var(--ink-rgb)/0.08)] bg-neutral-50 px-4 py-2.5 sm:px-5">
-          <div className="flex items-center gap-2">
-            <span className="flex gap-1.5" aria-hidden>
-              <span className="h-2.5 w-2.5 rounded-full bg-[rgb(var(--ink-rgb)/0.12)]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[rgb(var(--ink-rgb)/0.12)]" />
-              <span className="h-2.5 w-2.5 rounded-full bg-[rgb(var(--ink-rgb)/0.12)]" />
-            </span>
-            <p className="text-ui truncate text-[13px] text-muted">
-              {copy.workspaceLabel}
-            </p>
-          </div>
-          <IllustrativeBadge label={copy.badge} />
+      <div className="overflow-hidden rounded-[var(--radius-lg)] border border-[rgb(var(--ink-rgb)/0.1)] bg-white shadow-card">
+        <div className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-paper px-4 py-2.5 sm:px-5">
+          <p className="text-ui truncate text-[13px] text-muted">
+            {copy.workspaceLabel}
+          </p>
         </div>
 
         <div className="grid min-h-[280px] grid-cols-1 md:grid-cols-[11rem_minmax(0,1fr)] lg:min-h-[340px] lg:grid-cols-[13rem_minmax(0,1fr)]">

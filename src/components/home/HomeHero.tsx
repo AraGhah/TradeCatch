@@ -47,9 +47,7 @@ export function HomeHero({
       />
       <Container className="relative">
         <div className="mx-auto max-w-[42rem] text-center">
-          <p className="text-ui inline-flex items-center rounded-full border border-[rgb(var(--ink-rgb)/0.12)] bg-neutral-50 px-3 py-1 text-[12.5px] font-medium text-muted">
-            {eyebrow}
-          </p>
+          <p className="text-ui text-[13px] font-medium text-muted">{eyebrow}</p>
 
           <h1 className="text-hero mt-6 text-heading">
             {accentHeadline(headline, accentWord)}
@@ -60,7 +58,7 @@ export function HomeHero({
           </p>
 
           <div className="mt-8 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center sm:justify-center">
-            <WatchDemoButton className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[12px] bg-navy px-[26px] py-[17px] text-[16px] font-semibold tracking-[-0.01em] text-white transition-colors hover:bg-navy-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange sm:w-auto">
+            <WatchDemoButton className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[var(--radius-md)] bg-navy px-[26px] py-[17px] text-[16px] font-semibold tracking-[-0.01em] text-white transition-colors hover:bg-navy-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange sm:w-auto">
               {ctaPrimary}
             </WatchDemoButton>
             <CTAButton

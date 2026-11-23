@@ -50,7 +50,7 @@ export function PlanComparison({ data }: { data: PlanComparisonData }) {
           <tr className="border-b border-[rgb(var(--ink-rgb)/0.16)]">
             <th
               scope="col"
-              className="w-auto py-3 pr-3 align-bottom font-mono text-[10.5px] font-medium tracking-[0.12em] text-muted uppercase"
+              className="w-auto py-3 pr-3 align-bottom text-[12.5px] font-medium text-muted"
             >
               {data.featureLabel}
             </th>

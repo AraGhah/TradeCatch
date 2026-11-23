@@ -2,7 +2,7 @@
 
 import { useId, useState, type ReactNode } from "react";
 import { motion } from "framer-motion";
-import { Check, Star } from "lucide-react";
+import { Check } from "lucide-react";
 import { CTAButton, type AnchorHref } from "@/components/CTAButton";
 import { cn } from "@/lib/cn";
 
@@ -232,31 +232,24 @@ function PlanCard({
   return (
     <article
       className={cn(
-        "relative flex h-full flex-col rounded-2xl border bg-surface p-[clamp(22px,2.6vw,32px)] text-heading transition-[border-color,box-shadow] duration-200",
+        "relative flex h-full flex-col rounded-[var(--radius-lg)] border bg-surface p-[clamp(22px,2.6vw,32px)] text-heading transition-[border-color,box-shadow] duration-200",
         recommended
-          ? "z-10 border-2 border-navy shadow-[0_24px_48px_-32px_rgb(var(--ink-rgb)/0.35)]"
+          ? "z-10 border-2 border-navy shadow-card"
           : "border-[rgb(var(--ink-rgb)/0.12)] hover:border-[rgb(var(--ink-rgb)/0.22)]",
       )}
     >
-      {recommended && tier.badge ? (
-        <div className="absolute -top-3 left-1/2 z-20 -translate-x-1/2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-navy px-3 py-1 text-[12px] font-semibold tracking-[0.02em] text-white">
-            <Star
-              className="h-3.5 w-3.5 fill-orange text-orange"
-              aria-hidden
-            />
-            {tier.badge}
-          </span>
-        </div>
-      ) : tier.badge ? (
-        <div className="mb-3">
-          <span className="inline-flex rounded-full bg-[rgba(228,118,43,0.12)] px-2.5 py-1 text-[12px] font-semibold tracking-[0.04em] text-ember-text">
-            {tier.badge}
-          </span>
-        </div>
+      {tier.badge ? (
+        <p
+          className={cn(
+            "mb-3 text-[12.5px] font-medium",
+            recommended ? "text-heading" : "text-ember-text",
+          )}
+        >
+          {tier.badge}
+        </p>
       ) : null}
 
-      <div className={cn("flex flex-col", recommended && tier.badge && "pt-2")}>
+      <div className="flex flex-col">
         <h2 className="m-0 font-cabinet text-[clamp(22px,2.4vw,28px)] font-extrabold tracking-[-0.03em] text-heading">
           {tier.name}
         </h2>
@@ -311,7 +304,7 @@ function PlanCard({
             data-testid="plan-exclusive"
             className="rounded-xl border border-orange/30 bg-[rgba(228,118,43,0.08)] px-4 py-3.5"
           >
-            <p className="text-[11px] font-semibold tracking-[0.1em] text-orange uppercase">
+            <p className="text-[12.5px] font-medium text-ember-text">
               {tier.exclusive.badge}
             </p>
             <p className="mt-1.5 font-cabinet text-[18px] font-extrabold tracking-[-0.02em] text-heading">
@@ -329,9 +322,7 @@ function PlanCard({
         ) : null}
         {tier.groups.map((group) => (
           <div key={group.title}>
-            <p className="text-[11px] font-semibold tracking-[0.1em] text-muted uppercase">
-              {group.title}
-            </p>
+            <p className="text-[12.5px] font-medium text-muted">{group.title}</p>
             <ul className="mt-2.5 flex list-none flex-col gap-2.5 p-0">
               {group.items.map((item) => (
                 <li

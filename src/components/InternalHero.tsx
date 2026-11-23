@@ -28,16 +28,11 @@ export function InternalHero({
         >
           <div className="min-w-0">
             {eyebrow ? (
-              <p className="text-[13px] font-medium text-orange">{eyebrow}</p>
+              <p className="text-ui text-[13px] font-medium text-white/60">
+                {eyebrow}
+              </p>
             ) : null}
-            <h1
-              className="mt-3 max-w-[820px] font-heading font-extrabold text-white"
-              style={{
-                fontSize: "clamp(32px, 4.2vw, 52px)",
-                lineHeight: 1.05,
-                letterSpacing: "-0.042em",
-              }}
-            >
+            <h1 className="text-page-hero mt-3 max-w-[820px] text-white">
               {title}
             </h1>
             {intro ? (

@@ -177,46 +177,19 @@ export default async function PricingPage({
       />
 
       <section className="relative overflow-hidden bg-navy pt-[clamp(44px,5.4vw,72px)] pb-[clamp(48px,6vw,80px)]">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
-            backgroundSize: "56px 56px",
-            maskImage:
-              "radial-gradient(70% 70% at 30% 40%, #000 10%, transparent 70%)",
-          }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -right-24 top-10 h-[420px] w-[420px] rounded-full opacity-30"
-          style={{
-            background:
-              "radial-gradient(circle, rgba(228,118,43,0.35) 0%, transparent 68%)",
-          }}
-        />
-
         <Container className="relative">
           <div className="grid items-end gap-x-16 gap-y-10 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
-              <p className="font-cabinet text-[13px] font-medium text-orange">
+              <p className="text-ui text-[13px] font-medium text-white/60">
                 {t("eyebrow")}
               </p>
-              <h1
-                className="mt-4 max-w-[16em] font-cabinet font-extrabold text-white"
-                style={{
-                  fontSize: "clamp(36px, 5vw, 58px)",
-                  lineHeight: 0.98,
-                  letterSpacing: "-0.045em",
-                }}
-              >
+              <h1 className="text-page-hero mt-4 max-w-[16em] text-white">
                 {t("headline")}
               </h1>
-              <p className="mt-5 max-w-[34em] font-cabinet text-[clamp(16px,1.35vw,18px)] leading-[1.6] text-white/68">
+              <p className="mt-5 max-w-[34em] text-[clamp(16px,1.35vw,18px)] leading-[1.6] text-white/68">
                 {t("intro")}
               </p>
-              <p className="mt-4 max-w-[34em] rounded-[12px] border border-orange/40 bg-[rgba(228,118,43,0.16)] px-3.5 py-2.5 text-[14px] leading-[1.45] text-white/90">
+              <p className="mt-4 max-w-[34em] rounded-[var(--radius-md)] border border-white/20 bg-white/8 px-3.5 py-2.5 text-[14px] leading-[1.45] text-white/90">
                 {t("billingBanner")}
               </p>
             </div>

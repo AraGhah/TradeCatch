@@ -85,6 +85,12 @@
   --section-y: clamp(36px, 5.2vw, 64px);
   --section-y-tight: clamp(28px, 3.6vw, 48px);
   --pad-x: clamp(20px, 4vw, 40px);
+
+  /* Radius scale — one family for marketing + product (no random 13/14/18/20). */
+  --radius-sm: 0.5rem; /* 8px — chips, inputs */
+  --radius-md: 0.75rem; /* 12px — buttons, small cards */
+  --radius-lg: 1rem; /* 16px — marketing/product cards */
+  --radius-xl: 1.25rem; /* 20px — large frames only */
 }
 
 :root {
@@ -138,6 +144,31 @@
   --shadow-cta: var(--shadow-cta);
   --shadow-ink-panel: var(--shadow-ink-panel);
   --shadow-header: var(--shadow-header);
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+}
+
+/* Shared surface for marketing content blocks — thin border, no glow. */
+.tc-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgb(var(--ink-rgb) / 0.1);
+  background: var(--color-surface);
+}
+
+.tc-card-quiet {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgb(var(--ink-rgb) / 0.08);
+  background: var(--color-paper);
+}
+
+.tc-card-recommended {
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--color-navy);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
 }
 
 html {
@@ -351,9 +382,9 @@ h1 {
   }
 }
 
-/* Slow ember breathing for the top-tier plan card. */
+/* Glow disabled — looks template/AI. Prefer .tc-card-recommended. */
 .animate-tc-glow {
-  animation: tcGlow 4.5s ease-in-out infinite;
+  animation: none;
 }
 
 .animate-tc-pulse-ember {

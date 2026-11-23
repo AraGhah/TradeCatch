@@ -14,10 +14,9 @@ import { websiteServiceAddOn } from "@/lib/plan-marketing";
 const SECTION =
   "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-6 sm:py-8";
 
-const EYEBROW =
-  "font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase";
+const EYEBROW = "text-ui text-[13px] font-medium text-ember-text";
 const H2 =
-  "mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold leading-[1.12] tracking-[-0.035em] text-heading md:text-[1.65rem]";
+  "mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-bold leading-[1.12] tracking-[-0.03em] text-heading md:text-[1.65rem]";
 
 /**
  * Heading block, content and an optional action. On a phone they stack in that
@@ -239,7 +238,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
           <p className="mt-2 text-[15px] leading-[1.55] text-muted">
             {t("mobile.pricing.intro")}
           </p>
-          <p className="mt-3 rounded-[12px] border border-orange/30 bg-[rgba(228,118,43,0.08)] px-3.5 py-2.5 text-[13.5px] leading-[1.45] text-heading">
+          <p className="tc-card-quiet mt-3 px-3.5 py-2.5 text-[13.5px] leading-[1.45] text-heading">
             {t("mobile.pricing.billingNote")}
           </p>
           <ol className="m-0 mt-4 grid list-none grid-cols-2 gap-3 p-0">
@@ -249,20 +248,17 @@ export async function HomeMobile({ locale }: { locale: string }) {
               return (
                 <li
                   key={id}
-                  className={`flex flex-col rounded-[16px] border p-4 ${
-                    recommended
-                      ? "border-orange/45 bg-paper ring-1 ring-orange/15"
-                      : "border-[rgb(var(--ink-rgb)/0.1)] bg-paper"
+                  className={`flex flex-col p-4 ${
+                    recommended ? "tc-card-recommended" : "tc-card"
                   }`}
                 >
-                  {/* Same height in both cards, so names and prices line up. */}
                   <p
                     aria-hidden={recommended ? undefined : true}
-                    className="mb-2 min-h-[2.6em] font-mono text-[10px] leading-[1.3] tracking-[0.1em] text-ember-text uppercase"
+                    className="mb-2 min-h-[1.4em] text-[11px] font-medium text-ember-text"
                   >
                     {recommended ? t("mobile.pricing.recommended") : null}
                   </p>
-                  <h3 className="font-heading text-[20px] font-extrabold tracking-[-0.03em] text-heading">
+                  <h3 className="text-card-title text-heading">
                     {planNames[i]}
                   </h3>
                   <p className="mt-1 text-[14px] leading-[1.45] text-secondary">

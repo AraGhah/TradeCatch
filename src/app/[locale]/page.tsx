@@ -75,17 +75,9 @@ export default async function HomePage({
             />
 
             <ol className="m-0 mt-[clamp(20px,2.4vw,28px)] grid list-none gap-5 p-0 lg:grid-cols-3">
-              {leakCards.map((card, i) => (
-                <li
-                  key={card.title}
-                  className="flex flex-col rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-paper p-6"
-                >
-                  <span className="font-mono text-[12px] font-semibold tracking-[0.08em] text-ember-text">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="mt-2 font-heading text-[clamp(19px,1.7vw,22px)] leading-[1.2] font-bold tracking-[-0.028em] text-heading">
-                    {card.title}
-                  </h3>
+              {leakCards.map((card) => (
+                <li key={card.title} className="tc-card-quiet flex flex-col p-6">
+                  <h3 className="text-card-title text-heading">{card.title}</h3>
                   <p className="mt-2 text-[15px] leading-[1.6] text-muted">
                     {card.body}
                   </p>
@@ -94,7 +86,7 @@ export default async function HomePage({
             </ol>
 
             <div className="mt-6 flex justify-center">
-              <CTAButton href="/book-audit" variant="ember">
+              <CTAButton href="/book-audit" variant="ink">
                 {t("leaks.cta")}
               </CTAButton>
             </div>
@@ -112,40 +104,28 @@ export default async function HomePage({
               />
             </div>
 
-            <div className="mt-[clamp(20px,2.4vw,28px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ol className="m-0 mt-[clamp(20px,2.4vw,28px)] grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
               {systemSteps.map((step, i) => (
-                <div
-                  key={step.title}
-                  data-reveal
-                  className={`rounded-[14px] p-5 ${
-                    i === systemSteps.length - 1
-                      ? "border border-orange/45 bg-[rgba(228,118,43,0.07)]"
-                      : "border border-[rgb(var(--ink-rgb)/0.1)] bg-surface"
-                  }`}
-                >
-                  <div className="flex items-baseline gap-3">
-                    <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <h3 className="font-heading text-[18px] leading-[1.25] font-bold tracking-[-0.028em] text-heading">
-                      {step.title}
-                    </h3>
-                  </div>
+                <li key={step.title} data-reveal className="tc-card p-5">
+                  <p className="text-ui text-[12px] font-medium text-muted">
+                    {String(i + 1).padStart(2, "0")}
+                  </p>
+                  <h3 className="text-card-title mt-2 text-heading">
+                    {step.title}
+                  </h3>
                   <p className="mt-1.5 text-[14.5px] leading-[1.55] text-muted">
                     {step.body}
                   </p>
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <WatchDemoButton
-                className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[translate,scale,background] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
+              <WatchDemoButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-navy px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-white transition-colors hover:bg-navy-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange">
                 {t("proofExamples.demoCta")}
               </WatchDemoButton>
               <CTAButton href="/how-it-works" variant="secondary">
-                {t("system.cta")} →
+                {t("system.cta")}
               </CTAButton>
             </div>
           </Container>

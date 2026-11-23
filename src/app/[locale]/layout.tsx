@@ -22,7 +22,7 @@ import { HeadInlineScripts } from "@/components/HeadInlineScripts";
 import { ScrollReveal } from "@/components/motion/ScrollReveal";
 import { MarketingChrome } from "@/components/MarketingChrome";
 import { DemoModeBanner } from "@/components/DemoModeBanner";
-import { archivo, cabinetGrotesk, plexMono, plexSans } from "@/fonts";
+import { cabinetGrotesk, plexMono } from "@/fonts";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -89,7 +89,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       data-scroll-behavior="smooth"
-      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} ${cabinetGrotesk.variable} h-full antialiased`}
+      className={`${cabinetGrotesk.variable} ${plexMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <HeadInlineScripts

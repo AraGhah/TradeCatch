@@ -1,6 +1,5 @@
 import { CTAButton } from "@/components/CTAButton";
 import { SectionHeading } from "@/components/SectionHeading";
-import { StaggerGroup, StaggerItem } from "@/components/motion/StaggerGroup";
 
 export type PricingPreviewTier = {
   name: string;
@@ -47,56 +46,40 @@ export function PricingPreview({
       {billingNote ? (
         <p
           data-reveal
-          className="mt-4 max-w-[42em] rounded-[12px] border border-orange/30 bg-[rgba(228,118,43,0.08)] px-4 py-2.5 text-[14.5px] leading-[1.5] text-heading"
+          className="tc-card-quiet mt-4 max-w-[42em] px-4 py-3 text-[14.5px] leading-[1.5] text-heading"
         >
           {billingNote}
         </p>
       ) : null}
 
-      <StaggerGroup
-        as="ol"
-        stagger={0.12}
-        className="m-0 mt-[clamp(20px,2.4vw,28px)] grid list-none items-stretch gap-4 p-0 md:grid-cols-2 lg:gap-5"
-      >
+      <ol className="m-0 mt-[clamp(20px,2.4vw,28px)] grid list-none items-stretch gap-4 p-0 md:grid-cols-2 lg:gap-5">
         {tiers.map((tier, i) => {
-          const premium = i === tiers.length - 1;
           const recommended = i === recommendedIndex;
           return (
-            <StaggerItem
-              as="li"
+            <li
               key={tier.name}
-              className={`flex h-full flex-col rounded-[14px] p-5 transition-[translate,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:shadow-card-hover ${
-                premium || recommended
-                  ? "animate-tc-glow border border-orange/45 bg-surface ring-1 ring-orange/15"
-                  : "border border-[rgb(var(--ink-rgb)/0.1)] bg-surface hover:border-[rgb(var(--ink-rgb)/0.2)]"
+              data-reveal
+              className={`flex h-full flex-col p-6 ${
+                recommended ? "tc-card-recommended" : "tc-card"
               }`}
             >
-              <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
-                {String(i + 1).padStart(2, "0")}
-              </span>
-              <h3 className="mt-2 font-heading text-[21px] font-extrabold tracking-[-0.035em] text-heading">
-                {tier.name}
-              </h3>
-              <p
-                className={`mt-2 font-heading text-[clamp(26px,2.6vw,32px)] font-extrabold leading-[0.95] tracking-[-0.04em] break-words ${
-                  premium || recommended ? "text-orange" : "text-heading"
-                }`}
-              >
+              <h3 className="text-card-title text-heading">{tier.name}</h3>
+              <p className="mt-3 font-heading text-[clamp(1.6rem,2.4vw,2rem)] font-extrabold leading-none tracking-[-0.035em] text-heading tabular-nums">
                 {tier.price}
               </p>
-              <p className="mt-1.5 text-[14.5px] text-muted">{tier.cadence}</p>
-              <p className="mt-3 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-3 text-[14.5px] leading-[1.55] text-secondary">
+              <p className="mt-2 text-[14.5px] text-muted">{tier.cadence}</p>
+              <p className="mt-4 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-3 text-[14.5px] leading-[1.55] text-secondary">
                 {tier.idealFor}
               </p>
-            </StaggerItem>
+            </li>
           );
         })}
-      </StaggerGroup>
+      </ol>
 
       <p
         data-reveal
         data-testid="pricing-website-addon"
-        className="mt-4 rounded-[14px] border border-dashed border-[rgb(var(--ink-rgb)/0.22)] bg-paper px-5 py-3 text-[15px] leading-[1.5] text-heading"
+        className="tc-card-quiet mt-4 px-5 py-3 text-[15px] leading-[1.5] text-heading"
       >
         {note}
       </p>
@@ -109,7 +92,7 @@ export function PricingPreview({
           {cta}
         </CTAButton>
         <CTAButton href="/receptionist" variant="secondary" size="md">
-          {receptionistCta} →
+          {receptionistCta}
         </CTAButton>
       </div>
     </>

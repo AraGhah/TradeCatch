@@ -58,9 +58,7 @@ export function CallFlowDiagram({
 
       <div className="mt-8 flex items-center gap-4">
         <span aria-hidden className="h-px flex-1 bg-[rgb(var(--ink-rgb)/0.14)]" />
-        <p className="font-mono text-[10.5px] tracking-[0.12em] text-muted uppercase">
-          {branchLabel}
-        </p>
+        <p className="text-[12.5px] font-medium text-muted">{branchLabel}</p>
         <span aria-hidden className="h-px flex-1 bg-[rgb(var(--ink-rgb)/0.14)]" />
       </div>
 
@@ -74,7 +72,7 @@ export function CallFlowDiagram({
             as="li"
             from="pop"
             key={branch.title}
-            className="border-t-[3px] border-orange border-x border-b border-x-[rgb(var(--ink-rgb)/0.1)] border-b-[rgb(var(--ink-rgb)/0.1)] bg-surface p-5 transition-[translate,box-shadow] duration-200 hover:-translate-y-1 hover:shadow-card-hover"
+            className="tc-card p-5"
           >
             <h3 className="font-heading text-[17px] font-bold tracking-[-0.026em] text-heading">
               {branch.title}
@@ -87,9 +85,7 @@ export function CallFlowDiagram({
       </StaggerGroup>
 
       <div className="mt-8 bg-navy p-[clamp(22px,3vw,32px)] text-white">
-        <p className="font-mono text-[10.5px] tracking-[0.12em] text-[rgba(255,255,255,0.6)] uppercase">
-          {outcomeLabel}
-        </p>
+        <p className="text-[12.5px] font-medium text-white/60">{outcomeLabel}</p>
         <div className="mt-5 grid gap-x-10 gap-y-5 md:grid-cols-2">
           {outcome.map((item) => (
             <div key={item.title}>

@@ -103,15 +103,17 @@ export function AppShell({
               so the page itself starts near the top of the screen. */}
           <div className="flex items-start justify-between gap-3 md:block">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
+            <p className="text-ui text-xs font-medium text-muted">
               TradeCatch
               {isDemo ? (
-                <span className="ml-2 font-mono text-[10px] tracking-[0.1em] text-ember-text">
+                <span className="ml-2 text-[11px] font-medium text-ember-text">
                   {t("demoAccountBadge")}
                 </span>
               ) : null}
             </p>
-            <p className="mt-1 text-lg font-semibold text-heading">{orgName}</p>
+            <p className="mt-1 text-lg font-semibold tracking-[-0.02em] text-heading">
+              {orgName}
+            </p>
             <p className="text-sm text-muted">
               {planName ? `${userName} · ${planName}` : userName}
             </p>
@@ -128,7 +130,7 @@ export function AppShell({
           <div
             className={
               navOpen
-                ? "flex flex-col gap-5 rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-3 md:border-0 md:bg-transparent md:p-0"
+                ? "tc-card flex flex-col gap-5 p-3 md:border-0 md:bg-transparent md:p-0 md:shadow-none"
                 : "hidden md:flex md:flex-col md:gap-6"
             }
           >
@@ -136,7 +138,7 @@ export function AppShell({
             {isPlatformAdmin ? (
               <Link
                 href="/admin"
-                className={`inline-flex w-fit items-center rounded-md px-3 py-2.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
+                className={`inline-flex w-fit items-center rounded-[var(--radius-sm)] px-3 py-2.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
               >
                 {t("nav.admin")}
                 <LinkPendingHint />
@@ -152,9 +154,9 @@ export function AppShell({
                     <Link
                       href={item.href}
                       aria-current={active ? "page" : undefined}
-                      className={`inline-flex min-h-11 w-full items-center rounded-md px-3 py-2.5 text-sm ${FOCUS_RING} ${
+                      className={`inline-flex min-h-11 w-full items-center rounded-[var(--radius-sm)] px-3 py-2.5 text-sm ${FOCUS_RING} ${
                         active
-                          ? "bg-navy text-white"
+                          ? "bg-[rgb(var(--ink-rgb)/0.08)] font-medium text-heading"
                           : "text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
                       }`}
                     >

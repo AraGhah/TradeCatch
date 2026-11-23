@@ -127,10 +127,8 @@ export function DashboardView({
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="font-mono text-[11px] tracking-[0.14em] text-ember-text uppercase">TradeCatch</p>
-          <h1 className="mt-1 font-heading text-3xl font-extrabold text-navy">
-            {t("headline")}
-          </h1>
+          <p className="text-ui text-[13px] font-medium text-muted">TradeCatch</p>
+          <h1 className="mt-1 text-section text-heading">{t("headline")}</h1>
           <p className="mt-2 max-w-2xl text-sm text-navy/70">{t("intro")}</p>
           <p className="mt-2 text-xs text-navy/70" aria-live="polite">
             {live === "error" ? t("liveError") : t("live")} · {t("updated")} {formatWhen(data.generatedAt, locale)}
@@ -140,8 +138,10 @@ export function DashboardView({
           <div className="flex flex-wrap gap-2">
             {ranges.map((range) => {
               const active = data.range.preset === range.id;
-              const className = `rounded-full px-3 py-1.5 text-sm font-semibold ${FOCUS} ${
-                active ? "bg-navy text-white" : "border border-navy/15 bg-white text-navy hover:bg-navy/5"
+              const className = `rounded-[var(--radius-sm)] px-3 py-1.5 text-sm font-medium ${FOCUS} ${
+                active
+                  ? "bg-[rgb(var(--ink-rgb)/0.08)] text-heading"
+                  : "border border-[rgb(var(--ink-rgb)/0.12)] bg-surface text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
               }`;
               if (range.id === "7d") {
                 return (
