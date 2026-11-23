@@ -5,9 +5,11 @@
  */
 import localFont from "next/font/local";
 
+/** Legacy heading face — kept for gradual migration; prefer Cabinet via --font-heading. */
 export const archivo = localFont({
   variable: "--font-archivo",
   display: "swap",
+  preload: false,
   fallback: ["Arial", "Helvetica Neue", "sans-serif"],
   src: [
     {
@@ -23,9 +25,11 @@ export const archivo = localFont({
   ],
 });
 
+/** Legacy body face — body now uses Cabinet; variable retained for any residual refs. */
 export const plexSans = localFont({
   variable: "--font-plex-sans",
   display: "swap",
+  preload: false,
   fallback: ["Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
   src: [
     {
@@ -75,11 +79,14 @@ export const plexMono = localFont({
   ],
 });
 
-/** Pricing / dashboard display type — Cabinet Grotesk (Fontshare), self-hosted. */
+/**
+ * Primary UI type — Cabinet Grotesk (Fontshare, free for commercial use).
+ * Weights: 400 Regular, 500 Medium, 700 Bold, 800 ExtraBold.
+ */
 export const cabinetGrotesk = localFont({
   variable: "--font-cabinet-grotesk",
   display: "swap",
-  preload: false,
+  preload: true,
   fallback: ["Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
   src: [
     {

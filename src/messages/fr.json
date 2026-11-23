@@ -92,14 +92,55 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Pour les entrepreneurs qui travaillent sur le terrain",
-      "headline": "Vous êtes sur le chantier. On s'occupe des appels.",
-      "accentWord": "On s'occupe des appels.",
-      "subheadline": "TradeCatch répond à vos appels clients et saisit chaque demande, pour que vous puissiez continuer à travailler.",
-      "ctaPrimary": "Réserver une démo gratuite",
-      "ctaSecondary": "Écouter la réceptionniste",
+      "eyebrow": "Réceptionniste téléphonique pour entreprises de service",
+      "headline": "Chaque appel mérite une réponse.",
+      "accentWord": "mérite une réponse.",
+      "subheadline": "TradeCatch prend en charge vos appels, recueille les demandes de vos clients et vous aide à ne manquer aucune occasion d’affaires.",
+      "ctaPrimary": "Voir la démo",
+      "ctaSecondary": "Découvrir les forfaits",
       "ctaTry": "Essayer la démo live",
-      "reassurance": "Démo gratuite. Aucun accès système requis. Vous parlez avec le fondateur."
+      "reassurance": "Démo gratuite. Aucun accès système requis. Vous parlez avec le fondateur.",
+      "preview": {
+        "badge": "Aperçu illustratif",
+        "workspaceLabel": "Espace TradeCatch",
+        "navOverview": "Aperçu",
+        "navCalls": "Appels",
+        "navRequests": "Demandes",
+        "statsAnswered": "Répondus",
+        "statsAnsweredValue": "18",
+        "statsRequests": "Demandes",
+        "statsRequestsValue": "7",
+        "callsTitle": "Appels récents",
+        "requestsTitle": "Demande client",
+        "rows": [
+          {
+            "name": "Marie L.",
+            "meta": "Entretien de fournaise · Laval",
+            "status": "Répondu",
+            "statusTone": "answered"
+          },
+          {
+            "name": "Jean P.",
+            "meta": "Demande de soumission · Montréal",
+            "status": "Nouvelle",
+            "statusTone": "new"
+          },
+          {
+            "name": "Sophie R.",
+            "meta": "Manqué · suivi par texto",
+            "status": "Suivi",
+            "statusTone": "missed"
+          }
+        ],
+        "selectedTitle": "Demande d’entretien de fournaise",
+        "selectedFields": [
+          { "label": "Appelant", "value": "Marie L." },
+          { "label": "Téléphone", "value": "(514) 555-0198" },
+          { "label": "Service", "value": "Fournaise qui ne chauffe pas" },
+          { "label": "Secteur", "value": "Laval" },
+          { "label": "Urgence", "value": "Le jour même" }
+        ]
+      }
     },
     "leaks": {
       "eyebrow": "Le problème",

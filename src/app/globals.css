@@ -112,12 +112,21 @@
   --color-green: var(--color-green);
   --color-signal-text: var(--color-signal-text);
 
-  --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  /* Cabinet Grotesk is the primary brand face (headings + body). */
+  --font-heading:
+    var(--font-cabinet-grotesk), ui-sans-serif, system-ui, sans-serif;
+  --font-sans:
+    var(--font-cabinet-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
-  /* next/font sets --font-cabinet-grotesk on <html>; this alias is for utilities. */
   --font-cabinet:
     var(--font-cabinet-grotesk), ui-sans-serif, system-ui, sans-serif;
+
+  /* Typography scale tokens (responsive via clamp in utilities below). */
+  --text-hero-size: clamp(2.25rem, 5vw, 4.75rem);
+  --text-section-size: clamp(1.75rem, 3.2vw, 2.75rem);
+  --text-card-size: clamp(1.125rem, 1.4vw, 1.5rem);
+  --text-body-size: clamp(0.9375rem, 0.2vw + 0.9rem, 1.0625rem);
+  --text-ui-size: 0.9375rem;
 
   --container-page: 1200px;
   --container-how: 1040px;
@@ -139,6 +148,9 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
+  font-size: var(--text-body-size);
+  line-height: 1.55;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   text-wrap: pretty;
   transition:
@@ -157,12 +169,20 @@ h2,
 h3,
 h4 {
   font-family: var(--font-heading);
-  letter-spacing: -0.04em;
-  /* At 800 weight the tight tracking eats the word gaps ("talktoanyone");
-     word-spacing hands that room back without loosening the letters. */
-  word-spacing: 0.08em;
-  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-weight: 700;
   text-wrap: balance;
+}
+
+h1 {
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+}
+
+.tabular-nums,
+.font-tabular {
+  font-variant-numeric: tabular-nums;
 }
 
 ::selection {
@@ -202,31 +222,51 @@ h4 {
   mask-image: radial-gradient(120% 80% at 50% 0%, #000, transparent 72%);
 }
 
-/* Typography helpers */
+/* Typography helpers — Cabinet Grotesk scale */
 .text-hero {
-  font-size: clamp(36px, 4.7vw, 62px);
-  line-height: 1;
-  letter-spacing: -0.04em;
+  font-family: var(--font-heading);
+  font-size: var(--text-hero-size);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
   font-weight: 800;
 }
 
 .text-page-hero {
-  font-size: clamp(32px, 4vw, 52px);
-  line-height: 1.04;
-  letter-spacing: -0.04em;
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  line-height: 1.08;
+  letter-spacing: -0.035em;
   font-weight: 800;
 }
 
 .text-section {
-  font-size: clamp(28px, 3.3vw, 42px);
-  line-height: 1.06;
-  letter-spacing: -0.04em;
-  font-weight: 800;
+  font-family: var(--font-heading);
+  font-size: var(--text-section-size);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.text-card-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-card-size);
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  font-weight: 700;
 }
 
 .text-lede {
-  font-size: clamp(16px, 1.25vw, 18px);
-  line-height: 1.58;
+  font-family: var(--font-sans);
+  font-size: clamp(1rem, 1.15vw, 1.125rem);
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+.text-ui {
+  font-family: var(--font-sans);
+  font-size: var(--text-ui-size);
+  line-height: 1.4;
+  font-weight: 500;
 }
 
 .text-mono-label {

@@ -5,11 +5,10 @@ import { CTAButton } from "@/components/CTAButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
 import { StickyAuditCta } from "@/components/StickyAuditCta";
 import { StoryDemos } from "@/components/StoryDemos";
-import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { WebsiteServiceAddOn } from "@/components/WebsiteServiceAddOn";
-import { accentHeadline } from "@/components/home/accent-headline";
+import { HomeHero } from "@/components/home/HomeHero";
+import type { HomeHeroPreviewCopy } from "@/components/home/HomeHeroPreview";
 import { formatPlanPrice, PLAN_PRICES } from "@/lib/plans";
-import { localizedAnchor } from "@/lib/anchors";
 import { websiteServiceAddOn } from "@/lib/plan-marketing";
 
 const SECTION =
@@ -79,9 +78,7 @@ export async function HomeMobile({ locale }: { locale: string }) {
   const t = await getTranslations("home");
   const cta = await getTranslations("cta");
   const plans = await getTranslations("plans");
-  const tryHref = localizedAnchor(locale, "/receptionist#try-it");
-  const headline = t("hero.headline");
-  const accentWord = t("hero.accentWord");
+  const heroPreview = t.raw("hero.preview") as HomeHeroPreviewCopy;
   const benefits = t.raw("mobile.benefits.items") as {
     title: string;
     body: string;
@@ -118,50 +115,18 @@ export async function HomeMobile({ locale }: { locale: string }) {
 
   return (
     <div className="lg:hidden">
-      {/* 1. Hero */}
-      <section className="relative overflow-hidden bg-navy px-0 py-8 text-white sm:py-9">
-        <div
-          aria-hidden
-          className="bg-grid-ink pointer-events-none absolute inset-0"
-        />
-        <Container className="relative">
-          <span className="inline-flex items-center gap-2 text-[12px] font-medium text-white/75">
-            <span className="block h-1.5 w-1.5 rounded-full bg-green" />
-            {t("hero.eyebrow")}
-          </span>
-          <h1 className="mt-3 font-heading text-[clamp(1.85rem,7.2vw,2.45rem)] font-extrabold leading-[1.08] tracking-[-0.04em] text-white">
-            {accentHeadline(headline, accentWord)}
-          </h1>
-          <p className="mt-3 max-w-[34em] text-[15.5px] leading-[1.55] text-white/70">
-            {t("hero.subheadline")}
-          </p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <CTAButton
-              href="/book-audit"
-              variant="ember"
-              size="lg"
-              className="w-full justify-center sm:w-auto"
-            >
-              {t("hero.ctaPrimary")}
-            </CTAButton>
-            <WatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-transparent px-5 py-3.5 text-[15px] font-semibold text-white sm:w-auto">
-              {cta("watchDemo")}
-            </WatchDemoButton>
-            <CTAButton
-              href={tryHref}
-              variant="link-ink"
-              className="justify-center text-[15px]"
-            >
-              {t("hero.ctaTry")} <span aria-hidden>→</span>
-            </CTAButton>
-          </div>
-          <p className="mt-3 text-[12.5px] leading-[1.45] text-white/65">
-            {t("hero.reassurance")}
-          </p>
-        </Container>
-      </section>
+      <HomeHero
+        compact
+        eyebrow={t("hero.eyebrow")}
+        headline={t("hero.headline")}
+        accentWord={t("hero.accentWord")}
+        subheadline={t("hero.subheadline")}
+        ctaPrimary={t("hero.ctaPrimary")}
+        ctaSecondary={t("hero.ctaSecondary")}
+        preview={heroPreview}
+      />
 
-      {/* 2b. The one public demo video */}
+      {/* Story demos remain below the hero for mobile conversion. */}
       <StoryDemos locale={locale} compact />
 
       {/* 3. Benefits */}

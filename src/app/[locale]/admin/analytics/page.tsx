@@ -34,7 +34,7 @@ export default async function AdminAnalyticsPage({
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t("analyticsHeadline")}</h1>
+        <h1 className="font-heading text-2xl font-extrabold text-navy">{t("analyticsHeadline")}</h1>
       </header>
       <form className="flex flex-wrap gap-2" method="get">
         <select name="business" defaultValue={query.business ?? ""} className="rounded-md border border-navy/15 px-2 py-1.5 text-sm">

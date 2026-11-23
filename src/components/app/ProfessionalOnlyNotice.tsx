@@ -10,7 +10,7 @@ export async function ProfessionalOnlyNotice() {
   const t = await getTranslations("app.professionalOnly");
   return (
     <section className="max-w-xl rounded-md border border-navy/10 bg-white px-5 py-5">
-      <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+      <h1 className="font-heading text-2xl font-extrabold text-navy">
         {t("title")}
       </h1>
       <p className="mt-2 text-navy/70">{t("body")}</p>

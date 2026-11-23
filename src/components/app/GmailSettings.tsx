@@ -123,7 +123,7 @@ export function GmailSettings({
     >
       <h2
         id="gmail-settings-title"
-        className="font-[family-name:var(--font-archivo)] text-lg font-extrabold text-navy"
+        className="font-heading text-lg font-extrabold text-navy"
       >
         {t("title")}
       </h2>

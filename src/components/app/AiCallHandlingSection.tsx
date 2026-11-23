@@ -180,7 +180,7 @@ export function AiCallHandlingSection({
       <header>
         <h2
           id="ai-call-handling-title"
-          className="font-[family-name:var(--font-archivo)] text-xl font-extrabold text-navy"
+          className="font-heading text-xl font-extrabold text-navy"
         >
           {t("title")}
         </h2>

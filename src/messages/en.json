@@ -92,14 +92,55 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "For contractors who work with their hands",
-      "headline": "You're on the job. We'll handle the calls.",
-      "accentWord": "We'll handle the calls.",
-      "subheadline": "TradeCatch answers your customer calls and captures every request, so you can keep working.",
-      "ctaPrimary": "Book a Free Demo",
-      "ctaSecondary": "Hear the Receptionist",
+      "eyebrow": "Phone receptionist for service businesses",
+      "headline": "Every call deserves an answer.",
+      "accentWord": "deserves an answer.",
+      "subheadline": "TradeCatch answers your calls, captures customer requests, and helps you miss fewer opportunities.",
+      "ctaPrimary": "Watch the demo",
+      "ctaSecondary": "See plans",
       "ctaTry": "Try the live receptionist demo",
-      "reassurance": "Free demo. No system access needed. You talk with the founder."
+      "reassurance": "Free demo. No system access needed. You talk with the founder.",
+      "preview": {
+        "badge": "Illustrative preview",
+        "workspaceLabel": "TradeCatch workspace",
+        "navOverview": "Overview",
+        "navCalls": "Calls",
+        "navRequests": "Requests",
+        "statsAnswered": "Answered",
+        "statsAnsweredValue": "18",
+        "statsRequests": "Requests",
+        "statsRequestsValue": "7",
+        "callsTitle": "Recent calls",
+        "requestsTitle": "Customer request",
+        "rows": [
+          {
+            "name": "Marie L.",
+            "meta": "Furnace service · Laval",
+            "status": "Answered",
+            "statusTone": "answered"
+          },
+          {
+            "name": "Jean P.",
+            "meta": "Quote request · Montréal",
+            "status": "New request",
+            "statusTone": "new"
+          },
+          {
+            "name": "Sophie R.",
+            "meta": "Missed · followed up by text",
+            "status": "Follow-up",
+            "statusTone": "missed"
+          }
+        ],
+        "selectedTitle": "Furnace service request",
+        "selectedFields": [
+          { "label": "Caller", "value": "Marie L." },
+          { "label": "Phone", "value": "(514) 555-0198" },
+          { "label": "Service", "value": "Furnace not heating" },
+          { "label": "Area", "value": "Laval" },
+          { "label": "Urgency", "value": "Same day" }
+        ]
+      }
     },
     "leaks": {
       "eyebrow": "The problem",

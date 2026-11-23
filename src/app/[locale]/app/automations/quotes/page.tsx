@@ -30,7 +30,7 @@ export default async function QuoteAutomationPage({
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+        <h1 className="font-heading text-2xl font-extrabold text-navy">
           {t("names.quote_followup")}
         </h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("quoteIntro")}</p>

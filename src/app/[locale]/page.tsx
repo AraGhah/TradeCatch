@@ -7,10 +7,10 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { PricingPreview } from "@/components/PricingPreview";
 import { HomeMobile } from "@/components/home/HomeMobile";
-import { accentHeadline } from "@/components/home/accent-headline";
-import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { HomeHero } from "@/components/home/HomeHero";
+import type { HomeHeroPreviewCopy } from "@/components/home/HomeHeroPreview";
 import { StoryDemos } from "@/components/StoryDemos";
-import { localizedAnchor } from "@/lib/anchors";
+import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -39,77 +39,27 @@ export default async function HomePage({
   const cta = await getTranslations("cta");
   const site = await getTranslations("site");
 
-  const tryHref = localizedAnchor(locale, "/receptionist#try-it");
-  const headline = t("hero.headline");
-  const accentWord = t("hero.accentWord");
   const leakCards = t.raw("leaks.cards") as { title: string; body: string }[];
   const systemSteps = t.raw("system.steps") as {
     title: string;
     body: string;
   }[];
+  const heroPreview = t.raw("hero.preview") as HomeHeroPreviewCopy;
 
   return (
     <>
       <HomeMobile locale={locale} />
 
       <div className="hidden lg:block">
-        {/* 1. Hero */}
-        <section
-          className="relative overflow-hidden bg-navy text-white"
-          style={{
-            padding: "clamp(40px, 5vw, 72px) 0 clamp(44px, 5.4vw, 80px)",
-          }}
-        >
-          <div
-            aria-hidden
-            className="bg-grid-ink pointer-events-none absolute inset-0"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute top-[-160px] right-[-120px] h-[520px] w-[520px] rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(228,118,43,0.16), transparent 66%)",
-            }}
-          />
-          <Container className="relative text-center">
-            <div className="mx-auto max-w-[46rem]">
-              <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
-                <span className="animate-tc-pulse block h-[7px] w-[7px] rounded-full bg-green" />
-                {t("hero.eyebrow")}
-              </span>
-
-              <h1 className="text-hero mt-5 text-white">
-                {accentHeadline(headline, accentWord)}
-              </h1>
-
-              <p className="text-lede mx-auto mt-4 max-w-[38em] text-white/72">
-                {t("hero.subheadline")}
-              </p>
-
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <CTAButton href="/book-audit" variant="ember" size="lg">
-                  {t("hero.ctaPrimary")}
-                </CTAButton>
-                <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
-                  {cta("watchDemo")}
-                </WatchDemoButton>
-              </div>
-
-              <CTAButton
-                href={tryHref}
-                variant="link-ink"
-                className="mt-4 text-[15.5px]"
-              >
-                {t("hero.ctaTry")} <span aria-hidden>→</span>
-              </CTAButton>
-
-              <p className="mt-4 font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.7)] uppercase">
-                {t("hero.reassurance")}
-              </p>
-            </div>
-          </Container>
-        </section>
+        <HomeHero
+          eyebrow={t("hero.eyebrow")}
+          headline={t("hero.headline")}
+          accentWord={t("hero.accentWord")}
+          subheadline={t("hero.subheadline")}
+          ctaPrimary={t("hero.ctaPrimary")}
+          ctaSecondary={t("hero.ctaSecondary")}
+          preview={heroPreview}
+        />
 
         {/* 2. The problem: where revenue leaks */}
         <section

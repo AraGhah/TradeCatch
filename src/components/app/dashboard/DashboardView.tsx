@@ -128,7 +128,7 @@ export function DashboardView({
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="font-mono text-[11px] tracking-[0.14em] text-ember-text uppercase">TradeCatch</p>
-          <h1 className="mt-1 font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
+          <h1 className="mt-1 font-heading text-3xl font-extrabold text-navy">
             {t("headline")}
           </h1>
           <p className="mt-2 max-w-2xl text-sm text-navy/70">{t("intro")}</p>
@@ -232,7 +232,7 @@ export function DashboardView({
       {data.notices.some((notice) => notice.unread) ? (
         <section id="alerts" className="rounded-xl border border-navy/10 bg-white p-4 shadow-[var(--shadow-card)]">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
+            <h2 className="font-heading text-base font-extrabold text-navy">
               {t("sectionAlerts")}
             </h2>
             <Link href="/app/notifications" className="text-sm font-semibold text-ember-text hover:underline">
@@ -316,7 +316,7 @@ export function DashboardView({
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <section id="activity" className="rounded-xl border border-navy/10 bg-white p-4 shadow-[var(--shadow-card)]">
-          <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
+          <h2 className="font-heading text-base font-extrabold text-navy">
             {t("sectionActivity")}
           </h2>
           {data.activity.length === 0 ? (
@@ -339,7 +339,7 @@ export function DashboardView({
         </section>
 
         <section id="ai" className="rounded-xl border border-navy/10 bg-white p-4 shadow-[var(--shadow-card)]">
-          <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
+          <h2 className="font-heading text-base font-extrabold text-navy">
             {t("sectionAi")}
           </h2>
           <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
@@ -386,7 +386,7 @@ export function DashboardView({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold tracking-wide text-navy/70 uppercase">{t("detailCall")}</p>
-              <h2 id="call-detail-title" className="font-[family-name:var(--font-archivo)] text-xl font-extrabold text-navy">
+              <h2 id="call-detail-title" className="font-heading text-xl font-extrabold text-navy">
                 {selectedAi?.caller || selectedRow?.caller}
               </h2>
               <p className="text-sm text-navy/70">
@@ -449,7 +449,7 @@ export function DashboardView({
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold tracking-wide text-navy/70 uppercase">{t("detailAppointment")}</p>
-              <h2 className="font-[family-name:var(--font-archivo)] text-xl font-extrabold text-navy">
+              <h2 className="font-heading text-xl font-extrabold text-navy">
                 {selectedAppointment.customerName || selectedAppointment.serviceName}
               </h2>
             </div>
@@ -582,7 +582,7 @@ function AiStat({ label, value }: { label: string; value: number | undefined }) 
   return (
     <div className="rounded-lg bg-paper px-3 py-2">
       <dt className="text-xs text-navy/70">{label}</dt>
-      <dd className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{value ?? "—"}</dd>
+      <dd className="font-heading text-2xl font-extrabold text-navy">{value ?? "—"}</dd>
     </div>
   );
 }
@@ -617,7 +617,7 @@ function StatCard({ card, onOpen }: { card: CardModel; onOpen: () => void }) {
       className={`rounded-xl border border-navy/10 bg-white px-4 py-4 text-left shadow-[var(--shadow-card)] motion-safe:transition motion-safe:hover:-translate-y-0.5 ${FOCUS}`}
     >
       <span className="block text-xs font-semibold tracking-wide text-navy/70 uppercase">{card.label}</span>
-      <span className="mt-2 block font-[family-name:var(--font-archivo)] text-3xl font-extrabold text-navy">
+      <span className="mt-2 block font-heading text-3xl font-extrabold text-navy">
         {card.value}
       </span>
       <span className="mt-2 flex items-center justify-between gap-2">

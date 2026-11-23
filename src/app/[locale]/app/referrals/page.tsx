@@ -30,7 +30,7 @@ export default async function AppReferralsPage({
 
   const header = (
     <header>
-      <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+      <h1 className="font-heading text-2xl font-extrabold text-navy">
         {t("headline")}
       </h1>
       <p className="mt-2 max-w-[44em] text-navy/70">{t("intro")}</p>
@@ -144,7 +144,7 @@ export default async function AppReferralsPage({
           {overview.rewards.map((reward) => (
             <li key={reward.plan} className="rounded-md border border-navy/10 px-4 py-3">
               <p className="text-sm text-navy/70">{t("whenTheyChoose", { plan: planName(reward.plan) })}</p>
-              <p className="mt-1 font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+              <p className="mt-1 font-heading text-2xl font-extrabold text-navy">
                 {reward.earns ? t("giftCardAmount", { amount: money(reward.amountCents) }) : t("noReward")}
               </p>
             </li>
@@ -155,7 +155,7 @@ export default async function AppReferralsPage({
               className="rounded-md border border-orange/50 px-4 py-3"
             >
               <p className="text-sm text-navy/70">{t("websiteBonusLabel")}</p>
-              <p className="mt-1 font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+              <p className="mt-1 font-heading text-2xl font-extrabold text-navy">
                 + {money(overview.websiteBonusCents)}
               </p>
               <p className="mt-1 text-xs text-navy/60">{t("websiteBonusHelp")}</p>
@@ -182,7 +182,7 @@ export default async function AppReferralsPage({
           ).map(([key, value]) => (
             <div key={key} className={CARD}>
               <dt className="text-sm text-navy/70">{t(`stats.${key}`)}</dt>
-              <dd className="mt-1 font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+              <dd className="mt-1 font-heading text-2xl font-extrabold text-navy">
                 {value}
               </dd>
             </div>

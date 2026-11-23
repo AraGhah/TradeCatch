@@ -75,7 +75,7 @@ export function Header() {
     >
       <Container className="flex h-(--header-h) items-center justify-between gap-4">
         <div className="flex h-full w-full items-center justify-between gap-4 max-[420px]:gap-2">
-          <Link href="/" className={`flex items-center rounded-md py-2.5 ${FOCUS_RING}`}>
+          <Link href="/" className={`flex items-center rounded-md py-2.5 font-heading ${FOCUS_RING}`}>
             <BrandLockup />
           </Link>
 
