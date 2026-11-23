@@ -115,6 +115,9 @@
   --font-heading: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  /* next/font sets --font-cabinet-grotesk on <html>; this alias is for utilities. */
+  --font-cabinet:
+    var(--font-cabinet-grotesk), ui-sans-serif, system-ui, sans-serif;
 
   --container-page: 1200px;
   --container-how: 1040px;

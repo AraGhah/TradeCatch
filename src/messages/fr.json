@@ -593,8 +593,8 @@
   },
   "pricing": {
     "eyebrow": "Tarifs",
-    "headline": "Deux forfaits. Un choix simple.",
-    "intro": "Essential répond à vos appels et capte vos clients. Professional prend aussi vos rendez-vous. Tous les prix sont en dollars canadiens.",
+    "headline": "Des forfaits simples. Plus d’occasions saisies.",
+    "intro": "Choisissez la solution adaptée à votre entreprise. Une tarification claire, sans mauvaise surprise. Tous les prix sont en dollars canadiens.",
     "reassurance": "Mois par mois après l’installation. Annulation avec préavis.",
     "metaDescription": "Tarifs TradeCatch en CAD : Essential à 249,99 $ par mois et Professional à 349,99 $ par mois, avec des frais d’installation uniques de 1 999,99 $. Service de site web facultatif à 699,99 $.",
     "principles": [
@@ -651,6 +651,7 @@
             ]
           }
         ],
+        "ctaLabel": "Choisir Essential",
         "planInterest": "essential"
       },
       {
@@ -701,6 +702,7 @@
             ]
           }
         ],
+        "ctaLabel": "Choisir Professional",
         "planInterest": "professional"
       }
     ],
@@ -760,6 +762,7 @@
     },
     "onceLabel": "payé une fois",
     "monthlyEyebrow": "Chaque mois",
+    "periodLabel": "mois",
     "websiteMention": "Besoin d’un site web? Ajoutez notre service de site web pour 699,99 $.",
     "billingBanner": "À la caisse, vous payez les frais d’installation uniques. Votre premier paiement mensuel a lieu un mois plus tard.",
     "schedulingNote": "La prise de rendez-vous est activée pour votre entreprise une fois qu’elle a été testée avec votre Google Agenda pendant l’installation."

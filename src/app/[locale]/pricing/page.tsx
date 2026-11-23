@@ -22,7 +22,12 @@ import { localizedAnchor } from "@/lib/anchors";
 import { schedulingVerified } from "@/lib/launch-flags";
 import { comparisonRowsFromCatalog } from "@/lib/plan-marketing";
 import { planDisplayName } from "@/lib/plan-names";
-import { formatPlanMoney } from "@/lib/plans";
+import {
+  formatPlanMoney,
+  formatPlanPrice,
+  PLAN_PRICES,
+  type PlanId as PricePlanId,
+} from "@/lib/plans";
 import { buildMetadata } from "@/lib/seo";
 import {
   PLAN_ORDER,
@@ -32,6 +37,8 @@ import {
   REFERRAL_WEBSITE_BONUS_CENTS,
   type PlanId,
 } from "@/product/saas/plan-catalog";
+
+const LAUNCH_PLAN_IDS = ["essential", "professional"] as const satisfies readonly PricePlanId[];
 
 export async function generateMetadata({
   params,
@@ -66,13 +73,31 @@ export default async function PricingPage({
   const schedulingLive = schedulingVerified();
 
   // Hash links need the visitor's localized path (see localizedAnchor).
-  const tiers = (t.raw("tiers") as PricingTier[]).map((tier) => {
-    const linked = tier.secondaryCtaHref?.includes("#")
-      ? {
-          ...tier,
-          secondaryCtaHref: localizedAnchor(locale, tier.secondaryCtaHref),
-        }
-      : tier;
+  // Monthly/setup amounts always come from PLAN_PRICES so card copy cannot drift.
+  const tiers = (t.raw("tiers") as PricingTier[]).map((tier, index) => {
+    const planId =
+      tier.planInterest === "essential" || tier.planInterest === "professional"
+        ? tier.planInterest
+        : LAUNCH_PLAN_IDS[index] ?? "essential";
+    const amounts = PLAN_PRICES[planId];
+    const setupAmount = formatPlanPrice(amounts.setup, lang);
+    const monthlyAmount = formatPlanPrice(amounts.monthly, lang);
+    const linked: PricingTier = {
+      ...tier,
+      setupAmount,
+      monthlyAmount,
+      price:
+        lang === "fr"
+          ? `${setupAmount} d’installation`
+          : `${setupAmount} setup`,
+      cadence:
+        lang === "fr" ? `${monthlyAmount} / mois` : `${monthlyAmount} / month`,
+      ...(tier.secondaryCtaHref?.includes("#")
+        ? {
+            secondaryCtaHref: localizedAnchor(locale, tier.secondaryCtaHref),
+          }
+        : {}),
+    };
     return !schedulingLive && linked.planInterest === "professional"
       ? { ...linked, usageNote: t("schedulingNote") }
       : linked;
@@ -175,9 +200,11 @@ export default async function PricingPage({
         <Container className="relative">
           <div className="grid items-end gap-x-16 gap-y-10 lg:grid-cols-[1.2fr_0.8fr]">
             <div>
-              <p className="text-[13px] font-medium text-orange">{t("eyebrow")}</p>
+              <p className="font-cabinet text-[13px] font-medium text-orange">
+                {t("eyebrow")}
+              </p>
               <h1
-                className="mt-4 max-w-[14em] font-heading font-extrabold text-white"
+                className="mt-4 max-w-[16em] font-cabinet font-extrabold text-white"
                 style={{
                   fontSize: "clamp(36px, 5vw, 58px)",
                   lineHeight: 0.98,
@@ -186,7 +213,7 @@ export default async function PricingPage({
               >
                 {t("headline")}
               </h1>
-              <p className="mt-5 max-w-[34em] text-[clamp(16px,1.35vw,18px)] leading-[1.6] text-white/68">
+              <p className="mt-5 max-w-[34em] font-cabinet text-[clamp(16px,1.35vw,18px)] leading-[1.6] text-white/68">
                 {t("intro")}
               </p>
               <p className="mt-4 max-w-[34em] rounded-[12px] border border-orange/40 bg-[rgba(228,118,43,0.16)] px-3.5 py-2.5 text-[14px] leading-[1.45] text-white/90">
@@ -222,6 +249,7 @@ export default async function PricingPage({
               setupLabel: t("setupLabel"),
               onceLabel: t("onceLabel"),
               monthlyEyebrow: t("monthlyEyebrow"),
+              periodLabel: t("periodLabel"),
               includesTitle: t("includesTitle"),
               includesItems: t.raw("includesItems") as string[],
               websiteMention: t("websiteMention"),
