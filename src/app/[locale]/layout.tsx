@@ -10,10 +10,7 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { PUBLIC_CONTACT_EMAIL } from "@/lib/contact";
-import {
-  PUBLIC_CLIENT_NAMESPACES,
-  pickMessages,
-} from "@/i18n/client-messages";
+import { PUBLIC_CLIENT_NAMESPACES, pickMessages } from "@/i18n/client-messages";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CookieConsent } from "@/components/CookieConsent";
@@ -22,7 +19,7 @@ import { HeadInlineScripts } from "@/components/HeadInlineScripts";
 import { ScrollReveal } from "@/components/motion/ScrollReveal";
 import { MarketingChrome } from "@/components/MarketingChrome";
 import { DemoModeBanner } from "@/components/DemoModeBanner";
-import { archivo, plexMono, plexSans } from "@/fonts";
+import { archivo, cabinetGrotesk, plexMono, plexSans } from "@/fonts";
 import "../globals.css";
 
 export function generateStaticParams() {
@@ -89,7 +86,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       data-scroll-behavior="smooth"
-      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable} ${cabinetGrotesk.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <HeadInlineScripts

@@ -74,3 +74,33 @@ export const plexMono = localFont({
     },
   ],
 });
+
+/** Dashboard shell typography — Cabinet Grotesk (Fontshare), self-hosted. */
+export const cabinetGrotesk = localFont({
+  variable: "--font-cabinet-grotesk",
+  display: "swap",
+  preload: false,
+  fallback: ["Segoe UI", "Helvetica Neue", "Arial", "sans-serif"],
+  src: [
+    {
+      path: "./cabinet-grotesk-400.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "./cabinet-grotesk-500.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "./cabinet-grotesk-700.woff2",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "./cabinet-grotesk-800.woff2",
+      weight: "800",
+      style: "normal",
+    },
+  ],
+});
