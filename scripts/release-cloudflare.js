@@ -3,6 +3,7 @@ const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const { check } = require("./require-green-ci");
 const { checkWorkerDatabase } = require("./check-worker-database");
+const { stripBundledEnvFile } = require("./strip-bundled-env-secrets");
 
 const args = process.argv.slice(2);
 const mode = args.shift();
@@ -23,6 +24,9 @@ const approved = check({ staging });
 checkWorkerDatabase({ staging });
 run(path.resolve("scripts/clear-open-next.js"), []);
 run(cli, ["build"]);
+// OpenNext embeds `.env*` into next-env.mjs as runtime fallbacks. Strip secrets
+// before upload so a missing Worker binding cannot revive a stale local password.
+stripBundledEnvFile();
 const final = check({ staging });
 if (approved.head_sha !== final.head_sha)
   throw new Error(

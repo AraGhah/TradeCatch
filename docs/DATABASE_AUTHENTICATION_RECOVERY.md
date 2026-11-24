@@ -30,10 +30,19 @@ unverifiable `DATABASE_URL` secrets block release. Production and staging are
 checked independently. The check cannot read a secret value and therefore does
 not claim its password is valid; verify connectivity after secret rotation.
 
-Run `node scripts/check-worker-database.js` (or add `--staging`) for the same
-read-only metadata check. Keep actual credentials in Cloudflare secrets. Do not
-depend on a developer `.env.local` fallback, commit a database URL in Wrangler
-variables, or disable durable storage to silence authentication errors.
+After the OpenNext build, `scripts/strip-bundled-env-secrets.js` removes
+`DATABASE_URL` and other credential keys from `.open-next/cloudflare/next-env.mjs`
+before upload. OpenNext otherwise embeds `.env*` values and applies them with
+`process.env[key] ??= bundled` when a Worker binding is missing — that was the
+path from a stale local password to production `28P01`. `npm run build:cloudflare`
+and `npm run deploy` both run this strip. A remaining database URL with a
+password in that module still blocks release.
+
+Run `npm run check:worker-database` (or `node scripts/check-worker-database.js`,
+optionally with `--staging`) for the same read-only metadata check. Keep actual
+credentials in Cloudflare secrets. Do not depend on a developer `.env.local`
+fallback, commit a database URL in Wrangler variables, or disable durable storage
+to silence authentication errors.
 
 For a future `28P01`:
 
