@@ -95,19 +95,61 @@ async function freeSlots(page: Page, id: string): Promise<Slot[]> {
   return slots.sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt));
 }
 
+/**
+ * Pack non-overlapping starts on one day. Appointments are one hour, so a day
+ * with four half-hour slots spanning three hours may only fit three bookings
+ * when each claim ends at start+1h (CAL-04 flake).
+ */
+function packDay(slots: Slot[], count: number, durationMs = 3_600_000) {
+  const byDay = new Map<string, Slot[]>();
+  for (const slot of slots)
+    byDay.set(slot.dayKey, [...(byDay.get(slot.dayKey) ?? []), slot]);
+  for (const [dayKey, list] of byDay) {
+    const packed: Slot[] = [];
+    let from = 0;
+    for (const slot of list) {
+      const start = Date.parse(slot.startAt);
+      if (start < from) continue;
+      packed.push(slot);
+      from = start + durationMs;
+      if (packed.length >= count) {
+        return {
+          dayKey,
+          first: packed[0]!.startAt,
+          last: packed[packed.length - 1]!.startAt,
+          packed,
+        };
+      }
+    }
+  }
+  throw new Error(
+    `no free day with room for ${count} non-overlapping appointments in the next two months`,
+  );
+}
+
 /** The first day with enough room for two appointments hours apart. */
 function roomyDay(slots: Slot[]) {
   const byDay = new Map<string, Slot[]>();
   for (const slot of slots)
     byDay.set(slot.dayKey, [...(byDay.get(slot.dayKey) ?? []), slot]);
-  for (const [dayKey, list] of byDay) {
-    const first = list[0]!;
-    const last = list[list.length - 1]!;
+  for (const daySlots of byDay.values()) {
+    const first = daySlots[0]!;
+    const last = daySlots[daySlots.length - 1]!;
     if (
-      list.length >= 4 &&
-      Date.parse(last.startAt) - Date.parse(first.startAt) >= 3 * 3_600_000
+      daySlots.length < 4 ||
+      Date.parse(last.startAt) - Date.parse(first.startAt) < 3 * 3_600_000
     )
-      return { dayKey, first: first.startAt, last: last.startAt };
+      continue;
+    try {
+      const packed = packDay(daySlots, 2);
+      return {
+        dayKey: packed.dayKey,
+        first: packed.first,
+        last: packed.last,
+      };
+    } catch {
+      // Try the next day.
+    }
   }
   throw new Error("no free day with room for two appointments in the next two months");
 }
@@ -366,19 +408,13 @@ test("CAL-04: Month view shows each appointment on its day, with a count past th
   page,
 }) => {
   const { id } = await openWorkspace(page);
-  const open = roomyDay(await freeSlots(page, id));
+  const open = packDay(await freeSlots(page, id), 4);
 
   // Four appointments, one after another, on the same day.
   const names = ["Month One", "Month Two", "Month Three", "Month Four"];
-  let from = 0;
   let booked = 0;
-  for (const name of names) {
-    const next = (await freeSlots(page, id)).find(
-      (slot) => slot.dayKey === open.dayKey && Date.parse(slot.startAt) >= from,
-    );
-    if (!next) break;
-    const made = await book(page, id, next.startAt, name);
-    from = Date.parse(made.endAt);
+  for (const [index, name] of names.entries()) {
+    await book(page, id, open.packed[index]!.startAt, name);
     booked += 1;
   }
   expect(booked, "room for four appointments on the busiest day").toBe(4);
