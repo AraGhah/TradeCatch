@@ -22,6 +22,7 @@ export async function workspaceSession(
       headers: {
         Authorization: "Bearer tradecatch-e2e-ops-secret-not-for-production",
         "X-Ops-Actor": "playwright-workspace",
+        "x-forwarded-for": clientIp,
       },
       data: {
         email,
