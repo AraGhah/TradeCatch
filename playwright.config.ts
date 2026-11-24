@@ -57,6 +57,10 @@ export default defineConfig({
       PORT: String(E2E_PORT),
       NEXT_PUBLIC_SITE_URL: E2E_ORIGIN,
       TRADECATCH_E2E: "1",
+      // Parallel specs share one Node server; unidentified api.write traffic
+      // hits the default per-address backstop and flakes as HTTP 429 (see
+      // docs/KAN-12_AUTHENTICATION.md). Named route policies stay enforced.
+      RATE_LIMIT_MODE: "off",
       // The default harness exercises storage-disabled behavior. Never inherit
       // a developer's production database or provider keys from .env.local.
       DATABASE_URL: "",
