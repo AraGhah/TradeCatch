@@ -11,7 +11,7 @@ const {
 } = require("../../scripts/strip-bundled-env-secrets.js");
 
 const SAMPLE = [
-  'export const production = {"DATABASE_URL":"postgres://app:StalePassword123@db.example.supabase.co:5432/postgres","NEXT_PUBLIC_SITE_URL":"https://tradecatch.ca","TRADECATCH_ENV":"production","AUTH_SECRET":"abcdefghijklmnopqrstuvwxyz012345","MISSED_CALL_DURABLE_STORE":"1"};',
+  'export const production = {"DATABASE_URL":"postgres://app:StalePassword123@db.example.supabase.co:5432/postgres","NEXT_PUBLIC_SITE_URL":"https://tradecatch.ca","TRADECATCH_ENV":"production","AUTH_SECRET":"abcdefghijklmnopqrstuvwxyz012345","MISSED_CALL_DURABLE_STORE":"1"};', // secret-scan: allow
   'export const development = {"OPENAI_API_KEY":"sk-test-not-for-production-xxxxxxxxxxxx","NEXT_PUBLIC_DEMO_MODE":"1"};',
   "export const test = {};",
   "",
@@ -32,7 +32,7 @@ test("stripSecretKeys drops credentials and keeps safe values", () => {
   const { cleaned, removed } = stripSecretKeys({
     DATABASE_URL: "postgres://app:secret@host/db",
     NEXT_PUBLIC_SITE_URL: "https://tradecatch.ca",
-    AUTH_SECRET: "abcdefghijklmnopqrstuvwxyz012345",
+    AUTH_SECRET: "abcdefghijklmnopqrstuvwxyz012345", // secret-scan: allow
     MISSED_CALL_DURABLE_STORE: "1",
   });
   assert.equal(removed, 2);
@@ -60,7 +60,7 @@ test("stripBundledEnvSecrets refuses a remaining database URL with a password", 
   // Key name deliberately avoids SECRET/TOKEN/PASSWORD so only the URL shape
   // triggers the fail-closed scan after key stripping.
   const smuggled = [
-    'export const production = {"LEGACY_DB_DSN":"postgres://app:RealPassword999999@db.example.supabase.co:5432/postgres"};',
+    'export const production = {"LEGACY_DB_DSN":"postgres://app:RealPassword999999@db.example.supabase.co:5432/postgres"};', // secret-scan: allow
     "export const development = {};",
     "export const test = {};",
     "",
