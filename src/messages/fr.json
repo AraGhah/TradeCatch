@@ -4801,6 +4801,8 @@
       "mfaGenerating": "Génération…",
       "mfaVerifying": "Vérification…",
       "mfaNoAnswer": "Le serveur n’a pas répondu. Rien n’a été confirmé; réessayez dans un instant.",
+      "mfaQrLabel": "Code QR de l’application d’authentification pour la vérification administrateur",
+      "mfaQrHint": "Scannez ce code avec Google Authenticator ou Microsoft Authenticator, ou utilisez la clé ci-dessous.",
       "mfaKeyLabel": "Clé de configuration (à saisir manuellement dans votre application d’authentification)",
       "mfaOpenApp": "Ouvrir dans l’application d’authentification",
       "mfaConfirm": "Activer la vérification",
