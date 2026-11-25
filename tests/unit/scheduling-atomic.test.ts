@@ -1,6 +1,5 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { test, mock } from "node:test";
 import { Pool } from "pg";
 import { closePgPool } from "../../src/product/missed-call/postgres-store";
@@ -11,6 +10,7 @@ import {
   createSimulatedCalendar,
 } from "../../src/product/scheduling/service";
 import { createGoogleSyncPort } from "../../src/product/scheduling/gcal/port";
+import { schedulingSchemaSql } from "../support/scheduling-schema";
 
 test("a reservation remains a hold until its calendar event is created", async () => {
   const store = createMemorySchedulingStore();
@@ -252,7 +252,7 @@ test(
         "CREATE TABLE tc_organizations(id TEXT PRIMARY KEY); CREATE TABLE mc_schema_migrations(id TEXT PRIMARY KEY)",
       );
       await sql.query(
-        readFileSync("src/product/scheduling/schema.sql", "utf8"),
+        schedulingSchemaSql(),
       );
       await sql.query(
         "INSERT INTO tc_organizations(id) VALUES ('booking_test')",

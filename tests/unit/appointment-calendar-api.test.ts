@@ -16,12 +16,11 @@
  */
 import "../support/next-request-context";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { after, afterEach, before, beforeEach, describe, it, mock } from "node:test";
 import { NextRequest } from "next/server";
 import { withRequest } from "../support/next-request-context";
 import { createPglite, pgliteAvailable, poolOf, type PgliteDb } from "../support/pglite-pool";
+import { schedulingSchemaSql } from "../support/scheduling-schema";
 import { GET as listGET, POST as createPOST } from "../../src/app/api/businesses/[id]/appointments/route";
 import {
   GET as detailGET,
@@ -66,7 +65,7 @@ describe("KAN-19 appointment calendar API (PGlite)", { skip: !available && "PGli
       CREATE TABLE mc_schema_migrations (id TEXT PRIMARY KEY);
       CREATE TABLE tc_organizations (id TEXT PRIMARY KEY);
     `);
-    await db.exec(readFileSync(path.join(process.cwd(), "src", "product", "scheduling", "schema.sql"), "utf8"));
+    await db.exec(schedulingSchemaSql());
     pool = poolOf(db);
   });
   after(async () => {

@@ -14,8 +14,6 @@
  * that is not local, so it can never touch a real database.
  */
 import { randomBytes } from "node:crypto";
-import { readFileSync } from "node:fs";
-import path from "node:path";
 import { after, before, describe } from "node:test";
 import { Pool } from "pg";
 import { setPgPoolForTests } from "../../src/product/missed-call/postgres-store";
@@ -27,6 +25,7 @@ import {
   type PgliteDb,
 } from "../support/pglite-pool";
 import { registerSyncScenarios } from "./gcal-scenarios";
+import { schedulingSchemaSql } from "../support/scheduling-schema";
 import assert from "node:assert/strict";
 import { it } from "node:test";
 import {
@@ -64,10 +63,7 @@ describe(
     let schemaName = "";
 
     before(async () => {
-      const schema = readFileSync(
-        path.join(process.cwd(), "src", "product", "scheduling", "schema.sql"),
-        "utf8",
-      );
+      const schema = schedulingSchemaSql();
       const stubs = `
         CREATE TABLE mc_schema_migrations (id TEXT PRIMARY KEY);
         CREATE TABLE tc_organizations (id TEXT PRIMARY KEY);
