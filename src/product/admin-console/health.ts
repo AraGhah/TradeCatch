@@ -1,11 +1,14 @@
 import type { MonitorStatus, ReliabilityService } from "@/product/reliability/service";
-import type {
-  AlertDelivery,
-  FailedOperation,
-  Incident,
-  Priority,
-  ServiceHealth,
-  SystemError,
+import {
+  DISPLAY_PRIORITY_RANK,
+  displayPriority,
+  type AlertDelivery,
+  type DisplayPriority,
+  type FailedOperation,
+  type Incident,
+  type Priority,
+  type ServiceHealth,
+  type SystemError,
 } from "@/product/reliability/types";
 
 /**
@@ -215,6 +218,15 @@ export type HealthFilter = {
   service?: string;
 };
 
+export type IncidentCounts = Record<DisplayPriority, number> & { resolved: number };
+
+/** Most urgent first, then the most recently seen. */
+function compareIncidents(a: Incident, b: Incident): number {
+  const byPriority = DISPLAY_PRIORITY_RANK[displayPriority(b)] - DISPLAY_PRIORITY_RANK[displayPriority(a)];
+  if (byPriority !== 0) return byPriority;
+  return (b.lastSeenAt ?? b.createdAt).localeCompare(a.lastSeenAt ?? a.createdAt);
+}
+
 export type SystemHealth = {
   generatedAt: string;
   overall: "healthy" | "degraded" | "unavailable";
@@ -253,7 +265,12 @@ export type SystemHealth = {
   /** Errors whose operation is a webhook delivery. */
   webhookFailures: SystemError[];
   failedOperations: FailedOperation[];
+  /** Active (open or acknowledged) incidents, Critical first, then High, Warning, Low. */
   incidents: Incident[];
+  /** Most recently resolved first. Kept, never deleted. */
+  resolvedIncidents: Incident[];
+  /** Remaining active incidents per priority, and how many are resolved. */
+  incidentCounts: IncidentCounts;
   jobs: { pending: number; failed: number; dead: number; resolved: number };
   /** Counts over the filtered set, for the summary tiles. */
   totals: { openErrors: number; webhookFailures: number; failedOperations: number; openIncidents: number };
@@ -295,11 +312,19 @@ export async function loadSystemHealth(
     .filter((e) => inRange(e.createdAt, filter))
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
-  const incidents = allIncidents
+  const matchingIncidents = allIncidents
     .filter((i) => (!filter.status || i.status === filter.status))
     .filter((i) => (!filter.service || i.service === filter.service))
-    .filter((i) => inRange(i.createdAt, filter))
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    .filter((i) => inRange(i.createdAt, filter));
+  // Active work first, most urgent first; the most recently seen breaks ties.
+  const incidents = matchingIncidents
+    .filter((i) => i.status !== "resolved")
+    .sort(compareIncidents);
+  const resolvedIncidents = matchingIncidents
+    .filter((i) => i.status === "resolved")
+    .sort((a, b) => (b.resolvedAt ?? b.createdAt).localeCompare(a.resolvedAt ?? a.createdAt));
+  const incidentCounts: IncidentCounts = { critical: 0, high: 0, warning: 0, low: 0, resolved: resolvedIncidents.length };
+  for (const incident of incidents) incidentCounts[displayPriority(incident)] += 1;
 
   const failedOperations = operations
     .filter((o) => !filter.organizationId || o.organizationId === filter.organizationId)
@@ -348,7 +373,9 @@ export async function loadSystemHealth(
     errors: errors.slice(0, 100),
     webhookFailures: webhookFailures.slice(0, 50),
     failedOperations: failedOperations.slice(0, 100),
-    incidents: incidents.slice(0, 50),
+    incidents: incidents.slice(0, 200),
+    resolvedIncidents: resolvedIncidents.slice(0, 50),
+    incidentCounts,
     jobs,
     totals: {
       openErrors: errors.filter((e) => e.status !== "resolved").length,

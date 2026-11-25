@@ -2,7 +2,16 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { AreaState, SystemHealth } from "@/product/admin-console/health";
-import type { AlertDelivery, FailedOperation, Incident, ServiceHealth, SystemError } from "@/product/reliability/types";
+import {
+  DISPLAY_PRIORITIES,
+  displayPriority,
+  type AlertDelivery,
+  type DisplayPriority,
+  type FailedOperation,
+  type Incident,
+  type ServiceHealth,
+  type SystemError,
+} from "@/product/reliability/types";
 import { Link } from "@/i18n/navigation";
 import { SkeletonTiles } from "@/components/ui/Skeleton";
 import { adminFetch, queryString, useAdminAction, useAdminData, useAdminPermissions } from "./api";
@@ -141,7 +150,22 @@ const en = {
   jobsTitle: "Failed jobs",
   incidentsTitle: "Incidents",
   incidentsIntro:
-    "Repeated identical failures are grouped into one incident with a count. Open one to see its history, the alert emails sent for it and the errors behind it.",
+    "Repeated identical failures are grouped into one incident with a count, most urgent first. Tick an incident once its cause is fixed to move it to the resolved history; if the problem comes back it opens again by itself. Open one to see its history, the alert emails sent for it and the errors behind it.",
+  remaining: "Remaining",
+  remainingNone: "Nothing left to fix.",
+  filterPriority: "Show only {priority}",
+  showAllPriorities: "Show all priorities",
+  markResolvedFor: "Mark resolved: {title}",
+  resolvingNow: "Resolving…",
+  resolvedAnnounce: "Marked resolved: {title}",
+  tickFailed: "That incident could not be marked resolved. Refresh and try again.",
+  cannotTick: "Your role can view incidents but not resolve them, so the checkboxes are disabled.",
+  occurrencesShort: "{n} occurrences",
+  resolvedHistory: "Resolved history",
+  resolvedHistoryIntro: "Resolved incidents are kept here, newest first. If one of these problems returns, it moves back to the active list.",
+  resolvedHistoryEmpty: "No resolved incidents yet.",
+  resolvedAt: "Resolved",
+  reopenedShort: "Reopened {n}×",
   when: "When",
   service: "Service",
   operation: "Operation",
@@ -164,7 +188,7 @@ const en = {
   incidentsEmpty: "No incidents match these filters.",
   yes: "Yes",
   no: "No",
-  priorities: { critical: "Critical", high: "High", warning: "Warning" } as Record<string, string>,
+  priorities: { critical: "Critical", high: "High", warning: "Warning", low: "Low" } as Record<string, string>,
   severities: { low: "Low", medium: "Medium", high: "High", critical: "Critical" } as Record<string, string>,
   statuses: {
     open: "Active", investigating: "Acknowledged", resolved: "Resolved",
@@ -327,7 +351,22 @@ const fr: Copy = {
   jobsTitle: "Tâches en échec",
   incidentsTitle: "Incidents",
   incidentsIntro:
-    "Les échecs identiques et répétés sont regroupés en un seul incident avec un compteur. Ouvrez-en un pour voir son historique, les courriels d’alerte envoyés et les erreurs en cause.",
+    "Les échecs identiques et répétés sont regroupés en un seul incident avec un compteur, le plus urgent en premier. Cochez un incident une fois sa cause corrigée pour le déplacer dans l’historique des résolus; si le problème revient, il se rouvre de lui-même. Ouvrez-en un pour voir son historique, les courriels d’alerte envoyés et les erreurs en cause.",
+  remaining: "Restants",
+  remainingNone: "Plus rien à corriger.",
+  filterPriority: "Afficher seulement : {priority}",
+  showAllPriorities: "Afficher toutes les priorités",
+  markResolvedFor: "Marquer comme résolu : {title}",
+  resolvingNow: "Résolution…",
+  resolvedAnnounce: "Marqué comme résolu : {title}",
+  tickFailed: "Cet incident n’a pas pu être marqué comme résolu. Actualisez et réessayez.",
+  cannotTick: "Votre rôle permet de consulter les incidents, mais pas de les résoudre; les cases sont donc désactivées.",
+  occurrencesShort: "{n} occurrences",
+  resolvedHistory: "Historique des résolus",
+  resolvedHistoryIntro: "Les incidents résolus sont conservés ici, du plus récent au plus ancien. Si l’un de ces problèmes revient, il retourne dans la liste active.",
+  resolvedHistoryEmpty: "Aucun incident résolu pour l’instant.",
+  resolvedAt: "Résolu",
+  reopenedShort: "Rouvert {n} fois",
   when: "Date",
   service: "Service",
   operation: "Opération",
@@ -350,7 +389,7 @@ const fr: Copy = {
   incidentsEmpty: "Aucun incident ne correspond à ces filtres.",
   yes: "Oui",
   no: "Non",
-  priorities: { critical: "Critique", high: "Élevée", warning: "Avertissement" },
+  priorities: { critical: "Critique", high: "Élevée", warning: "Avertissement", low: "Faible" },
   severities: { low: "Faible", medium: "Moyenne", high: "Élevée", critical: "Critique" },
   statuses: {
     open: "Actif", investigating: "Pris en compte", resolved: "Résolu",
@@ -402,7 +441,7 @@ const fr: Copy = {
   },
 };
 
-const PRIORITY_TONE: Record<string, Tone> = { critical: "bad", high: "warn", warning: "neutral" };
+const PRIORITY_TONE: Record<string, Tone> = { critical: "bad", high: "warn", warning: "neutral", low: "neutral" };
 const SEVERITY_TONE: Record<string, Tone> = { low: "neutral", medium: "warn", high: "bad", critical: "bad" };
 const STATUS_TONE: Record<string, Tone> = {
   open: "bad", investigating: "warn", resolved: "good", failed: "bad", retrying: "warn", dead: "bad",
@@ -425,11 +464,8 @@ type DetailResponse = {
   errors: SystemError[];
 };
 
-/** Critical, High or Warning, from the priority KAN-28 records, or the older severity. */
-function priorityOf(incident: Incident): "critical" | "high" | "warning" {
-  if (incident.priority) return incident.priority;
-  return incident.severity === "critical" ? "critical" : incident.severity === "high" ? "high" : "warning";
-}
+/** Critical, High, Warning or Low, from the priority KAN-28 records, or the older severity. */
+const priorityOf = displayPriority;
 
 /** The incident an alert email linked to, if the address names a well-formed one. */
 function linkedIncident(): string | null {
@@ -527,7 +563,7 @@ function IncidentDetail({
   }
 
   const incident = detail.data?.incident;
-  const priority = incident ? priorityOf(incident) : "warning";
+  const priority: DisplayPriority = incident ? priorityOf(incident) : "warning";
 
   return (
     <section className={`${card} flex flex-col gap-4 border-navy/30`} aria-labelledby={headingId}>
@@ -659,6 +695,79 @@ function IncidentDetail({
   );
 }
 
+function IncidentRow({
+  incident,
+  t,
+  when,
+  selected,
+  resolved,
+  disabled,
+  pending,
+  onToggle,
+  onSelect,
+}: {
+  incident: Incident;
+  t: Copy;
+  when: (iso: string) => string;
+  selected: boolean;
+  resolved: boolean;
+  disabled: boolean;
+  pending: boolean;
+  onToggle: () => void;
+  onSelect: () => void;
+}) {
+  const priority = priorityOf(incident);
+  const count = incident.occurrenceCount ?? 1;
+  const resolvedBy =
+    incident.resolvedBy === "auto" ? ` · ${t.clearedOnItsOwn}` : incident.resolvedBy ? ` · ${incident.resolvedBy}` : "";
+  return (
+    <li
+      data-incident={incident.id}
+      data-priority={priority}
+      data-resolved={resolved ? "true" : "false"}
+      className="flex flex-wrap items-start gap-x-3 gap-y-1 py-2"
+    >
+      {resolved ? (
+        <span className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+      ) : (
+        <input
+          type="checkbox"
+          checked={pending}
+          disabled={disabled}
+          aria-label={t.markResolvedFor.replace("{title}", incident.title)}
+          onChange={onToggle}
+          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-navy disabled:cursor-not-allowed disabled:opacity-50"
+        />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <button
+            type="button"
+            aria-expanded={selected}
+            onClick={onSelect}
+            className="break-words text-left text-sm font-semibold text-navy underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60"
+          >
+            {incident.title}
+          </button>
+          <Badge tone={PRIORITY_TONE[priority]}>{t.priorities[priority]}</Badge>
+          {!resolved ? <Badge tone={STATUS_TONE[incident.status] ?? "neutral"}>{t.statuses[incident.status] ?? incident.status}</Badge> : null}
+          {count > 1 ? <Badge tone="neutral">{t.occurrencesShort.replace("{n}", String(count))}</Badge> : null}
+          {incident.reopenCount ? <Badge tone="warn">{t.reopenedShort.replace("{n}", String(incident.reopenCount))}</Badge> : null}
+          {incident.simulated ? <Badge tone="info">{t.simulated}</Badge> : null}
+          {pending ? <span role="status" className="text-xs text-navy/70">{t.resolvingNow}</span> : null}
+        </div>
+        <p className="mt-0.5 break-words text-xs text-navy/70">
+          {t.serviceNames[incident.service] ?? incident.service}
+          {" · "}
+          {resolved && incident.resolvedAt
+            ? `${t.resolvedAt} ${when(incident.resolvedAt)}${resolvedBy}`
+            : `${t.lastSeen} ${when(incident.lastSeenAt ?? incident.createdAt)}`}
+        </p>
+      </div>
+    </li>
+  );
+}
+
 export function SystemHealthConsole() {
   const locale = useLocaleTag();
   const t: Copy = locale === "fr" ? fr : en;
@@ -675,6 +784,10 @@ export function SystemHealthConsole() {
   // It only affects what renders once the data has loaded, so the server and the first
   // client render agree.
   const [selected, setSelected] = useState<string | null>(linkedIncident);
+  const [priorityFilter, setPriorityFilter] = useState<DisplayPriority | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  const [tickError, setTickError] = useState(false);
 
   const url = `/api/admin/health${queryString({ businessId, status, service, from, to })}`;
   const { data, error, loading, refresh, updatedAt } = useAdminData<Response>(url, { autoRefreshMs: 60_000 });
@@ -683,6 +796,24 @@ export function SystemHealthConsole() {
   const when = (iso: string) => formatDateTime(iso, locale);
   const orgCell = (organizationId?: string) => <BusinessCell organizationId={organizationId} t={t} />;
   const plural = (count: number, one: string, many: string) => (count === 1 ? one : many.replace("{n}", String(count)));
+  const canResolve = known && can("admin.manage");
+
+  /** Ticking an incident resolves it on the server, so it stays resolved after a refresh. */
+  async function resolveIncident(incident: Incident) {
+    if (resolvingId) return;
+    setResolvingId(incident.id);
+    setTickError(false);
+    try {
+      await adminFetch(`/api/admin/incidents/${encodeURIComponent(incident.id)}/resolve`, { method: "POST", body: {} });
+      setAnnouncement(t.resolvedAnnounce.replace("{title}", incident.title));
+      if (selected === incident.id) setSelected(null);
+      refresh();
+    } catch {
+      setTickError(true);
+    } finally {
+      setResolvingId(null);
+    }
+  }
 
   const errorColumns: Column<SystemError>[] = [
     { id: "when", header: t.when, primary: true, cell: (row) => when(row.createdAt) },
@@ -746,30 +877,6 @@ export function SystemHealthConsole() {
             ),
         }]
       : []),
-  ];
-
-  const incidentColumns: Column<Incident>[] = [
-    {
-      id: "title",
-      header: t.titleCol,
-      primary: true,
-      cell: (row) => (
-        <button
-          type="button"
-          aria-expanded={selected === row.id}
-          onClick={() => setSelected(selected === row.id ? null : row.id)}
-          className="break-words text-left font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60"
-        >
-          {row.title}
-        </button>
-      ),
-    },
-    { id: "priority", header: t.priority, cell: (row) => { const p = priorityOf(row); return <Badge tone={PRIORITY_TONE[p]}>{t.priorities[p]}</Badge>; } },
-    { id: "status", header: t.status, cell: (row) => <Badge tone={STATUS_TONE[row.status] ?? "neutral"}>{t.statuses[row.status] ?? row.status}</Badge> },
-    { id: "count", header: t.occurrences, cell: (row) => row.occurrenceCount ?? 1 },
-    { id: "last", header: t.lastSeen, cell: (row) => when(row.lastSeenAt ?? row.createdAt) },
-    { id: "service", header: t.service, cell: (row) => t.serviceNames[row.service] ?? row.service },
-    { id: "business", header: t.business, cell: (row) => orgCell(row.organizationId) },
   ];
 
   const section = (id: string, title: string, children: ReactNode) => (
@@ -948,9 +1055,90 @@ export function SystemHealthConsole() {
             {section("incidents-title", t.incidentsTitle, (
               <>
                 <p className="text-sm text-navy/70">{t.incidentsIntro}</p>
-                {data.incidents.length === 0
-                  ? <p className="text-sm text-navy/70">{t.incidentsEmpty}</p>
-                  : <DataTable columns={incidentColumns} rows={data.incidents} rowKey={(row) => row.id} caption={t.incidentsTitle} />}
+                <div role="group" aria-label={t.remaining} className="flex flex-wrap items-center gap-2" data-testid="incident-counts">
+                  <span className="text-xs font-semibold text-navy/70">{t.remaining}</span>
+                  {DISPLAY_PRIORITIES.map((p) => {
+                    const pressed = priorityFilter === p;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        data-priority={p}
+                        aria-pressed={pressed}
+                        aria-label={`${t.priorities[p]}: ${data.incidentCounts[p]}. ${t.filterPriority.replace("{priority}", t.priorities[p])}`}
+                        onClick={() => setPriorityFilter(pressed ? null : p)}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 ${
+                          pressed ? "border-navy bg-navy text-white" : "border-navy/20 bg-white text-navy"
+                        }`}
+                      >
+                        <span>{t.priorities[p]}</span>
+                        <span>{data.incidentCounts[p]}</span>
+                      </button>
+                    );
+                  })}
+                  {priorityFilter ? (
+                    <button type="button" className="text-xs font-semibold text-navy underline" onClick={() => setPriorityFilter(null)}>
+                      {t.showAllPriorities}
+                    </button>
+                  ) : null}
+                </div>
+                {known && !canResolve ? <Notice tone="neutral">{t.cannotTick}</Notice> : null}
+                {tickError ? <Notice tone="bad">{t.tickFailed}</Notice> : null}
+                <p className="sr-only" role="status" aria-live="polite">{announcement}</p>
+                {(() => {
+                  const active = data.incidents.filter((i) => !priorityFilter || priorityOf(i) === priorityFilter);
+                  if (active.length === 0)
+                    return (
+                      <p className="text-sm text-navy/70">
+                        {data.incidents.length === 0 && !filtered ? t.remainingNone : t.incidentsEmpty}
+                      </p>
+                    );
+                  return (
+                    <ul aria-label={t.incidentsTitle} className="divide-y divide-navy/10">
+                      {active.map((incident) => (
+                        <IncidentRow
+                          key={incident.id}
+                          incident={incident}
+                          t={t}
+                          when={when}
+                          selected={selected === incident.id}
+                          resolved={false}
+                          disabled={!canResolve || resolvingId !== null}
+                          pending={resolvingId === incident.id}
+                          onToggle={() => void resolveIncident(incident)}
+                          onSelect={() => setSelected(selected === incident.id ? null : incident.id)}
+                        />
+                      ))}
+                    </ul>
+                  );
+                })()}
+
+                <details className="rounded-md border border-navy/10 bg-white px-4 py-2" data-testid="resolved-history">
+                  <summary className="cursor-pointer text-sm font-semibold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60">
+                    {t.resolvedHistory} ({data.incidentCounts.resolved})
+                  </summary>
+                  <p className="mt-2 text-xs text-navy/70">{t.resolvedHistoryIntro}</p>
+                  {data.resolvedIncidents.length === 0 ? (
+                    <p className="mt-2 text-sm text-navy/70">{t.resolvedHistoryEmpty}</p>
+                  ) : (
+                    <ul aria-label={t.resolvedHistory} className="mt-1 divide-y divide-navy/10">
+                      {data.resolvedIncidents.map((incident) => (
+                        <IncidentRow
+                          key={incident.id}
+                          incident={incident}
+                          t={t}
+                          when={when}
+                          selected={selected === incident.id}
+                          resolved
+                          disabled
+                          pending={false}
+                          onToggle={() => undefined}
+                          onSelect={() => setSelected(selected === incident.id ? null : incident.id)}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </details>
               </>
             ))}
 
