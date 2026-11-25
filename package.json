@@ -27,6 +27,7 @@
     "check:media": "node scripts/check-repo-media.js",
     "check:dev-audit": "node scripts/check-dev-audit-exceptions.js",
     "check:secrets": "node scripts/check-secrets.js",
+    "check:push": "npm run check:secrets && npm run check:i18n && npm run check:legal && npm run check:media && npm run check:dev-audit && npm run format:check && tsc --noEmit -p tsconfig.json && npm run cf-typecheck && npm run lint",
     "check:brace-expansion": "node scripts/check-brace-expansion.js",
     "test:unit": "tsx --test tests/unit/*.test.ts",
     "test:qa": "tsx --test tests/qa/*.test.ts",
@@ -40,7 +41,7 @@
     "deploy:staging": "node scripts/release-cloudflare.js deploy --staging",
     "upload": "node scripts/release-cloudflare.js upload",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv --env-file scripts/wrangler-types.env",
-    "cf-typecheck": "wrangler types --check --env-interface CloudflareEnv --env-file scripts/wrangler-types.env",
+    "cf-typecheck": "node scripts/check-cloudflare-types.js",
     "check:release": "node scripts/require-green-ci.js"
   },
   "dependencies": {
