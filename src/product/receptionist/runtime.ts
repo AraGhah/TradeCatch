@@ -1,5 +1,6 @@
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
 import { runAfterResponse } from "@/lib/after-response";
+import { databaseFailureCode } from "@/lib/postgres-pool";
 import {
   isDurableMissedCallStoreConfigured,
   isE2eHarness,
@@ -169,7 +170,10 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
       onPrivacyError: (error) =>
         console.error(
           "[receptionist] privacy settings unavailable; recording and transcripts off for this reload",
-          error instanceof Error ? error.name : "error",
+          // pg names every server error "error", so the name said nothing. The
+          // code does (42P01 = tc_privacy_settings missing: migration 040 not
+          // applied); never the driver message, which can quote values.
+          databaseFailureCode(error),
         ),
       onSkip: (organizationId, reason) =>
         logReceptionistDiagnostic({
