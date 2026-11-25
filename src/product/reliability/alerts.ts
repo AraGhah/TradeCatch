@@ -152,39 +152,87 @@ export function composeDigest(
 }
 
 /**
+ * What a database failure code means, for the administrator reading the
+ * alert. The 2026-11-24 outage emails said only "did not answer", so the cause
+ * could not be told from them: an authentication refusal, a timeout and a
+ * missing setting need different fixes.
+ */
+export function describeDatabaseFailure(code: string | undefined): string {
+  const c = code ?? "UNKNOWN";
+  if (c === "28P01" || c === "28000")
+    return "The database refused the login (wrong password or user). Check the Worker's DATABASE_URL secret against the database's current password.";
+  if (c === "NOT_CONFIGURED")
+    return "DATABASE_URL is not set on this Worker. Add it as an encrypted Worker secret.";
+  if (c === "3D000") return "The database named in DATABASE_URL does not exist.";
+  if (c === "53300" || c === "53400")
+    return "The database or its connection pooler has no free connections.";
+  if (c === "53100" || c === "25006")
+    return "The database is not accepting writes (often a full disk or read-only mode).";
+  if (c.startsWith("57P"))
+    return "The database is shutting down, restarting or paused.";
+  if (c.startsWith("08"))
+    return "The database reported a connection failure.";
+  if (c === "XX000")
+    return "The database or its connection pooler returned an internal error (with Supabase, often an unknown project or user in DATABASE_URL).";
+  if (c === "CONNECT_TIMEOUT" || c === "QUERY_TIMEOUT" || c === "ETIMEDOUT")
+    return "The database did not answer in time (unreachable, paused or overloaded).";
+  if (c === "ECONNREFUSED") return "The database host refused the connection.";
+  if (c === "ENOTFOUND") return "The database host name could not be found.";
+  if (c === "EHOSTUNREACH") return "The database host could not be reached.";
+  if (c === "ECONNRESET" || c === "EPIPE" || c === "CONNECTION_CLOSED")
+    return "The connection to the database was dropped.";
+  return "No error code was available. Check the Worker logs for tradecatch.monitoring.stage_failed.";
+}
+
+/**
  * The alert for a database that cannot store anything, so there is no incident
  * row and no outbox to carry it. It is sent straight away, once per window (the
  * window number is in the idempotency key, so the email provider drops repeats),
- * and says only what is known: the database did not answer. The incident itself
- * is recorded when the database returns.
+ * and says what is known: which code the database failed with and what that
+ * usually means. The incident itself is recorded when the database returns.
  */
 export function composeDatabaseOutageNotice(ctx: {
   now: Date;
   siteUrl?: string;
   windowMs: number;
+  /** See databaseFailureCode: a SQLSTATE, a network code or a fixed name. */
+  failureCode?: string;
+  /** The monitor's own database check, when it ran. */
+  check?: { readOk: boolean; writeOk: boolean };
 }): AlertPayload {
   const window = Math.floor(ctx.now.getTime() / ctx.windowMs);
   const base = ctx.siteUrl?.replace(/\/+$/, "");
+  const code = /^[0-9A-Z_]{2,32}$/.test(ctx.failureCode ?? "") ? ctx.failureCode! : "UNKNOWN";
+  const lines: { label: string; value: string }[] = [
+    { label: "Service", value: serviceLabel("database") },
+    { label: "Severity", value: "CRITICAL" },
+    { label: "Category", value: "unavailable" },
+    { label: "Status", value: "active" },
+    {
+      label: "What happened",
+      value:
+        "The monitor could not use the database, so this alert could not be stored as an incident. The incident is recorded automatically, with its start time, once the database is back, and a resolution email follows.",
+    },
+    { label: "Failure code", value: code },
+    { label: "Likely cause", value: describeDatabaseFailure(code) },
+  ];
+  if (ctx.check)
+    lines.push({
+      label: "Database check",
+      value: `read ${ctx.check.readOk ? "ok" : "failed"}, write ${ctx.check.writeOk ? "ok" : "failed"}`,
+    });
+  lines.push(
+    { label: "Business", value: "Platform-wide" },
+    { label: "Alert sent", value: ctx.now.toISOString() },
+    { label: "Diagnostic reference", value: `dbdown-${window}` },
+  );
   return {
     kind: "opened",
     priority: "critical",
     severity: "critical",
     title: "Database is unavailable",
     subject: "[TradeCatch CRITICAL] Database is unavailable",
-    lines: [
-      { label: "Service", value: serviceLabel("database") },
-      { label: "Severity", value: "CRITICAL" },
-      { label: "Category", value: "unavailable" },
-      { label: "Status", value: "active" },
-      {
-        label: "What happened",
-        value:
-          "The database did not answer the monitor's checks, so this alert could not be stored as an incident. The incident is recorded automatically once the database is back.",
-      },
-      { label: "Business", value: "Platform-wide" },
-      { label: "Alert sent", value: ctx.now.toISOString() },
-      { label: "Diagnostic reference", value: `dbdown-${window}` },
-    ],
+    lines,
     ctaUrl: base ? `${base}/admin/system-health` : undefined,
     incidentId: null,
     simulated: false,
@@ -194,7 +242,7 @@ export function composeDatabaseOutageNotice(ctx: {
 
 /** A payload that is only safe fields, used when a composed one fails the final check. */
 function minimalPayload(payload: AlertPayload): AlertPayload {
-  const keep = new Set(["Service", "Severity", "Category", "Status", "Diagnostic reference"]);
+  const keep = new Set(["Service", "Severity", "Category", "Status", "Failure code", "Diagnostic reference"]);
   return {
     ...payload,
     title: "Incident requires attention",

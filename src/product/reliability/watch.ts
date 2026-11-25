@@ -1,5 +1,5 @@
 import { createId } from "@/lib/id";
-import { safeDatabaseErrorCode } from "@/lib/postgres-pool";
+import { databaseFailureCode, safeDatabaseErrorCode } from "@/lib/postgres-pool";
 import {
   AlertNotConfiguredError,
   composeDatabaseOutageNotice,
@@ -52,6 +52,12 @@ export type MonitorDeps = {
   collectSignals?: () => Promise<CollectedSignals>;
   /** Sends one alert without touching the database. */
   emergencyNotify?: AlertNotifier;
+  /**
+   * Durable storage is required but DATABASE_URL is missing. The store then
+   * falls back to memory, which would make every run look healthy while
+   * nothing is saved; it is reported as a database outage instead.
+   */
+  databaseUnconfigured?: boolean;
   thresholds: MonitorThresholds;
   now: () => Date;
   siteUrl?: string;
@@ -72,6 +78,8 @@ export type MonitorRun = {
   degraded: string[];
   alerts: DeliveryRun;
   emergency?: "sent" | "failed" | "not_configured";
+  /** Why storage failed, when it did (see databaseFailureCode). */
+  storageFailure?: string;
   pastOutageRecorded: boolean;
   pruned: boolean;
 };
@@ -154,7 +162,13 @@ export async function runMonitor(deps: MonitorDeps): Promise<MonitorRun> {
     deps.checkDatabase
       ? deps.checkDatabase().catch<DatabaseProbe>((error) => {
           logStage("database_probe", error);
-          return { ok: false, readOk: false, writeOk: false, durationMs: t.database.probeTimeoutMs };
+          return {
+            ok: false,
+            readOk: false,
+            writeOk: false,
+            durationMs: t.database.probeTimeoutMs,
+            failureCode: databaseFailureCode(error),
+          };
         })
       : undefined,
     deps.checkWebsite
@@ -175,18 +189,31 @@ export async function runMonitor(deps: MonitorDeps): Promise<MonitorRun> {
   // 2. Can anything be stored? Reading the heartbeat answers that and gives the
   // time of the last good run in one query.
   let lastRun: Heartbeat | null = null;
-  let storageDown = false;
-  try {
-    lastRun = parseHeartbeat(await deps.store.getMeta(LAST_RUN_META));
-  } catch (error) {
-    storageDown = true;
-    logStage("storage", error);
-  }
+  let storageFailure: string | undefined;
+  if (deps.databaseUnconfigured) {
+    storageFailure = "NOT_CONFIGURED";
+    run.checks.database = "unavailable";
+  } else
+    try {
+      lastRun = parseHeartbeat(await deps.store.getMeta(LAST_RUN_META));
+    } catch (error) {
+      storageFailure = databaseFailureCode(error);
+      logStage("storage", error);
+    }
 
-  if (storageDown) {
-    run.emergency = await sendEmergency(deps, now, simulated);
+  if (storageFailure) {
+    // The storage error is the operation that actually failed; the probe's code
+    // only stands in when the storage error carried none.
+    const code =
+      storageFailure === "UNKNOWN" && dbProbe?.failureCode ? dbProbe.failureCode : storageFailure;
+    run.storageFailure = code;
+    run.emergency = await sendEmergency(deps, now, simulated, code, dbProbe);
     console.error(
-      JSON.stringify({ event: "tradecatch.monitoring.database_unavailable", emergency: run.emergency }),
+      JSON.stringify({
+        event: "tradecatch.monitoring.database_unavailable",
+        emergency: run.emergency,
+        code,
+      }),
     );
     return run;
   }
@@ -205,6 +232,11 @@ export async function runMonitor(deps: MonitorDeps): Promise<MonitorRun> {
   if (lastRun && dbProbe?.ok !== false) {
     const gap = now.getTime() - Date.parse(lastRun.at);
     if (gap >= t.monitor.gapMs) {
+      // Ties this resolution to the "Database is unavailable" emails sent while
+      // nothing could be stored: theirs are the only references in this range.
+      const windowMs = t.monitor.emergencyWindowMs;
+      const firstWindow = Math.floor(Date.parse(lastRun.at) / windowMs);
+      const lastWindow = Math.floor(now.getTime() / windowMs);
       const recorded = await stage("past_outage", () =>
         deps.engine.recordPastOutage({
           fingerprint: DATABASE_UNAVAILABLE_FINGERPRINT,
@@ -212,7 +244,10 @@ export async function runMonitor(deps: MonitorDeps): Promise<MonitorRun> {
           category: "health_check",
           priority: "critical",
           title: "Database or monitoring was unavailable",
-          summary: `No successful monitor run for ${Math.round(gap / MINUTE)} minutes (database or monitoring unavailable).`,
+          summary:
+            `No successful monitor run for ${Math.round(gap / MINUTE)} minutes (database or monitoring unavailable), ` +
+            `from ${lastRun!.at} to ${at}. Any database-down alert sent in this period has a reference ` +
+            `between dbdown-${firstWindow} and dbdown-${lastWindow}.`,
           correlationId: createId("gap"),
           startedAt: lastRun!.at,
           simulated,
@@ -306,6 +341,8 @@ async function sendEmergency(
   deps: MonitorDeps,
   now: Date,
   simulated: boolean,
+  failureCode: string,
+  probe: DatabaseProbe | undefined,
 ): Promise<"sent" | "failed" | "not_configured"> {
   if (simulated) return "not_configured";
   if (!deps.emergencyNotify) return "not_configured";
@@ -315,6 +352,8 @@ async function sendEmergency(
         now,
         siteUrl: deps.siteUrl,
         windowMs: deps.thresholds.monitor.emergencyWindowMs,
+        failureCode,
+        check: probe ? { readOk: probe.readOk, writeOk: probe.writeOk } : undefined,
       }),
     );
     await raceTimeout(deps.emergencyNotify(payload), deps.thresholds.alerts.retry.sendTimeoutMs);
