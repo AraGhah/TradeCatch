@@ -71,6 +71,10 @@ export default defineConfig({
       // @next/env skips every dotenv file when this flag is set (Next sets it itself for child processes);
       // tests/unit/e2e-harness-isolation.test.ts proves that on the installed Next.
       __NEXT_PROCESSED_ENV: "true",
+      // Parallel specs share one Node server; unidentified api.write traffic
+      // hits the default per-address backstop and flakes as HTTP 429 (see
+      // docs/KAN-12_AUTHENTICATION.md). Named route policies stay enforced.
+      RATE_LIMIT_MODE: "off",
       // The default harness exercises storage-disabled behavior. Never inherit
       // a developer's production database or provider keys from the shell.
       DATABASE_URL: "",
