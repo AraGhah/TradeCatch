@@ -168,23 +168,41 @@ export function createPostgresNotificationStore(
       return res.rows[0] ? noteFrom(res.rows[0]) : null;
     },
     async saveRecipient(row) {
-      await query(
-        `INSERT INTO tc_notification_recipients (id, notification_id, organization_id, user_id, read_at, acknowledged_at, acknowledged_by)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)
-         ON CONFLICT (notification_id, user_id) DO UPDATE SET
-           read_at = EXCLUDED.read_at,
-           acknowledged_at = EXCLUDED.acknowledged_at,
-           acknowledged_by = EXCLUDED.acknowledged_by`,
-        [
-          row.id,
-          row.notificationId,
-          row.organizationId,
-          row.userId,
-          row.readAt ?? null,
-          row.acknowledgedAt ?? null,
-          row.acknowledgedBy ?? null,
-        ],
-      );
+      const save = () =>
+        query(
+          `INSERT INTO tc_notification_recipients (id, notification_id, organization_id, user_id, read_at, acknowledged_at, acknowledged_by)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)
+           ON CONFLICT (notification_id, user_id) DO UPDATE SET
+             read_at = EXCLUDED.read_at,
+             acknowledged_at = EXCLUDED.acknowledged_at,
+             acknowledged_by = EXCLUDED.acknowledged_by`,
+          [
+            row.id,
+            row.notificationId,
+            row.organizationId,
+            row.userId,
+            row.readAt ?? null,
+            row.acknowledgedAt ?? null,
+            row.acknowledgedBy ?? null,
+          ],
+        );
+      try {
+        await save();
+      } catch (error) {
+        // ON CONFLICT only arbitrates (notification_id, user_id). When two writers
+        // insert the same recipient at once (two queue workers, a status callback and
+        // the queue), the loser can trip the primary key instead and get 23505. The
+        // winner's row is committed by then, so the same statement now takes the
+        // ON CONFLICT path. A different row holding this id still fails, as it should.
+        if ((error as { code?: string; constraint?: string }).code !== "23505")
+          throw error;
+        if (
+          (error as { constraint?: string }).constraint !==
+          "tc_notification_recipients_pkey"
+        )
+          throw error;
+        await save();
+      }
     },
     async listRecipients(organizationId, notificationId) {
       const res = await query(
