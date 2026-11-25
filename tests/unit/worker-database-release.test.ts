@@ -6,6 +6,8 @@ const require = createRequire(import.meta.url);
 const {
   requireDatabaseSecret,
   requireSchedulerSecret,
+  requireStrippedSecretsBound,
+  parseNameList,
   checkWorkerDatabase,
 } = require("../../scripts/check-worker-database.js");
 const bindings = [
@@ -101,4 +103,60 @@ test("database release guard fails closed on missing Workers, auth/network error
         !error.message.includes("sensitive provider response"),
     );
   }
+});
+
+test("a credential stripped from the bundle must already be an encrypted Worker secret", () => {
+  // Production ran on bundled .env fallbacks for keys that were never Worker
+  // secrets; stripping them without this check would silently take them away.
+  const worker = [
+    ...bindings,
+    { name: "RESEND_API_KEY", type: "secret_text" },
+    { name: "STRIPE_SECRET_KEY", type: "plain_text" },
+  ];
+  assert.doesNotThrow(() => requireStrippedSecretsBound([], worker));
+  assert.doesNotThrow(() =>
+    requireStrippedSecretsBound(["DATABASE_URL", "RESEND_API_KEY"], worker),
+  );
+  assert.throws(
+    () =>
+      requireStrippedSecretsBound(
+        ["RESEND_API_KEY", "STRIPE_SECRET_KEY", "ANTHROPIC_API_KEY"],
+        worker,
+      ),
+    (error: Error) =>
+      /Release blocked/.test(error.message) &&
+      // A plain-text variable is not an encrypted secret.
+      error.message.includes("ANTHROPIC_API_KEY, STRIPE_SECRET_KEY") &&
+      !error.message.includes("RESEND_API_KEY"),
+  );
+  assert.doesNotThrow(() =>
+    requireStrippedSecretsBound(
+      ["STRIPE_SECRET_KEY", "ANTHROPIC_API_KEY"],
+      worker,
+      ["ANTHROPIC_API_KEY", "STRIPE_SECRET_KEY"],
+    ),
+  );
+  assert.deepEqual(parseNameList(" BLAND_API_KEY, ,CALCOM_API_KEY,bad name;rm "), [
+    "BLAND_API_KEY",
+    "CALCOM_API_KEY",
+  ]);
+  assert.deepEqual(parseNameList(undefined), []);
+});
+
+test("the release check applies the stripped-secret rule to the listed Worker", () => {
+  const run = () => JSON.stringify(bindings);
+  assert.doesNotThrow(() =>
+    checkWorkerDatabase({ run, strippedSecrets: ["DATABASE_URL"] }),
+  );
+  assert.throws(
+    () => checkWorkerDatabase({ run, strippedSecrets: ["STRIPE_WEBHOOK_SECRET"] }),
+    /STRIPE_WEBHOOK_SECRET/,
+  );
+  assert.doesNotThrow(() =>
+    checkWorkerDatabase({
+      run,
+      strippedSecrets: ["STRIPE_WEBHOOK_SECRET"],
+      allowUnbound: ["STRIPE_WEBHOOK_SECRET"],
+    }),
+  );
 });
