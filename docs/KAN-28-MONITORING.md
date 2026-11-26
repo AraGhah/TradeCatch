@@ -75,7 +75,7 @@ Defaults live in `src/product/reliability/thresholds.ts`. All are tunable (see
 
 | Area | Condition | Priority | Default threshold |
 | --- | --- | --- | --- |
-| Website | Page or `/api/health` unreachable (5xx, timeout, network) | Critical | 3 consecutive failed probes (a probe runs each minute) |
+| Website | Page or `/api/health` unreachable (5xx, timeout, network) | Critical | 3 consecutive failed probes on either address (a probe runs each minute); page and API share ONE incident; resolves only after 5 consecutive successful probes on every address |
 | API | Server-error rate | Critical | at least 20 requests in 5 min and 50% 5xx |
 | API | Server-error rate, lower | High | at least 20 requests in 10 min and 10% 5xx |
 | API | Sign-in or permission failures (401/403) | Warning | at least 40 in 10 min and 40% of traffic |
@@ -122,7 +122,11 @@ up (that is normal); a single failed probe; anything counted only in a simulatio
 * **Storm control.** At most 6 alert emails per 10 minutes. Beyond that, further
   incidents are still recorded and one summary email says how many were held back.
 * **Recovery.** When the condition stays clear for the quiet period, the incident
-  resolves itself and a recovery notice goes out (Critical and High).
+  resolves itself and a recovery notice goes out (Critical and High). A website
+  incident also needs positive evidence: the last 5 probes of every address
+  succeeded (`website.recoverySuccesses`); no probes at all is not recovery.
+  A manual "Mark resolved" sends the same recovery notice ("Resolved by: an
+  administrator"). See docs/INCIDENT-2026-11-25-RECURRING-OUTAGES.md for why.
 * **Delivery is tracked.** Every email is a row in `tc_alert_deliveries` with up
   to 5 attempts (1, 5, 15 and 60 minutes apart), 8 seconds per send. A failure
   stores a short code (`send_failed`, `timeout`, `not_configured`), never the

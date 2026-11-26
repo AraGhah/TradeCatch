@@ -289,6 +289,34 @@ export async function probeDatabase(
  * those never count as an outage. Server errors, a missing page, a dropped
  * connection and a hung request do.
  */
+const ERROR_PAGE_BYTES = 16_384;
+
+/**
+ * The Cloudflare error code on a server-error page (`cf_1102`), read from at
+ * most the first 16 KiB, or undefined when the page names none (an error the
+ * application itself returned). Never throws.
+ */
+async function cloudflareErrorCode(response: Response): Promise<string | undefined> {
+  const reader = response.body?.getReader();
+  if (!reader) return undefined;
+  const decoder = new TextDecoder();
+  let text = "";
+  try {
+    while (text.length < ERROR_PAGE_BYTES) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      text += decoder.decode(value, { stream: true });
+    }
+  } catch {
+    return undefined;
+  } finally {
+    await reader.cancel().catch(() => undefined);
+  }
+  const match =
+    /error code:?\s*(1\d{3})\b/i.exec(text) ?? /\bError\s+(1\d{3})\b/.exec(text);
+  return match ? `cf_${match[1]}` : undefined;
+}
+
 export async function probeWebsite(input: {
   fetchImpl: typeof fetch;
   url: string;
@@ -309,21 +337,34 @@ export async function probeWebsite(input: {
       signal: controller.signal,
       headers: { "user-agent": "TradeCatch-Monitor/1.0", accept: "text/html,application/json" },
     });
-    await response.body?.cancel().catch(() => undefined);
     const status = response.status;
+    // A server error is read just far enough to learn which one it was: an
+    // error page served by Cloudflare names its code ("Error 1102" = the Worker
+    // was stopped for exceeding its CPU or memory limit). Successful pages are
+    // never read.
+    const errorCode =
+      status >= 500 ? await cloudflareErrorCode(response) : undefined;
+    await response.body?.cancel().catch(() => undefined);
+    const ray = response.headers.get("cf-ray")?.trim();
     return {
       at: input.now().toISOString(),
       target: input.target,
       ok: status < 400 || status === 401 || status === 403 || status === 429,
       statusCode: status,
       durationMs: Math.max(0, clock() - started),
+      ...(errorCode ? { errorCode } : {}),
+      ...(ray && /^[0-9a-f]{16}-[A-Z]{3}$/i.test(ray) ? { requestId: ray } : {}),
     };
-  } catch {
+  } catch (error) {
     return {
       at: input.now().toISOString(),
       target: input.target,
       ok: false,
       durationMs: Math.max(0, clock() - started),
+      errorCode:
+        controller.signal.aborted || (error instanceof Error && error.name === "AbortError")
+          ? "timeout"
+          : "network",
     };
   } finally {
     clearTimeout(timer);

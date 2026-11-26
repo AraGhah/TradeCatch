@@ -121,8 +121,49 @@ export function summarizeTraffic(
 export const DATABASE_SERVICE = "health:database";
 export const DATABASE_UNAVAILABLE_FINGERPRINT = incidentFingerprint({ service: DATABASE_SERVICE });
 
-/** Website / endpoint availability: N failed probes in a row, per target. */
-export function evaluateWebsite(samples: ProbeSample[], t: MonitorThresholds): Finding[] {
+/**
+ * The one incident for "the site is not answering". The page and the API are
+ * served by the same Worker, so they fail together: until 2026-11-25 each had
+ * its own incident, and every outage sent two "unreachable" and two "resolved"
+ * emails. Both addresses now report into this fingerprint, and the summary says
+ * which of them failed. `website:unavailable:<target>` is the older per-address
+ * form, still recognised so incidents opened before this change resolve.
+ */
+export const WEBSITE_FINGERPRINT = "website:unavailable";
+
+export function isWebsiteFingerprint(fingerprint: string | undefined): boolean {
+  return (
+    fingerprint === WEBSITE_FINGERPRINT ||
+    Boolean(fingerprint?.startsWith(`${WEBSITE_FINGERPRINT}:`))
+  );
+}
+
+const TARGET_LABELS: Record<string, string> = { page: "website (/)", api: "API (/api/health)" };
+
+/** What a probe's failure code means, in a few words. */
+export function describeProbeFailure(code: string | undefined): string | undefined {
+  if (!code) return undefined;
+  if (code === "cf_1102") return "Cloudflare error 1102: the Worker exceeded its CPU or memory limit";
+  if (code.startsWith("cf_")) return `Cloudflare error ${code.slice(3)}`;
+  if (code === "timeout") return "no answer before the check timed out";
+  if (code === "network") return "the connection failed";
+  return undefined;
+}
+
+function timeOfDay(at: string): string {
+  return `${new Date(at).toISOString().slice(11, 19)} UTC`;
+}
+
+/**
+ * Website / endpoint availability: N failed probes in a row on an address
+ * raises one shared incident. `current` is this run's probes, which carry the
+ * diagnostics that are not stored (Cloudflare error code, request ID).
+ */
+export function evaluateWebsite(
+  samples: ProbeSample[],
+  t: MonitorThresholds,
+  current: { target: string; errorCode?: string; requestId?: string }[] = [],
+): Finding[] {
   const need = t.website.consecutiveFailures;
   const byTarget = new Map<string, ProbeSample[]>();
   for (const sample of samples) {
@@ -130,22 +171,76 @@ export function evaluateWebsite(samples: ProbeSample[], t: MonitorThresholds): F
     list.push(sample);
     byTarget.set(sample.target, list);
   }
-  const findings: Finding[] = [];
-  for (const [target, list] of byTarget) {
-    const latest = [...list].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, need);
-    if (latest.length < need || latest.some((sample) => sample.ok)) continue;
-    const codes = [...new Set(latest.map((s) => s.statusCode ?? 0))];
-    findings.push({
-      fingerprint: `website:unavailable:${target}`,
+  const failing: { target: string; streak: ProbeSample[] }[] = [];
+  for (const [target, list] of [...byTarget].sort(([a], [b]) => a.localeCompare(b))) {
+    const ordered = [...list].sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
+    const firstOk = ordered.findIndex((sample) => sample.ok);
+    const streak = firstOk === -1 ? ordered : ordered.slice(0, firstOk);
+    if (streak.length >= need) failing.push({ target, streak });
+  }
+  if (failing.length === 0) return [];
+
+  const label = (target: string) => TARGET_LABELS[target] ?? target;
+  const parts = failing.map(
+    ({ target, streak }) =>
+      `${label(target)} since ${timeOfDay(streak[streak.length - 1].at)} (${streak.length} in a row)`,
+  );
+  const codes = [...new Set(failing.map(({ streak }) => streak[0].statusCode ?? 0))];
+  const now = current.filter((probe) => failing.some((f) => f.target === probe.target));
+  const causes = [...new Set(now.map((probe) => describeProbeFailure(probe.errorCode)).filter(Boolean))];
+  const requests = now.map((probe) => probe.requestId).filter(Boolean);
+  const targets = failing.map((f) => f.target);
+  const title =
+    targets.includes("page") && targets.includes("api")
+      ? "Website and API are unreachable"
+      : targets.includes("api")
+        ? "Public API is unreachable"
+        : "Website is unreachable";
+  return [
+    {
+      fingerprint: WEBSITE_FINGERPRINT,
       service: "website",
       category: "unavailable",
       priority: "critical",
-      title: target === "api" ? "Public API is unreachable" : "Website is unreachable",
-      summary: `${need} consecutive availability checks failed (${target}); last status ${codes.join("/") || "none"}.`,
+      title,
+      summary:
+        `Availability checks failing: ${parts.join("; ")}. ` +
+        `Last status ${codes.map((code) => code || "none").join("/")}` +
+        (causes.length ? ` (${causes.join("; ")})` : "") +
+        "." +
+        (requests.length ? ` Request ID ${requests.join(", ")}.` : ""),
       quietMs: t.website.quietMs,
-    });
+    },
+  ];
+}
+
+/**
+ * Whether the website has proven it recovered: the last `recoverySuccesses`
+ * checks of every address checked recently all succeeded. Fewer checks than
+ * that (the monitor itself stopped running) is not proof, so the answer is no.
+ * `targets` limits the question to the addresses an older per-address incident
+ * was about.
+ */
+export function websiteRecovered(
+  samples: ProbeSample[],
+  t: MonitorThresholds,
+  targets?: string[],
+): boolean {
+  const need = Math.max(t.website.recoverySuccesses, 1);
+  const byTarget = new Map<string, ProbeSample[]>();
+  for (const sample of samples) {
+    if (sample.target === "database") continue;
+    if (targets && !targets.includes(sample.target)) continue;
+    const list = byTarget.get(sample.target) ?? [];
+    list.push(sample);
+    byTarget.set(sample.target, list);
   }
-  return findings;
+  if (byTarget.size === 0) return false;
+  for (const list of byTarget.values()) {
+    const latest = [...list].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, need);
+    if (latest.length < need || latest.some((sample) => !sample.ok)) return false;
+  }
+  return true;
 }
 
 /**

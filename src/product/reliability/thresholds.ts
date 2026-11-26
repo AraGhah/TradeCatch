@@ -18,6 +18,14 @@ export type MonitorThresholds = {
     probeTimeoutMs: number;
     /** Quiet time with no failing probe before the incident resolves itself. */
     quietMs: number;
+    /**
+     * Successful checks in a row, on every checked address, before a website
+     * incident may resolve. Quiet time alone is not proof of recovery: on
+     * 2026-11-25 the 3-in-a-row rule stopped matching after one lucky check, so
+     * the incident "cleared" at 19:11:58 UTC while checks were still failing,
+     * and one cleared after three good minutes at 18:56:50 failed again at 19:00.
+     */
+    recoverySuccesses: number;
   };
   api: {
     /** Widespread failure: most requests are server errors. Critical. */
@@ -114,7 +122,12 @@ export type MonitorThresholds = {
 };
 
 export const DEFAULT_THRESHOLDS: MonitorThresholds = {
-  website: { consecutiveFailures: 3, probeTimeoutMs: 8_000, quietMs: 3 * MINUTE },
+  website: {
+    consecutiveFailures: 3,
+    probeTimeoutMs: 8_000,
+    quietMs: 3 * MINUTE,
+    recoverySuccesses: 5,
+  },
   api: {
     critical: { windowMs: 5 * MINUTE, minRequests: 20, errorRate: 0.5, quietMs: 5 * MINUTE },
     elevated: { windowMs: 10 * MINUTE, minRequests: 20, errorRate: 0.1, quietMs: 10 * MINUTE },

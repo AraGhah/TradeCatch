@@ -169,7 +169,7 @@ describe("MON-01 website availability", () => {
     await h.tick();
     const [incident, ...rest] = await h.incidents();
     assert.equal(rest.length, 0);
-    assert.equal(incident.fingerprint, "website:unavailable:page");
+    assert.equal(incident.fingerprint, "website:unavailable");
     assert.equal(incident.priority, "critical");
     assert.equal(h.sent.length, 1);
     assert.match(h.sent[0].subject, /^\[TradeCatch CRITICAL\]/);
@@ -192,11 +192,103 @@ describe("MON-01 website availability", () => {
     assert.match(h.sent[1].subject, /^\[TradeCatch RESOLVED\]/);
   });
 
-  it("a failing public API check is its own incident, separate from the page", async () => {
+  it("a failing public API check alone opens the website incident and names the API", async () => {
     const h = harness();
     h.world.down.add("api");
     for (let i = 0; i < 3; i += 1) await h.tick();
-    assert.deepEqual((await h.incidents()).map((i) => i.fingerprint), ["website:unavailable:api"]);
+    const incidents = await h.incidents();
+    assert.deepEqual(incidents.map((i) => i.fingerprint), ["website:unavailable"]);
+    assert.equal(incidents[0].title, "Public API is unreachable");
+  });
+
+  it("page and API failing together are ONE incident: one opened and one resolved email", async () => {
+    const h = harness();
+    h.world.down.add("page");
+    h.world.down.add("api");
+    for (let i = 0; i < 4; i += 1) await h.tick();
+    assert.equal((await h.incidents()).length, 1);
+    h.world.down.clear();
+    for (let i = 0; i < 8; i += 1) await h.tick();
+    assert.deepEqual(h.sent.map((p) => p.kind), ["opened", "recovered"]);
+    assert.match(h.sent[0].subject, /Website and API are unreachable/);
+  });
+
+  it("does not resolve while checks still fail intermittently (2026-11-25 19:11:58 UTC premature resolution)", async () => {
+    const h = harness();
+    h.world.down.add("page");
+    for (let i = 0; i < 3; i += 1) await h.tick();
+    assert.equal(h.sent.length, 1);
+    // One good check breaks the 3-in-a-row streak, then failures resume: the old
+    // rule went quiet and resolved after 3 minutes although nothing had recovered.
+    for (let round = 0; round < 4; round += 1) {
+      h.world.down.clear();
+      await h.tick();
+      h.world.down.add("page");
+      await h.tick();
+      await h.tick();
+    }
+    const [incident] = await h.incidents();
+    assert.notEqual(incidentState(incident.status), "resolved");
+    assert.deepEqual(h.sent.map((p) => p.kind), ["opened"], "no resolved/reopened email churn");
+    h.world.down.clear();
+    for (let i = 0; i < 4; i += 1) await h.tick();
+    assert.notEqual(incidentState((await h.incidents())[0].status), "resolved", "4 good checks are not enough");
+    await h.tick();
+    assert.equal(incidentState((await h.incidents())[0].status), "resolved", "5 good checks in a row resolve it");
+    assert.deepEqual(h.sent.map((p) => p.kind), ["opened", "recovered"]);
+  });
+
+  it("replays the real 2026-11-25 18:45–19:39 UTC probe outcomes: one incident, no premature resolution", async () => {
+    // One character per minute from 18:45 UTC, read from Cloudflare's Worker
+    // analytics (workersInvocationsAdaptive) for the monitor's two probes:
+    //   F = both probes stopped at 10 ms CPU (exceededResources, Error 1102)
+    //   f = one of the two stopped (modelled as the page; analytics do not say which)
+    //   S = both answered   - = the per-minute cron itself was stopped, no run
+    // What the old rules did with this (tc_system_incidents, prod): page opened
+    // 18:53, "resolved" 18:56:50, reopened 19:08:58, "resolved" 19:11:58 with
+    // checks still failing, reopened 19:12:57, "resolved" 19:20:03; API opened
+    // 19:09:00, resolved 19:20:03: 7 emails, and the checks kept failing
+    // through 19:39 after the last "resolved".
+    const minutes = "SSSSFSFfFSSS-SS" + "FSSSSSFFFSFFFFFFSSSSFSFSSSFFSFFSFSSSFSSF";
+    const h = harness();
+    const statusAt = new Map<string, string>();
+    let skipped = 0;
+    for (const [index, mark] of [...minutes].entries()) {
+      if (mark === "-") {
+        skipped += 1;
+        continue;
+      }
+      h.world.down.clear();
+      if (mark === "F") ["page", "api"].forEach((t) => h.world.down.add(t));
+      if (mark === "f") h.world.down.add("page");
+      await h.tick(1 + skipped);
+      skipped = 0;
+      const clock = new Date(Date.parse("2026-11-25T18:45:00Z") + index * MIN).toISOString().slice(11, 16);
+      const [incident] = await h.incidents();
+      statusAt.set(clock, incident ? incidentState(incident.status) : "none");
+    }
+    assert.equal(statusAt.get("18:52"), "none");
+    assert.notEqual(statusAt.get("18:53"), "none", "opens on the third failed check in a row");
+    assert.equal(statusAt.get("18:59"), "resolved", "five clean checks (18:54–18:59) are real recovery evidence");
+    for (const clock of ["19:11", "19:12", "19:20", "19:30", "19:39"])
+      assert.notEqual(statusAt.get(clock), "resolved", `still failing intermittently at ${clock}`);
+    assert.equal((await h.incidents()).length, 1, "page and API share one incident");
+    assert.deepEqual(h.sent.map((p) => p.kind), ["opened", "recovered", "opened"]);
+
+    h.world.down.clear();
+    for (let i = 0; i < 5; i += 1) await h.tick();
+    assert.equal(incidentState((await h.incidents())[0].status), "resolved");
+    assert.deepEqual(h.sent.map((p) => p.kind), ["opened", "recovered", "opened", "recovered"]);
+  });
+
+  it("stays open, without evidence of recovery, while the website check cannot run", async () => {
+    const h = harness();
+    h.world.down.add("page");
+    for (let i = 0; i < 3; i += 1) await h.tick();
+    h.world.down.clear();
+    h.world.websiteThrows = true;
+    for (let i = 0; i < 8; i += 1) await h.tick();
+    assert.notEqual(incidentState((await h.incidents())[0].status), "resolved");
   });
 });
 
@@ -551,6 +643,25 @@ describe("website probe", () => {
     });
     assert.equal(result.ok, false);
     assert.ok(Date.now() - started < 1000);
+  });
+
+  it("names Cloudflare's error code and request ID on a Worker resource-limit page (Error 1102)", async () => {
+    const page = "<html><title>Worker exceeded resource limits | tradecatch.ca | Cloudflare</title><h1>Error 1102</h1></html>";
+    const result = await record(
+      () => new Response(page, { status: 503, headers: { "cf-ray": "a60285f1d86c36d4-DFW" } }),
+    );
+    assert.deepEqual([result.ok, result.statusCode, result.errorCode, result.requestId], [false, 503, "cf_1102", "a60285f1d86c36d4-DFW"]);
+    const plain = await record(() => new Response("{\"ok\":false}", { status: 503 }));
+    assert.equal(plain.errorCode, undefined, "an application 503 names no Cloudflare code");
+    const fine = await record(() => new Response("Error 1102", { status: 200 }));
+    assert.equal(fine.errorCode, undefined, "a successful page is never read");
+  });
+
+  it("says whether a failed check timed out or could not connect", async () => {
+    const thrown = await record(() => {
+      throw new TypeError("fetch failed");
+    });
+    assert.equal(thrown.errorCode, "network");
   });
 
   it("sends no credentials and identifies itself", async () => {

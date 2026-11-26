@@ -227,6 +227,99 @@ describe("acknowledging an incident", () => {
     assert.equal((await engine.resolve(id, "admin@example.test")).status, "resolved", "double click is harmless");
     await assert.rejects(() => engine.acknowledge(id, "a"), (e) => e instanceof ReliabilityError && e.status === 409);
   });
+
+  it("a manual resolution of an alerted incident sends exactly one resolution email (2026-11-25 20:45 UTC had none)", async () => {
+    const { engine, store } = harness();
+    await engine.report(report({ priority: "critical", fingerprint: "website:unavailable", service: "website" }));
+    const id = (await store.listIncidents())[0].id;
+    await engine.resolve(id, "admin@example.test");
+    await engine.resolve(id, "admin@example.test");
+    const recovered = (await store.listAlertDeliveries()).filter((a) => a.kind === "recovered");
+    assert.equal(recovered.length, 1);
+    assert.equal(recovered[0].incidentId, id);
+    const payload = composeAlert("recovered", (await store.getIncident(id))!, { now: new Date(START) });
+    assert.ok(payload.lines.some((l) => l.label === "Resolved by" && /administrator/.test(l.value)));
+  });
+
+  it("a manual resolution of a warning, or of an incident never alerted, sends nothing", async () => {
+    const { engine, store } = harness();
+    await engine.report(report({ priority: "warning", fingerprint: "api:latency", service: "api" }));
+    await engine.resolve((await store.listIncidents())[0].id, "a");
+    assert.equal((await store.listAlertDeliveries()).filter((a) => a.kind === "recovered").length, 0);
+  });
+});
+
+describe("website incidents resolve only on sustained successful checks", () => {
+  const site = report({
+    fingerprint: "website:unavailable",
+    service: "website",
+    category: "unavailable",
+    priority: "critical",
+    title: "Website is unreachable",
+    quietMs: 3 * MIN,
+  });
+
+  it("quiet time alone does not resolve it; five good checks on every address do", async () => {
+    const { engine, store, advance, now } = harness();
+    await engine.report(site);
+    advance(10 * MIN);
+    assert.equal((await engine.sweepRecovered()).length, 0, "no checks at all: no evidence");
+    for (let i = 0; i < 4; i += 1)
+      await store.saveProbe({ at: new Date(now().getTime() - (4 - i) * 1000).toISOString(), target: "page", ok: true, durationMs: 50 });
+    assert.equal((await engine.sweepRecovered()).length, 0, "four good checks are not enough");
+    await store.saveProbe({ at: now().toISOString(), target: "page", ok: true, durationMs: 50 });
+    const [resolved] = await engine.sweepRecovered();
+    assert.equal(resolved.status, "resolved");
+    const events = await store.listIncidentEvents(resolved.id);
+    assert.ok(events.some((e) => e.kind === "resolved" && /last 5 availability checks succeeded/.test(e.detail ?? "")));
+  });
+
+  it("an older per-address incident needs only its own address to recover", async () => {
+    const { engine, store, advance, now } = harness();
+    await engine.report({ ...site, fingerprint: "website:unavailable:api" });
+    advance(10 * MIN);
+    for (let i = 0; i < 5; i += 1) {
+      const at = new Date(now().getTime() - i * 1000).toISOString();
+      await store.saveProbe({ at, target: "api", ok: true, durationMs: 50 });
+      await store.saveProbe({ at, target: "page", ok: false, durationMs: 50 });
+    }
+    assert.equal((await engine.sweepRecovered()).length, 1);
+  });
+});
+
+describe("alert identifiers are not mistaken for phone numbers", () => {
+  it("keeps the full alert for an incident id whose last UUID group is all digits", async () => {
+    const { engine, store } = harness();
+    await engine.report(report({ priority: "critical" }));
+    const incident = { ...(await store.listIncidents())[0], id: "inc_9fc51ebf-83e6-4992-b530-272773860567", correlationId: "mon_de579d9c-3de8-497b-ac5b-58c7af2d4913" };
+    const payload = safePayload(composeAlert("opened", incident, { now: new Date(START), siteUrl: "https://tradecatch.ca" }));
+    assert.equal(payload.title, "Stripe webhooks are failing");
+    assert.ok(payload.lines.some((l) => l.label === "Diagnostic reference" && l.value === incident.id));
+  });
+
+  it("a fallback for a resolution says RESOLVED and keeps every safe line", () => {
+    const base = composeAlert(
+      "recovered",
+      {
+        id: "inc_1",
+        service: "website",
+        severity: "critical",
+        priority: "critical",
+        title: "Website is unreachable",
+        status: "resolved",
+        correlationId: "mon_1",
+        createdAt: new Date(START).toISOString(),
+        resolvedAt: new Date(START).toISOString(),
+      },
+      { now: new Date(START) },
+    );
+    const leaked = { ...base, lines: [...base.lines, { label: "Contact", value: "call +1 514 555 0100" }] };
+    const payload = safePayload(leaked);
+    assert.match(payload.subject, /^\[TradeCatch RESOLVED\]/);
+    assert.ok(!payload.lines.some((l) => l.label === "Contact"), "the unsafe line is dropped");
+    assert.ok(payload.lines.some((l) => l.label === "Service"));
+    assert.ok(payload.lines.some((l) => l.label === "Resolved"));
+  });
 });
 
 describe("an outage recorded after the fact (the database could not store it while it was down)", () => {

@@ -8,6 +8,10 @@ import {
   type Priority,
 } from "./types";
 import { createId } from "@/lib/id";
+import { isWebsiteFingerprint, WEBSITE_FINGERPRINT, websiteRecovered } from "./rules";
+
+/** How far back the website's recovery evidence is read (well past any rule). */
+const RECOVERY_LOOKBACK_MS = 30 * 60_000;
 
 /**
  * Incident lifecycle (KAN-28): one incident per fingerprint, tracked
@@ -259,19 +263,35 @@ export function createIncidentEngine(deps: IncidentEngineDeps) {
       return resolved;
     },
 
-    /** Resolves incidents whose condition has stayed clear, and announces recoveries. */
+    /**
+     * Resolves incidents whose condition has stayed clear, and announces
+     * recoveries. A website incident additionally needs positive evidence: the
+     * last `website.recoverySuccesses` checks of every address succeeded. This
+     * runs from both the per-minute monitor and the 15-minute health tick, so
+     * the rule lives here rather than in either caller.
+     */
     async sweepRecovered(): Promise<Incident[]> {
       const now = deps.now();
       const at = now.toISOString();
       const resolved: Incident[] = [];
+      let probes: Awaited<ReturnType<ReliabilityStore["listProbes"]>> | undefined;
       for (const candidate of await store.listRecoverableIncidents(at)) {
+        let detail = "Condition cleared.";
+        if (isWebsiteFingerprint(candidate.fingerprint)) {
+          probes ??= await store.listProbes(
+            new Date(now.getTime() - RECOVERY_LOOKBACK_MS).toISOString(),
+          );
+          const target = candidate.fingerprint!.slice(WEBSITE_FINGERPRINT.length + 1);
+          if (!websiteRecovered(probes, thresholds, target ? [target] : undefined)) continue;
+          detail = `Condition cleared: the last ${thresholds.website.recoverySuccesses} availability checks succeeded.`;
+        }
         const incident = await store.resolveIncident(candidate.id, { at, by: "auto" });
         if (!incident) continue;
         resolved.push(incident);
         await store.addIncidentEvent({
           incidentId: incident.id,
           kind: "resolved",
-          detail: "Condition cleared.",
+          detail,
           actor: "auto",
           at,
         });
@@ -313,6 +333,16 @@ export function createIncidentEngine(deps: IncidentEngineDeps) {
         actor,
         at,
       });
+      // Whoever was told it opened is told it closed, however it closed. The
+      // 2026-11-25 20:42 UTC website incident was closed by hand and its
+      // recipients never heard that it ended.
+      const priority = incident.priority ?? "warning";
+      if (
+        !incident.simulated &&
+        incident.lastAlertedAt &&
+        (priority === "critical" || priority === "high")
+      )
+        await enqueue("recovered", incident, Date.parse(at));
       return incident;
     },
   };

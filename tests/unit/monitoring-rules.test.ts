@@ -8,6 +8,7 @@ import {
   emptySignals,
   evaluateDatabaseSlow,
   p95FromBuckets,
+  websiteRecovered,
   type ProbeSample,
   type TrafficBucket,
 } from "../../src/product/reliability/rules";
@@ -124,7 +125,8 @@ describe("MON-01 website availability", () => {
     assert.equal(down.length, 1);
     assert.equal(down[0].priority, "critical");
     assert.equal(down[0].service, "website");
-    assert.equal(down[0].fingerprint, "website:unavailable:page");
+    assert.equal(down[0].fingerprint, "website:unavailable");
+    assert.equal(down[0].title, "Website is unreachable");
   });
 
   it("treats a single recovered probe as a break in the run and stays quiet when data is missing", () => {
@@ -132,13 +134,56 @@ describe("MON-01 website availability", () => {
     assert.equal(evaluateWebsite([], T).length, 0);
   });
 
-  it("evaluates each target on its own", () => {
+  it("evaluates each target on its own, and names only the failing one", () => {
     const samples = [
       ...[1, 2, 3].map((m) => probe(m, false, "api")),
       ...[1, 2, 3].map((m) => probe(m, true, "page")),
     ];
     const findings = evaluateWebsite(samples, T);
-    assert.deepEqual(findings.map((f) => f.fingerprint), ["website:unavailable:api"]);
+    assert.deepEqual(findings.map((f) => f.fingerprint), ["website:unavailable"]);
+    assert.equal(findings[0].title, "Public API is unreachable");
+    assert.match(findings[0].summary, /API \(\/api\/health\)/);
+    assert.doesNotMatch(findings[0].summary, /website \(\/\)/);
+  });
+
+  it("correlates the page and the API into ONE finding when both fail (2026-11-25: two emails per outage)", () => {
+    const samples = [
+      ...[1, 2, 3].map((m) => probe(m, false, "api")),
+      ...[1, 2, 3].map((m) => probe(m, false, "page")),
+    ];
+    const findings = evaluateWebsite(samples, T);
+    assert.equal(findings.length, 1);
+    assert.equal(findings[0].title, "Website and API are unreachable");
+    assert.match(findings[0].summary, /website \(\/\) since .* UTC \(3 in a row\)/);
+    assert.match(findings[0].summary, /API \(\/api\/health\) since .* UTC \(3 in a row\)/);
+  });
+
+  it("puts the Cloudflare error code and request ID of this run's checks in the summary", () => {
+    const samples = [1, 2, 3].map((m) => ({ ...probe(m, false, "page"), statusCode: 503 }));
+    const [finding] = evaluateWebsite(samples, T, [
+      { target: "page", errorCode: "cf_1102", requestId: "8e5a1b2c3d4e5f60-DFW" },
+    ]);
+    assert.match(finding.summary, /Last status 503/);
+    assert.match(finding.summary, /Cloudflare error 1102: the Worker exceeded its CPU or memory limit/);
+    assert.match(finding.summary, /Request ID 8e5a1b2c3d4e5f60-DFW/);
+    assert.ok(finding.summary.length <= 280, `fits the alert line (${finding.summary.length})`);
+  });
+});
+
+describe("website recovery needs sustained successful checks", () => {
+  it("is not proven by fewer successes than required, by any recent failure, or by no data", () => {
+    const need = T.website.recoverySuccesses;
+    assert.equal(need, 5);
+    const ok = (n: number, target = "page") =>
+      Array.from({ length: n }, (_, i) => probe(i + 1, true, target));
+    assert.equal(websiteRecovered(ok(need - 1), T), false);
+    assert.equal(websiteRecovered(ok(need), T), true);
+    assert.equal(websiteRecovered([], T), false, "a monitor that stopped proves nothing");
+    // newest first is minute 1: one failure inside the last `need` checks blocks recovery
+    assert.equal(websiteRecovered([...ok(need + 2).slice(1), probe(1, false)], T), false);
+    // every address must have recovered
+    assert.equal(websiteRecovered([...ok(need, "page"), ...ok(2, "api")], T), false);
+    assert.equal(websiteRecovered([...ok(need, "page"), ...ok(2, "api")], T, ["page"]), true);
   });
 });
 

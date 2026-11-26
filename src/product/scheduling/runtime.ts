@@ -334,7 +334,25 @@ export async function reconcileGoogleBusy(organizationId: string) {
 }
 
 /** The periodic pass: read what changed, renew channels, send what is queued. */
+/**
+ * Without Google client credentials no business can be connected and nothing
+ * can be read or sent (open() answers `not_configured` for every one), so the
+ * pass has no work. It used to read the sync tables anyway: on the production
+ * database, where they are missing (scheduling schema drift, see
+ * docs/INCIDENT-2026-11-25-RECURRING-OUTAGES.md), that read failed every minute
+ * from 2026-11-22, which failed the whole per-minute cron run each time. The
+ * missing tables stay visible in System Health ("Calendar check unavailable")
+ * and `node scripts/schema-targeted.js --check`; once credentials are set the
+ * pass runs, and fails loudly, again.
+ */
 export async function runGoogleSyncTick() {
+  if (!googleCalendarConfigured())
+    return {
+      skipped: "not_configured" as const,
+      pulled: 0,
+      pushed: { claimed: 0, synced: 0, retrying: 0, failed: 0 },
+      channels: 0,
+    };
   return getGoogleSync().tick();
 }
 
