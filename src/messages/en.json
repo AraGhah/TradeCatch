@@ -91,56 +91,22 @@
     }
   },
   "home": {
+    "meta": {
+      "title": "Every call deserves an answer.",
+      "description": "TradeCatch answers your calls, captures customer requests, and helps you miss fewer opportunities."
+    },
     "hero": {
-      "eyebrow": "Phone receptionist for service businesses",
-      "headline": "Every call deserves an answer.",
-      "accentWord": "deserves an answer.",
-      "subheadline": "TradeCatch answers your calls, captures customer requests, and helps you miss fewer opportunities.",
-      "ctaPrimary": "Watch the demo",
-      "ctaSecondary": "See plans",
-      "ctaTry": "Try the live receptionist demo",
-      "reassurance": "Free demo. No system access needed. You talk with the founder.",
-      "preview": {
-        "badge": "Sample",
-        "workspaceLabel": "TradeCatch workspace",
-        "navOverview": "Overview",
-        "navCalls": "Calls",
-        "navRequests": "Requests",
-        "statsAnswered": "Answered",
-        "statsAnsweredValue": "18",
-        "statsRequests": "Requests",
-        "statsRequestsValue": "7",
-        "callsTitle": "Recent calls",
-        "requestsTitle": "Customer request",
-        "rows": [
-          {
-            "name": "Marie L.",
-            "meta": "Furnace service · Laval",
-            "status": "Answered",
-            "statusTone": "answered"
-          },
-          {
-            "name": "Jean P.",
-            "meta": "Quote request · Montréal",
-            "status": "New request",
-            "statusTone": "new"
-          },
-          {
-            "name": "Sophie R.",
-            "meta": "Missed · followed up by text",
-            "status": "Follow-up",
-            "statusTone": "missed"
-          }
-        ],
-        "selectedTitle": "Furnace service request",
-        "selectedFields": [
-          { "label": "Caller", "value": "Marie L." },
-          { "label": "Phone", "value": "(514) 555-0198" },
-          { "label": "Service", "value": "Furnace not heating" },
-          { "label": "Area", "value": "Laval" },
-          { "label": "Urgency", "value": "Same day" }
-        ]
-      }
+      "eyebrow": "Built for contractors",
+      "headline": "Don’t let another missed call",
+      "highlight": "cost you a job.",
+      "subheadline": "TradeCatch handles your calls, qualifies customer requests and helps turn more opportunities into booked jobs.",
+      "ctaPrimary": "Explore our plans",
+      "ctaSecondary": "Watch the demo",
+      "ctaContact": "Book a free demo",
+      "benefitsLabel": "What TradeCatch does",
+      "benefitReception": "Telephone reception",
+      "benefitRequests": "Qualified requests",
+      "benefitDashboard": "One central dashboard"
     },
     "leaks": {
       "eyebrow": "The problem",
@@ -1586,9 +1552,9 @@
     }
   },
   "login": {
-    "eyebrow": "Account Center",
-    "headline": "Sign in to your TradeCatch account",
-    "intro": "Sign in with your email and password. Accounts are created by TradeCatch when you become a customer, so there is no public sign-up.",
+    "eyebrow": "Client portal",
+    "headline": "Welcome back.",
+    "intro": "Sign in to access your TradeCatch account.",
     "email": "Work email",
     "submit": "Email me a sign-in link",
     "sending": "Sending…",
@@ -1611,7 +1577,21 @@
     "linkRateLimited": "Too many attempts. Try again in a few minutes.",
     "linkUnconfirmed": "We could not confirm that the sign-in link was sent. Check your inbox, and try again if nothing arrives in a few minutes.",
     "passwordSaved": "Your password is saved. Sign in below.",
-    "errorOutage": "Sign-in is temporarily unavailable. This is not a problem with your email or password. Try again in a few minutes, or email contact@tradecatch.ca."
+    "errorOutage": "Sign-in is temporarily unavailable. This is not a problem with your email or password. Try again in a few minutes, or email contact@tradecatch.ca.",
+    "invalidEmail": "Enter a valid email address.",
+    "missingPassword": "Enter your password.",
+    "emailPlaceholder": "you@company.ca",
+    "opening": "Opening your workspace…",
+    "openingStuck": "Page not opening?",
+    "openingContinue": "Continue to my workspace",
+    "secure": "Secure sign-in",
+    "backHome": "Back to homepage",
+    "accountsNote": "TradeCatch creates your account when you become a customer. There is no public sign-up.",
+    "help": "Need help?",
+    "contact": "Contact TradeCatch",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "languageLabel": "Language"
   },
   "passwordToggle": {
     "show": "Show password",
@@ -5249,5 +5229,25 @@
     "too_long": "Use 128 characters or fewer.",
     "common": "That password is too easy to guess. Choose another.",
     "contains_email": "Do not use your email address in your password."
+  },
+  "productPreview": {
+    "label": "TradeCatch service preview",
+    "badge": "Telephone reception",
+    "business": "Your business",
+    "dashboard": "Management center",
+    "railLabel": "How a call moves",
+    "incoming": "Incoming call",
+    "customer": "New customer",
+    "request": "Service request",
+    "service": "Plumbing request",
+    "appointment": "Appointment scheduling",
+    "scheduling": "Based on your availability",
+    "recorded": "On your dashboard",
+    "recordedNote": "Ready for your follow-up",
+    "handled": "Call handled",
+    "qualified": "Request qualified",
+    "captionTitle": "Your calls. Your customers.",
+    "captionBody": "Focus on your jobs while TradeCatch takes care of your calls.",
+    "example": "Illustrative workflow"
   }
 }

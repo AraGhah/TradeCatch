@@ -91,56 +91,22 @@
     }
   },
   "home": {
+    "meta": {
+      "title": "Chaque appel mérite une réponse.",
+      "description": "TradeCatch prend en charge vos appels, recueille les demandes de vos clients et vous aide à ne manquer aucune occasion d’affaires."
+    },
     "hero": {
-      "eyebrow": "Réceptionniste téléphonique pour entreprises de service",
-      "headline": "Chaque appel mérite une réponse.",
-      "accentWord": "mérite une réponse.",
-      "subheadline": "TradeCatch prend en charge vos appels, recueille les demandes de vos clients et vous aide à ne manquer aucune occasion d’affaires.",
-      "ctaPrimary": "Voir la démo",
-      "ctaSecondary": "Découvrir les forfaits",
-      "ctaTry": "Essayer la démo live",
-      "reassurance": "Démo gratuite. Aucun accès système requis. Vous parlez avec le fondateur.",
-      "preview": {
-        "badge": "Exemple",
-        "workspaceLabel": "Espace TradeCatch",
-        "navOverview": "Aperçu",
-        "navCalls": "Appels",
-        "navRequests": "Demandes",
-        "statsAnswered": "Répondus",
-        "statsAnsweredValue": "18",
-        "statsRequests": "Demandes",
-        "statsRequestsValue": "7",
-        "callsTitle": "Appels récents",
-        "requestsTitle": "Demande client",
-        "rows": [
-          {
-            "name": "Marie L.",
-            "meta": "Entretien de fournaise · Laval",
-            "status": "Répondu",
-            "statusTone": "answered"
-          },
-          {
-            "name": "Jean P.",
-            "meta": "Demande de soumission · Montréal",
-            "status": "Nouvelle",
-            "statusTone": "new"
-          },
-          {
-            "name": "Sophie R.",
-            "meta": "Manqué · suivi par texto",
-            "status": "Suivi",
-            "statusTone": "missed"
-          }
-        ],
-        "selectedTitle": "Demande d’entretien de fournaise",
-        "selectedFields": [
-          { "label": "Appelant", "value": "Marie L." },
-          { "label": "Téléphone", "value": "(514) 555-0198" },
-          { "label": "Service", "value": "Fournaise qui ne chauffe pas" },
-          { "label": "Secteur", "value": "Laval" },
-          { "label": "Urgence", "value": "Le jour même" }
-        ]
-      }
+      "eyebrow": "Conçu pour les entrepreneurs",
+      "headline": "Ne laissez plus un appel manqué",
+      "highlight": "vous coûter un contrat.",
+      "subheadline": "TradeCatch prend en charge vos appels, qualifie vos demandes et vous aide à transformer davantage d’occasions en contrats.",
+      "ctaPrimary": "Découvrir nos forfaits",
+      "ctaSecondary": "Voir la démo",
+      "ctaContact": "Réserver une démo gratuite",
+      "benefitsLabel": "Ce que fait TradeCatch",
+      "benefitReception": "Réception téléphonique",
+      "benefitRequests": "Demandes qualifiées",
+      "benefitDashboard": "Tableau de bord centralisé"
     },
     "leaks": {
       "eyebrow": "Le problème",
@@ -1586,9 +1552,9 @@
     }
   },
   "login": {
-    "eyebrow": "Centre de compte",
-    "headline": "Connexion à votre compte TradeCatch",
-    "intro": "Connectez-vous avec votre courriel et votre mot de passe. Les comptes sont créés par TradeCatch quand vous devenez client, il n’y a donc pas d’inscription publique.",
+    "eyebrow": "Espace client",
+    "headline": "Bon retour parmi nous.",
+    "intro": "Connectez-vous pour accéder à votre espace TradeCatch.",
     "email": "Courriel professionnel",
     "submit": "M'envoyer un lien de connexion",
     "sending": "Envoi…",
@@ -1611,7 +1577,21 @@
     "linkRateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
     "linkUnconfirmed": "Nous n’avons pas pu confirmer l’envoi du lien de connexion. Vérifiez votre boîte de réception et réessayez si rien n’arrive d’ici quelques minutes.",
     "passwordSaved": "Votre mot de passe est enregistré. Connectez-vous ci-dessous.",
-    "errorOutage": "La connexion est temporairement indisponible. Votre courriel et votre mot de passe ne sont pas en cause. Réessayez dans quelques minutes ou écrivez à contact@tradecatch.ca."
+    "errorOutage": "La connexion est temporairement indisponible. Votre courriel et votre mot de passe ne sont pas en cause. Réessayez dans quelques minutes ou écrivez à contact@tradecatch.ca.",
+    "invalidEmail": "Entrez une adresse courriel valide.",
+    "missingPassword": "Entrez votre mot de passe.",
+    "emailPlaceholder": "vous@entreprise.ca",
+    "opening": "Ouverture de votre espace…",
+    "openingStuck": "La page ne s’ouvre pas?",
+    "openingContinue": "Continuer vers mon espace",
+    "secure": "Connexion sécurisée",
+    "backHome": "Retour à l’accueil",
+    "accountsNote": "Les comptes sont créés par TradeCatch quand vous devenez client. Il n’y a pas d’inscription publique.",
+    "help": "Besoin d’aide?",
+    "contact": "Contacter TradeCatch",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "languageLabel": "Langue"
   },
   "passwordToggle": {
     "show": "Afficher le mot de passe",
@@ -5249,5 +5229,25 @@
     "too_long": "Utilisez 128 caractères ou moins.",
     "common": "Ce mot de passe est trop facile à deviner. Choisissez-en un autre.",
     "contains_email": "N’utilisez pas votre adresse courriel dans votre mot de passe."
+  },
+  "productPreview": {
+    "label": "Aperçu du service TradeCatch",
+    "badge": "Réception téléphonique",
+    "business": "Votre entreprise",
+    "dashboard": "Centre de gestion",
+    "railLabel": "Le parcours d’un appel",
+    "incoming": "Appel entrant",
+    "customer": "Nouveau client",
+    "request": "Demande de service",
+    "service": "Demande de plomberie",
+    "appointment": "Prise de rendez-vous",
+    "scheduling": "Selon vos disponibilités",
+    "recorded": "Dans votre tableau de bord",
+    "recordedNote": "Prête pour votre suivi",
+    "handled": "Appel pris en charge",
+    "qualified": "Demande qualifiée",
+    "captionTitle": "Vos appels. Vos clients.",
+    "captionBody": "Concentrez-vous sur vos contrats pendant que TradeCatch prend en charge vos appels.",
+    "example": "Exemple de fonctionnement"
   }
 }
