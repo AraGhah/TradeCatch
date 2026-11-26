@@ -740,3 +740,467 @@ body.demo-video-active {
 .tc-wf .tc-wf-list {
   transform: translateY(-26px);
 }
+
+/* ── Homepage motion ─────────────────────────────────────────────────────
+   One easing (--ease-out). Presses 160 to 200ms, hovers 240ms, entrances
+   350 to 600ms. Only opacity and transform move; nothing changes size, so
+   nothing shifts. The global reduced-motion rule above collapses all of it
+   to the end state. */
+
+/* Buttons: a trailing arrow nudges forward on hover. */
+.tc-cta > svg {
+  transition: transform 0.24s var(--ease-out);
+}
+@media (hover: hover) {
+  .tc-cta:hover > svg:last-child:not(:first-child) {
+    transform: translateX(2px);
+  }
+}
+
+/* Plan cards: an ember edge under the pointer. Keeps the reveal transform. */
+@media (hover: hover) {
+  .tc-plan {
+    transition:
+      transform 0.7s var(--ease-out),
+      border-color 0.24s var(--ease-out),
+      box-shadow 0.24s var(--ease-out);
+  }
+  .tc-plan:hover {
+    border-color: rgb(228 118 43 / 0.6);
+    box-shadow: var(--shadow-card-hover);
+  }
+}
+
+/* FAQ: answers slide open where the browser can animate to auto height. */
+@supports (interpolate-size: allow-keywords) {
+  .tc-acc {
+    interpolate-size: allow-keywords;
+  }
+  .tc-acc::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 0.32s var(--ease-out),
+      content-visibility 0.32s allow-discrete;
+  }
+  .tc-acc[open]::details-content {
+    block-size: auto;
+  }
+}
+
+/* Ambient light: a slow drift behind the hero and the closing band. Paused
+   off screen by ScrollReveal (data-ambient="off"). */
+.tc-ambient {
+  position: absolute;
+  inset: -20%;
+  z-index: -1;
+  pointer-events: none;
+  animation: tc-ambient 28s ease-in-out infinite alternate;
+}
+.tc-ambient[data-ambient="off"] {
+  animation-play-state: paused;
+}
+.tc-ambient-paper {
+  background:
+    radial-gradient(
+      34% 42% at 74% 46%,
+      rgb(228 118 43 / 0.11),
+      transparent 70%
+    ),
+    radial-gradient(
+      30% 38% at 18% 82%,
+      rgb(var(--ink-rgb) / 0.045),
+      transparent 70%
+    );
+}
+.tc-ambient-ink {
+  background:
+    radial-gradient(
+      38% 60% at 28% 26%,
+      rgb(228 118 43 / 0.17),
+      transparent 70%
+    ),
+    radial-gradient(
+      34% 50% at 82% 84%,
+      rgb(255 255 255 / 0.05),
+      transparent 70%
+    );
+}
+@keyframes tc-ambient {
+  from {
+    transform: translate3d(-3%, -2%, 0);
+  }
+  to {
+    transform: translate3d(3%, 2.5%, 0);
+  }
+}
+
+/* Hero: the benefit the phone is showing gets an ember underline. */
+.tc-hero-cue svg {
+  transition: color 0.3s var(--ease-out);
+}
+.tc-hero-cue::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: -5px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--color-orange);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease-out);
+}
+.tc-hero:has(
+    .tc-wf[data-wf-live]:not([data-wf-hold]):is(
+        [data-wf-phase="call"],
+        [data-wf-phase="text"]
+      )
+  )
+  [data-hero-cue="call"],
+.tc-hero:has(.tc-wf[data-wf-live]:not([data-wf-hold])[data-wf-phase="card"])
+  [data-hero-cue="card"],
+.tc-hero:has(.tc-wf[data-wf-live]:not([data-wf-hold])[data-wf-phase="notify"])
+  [data-hero-cue="notify"] {
+  color: var(--color-heading);
+}
+.tc-hero:has(
+    .tc-wf[data-wf-live]:not([data-wf-hold]):is(
+        [data-wf-phase="call"],
+        [data-wf-phase="text"]
+      )
+  )
+  [data-hero-cue="call"]::after,
+.tc-hero:has(.tc-wf[data-wf-live]:not([data-wf-hold])[data-wf-phase="card"])
+  [data-hero-cue="card"]::after,
+.tc-hero:has(.tc-wf[data-wf-live]:not([data-wf-hold])[data-wf-phase="notify"])
+  [data-hero-cue="notify"]::after {
+  transform: scaleX(1);
+}
+.tc-hero:has(
+    .tc-wf[data-wf-live]:not([data-wf-hold]):is(
+        [data-wf-phase="call"],
+        [data-wf-phase="text"]
+      )
+  )
+  [data-hero-cue="call"]
+  svg,
+.tc-hero:has(.tc-wf[data-wf-live]:not([data-wf-hold])[data-wf-phase="card"])
+  [data-hero-cue="card"]
+  svg,
+.tc-hero:has(.tc-wf[data-wf-live]:not([data-wf-hold])[data-wf-phase="notify"])
+  [data-hero-cue="notify"]
+  svg {
+  color: var(--color-ember-text);
+}
+
+/* Seam: the problem section's line draws down into the system section. */
+.tc-seam {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: clamp(28px, 3.4vw, 44px);
+  margin-left: -1px;
+  border-radius: 2px;
+  background: linear-gradient(
+    to bottom,
+    rgb(228 118 43 / 0),
+    var(--color-orange)
+  );
+  transform-origin: top;
+}
+[data-reveal="seam"] {
+  transition: transform 0.9s var(--ease-out);
+}
+[data-reveal="seam"].reveal-pending:not(.is-visible) {
+  transform: scaleY(0);
+}
+
+/* Segmented controls and tabs (before/after toggle, demo tabs). */
+.tc-lr-option,
+.tc-tab {
+  transition:
+    background-color 0.25s var(--ease-out),
+    color 0.25s var(--ease-out),
+    box-shadow 0.25s var(--ease-out);
+}
+.tc-lr-option[aria-pressed="true"],
+.tc-tab[aria-selected="true"] {
+  background: var(--color-navy);
+  color: #fff;
+  box-shadow: 0 6px 14px -8px rgb(var(--ink-rgb) / 0.6);
+}
+@media (hover: hover) {
+  .tc-lr-option[aria-pressed="false"]:hover,
+  .tc-tab[aria-selected="false"]:hover {
+    color: var(--color-heading);
+  }
+}
+@media (scripting: none) {
+  .tc-lr-toggle,
+  .tc-tabs-list {
+    display: none;
+  }
+}
+.tc-tabs[data-touched] .tc-tab-panel:not([hidden]) {
+  animation: tc-tab-in 0.35s var(--ease-out);
+}
+@keyframes tc-tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Before/after: both faces share one grid cell; cards turn one by one. */
+.tc-lr-card {
+  border-color: rgb(var(--ink-rgb) / 0.08);
+  transition: border-color 0.5s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+.tc-lr[data-mode="with"] .tc-lr-card {
+  border-color: rgb(47 158 104 / 0.38);
+}
+.tc-lr-face {
+  grid-area: 1 / 1;
+  transition:
+    opacity 0.45s var(--ease-out),
+    transform 0.45s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+.tc-lr[data-mode="with"] [data-face="without"],
+.tc-lr[data-mode="without"] [data-face="with"] {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+}
+.tc-lr-row {
+  transition:
+    opacity 0.4s var(--ease-out),
+    transform 0.4s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 90ms + 120ms + var(--j, 0) * 130ms);
+}
+.tc-lr[data-mode="without"] .tc-lr-row {
+  opacity: 0;
+  transform: translateX(-6px);
+}
+
+/* Signal flow: customer, TradeCatch and you, joined by drawn lines. */
+.tc-sf-node {
+  border-color: rgb(var(--ink-rgb) / 0.1);
+  transition:
+    border-color 0.3s var(--ease-out),
+    box-shadow 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out);
+}
+.tc-sf-node[data-lit] {
+  border-color: rgb(228 118 43 / 0.6);
+  box-shadow: 0 0 0 4px rgb(228 118 43 / 0.1);
+  transform: translateY(-2px);
+}
+.tc-sf-track {
+  height: 2px;
+  margin-inline: 8px;
+}
+.tc-sf-line {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 2px;
+  background: rgb(var(--ink-rgb) / 0.12);
+}
+.tc-sf-line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--color-orange);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.9s var(--ease-out);
+}
+.tc-sf-track[data-drawn] .tc-sf-line::after {
+  transform: scaleX(1);
+}
+.tc-sf-run {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: 0;
+}
+.tc-sf-packet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--color-navy);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: 0 6px 16px -8px rgb(var(--ink-rgb) / 0.6);
+}
+.tc-sf-run[data-mode="run"] {
+  animation: tc-sf-travel 1.15s cubic-bezier(0.45, 0, 0.2, 1) both;
+}
+.tc-sf-run[data-mode="run"][data-dir="back"] {
+  animation-direction: reverse;
+}
+.tc-sf-run[data-mode="rest"] {
+  transform: translateX(50%);
+}
+@keyframes tc-sf-travel {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  12%,
+  88% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+.tc-sf-step {
+  transition:
+    border-color 0.35s var(--ease-out),
+    box-shadow 0.35s var(--ease-out),
+    transform 0.35s var(--ease-out);
+}
+.tc-sf-step[data-state="active"] {
+  border-color: rgb(228 118 43 / 0.65);
+  box-shadow: 0 14px 30px -20px rgb(228 118 43 / 0.6);
+  transform: translateY(-2px);
+}
+.tc-sf-step[data-state="done"] .tc-sf-num {
+  color: var(--color-ember-text);
+}
+.tc-sf-tag {
+  border-radius: 999px;
+  background: rgb(228 118 43 / 0.12);
+  padding: 1px 8px;
+  font-weight: 600;
+  color: var(--color-ember-text);
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity 0.3s var(--ease-out),
+    transform 0.3s var(--ease-out);
+}
+.tc-sf-step:is([data-state="active"], [data-state="done"]) .tc-sf-tag {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: hover) {
+  .tc-sf:not([data-playing]) .tc-sf-step:hover {
+    border-color: rgb(var(--ink-rgb) / 0.22);
+  }
+  .tc-sf:not([data-playing]) .tc-sf-step:hover .tc-sf-tag {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Missed-call simulator: every element keeps its place; [data-show] reveals. */
+.tc-sim-fade {
+  opacity: 0;
+  transition: opacity 0.35s var(--ease-out);
+}
+.tc-sim-rise {
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 0.4s var(--ease-out),
+    transform 0.4s var(--ease-out);
+  transition-delay: calc(var(--k, 0) * 120ms);
+}
+.tc-sim-drop {
+  opacity: 0;
+  transform: translateY(-10px) scale(0.9);
+  transition:
+    opacity 0.4s var(--ease-out),
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.tc-sim-toast {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  transition:
+    opacity 0.3s var(--ease-out),
+    transform 0.4s var(--ease-out);
+}
+:is(.tc-sim-fade, .tc-sim-rise, .tc-sim-drop, .tc-sim-toast)[data-show] {
+  opacity: 1;
+  transform: none;
+}
+/* The notification comes and goes; the result strip stays. */
+.tc-sim-toast.tc-sim-flash[data-show] {
+  animation: tc-sim-flash 3.4s var(--ease-out) forwards;
+}
+@keyframes tc-sim-flash {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  12%,
+  78% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+}
+.tc-sim-ring {
+  animation: tc-sim-ring 0.9s ease-in-out infinite;
+}
+@keyframes tc-sim-ring {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  20% {
+    transform: rotate(-14deg);
+  }
+  40% {
+    transform: rotate(12deg);
+  }
+  60% {
+    transform: rotate(-8deg);
+  }
+}
+.tc-sim-count > span {
+  grid-area: 1 / 1;
+  transition:
+    opacity 0.35s var(--ease-out),
+    transform 0.35s var(--ease-out);
+}
+.tc-sim-count > span:not([data-show]) {
+  opacity: 0;
+  transform: translateY(100%);
+}
+.tc-sim-trade {
+  border-color: rgb(var(--ink-rgb) / 0.16);
+  background: var(--color-surface);
+  color: var(--color-secondary);
+  transition:
+    background-color 0.25s var(--ease-out),
+    border-color 0.25s var(--ease-out),
+    color 0.25s var(--ease-out);
+}
+.tc-sim-trade[aria-pressed="true"] {
+  border-color: var(--color-navy);
+  background: var(--color-navy);
+  color: #fff;
+}
+@media (hover: hover) {
+  .tc-sim-trade[aria-pressed="false"]:hover {
+    border-color: var(--color-navy);
+    color: var(--color-heading);
+  }
+}
