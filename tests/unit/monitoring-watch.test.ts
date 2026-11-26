@@ -332,8 +332,12 @@ describe("MON-09 database unavailable", () => {
     await h.tick();
     const references = h.emergency.map((p) => p.lines.find((l) => l.label === "Diagnostic reference")!.value);
     assert.ok(new Set(references).size >= 3, "one window per 15 minutes");
-    const [resolved] = h.sent;
-    assert.equal(resolved.kind, "recovered");
+    const resolved = h.sent.find((payload) =>
+      payload.kind === "recovered" && payload.lines.some((line) =>
+        line.label === "What happened" && line.value.includes("database-down alert"),
+      ),
+    );
+    assert.ok(resolved, "the database outage has a recovery alert");
     const happened = resolved.lines.find((l) => l.label === "What happened")?.value ?? "";
     const [, first, last] = happened.match(/between dbdown-(\d+) and dbdown-(\d+)/) ?? [];
     assert.ok(first && last, happened);
