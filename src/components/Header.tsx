@@ -87,7 +87,7 @@ export function Header() {
                   key={link.href}
                   href={link.href}
                   aria-current={active ? "page" : undefined}
-                  className={`group relative flex items-center rounded-md px-3.5 py-2.5 text-[14.5px] font-medium whitespace-nowrap transition-colors ${FOCUS_RING} ${
+                  className={`group relative flex items-center rounded-md px-3.5 py-2.5 text-[14.5px] font-medium whitespace-nowrap transition-colors min-[1080px]:max-[1279px]:px-2 ${FOCUS_RING} ${
                     active ? "text-heading" : "text-muted hover:text-heading"
                   }`}
                 >
