@@ -160,6 +160,34 @@ describe("confirmed caller details", () => {
     assert.equal(saved.confirmed.serviceAddress, "12 rue des Pins, Laval, QC H7N 1A1");
     assert.deepEqual(saved.missing, ["callback number"]);
     assert.equal(saved.address?.status, "complete");
+    assert.equal(saved.ready, "no", "a detail booking needs is still missing");
+  });
+
+  it("is ready for the calendar only once every detail is on the call, and empty values are never ready", async () => {
+    const { service, config } = setup();
+    // What a voice platform sends before it has extracted the caller's answers.
+    const empty = await service.saveDetails(config, {
+      ...base,
+      callerName: "",
+      callbackPhone: "",
+      useCallerId: false,
+      address: { street: " ", unit: "", city: "", province: "", postalCode: "" },
+    });
+    assert.equal(empty.status, "saved", "nothing sent was refused");
+    assert.equal(empty.ready, "no", "but nothing was saved either");
+    assert.deepEqual(empty.missing, ["name", "callback number", "service address"]);
+
+    const full = await service.saveDetails(config, {
+      ...base,
+      callerName: "Marie Tremblay",
+      useCallerId: true,
+      address: { street: "12 rue des Pins", city: "Laval", province: "QC", postalCode: "H7N 1A1" },
+    });
+    assert.equal(full.ready, "yes");
+    assert.deepEqual(full.missing, []);
+    // Details already on the call stay ready when the next save adds nothing.
+    const again = await service.saveDetails(config, { ...base, callerName: "" });
+    assert.equal(again.ready, "yes");
   });
 
   it("does not save an incomplete address, and says which part is missing", async () => {
