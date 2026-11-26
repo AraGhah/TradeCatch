@@ -245,9 +245,13 @@ export async function runMonitor(deps: MonitorDeps): Promise<MonitorRun> {
           priority: "critical",
           title: "Database or monitoring was unavailable",
           summary:
-            `No successful monitor run for ${Math.round(gap / MINUTE)} minutes (database or monitoring unavailable), ` +
-            `from ${lastRun!.at} to ${at}. Any database-down alert sent in this period has a reference ` +
-            `between dbdown-${firstWindow} and dbdown-${lastWindow}.`,
+            `No successful monitor run for ${Math.round(gap / MINUTE)} minutes, from ${lastRun!.at} to ${at}. ` +
+            `Any database-down alert in this period: between dbdown-${firstWindow} and dbdown-${lastWindow}.` +
+            // A database that answers again is no proof it was down: the
+            // scheduled Worker run itself may have been stopped (Cloudflare
+            // "exceededResources"), as it was three times on 2026-11-26. Last,
+            // so a cut at the alert's length limit only shortens this hint.
+            (dbProbe?.ok ? " If none came, the monitor run itself was stopped." : ""),
           correlationId: createId("gap"),
           startedAt: lastRun!.at,
           simulated,
@@ -279,7 +283,13 @@ export async function runMonitor(deps: MonitorDeps): Promise<MonitorRun> {
       quietMs: t.database.quietMs,
     });
   const probes = (await stage("read_probes", () => deps.store.listProbes(lookback))) ?? [];
-  findings.push(...evaluateWebsite(probes.filter((probe) => probe.target !== "database"), t));
+  findings.push(
+    ...evaluateWebsite(
+      probes.filter((probe) => probe.target !== "database"),
+      t,
+      sites ?? [],
+    ),
+  );
   if (deps.checkDatabase) findings.push(...evaluateDatabaseSlow(probes, t));
   const buckets = (await stage("read_buckets", () => deps.store.listBuckets(lookback))) ?? [];
   findings.push(...evaluateApiTraffic(buckets, now, t));
