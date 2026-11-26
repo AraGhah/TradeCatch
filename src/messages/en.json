@@ -362,6 +362,57 @@
         "note": "No pressure. Clear pricing. Direct founder support."
       },
       "stickyCta": "Book a Free Demo"
+    },
+    "lossRecovery": {
+      "label": "Compare the same three moments",
+      "without": "Without TradeCatch",
+      "with": "With TradeCatch",
+      "lost": "Job lost",
+      "recovered": "Job recovered",
+      "saved": [
+        [
+          "The call is missed while you work",
+          "A text goes out to the caller right away",
+          "They reply, and the request reaches you"
+        ],
+        [
+          "The receptionist takes the call",
+          "Name, address and service are written down",
+          "The request waits in your account, ready to read"
+        ],
+        [
+          "You send the quote and get back to work",
+          "Follow-up texts go out on day 1, 3, 7 and 14",
+          "The customer replies, and you pick it back up"
+        ]
+      ]
+    },
+    "signalFlow": {
+      "label": "How a call moves between your customer, TradeCatch and you",
+      "nodes": [
+        {
+          "title": "Your customer",
+          "body": "Calls your business line"
+        },
+        {
+          "title": "TradeCatch",
+          "body": "Answers, asks, records"
+        },
+        {
+          "title": "You",
+          "body": "Get the details"
+        }
+      ],
+      "packets": [
+        "Call",
+        "Questions",
+        "Details",
+        "Alert",
+        "Follow-up text",
+        "Appointment"
+      ],
+      "stop": "Stop the animation",
+      "replay": "Replay"
     }
   },
   "services": {
@@ -1522,7 +1573,74 @@
       "Answers in French or English, under your business name.",
       "Captures the name, address, service needed and how urgent it is.",
       "Sends you the request so you can call back when you are free."
-    ]
+    ],
+    "simulator": {
+      "tabsLabel": "Demo",
+      "tabWatch": "Watch the story",
+      "tabTry": "Simulate a missed call",
+      "badge": "Simulation",
+      "title": "Miss a call on purpose.",
+      "intro": "Pick a trade, then let the phone ring out. See what the customer receives and what lands in your dashboard.",
+      "tradeLabel": "Trade",
+      "trades": [
+        {
+          "id": "plumbing",
+          "label": "Plumbing",
+          "ask": "My water heater is leaking. Can someone come this week?",
+          "service": "Water heater leak"
+        },
+        {
+          "id": "electrical",
+          "label": "Electrical",
+          "ask": "Half my outlets stopped working. Can someone check this week?",
+          "service": "Outlets not working"
+        },
+        {
+          "id": "heating",
+          "label": "Heating",
+          "ask": "My furnace won’t turn on. Can someone come this week?",
+          "service": "Furnace not starting"
+        }
+      ],
+      "start": "Miss the call",
+      "again": "Run it again",
+      "skip": "Skip to the end",
+      "note": "Runs in your browser. No call is made and no text is sent.",
+      "appTitle": "Requests",
+      "today": "Today",
+      "newToday": "New today",
+      "empty": "No new requests yet",
+      "newCustomer": "New customer",
+      "textBack": "Sorry we missed your call. How can we help today?",
+      "threadLabel": "Text conversation",
+      "fieldService": "Service",
+      "fieldName": "Name",
+      "fieldAddress": "Address",
+      "fieldBooked": "Appointment",
+      "fieldRequest": "Prefers",
+      "name": "Sam",
+      "address": "24 Maple Street",
+      "prefers": "Thursday morning",
+      "weekLabel": "This week",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "otherJob": "Other job",
+      "tentative": "To confirm",
+      "status": {
+        "ringing": "Incoming call",
+        "missed": "Missed call",
+        "texted": "Text sent automatically",
+        "replied": "Customer replied",
+        "captured": "Details captured",
+        "booked": "Booked",
+        "request": "Needs a time"
+      }
+    }
   },
   "errors": {
     "eyebrow": "Something went wrong",
