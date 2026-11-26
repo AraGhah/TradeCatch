@@ -586,3 +586,157 @@ body.demo-video-active {
     opacity: 0.35;
   }
 }
+
+/* ── Illustrative workflow phone (src/components/ui/workflow-phone.tsx) ──
+   Each step is a [data-wf-beat] that is on or off. Only opacity and transforms
+   change, so the sequence never triggers layout. The server renders the
+   finished screen. Where scripts will run and motion is welcome, the first
+   screen (the ringing call) shows until the player takes over. The 3 s
+   fallback brings back the finished screen if the script never loads. */
+.tc-wf [data-wf-beat] {
+  transition:
+    opacity 0.42s var(--ease-out),
+    transform 0.55s var(--ease-out);
+}
+.tc-wf [data-wf-beat][data-on="false"] {
+  opacity: 0;
+}
+.tc-wf-rise[data-on="false"],
+.tc-wf-fade[data-on="false"] {
+  transform: translateY(8px);
+}
+.tc-wf-out {
+  transform-origin: bottom right;
+}
+.tc-wf-in {
+  transform-origin: bottom left;
+}
+.tc-wf-out[data-on="false"],
+.tc-wf-in[data-on="false"] {
+  transform: translateY(10px) scale(0.94);
+}
+.tc-wf-pop[data-on="false"] {
+  transform: translateY(10px) scale(0.95);
+}
+.tc-wf .tc-wf-call {
+  transition-duration: 0.5s, 0.6s;
+}
+.tc-wf-call[data-on="false"] {
+  transform: translateY(28px) scale(0.97);
+}
+
+.tc-wf-ring {
+  opacity: 0;
+}
+.tc-wf-ring.is-ringing {
+  animation: tc-wf-ring 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) infinite;
+}
+.tc-wf-ring-late.is-ringing {
+  animation-delay: 0.9s;
+}
+.tc-wf [data-on="true"] .tc-wf-answer {
+  animation: tc-wf-answer 1.2s ease-in-out infinite;
+}
+.tc-wf [data-on="true"] > .tc-wf-dot {
+  animation: tc-wf-dot 1s ease-in-out infinite;
+}
+.tc-wf [data-on="true"] .tc-wf-check {
+  animation: tc-wf-check 0.5s 0.25s var(--ease-out) both;
+}
+/* Paused, off screen or in a background tab: nothing keeps moving. */
+.tc-wf[data-wf-hold] * {
+  animation-play-state: paused !important;
+}
+
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .tc-wf:not([data-wf-live]) [data-wf-beat][data-on="true"] {
+    animation: tc-wf-failsafe-show 0.4s 3s backwards;
+  }
+  .tc-wf:not([data-wf-live]) .tc-wf-first {
+    animation: tc-wf-failsafe-hide 0.4s 3s backwards;
+  }
+  .tc-wf:not([data-wf-live]) .tc-wf-ring {
+    animation: tc-wf-ring 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) 2;
+  }
+}
+
+@keyframes tc-wf-failsafe-show {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes tc-wf-failsafe-hide {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+  }
+}
+@keyframes tc-wf-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+@keyframes tc-wf-answer {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+@keyframes tc-wf-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+@keyframes tc-wf-check {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.tc-wf[data-wf-live] .tc-wf-list {
+  transition: transform 0.6s var(--ease-out);
+}
+.tc-wf-drop {
+  transform-origin: top center;
+}
+.tc-wf-drop[data-on="false"] {
+  transform: translateY(-28px) scale(0.96);
+}
+.tc-wf-spin {
+  animation: tc-wf-spin 0.9s linear infinite;
+}
+@keyframes tc-wf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+/* The finished thread sits clear of the result card (RESULT_LIFT in
+   workflow-phone.tsx); while the workflow plays, the player sets it inline. */
+.tc-wf .tc-wf-list {
+  transform: translateY(-26px);
+}

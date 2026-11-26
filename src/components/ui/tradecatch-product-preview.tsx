@@ -1,27 +1,17 @@
-import {
-  Building2,
-  CalendarCheck,
-  CheckCircle2,
-  ClipboardList,
-  LayoutDashboard,
-  PhoneCall,
-  PhoneIncoming,
-} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-
-/** Bar heights (px) of the decorative call waveform. */
-const WAVE = [7, 12, 18, 10, 22, 15, 20, 9, 16, 24, 13, 18, 8, 12, 6];
-
-const FLOATING_CARD =
-  "absolute hidden items-center gap-2.5 rounded-[var(--radius-md)] border border-[rgb(var(--ink-rgb)/0.12)] bg-surface py-2 pr-3.5 pl-2.5 shadow-[0_18px_36px_-20px_rgb(var(--ink-rgb)/0.38)] sm:flex";
+import {
+  WorkflowPhone,
+  type WorkflowPhoneCopy,
+} from "@/components/ui/workflow-phone";
 
 /**
- * What TradeCatch does, shown on a phone: one call traced down a rail from
- * ringing to the business's dashboard. The rail is the same idea as the one on
- * the Pricing and Rewards cards. Everything here is an illustration: no names,
- * numbers or figures that could read as real customer data. Shared by the home
- * page hero and the sign-in panel. `data-motion` marks what the hero animates.
+ * What TradeCatch does, shown on a phone: a call missed while the contractor
+ * is on a job, texted back at once, followed by text to a confirmed visit and
+ * a notification. Everything here is an illustration: no names, numbers or
+ * figures that could read as real customer data. Shared by the home page hero
+ * and the sign-in panel. Strings are resolved here, on the server, so the
+ * client player needs no message namespace of its own.
  */
 export function TradeCatchProductPreview({
   className,
@@ -35,193 +25,80 @@ export function TradeCatchProductPreview({
   showCaption?: boolean;
 }) {
   const t = useTranslations("productPreview");
-  const stages = [
-    { icon: PhoneCall, title: t("request"), detail: t("service") },
-    ...(showScheduling
-      ? [
-          {
-            icon: CalendarCheck,
-            title: t("appointment"),
-            detail: t("scheduling"),
-          },
-        ]
-      : []),
-    { icon: LayoutDashboard, title: t("recorded"), detail: t("recordedNote") },
-  ];
+  // Booking is promised only once the operator has verified scheduling.
+  // Before that, the same conversation ends with a request the owner
+  // confirms, which is what the product does in that mode.
+  const booked = showScheduling;
+  const copy: WorkflowPhoneCopy = {
+    screenLabel: booked ? t("screenLabelBooked") : t("screenLabelRequest"),
+    busy: t("busy"),
+    incoming: t("incoming"),
+    line: t("line"),
+    customer: t("customer"),
+    service: t("service"),
+    decline: t("decline"),
+    answer: t("answer"),
+    missed: t("missed"),
+    textingBack: t("textingBack"),
+    auto: t("auto"),
+    sms1: t("sms1"),
+    sms2: t("sms2"),
+    sms3: t("sms3"),
+    sms4: t("sms4"),
+    sms5: booked ? t("sms5Booked") : t("sms5Request"),
+    sms6: t("sms6"),
+    sms7: booked ? t("sms7Booked") : t("sms7Request"),
+    cardTitle: booked ? t("calTitle") : t("reqTitle"),
+    cardWorking: booked ? t("calWorking") : t("reqWorking"),
+    cardFound: booked ? t("calFound") : t("reqDone"),
+    cardDone: booked ? t("calDone") : t("reqDone"),
+    chips: booked
+      ? [t("slotWed"), t("slotThu"), t("slotFri")]
+      : [t("reqService"), t("reqName"), t("reqAddress")],
+    slotBusy: t("slotBusy"),
+    notifyApp: t("notifyApp"),
+    notifyNow: t("notifyNow"),
+    notifyTitle: booked ? t("notifyBookedTitle") : t("notifyRequestTitle"),
+    notifyBody: booked ? t("notifyBookedBody") : t("notifyRequestBody"),
+    resultFrom: t("resultFrom"),
+    resultTo: booked ? t("resultBooked") : t("resultRequest"),
+    resultNote: t("resultNote"),
+    composer: t("composer"),
+    noticeLeft: t("noticeLeft"),
+    noticeRight: booked ? t("noticeBooked") : t("noticeRequest"),
+    pause: t("pause"),
+    play: t("play"),
+  };
 
   return (
     <figure
       aria-label={t("label")}
       className={cn(
-        "relative isolate m-0 overflow-hidden rounded-[var(--radius-xl)] border border-[rgb(var(--ink-rgb)/0.12)] bg-paper-deep/55 px-4 pt-4 pb-3.5 sm:px-6",
+        "relative isolate m-0 overflow-hidden rounded-[var(--radius-xl)] border border-[rgb(var(--ink-rgb)/0.12)] bg-paper-deep/55 px-3 pt-4 pb-3 sm:px-6",
         className,
       )}
     >
-      {/* Drafting grid, faded toward the edges. */}
+      {/* Drafting grid, faded toward the edges, and a warm glow behind the phone. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10 [background-image:linear-gradient(to_right,rgb(var(--ink-rgb)/0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgb(var(--ink-rgb)/0.055)_1px,transparent_1px)] [background-size:40px_40px] [mask-image:radial-gradient(ellipse_at_center,#000,transparent_78%)]"
       />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-1/2 -z-10 h-[70%] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange/15 blur-3xl"
+      />
 
-      <p className="m-0 flex items-center justify-between gap-3 text-[13px]">
+      <p className="m-0 flex items-center justify-between gap-3 px-1 text-[13px]">
         <span className="font-bold text-ember-text">{t("badge")}</span>
         <span className="text-secondary">{t("example")}</span>
       </p>
 
-      <div className="relative mx-auto mt-3 flex w-full max-w-[468px] justify-center sm:pb-4">
-        {/* Phone */}
-        <div
-          data-motion="phone"
-          className="w-full max-w-[272px] rounded-[40px] border-[7px] border-navy bg-paper shadow-[0_30px_50px_-30px_rgb(var(--ink-rgb)/0.55),inset_0_0_0_1px_rgb(var(--ink-rgb)/0.08)]"
-        >
-          <div className="px-3 pt-2 pb-3">
-            <div
-              aria-hidden
-              className="mx-auto h-[18px] w-[74px] rounded-full bg-navy"
-            />
-
-            <div className="mt-3 flex items-center justify-between gap-2">
-              <p className="m-0 leading-tight">
-                <span className="block text-[11px] text-muted">
-                  {t("business")}
-                </span>
-                <span className="block text-[14px] font-extrabold tracking-[-0.02em] text-heading">
-                  {t("dashboard")}
-                </span>
-              </p>
-              <span
-                aria-hidden
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[rgb(var(--ink-rgb)/0.12)] bg-surface text-heading"
-              >
-                <Building2 className="h-4 w-4" strokeWidth={1.9} />
-              </span>
-            </div>
-
-            <ol aria-label={t("railLabel")} className="m-0 mt-3 list-none p-0">
-              {/* The ringing call */}
-              <li data-motion="stage" className="relative pb-2.5">
-                <div className="rounded-[var(--radius-md)] bg-navy p-3 text-white">
-                  <div className="flex items-center gap-2.5">
-                    <span
-                      aria-hidden
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-orange text-navy"
-                    >
-                      <PhoneIncoming className="h-4 w-4" strokeWidth={2.1} />
-                    </span>
-                    <p className="m-0 min-w-0 leading-tight">
-                      <span className="block text-[13.5px] font-bold">
-                        {t("incoming")}
-                      </span>
-                      <span className="block text-[11.5px] text-white/75">
-                        {t("customer")}
-                      </span>
-                    </p>
-                  </div>
-                  <div
-                    aria-hidden
-                    className="mt-2.5 flex h-6 items-center justify-between"
-                  >
-                    {WAVE.map((height, index) => (
-                      <span
-                        key={index}
-                        data-motion="bar"
-                        className="w-[3px] rounded-full bg-orange/80"
-                        style={{ height }}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <span
-                  aria-hidden
-                  className="absolute bottom-0 left-[27px] h-2.5 border-l border-navy/40"
-                />
-              </li>
-
-              {stages.map((stage, index) => {
-                const Icon = stage.icon;
-                const last = index === stages.length - 1;
-                return (
-                  <li
-                    key={stage.title}
-                    data-motion="stage"
-                    className={cn("relative", !last && "pb-2.5")}
-                  >
-                    <div className="flex items-center gap-2.5 rounded-[var(--radius-md)] border border-[rgb(var(--ink-rgb)/0.12)] bg-surface py-2 pr-2 pl-3">
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border",
-                          last
-                            ? "border-orange bg-orange text-navy"
-                            : "border-navy bg-navy text-white",
-                        )}
-                      >
-                        <Icon className="h-4 w-4" strokeWidth={1.9} />
-                      </span>
-                      <p className="m-0 min-w-0 leading-tight">
-                        <span className="block text-[12.5px] font-bold text-heading">
-                          {stage.title}
-                        </span>
-                        <span className="mt-0.5 block text-[11px] text-muted">
-                          {stage.detail}
-                        </span>
-                      </p>
-                    </div>
-                    {last ? null : (
-                      <span
-                        aria-hidden
-                        className="absolute bottom-0 left-[28px] h-2.5 border-l border-navy/40"
-                      />
-                    )}
-                  </li>
-                );
-              })}
-            </ol>
-
-            <div
-              aria-hidden
-              className="mx-auto mt-3 h-1 w-20 rounded-full bg-navy/25"
-            />
-          </div>
-        </div>
-
-        {/* Floating notices. They repeat the rail, so they are decoration only.
-            They sit level with the phone's notch and home bar, its two empty
-            areas, so they cover none of its text however narrow the frame. */}
-        <div
-          aria-hidden
-          data-motion="notice"
-          className={cn(FLOATING_CARD, "-top-1.5 left-0")}
-        >
-          <PhoneCall className="h-4 w-4 text-ember-text" strokeWidth={2.1} />
-          <span className="max-w-[88px] text-[12px] leading-tight font-bold text-heading">
-            {t("handled")}
-          </span>
-        </div>
-        <div
-          aria-hidden
-          data-motion="notice"
-          className={cn(FLOATING_CARD, "right-0 bottom-0")}
-        >
-          {showScheduling ? (
-            <ClipboardList
-              className="h-4 w-4 text-signal-text"
-              strokeWidth={2.1}
-            />
-          ) : (
-            <CheckCircle2
-              className="h-4 w-4 text-signal-text"
-              strokeWidth={2.1}
-            />
-          )}
-          <span className="max-w-[88px] text-[12px] leading-tight font-bold text-heading">
-            {t("qualified")}
-          </span>
-        </div>
+      <div className="mt-3">
+        <WorkflowPhone copy={copy} booked={booked} />
       </div>
 
       {showCaption ? (
-        <figcaption className="mx-auto mt-5 max-w-sm pb-2 text-center">
+        <figcaption className="mx-auto mt-4 max-w-sm pb-2 text-center">
           <span className="block font-heading text-[clamp(22px,2vw,28px)] font-extrabold tracking-[-0.03em] text-heading">
             {t("captionTitle")}
           </span>
