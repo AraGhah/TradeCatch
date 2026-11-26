@@ -35,6 +35,14 @@ const REQUIRED_SCHEMA_MIGRATIONS = [
   "sms_receptionist_inbox",
 ] as const;
 
+/** Any of these means a single legacy MISSED_CALL_* client is (meant to be) configured. */
+const LEGACY_CLIENT_ENV_KEYS = [
+  "MISSED_CALL_CLIENT_CONFIG_JSON",
+  "MISSED_CALL_CLIENT_ID",
+  "MISSED_CALL_SMS_FROM",
+  "MISSED_CALL_TECH_PHONE",
+] as const;
+
 function hasValidProductionClientRouting(): boolean {
   const strictProductionEnv: NodeJS.ProcessEnv = {
     ...process.env,
@@ -43,6 +51,14 @@ function hasValidProductionClientRouting(): boolean {
   // Readiness never permits the explicit demo bypass, even if it was set by
   // mistake. Production safety reports that flag separately.
   delete strictProductionEnv.MISSED_CALL_ALLOW_DEMO;
+
+  // Multi-tenant production has no single legacy client: every organization
+  // routes through its own linked client record (findClientBySmsFromNumber),
+  // which the durable store and schema checks cover. Requiring a global client
+  // here kept readiness at 503 and invited filling it with placeholder values.
+  // A legacy client that is even partly configured must still validate fully.
+  if (LEGACY_CLIENT_ENV_KEYS.every((key) => !strictProductionEnv[key]?.trim()))
+    return true;
 
   try {
     const loaded = loadClientAccountFromEnv(strictProductionEnv);

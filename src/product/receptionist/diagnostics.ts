@@ -20,7 +20,7 @@ export function receptionistErrorCode(error: unknown): string {
     return "DATABASE_URL_MISSING";
   if (/Refusing in-memory/.test(error.message)) return "DURABLE_STORE_REQUIRED";
   if (
-    /Invalid config|Invalid production config|not valid JSON/.test(
+    /Invalid config|Invalid production (?:client )?config|not valid JSON|failed schema validation/.test(
       error.message,
     )
   )
@@ -35,6 +35,7 @@ type Diagnostic = {
     | "profile_skipped"
     | "profile_reload_failed"
     | "runtime_unavailable"
+    | "env_config_rejected"
     | "webhook_failed"
     | "orphan_voicemail"
     | "call_event_write_failed"

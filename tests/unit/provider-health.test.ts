@@ -60,6 +60,28 @@ test("provider failures, timeouts and invalid responses cannot become green or l
     assert.ok(!JSON.stringify(probes).includes("private-token"));
   }
 });
+test("a failed provider check says how it failed, by error kind only", async () => {
+  const kinds: [() => never, RegExp][] = [
+    [() => { throw new DOMException("signal timed out", "TimeoutError"); }, /timed out after 4 s/],
+    [() => { throw new TypeError("connect to https://x?token=private-token failed"); }, /failed \(TypeError\)/],
+    [() => { throw Object.assign(new Error("private-token"), { name: "Bearer private-token" }); }, /failed \(error\)/],
+  ];
+  for (const [fail, detail] of kinds) {
+    const probes = await providerProbes(env, async () => fail());
+    const stripe = probes.find((p) => p.service === "stripe");
+    assert.match(stripe?.detail ?? "", detail);
+    assert.equal(stripe?.status, "unavailable");
+    assert.ok(!JSON.stringify(probes).includes("private-token"));
+  }
+  const notJson = await providerProbes(
+    env,
+    async () => new Response("<html>gateway</html>", { status: 200 }),
+  );
+  assert.match(
+    notJson.find((p) => p.service === "twilio_voice")?.detail ?? "",
+    /not JSON/,
+  );
+});
 test("every scheduled job needs its own recent successful result", () => {
   const now = Date.now();
   const rows = Object.keys(JOB_MAX_AGE_MS).map((path) => ({

@@ -144,9 +144,11 @@ export async function probe(): Promise<Probe[]> {
           row.revoked ? `; ${row.revoked} need to be reconnected by their owner` : ""
         }`;
       }
-    } catch {
+    } catch (error) {
       calendar.status = "degraded";
-      calendar.detail = "Calendar check unavailable";
+      // The SQLSTATE says why: 42P01/42703 mean the Google Calendar tables or
+      // columns are not in this database (scheduling schema not applied).
+      calendar.detail = `Calendar check unavailable (${databaseFailureCode(error)})`;
     }
     try {
       const r = await pool.query(`SELECT

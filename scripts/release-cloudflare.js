@@ -7,6 +7,7 @@ const {
   parseNameList,
 } = require("./check-worker-database");
 const { stripBundledEnvFile } = require("./strip-bundled-env-secrets");
+const { checkBundledDemoConfigFile } = require("./check-bundled-demo-config");
 
 const args = process.argv.slice(2);
 const mode = args.shift();
@@ -30,6 +31,9 @@ run(cli, ["build"]);
 // OpenNext embeds `.env*` into next-env.mjs as runtime fallbacks. Strip secrets
 // before upload so a missing Worker binding cannot revive a stale local password.
 const { removedKeys } = stripBundledEnvFile();
+// Those fallbacks are also how demo call routing (client_demo, 555 numbers)
+// reached production on 2026-10-25. Staging runs on demo fixtures by design.
+if (!staging) checkBundledDemoConfigFile();
 const final = check({ staging });
 if (approved.head_sha !== final.head_sha)
   throw new Error(

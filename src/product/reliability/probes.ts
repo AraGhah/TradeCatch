@@ -2,6 +2,22 @@ import { resolveLlmConfig } from "@/product/receptionist/llm";
 import type { Probe } from "./service";
 import type { ServiceName } from "./types";
 
+/**
+ * Which way a provider check broke, by error kind only (never the message: a
+ * driver or runtime message can quote a URL or a credential). On 2026-11-22 the
+ * Twilio and Stripe alerts said only "failed or timed out", so nobody could tell
+ * a 4-second timeout from a refused connection or a non-JSON reply.
+ */
+export function providerFailureDetail(error: unknown): string {
+  const name =
+    error instanceof Error || error instanceof DOMException ? error.name : "";
+  if (name === "TimeoutError" || name === "AbortError")
+    return "Provider check timed out after 4 s";
+  if (name === "SyntaxError")
+    return "Provider check failed (response was not JSON)";
+  return `Provider check failed (${/^[A-Za-z]{1,40}$/.test(name) ? name : "error"})`;
+}
+
 /** Connectivity is not proof of a call, payment, inference or delivery. */
 export async function providerProbes(
   env: Partial<NodeJS.ProcessEnv>,
@@ -43,12 +59,12 @@ export async function providerProbes(
         detail:
           "Authenticated read succeeded; real operation/delivery not verified",
       };
-    } catch {
+    } catch (error) {
       return {
         service,
         status: "unavailable",
         state: "configured",
-        detail: "Provider check failed or timed out",
+        detail: providerFailureDetail(error),
       };
     }
   }
