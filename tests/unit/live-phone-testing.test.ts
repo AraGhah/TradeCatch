@@ -480,7 +480,7 @@ describe("SIM-03 receptionist routing is respected", () => {
 
   it("on a plan without live transfer a contractor-first setting cannot ring, and the simulation says so like a live call", async () => {
     const w = await business({ strategy: "human_first" });
-    await saas.updateOrganizationPlan(w.orgId, "professional");
+    await saas.updateOrganizationPlan(w.orgId, "essential");
     await getReceptionistRuntime().refresh(true);
     const sim = await simulateVia(w, "receptionist_response");
     assert.equal(sim.status, 200);
@@ -1124,7 +1124,7 @@ describe("SIM-11 invalid configuration and failures give clear errors", () => {
 
   it("a transfer scenario on a plan that has no live transfer", async () => {
     const w = await business({ strategy: "ai_first" });
-    await saas.updateOrganizationPlan(w.orgId, "professional");
+    await saas.updateOrganizationPlan(w.orgId, "essential");
     await getReceptionistRuntime().refresh(true);
     assertActionable(await simulateVia(w, "transfer_request"), 409, "no_transfer_destination");
   });
