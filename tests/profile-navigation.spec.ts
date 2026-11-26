@@ -160,7 +160,7 @@ test.describe("profile icon: where it sends each kind of visitor", () => {
   });
 
   test("NAV-03 a signed-in administrator who clicks the icon reaches the admin dashboard", async ({ page }) => {
-    await signInAdmin(page, "24");
+    await signInAdmin(page, "30");
     await page.goto("/");
     const icon = await expectIcon(page, "signed_in", "Admin dashboard", "/admin");
     await icon.click();

@@ -200,7 +200,7 @@ test.describe("Gmail receiving", () => {
     for (const message of body.messages) ids[message.subject] = message.id;
     expect(body.unread).toBe(4);
     // The sent-by-nobody receipt is stored but is not flagged as a customer.
-    await expect(alice.page.getByText("Customer").first()).toBeVisible();
+    await expect(list.getByText("Customer", { exact: true }).first()).toBeVisible();
   });
 
   test("filters and search work, with honest empty states", async () => {
@@ -668,6 +668,8 @@ test.describe("Gmail receiving", () => {
   test("dashboard: each workspace sees only its own name and data", async () => {
     await alice.page.goto("/app");
     await bob.page.goto("/app");
+    await alice.page.getByRole("navigation", { name: "TradeCatch" }).hover();
+    await bob.page.getByRole("navigation", { name: "TradeCatch" }).hover();
     await expect(alice.page.getByText("Gmail alice").first()).toBeVisible();
     await expect(bob.page.getByText("Gmail bob").first()).toBeVisible();
     await expect(alice.page.getByText("Gmail bob")).toHaveCount(0);

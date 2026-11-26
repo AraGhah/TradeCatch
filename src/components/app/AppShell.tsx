@@ -92,6 +92,7 @@ function BrandHeader({ href = "/app" as const }: { href?: "/app" }) {
     >
       <LogoMark className="h-8 w-8 rounded-[9px]" />
       <motion.span
+        transition={{ duration: 0 }}
         animate={{
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
           opacity: animate ? (open ? 1 : 0) : 1,
@@ -138,6 +139,7 @@ function AccountFooter({
           {initials}
         </span>
         <motion.div
+          transition={{ duration: 0 }}
           animate={{
             display: animate ? (open ? "block" : "none") : "block",
             opacity: animate ? (open ? 1 : 0) : 1,
@@ -169,6 +171,7 @@ function AccountFooter({
       >
         <LogOut className={ICON_CLASS} strokeWidth={ICON_STROKE} aria-hidden />
         <motion.span
+          transition={{ duration: 0 }}
           animate={{
             display: animate
               ? open

@@ -276,6 +276,7 @@ export function SidebarLink({
     >
       {link.icon}
       <motion.span
+        transition={{ duration: 0 }}
         animate={{
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
           opacity: animate ? (open ? 1 : 0) : 1,

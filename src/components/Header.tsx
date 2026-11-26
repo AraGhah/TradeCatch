@@ -128,7 +128,7 @@ export function Header() {
               href="/book-audit"
               variant="ink"
               size="sm"
-              className="whitespace-nowrap !px-3.5 !py-2.5 text-[13px] max-[420px]:!px-2.5 max-[420px]:text-[12px] max-[385px]:hidden min-[1080px]:hidden"
+              className="min-w-[80px] whitespace-nowrap !px-3.5 !py-2.5 text-[13px] max-[420px]:!px-2.5 max-[420px]:text-[12px] max-[385px]:hidden min-[1080px]:hidden"
             >
               {cta("bookAuditShort")}
             </CTAButton>

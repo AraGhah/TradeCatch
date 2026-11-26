@@ -637,7 +637,7 @@ test("LOAD-12: leaving a page while a request is out causes no error and no stal
   await recordVoicemails(page).check();
   await privacySave(page).click();
   await expect.poll(() => write.count()).toBe(1);
-  await page.locator('aside a[href$="/app/settings"]').first().click();
+  await page.getByRole("link", { name: "Business settings" }).first().click();
   await expect(page).toHaveURL(/\/app\/settings\/?$/);
   await write.release("continue");
   await settle(page);
