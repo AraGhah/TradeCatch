@@ -106,8 +106,16 @@ export function composeAlert(
   ];
   if (incident.summary)
     lines.splice(4, 0, { label: "What happened", value: sanitizeAlertText(incident.summary, 280) });
-  if (incident.resolvedAt && kind === "recovered")
+  if (incident.resolvedAt && kind === "recovered") {
     lines.push({ label: "Resolved", value: incident.resolvedAt });
+    lines.push({
+      label: "Resolved by",
+      value:
+        !incident.resolvedBy || incident.resolvedBy === "auto"
+          ? "Automatically, after the condition cleared"
+          : "An administrator, by hand",
+    });
+  }
   if ((incident.reopenCount ?? 0) > 0)
     lines.push({ label: "Reopened", value: `${incident.reopenCount} time(s)` });
   lines.push({ label: "Diagnostic reference", value: incident.id });
@@ -240,14 +248,29 @@ export function composeDatabaseOutageNotice(ctx: {
   };
 }
 
-/** A payload that is only safe fields, used when a composed one fails the final check. */
+/**
+ * The payload with only its safe parts, used when a composed one fails the
+ * final check. Every line that passes on its own is kept (only the offending
+ * ones are dropped), and a resolution still reads as one: before 2026-11-26 the
+ * fallback kept six fixed lines and labelled every email with its priority, so
+ * a recovery arrived as "[TradeCatch CRITICAL] Incident requires attention".
+ */
 function minimalPayload(payload: AlertPayload): AlertPayload {
-  const keep = new Set(["Service", "Severity", "Category", "Status", "Failure code", "Diagnostic reference"]);
+  const label = payload.kind === "recovered" ? "RESOLVED" : payload.priority.toUpperCase();
+  const title = hasUnsafe(payload.title)
+    ? payload.kind === "recovered"
+      ? "Resolved: incident (details withheld)"
+      : "Incident requires attention"
+    : payload.title;
   return {
     ...payload,
-    title: "Incident requires attention",
-    subject: `[TradeCatch ${payload.priority.toUpperCase()}] Incident requires attention`,
-    lines: payload.lines.filter((line) => keep.has(line.label) && !hasUnsafe(line.value)),
+    title,
+    subject: `[TradeCatch ${label}] ${title}`,
+    lines: [
+      ...payload.lines.filter((line) => !hasUnsafe(line.label) && !hasUnsafe(line.value)),
+      { label: "Note", value: "Part of this alert was withheld because it looked like sensitive data." },
+    ],
+    ctaUrl: payload.ctaUrl && !hasUnsafe(payload.ctaUrl) ? payload.ctaUrl : undefined,
   };
 }
 
