@@ -225,7 +225,6 @@
       "headline": "Vous n'achetez pas un logiciel. Vous embauchez la personne qui le construit.",
       "name": "Ara Ghahramanyan",
       "role": "Fondateur, TradeCatch",
-      "floatLabel": "Conçoit et gère votre système",
       "quote": "Je m'assois avec votre équipe, je cartographie comment les appels et les soumissions circulent vraiment dans votre entreprise, j'écris chaque message avec vous, et je teste chaque scénario avant qu'un seul client le voie. Ensuite, je continue de surveiller après le lancement.",
       "bio": "TradeCatch n'est pas un logiciel que vous devez configurer seul. J'analyse votre processus, connecte vos outils, teste les scénarios avec votre équipe et surveille le système après son lancement.",
       "points": [
@@ -242,19 +241,19 @@
       "work": [
         {
           "title": "Audit",
-          "body": "On cartographie le parcours réel de vos appels, soumissions et chantiers."
+          "body": "Cartographier le parcours réel du client : appels, soumissions et chantiers."
         },
         {
           "title": "Construction",
-          "body": "Messages, acheminement et conditions d’arrêt écrits avec vous, jamais en gabarit."
+          "body": "Personnaliser les messages, l’acheminement et les règles d’affaires."
         },
         {
           "title": "Tests",
-          "body": "Chaque scénario est testé de bout en bout avant qu’un client le voie."
+          "body": "Tester chaque scénario de bout en bout avant le lancement."
         },
         {
-          "title": "Surveillance",
-          "body": "Le système reste surveillé après le lancement et ajusté selon votre saison."
+          "title": "Suivi",
+          "body": "Surveiller le système en continu et l’ajuster après le lancement."
         }
       ]
     },

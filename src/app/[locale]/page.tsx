@@ -167,7 +167,6 @@ export default async function HomePage({
               headline={t("founder.headline")}
               name={t("founder.name")}
               role={t("founder.role")}
-              floatLabel={t("founder.floatLabel")}
               statement={t("founder.statement")}
               points={t.raw("founder.points")}
               workLabel={t("founder.workLabel")}

@@ -225,7 +225,6 @@
       "headline": "You're not buying software. You're hiring the person who builds it.",
       "name": "Ara Ghahramanyan",
       "role": "Founder, TradeCatch",
-      "floatLabel": "Builds & runs your system",
       "quote": "I sit down with your team, map how calls and quotes actually move through your business, write every message with you, and test every scenario before a single customer sees it. Then I keep watching it after launch.",
       "bio": "TradeCatch isn't software you're handed to configure alone. I review your process, connect your tools, test every scenario with your team, and keep watching the system after it goes live.",
       "points": [
@@ -242,19 +241,19 @@
       "work": [
         {
           "title": "Audit",
-          "body": "We map how calls, quotes and jobs move through your business today."
+          "body": "Map the actual customer journey, calls, quotes, and jobs."
         },
         {
           "title": "Build",
-          "body": "Messages, routing and stop conditions are written with you, not pulled from a template."
+          "body": "Customize messages, routing, and business rules."
         },
         {
-          "title": "Test",
-          "body": "Every scenario runs end to end before a single customer sees it."
+          "title": "Testing",
+          "body": "Test every scenario end-to-end before launch."
         },
         {
-          "title": "Monitor",
-          "body": "The system stays watched after launch and gets adjusted as your season changes."
+          "title": "Monitoring",
+          "body": "Continuously monitor and adjust the system after launch."
         }
       ]
     },
