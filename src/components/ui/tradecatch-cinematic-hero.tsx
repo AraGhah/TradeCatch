@@ -1,4 +1,10 @@
-import { ArrowRight, ClipboardList, LayoutDashboard, PhoneCall, Play } from "lucide-react";
+import {
+  ArrowRight,
+  ClipboardList,
+  LayoutDashboard,
+  PhoneCall,
+  Play,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Container } from "@/components/Container";
 import { CTAButton } from "@/components/CTAButton";
@@ -19,13 +25,15 @@ export function TradeCatchCinematicHero({
 }) {
   const t = useTranslations("home.hero");
   const benefits = [
-    { icon: PhoneCall, label: t("benefitReception") },
-    { icon: ClipboardList, label: t("benefitRequests") },
-    { icon: LayoutDashboard, label: t("benefitDashboard") },
+    { icon: PhoneCall, label: t("benefitReception"), cue: "call" },
+    { icon: ClipboardList, label: t("benefitRequests"), cue: "card" },
+    { icon: LayoutDashboard, label: t("benefitDashboard"), cue: "notify" },
   ];
 
   return (
-    <section className="overflow-hidden border-b border-[rgb(var(--ink-rgb)/0.08)] bg-paper pt-[clamp(24px,4vw,56px)] pb-[clamp(32px,4.5vw,64px)] text-heading">
+    <section className="tc-hero relative isolate overflow-hidden border-b border-[rgb(var(--ink-rgb)/0.08)] bg-paper pt-[clamp(24px,4vw,56px)] pb-[clamp(32px,4.5vw,64px)] text-heading">
+      {/* A slow warm light behind the phone; paused once off screen. */}
+      <span aria-hidden data-ambient className="tc-ambient tc-ambient-paper" />
       <Container>
         <div className="mx-auto grid items-center gap-x-14 gap-y-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(0,0.92fr)]">
           <div className="mx-auto w-full max-w-[36rem] min-w-0 text-center lg:mx-0 lg:text-left">
@@ -34,7 +42,8 @@ export function TradeCatchCinematicHero({
             </p>
 
             <h1 className="mt-3 font-heading text-[clamp(2.1rem,4.4vw,3.75rem)] leading-[1.04] font-extrabold tracking-[-0.038em] text-heading">
-              {t("headline")} {/* The underline marks the half that costs money. */}
+              {t("headline")}{" "}
+              {/* The underline marks the half that costs money. */}
               <span className="underline decoration-orange decoration-[0.09em] underline-offset-[0.13em] [text-decoration-skip-ink:none]">
                 {t("highlight")}
               </span>
@@ -69,10 +78,12 @@ export function TradeCatchCinematicHero({
               aria-label={t("benefitsLabel")}
               className="m-0 mt-5 flex list-none flex-wrap justify-center gap-x-5 gap-y-2 border-t border-[rgb(var(--ink-rgb)/0.12)] p-0 pt-4 lg:justify-start"
             >
-              {benefits.map(({ icon: Icon, label }) => (
+              {/* Each benefit lights up while the phone shows it (CSS :has). */}
+              {benefits.map(({ icon: Icon, label, cue }) => (
                 <li
                   key={label}
-                  className="flex items-center gap-2 text-[14px] font-medium text-secondary"
+                  data-hero-cue={cue}
+                  className="tc-hero-cue relative flex items-center gap-2 text-[14px] font-medium text-secondary"
                 >
                   <Icon aria-hidden className="h-4 w-4 text-heading" />
                   {label}

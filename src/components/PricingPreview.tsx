@@ -59,7 +59,7 @@ export function PricingPreview({
             <li
               key={tier.name}
               data-reveal
-              className={`flex h-full flex-col p-6 ${
+              className={`tc-plan flex h-full flex-col p-6 ${
                 recommended ? "tc-card-recommended" : "tc-card"
               }`}
             >

@@ -79,7 +79,8 @@ export function CTAButton({
   const styleKey = resolveVariant(variant);
   const isLink = styleKey === "link" || styleKey === "link-ink";
 
-  const classes = `inline-flex items-center justify-center gap-2 font-semibold tracking-[-0.01em] transition-[translate,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange ${styles[styleKey]} ${isLink ? "" : sizes[size]} ${className}`;
+  // tc-cta: a short press (scale) and a nudge of a trailing arrow on hover.
+  const classes = `tc-cta inline-flex items-center justify-center gap-2 font-semibold tracking-[-0.01em] transition-[translate,scale,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange ${styles[styleKey]} ${isLink ? "" : `${sizes[size]} active:scale-[0.98]`} ${className}`;
 
   // Anchor links bypass typed locale pathnames (see localizedAnchor).
   if (isAnchorHref(href)) {

@@ -278,6 +278,16 @@ export function WorkflowPhone({
       className="tc-wf relative mx-auto flex w-full max-w-[476px] flex-col items-center"
       data-wf-live={live ? "" : undefined}
       data-wf-step={step}
+      // Coarse chapter of the story, for the hero copy beside the phone.
+      data-wf-phase={
+        step <= B.missed
+          ? "call"
+          : step < B.checking
+            ? "text"
+            : step < B.notify
+              ? "card"
+              : "notify"
+      }
       data-wf-hold={
         live && (!playing || !inView || !pageVisible) ? "" : undefined
       }
