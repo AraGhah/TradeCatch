@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { LoginForm, type LoginNotice } from "@/components/app/LoginForm";
-import { Container } from "@/components/Container";
 import { FullMessagesProvider } from "@/components/FullMessagesProvider";
+import { TradeCatchSignIn } from "@/components/ui/tradecatch-sign-in";
+import { schedulingVerified } from "@/lib/launch-flags";
 import { resolveAccountState } from "@/product/saas/auth/account-destination";
 import { safeReturnPath } from "@/product/saas/auth/return-path";
 
@@ -32,7 +33,6 @@ export default async function LoginPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("login");
   const query = await searchParams;
   const notice = noticeFrom(
     typeof query.error === "string" ? query.error : undefined,
@@ -62,24 +62,22 @@ export default async function LoginPage({
     }
   }
 
+  // Only plain values from the address travel with a language switch.
+  const kept: Record<string, string> = {};
+  for (const key of ["error", "notice", "next"] as const) {
+    const value = query[key];
+    if (typeof value === "string") kept[key] = value;
+  }
+
   return (
-    <section className="border-b border-navy/10 bg-[var(--color-surface)] py-16 md:py-24">
-      <Container>
-        <div className="mx-auto max-w-lg text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ember-text">
-            {t("eyebrow")}
-          </p>
-          <h1 className="mt-3 font-heading text-3xl font-extrabold tracking-tight text-navy md:text-4xl">
-            {t("headline")}
-          </h1>
-          <p className="mt-3 text-base text-navy/70">{t("intro")}</p>
-        </div>
-        <div className="mt-10">
-          <FullMessagesProvider>
-            <LoginForm notice={notice} returnTo={returnTo} />
-          </FullMessagesProvider>
-        </div>
-      </Container>
-    </section>
+    <TradeCatchSignIn
+      locale={locale === "fr" ? "fr" : "en"}
+      query={kept}
+      showScheduling={schedulingVerified()}
+    >
+      <FullMessagesProvider>
+        <LoginForm notice={notice} returnTo={returnTo} />
+      </FullMessagesProvider>
+    </TradeCatchSignIn>
   );
 }

@@ -6,8 +6,6 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { StickyAuditCta } from "@/components/StickyAuditCta";
 import { StoryDemos } from "@/components/StoryDemos";
 import { WebsiteServiceAddOn } from "@/components/WebsiteServiceAddOn";
-import { HomeHero } from "@/components/home/HomeHero";
-import type { HomeHeroPreviewCopy } from "@/components/home/HomeHeroPreview";
 import { formatPlanPrice, PLAN_PRICES } from "@/lib/plans";
 import { websiteServiceAddOn } from "@/lib/plan-marketing";
 
@@ -77,7 +75,6 @@ export async function HomeMobile({ locale }: { locale: string }) {
   const t = await getTranslations("home");
   const cta = await getTranslations("cta");
   const plans = await getTranslations("plans");
-  const heroPreview = t.raw("hero.preview") as HomeHeroPreviewCopy;
   const benefits = t.raw("mobile.benefits.items") as {
     title: string;
     body: string;
@@ -114,17 +111,6 @@ export async function HomeMobile({ locale }: { locale: string }) {
 
   return (
     <div className="lg:hidden">
-      <HomeHero
-        compact
-        eyebrow={t("hero.eyebrow")}
-        headline={t("hero.headline")}
-        accentWord={t("hero.accentWord")}
-        subheadline={t("hero.subheadline")}
-        ctaPrimary={t("hero.ctaPrimary")}
-        ctaSecondary={t("hero.ctaSecondary")}
-        preview={heroPreview}
-      />
-
       {/* Story demos remain below the hero for mobile conversion. */}
       <StoryDemos locale={locale} compact />
 

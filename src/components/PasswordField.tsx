@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
 import { useTranslations } from "next-intl";
 
 /**
@@ -23,6 +31,11 @@ export function PasswordField({
   minLength,
   maxLength,
   describedBy,
+  name,
+  invalid,
+  disabled,
+  inputRef: externalRef,
+  inputClassName = "py-2.5",
 }: {
   label: string;
   value: string;
@@ -33,11 +46,21 @@ export function PasswordField({
   maxLength?: number;
   /** Id of an element that explains the field (for example the password rules). */
   describedBy?: string;
+  /** Helps password managers; only set it inside a form that posts. */
+  name?: string;
+  /** Marks the field as failing validation (explain why with describedBy). */
+  invalid?: boolean;
+  disabled?: boolean;
+  /** Lets a form move focus to this field. */
+  inputRef?: Ref<HTMLInputElement>;
+  /** Height and extra classes, for a form that needs a taller field. */
+  inputClassName?: string;
 }) {
   const t = useTranslations("passwordToggle");
   const id = useId();
   const labelId = `${id}-label`;
   const inputRef = useRef<HTMLInputElement>(null);
+  useImperativeHandle(externalRef, () => inputRef.current!, []);
   const [visible, setVisible] = useState(false);
   // Where the caret was when the field was toggled with the pointer, to put it back.
   const caret = useRef<{
@@ -100,13 +123,16 @@ export function PasswordField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           aria-describedby={describedBy}
+          aria-invalid={invalid || undefined}
+          name={name}
+          disabled={disabled}
           // A visible password is plain text to the browser: keep it out of spell-check
           // services and stop phone keyboards from capitalising or "correcting" it.
           spellCheck={false}
           autoCapitalize="none"
           autoCorrect="off"
           // Edge draws its own reveal button on password inputs; ours replaces it.
-          className="w-full rounded-md border border-navy/15 bg-white py-2.5 pl-3 pr-12 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-ms-reveal]:hidden"
+          className={`w-full rounded-md border border-navy/15 bg-white pl-3 pr-12 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange aria-[invalid=true]:border-red-700 [&::-ms-reveal]:hidden ${inputClassName}`}
         />
         <button
           type="button"

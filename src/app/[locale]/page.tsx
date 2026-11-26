@@ -7,10 +7,10 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { PricingPreview } from "@/components/PricingPreview";
 import { HomeMobile } from "@/components/home/HomeMobile";
-import { HomeHero } from "@/components/home/HomeHero";
-import type { HomeHeroPreviewCopy } from "@/components/home/HomeHeroPreview";
+import { TradeCatchCinematicHero } from "@/components/ui/tradecatch-cinematic-hero";
 import { StoryDemos } from "@/components/StoryDemos";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { schedulingVerified } from "@/lib/launch-flags";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -23,8 +23,8 @@ export async function generateMetadata({
   return buildMetadata({
     locale,
     pathname: "/",
-    title: t("hero.headline"),
-    description: t("hero.subheadline"),
+    title: t("meta.title"),
+    description: t("meta.description"),
   });
 }
 
@@ -44,23 +44,15 @@ export default async function HomePage({
     title: string;
     body: string;
   }[];
-  const heroPreview = t.raw("hero.preview") as HomeHeroPreviewCopy;
 
   return (
     <>
+      {/* One hero for every width; the sections below differ by screen size. */}
+      <TradeCatchCinematicHero showScheduling={schedulingVerified()} />
+
       <HomeMobile locale={locale} />
 
       <div className="hidden lg:block">
-        <HomeHero
-          eyebrow={t("hero.eyebrow")}
-          headline={t("hero.headline")}
-          accentWord={t("hero.accentWord")}
-          subheadline={t("hero.subheadline")}
-          ctaPrimary={t("hero.ctaPrimary")}
-          ctaSecondary={t("hero.ctaSecondary")}
-          preview={heroPreview}
-        />
-
         {/* 2. The problem: where revenue leaks */}
         <section
           className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface"

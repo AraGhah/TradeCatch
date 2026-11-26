@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useId, useRef, useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { PasswordField } from "@/components/PasswordField";
 import { BusyLabel } from "@/components/ui/Spinner";
@@ -9,9 +9,12 @@ import { requestJson } from "@/lib/client/request";
 import { useAction, type Failure } from "@/lib/client/use-action";
 
 const inputClass =
-  "rounded-md border border-navy/15 bg-white px-3 py-2.5 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange";
+  "h-12 rounded-[var(--radius-md)] border border-navy/15 bg-white px-3 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange aria-[invalid=true]:border-red-700";
 const buttonClass =
-  "rounded-md bg-orange px-4 py-3 text-[15px] font-semibold text-navy transition hover:bg-orange-dark disabled:opacity-60";
+  "min-h-12 rounded-[var(--radius-md)] bg-orange px-4 py-3 text-[15.5px] font-bold text-navy transition-colors hover:bg-orange-dark disabled:opacity-60";
+const fieldErrorClass = "m-0 -mt-2 text-sm text-red-700";
+/** Loose on purpose: the server is the judge; this only catches obvious slips. */
+const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Mode = "password" | "link";
 
@@ -59,6 +62,14 @@ export function LoginForm({
   const [outage, setOutage] = useState(false);
   // True once the browser is on its way to the workspace: signing in again from here would be a second sign-in.
   const [redirecting, setRedirecting] = useState(false);
+  // Where the server said to go, so a navigation that stalls can be retried without signing in again.
+  const [destination, setDestination] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: boolean; password?: boolean }>({});
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const fieldId = useId();
+  const emailErrorId = `${fieldId}-email-error`;
+  const passwordErrorId = `${fieldId}-password-error`;
   // One sign-in request at a time, however fast the button is pressed; it always ends (30 s), so the button always comes back.
   const action = useAction();
   const busy = action.pending || redirecting;
@@ -70,6 +81,19 @@ export function LoginForm({
     setDevLink(null);
     setOutage(false);
     setPassword("");
+    setFieldErrors({});
+  }
+
+  /** Marks what is missing and moves focus to the first of them. Sends nothing. */
+  function validate(needsPassword: boolean): boolean {
+    const invalid = {
+      email: !EMAIL_SHAPE.test(email.trim()),
+      password: needsPassword && !password,
+    };
+    setFieldErrors(invalid);
+    if (invalid.email) emailRef.current?.focus();
+    else if (invalid.password) passwordRef.current?.focus();
+    return !invalid.email && !invalid.password;
   }
 
   async function onPasswordSubmit(e: FormEvent) {
@@ -77,6 +101,7 @@ export function LoginForm({
     if (busy) return;
     setError(null);
     setOutage(false);
+    if (!validate(true)) return;
     const outcome = await action.run(
       (signal) =>
         requestJson<SignInAnswer>("/api/auth/password-login", {
@@ -96,6 +121,7 @@ export function LoginForm({
       if (outcome.value?.ok && outcome.value.next) {
         // A full navigation, so the new session cookie is used for the first page.
         setRedirecting(true);
+        setDestination(outcome.value.next);
         window.location.assign(outcome.value.next);
         return;
       }
@@ -127,6 +153,7 @@ export function LoginForm({
     setError(null);
     setDevLink(null);
     setSent(false);
+    if (!validate(false)) return;
     const outcome = await action.run(
       (signal) =>
         requestJson<SignInAnswer>("/api/auth/magic-link", {
@@ -180,8 +207,11 @@ export function LoginForm({
   return (
     <form
       onSubmit={mode === "password" ? onPasswordSubmit : onLinkSubmit}
+      // Never a GET: a submit before the page is ready must not put a password in the address.
+      method="post"
+      noValidate
       aria-busy={busy}
-      className="mx-auto flex w-full max-w-md flex-col gap-4"
+      className="flex w-full flex-col gap-4"
     >
       {noticeText ? (
         <p
@@ -198,14 +228,30 @@ export function LoginForm({
       <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
         {t("email")}
         <input
+          ref={emailRef}
           type="email"
+          name="email"
+          inputMode="email"
           required
-          autoComplete="email"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          placeholder={t("emailPlaceholder")}
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            setFieldErrors((current) => ({ ...current, email: false }));
+          }}
+          aria-invalid={fieldErrors.email || undefined}
+          aria-describedby={fieldErrors.email ? emailErrorId : undefined}
           className={inputClass}
         />
       </label>
+      {fieldErrors.email ? (
+        <p id={emailErrorId} className={fieldErrorClass}>
+          {t("invalidEmail")}
+        </p>
+      ) : null}
       {mode === "password" ? (
         <>
           <PasswordField
@@ -213,9 +259,30 @@ export function LoginForm({
             required
             autoComplete="current-password"
             maxLength={256}
+            name="password"
+            inputRef={passwordRef}
+            inputClassName="h-12"
+            invalid={fieldErrors.password}
+            describedBy={fieldErrors.password ? passwordErrorId : undefined}
             value={password}
-            onChange={setPassword}
+            onChange={(value) => {
+              setPassword(value);
+              setFieldErrors((current) => ({ ...current, password: false }));
+            }}
           />
+          {fieldErrors.password ? (
+            <p id={passwordErrorId} className={fieldErrorClass}>
+              {t("missingPassword")}
+            </p>
+          ) : null}
+          <p className="m-0 -mt-1.5 text-right text-sm">
+            <Link
+              href="/forgot-password"
+              className="font-semibold text-ember-text underline-offset-4 hover:underline"
+            >
+              {t("forgot")}
+            </Link>
+          </p>
           <button
             type="submit"
             disabled={busy}
@@ -226,11 +293,6 @@ export function LoginForm({
               {t("passwordSubmit")}
             </BusyLabel>
           </button>
-          <p className="text-sm text-navy/70">
-            <Link href="/forgot-password" className="font-semibold underline">
-              {t("forgot")}
-            </Link>
-          </p>
         </>
       ) : (
         <>
@@ -247,6 +309,20 @@ export function LoginForm({
           </button>
         </>
       )}
+      {destination ? (
+        <div
+          role="status"
+          className="rounded-[var(--radius-md)] border border-[rgb(var(--ink-rgb)/0.14)] bg-paper px-3.5 py-3 text-sm text-navy"
+        >
+          <p className="m-0 font-semibold">{t("opening")}</p>
+          <p className="m-0 mt-1">
+            {t("openingStuck")}{" "}
+            <a className="font-semibold underline" href={destination}>
+              {t("openingContinue")}
+            </a>
+          </p>
+        </div>
+      ) : null}
       {sent ? (
         <p className="text-sm text-navy/80" role="status">
           {t("sent")}
@@ -261,7 +337,10 @@ export function LoginForm({
         </p>
       ) : null}
       {error ? (
-        <p className="text-sm text-red-700" role="alert">
+        <p
+          className="m-0 rounded-[var(--radius-md)] border border-red-700/25 bg-red-50 px-3.5 py-3 text-sm text-red-800"
+          role="alert"
+        >
           {error}
           {outage && mode === "password" ? (
             <>
@@ -282,11 +361,11 @@ export function LoginForm({
         type="button"
         onClick={() => switchMode(mode === "password" ? "link" : "password")}
         disabled={busy}
-        className="self-start text-sm font-semibold text-navy underline disabled:opacity-60"
+        className="min-h-12 rounded-[var(--radius-md)] border-[1.5px] border-[rgb(var(--ink-rgb)/0.18)] bg-surface px-4 py-2.5 text-[14.5px] font-semibold text-navy transition-colors hover:border-navy disabled:opacity-60"
       >
         {mode === "password" ? t("useLink") : t("usePassword")}
       </button>
-      <p className="text-sm text-navy/60">
+      <p className="m-0 text-center text-sm text-muted">
         <Link href="/book-audit" className="underline">
           {t("preferAudit")}
         </Link>
