@@ -219,8 +219,7 @@ describe("health route", () => {
     assert.equal(JSON.stringify(body).includes("health-password"), false);
   });
 
-  it("rejects readiness when production client routing cannot bootstrap", async () => {
-    delete process.env.MISSED_CALL_CLIENT_ID;
+  it("rejects readiness when a partly configured legacy client cannot bootstrap", async () => {
     delete process.env.MISSED_CALL_SMS_FROM;
     delete process.env.MISSED_CALL_TECH_PHONE;
     delete process.env.MISSED_CALL_HUMAN_REVIEW_PHONE;
@@ -238,6 +237,43 @@ describe("health route", () => {
     assert.equal(body.moduleA.ready, false);
     assert.equal(queryCalls(), 4);
     assert.equal(JSON.stringify(body).includes("MISSED_CALL_CLIENT"), false);
+  });
+
+  it("is ready in multi-tenant production with no legacy client configured", async () => {
+    // Each organization routes through its own linked client record; this is
+    // what live production looks like. Requiring a global client kept
+    // readiness at 503 for no reason.
+    delete process.env.MISSED_CALL_CLIENT_ID;
+    delete process.env.MISSED_CALL_SMS_FROM;
+    delete process.env.MISSED_CALL_TECH_PHONE;
+    delete process.env.MISSED_CALL_HUMAN_REVIEW_PHONE;
+    installSuccessfulProbeStub();
+
+    const response = await GET(healthRequest("health-ops-secret"));
+    const body = (await response.json()) as DetailedHealthBody;
+
+    assert.equal(response.status, 200);
+    assert.equal(body.checks.clientRouting, true);
+    assert.equal(body.moduleA.ready, true);
+  });
+
+  it("rejects readiness for the 2026-10-25 demo client, even with the demo bypass set", async () => {
+    Object.assign(process.env, {
+      MISSED_CALL_CLIENT_ID: "client_demo",
+      MISSED_CALL_SMS_FROM: "+15145550100",
+      MISSED_CALL_TECH_PHONE: "+15145550199",
+      MISSED_CALL_ALLOW_DEMO: "1",
+    });
+    delete process.env.MISSED_CALL_HUMAN_REVIEW_PHONE;
+    installSuccessfulProbeStub();
+    console.error = () => undefined;
+
+    const response = await GET(healthRequest("health-ops-secret"));
+    const body = (await response.json()) as DetailedHealthBody;
+
+    assert.equal(response.status, 503);
+    assert.equal(body.checks.clientRouting, false);
+    assert.equal(body.moduleA.ready, false);
   });
 
   it("reports authenticated readiness when all Module A checks pass", async () => {

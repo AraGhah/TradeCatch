@@ -59,6 +59,8 @@ type RuntimeState = {
   profileConfigs: ReceptionistConfig[];
   profilesLoadedAt: number;
   profileLoadError?: string;
+  /** Founder env configs were refused by production validation (see loadEnvConfigs). */
+  envConfigError?: string;
   refreshing?: Promise<void>;
   llm: LlmClient | null;
   durable: boolean;
@@ -111,8 +113,38 @@ function createStores(): {
   };
 }
 
-/** Founder-managed configs from env. Zero profiles is valid (tenant profiles only). */
-function loadEnvConfigs(): ReceptionistConfig[] {
+/** Error code recorded when the founder env configs fail production validation. */
+export const ENV_CONFIG_INVALID_CODE = "RECEPTIONIST_ENV_CONFIG_INVALID";
+
+type EnvConfigLoad = {
+  configs: ReceptionistConfig[];
+  /** Set when the founder env configs were refused; the validation messages, no values. */
+  rejected?: string;
+};
+
+/**
+ * What production validation said, for ops: the messages name fields and
+ * technician ids, never values; any phone-like digit run is masked anyway.
+ */
+function rejectionDetail(err: unknown): string {
+  const message = err instanceof Error ? err.message : "unknown error";
+  return message
+    .replace(/^\[[a-z-]+\]\s*/i, "")
+    .replace(/\+?\d[\d\s().-]{6,}\d/g, "[number]")
+    .slice(0, 500);
+}
+
+/**
+ * Founder-managed configs from env. Zero profiles is valid (tenant profiles only).
+ *
+ * A founder config that fails production validation (demo client id, reserved
+ * 555 numbers, no human fallback...) is refused, never used: it does not
+ * answer a single call. It also must not take the whole runtime down with it,
+ * because tenant profiles and the Bland/LiveKit agent tools share this runtime;
+ * on 2026-10-25 a demo `.env.local` bundled into the Worker did exactly that.
+ * The refusal is reported as a critical incident instead (see bootstrap).
+ */
+function loadEnvConfigs(): EnvConfigLoad {
   const explicit =
     Boolean(process.env.RECEPTIONIST_CONFIG_JSON?.trim()) ||
     process.env.RECEPTIONIST_ENABLED === "1";
@@ -122,10 +154,15 @@ function loadEnvConfigs(): ReceptionistConfig[] {
   } catch (err) {
     // The env client is only needed for the derived (RECEPTIONIST_ENABLED=1)
     // profile; a multi-tenant deployment legitimately has none.
-    if (process.env.RECEPTIONIST_ENABLED === "1") throw err;
+    if (process.env.RECEPTIONIST_ENABLED === "1")
+      return { configs: [], rejected: rejectionDetail(err) };
   }
-  if (!explicit) return [];
-  return loadReceptionistConfigsFromEnv(client);
+  if (!explicit) return { configs: [] };
+  try {
+    return { configs: loadReceptionistConfigsFromEnv(client) };
+  } catch (err) {
+    return { configs: [], rejected: rejectionDetail(err) };
+  }
 }
 
 /** Real stores behind the lead-sync module (loaded lazily: SaaS/Growth are optional at boot). */
@@ -288,7 +325,25 @@ async function describeInactiveLine(
 
 function bootstrap(): RuntimeState {
   const { store, profileStore, durable } = createStores();
-  const envConfigs = loadEnvConfigs();
+  const { configs: envConfigs, rejected } = loadEnvConfigs();
+  if (rejected) {
+    logReceptionistDiagnostic({
+      event: "env_config_rejected",
+      code: ENV_CONFIG_INVALID_CODE,
+    });
+    // Once per instance; the incident engine folds repeats into one incident.
+    void runAfterResponse(async () => {
+      const { recordFailure } = await import("@/product/reliability/hooks");
+      await recordFailure({
+        service: "ai_receptionist",
+        operation: "env_config",
+        errorCode: ENV_CONFIG_INVALID_CODE,
+        severity: "critical",
+        retryable: false,
+        detail: rejected,
+      });
+    });
+  }
   const llm = createLlmClientFromEnv();
   const sms = createTwilioSmsPort();
   // Scheduling for businesses that turned on phone booking in their profile.
@@ -313,6 +368,7 @@ function bootstrap(): RuntimeState {
     store,
     profileStore,
     envConfigs,
+    envConfigError: rejected,
     profileConfigs: [] as ReceptionistConfig[],
     profilesLoadedAt: 0,
     llm,
@@ -441,6 +497,10 @@ export function getReceptionistRuntime() {
     get profileLoadError(): string | undefined {
       return s.profileLoadError;
     },
+    /** Why the founder env configs were refused at boot (validation messages, no values). */
+    get envConfigError(): string | undefined {
+      return s.envConfigError;
+    },
     /** Founder env configs + activated tenant profiles (as of the last refresh). */
     get configs(): ReceptionistConfig[] {
       return [...s.envConfigs, ...s.profileConfigs];
@@ -500,9 +560,11 @@ export function receptionistReadiness(): {
       profiles: rt.configs.length,
       brain: rt.llm ? `${rt.llm.provider}:${rt.llm.model}` : "rules",
       durable: rt.durable,
-      ...(rt.profileLoadError
-        ? { error: `PROFILE_RELOAD_FAILED:${rt.profileLoadError}` }
-        : {}),
+      ...(rt.envConfigError
+        ? { error: ENV_CONFIG_INVALID_CODE }
+        : rt.profileLoadError
+          ? { error: `PROFILE_RELOAD_FAILED:${rt.profileLoadError}` }
+          : {}),
     };
   } catch (err) {
     return {
