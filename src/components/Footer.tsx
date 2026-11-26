@@ -46,7 +46,7 @@ export function Footer() {
           </div>
 
           <div className="col-span-2 min-w-0 min-[700px]:col-span-1">
-            <p className="m-0 font-mono text-[10.5px] font-medium tracking-[0.14em] text-[rgba(255,255,255,0.64)] uppercase">
+            <p className="m-0 text-[12.5px] font-medium text-white/60">
               {t("company")}
             </p>
             <ul className="mt-2 flex list-none flex-row flex-wrap items-start gap-x-5 gap-y-0 p-0 min-[700px]:mt-3 min-[700px]:flex-col min-[700px]:gap-x-0">
@@ -74,7 +74,7 @@ export function Footer() {
           </div>
 
           <div className="col-span-2 min-w-0 min-[700px]:col-span-1">
-            <p className="m-0 font-mono text-[10.5px] font-medium tracking-[0.14em] text-[rgba(255,255,255,0.64)] uppercase">
+            <p className="m-0 text-[12.5px] font-medium text-white/60">
               {t("legal")}
             </p>
             <ul className="mt-2 flex list-none flex-row flex-wrap items-start gap-x-5 gap-y-0 p-0 min-[700px]:mt-3 min-[700px]:flex-col min-[700px]:gap-x-0">

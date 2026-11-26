@@ -53,6 +53,27 @@ export const severityToPriority = (severity: Severity): Priority =>
   severity === "critical" ? "critical" : severity === "high" ? "high" : "warning";
 
 /**
+ * What the System Health console sorts and counts by: the alert priority, plus
+ * "low" for older incidents that were recorded with severity "low" and no
+ * priority. No rule produces a Low priority today, so nothing is stored as one.
+ */
+export type DisplayPriority = Priority | "low";
+export const DISPLAY_PRIORITIES: readonly DisplayPriority[] = ["critical", "high", "warning", "low"];
+export const DISPLAY_PRIORITY_RANK: Record<DisplayPriority, number> = {
+  low: 0,
+  warning: 1,
+  high: 2,
+  critical: 3,
+};
+export function displayPriority(incident: {
+  priority?: Priority;
+  severity: Severity;
+}): DisplayPriority {
+  if (incident.priority) return incident.priority;
+  return incident.severity === "low" ? "low" : severityToPriority(incident.severity);
+}
+
+/**
  * Incident lifecycle as administrators see it. The stored status keeps its
  * original values (open / investigating / resolved) so existing rows and
  * clients keep working; this is the one place that names them.

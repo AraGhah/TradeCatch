@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { BusyLabel } from "@/components/ui/Spinner";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { OtpauthQr } from "./OtpauthQr";
 type GateState = "unenrolled" | "pending" | "unverified";
 
 function groupKey(secret: string) {
@@ -83,7 +84,7 @@ export function AdminMfaGate({
 
   return (
     <div className="flex max-w-md flex-col gap-3 rounded-md border border-navy/10 bg-white p-4">
-      <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+      <h1 className="font-heading text-2xl font-extrabold text-navy">
         {enrolling ? t("mfaSetupTitle") : t("mfaTitle")}
       </h1>
       <p className="text-sm text-navy/70">{enrolling ? t("mfaSetupBody") : t("mfaBody")}</p>
@@ -104,6 +105,8 @@ export function AdminMfaGate({
 
       {setup ? (
         <div className="flex flex-col gap-2 rounded-md bg-navy/5 p-3 text-sm text-navy">
+          <OtpauthQr value={setup.otpauth} label={t("mfaQrLabel")} />
+          <p className="text-navy/70">{t("mfaQrHint")}</p>
           <span className="text-navy/70">{t("mfaKeyLabel")}</span>
           <code className="select-all break-all font-mono text-base tracking-wider">{groupKey(setup.secret)}</code>
           <a className="w-fit underline" href={setup.otpauth}>

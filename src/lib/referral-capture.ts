@@ -32,9 +32,9 @@ export function recallReferralCode(): string | null {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return null;
     const saved = JSON.parse(raw) as Partial<Saved>;
-    const fresh =
-      typeof saved.savedAt === "number" &&
-      Date.now() - saved.savedAt < REFERRAL_CAPTURE_DAYS * 86_400_000;
+    const age =
+      typeof saved.savedAt === "number" ? Date.now() - saved.savedAt : NaN;
+    const fresh = age >= 0 && age < REFERRAL_CAPTURE_DAYS * 86_400_000;
     const code = fresh ? normalizeReferralCode(saved.code) : null;
     if (!code) window.localStorage.removeItem(KEY);
     return code;

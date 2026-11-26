@@ -33,6 +33,39 @@ export function safeDatabaseErrorCode(error: unknown): string | undefined {
     : undefined;
 }
 
+/**
+ * Fixed messages from `pg`, `pg-pool` and the monitor's own timers that carry
+ * no error code. Only these exact texts are recognised; the message itself is
+ * never logged or sent anywhere.
+ */
+const UNCODED_FAILURES: [RegExp, string][] = [
+  [/^Connection terminated due to connection timeout$/, "CONNECT_TIMEOUT"],
+  [/^timeout exceeded when trying to connect$/, "CONNECT_TIMEOUT"],
+  [/^Connection terminated unexpectedly$/, "CONNECTION_CLOSED"],
+  [/^Connection terminated$/, "CONNECTION_CLOSED"],
+  [/^(?:database check timed out|timeout)$/, "QUERY_TIMEOUT"],
+];
+
+/**
+ * Why a database operation failed, as a short code that is safe to log and to
+ * put in an administrator alert: a SQLSTATE or network code when the error has
+ * one, a fixed code for the known uncoded `pg` failures, otherwise "UNKNOWN".
+ */
+export function databaseFailureCode(error: unknown): string {
+  const direct = safeDatabaseErrorCode(error);
+  if (direct) return direct;
+  const nested = (error as { errors?: unknown } | null)?.errors;
+  if (Array.isArray(nested))
+    for (const inner of nested) {
+      const code = safeDatabaseErrorCode(inner);
+      if (code) return code;
+    }
+  const message = error instanceof Error ? error.message : "";
+  for (const [pattern, code] of UNCODED_FAILURES)
+    if (pattern.test(message)) return code;
+  return "UNKNOWN";
+}
+
 function managedPool(options: PoolConfig): Pool {
   const pool = new Pool(options);
   // pg forwards disconnected idle-client errors to the pool, after removing

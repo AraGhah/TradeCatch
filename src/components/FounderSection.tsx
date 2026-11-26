@@ -29,76 +29,54 @@ export function FounderSection({
   talkCta: string;
 }) {
   return (
-    <div
-      className="grid items-center gap-8 lg:gap-[clamp(32px,5vw,64px)]"
-      style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}
-    >
-      <div className="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[20px] bg-navy p-6 text-white shadow-ink-panel">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-45"
-          style={{
-            backgroundImage:
-              "linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-            maskImage:
-              "radial-gradient(85% 70% at 80% 0%, #000 20%, transparent 78%)",
-          }}
-        />
-        <div className="relative">
-          <p className="font-mono text-[10.5px] tracking-[0.12em] text-[rgba(255,255,255,0.6)] uppercase">
-            {workLabel}
+    <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-16">
+      <div className="tc-card overflow-hidden bg-navy p-6 text-white md:p-8">
+        <p className="text-ui text-[12px] font-medium tracking-[0.02em] text-white/55">
+          {workLabel}
+        </p>
+        <ol className="mt-5 m-0 flex list-none flex-col gap-0 p-0">
+          {work.map((item) => (
+            <li
+              key={item.title}
+              className="border-t border-white/10 py-4 first:border-t-0 first:pt-0"
+            >
+              <p className="text-[15px] font-semibold tracking-[-0.015em] text-white">
+                {item.title}
+              </p>
+              <p className="mt-1 text-[14px] leading-[1.5] text-white/60">
+                {item.body}
+              </p>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-2 border-t border-white/10 pt-4">
+          <p className="font-heading text-[17px] font-bold tracking-[-0.02em] text-white">
+            {name}
           </p>
-          <ol className="mt-4 flex list-none flex-col p-0">
-            {work.map((item, i) => (
-              <li
-                key={item.title}
-                className="flex gap-3.5 border-t border-white/10 py-3 first:border-t-0 first:pt-0"
-              >
-                <span className="pt-0.5 font-mono text-[11px] font-semibold tracking-[0.08em] text-orange">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="min-w-0">
-                  <span className="block text-[15px] font-semibold tracking-[-0.015em] text-white">
-                    {item.title}
-                  </span>
-                  <span className="mt-1 block text-[13.5px] leading-[1.5] text-white/60">
-                    {item.body}
-                  </span>
-                </span>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-4 border-t border-white/10 pt-3">
-            <p className="font-heading text-[16px] font-bold tracking-[-0.02em] text-white">
-              {name}
-            </p>
-            <p className="mt-0.5 text-[13.5px] text-white/60">{role}</p>
-            <p className="mt-2 font-mono text-[10.5px] tracking-[0.1em] text-[rgba(255,255,255,0.5)] uppercase">
-              {floatLabel}
-            </p>
-          </div>
+          <p className="mt-0.5 text-[14px] text-white/60">{role}</p>
+          <p className="mt-2 text-[12.5px] text-white/45">{floatLabel}</p>
         </div>
       </div>
 
       <div>
-        <p className="text-mono-label text-muted">{eyebrow}</p>
-        <h2 className="text-section mt-3 text-heading">{headline}</h2>
-        <blockquote className="mt-4 border-l-2 border-orange pl-5 text-[16.5px] leading-[1.6] text-heading">
+        <p className="text-ui mb-2 text-[13px] font-medium text-ember-text">
+          {eyebrow}
+        </p>
+        <h2 className="text-section text-heading">{headline}</h2>
+        <blockquote className="mt-5 border-l-2 border-[rgb(var(--ink-rgb)/0.2)] pl-5 text-[16.5px] leading-[1.6] text-heading">
           {statement}
         </blockquote>
-        <ul className="mt-5 space-y-2">
+        <ul className="mt-5 m-0 list-none space-y-2.5 p-0">
           {points.map((point) => (
             <li
               key={point}
-              className="flex items-start gap-3 text-[15px] leading-relaxed text-secondary"
+              className="text-[15px] leading-relaxed text-secondary before:mr-2 before:text-muted before:content-['–']"
             >
-              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-orange" />
               {point}
             </li>
           ))}
         </ul>
-        <div className="mt-6 flex flex-wrap items-center gap-5">
+        <div className="mt-7 flex flex-wrap items-center gap-5">
           <CTAButton href="/book-audit" variant="ink" size="md">
             {talkCta}
           </CTAButton>

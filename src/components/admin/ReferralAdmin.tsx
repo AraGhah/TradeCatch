@@ -317,7 +317,7 @@ export function ReferralAdmin() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{t.title}</h1>
+          <h1 className="font-heading text-2xl font-extrabold text-navy">{t.title}</h1>
           <p className="mt-2 max-w-[48em] text-sm text-navy/70">{t.notice}</p>
         </div>
         <button type="button" className={BUTTON} onClick={() => void load()} disabled={loading} aria-busy={loading}>

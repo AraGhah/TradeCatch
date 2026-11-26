@@ -141,6 +141,30 @@ function recoveryChecks(factory: () => NotificationStore, durable: boolean) {
     assert.equal(saved.status, "delivered");
     assert.equal(saved.attempts, 1);
   });
+  it("saves one recipient from many simultaneous writers without a duplicate-key error", async () => {
+    // CI failed four times (Oct 24 - Nov 3) with 23505 on tc_notification_recipients_pkey
+    // when two queue workers added the same backup recipient at the same moment.
+    const note = await h.urgent();
+    for (let round = 0; round < 25; round += 1) {
+      const row = {
+        id: `${note.notificationId}:race_${round}:sms_recovery`,
+        notificationId: `${note.notificationId}:race_${round}`,
+        organizationId: h.organizationId,
+        userId: "owner",
+      };
+      await Promise.all(
+        Array.from({ length: 8 }, () => h.store.saveRecipient({ ...row })),
+      );
+      const saved = await h.store.listRecipients(
+        h.organizationId,
+        row.notificationId,
+      );
+      assert.equal(
+        saved.filter((person) => person.userId === "owner").length,
+        1,
+      );
+    }
+  });
   it("retries transient failed callbacks at one and five minutes, then emails the backup exactly once", async () => {
     const first = await h.urgent();
     assert.equal(first.attempts, 1);

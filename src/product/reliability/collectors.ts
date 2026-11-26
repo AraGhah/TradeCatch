@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import { safeDatabaseErrorCode } from "@/lib/postgres-pool";
+import { databaseFailureCode, safeDatabaseErrorCode } from "@/lib/postgres-pool";
 import { emptySignals, type Signals } from "./rules";
 import type { MonitorThresholds } from "./thresholds";
 import type { ProbeRecord } from "./types";
@@ -231,6 +231,8 @@ export type DatabaseProbe = {
   readOk: boolean;
   writeOk: boolean;
   durationMs: number;
+  /** Why the last attempt failed (see databaseFailureCode); absent when ok. */
+  failureCode?: string;
 };
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
@@ -256,6 +258,7 @@ export async function probeDatabase(
 ): Promise<DatabaseProbe> {
   let readOk = false;
   let writeOk = false;
+  let failureCode = "UNKNOWN";
   for (let attempt = 0; attempt < t.database.probeAttempts; attempt += 1) {
     const started = clock();
     try {
@@ -271,11 +274,12 @@ export async function probeDatabase(
       );
       writeOk = true;
       return { ok: true, readOk, writeOk, durationMs: Math.max(0, clock() - started) };
-    } catch {
+    } catch (error) {
       // try again; only the last answer matters
+      failureCode = databaseFailureCode(error);
     }
   }
-  return { ok: false, readOk, writeOk, durationMs: t.database.probeTimeoutMs };
+  return { ok: false, readOk, writeOk, durationMs: t.database.probeTimeoutMs, failureCode };
 }
 
 /**

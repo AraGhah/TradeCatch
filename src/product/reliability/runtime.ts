@@ -1,7 +1,7 @@
 import { isE2eHarness } from "@/lib/config";
 import { providerProbes } from "./probes";
 import { scheduledJobFailures } from "./job-health";
-import { getPgPool } from "@/lib/postgres-pool";
+import { databaseFailureCode, getPgPool } from "@/lib/postgres-pool";
 import type { AlertPayload } from "./alerts";
 import { collectSignals, createWebsiteCheck, probeDatabase } from "./collectors";
 import { createAdminAlertNotifier } from "./notify";
@@ -40,14 +40,27 @@ export async function probe(): Promise<Probe[]> {
     },
   ];
   const url = process.env.DATABASE_URL?.trim();
+  const durableRequired =
+    (process.env.MISSED_CALL_DURABLE_STORE === "1" ||
+      process.env.SAAS_DURABLE_STORE === "1") &&
+    !isE2eHarness();
   let database = false;
   if (!url)
-    probes.push({
-      service: "database",
-      status: "unknown",
-      state: "unconfigured",
-      detail: "Database not configured",
-    });
+    probes.push(
+      durableRequired
+        ? {
+            service: "database",
+            status: "unavailable",
+            state: "unconfigured",
+            detail: "DATABASE_URL is not set although durable storage is required (NOT_CONFIGURED)",
+          }
+        : {
+            service: "database",
+            status: "unknown",
+            state: "unconfigured",
+            detail: "Database not configured",
+          },
+    );
   else {
     try {
       await getPgPool(url).query("SELECT 1");
@@ -58,12 +71,14 @@ export async function probe(): Promise<Probe[]> {
         state: "operational",
         detail: "SELECT 1 succeeded",
       });
-    } catch {
+    } catch (error) {
       probes.push({
         service: "database",
         status: "unavailable",
         state: "configured",
-        detail: "Required query failed",
+        // The code only (SQLSTATE such as 28P01, or a network/timeout name),
+        // never the driver message: it can quote the connection string.
+        detail: `Required query failed (${databaseFailureCode(error)})`,
       });
     }
   }
@@ -272,6 +287,10 @@ export async function runMonitorOnce() {
     checkDatabase: db ? () => probeDatabase(db, thresholds) : undefined,
     collectSignals: db ? () => collectSignals(db, now(), thresholds) : undefined,
     emergencyNotify: notifyAdmin,
+    // A durable store without a database URL means the Worker secret is gone:
+    // with the bundled .env fallback stripped (scripts/strip-bundled-env-secrets.js)
+    // nothing else would notice. The e2e harness runs without one on purpose.
+    databaseUnconfigured: durable && !url && !isE2eHarness(),
     thresholds,
     now,
     siteUrl,

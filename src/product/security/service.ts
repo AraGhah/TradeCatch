@@ -169,14 +169,30 @@ export function createSecurityService(deps: SecurityDeps) {
           409,
         );
       }
-      const secret = generateTotpSecret();
-      await deps.store.saveMfa({
-        userId,
-        ciphertext: encryptSecret(secret, deps.secret()),
-        enabled: false,
-        updatedAt: deps.now().toISOString(),
-      });
-      await audit({ actorUserId: userId, action: "mfa_enroll_started" });
+      // A pending (never confirmed) secret is handed out again rather than
+      // replaced. Replacing it on every request meant a reload, a second tab or a
+      // double click invalidated the entry already added to the authenticator,
+      // and the code it then showed was rejected. Nothing is protected by a
+      // pending secret yet, so showing it again to the same administrator adds no
+      // exposure.
+      let secret: string | null = null;
+      if (existing && !existing.enabled) {
+        try {
+          secret = decryptSecret(existing.ciphertext, deps.secret());
+        } catch {
+          secret = null; // unreadable (e.g. sealing key changed): issue a fresh one
+        }
+      }
+      if (!secret) {
+        secret = generateTotpSecret();
+        await deps.store.saveMfa({
+          userId,
+          ciphertext: encryptSecret(secret, deps.secret()),
+          enabled: false,
+          updatedAt: deps.now().toISOString(),
+        });
+        await audit({ actorUserId: userId, action: "mfa_enroll_started" });
+      }
       return {
         otpauth: `otpauth://totp/TradeCatch:${encodeURIComponent(userId)}?secret=${secret}&issuer=TradeCatch`,
         secret,

@@ -219,6 +219,17 @@ describe("failureFromStatus", () => {
 });
 
 describe("timedFetch", () => {
+  it("keeps a caller cancellation distinct from a later timeout", async () => {
+    const controller = new AbortController();
+    const slowAbort = ((_input: unknown, init?: RequestInit) => new Promise<Response>((_resolve, reject) => {
+      init?.signal?.addEventListener("abort", () => {
+        setTimeout(() => reject(new DOMException("Aborted", "AbortError")), 30);
+      });
+    })) as typeof fetch;
+    const request = timedFetch("/x", { timeoutMs: 10, signal: controller.signal }, slowAbort);
+    controller.abort();
+    await assert.rejects(request, (error: Error) => error.name === "AbortError");
+  });
   it("returns the response and does not leave a timer behind", async () => {
     const response = await timedFetch("/x", { timeoutMs: 10_000 }, (async () => new Response("ok")) as typeof fetch);
     assert.equal(await response.text(), "ok");

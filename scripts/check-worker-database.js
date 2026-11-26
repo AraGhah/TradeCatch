@@ -33,7 +33,48 @@ function requireSchedulerSecret(bindings) {
     );
 }
 
-function checkWorkerDatabase({ staging = false, run = execFileSync } = {}) {
+/**
+ * The build strips credentials from OpenNext's `.env*` fallback module
+ * (scripts/strip-bundled-env-secrets.js). A Worker that has been running on a
+ * bundled fallback, because the credential was never set as a Worker secret,
+ * would lose it silently on this release: payments, the receptionist or a
+ * provider integration would stop with no error at deploy time. Every stripped
+ * key must therefore exist as an encrypted secret on the target Worker, unless
+ * the operator lists it in RELEASE_ALLOW_UNBOUND_SECRETS to confirm that this
+ * Worker does not use it. Names only; values are never read.
+ */
+function requireStrippedSecretsBound(stripped, bindings, allowUnbound = []) {
+  if (!Array.isArray(stripped) || stripped.length === 0) return;
+  const encrypted = new Set(
+    (Array.isArray(bindings) ? bindings : [])
+      .filter((binding) => binding?.type === "secret_text")
+      .map((binding) => binding.name),
+  );
+  const allowed = new Set(allowUnbound);
+  const missing = [...new Set(stripped)]
+    .filter((name) => !encrypted.has(name) && !allowed.has(name))
+    .sort();
+  if (missing.length > 0)
+    throw new Error(
+      `Release blocked: this build no longer carries ${missing.join(", ")} from .env files, and the target Worker has no encrypted secret with that name. ` +
+        "Set each one with `wrangler secret put <NAME>` first, or list the ones this Worker does not use in RELEASE_ALLOW_UNBOUND_SECRETS (comma-separated).",
+    );
+}
+
+/** `A, B,,C` -> ["A", "B", "C"]; only plausible environment variable names. */
+function parseNameList(value) {
+  return String(value ?? "")
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => /^[A-Z_][A-Z0-9_]*$/i.test(name));
+}
+
+function checkWorkerDatabase({
+  staging = false,
+  run = execFileSync,
+  strippedSecrets = [],
+  allowUnbound = [],
+} = {}) {
   const worker = staging ? "tradecatch-staging" : "tradecatch";
   let bindings;
   try {
@@ -68,6 +109,7 @@ function checkWorkerDatabase({ staging = false, run = execFileSync } = {}) {
   }
   requireDatabaseSecret(bindings);
   requireSchedulerSecret(bindings);
+  requireStrippedSecretsBound(strippedSecrets, bindings, allowUnbound);
   console.log(
     `Runtime database and scheduler secrets are configured on ${worker}.`,
   );
@@ -90,5 +132,7 @@ if (require.main === module) {
 module.exports = {
   requireDatabaseSecret,
   requireSchedulerSecret,
+  requireStrippedSecretsBound,
+  parseNameList,
   checkWorkerDatabase,
 };

@@ -92,14 +92,55 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "Pour les entrepreneurs qui travaillent sur le terrain",
-      "headline": "Vous êtes sur le chantier. On s'occupe des appels.",
-      "accentWord": "On s'occupe des appels.",
-      "subheadline": "TradeCatch répond à vos appels clients et saisit chaque demande, pour que vous puissiez continuer à travailler.",
-      "ctaPrimary": "Réserver une démo gratuite",
-      "ctaSecondary": "Écouter la réceptionniste",
+      "eyebrow": "Réceptionniste téléphonique pour entreprises de service",
+      "headline": "Chaque appel mérite une réponse.",
+      "accentWord": "mérite une réponse.",
+      "subheadline": "TradeCatch prend en charge vos appels, recueille les demandes de vos clients et vous aide à ne manquer aucune occasion d’affaires.",
+      "ctaPrimary": "Voir la démo",
+      "ctaSecondary": "Découvrir les forfaits",
       "ctaTry": "Essayer la démo live",
-      "reassurance": "Démo gratuite. Aucun accès système requis. Vous parlez avec le fondateur."
+      "reassurance": "Démo gratuite. Aucun accès système requis. Vous parlez avec le fondateur.",
+      "preview": {
+        "badge": "Exemple",
+        "workspaceLabel": "Espace TradeCatch",
+        "navOverview": "Aperçu",
+        "navCalls": "Appels",
+        "navRequests": "Demandes",
+        "statsAnswered": "Répondus",
+        "statsAnsweredValue": "18",
+        "statsRequests": "Demandes",
+        "statsRequestsValue": "7",
+        "callsTitle": "Appels récents",
+        "requestsTitle": "Demande client",
+        "rows": [
+          {
+            "name": "Marie L.",
+            "meta": "Entretien de fournaise · Laval",
+            "status": "Répondu",
+            "statusTone": "answered"
+          },
+          {
+            "name": "Jean P.",
+            "meta": "Demande de soumission · Montréal",
+            "status": "Nouvelle",
+            "statusTone": "new"
+          },
+          {
+            "name": "Sophie R.",
+            "meta": "Manqué · suivi par texto",
+            "status": "Suivi",
+            "statusTone": "missed"
+          }
+        ],
+        "selectedTitle": "Demande d’entretien de fournaise",
+        "selectedFields": [
+          { "label": "Appelant", "value": "Marie L." },
+          { "label": "Téléphone", "value": "(514) 555-0198" },
+          { "label": "Service", "value": "Fournaise qui ne chauffe pas" },
+          { "label": "Secteur", "value": "Laval" },
+          { "label": "Urgence", "value": "Le jour même" }
+        ]
+      }
     },
     "leaks": {
       "eyebrow": "Le problème",
@@ -593,8 +634,8 @@
   },
   "pricing": {
     "eyebrow": "Tarifs",
-    "headline": "Deux forfaits. Un choix simple.",
-    "intro": "Essential répond à vos appels et capte vos clients. Professional prend aussi vos rendez-vous. Tous les prix sont en dollars canadiens.",
+    "headline": "Des forfaits simples. Plus d’occasions saisies.",
+    "intro": "Choisissez la solution adaptée à votre entreprise. Une tarification claire, sans mauvaise surprise. Tous les prix sont en dollars canadiens.",
     "reassurance": "Mois par mois après l’installation. Annulation avec préavis.",
     "metaDescription": "Tarifs TradeCatch en CAD : Essential à 249,99 $ par mois et Professional à 349,99 $ par mois, avec des frais d’installation uniques de 1 999,99 $. Service de site web facultatif à 699,99 $.",
     "principles": [
@@ -651,6 +692,7 @@
             ]
           }
         ],
+        "ctaLabel": "Choisir Essential",
         "planInterest": "essential"
       },
       {
@@ -701,6 +743,7 @@
             ]
           }
         ],
+        "ctaLabel": "Choisir Professional",
         "planInterest": "professional"
       }
     ],
@@ -760,6 +803,7 @@
     },
     "onceLabel": "payé une fois",
     "monthlyEyebrow": "Chaque mois",
+    "periodLabel": "mois",
     "websiteMention": "Besoin d’un site web? Ajoutez notre service de site web pour 699,99 $.",
     "billingBanner": "À la caisse, vous payez les frais d’installation uniques. Votre premier paiement mensuel a lieu un mois plus tard.",
     "schedulingNote": "La prise de rendez-vous est activée pour votre entreprise une fois qu’elle a été testée avec votre Google Agenda pendant l’installation."
@@ -4757,6 +4801,8 @@
       "mfaGenerating": "Génération…",
       "mfaVerifying": "Vérification…",
       "mfaNoAnswer": "Le serveur n’a pas répondu. Rien n’a été confirmé; réessayez dans un instant.",
+      "mfaQrLabel": "Code QR de l’application d’authentification pour la vérification administrateur",
+      "mfaQrHint": "Scannez ce code avec Google Authenticator ou Microsoft Authenticator, ou utilisez la clé ci-dessous.",
       "mfaKeyLabel": "Clé de configuration (à saisir manuellement dans votre application d’authentification)",
       "mfaOpenApp": "Ouvrir dans l’application d’authentification",
       "mfaConfirm": "Activer la vérification",

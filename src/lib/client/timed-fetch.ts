@@ -43,8 +43,11 @@ export function timedFetch(
     timedOut = true;
     controller.abort();
   }, timeoutMs);
-  const onAbort = () => controller.abort();
-  if (signal?.aborted) controller.abort();
+  const onAbort = () => {
+    clearTimeout(timer);
+    controller.abort();
+  };
+  if (signal?.aborted) onAbort();
   else signal?.addEventListener("abort", onAbort, { once: true });
 
   const done = () => {

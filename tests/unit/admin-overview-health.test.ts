@@ -132,6 +132,80 @@ describe("system health", () => {
   });
 });
 
+describe("incident management", () => {
+  const report = (fingerprint: string, priority: "critical" | "high" | "warning", over: Record<string, unknown> = {}) => ({
+    fingerprint,
+    service: "stripe",
+    category: fingerprint,
+    priority,
+    title: `Incident ${fingerprint}`,
+    quietMs: 60_000,
+    correlationId: `corr_${fingerprint}`,
+    simulated: false,
+    ...over,
+  });
+
+  it("lists active incidents Critical, High, Warning, Low, and counts what remains per priority", async () => {
+    const service = reliability();
+    await service.reportIncident(report("w1", "warning"));
+    await service.reportIncident(report("c1", "critical"));
+    await service.reportIncident(report("h1", "high"));
+    await service.reportIncident(report("c2", "critical"));
+    const health = await loadSystemHealth(service, {}, {}, NOW);
+    assert.deepEqual(health.incidents.map((i) => i.priority), ["critical", "critical", "high", "warning"]);
+    assert.deepEqual(health.incidentCounts, { critical: 2, high: 1, warning: 1, low: 0, resolved: 0 });
+  });
+
+  it("groups identical failures into one incident with an occurrence counter", async () => {
+    const service = reliability();
+    for (let i = 0; i < 4; i += 1) await service.reportIncident(report("same", "high"));
+    const health = await loadSystemHealth(service, {}, {}, NOW);
+    assert.equal(health.incidents.length, 1);
+    assert.equal(health.incidents[0].occurrenceCount, 4);
+  });
+
+  it("moves a resolved incident to the history, keeps it, and removes it from the counts", async () => {
+    const service = reliability();
+    await service.reportIncident(report("a", "critical"));
+    await service.reportIncident(report("b", "high"));
+    const first = (await loadSystemHealth(service, {}, {}, NOW)).incidents[0];
+    await service.resolve(first.id, "admin");
+    const health = await loadSystemHealth(service, {}, {}, NOW);
+    assert.deepEqual(health.incidents.map((i) => i.priority), ["high"]);
+    assert.deepEqual(health.resolvedIncidents.map((i) => i.id), [first.id]);
+    assert.equal(health.resolvedIncidents[0].resolvedBy, "admin");
+    assert.deepEqual(health.incidentCounts, { critical: 0, high: 1, warning: 0, low: 0, resolved: 1 });
+    assert.equal(health.totals.openIncidents, 1);
+  });
+
+  it("reopens a resolved incident when the same problem is reported again", async () => {
+    const service = reliability();
+    await service.reportIncident(report("again", "high"));
+    const [incident] = (await loadSystemHealth(service, {}, {}, NOW)).incidents;
+    await service.resolve(incident.id, "admin");
+    await service.reportIncident(report("again", "high"));
+    const health = await loadSystemHealth(service, {}, {}, NOW);
+    assert.equal(health.incidents.length, 1);
+    assert.equal(health.incidents[0].id, incident.id);
+    assert.equal(health.incidents[0].reopenCount, 1);
+    assert.equal(health.resolvedIncidents.length, 0);
+  });
+
+  it("does not let a long resolved history push active incidents out of the list", async () => {
+    const service = reliability();
+    for (let i = 0; i < 60; i += 1) {
+      await service.reportIncident(report(`old${i}`, "warning"));
+      const found = (await loadSystemHealth(service, {}, {}, NOW)).incidents.find((x) => x.fingerprint === `old${i}`);
+      await service.resolve(found!.id, "admin");
+    }
+    await service.reportIncident(report("live", "critical"));
+    const health = await loadSystemHealth(service, {}, {}, NOW);
+    assert.equal(health.incidents.length, 1);
+    assert.equal(health.incidentCounts.resolved, 60);
+    assert.equal(health.resolvedIncidents.length, 50);
+  });
+});
+
 describe("overview", () => {
   beforeEach(() => {
     resetBillingEventsForTests();

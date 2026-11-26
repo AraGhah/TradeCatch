@@ -1,3 +1,7 @@
+/**
+ * Quiet compliance note for illustrative / simulated content.
+ * Plain text only — no sticker, mono stamp, or watermark look.
+ */
 export function IllustrativeBadge({
   label,
   light = false,
@@ -8,14 +12,12 @@ export function IllustrativeBadge({
   className?: string;
 }) {
   return (
-    <span
-      className={`inline-flex items-center rounded-md px-2.5 py-1 font-mono text-[10px] font-semibold tracking-[0.1em] uppercase ${
-        light
-          ? "bg-white/10 text-white/70"
-          : "bg-[rgb(var(--ink-rgb)/0.06)] text-muted"
+    <p
+      className={`m-0 text-[12.5px] leading-snug ${
+        light ? "text-white/65" : "text-muted"
       } ${className}`}
     >
       {label}
-    </span>
+    </p>
   );
 }

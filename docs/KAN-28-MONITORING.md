@@ -45,16 +45,23 @@ and a dashboard that reads real data for each area.
   `ctx.waitUntil`, through an authenticated internal call. Counts only: no URLs,
   headers, bodies or customer data. The latency measured is time to response
   headers, not to the last byte.
-* **The monitor** (`watch.ts`) runs in the existing every-minute cron, last in
-  the list. Each stage is isolated: one failing stage never stops the others and
-  the run itself never throws.
+* **The monitor** (`watch.ts`) runs in the existing every-minute cron. It starts
+  alongside the other jobs, not after them (`MONITOR_ROUTES`), so a database
+  that makes every job wait cannot delay or starve it (2026-11-24, see
+  [DATABASE_AUTHENTICATION_RECOVERY.md](DATABASE_AUTHENTICATION_RECOVERY.md)).
+  Each stage is isolated: one failing stage never stops the others and the run
+  itself never throws.
 * **Database unavailable.** If the database can still store a row, the outage
   becomes a normal critical incident (`health:database`). If it cannot, the
   monitor emails administrators directly (one email per 15-minute window,
   idempotency key in the provider call, no database needed) and the route answers
-  503 so the scheduler records the failure. When the database returns, the outage
-  is recorded after the fact as a resolved critical incident with a recovery
-  notice, dated from the last successful run.
+  503 so the scheduler records the failure. That email names the failure code
+  (SQLSTATE such as `28P01`, a network code, `CONNECT_TIMEOUT`, `QUERY_TIMEOUT`,
+  or `NOT_CONFIGURED` when `DATABASE_URL` is missing although durable storage is
+  on) and its likely cause, never the driver message. When the database
+  returns, the outage is recorded after the fact as a resolved critical incident
+  with a recovery notice, dated from the last successful run and naming the
+  `dbdown-…` references it closes.
 * **A gap in the monitor itself** (no run for 4 minutes while the database is
   healthy) is also recorded as a past outage.
 * **Customer operations are never affected.** Recording is outside the request

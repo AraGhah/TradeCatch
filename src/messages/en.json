@@ -92,14 +92,55 @@
   },
   "home": {
     "hero": {
-      "eyebrow": "For contractors who work with their hands",
-      "headline": "You're on the job. We'll handle the calls.",
-      "accentWord": "We'll handle the calls.",
-      "subheadline": "TradeCatch answers your customer calls and captures every request, so you can keep working.",
-      "ctaPrimary": "Book a Free Demo",
-      "ctaSecondary": "Hear the Receptionist",
+      "eyebrow": "Phone receptionist for service businesses",
+      "headline": "Every call deserves an answer.",
+      "accentWord": "deserves an answer.",
+      "subheadline": "TradeCatch answers your calls, captures customer requests, and helps you miss fewer opportunities.",
+      "ctaPrimary": "Watch the demo",
+      "ctaSecondary": "See plans",
       "ctaTry": "Try the live receptionist demo",
-      "reassurance": "Free demo. No system access needed. You talk with the founder."
+      "reassurance": "Free demo. No system access needed. You talk with the founder.",
+      "preview": {
+        "badge": "Sample",
+        "workspaceLabel": "TradeCatch workspace",
+        "navOverview": "Overview",
+        "navCalls": "Calls",
+        "navRequests": "Requests",
+        "statsAnswered": "Answered",
+        "statsAnsweredValue": "18",
+        "statsRequests": "Requests",
+        "statsRequestsValue": "7",
+        "callsTitle": "Recent calls",
+        "requestsTitle": "Customer request",
+        "rows": [
+          {
+            "name": "Marie L.",
+            "meta": "Furnace service · Laval",
+            "status": "Answered",
+            "statusTone": "answered"
+          },
+          {
+            "name": "Jean P.",
+            "meta": "Quote request · Montréal",
+            "status": "New request",
+            "statusTone": "new"
+          },
+          {
+            "name": "Sophie R.",
+            "meta": "Missed · followed up by text",
+            "status": "Follow-up",
+            "statusTone": "missed"
+          }
+        ],
+        "selectedTitle": "Furnace service request",
+        "selectedFields": [
+          { "label": "Caller", "value": "Marie L." },
+          { "label": "Phone", "value": "(514) 555-0198" },
+          { "label": "Service", "value": "Furnace not heating" },
+          { "label": "Area", "value": "Laval" },
+          { "label": "Urgency", "value": "Same day" }
+        ]
+      }
     },
     "leaks": {
       "eyebrow": "The problem",
@@ -593,8 +634,8 @@
   },
   "pricing": {
     "eyebrow": "Pricing",
-    "headline": "Two plans. One simple choice.",
-    "intro": "Essential answers your calls and captures your customers. Professional also books your appointments. All prices are in Canadian dollars.",
+    "headline": "Simple plans. More opportunities caught.",
+    "intro": "Choose the solution that fits your business. Clear pricing, no surprises. All prices are in Canadian dollars.",
     "reassurance": "Month to month after setup. Cancel with notice.",
     "metaDescription": "TradeCatch pricing in CAD: Essential at $249.99 a month and Professional at $349.99 a month, each with a one-time $1,999.99 setup fee. Optional website service for $699.99.",
     "principles": [
@@ -651,6 +692,7 @@
             ]
           }
         ],
+        "ctaLabel": "Choose Essential",
         "planInterest": "essential"
       },
       {
@@ -701,6 +743,7 @@
             ]
           }
         ],
+        "ctaLabel": "Choose Professional",
         "planInterest": "professional"
       }
     ],
@@ -760,6 +803,7 @@
     },
     "onceLabel": "paid once",
     "monthlyEyebrow": "Each month",
+    "periodLabel": "month",
     "websiteMention": "Need a website? Add our website service for $699.99.",
     "billingBanner": "At checkout you pay the one-time setup fee. Your first monthly charge comes one month later.",
     "schedulingNote": "Appointment scheduling is switched on for your business once it has been tested with your Google Calendar during setup."
@@ -4757,6 +4801,8 @@
       "mfaGenerating": "Generating…",
       "mfaVerifying": "Verifying…",
       "mfaNoAnswer": "The server did not answer. Nothing was confirmed; try again in a moment.",
+      "mfaQrLabel": "Authenticator QR code for administrator verification",
+      "mfaQrHint": "Scan this code with Google Authenticator or Microsoft Authenticator, or use the key below.",
       "mfaKeyLabel": "Setup key (enter it manually in your authenticator app)",
       "mfaOpenApp": "Open in authenticator app",
       "mfaConfirm": "Turn on verification",

@@ -95,7 +95,7 @@ export default async function AppCallsPage({
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+          <h1 className="font-heading text-2xl font-extrabold text-navy">
             {t("calls.headline")}
           </h1>
           <p className="mt-2 text-navy/70">{t("calls.intro")}</p>

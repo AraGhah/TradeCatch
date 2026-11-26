@@ -79,10 +79,9 @@ export async function StoryDemos({
                   key={benefit}
                   className="flex items-start gap-3 text-[15.5px] leading-[1.5] text-secondary"
                 >
-                  <span
-                    aria-hidden
-                    className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-orange"
-                  />
+                  <span aria-hidden className="mt-0.5 text-muted">
+                    –
+                  </span>
                   {benefit}
                 </li>
               ))}
@@ -94,7 +93,7 @@ export async function StoryDemos({
               </CTAButton>
               <WatchDemoButton
                 video={DEFAULT_STORY_ID}
-                className="hidden items-center justify-center gap-2 rounded-[11px] border-[1.5px] lg:inline-flex border-[rgb(var(--ink-rgb)/0.18)] px-[22px] py-[13px] text-[15px] font-semibold tracking-[-0.01em] text-heading transition-[translate,border-color] duration-200 hover:-translate-y-[2px] hover:border-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+                className="hidden min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] px-[22px] py-[13px] text-[15px] font-semibold tracking-[-0.01em] text-heading transition-colors hover:border-navy lg:inline-flex focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
               >
                 {cta("watchDemo")}
               </WatchDemoButton>
@@ -104,7 +103,7 @@ export async function StoryDemos({
           <div className="mx-auto w-full max-w-[264px] sm:max-w-[300px] md:mx-0 lg:max-w-[360px]">
             <WatchDemoButton
               video={DEFAULT_STORY_ID}
-              className="group block h-full w-full overflow-hidden rounded-[14px] border border-[rgb(var(--ink-rgb)/0.12)] bg-surface text-left transition-[translate,box-shadow] duration-200 hover:-translate-y-[2px] hover:shadow-[0_18px_40px_-22px_rgba(12,20,30,0.45)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+              className="group tc-card block h-full w-full overflow-hidden text-left transition-[box-shadow] duration-200 hover:shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
             >
               {/* The button is named from its content (WCAG 2.5.3: the name contains the visible text); this cue says what it does. */}
               <span className="sr-only">{t("watchLabel")} </span>

@@ -25,19 +25,13 @@ export function WebsiteServiceAddOn({ copy }: { copy: WebsiteServiceAddOnCopy })
     <section
       id="website-service"
       aria-labelledby="website-service-title"
-      className="relative scroll-mt-28 overflow-hidden border border-orange/35 bg-navy px-[clamp(18px,3vw,36px)] py-[clamp(20px,3.2vw,40px)] text-white"
+      className="relative scroll-mt-28 overflow-hidden rounded-[var(--radius-lg)] border border-white/15 bg-navy px-[clamp(18px,3vw,36px)] py-[clamp(20px,3.2vw,40px)] text-white"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-16 top-0 h-56 w-56 rounded-full opacity-40"
-        style={{
-          background:
-            "radial-gradient(circle, rgba(228,118,43,0.45) 0%, transparent 70%)",
-        }}
-      />
       <div className="relative grid gap-x-8 gap-y-4 md:grid-cols-[1.15fr_0.85fr] lg:gap-x-14">
         <div>
-          <p className="text-[13px] font-medium text-orange">{copy.eyebrow}</p>
+          <p className="text-ui text-[13px] font-medium text-white/60">
+            {copy.eyebrow}
+          </p>
           <h2
             id="website-service-title"
             className="mt-2 max-w-[16em] font-heading text-[clamp(24px,3vw,36px)] font-extrabold leading-[1.05] tracking-[-0.04em] text-white"

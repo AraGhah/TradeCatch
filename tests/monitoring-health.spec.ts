@@ -195,8 +195,8 @@ test("MON-14 an incident can be opened, acknowledged and resolved, with its hist
   await openIncident(page);
   await page.goto("/admin/system-health");
 
-  const table = page.getByRole("table", { name: "Incidents" });
-  const row = table.getByRole("row").filter({ hasText: INCIDENT_TITLE });
+  const list = page.getByRole("list", { name: "Incidents", exact: true });
+  const row = list.getByRole("listitem").filter({ hasText: INCIDENT_TITLE });
   await expect(row).toContainText("Critical");
   await expect(row).toContainText("Active");
 
@@ -226,7 +226,10 @@ test("MON-14 an incident can be opened, acknowledged and resolved, with its hist
   await expect(row).toContainText("Acknowledged");
   await detail.getByRole("button", { name: "Mark resolved" }).click();
   await detail.getByRole("form").getByRole("button", { name: "Mark resolved" }).click();
-  await expect(row).toContainText("Resolved");
+  // It leaves the active list and is kept in the resolved history.
+  await expect(row).toHaveCount(0);
+  await page.getByTestId("resolved-history").getByText(/Resolved history/).click();
+  await expect(page.getByRole("list", { name: "Resolved history" }).getByRole("listitem").filter({ hasText: INCIDENT_TITLE }).first()).toBeVisible();
   await expect(detail.getByRole("button", { name: "Mark resolved" })).toBeHidden();
 
   // The status filter speaks the same words, and a resolved incident is no longer Active.
@@ -237,6 +240,31 @@ test("MON-14 an incident can be opened, acknowledged and resolved, with its hist
   // No serious accessibility violations with the details open.
   await expect(detail).toBeVisible();
   expect(await seriousViolations(page)).toEqual([]);
+});
+
+test("MON-16 ticking an incident resolves it for good, keeps it in the history, and counts what remains", async ({ page }) => {
+  await adminSession(page, ADMINS.super("24"));
+  const id = await openIncident(page);
+  await page.goto("/admin/system-health");
+
+  const counts = page.getByTestId("incident-counts");
+  const critical = counts.locator('[data-priority="critical"]');
+  await expect(critical).toContainText(/Criticals*[1-9]/);
+  // Critical incidents are listed before anything less urgent.
+  const priorities = await page.locator('li[data-incident][data-resolved="false"]').evaluateAll((items) => items.map((item) => item.getAttribute("data-priority")));
+  const order = ["critical", "high", "warning", "low"];
+  expect([...priorities].sort((a, b) => order.indexOf(a!) - order.indexOf(b!))).toEqual(priorities);
+
+  const row = page.locator(`li[data-incident="${id}"]`);
+  await row.getByRole("checkbox", { name: /Mark resolved/ }).click();
+  await expect(page.locator(`li[data-incident="${id}"][data-resolved="false"]`)).toHaveCount(0);
+
+  // Still resolved after a refresh: it is stored, not just hidden.
+  await page.reload();
+  await expect(page.locator(`li[data-incident="${id}"][data-resolved="false"]`)).toHaveCount(0);
+  const history = page.getByTestId("resolved-history");
+  await history.getByText(/Resolved history/).click();
+  await expect(history.locator(`li[data-incident="${id}"]`)).toBeVisible();
 });
 
 test("MON-14 the link in an alert email opens that incident, and an unknown one fails gracefully", async ({ page }) => {
@@ -294,7 +322,7 @@ test("MON-13 monitoring data and actions are denied without credentials, and to 
     }
     // And the console says so instead of offering a button that fails.
     await other.goto("/admin/system-health");
-    await other.getByRole("table", { name: "Incidents" }).getByRole("button", { name: INCIDENT_TITLE }).click();
+    await other.getByRole("list", { name: "Incidents", exact: true }).getByRole("button", { name: INCIDENT_TITLE }).click();
     const panel = other.getByRole("region", { name: INCIDENT_TITLE, exact: true });
     await expect(panel.getByText("Your role can view incidents but not acknowledge or resolve them.")).toBeVisible();
     await expect(panel.getByRole("button", { name: "Acknowledge", exact: true })).toBeDisabled();

@@ -796,7 +796,7 @@ export function BookAuditForm() {
             ) : null}
 
             {showEnterHint ? (
-              <span className="font-mono text-[11px] tracking-[0.08em] text-muted uppercase">
+              <span className="text-[12px] font-medium text-muted">
                 {t("wizard.enterHint")}
               </span>
             ) : null}
@@ -827,13 +827,11 @@ function ProgressBar({
         <div className="flex items-center justify-between gap-4">
           <p
             id={summaryId}
-            className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase"
+            className="m-0 text-[12px] font-medium text-muted"
           >
             {counterText}
           </p>
-          <p className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
-            {timeLeft}
-          </p>
+          <p className="m-0 text-[12px] font-medium text-muted">{timeLeft}</p>
         </div>
         <div
           role="progressbar"
@@ -1223,9 +1221,7 @@ function UnderlineField({
   return (
     <label className="flex flex-col gap-2.5">
       {label ? (
-        <span className="font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
-          {label}
-        </span>
+        <span className="text-[12.5px] font-medium text-muted">{label}</span>
       ) : null}
       <input
         id={name ? `audit-field-${name}` : undefined}
@@ -1268,9 +1264,7 @@ function ReviewRow({
 }) {
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] items-baseline gap-2 gap-x-5 border-b border-[rgb(var(--ink-rgb)/0.1)] py-[15px]">
-      <p className="m-0 font-mono text-[11px] tracking-[0.1em] text-muted uppercase">
-        {label}
-      </p>
+      <p className="m-0 text-[12.5px] font-medium text-muted">{label}</p>
       <div className="flex items-baseline justify-between gap-4">
         <p className="m-0 text-[16.5px] leading-[1.5] text-text">{value}</p>
         <button

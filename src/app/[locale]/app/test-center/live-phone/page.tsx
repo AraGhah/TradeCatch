@@ -80,7 +80,7 @@ export default async function LivePhoneTestingPage({
             {t("back")}
           </Link>
         </p>
-        <h1 className="mt-2 font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+        <h1 className="mt-2 font-heading text-2xl font-extrabold text-navy">
           {t("headline")}
         </h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("intro")}</p>

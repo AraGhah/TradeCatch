@@ -32,6 +32,10 @@ type World = {
   down: Set<string>;
   database: "ok" | "down" | "slow";
   storeDown: boolean;
+  /** What every store call rejects with while storeDown (default: an uncoded error quoting a URL). */
+  storeError?: Error;
+  /** The failure code the database probe reports while down. */
+  probeCode?: string;
   signals: Signals;
   degraded: string[];
   websiteThrows: boolean;
@@ -39,7 +43,9 @@ type World = {
   deliverThrows: boolean;
 };
 
-function harness(opts: { emergency?: boolean; noDatabase?: boolean; noSignals?: boolean } = {}) {
+function harness(
+  opts: { emergency?: boolean; noDatabase?: boolean; noSignals?: boolean; databaseUnconfigured?: boolean } = {},
+) {
   const real = createMemoryReliabilityStore();
   let clock = START;
   const world: World = {
@@ -59,7 +65,10 @@ function harness(opts: { emergency?: boolean; noDatabase?: boolean; noSignals?: 
       if (typeof value !== "function") return value;
       return (...args: unknown[]) =>
         world.storeDown
-          ? Promise.reject(new Error("connection refused: postgres://user:hunter2@db.internal:5432/app")) // secret-scan: allow
+          ? Promise.reject(
+              world.storeError ??
+                new Error("connection refused: postgres://user:hunter2@db.internal:5432/app"), // secret-scan: allow
+            )
           : value.apply(target, args);
     },
   }) as ReliabilityStore;
@@ -107,7 +116,13 @@ function harness(opts: { emergency?: boolean; noDatabase?: boolean; noSignals?: 
         ? undefined
         : async () =>
             world.database === "down"
-              ? { ok: false, readOk: false, writeOk: false, durationMs: T.database.probeTimeoutMs }
+              ? {
+                  ok: false,
+                  readOk: false,
+                  writeOk: false,
+                  durationMs: T.database.probeTimeoutMs,
+                  failureCode: world.probeCode,
+                }
               : { ok: true, readOk: true, writeOk: true, durationMs: world.database === "slow" ? T.database.slowMs + 400 : 15 },
       collectSignals: opts.noSignals ? undefined : async () => {
         if (world.collectThrows) throw new Error("query exploded");
@@ -119,6 +134,7 @@ function harness(opts: { emergency?: boolean; noDatabase?: boolean; noSignals?: 
           : async (payload) => {
               emergency.push(payload);
             },
+      databaseUnconfigured: opts.databaseUnconfigured,
     });
   async function tick(minutes = 1): Promise<MonitorRun> {
     clock += minutes * MIN;
@@ -257,6 +273,75 @@ describe("MON-09 database unavailable", () => {
     assert.equal(outages[0].firstSeenAt, lastGoodRun);
     assert.deepEqual(h.sent.map((p) => p.kind), ["recovered"]);
     assert.match(outages[0].summary ?? "", /minutes/);
+  });
+
+  it("says why: the emergency email carries the database's failure code and what it usually means", async () => {
+    // 2026-11-24: fourteen emails said only "did not answer", so an
+    // authentication refusal could not be told from a timeout.
+    const h = harness();
+    await h.tick();
+    h.world.database = "down";
+    h.world.storeDown = true;
+    h.world.storeError = Object.assign(
+      new Error('password authentication failed for user "postgres.abcdefghijklmnop" postgres://u:hunter2@db.internal'), // secret-scan: allow
+      { code: "28P01" },
+    );
+    const run = await h.tick();
+    const [payload] = h.emergency;
+    const line = (label: string) => payload.lines.find((l) => l.label === label)?.value;
+    assert.equal(line("Failure code"), "28P01");
+    assert.match(line("Likely cause") ?? "", /refused the login.*DATABASE_URL/);
+    assert.equal(line("Database check"), "read failed, write failed");
+    assert.equal(run.storageFailure, "28P01");
+    assert.doesNotThrow(() => assertAlertSafe({ subject: payload.subject, title: payload.title, lines: payload.lines }));
+    assert.doesNotMatch(JSON.stringify(payload), /hunter2|postgres:\/\/|abcdefghijklmnop|password authentication/);
+  });
+
+  it("falls back to the probe's code when the storage error carries none", async () => {
+    const h = harness();
+    await h.tick();
+    h.world.database = "down";
+    h.world.probeCode = "CONNECT_TIMEOUT";
+    h.world.storeDown = true;
+    await h.tick();
+    const value = (label: string) => h.emergency[0].lines.find((l) => l.label === label)?.value;
+    assert.equal(value("Failure code"), "CONNECT_TIMEOUT");
+    assert.match(value("Likely cause") ?? "", /did not answer in time/);
+  });
+
+  it("a missing DATABASE_URL is an outage, not a quiet run on memory", async () => {
+    const h = harness({ databaseUnconfigured: true });
+    const run = await h.tick();
+    assert.equal(run.emergency, "sent");
+    assert.equal(run.storageFailure, "NOT_CONFIGURED");
+    assert.equal(run.checks.database, "unavailable");
+    const [payload] = h.emergency;
+    assert.equal(payload.lines.find((l) => l.label === "Failure code")?.value, "NOT_CONFIGURED");
+    assert.match(payload.lines.find((l) => l.label === "Likely cause")?.value ?? "", /DATABASE_URL is not set/);
+    assert.equal(await h.real.getMeta("monitor_last_run"), null, "nothing pretends to have been stored");
+  });
+
+  it("the resolution names the range of database-down references it closes", async () => {
+    const h = harness();
+    await h.tick();
+    h.world.database = "down";
+    h.world.storeDown = true;
+    for (let i = 0; i < 40; i += 1) await h.tick();
+    h.world.database = "ok";
+    h.world.storeDown = false;
+    await h.tick();
+    const references = h.emergency.map((p) => p.lines.find((l) => l.label === "Diagnostic reference")!.value);
+    assert.ok(new Set(references).size >= 3, "one window per 15 minutes");
+    const [resolved] = h.sent;
+    assert.equal(resolved.kind, "recovered");
+    const happened = resolved.lines.find((l) => l.label === "What happened")?.value ?? "";
+    const [, first, last] = happened.match(/between dbdown-(\d+) and dbdown-(\d+)/) ?? [];
+    assert.ok(first && last, happened);
+    for (const reference of references) {
+      const n = Number(reference.replace("dbdown-", ""));
+      assert.ok(n >= Number(first) && n <= Number(last), `${reference} is inside ${first}..${last}`);
+    }
+    assert.doesNotThrow(() => assertAlertSafe({ lines: resolved.lines }));
   });
 
   it("reports no emergency destination instead of pretending it sent one", async () => {

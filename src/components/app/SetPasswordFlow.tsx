@@ -108,7 +108,7 @@ export function SetPasswordFlow() {
         <p className="text-sm font-semibold uppercase tracking-[0.08em] text-ember-text">
           {t("eyebrow")}
         </p>
-        <h1 className="mt-3 font-[family-name:var(--font-archivo)] text-3xl font-extrabold tracking-tight text-navy md:text-4xl">
+        <h1 className="mt-3 font-heading text-3xl font-extrabold tracking-tight text-navy md:text-4xl">
           {headline}
         </h1>
         {phase.name === "checking" ? (

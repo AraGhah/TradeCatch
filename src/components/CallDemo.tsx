@@ -393,7 +393,7 @@ export function CallDemo({
             {voice.ready ? (
               voice.canListen ? (
                 <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-                  <legend className="mb-2 p-0 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase">
+                  <legend className="mb-2 p-0 text-[12.5px] font-medium text-muted">
                     {copy.voice.modeLabel}
                   </legend>
                   <div className="inline-flex w-fit border border-[rgb(var(--ink-rgb)/0.25)]">
@@ -442,7 +442,7 @@ export function CallDemo({
             <div className="flex flex-col gap-3">
               <p
                 id="demo-scenario-heading"
-                className="m-0 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase"
+                className="m-0 text-[12.5px] font-medium text-muted"
               >
                 {copy.startHeading}
               </p>
@@ -493,7 +493,7 @@ export function CallDemo({
                           : "mr-auto max-w-[85%]"
                     }
                   >
-                    <p className="mb-1 font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
+                    <p className="mb-1 text-[12px] font-medium text-muted">
                       {label(line.role)}
                     </p>
                     <p
@@ -570,7 +570,7 @@ export function CallDemo({
 
                 {suggestions.length > 0 ? (
                   <div>
-                    <p className="mb-2 font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
+                    <p className="mb-2 text-[12px] font-medium text-muted">
                       {copy.suggestionsLabel}
                     </p>
                     <div className="flex flex-wrap gap-2">

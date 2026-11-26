@@ -32,7 +32,7 @@ export default async function TestCenterPage({
         <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-navy/50">
           {isDemo ? t("demoBadge") : t("liveBadge")}
         </p>
-        <h1 className="mt-2 font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+        <h1 className="mt-2 font-heading text-2xl font-extrabold text-navy">
           {t("headline")}
         </h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("intro")}</p>
