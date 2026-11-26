@@ -18,11 +18,30 @@ export const SENSITIVE_PATTERNS: [RegExp, string][] = [
   [/\b[a-f0-9]{32,}\b/gi, "[redacted-token]"],
 ];
 
+/**
+ * Identifiers the system generates itself: a UUID (bare or behind a short
+ * prefix such as `inc_` or `mon_`) and a Cloudflare request ID (cf-ray, 16 hex
+ * digits and a data-centre code). They carry no personal data, but a UUID whose
+ * last group happens to be all decimal digits (`...-272773860567`) looks like a
+ * phone number to the pattern below. On 2026-11-25 that turned both emails of
+ * incident inc_9fc51ebf-83e6-4992-b530-272773860567 into the bare
+ * "Incident requires attention" fallback. They are set aside while the
+ * patterns run and put back afterwards, unchanged.
+ */
+const GENERATED_ID =
+  /\b(?:[a-z]{2,12}_)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b|\b[0-9a-f]{16}-[A-Z]{3}\b/gi;
+
 export function redactDiagnostic(value: string): string {
-  let out = value
+  const kept: string[] = [];
+  let out = value.replace(GENERATED_ID, (id) => {
+    kept.push(id);
+    return `\u0000${kept.length - 1}\u0000`;
+  });
+  out = out
     .replace(SECRET, "[redacted]")
     .replace(/\b(?:\d[ -]*?){13,19}\b/g, "[redacted]");
   for (const [pattern, replacement] of SENSITIVE_PATTERNS) out = out.replace(pattern, replacement);
+  out = out.replace(/\u0000(\d+)\u0000/g, (_, index: string) => kept[Number(index)] ?? "");
   return out.slice(0, 300);
 }
 
@@ -159,6 +178,14 @@ export type ProbeRecord = {
   ok: boolean;
   statusCode?: number;
   durationMs: number;
+  /**
+   * Why the check failed, when the answer says so: `cf_1102` style codes from a
+   * Cloudflare error page (1102 = the Worker exceeded its CPU or memory limit),
+   * or `timeout` / `network` when no answer came. Current run only: not stored.
+   */
+  errorCode?: string;
+  /** Cloudflare's request ID (cf-ray) of the probed request. Current run only. */
+  requestId?: string;
 };
 
 /** Counts to add to one (minute, scope) request bucket. */
