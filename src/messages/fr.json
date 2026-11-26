@@ -805,6 +805,12 @@
     "periodLabel": "mois",
     "websiteMention": "Besoin d’un site web? Ajoutez notre service de site web pour 699,99 $.",
     "billingBanner": "À la caisse, vous payez les frais d’installation uniques. Votre premier paiement mensuel a lieu un mois plus tard.",
+    "flow": {
+      "label": "Ce qui arrive à un appel",
+      "answered": "Appel répondu",
+      "captured": "Client capté",
+      "booked": "Rendez-vous pris"
+    },
     "schedulingNote": "La prise de rendez-vous est activée pour votre entreprise une fois qu’elle a été testée avec votre Google Agenda pendant l’installation."
   },
   "about": {
@@ -5077,7 +5083,13 @@
       },
       "bonusTitle": "Bonus du service de site web",
       "bonusLabel": "Ajouté quand elle commande aussi notre service de site web",
-      "bonusPlus": "En plus",
+      "flow": {
+        "label": "Comment cette récompense est gagnée",
+        "referred": "Entreprise parrainée",
+        "paid": "Installation payée",
+        "reward": "Interac envoyé",
+        "unavailable": "Aucune récompense"
+      },
       "maxNote": "Le maximum qu’un parrainage peut rapporter est de {max} CAD.",
       "getLink": "Obtenez votre lien"
     },

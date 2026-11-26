@@ -805,6 +805,12 @@
     "periodLabel": "month",
     "websiteMention": "Need a website? Add our website service for $699.99.",
     "billingBanner": "At checkout you pay the one-time setup fee. Your first monthly charge comes one month later.",
+    "flow": {
+      "label": "What happens to a call",
+      "answered": "Call answered",
+      "captured": "Lead captured",
+      "booked": "Job booked"
+    },
     "schedulingNote": "Appointment scheduling is switched on for your business once it has been tested with your Google Calendar during setup."
   },
   "about": {
@@ -5077,7 +5083,13 @@
       },
       "bonusTitle": "Website service bonus",
       "bonusLabel": "Added when they also order our website service",
-      "bonusPlus": "Extra",
+      "flow": {
+        "label": "How this reward is earned",
+        "referred": "Business referred",
+        "paid": "Setup paid",
+        "reward": "Interac sent",
+        "unavailable": "No reward"
+      },
       "maxNote": "The most one referral can earn is {max} CAD.",
       "getLink": "Get your link"
     },
