@@ -90,7 +90,7 @@ export function DiagnosticsPanel({ organizationId }: { organizationId: string })
       {report && !running ? (
         <section
           aria-live="polite"
-          className="max-w-2xl rounded-md border border-navy/10 bg-white p-4 text-sm text-navy"
+          className="max-w-2xl rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6 text-sm text-navy"
         >
           <h2 className="m-0 font-semibold">{t(`checks.${report.check}`)}</h2>
           {report.findings.length === 0 ? (

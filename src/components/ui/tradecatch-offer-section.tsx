@@ -6,6 +6,7 @@ import {
   ClipboardList,
   PhoneCall,
   Send,
+  Sparkles,
   Wrench,
 } from "lucide-react";
 
@@ -151,9 +152,10 @@ function OfferCard({
       data-offer={offer.id}
       className={cn(
         // Subgrid keeps header, price, button, rail and list level across both cards.
-        "flex min-w-0 flex-col rounded-[var(--radius-lg)] border bg-surface text-heading md:row-span-5 md:grid md:grid-rows-subgrid md:gap-0",
+        "relative flex min-w-0 flex-col overflow-hidden rounded-[var(--radius-lg)] border bg-surface text-heading md:row-span-5 md:grid md:grid-rows-subgrid md:gap-0",
         featured
-          ? "border-navy shadow-[0_0_0_1px_var(--color-navy),var(--shadow-card)]"
+          ? // The recommended plan: an orange top edge and a deeper shadow, never a different size, so both cards stay level.
+            "border-navy shadow-[0_0_0_1px_var(--color-navy),0_22px_48px_-24px_rgb(var(--ink-rgb)/0.45)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-[5px] before:bg-orange"
           : "border-[rgb(var(--ink-rgb)/0.13)]",
       )}
     >
@@ -163,7 +165,15 @@ function OfferCard({
             {offer.title}
           </Heading>
           {offer.badge ? (
-            <p className="rounded-[var(--radius-sm)] border border-orange/35 bg-orange/10 px-2.5 py-1 text-[12.5px] font-bold text-ember-text">
+            <p
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border px-2.5 py-1 text-[12.5px] font-bold",
+                featured
+                  ? "border-orange bg-orange text-navy"
+                  : "border-orange/35 bg-orange/10 text-ember-text",
+              )}
+            >
+              {featured ? <Sparkles aria-hidden className="h-3.5 w-3.5" strokeWidth={2.2} /> : null}
               {offer.badge}
             </p>
           ) : null}

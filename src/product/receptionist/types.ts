@@ -164,6 +164,8 @@ export type ReceptionistConfig = {
   transferTimeoutSeconds?: number;
   /** Explicit opt-in to voicemail + email while no live transfer line exists. */
   allowVoicemailOnly?: boolean;
+  /** Owner setting: what the voice agent does when a transfer is not answered. */
+  failedTransferAction?: "take_message" | "urgent_lead" | "voicemail";
   faqs: FaqEntry[];
   urgencyRubric: UrgencyRubricEntry[];
   /** Ask the caller for a preferred appointment window. */

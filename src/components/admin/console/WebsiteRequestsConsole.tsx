@@ -104,7 +104,18 @@ const en = {
   historyEmpty: "No history yet.",
   readOnly: "Your role can read website requests but not change them.",
   rejectTitle: "Reject this request?",
-  rejectBody: "This is final. The reason in the internal note is saved in the history.",
+  rejectBody: "This is final. The customer is emailed the reason below; the internal note stays with the team.",
+  customerReason: "Reason sent to the customer",
+  customerReasonHint: "Written for the customer: they receive it by email. 5 characters minimum.",
+  approveBody: "The customer is emailed that their request is approved, with the next steps.",
+  customerEmail: {
+    sent: "The customer was emailed.",
+    already_sent: "The customer had already been emailed about this decision.",
+    failed: "The customer email could not be sent. Contact them directly.",
+    not_configured: "Email is not configured on this server: the customer was not emailed.",
+  } as Record<string, string>,
+  customerEmailEvent: "Customer email ({status}): {result}",
+  customerEmailResults: { sent: "sent", failed: "failed", not_configured: "not configured", already_sent: "already sent" } as Record<string, string>,
   cancelTitle: "Cancel this request?",
   cancelBody: "This is final. Any pending payment request is withdrawn.",
   moveTitle: "Move to “{status}”?",
@@ -128,6 +139,7 @@ const en = {
     invalid_payment_transition: "That payment change is not allowed from the current payment status.",
     payment_not_allowed: "Payment can only be requested once the work is approved or quoted.",
     review_note_required: "Add the reason in the internal note before rejecting.",
+    customer_reason_required: "Write the reason the customer will receive (5 characters minimum).",
     locked: "The agreed scope and price cannot be changed once work has started.",
     conflict: "This request changed while you were editing it. It has been reloaded; try again.",
     price_too_low: "The price cannot be below the starting price.",
@@ -193,7 +205,18 @@ const fr: Copy = {
   historyEmpty: "Aucun historique pour l’instant.",
   readOnly: "Votre rôle permet de lire les demandes de site Web, pas de les modifier.",
   rejectTitle: "Refuser cette demande?",
-  rejectBody: "C’est définitif. Le motif de la note interne est consigné dans l’historique.",
+  rejectBody: "C’est définitif. Le client reçoit par courriel le motif ci-dessous; la note interne reste à l’équipe.",
+  customerReason: "Motif envoyé au client",
+  customerReasonHint: "Rédigé pour le client : il le reçoit par courriel. 5 caractères minimum.",
+  approveBody: "Le client reçoit un courriel confirmant l’approbation, avec les prochaines étapes.",
+  customerEmail: {
+    sent: "Le client a reçu un courriel.",
+    already_sent: "Le client avait déjà reçu un courriel pour cette décision.",
+    failed: "Le courriel au client n’a pas pu être envoyé. Communiquez avec lui directement.",
+    not_configured: "Le courriel n’est pas configuré sur ce serveur : le client n’a pas été avisé.",
+  } as Record<string, string>,
+  customerEmailEvent: "Courriel au client ({status}) : {result}",
+  customerEmailResults: { sent: "envoyé", failed: "échec", not_configured: "non configuré", already_sent: "déjà envoyé" } as Record<string, string>,
   cancelTitle: "Annuler cette demande?",
   cancelBody: "C’est définitif. Toute demande de paiement en attente est retirée.",
   moveTitle: "Passer à « {status} »?",
@@ -217,6 +240,7 @@ const fr: Copy = {
     invalid_payment_transition: "Ce changement de paiement n’est pas permis depuis le statut de paiement actuel.",
     payment_not_allowed: "Le paiement ne peut être demandé qu’une fois le travail approuvé ou soumissionné.",
     review_note_required: "Ajoutez le motif dans la note interne avant de refuser.",
+    customer_reason_required: "Rédigez le motif que recevra le client (5 caractères minimum).",
     locked: "La portée et le prix convenus ne peuvent plus être modifiés une fois le travail commencé.",
     conflict: "Cette demande a changé pendant votre modification. Elle a été rechargée; réessayez.",
     price_too_low: "Le prix ne peut pas être inférieur au prix de départ.",
@@ -332,6 +356,9 @@ function DetailBody({
   const [price, setPrice] = useState(request.quotedPriceCad != null ? String(request.quotedPriceCad) : "");
   const [note, setNote] = useState(request.reviewNote ?? "");
   const [noteMissing, setNoteMissing] = useState(false);
+  const [customerReason, setCustomerReason] = useState("");
+  const [reasonMissing, setReasonMissing] = useState(false);
+  const [customerEmail, setCustomerEmail] = useState<string | null>(null);
 
   const nextStatuses = WEBSITE_REQUEST_STATUSES.filter(
     (status) => status !== request.status && canTransitionWebsiteStatus(request.status, status),
@@ -364,12 +391,16 @@ function DetailBody({
 
   async function send(patch: Record<string, unknown>) {
     setSaved(false);
+    setCustomerEmail(null);
     const result = await action.run(() =>
       adminFetch(`/api/admin/website-requests/${encodeURIComponent(request.id)}`, { method: "PATCH", body: patch }),
     );
     if (result) {
       setStep(null);
       setSaved(true);
+      setCustomerReason("");
+      const emailed = (result as { customerEmail?: string }).customerEmail;
+      if (emailed) setCustomerEmail(emailed);
       onSaved();
     } else {
       // A conflict means someone else changed it: show them the current state.
@@ -383,6 +414,7 @@ function DetailBody({
   function confirmCopy(next: Step): { title: string; body: string; danger: boolean } {
     if (next.kind === "status") {
       if (next.to === "rejected") return { title: t.rejectTitle, body: t.rejectBody, danger: true };
+      if (next.to === "approved") return { title: t.moveTitle.replace("{status}", t.statuses[next.to]), body: t.approveBody, danger: false };
       if (next.to === "cancelled") return { title: t.cancelTitle, body: t.cancelBody, danger: true };
       return { title: t.moveTitle.replace("{status}", t.statuses[next.to]), body: "", danger: false };
     }
@@ -398,10 +430,15 @@ function DetailBody({
       setNoteMissing(true);
       return;
     }
+    if (next.kind === "status" && next.to === "rejected" && customerReason.trim().length < 5) {
+      setReasonMissing(true);
+      return;
+    }
     // Scope, price and note travel with the step so a quote and its status change are one update.
     const patch: Record<string, unknown> = detailsPatch();
     if (next.kind === "status") patch.status = next.to;
     else patch.paymentStatus = next.to;
+    if (next.kind === "status" && next.to === "rejected") patch.customerReason = customerReason.trim();
     void send(patch);
   }
 
@@ -411,6 +448,11 @@ function DetailBody({
     <div className="flex flex-col gap-4 text-sm">
       {known && !writable ? <Notice tone="neutral">{t.readOnly}</Notice> : null}
       {saved ? <Notice tone="good" onClose={() => setSaved(false)}>{t.saved}</Notice> : null}
+      {customerEmail ? (
+        <Notice tone={customerEmail === "sent" || customerEmail === "already_sent" ? "good" : "bad"} onClose={() => setCustomerEmail(null)}>
+          {t.customerEmail[customerEmail] ?? customerEmail}
+        </Notice>
+      ) : null}
 
       <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
         <div>
@@ -524,12 +566,23 @@ function DetailBody({
       {step ? (
         <ConfirmPanel
           title={confirmCopy(step).title}
-          description={confirmCopy(step).body || undefined}
+          description={
+            step.kind === "status" && step.to === "rejected" ? (
+              <div className="flex flex-col gap-3">
+                <span>{confirmCopy(step).body}</span>
+                <Field label={t.customerReason} htmlFor={`reason-${request.id}`} hint={t.customerReasonHint}>
+                  <textarea id={`reason-${request.id}`} rows={3} maxLength={600} value={customerReason} onChange={(e) => { setCustomerReason(e.target.value); setReasonMissing(false); }} className={inputClass} disabled={action.pending} />
+                </Field>
+              </div>
+            ) : (
+              confirmCopy(step).body || undefined
+            )
+          }
           word={step.kind === "status" && step.to === "rejected" ? "reject" : step.kind === "status" && step.to === "cancelled" ? "cancel" : undefined}
           confirmLabel={t.confirm}
           tone={confirmCopy(step).danger ? "danger" : "primary"}
           busy={action.pending}
-          error={noteMissing ? t.errors.review_note_required : failure}
+          error={noteMissing ? t.errors.review_note_required : reasonMissing ? t.errors.customer_reason_required : failure}
           onConfirm={() => run(step)}
           onCancel={() => { setStep(null); action.reset(); }}
         />
@@ -544,7 +597,12 @@ function DetailBody({
         ) : (
           <ol className="mt-2 flex flex-col gap-2 border-l-2 border-navy/15 pl-3">
             {history.map((event) => {
-              const template = t.event[event.kind] ?? event.kind;
+              const customer = event.kind === "notified" ? /^Customer email (w+) [[^]]*]: (w+)$/.exec(event.note ?? "") : null;
+              const template = customer
+                ? t.customerEmailEvent
+                    .replace("{status}", t.statuses[customer[1] as WebsiteRequestStatus] ?? customer[1]!)
+                    .replace("{result}", t.customerEmailResults[customer[2]!] ?? customer[2]!)
+                : (t.event[event.kind] ?? event.kind);
               const label = template
                 .replace("{from}", event.fromStatus ? (t.statuses[event.fromStatus] ?? event.fromStatus) : "—")
                 .replace("{to}", event.toStatus ? (t.statuses[event.toStatus] ?? event.toStatus) : "—")

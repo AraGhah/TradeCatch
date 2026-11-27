@@ -1204,3 +1204,70 @@ body.demo-video-active {
     color: var(--color-heading);
   }
 }
+
+/* Home page call phone (call-journey-phone.tsx). Each bar has its own speed and
+   phase, set inline, so the waveform moves like speech and never in step. The
+   caller (data-voice=1) speaks a little louder than the pauses between lines. */
+.tc-voice-bar {
+  animation-name: tc-voice;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+  transform: scaleY(0.3);
+  transition: background-color 0.3s ease;
+}
+.tc-voice[data-voice="0"] .tc-voice-bar {
+  animation-name: tc-voice-idle;
+}
+@keyframes tc-voice {
+  0%,
+  100% {
+    transform: scaleY(0.28);
+  }
+  22% {
+    transform: scaleY(0.95);
+  }
+  41% {
+    transform: scaleY(0.5);
+  }
+  63% {
+    transform: scaleY(1);
+  }
+  82% {
+    transform: scaleY(0.4);
+  }
+}
+@keyframes tc-voice-idle {
+  0%,
+  100% {
+    transform: scaleY(0.16);
+  }
+  50% {
+    transform: scaleY(0.3);
+  }
+}
+.tc-ring {
+  animation: tc-ring 1.6s ease-out infinite;
+}
+@keyframes tc-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
+}
+.tc-shake {
+  animation: phone-vibrate 0.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tc-voice-bar,
+  .tc-ring,
+  .tc-shake {
+    animation: none;
+  }
+  .tc-voice-bar {
+    transform: scaleY(0.55);
+  }
+}

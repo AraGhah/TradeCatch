@@ -9,9 +9,10 @@ import type { PhoneSettingsView } from "@/product/telephony/types";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
 import { BusyLabel } from "@/components/ui/Spinner";
+import { APP_CARD } from "@/components/app/card-classes";
 const INPUT =
   "mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:bg-navy/5";
-const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
+const CARD = APP_CARD;
 const BUTTON =
   "rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
 

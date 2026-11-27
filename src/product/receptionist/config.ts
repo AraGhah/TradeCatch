@@ -118,6 +118,9 @@ export const receptionistConfigSchema = z.object({
   transferHours: z.enum(["always", "business_hours"]).default("business_hours"),
   transferTimeoutSeconds: z.number().int().min(10).max(120).default(30),
   allowVoicemailOnly: z.boolean().default(false),
+  failedTransferAction: z
+    .enum(["take_message", "urgent_lead", "voicemail"])
+    .optional(),
   faqs: z
     .array(
       z.object({

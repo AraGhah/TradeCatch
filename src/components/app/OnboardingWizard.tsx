@@ -120,7 +120,7 @@ export function OnboardingWizard({
   }
 
   return (
-    <div className="rounded-md border border-navy/10 bg-white px-5 py-5">
+    <div className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
       {error ? (
         <p className="mb-3 text-sm text-red-700" role="alert">
           {error}

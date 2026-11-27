@@ -137,7 +137,7 @@ export default async function AppLeadsPage({
 
       <NewLeadForm organizationId={auth.ctx.organization.id} />
 
-      <form className="grid gap-3 rounded-md border border-navy/10 bg-white p-4 sm:grid-cols-4">
+      <form className="grid gap-3 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6 sm:grid-cols-4">
         <label className="flex flex-col gap-1 text-sm text-navy sm:col-span-4">
           {t("search")}
           <input
@@ -220,7 +220,7 @@ export default async function AppLeadsPage({
           )}
         </p>
       ) : (
-        <ul className="divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white">
+        <ul className="divide-y divide-navy/10 overflow-hidden rounded-xl border border-navy/10 bg-white">
           {leads.map((lead) => {
             const visit = appointments.find(
               (row) =>

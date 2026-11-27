@@ -51,7 +51,7 @@ export default async function AutomationHistoryPage({
           {t("historyEmpty")}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-md border border-navy/10 bg-white">
+        <div className="overflow-x-auto rounded-xl border border-navy/10 bg-white">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-navy/10 text-xs uppercase tracking-wide text-navy/50">
               <tr>

@@ -25,12 +25,16 @@ import type {
   WebsiteRequestStore,
 } from "./store";
 
+/** History note prefix for the rejection reason that was sent to the customer. */
+export const CUSTOMER_REASON_PREFIX = "Reason given to the customer: ";
+
 export type WebsiteRequestUpdateError =
   | "not_found"
   | "invalid_transition"
   | "invalid_payment_transition"
   | "payment_not_allowed"
   | "review_note_required"
+  | "customer_reason_required"
   | "locked"
   | "price_mismatch"
   | "price_too_low"
@@ -68,6 +72,8 @@ export type WebsiteRequestService = {
     id: string,
     status: WebsiteNotificationStatus,
   ): Promise<void>;
+  /** Records an email sent (or not) to the customer, in the history. */
+  recordCustomerNotification(id: string, note: string): Promise<void>;
   /**
    * `actor` is recorded in the request's history: an administrator's email, or
    * "ops:<name>". It is never shown to the customer.
@@ -145,6 +151,8 @@ export function createWebsiteRequestService(
 
     recordNotification: (id, status) =>
       store.recordNotification(id, status, now().toISOString()),
+    recordCustomerNotification: (id, note) =>
+      store.recordCustomerNotification(id, note, now().toISOString()),
 
     async adminUpdate(id, update, actor = "admin") {
       const current = await store.get(id);
@@ -206,6 +214,14 @@ export function createWebsiteRequestService(
       if (nextStatus === "rejected" && !note) {
         return { ok: false, error: "review_note_required" };
       }
+      const customerReason = update.customerReason?.trim() || null;
+      if (
+        nextStatus === "rejected" &&
+        current.status !== "rejected" &&
+        !customerReason
+      ) {
+        return { ok: false, error: "customer_reason_required" };
+      }
 
       // Payment is recorded here, never collected here: nothing on this path
       // can create a charge. Asking for payment needs approved work and a price.
@@ -244,6 +260,14 @@ export function createWebsiteRequestService(
           kind: "status_changed",
           actor,
           note: nextStatus === "rejected" ? note : null,
+        });
+      }
+      if (patch.status === "rejected" && customerReason) {
+        // What the customer is told, kept apart from the internal note.
+        history.push({
+          kind: "note",
+          actor,
+          note: `${CUSTOMER_REASON_PREFIX}${customerReason}`,
         });
       }
       if (quoteChanged) {

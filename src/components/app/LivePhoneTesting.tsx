@@ -15,7 +15,8 @@ import type {
 
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { timedFetch } from "@/lib/client/timed-fetch";
-const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
+import { APP_CARD } from "@/components/app/card-classes";
+const CARD = APP_CARD;
 const BUTTON =
   "rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
 const BUTTON_GHOST =

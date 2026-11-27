@@ -23,7 +23,7 @@ Mechanisms, chosen by `AGENT_TRANSFER_MODE`:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Mapping
 
 MODES = ("auto", "warm", "blind", "off")
@@ -88,6 +88,18 @@ def transfer_settings(env: Mapping[str, str]) -> TransferSettings:
         return TransferSettings(mode="off", problem=f"warm transfer needs a trunk: {problem}", **common)
     # auto: fall back to the REFER handoff, which needs no outbound trunk.
     return TransferSettings(mode="blind", problem=f"using SIP REFER: {problem}", **common)
+
+
+def with_business_ring_time(
+    settings: TransferSettings, cfg: Mapping[str, Any] | None
+) -> TransferSettings:
+    """The owner's "ring for N seconds" (dashboard transfer timeout), when the
+    business sent one. Kept inside the same 10-60 s window as the env setting:
+    past a minute most phones hand the call to their own voicemail."""
+    raw = (cfg or {}).get("transferRingSeconds")
+    if isinstance(raw, bool) or not isinstance(raw, (int, float)):
+        return settings
+    return replace(settings, ring_seconds=float(min(60, max(10, raw))))
 
 
 # -- failures ------------------------------------------------------------

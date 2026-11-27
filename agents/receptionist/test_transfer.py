@@ -12,12 +12,22 @@ from transfer import (
     failure_message,
     hold_line,
     transfer_settings,
+    with_business_ring_time,
 )
 
 TRUNK = {"LIVEKIT_SIP_OUTBOUND_TRUNK": "ST_abc123XYZ"}
 
 
 class SettingsTests(unittest.TestCase):
+    def test_the_business_ring_time_replaces_the_default_within_bounds(self):
+        base = transfer_settings(TRUNK)
+        self.assertEqual(with_business_ring_time(base, {"transferRingSeconds": 40}).ring_seconds, 40)
+        self.assertEqual(with_business_ring_time(base, {"transferRingSeconds": 120}).ring_seconds, 60)
+        self.assertEqual(with_business_ring_time(base, {"transferRingSeconds": 3}).ring_seconds, 10)
+        # Missing, wrong type or an older server: the env setting stands.
+        for cfg in (None, {}, {"transferRingSeconds": "40"}, {"transferRingSeconds": True}):
+            self.assertEqual(with_business_ring_time(base, cfg).ring_seconds, base.ring_seconds)
+
     def test_a_configured_trunk_means_warm_transfers(self):
         s = transfer_settings(TRUNK)
         self.assertEqual((s.mode, s.trunk_id, s.problem), ("warm", "ST_abc123XYZ", None))

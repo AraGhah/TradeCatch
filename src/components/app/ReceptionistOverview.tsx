@@ -7,7 +7,8 @@ import type { AiReceptionistOverview } from "@/product/receptionist/ai-reception
 
 import { BusyLabel } from "@/components/ui/Spinner";
 import { timedFetch } from "@/lib/client/timed-fetch";
-const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
+import { APP_CARD } from "@/components/app/card-classes";
+const CARD = APP_CARD;
 const BUTTON_STOP =
   "inline-flex items-center gap-2 rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600/60 focus-visible:ring-offset-2";
 const BUTTON_GO =

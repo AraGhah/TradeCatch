@@ -78,7 +78,7 @@ export function NotificationTestPanel({
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-md border border-navy/10 bg-white p-4">
+    <section className="flex flex-col gap-3 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
       <h2 className="font-semibold text-navy">{t("testTitle")}</h2>
       <p className="text-sm text-navy/70">{t("testIntro")}</p>
       <div className="flex flex-wrap gap-2">

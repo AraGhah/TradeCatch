@@ -2,7 +2,7 @@ import { ArrowLeft, Lock, ShieldCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import { BrandLockup } from "@/components/BrandLockup";
-import { TradeCatchProductPreview } from "@/components/ui/tradecatch-product-preview";
+import { CallJourneyPreview } from "@/components/ui/call-journey-preview";
 import { Link } from "@/i18n/navigation";
 import { PUBLIC_CONTACT_EMAIL } from "@/lib/contact";
 import { cn } from "@/lib/cn";
@@ -141,7 +141,7 @@ export function TradeCatchSignIn({
       <aside className="hidden min-w-0 items-center justify-center border-l border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-8 lg:flex xl:p-12">
         {/* Stays in view if the form column grows taller than the window. */}
         <div className="sticky top-6 w-full max-w-[540px]">
-          <TradeCatchProductPreview showCaption showScheduling={showScheduling} />
+          <CallJourneyPreview showCaption showScheduling={showScheduling} />
         </div>
       </aside>
     </div>

@@ -299,7 +299,7 @@ export function CalendarIntegrationPanel({
     return (
       <section
         data-testid="calendar-availability"
-        className="flex max-w-xl flex-col gap-4 rounded-md border border-navy/10 bg-white p-4"
+        className="flex max-w-xl flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
       >
         <h2 className="font-semibold">{t("calendarPilotTitle")}</h2>
         <p>{t("calendarPilotNotice")}</p>
@@ -336,7 +336,7 @@ export function CalendarIntegrationPanel({
   return (
     <div
       data-testid="calendar-availability"
-      className="flex max-w-xl flex-col gap-5 rounded-md border border-navy/10 bg-white p-4"
+      className="flex max-w-xl flex-col gap-5 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
     >
       {busy ? <InlineStatus>{feedback("working")}</InlineStatus> : null}
       <div className="flex flex-col gap-1">
