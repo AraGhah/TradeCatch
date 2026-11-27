@@ -201,7 +201,7 @@ export function LeadWorkspace({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <section className="flex flex-col gap-4 rounded-md border border-navy/10 bg-white p-4">
+      <section className="flex flex-col gap-4 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <h2 className="font-semibold text-navy">{t("customer")}</h2>
         <p className="text-sm text-navy/80">
           {lead.customer.displayName || lead.customer.phoneE164}
@@ -310,7 +310,7 @@ export function LeadWorkspace({
         </ul>
       </section>
 
-      <section className="flex flex-col gap-3 rounded-md border border-navy/10 bg-white p-4">
+      <section className="flex flex-col gap-3 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold text-navy">{t("conversation")}</h2>
           <label className="flex items-center gap-2 text-sm text-navy">

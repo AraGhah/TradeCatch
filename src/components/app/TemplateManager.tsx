@@ -148,7 +148,7 @@ export function TemplateManager({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
-      <ul className="rounded-md border border-navy/10 bg-white">
+      <ul className="rounded-xl border border-navy/10 bg-white">
         {keys.map((templateKey) => (
           <li key={templateKey}>
             <button
@@ -163,7 +163,7 @@ export function TemplateManager({
           </li>
         ))}
       </ul>
-      <div className="flex flex-col gap-3 rounded-md border border-navy/10 bg-white p-4">
+      <div className="flex flex-col gap-3 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <label className="text-xs text-navy/70">
           {labels.language}
           <select

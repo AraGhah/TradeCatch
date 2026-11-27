@@ -191,7 +191,7 @@ export function TicketThread({
         </p>
       ) : null}
       {ticket ? (
-        <section className="rounded-md border border-navy/10 bg-white px-4 py-3 text-sm text-navy">
+        <section className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6 text-sm text-navy">
           <p className="m-0 text-navy/70">
             {t("status")}: {label("statuses", ticket.status)}
             {" · "}

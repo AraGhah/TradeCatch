@@ -722,7 +722,7 @@ export function AppointmentDesk({
     <section
       aria-labelledby="appointment-details-title"
       data-testid="appointment-details"
-      className="rounded-md border border-navy/10 bg-white p-4 lg:sticky lg:top-4"
+      className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6 lg:sticky lg:top-4"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h2
@@ -1063,7 +1063,7 @@ export function AppointmentDesk({
         ].map(([label, value]) => (
           <div
             key={String(label)}
-            className="rounded-md border border-navy/10 bg-white px-4 py-3"
+            className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
           >
             <p className="text-xs uppercase tracking-wide text-navy/50">
               {label}
@@ -1220,7 +1220,7 @@ export function AppointmentDesk({
       </div>
 
       <section
-        className="grid gap-3 rounded-md border border-navy/10 bg-white p-4 sm:grid-cols-2"
+        className="grid gap-3 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6 sm:grid-cols-2"
         aria-labelledby="add-appointment-title"
       >
         <h2

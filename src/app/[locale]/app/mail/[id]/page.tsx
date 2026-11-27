@@ -108,7 +108,7 @@ export default async function MailMessagePage({
       <p className="-mt-3 text-xs text-navy/70">{t("readNote")}</p>
 
       {thread.length <= 1 ? (
-        <div className="rounded-md border border-navy/10 bg-white">
+        <div className="rounded-xl border border-navy/10 bg-white">
           {renderBody(message)}
         </div>
       ) : (

@@ -55,7 +55,7 @@ export default async function AutomationsPage({
           history: t("subnav.history"),
         }}
       />
-      <section aria-labelledby="automation-how" className="rounded-md border border-navy/10 bg-white p-4">
+      <section aria-labelledby="automation-how" className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <h2 id="automation-how" className="font-semibold text-navy">
           {t("how.title")}
         </h2>

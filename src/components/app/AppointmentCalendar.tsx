@@ -162,7 +162,7 @@ function TimeGrid<Row extends CalendarAppointment>({
       aria-label={`${t("calendarGrid")}: ${caption}`}
       data-testid="calendar-grid"
       data-view={view}
-      className="max-h-[70vh] overflow-auto rounded-md border border-navy/10 bg-white focus-visible:outline-2 focus-visible:outline-navy"
+      className="max-h-[70vh] overflow-auto rounded-xl border border-navy/10 bg-white focus-visible:outline-2 focus-visible:outline-navy"
     >
       <div
         style={{
@@ -430,7 +430,7 @@ function MonthView<Row extends CalendarAppointment>({
   );
   return (
     <div
-      className="overflow-hidden rounded-md border border-navy/10 bg-white"
+      className="overflow-hidden rounded-xl border border-navy/10 bg-white"
       data-testid="calendar-grid"
       data-view="month"
     >

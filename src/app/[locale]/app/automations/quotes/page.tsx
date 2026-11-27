@@ -50,7 +50,7 @@ export default async function QuoteAutomationPage({
         automation={quote}
         status={status}
       />
-      <section className="rounded-md border border-navy/10 bg-white p-4">
+      <section className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <h2 className="font-semibold text-navy">{t("pendingTitle")}</h2>
         {quoteJobs.length === 0 ? (
           <p className="mt-2 text-sm text-navy/60">{t("pendingEmpty")}</p>

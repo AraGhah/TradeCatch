@@ -3,8 +3,9 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 /**
- * The hero's one entrance: the phone settles, the call's steps drop onto the
- * rail in order and the waveform rises once. Only transforms move, never
+ * The hero's one entrance: the phone settles and the call's steps drop onto
+ * the rail in order. The phone's own loop (call-journey-phone.tsx) takes over
+ * from there. Only transforms move, never
  * opacity, so nothing is ever hidden or low in contrast, and the page is
  * complete and usable whether or not this runs. GSAP is loaded after the page
  * is interactive, and not at all for visitors who ask for reduced motion.
@@ -45,21 +46,6 @@ export function HeroEntrance({
               "[data-motion='stage']",
               { y: -8, duration: 0.45, stagger: 0.14, clearProps: "transform" },
               0.1,
-            )
-            .from(
-              "[data-motion='bar']",
-              {
-                scaleY: 0.3,
-                duration: 0.5,
-                stagger: 0.025,
-                clearProps: "transform",
-              },
-              0.2,
-            )
-            .from(
-              "[data-motion='notice']",
-              { y: 12, duration: 0.55, stagger: 0.2, clearProps: "transform" },
-              0.45,
             );
         });
         revert = () => media.revert();

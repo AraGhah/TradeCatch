@@ -325,10 +325,12 @@ export function AppShell({
       </Sidebar>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="mb-0 hidden justify-end px-6 pt-6 md:flex md:px-8">
+        <div className="mx-auto hidden w-full max-w-[1240px] justify-end px-6 pt-6 md:flex md:px-8">
           <NotificationBell organizationId={organizationId} />
         </div>
-        <div className="min-w-0 flex-1 px-4 py-4 md:px-8 md:py-6">
+        {/* One content width and gutter for every dashboard page: wide screens get a
+            readable measure instead of lines that run edge to edge. */}
+        <div className="mx-auto w-full min-w-0 max-w-[1240px] flex-1 px-4 py-5 sm:px-6 md:px-8 md:pt-4 md:pb-10">
           <SessionKeeper accessExpiresAt={accessExpiresAt} locale={locale} />
           {children}
         </div>

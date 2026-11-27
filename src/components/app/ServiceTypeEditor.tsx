@@ -117,7 +117,7 @@ export function ServiceTypeEditor({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-navy/70">{t("servicesIntro")}</p>
-      <ul className="divide-y divide-navy/10 rounded-md border border-navy/10 bg-white">
+      <ul className="divide-y divide-navy/10 rounded-xl border border-navy/10 bg-white">
         {services.map((service) => (
           <li
             key={service.id}
@@ -160,7 +160,7 @@ export function ServiceTypeEditor({
         ))}
       </ul>
       <form
-        className="grid gap-2 rounded-md border border-navy/10 bg-white p-4"
+        className="grid gap-2 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
         onSubmit={(event) => {
           event.preventDefault();
           void save(draft, true);

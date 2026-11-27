@@ -49,7 +49,7 @@ export default async function AccountPage({
       <h1 className="font-heading text-2xl font-extrabold text-navy">
         {t("headline")}
       </h1>
-      <p className="max-w-2xl text-sm text-navy/70">{t("intro")}</p>
+      <p className="-mt-1 max-w-3xl text-sm leading-relaxed text-navy/70">{t("intro")}</p>
       <AccountManagement
         organizationId={org.id}
         initialName={org.name}

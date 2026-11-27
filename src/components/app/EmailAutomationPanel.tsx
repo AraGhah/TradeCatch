@@ -12,6 +12,7 @@ import type {
 import { RequestTimeoutError, timedFetch } from "@/lib/client/timed-fetch";
 import { useGuarded } from "@/lib/client/use-single-flight";
 import { InlineStatus } from "@/components/ui/Spinner";
+import { APP_CARD } from "@/components/app/card-classes";
 
 const INPUT =
   "mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy";
@@ -19,7 +20,7 @@ const BUTTON =
   "rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
 const BUTTON_GHOST =
   "rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
-const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
+const CARD = APP_CARD;
 
 function parseVars(raw: string): Record<string, string> {
   const vars: Record<string, string> = {};

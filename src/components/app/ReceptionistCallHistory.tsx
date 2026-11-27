@@ -13,6 +13,7 @@ import {
 import { LoadingRegion, SkeletonRows } from "@/components/ui/Skeleton";
 import { BusyLabel } from "@/components/ui/Spinner";
 import { timedFetch } from "@/lib/client/timed-fetch";
+import { APP_LIST_CARD } from "@/components/app/card-classes";
 type CallRow = {
   id: string;
   callSid: string;
@@ -52,7 +53,7 @@ type CallRow = {
 
 type TurnRow = { speaker: "agent" | "caller"; text: string };
 
-const CARD = "overflow-hidden rounded-md border border-navy/10 bg-white";
+const CARD = APP_LIST_CARD;
 
 /** Call urgency as the owner reads it: emergency, high, medium. */
 function priorityOf(urgency: string | undefined): RecordPriority {

@@ -65,7 +65,7 @@ export default async function AppQuotesPage({
           {t("quotes.empty")}
         </p>
       ) : (
-        <ul className="divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white">
+        <ul className="divide-y divide-navy/10 overflow-hidden rounded-xl border border-navy/10 bg-white">
           {quotes.map((q) => (
             <li key={q.id} className="px-4 py-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">

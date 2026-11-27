@@ -22,7 +22,7 @@ export function OnboardingWebsiteOffer({
   return (
     <section
       aria-labelledby={`${panelId}-title`}
-      className="rounded-md border border-navy/10 bg-white px-5 py-5"
+      className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
     >
       <h2 id={`${panelId}-title`} className="text-lg font-semibold text-navy">
         {t("title")}
