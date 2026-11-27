@@ -69,6 +69,59 @@ export function unhandledCallLabel(
   return fr ? "Appel manqué — rappeler" : "Missed call — call back";
 }
 
+/**
+ * The banner at the top of the owner email: what happened, in one glance.
+ * An emergency always wins, then a booking, a transfer, and anything left to do.
+ */
+export function callStatusBanner(input: {
+  summary: CallSummary;
+  booked: boolean;
+  transferred: boolean;
+  emergency: boolean;
+  needsFollowUp: boolean;
+  lang: Lang;
+}): NonNullable<BusinessNotifyInput["status"]> {
+  const { summary, lang } = input;
+  const fr = lang === "fr";
+  if (input.emergency) {
+    return {
+      tone: "urgent",
+      label: fr ? "Urgence" : "Emergency",
+      detail: input.transferred
+        ? fr ? "Transférée à votre ligne d'urgence." : "Transferred to your emergency line."
+        : fr ? "Rappelez le client dès que possible." : "Call the customer back as soon as possible.",
+    };
+  }
+  if (input.booked) {
+    return {
+      tone: "success",
+      label: fr ? "Rendez-vous réservé" : "Appointment booked",
+      detail: summary.appointment?.label || undefined,
+    };
+  }
+  if (input.transferred) {
+    return {
+      tone: "info",
+      label: fr ? "Appel transféré" : "Call transferred",
+      detail: summary.transferredTo
+        ? `${fr ? "À" : "To"} ${summary.transferredTo}`
+        : undefined,
+    };
+  }
+  if (input.needsFollowUp) {
+    return {
+      tone: "action",
+      label: fr ? "Suivi requis" : "Follow-up required",
+      detail: nextActionLabel(summary, lang),
+    };
+  }
+  return {
+    tone: "info",
+    label: fr ? "Aucune action requise" : "No action needed",
+    detail: nextActionLabel(summary, lang),
+  };
+}
+
 /** What the owner has to do (or that nothing is needed), from the recorded outcome. */
 export function nextActionLabel(summary: CallSummary, lang: Lang): string {
   const fr = lang === "fr";
@@ -216,6 +269,7 @@ export function ownerCallEmail(
     title: fr ? "Résumé d'un nouvel appel client" : "New Customer Call Summary",
     // One email per finished call and recipient, even if the report is retried.
     idempotencyKey: `rcs-${session.id}-email-${to.toLowerCase()}`.slice(0, 256),
+    status: callStatusBanner({ summary, booked, transferred, emergency, needsFollowUp, lang }),
     lines: [],
     sections: [
       {
