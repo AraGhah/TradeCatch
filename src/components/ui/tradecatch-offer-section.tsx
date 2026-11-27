@@ -367,7 +367,10 @@ export function TradeCatchOfferSection({
   return (
     <section
       data-offer-mode={mode}
-      className="bg-paper pt-[clamp(24px,2.4vw,34px)] pb-[clamp(36px,5vw,64px)]"
+      className={cn(
+        "bg-paper pb-[clamp(36px,5vw,64px)]",
+        referral ? "pt-[clamp(24px,2.4vw,34px)]" : "pt-4 sm:pt-5",
+      )}
     >
       <Container>
         <header className="mx-auto max-w-3xl text-center">
