@@ -13,7 +13,7 @@ import { lossRecoveryCopy } from "@/components/home/loss-recovery-copy";
 import { TradeCatchCinematicHero } from "@/components/ui/tradecatch-cinematic-hero";
 import { StoryDemos } from "@/components/StoryDemos";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
-import { schedulingVerified } from "@/lib/launch-flags";
+import { launchFlagEnabled, schedulingVerified } from "@/lib/launch-flags";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -50,7 +50,10 @@ export default async function HomePage({
   return (
     <>
       {/* One hero for every width; the sections below differ by screen size. */}
-      <TradeCatchCinematicHero showScheduling={schedulingVerified()} />
+      <TradeCatchCinematicHero
+        showScheduling={schedulingVerified()}
+        showTransfer={launchFlagEnabled("callTransfer")}
+      />
 
       <HomeMobile locale={locale} />
 

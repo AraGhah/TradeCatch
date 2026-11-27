@@ -587,7 +587,7 @@ body.demo-video-active {
   }
 }
 
-/* ── Illustrative workflow phone (src/components/ui/workflow-phone.tsx) ──
+/* ── Illustrative hero phone (src/components/ui/receptionist-call-phone.tsx) ──
    Each step is a [data-wf-beat] that is on or off. Only opacity and transforms
    change, so the sequence never triggers layout. The server renders the
    finished screen. Where scripts will run and motion is welcome, the first
@@ -718,9 +718,6 @@ body.demo-video-active {
     opacity: 1;
   }
 }
-.tc-wf[data-wf-live] .tc-wf-list {
-  transition: transform 0.6s var(--ease-out);
-}
 .tc-wf-drop {
   transform-origin: top center;
 }
@@ -735,10 +732,25 @@ body.demo-video-active {
     transform: rotate(360deg);
   }
 }
-/* The finished thread sits clear of the result card (RESULT_LIFT in
-   workflow-phone.tsx); while the workflow plays, the player sets it inline. */
-.tc-wf .tc-wf-list {
-  transform: translateY(-26px);
+/* Receptionist call phone (receptionist-call-phone.tsx), on the same .tc-wf
+   contract. The transcript slides up as each line arrives, and the words of
+   the line being spoken appear one after the other (--rc-i, --rc-word set
+   inline). Off a call the waveforms stop, so nothing animates unseen. */
+.tc-wf[data-wf-live] .tc-rc-list {
+  transition: transform 0.6s var(--ease-out);
+}
+.tc-rc-word {
+  transition: opacity 0.22s var(--ease-out);
+}
+.tc-wf[data-wf-live] .tc-rc-line[data-on="false"] .tc-rc-word {
+  opacity: 0;
+}
+.tc-wf[data-wf-live] .tc-rc-line[data-on="true"] .tc-rc-word {
+  transition-delay: calc(var(--rc-i) * var(--rc-word, 90ms) + 140ms);
+}
+.tc-voice[data-voice="off"] .tc-voice-bar {
+  animation: none;
+  transform: scaleY(0.22);
 }
 
 /* ── Homepage motion ─────────────────────────────────────────────────────
@@ -1205,7 +1217,7 @@ body.demo-video-active {
   }
 }
 
-/* Home page call phone (call-journey-phone.tsx). Each bar has its own speed and
+/* Call phone waveforms (call-journey-phone.tsx, receptionist-call-phone.tsx). Each bar has its own speed and
    phase, set inline, so the waveform moves like speech and never in step. The
    caller (data-voice=1) speaks a little louder than the pauses between lines. */
 .tc-voice-bar {
