@@ -268,6 +268,14 @@ export function createPostgresWebsiteRequestStore(
       );
     },
 
+    async recordCustomerNotification(id, note, at) {
+      await db.query(
+        `INSERT INTO tc_website_request_events (id, request_id, kind, note, created_at)
+         SELECT $1, id, 'notified', $3, $4::timestamptz FROM tc_website_requests WHERE id = $2`,
+        [createId("wse"), id, note.slice(0, 1000), at],
+      );
+    },
+
     async listEvents(requestId) {
       const { rows } = await db.query<Row>(
         `SELECT id, request_id, kind, actor, from_status, to_status,

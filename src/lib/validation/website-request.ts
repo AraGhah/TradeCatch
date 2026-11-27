@@ -117,6 +117,11 @@ export const websiteRequestUpdateSchema = z
     paymentStatus: z.enum(WEBSITE_PAYMENT_STATUSES).optional(),
     /** Internal: the reason for a rejection, or any note for the team. */
     reviewNote: z.string().trim().max(1000).nullable().optional(),
+    /**
+     * Sent to the customer in the decision email (unlike reviewNote). Required
+     * to reject, so a customer is never told "no" without being told why.
+     */
+    customerReason: z.string().trim().min(5).max(600).optional(),
   })
   .strict()
   .refine(

@@ -9,6 +9,8 @@ import {
 import { referralWebsiteServiceStarted } from "@/product/referrals/billing-hooks";
 import type { WebsiteRequestUpdateError } from "@/product/website-services/service";
 import { getWebsiteRequestService } from "@/product/website-services/runtime";
+import { isCustomerDecision } from "@/product/website-services/decision-email";
+import { notifyCustomerOfDecision } from "@/product/website-services/notify";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,7 @@ const STATUS_FOR_ERROR: Record<WebsiteRequestUpdateError, number> = {
   invalid_payment_transition: 409,
   payment_not_allowed: 409,
   review_note_required: 400,
+  customer_reason_required: 400,
   locked: 409,
   conflict: 409,
   price_too_low: 400,
@@ -34,6 +37,8 @@ const MESSAGE_FOR_ERROR: Record<WebsiteRequestUpdateError, string> = {
   payment_not_allowed:
     "Payment can only be requested once the work is approved or quoted.",
   review_note_required: "Add the reason before rejecting a request.",
+  customer_reason_required:
+    "Write the reason the customer will receive before rejecting a request.",
   locked: "The agreed scope and price cannot be changed once work has started.",
   conflict:
     "The request changed while you were editing it. Reload and try again.",
@@ -141,9 +146,21 @@ export async function PATCH(request: Request, { params }: Params) {
         requestId: result.request.id,
       });
     }
+    // The customer hears about an approval or a rejection the moment it is
+    // made: only on the update that moved the status, once per decision.
+    const decided =
+      before?.status !== result.request.status &&
+      isCustomerDecision(result.request.status);
+    const customerEmail = decided
+      ? await notifyCustomerOfDecision(result.request, {
+          reason: parsed.data.customerReason ?? null,
+        })
+      : undefined;
+
     return adminReply({
       ok: true,
       request: result.request,
+      ...(customerEmail ? { customerEmail } : {}),
       history: await service.history(id),
     });
   } catch (error) {
