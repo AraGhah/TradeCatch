@@ -1,74 +1,38 @@
 import { useTranslations } from "next-intl";
 import { cn } from "@/lib/cn";
-import {
-  WorkflowPhone,
-  type WorkflowPhoneCopy,
-} from "@/components/ui/workflow-phone";
+import { receptionistCallCopy } from "@/components/ui/receptionist-call-copy";
+import { ReceptionistCallPhone } from "@/components/ui/receptionist-call-phone";
 
 /**
- * What TradeCatch does, shown on a phone: a call missed while the contractor
- * is on a job, texted back at once, followed by text to a confirmed visit and
- * a notification. Everything here is an illustration: no names, numbers or
- * figures that could read as real customer data. Shared by the home page hero
- * and the sign-in panel. Strings are resolved here, on the server, so the
- * client player needs no message namespace of its own.
+ * What TradeCatch does, shown on a phone: a customer calls, the receptionist
+ * answers and holds the conversation, captures the job, books it or prepares
+ * it for the team, handles a request for a person, and the call ends as a
+ * summary on the contractor's dashboard. Everything is an illustration with a
+ * fictional business (the one in the demo video); no real names or numbers.
+ *
+ * Strings are resolved here, on the server, so the client player needs no
+ * message namespace of its own; receptionistCallCopy decides what the call
+ * promises for the launch flags passed in.
  */
 export function TradeCatchProductPreview({
   className,
   showScheduling = false,
+  showTransfer = false,
   showCaption = false,
 }: {
   className?: string;
   /** Pass the operator's launch flag: booking is advertised only once verified. */
   showScheduling?: boolean;
+  /** Pass the operator's call-transfer launch flag. Off at launch. */
+  showTransfer?: boolean;
   /** The headline and line under the phone, for places that have none of their own. */
   showCaption?: boolean;
 }) {
   const t = useTranslations("productPreview");
-  // Booking is promised only once the operator has verified scheduling.
-  // Before that, the same conversation ends with a request the owner
-  // confirms, which is what the product does in that mode.
-  const booked = showScheduling;
-  const copy: WorkflowPhoneCopy = {
-    screenLabel: booked ? t("screenLabelBooked") : t("screenLabelRequest"),
-    busy: t("busy"),
-    incoming: t("incoming"),
-    line: t("line"),
-    customer: t("customer"),
-    service: t("service"),
-    decline: t("decline"),
-    answer: t("answer"),
-    missed: t("missed"),
-    textingBack: t("textingBack"),
-    auto: t("auto"),
-    sms1: t("sms1"),
-    sms2: t("sms2"),
-    sms3: t("sms3"),
-    sms4: t("sms4"),
-    sms5: booked ? t("sms5Booked") : t("sms5Request"),
-    sms6: t("sms6"),
-    sms7: booked ? t("sms7Booked") : t("sms7Request"),
-    cardTitle: booked ? t("calTitle") : t("reqTitle"),
-    cardWorking: booked ? t("calWorking") : t("reqWorking"),
-    cardFound: booked ? t("calFound") : t("reqDone"),
-    cardDone: booked ? t("calDone") : t("reqDone"),
-    chips: booked
-      ? [t("slotWed"), t("slotThu"), t("slotFri")]
-      : [t("reqService"), t("reqName"), t("reqAddress")],
-    slotBusy: t("slotBusy"),
-    notifyApp: t("notifyApp"),
-    notifyNow: t("notifyNow"),
-    notifyTitle: booked ? t("notifyBookedTitle") : t("notifyRequestTitle"),
-    notifyBody: booked ? t("notifyBookedBody") : t("notifyRequestBody"),
-    resultFrom: t("resultFrom"),
-    resultTo: booked ? t("resultBooked") : t("resultRequest"),
-    resultNote: t("resultNote"),
-    composer: t("composer"),
-    noticeLeft: t("noticeLeft"),
-    noticeRight: booked ? t("noticeBooked") : t("noticeRequest"),
-    pause: t("pause"),
-    play: t("play"),
-  };
+  const copy = receptionistCallCopy(t, {
+    booking: showScheduling,
+    transfer: showTransfer,
+  });
 
   return (
     <figure
@@ -94,7 +58,11 @@ export function TradeCatchProductPreview({
       </p>
 
       <div className="mt-3">
-        <WorkflowPhone copy={copy} booked={booked} />
+        <ReceptionistCallPhone
+          copy={copy}
+          booking={showScheduling}
+          transfer={showTransfer}
+        />
       </div>
 
       {showCaption ? (

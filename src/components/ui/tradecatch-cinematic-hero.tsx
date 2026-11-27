@@ -13,15 +13,17 @@ import { HeroEntrance } from "@/components/ui/hero-entrance";
 import { TradeCatchProductPreview } from "@/components/ui/tradecatch-product-preview";
 
 /**
- * The home page hero: what TradeCatch does, in words on one side and as a call
- * moving through the product on the other. One hero for every screen size, so
+ * The home page hero: what TradeCatch does, in words on one side and as a live
+ * call handled by the receptionist on the other. One hero for every screen size, so
  * the page has a single h1. Compact on purpose: no scroll pinning, and the
  * headline and both actions are on screen as soon as the page loads.
  */
 export function TradeCatchCinematicHero({
   showScheduling = false,
+  showTransfer = false,
 }: {
   showScheduling?: boolean;
+  showTransfer?: boolean;
 }) {
   const t = useTranslations("home.hero");
   const benefits = [
@@ -43,7 +45,7 @@ export function TradeCatchCinematicHero({
 
             <h1 className="mt-3 font-heading text-[clamp(2.1rem,4.4vw,3.75rem)] leading-[1.04] font-extrabold tracking-[-0.038em] text-heading">
               {t("headline")}{" "}
-              {/* The underline marks the half that costs money. */}
+              {/* The underline marks what happens to the caller. */}
               <span className="underline decoration-orange decoration-[0.09em] underline-offset-[0.13em] [text-decoration-skip-ink:none]">
                 {t("highlight")}
               </span>
@@ -93,7 +95,10 @@ export function TradeCatchCinematicHero({
           </div>
 
           <HeroEntrance className="mx-auto w-full max-w-[540px] min-w-0">
-            <TradeCatchProductPreview showScheduling={showScheduling} />
+            <TradeCatchProductPreview
+              showScheduling={showScheduling}
+              showTransfer={showTransfer}
+            />
           </HeroEntrance>
         </div>
       </Container>
