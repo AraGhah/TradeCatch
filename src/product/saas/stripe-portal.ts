@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { isE2eHarness, isProductionRuntime } from "@/lib/config";
 import type { Organization } from "./types";
 import { isStripePortalUrl } from "./billing-access";

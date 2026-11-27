@@ -1,24 +1,38 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import type { SystemHealth } from "@/product/admin-console/health";
-import type { FailedOperation, Incident, ServiceHealth, SystemError } from "@/product/reliability/types";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import type { AreaState, SystemHealth } from "@/product/admin-console/health";
+import {
+  DISPLAY_PRIORITIES,
+  displayPriority,
+  type AlertDelivery,
+  type DisplayPriority,
+  type FailedOperation,
+  type Incident,
+  type ServiceHealth,
+  type SystemError,
+} from "@/product/reliability/types";
 import { Link } from "@/i18n/navigation";
-import { queryString, useAdminData } from "./api";
+import { SkeletonTiles } from "@/components/ui/Skeleton";
+import { adminFetch, queryString, useAdminAction, useAdminData, useAdminPermissions } from "./api";
 import {
   Badge,
   BusinessSelect,
+  ConfirmPanel,
   DataState,
   DataTable,
   Field,
   FilterBar,
+  Notice,
   PageHeader,
   Tile,
   card,
   formatDateTime,
   inputClass,
+  primaryButton,
   secondaryButton,
   useCommon,
+  useErrorText,
   useLoadErrorText,
   useLocaleTag,
   type Column,
@@ -28,21 +42,90 @@ import {
 const en = {
   title: "System health",
   intro:
-    "Live readings from the platform: database, Twilio, Bland AI, Stripe and email, plus the errors, webhook failures and failed jobs TradeCatch has recorded. Refreshed every minute while this page is open.",
+    "Live readings from the platform: the website, API, voice receptionist, SMS, Stripe, database, calendar and automations, plus the incidents, errors, webhook failures and failed jobs TradeCatch has recorded. Refreshed every minute while this page is open.",
   overall: "Overall",
   overallStates: { healthy: "Healthy", degraded: "Degraded", unavailable: "Unavailable" } as Record<string, string>,
   checked: "Checked",
   database: "Database",
   apiRequests: "API requests",
+  noTraffic: "No traffic recorded yet",
   serverErrors: "Server errors (5xx)",
   errorRate: "Server error rate",
+  authFailures: "Sign-in and permission failures",
+  authFailuresNote: "401 and 403 responses",
+  rateLimited: "Rate-limited requests",
+  rateLimitedNote: "429 responses",
   latency: "Response time (p95)",
-  latencyNote: "average {avg} ms",
+  latencyNote: "median within {avg} ms",
   openErrors: "Open errors",
   webhooks: "Webhook failures",
   failedJobs: "Failed jobs",
-  incidents: "Open incidents",
   jobsLine: "{pending} pending · {failed} failed · {dead} gave up · {resolved} resolved",
+
+  monitorNever:
+    "The monitor has not run yet. Nothing below has been measured by it, so no area is shown as healthy.",
+  monitorStale:
+    "The monitor last ran {ago} ago. Until it runs again, areas are shown as not measured rather than healthy.",
+  monitorRunning: "Monitor last ran {ago} ago.",
+
+  areasTitle: "Areas",
+  areasIntro:
+    "Each area is judged only from what the monitor measured and from recorded incidents. “Not measured” means nobody has checked it recently; it is never shown as healthy by default.",
+  areaNames: {
+    website: "Website",
+    api: "API",
+    receptionist: "Voice receptionist",
+    sms: "SMS",
+    stripe: "Stripe billing",
+    database: "Database",
+    calendar: "Calendar",
+    automations: "Automations",
+  } as Record<string, string>,
+  areaStates: { healthy: "Healthy", degraded: "Degraded", incident: "Incident", unknown: "Not measured" } as Record<string, string>,
+  areaHealthy: "No active incidents.",
+  areaDegraded: "A recent check found a problem.",
+  incidentsOne: "1 active incident",
+  incidentsMany: "{n} active incidents",
+  warningsOne: "1 active warning",
+  warningsMany: "{n} active warnings",
+  areaReasons: {
+    monitor_never: "The monitor has not run yet.",
+    monitor_stale: "The monitor has not run recently.",
+    no_address: "No public address is configured to check.",
+    no_database: "No database is configured to check.",
+    no_traffic: "No traffic has been recorded yet.",
+    data_unreadable: "The data for this check could not be read.",
+  } as Record<string, string>,
+  checkedAt: "Checked {time}",
+
+  alertsTitle: "Alert emails",
+  alertsIntro:
+    "Emails sent to administrators when an incident opens, escalates or recovers. A failed send is retried a limited number of times and is listed here with a short reason. Message contents are never shown.",
+  alertsWaiting: "Waiting to send",
+  alertsGaveUp: "Gave up",
+  alertsSent: "Sent in 24 hours",
+  alertsLastFailure: "Last failure {time}",
+  alertsFailedNotice:
+    "Some alert emails could not be delivered after repeated attempts. Check that an administrator email address and the email provider are configured.",
+  alertsEmpty: "No failed alert emails.",
+  alertKinds: {
+    opened: "Opening alert",
+    escalated: "Escalation",
+    reminder: "Reminder",
+    recovered: "Recovery notice",
+    digest: "Summary alert",
+  } as Record<string, string>,
+  alertStatuses: { pending: "Waiting to retry", sent: "Sent", exhausted: "Gave up" } as Record<string, string>,
+  alertErrors: {
+    send_failed: "The email provider failed to send it",
+    timeout: "The email provider did not answer in time",
+    not_configured: "No administrator email or email provider is configured",
+  } as Record<string, string>,
+  nextAttempt: "Next attempt",
+  showIncident: "Show incident",
+  kind: "Kind",
+  priority: "Priority",
+
   servicesTitle: "Services",
   servicesIntro: "Provider checks. “Unknown” means nothing has verified that service yet; it is never shown as healthy by default.",
   integrationsTitle: "Integrations",
@@ -53,7 +136,7 @@ const en = {
   serviceNames: {
     api: "API", database: "Database", ai_receptionist: "Voice receptionist (Bland AI)", twilio_voice: "Twilio voice",
     twilio_sms: "Twilio SMS", google_calendar: "Google Calendar", stripe: "Stripe", jobs: "Background jobs",
-    notifications: "Notifications",
+    notifications: "Notifications", website: "Website", calcom: "Calendar bookings", scheduling: "Scheduling",
   } as Record<string, string>,
   integrationNames: { twilio: "Twilio", bland: "Bland AI", stripe: "Stripe", resend: "Email (Resend)", cloudflare: "Cloudflare" } as Record<string, string>,
   healthStatus: { healthy: "Healthy", degraded: "Degraded", unavailable: "Unavailable", unknown: "Unknown" } as Record<string, string>,
@@ -66,6 +149,23 @@ const en = {
   webhookTitle: "Webhook failures",
   jobsTitle: "Failed jobs",
   incidentsTitle: "Incidents",
+  incidentsIntro:
+    "Repeated identical failures are grouped into one incident with a count, most urgent first. Tick an incident once its cause is fixed to move it to the resolved history; if the problem comes back it opens again by itself. Open one to see its history, the alert emails sent for it and the errors behind it.",
+  remaining: "Remaining",
+  remainingNone: "Nothing left to fix.",
+  filterPriority: "Show only {priority}",
+  showAllPriorities: "Show all priorities",
+  markResolvedFor: "Mark resolved: {title}",
+  resolvingNow: "Resolving…",
+  resolvedAnnounce: "Marked resolved: {title}",
+  tickFailed: "That incident could not be marked resolved. Refresh and try again.",
+  cannotTick: "Your role can view incidents but not resolve them, so the checkboxes are disabled.",
+  occurrencesShort: "{n} occurrences",
+  resolvedHistory: "Resolved history",
+  resolvedHistoryIntro: "Resolved incidents are kept here, newest first. If one of these problems returns, it moves back to the active list.",
+  resolvedHistoryEmpty: "No resolved incidents yet.",
+  resolvedAt: "Resolved",
+  reopenedShort: "Reopened {n}×",
   when: "When",
   service: "Service",
   operation: "Operation",
@@ -77,7 +177,9 @@ const en = {
   attempts: "Attempts",
   lastError: "Last error",
   retryable: "Retryable",
-  titleCol: "Title",
+  titleCol: "Incident",
+  occurrences: "Occurrences",
+  lastSeen: "Last seen",
   simulated: "Simulated",
   platformWide: "Platform-wide",
   errorsEmpty: "No errors match these filters.",
@@ -86,8 +188,12 @@ const en = {
   incidentsEmpty: "No incidents match these filters.",
   yes: "Yes",
   no: "No",
+  priorities: { critical: "Critical", high: "High", warning: "Warning", low: "Low" } as Record<string, string>,
   severities: { low: "Low", medium: "Medium", high: "High", critical: "Critical" } as Record<string, string>,
-  statuses: { open: "Open", investigating: "Investigating", resolved: "Resolved", failed: "Failed", retrying: "Retrying", dead: "Gave up" } as Record<string, string>,
+  statuses: {
+    open: "Active", investigating: "Acknowledged", resolved: "Resolved",
+    failed: "Failed", retrying: "Retrying", dead: "Gave up",
+  } as Record<string, string>,
   statusFilter: "Status",
   anyStatus: "Any status",
   serviceFilter: "Service",
@@ -95,26 +201,132 @@ const en = {
   jobsLink: "Open the full reliability desk",
   loadError: "System health could not be loaded.",
   note: "Worker and API errors here are the failures this app recorded itself. Cloudflare's own analytics are not connected.",
+
+  detailLoading: "Loading the incident…",
+  detailLoadError: "The incident details could not be loaded.",
+  firstSeen: "First seen",
+  reopenedTimes: "Reopened",
+  affected: "Businesses affected",
+  acknowledgedBy: "Acknowledged by",
+  resolvedBy: "Resolved by",
+  clearedOnItsOwn: "Cleared on its own",
+  diagRef: "Diagnostic reference",
+  requestRef: "Request reference",
+  category: "Category",
+  history: "History",
+  noHistory: "No history recorded.",
+  incidentAlerts: "Alert emails for this incident",
+  incidentAlertsEmpty: "No alert emails have been queued for this incident.",
+  incidentErrors: "Recent errors behind it",
+  incidentErrorsEmpty: "No recorded errors.",
+  acknowledge: "Acknowledge",
+  resolve: "Mark resolved",
+  resolveTitle: "Mark this incident resolved?",
+  resolveBody: "Use this once the cause is fixed. If the problem is still happening, the incident will open again by itself.",
+  cannotChange: "Your role can view incidents but not acknowledge or resolve them.",
+  changeFailed: "The incident could not be changed. It may already be resolved; refresh and try again.",
+  eventKinds: {
+    opened: "Opened",
+    reopened: "Opened again",
+    escalated: "Escalated",
+    acknowledged: "Acknowledged",
+    resolved: "Resolved",
+    alert_suppressed: "Alert held back to avoid flooding",
+    admin_notified: "Administrators emailed",
+    admin_notification_failed: "Alert email failed, will retry",
+    admin_notification_exhausted: "Alert email gave up",
+    reminder: "Reminder",
+    digest: "Included in a summary alert",
+  } as Record<string, string>,
 };
 type Copy = typeof en;
 const fr: Copy = {
   title: "Santé du système",
   intro:
-    "Relevés en direct de la plateforme : base de données, Twilio, Bland AI, Stripe et courriel, ainsi que les erreurs, échecs de webhook et tâches en échec consignés par TradeCatch. Actualisés chaque minute tant que cette page est ouverte.",
+    "Relevés en direct de la plateforme : site Web, API, réceptionniste vocale, SMS, Stripe, base de données, agenda et automatisations, ainsi que les incidents, erreurs, échecs de webhook et tâches en échec consignés par TradeCatch. Actualisés chaque minute tant que cette page est ouverte.",
   overall: "Ensemble",
   overallStates: { healthy: "En bonne santé", degraded: "Dégradé", unavailable: "Indisponible" },
   checked: "Vérifié",
   database: "Base de données",
   apiRequests: "Requêtes API",
+  noTraffic: "Aucun trafic consigné pour l’instant",
   serverErrors: "Erreurs serveur (5xx)",
   errorRate: "Taux d’erreurs serveur",
+  authFailures: "Échecs de connexion et d’autorisation",
+  authFailuresNote: "Réponses 401 et 403",
+  rateLimited: "Requêtes limitées",
+  rateLimitedNote: "Réponses 429",
   latency: "Temps de réponse (p95)",
-  latencyNote: "moyenne {avg} ms",
+  latencyNote: "médiane sous {avg} ms",
   openErrors: "Erreurs ouvertes",
   webhooks: "Échecs de webhook",
   failedJobs: "Tâches en échec",
-  incidents: "Incidents ouverts",
   jobsLine: "{pending} en attente · {failed} échouées · {dead} abandonnées · {resolved} résolues",
+
+  monitorNever:
+    "La surveillance ne s’est pas encore exécutée. Rien ci-dessous n’a été mesuré par elle, donc aucun secteur n’est présenté comme sain.",
+  monitorStale:
+    "La surveillance s’est exécutée pour la dernière fois il y a {ago}. D’ici sa prochaine exécution, les secteurs sont présentés comme non mesurés plutôt que sains.",
+  monitorRunning: "Dernière exécution de la surveillance il y a {ago}.",
+
+  areasTitle: "Secteurs",
+  areasIntro:
+    "Chaque secteur est jugé uniquement d’après les mesures de la surveillance et les incidents consignés. « Non mesuré » signifie que personne ne l’a vérifié récemment; il n’est jamais présenté comme sain par défaut.",
+  areaNames: {
+    website: "Site Web",
+    api: "API",
+    receptionist: "Réceptionniste vocale",
+    sms: "SMS",
+    stripe: "Facturation Stripe",
+    database: "Base de données",
+    calendar: "Agenda",
+    automations: "Automatisations",
+  },
+  areaStates: { healthy: "En bonne santé", degraded: "Dégradé", incident: "Incident", unknown: "Non mesuré" },
+  areaHealthy: "Aucun incident actif.",
+  areaDegraded: "Une vérification récente a relevé un problème.",
+  incidentsOne: "1 incident actif",
+  incidentsMany: "{n} incidents actifs",
+  warningsOne: "1 avertissement actif",
+  warningsMany: "{n} avertissements actifs",
+  areaReasons: {
+    monitor_never: "La surveillance ne s’est pas encore exécutée.",
+    monitor_stale: "La surveillance ne s’est pas exécutée récemment.",
+    no_address: "Aucune adresse publique n’est configurée pour la vérification.",
+    no_database: "Aucune base de données n’est configurée pour la vérification.",
+    no_traffic: "Aucun trafic n’a encore été consigné.",
+    data_unreadable: "Les données de cette vérification n’ont pas pu être lues.",
+  },
+  checkedAt: "Vérifié {time}",
+
+  alertsTitle: "Courriels d’alerte",
+  alertsIntro:
+    "Courriels envoyés aux administrateurs quand un incident s’ouvre, s’aggrave ou se rétablit. Un envoi échoué est retenté un nombre limité de fois et figure ici avec une courte raison. Le contenu des messages n’est jamais affiché.",
+  alertsWaiting: "En attente d’envoi",
+  alertsGaveUp: "Abandonnés",
+  alertsSent: "Envoyés en 24 heures",
+  alertsLastFailure: "Dernier échec {time}",
+  alertsFailedNotice:
+    "Certains courriels d’alerte n’ont pas pu être livrés après plusieurs tentatives. Vérifiez qu’une adresse courriel d’administrateur et le fournisseur de courriel sont configurés.",
+  alertsEmpty: "Aucun courriel d’alerte en échec.",
+  alertKinds: {
+    opened: "Alerte d’ouverture",
+    escalated: "Aggravation",
+    reminder: "Rappel",
+    recovered: "Avis de rétablissement",
+    digest: "Alerte récapitulative",
+  },
+  alertStatuses: { pending: "En attente de nouvelle tentative", sent: "Envoyé", exhausted: "Abandonné" },
+  alertErrors: {
+    send_failed: "Le fournisseur de courriel n’a pas pu l’envoyer",
+    timeout: "Le fournisseur de courriel n’a pas répondu à temps",
+    not_configured: "Aucun courriel d’administrateur ni fournisseur de courriel n’est configuré",
+  },
+  nextAttempt: "Prochaine tentative",
+  showIncident: "Afficher l’incident",
+  kind: "Type",
+  priority: "Priorité",
+
   servicesTitle: "Services",
   servicesIntro: "Vérifications des fournisseurs. « Inconnu » signifie que rien n’a encore vérifié ce service; il n’est jamais présenté comme sain par défaut.",
   integrationsTitle: "Intégrations",
@@ -125,7 +337,7 @@ const fr: Copy = {
   serviceNames: {
     api: "API", database: "Base de données", ai_receptionist: "Réceptionniste vocale (Bland AI)", twilio_voice: "Voix Twilio",
     twilio_sms: "SMS Twilio", google_calendar: "Google Agenda", stripe: "Stripe", jobs: "Tâches en arrière-plan",
-    notifications: "Notifications",
+    notifications: "Notifications", website: "Site Web", calcom: "Réservations d’agenda", scheduling: "Planification",
   },
   integrationNames: { twilio: "Twilio", bland: "Bland AI", stripe: "Stripe", resend: "Courriel (Resend)", cloudflare: "Cloudflare" },
   healthStatus: { healthy: "En bonne santé", degraded: "Dégradé", unavailable: "Indisponible", unknown: "Inconnu" },
@@ -138,6 +350,23 @@ const fr: Copy = {
   webhookTitle: "Échecs de webhook",
   jobsTitle: "Tâches en échec",
   incidentsTitle: "Incidents",
+  incidentsIntro:
+    "Les échecs identiques et répétés sont regroupés en un seul incident avec un compteur, le plus urgent en premier. Cochez un incident une fois sa cause corrigée pour le déplacer dans l’historique des résolus; si le problème revient, il se rouvre de lui-même. Ouvrez-en un pour voir son historique, les courriels d’alerte envoyés et les erreurs en cause.",
+  remaining: "Restants",
+  remainingNone: "Plus rien à corriger.",
+  filterPriority: "Afficher seulement : {priority}",
+  showAllPriorities: "Afficher toutes les priorités",
+  markResolvedFor: "Marquer comme résolu : {title}",
+  resolvingNow: "Résolution…",
+  resolvedAnnounce: "Marqué comme résolu : {title}",
+  tickFailed: "Cet incident n’a pas pu être marqué comme résolu. Actualisez et réessayez.",
+  cannotTick: "Votre rôle permet de consulter les incidents, mais pas de les résoudre; les cases sont donc désactivées.",
+  occurrencesShort: "{n} occurrences",
+  resolvedHistory: "Historique des résolus",
+  resolvedHistoryIntro: "Les incidents résolus sont conservés ici, du plus récent au plus ancien. Si l’un de ces problèmes revient, il retourne dans la liste active.",
+  resolvedHistoryEmpty: "Aucun incident résolu pour l’instant.",
+  resolvedAt: "Résolu",
+  reopenedShort: "Rouvert {n} fois",
   when: "Date",
   service: "Service",
   operation: "Opération",
@@ -149,7 +378,9 @@ const fr: Copy = {
   attempts: "Tentatives",
   lastError: "Dernière erreur",
   retryable: "Reprise possible",
-  titleCol: "Titre",
+  titleCol: "Incident",
+  occurrences: "Occurrences",
+  lastSeen: "Dernière occurrence",
   simulated: "Simulé",
   platformWide: "Toute la plateforme",
   errorsEmpty: "Aucune erreur ne correspond à ces filtres.",
@@ -158,8 +389,12 @@ const fr: Copy = {
   incidentsEmpty: "Aucun incident ne correspond à ces filtres.",
   yes: "Oui",
   no: "Non",
+  priorities: { critical: "Critique", high: "Élevée", warning: "Avertissement", low: "Faible" },
   severities: { low: "Faible", medium: "Moyenne", high: "Élevée", critical: "Critique" },
-  statuses: { open: "Ouvert", investigating: "En analyse", resolved: "Résolu", failed: "Échoué", retrying: "Nouvelle tentative", dead: "Abandonné" },
+  statuses: {
+    open: "Actif", investigating: "Pris en compte", resolved: "Résolu",
+    failed: "Échoué", retrying: "Nouvelle tentative", dead: "Abandonné",
+  },
   statusFilter: "Statut",
   anyStatus: "Tout statut",
   serviceFilter: "Service",
@@ -167,45 +402,418 @@ const fr: Copy = {
   jobsLink: "Ouvrir le bureau de fiabilité complet",
   loadError: "La santé du système n’a pas pu être chargée.",
   note: "Les erreurs Worker et API affichées ici sont les échecs que l’application a elle-même consignés. Les analyses propres à Cloudflare ne sont pas connectées.",
+
+  detailLoading: "Chargement de l’incident…",
+  detailLoadError: "Les détails de l’incident n’ont pas pu être chargés.",
+  firstSeen: "Première occurrence",
+  reopenedTimes: "Rouvert",
+  affected: "Entreprises touchées",
+  acknowledgedBy: "Pris en compte par",
+  resolvedBy: "Résolu par",
+  clearedOnItsOwn: "Rétabli de lui-même",
+  diagRef: "Référence de diagnostic",
+  requestRef: "Référence de requête",
+  category: "Catégorie",
+  history: "Historique",
+  noHistory: "Aucun historique consigné.",
+  incidentAlerts: "Courriels d’alerte de cet incident",
+  incidentAlertsEmpty: "Aucun courriel d’alerte n’a été mis en file pour cet incident.",
+  incidentErrors: "Erreurs récentes en cause",
+  incidentErrorsEmpty: "Aucune erreur consignée.",
+  acknowledge: "Prendre en compte",
+  resolve: "Marquer comme résolu",
+  resolveTitle: "Marquer cet incident comme résolu?",
+  resolveBody: "À utiliser une fois la cause corrigée. Si le problème persiste, l’incident se rouvrira de lui-même.",
+  cannotChange: "Votre rôle permet de consulter les incidents, mais pas de les prendre en compte ni de les résoudre.",
+  changeFailed: "L’incident n’a pas pu être modifié. Il est peut-être déjà résolu; actualisez et réessayez.",
+  eventKinds: {
+    opened: "Ouvert",
+    reopened: "Rouvert",
+    escalated: "Aggravé",
+    acknowledged: "Pris en compte",
+    resolved: "Résolu",
+    alert_suppressed: "Alerte retenue pour éviter l’inondation",
+    admin_notified: "Administrateurs avisés par courriel",
+    admin_notification_failed: "Courriel d’alerte échoué, nouvelle tentative prévue",
+    admin_notification_exhausted: "Courriel d’alerte abandonné",
+    reminder: "Rappel",
+    digest: "Inclus dans une alerte récapitulative",
+  },
 };
 
+const PRIORITY_TONE: Record<string, Tone> = { critical: "bad", high: "warn", warning: "neutral", low: "neutral" };
 const SEVERITY_TONE: Record<string, Tone> = { low: "neutral", medium: "warn", high: "bad", critical: "bad" };
 const STATUS_TONE: Record<string, Tone> = {
   open: "bad", investigating: "warn", resolved: "good", failed: "bad", retrying: "warn", dead: "bad",
 };
 const HEALTH_TONE: Record<string, Tone> = { healthy: "good", degraded: "warn", unavailable: "bad", unknown: "neutral" };
+const AREA_TONE: Record<AreaState, Tone> = { healthy: "good", degraded: "warn", incident: "bad", unknown: "neutral" };
+const DELIVERY_TONE: Record<string, Tone> = { pending: "warn", sent: "good", exhausted: "bad" };
 
 const SERVICES = [
-  "api", "database", "ai_receptionist", "twilio_voice", "twilio_sms", "google_calendar", "stripe", "jobs", "notifications",
+  "website", "api", "database", "ai_receptionist", "twilio_voice", "twilio_sms", "google_calendar", "stripe", "jobs", "notifications",
 ];
 
 type Response = SystemHealth & { ok: true };
+type IncidentEvent = { kind: string; detail?: string; actor?: string; at: string };
+type DetailResponse = {
+  ok: true;
+  incident: Incident;
+  events: IncidentEvent[];
+  deliveries: AlertDelivery[];
+  errors: SystemError[];
+};
+
+/** Critical, High, Warning or Low, from the priority KAN-28 records, or the older severity. */
+const priorityOf = displayPriority;
+
+/** The incident an alert email linked to, if the address names a well-formed one. */
+function linkedIncident(): string | null {
+  if (typeof window === "undefined") return null;
+  const value = new URLSearchParams(window.location.search).get("incident");
+  return value && /^[A-Za-z0-9_-]{1,120}$/.test(value) ? value : null;
+}
+
+function ago(ms: number): string {
+  const seconds = Math.max(0, Math.round(ms / 1000));
+  if (seconds < 60) return `${seconds} s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} min`;
+  return `${Math.floor(minutes / 60)} h ${minutes % 60} min`;
+}
+
+function BusinessCell({ organizationId, t }: { organizationId?: string; t: Copy }) {
+  return organizationId ? (
+    <Link href={{ pathname: "/admin/businesses/[id]", params: { id: organizationId } }} className="underline">
+      {organizationId}
+    </Link>
+  ) : (
+    <span className="text-navy/70">{t.platformWide}</span>
+  );
+}
+
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-xs text-navy/70">{label}</dt>
+      <dd className="break-words text-sm text-navy">{children}</dd>
+    </div>
+  );
+}
+
+function eventDetail(t: Copy, event: IncidentEvent): string | null {
+  if (!event.detail) return null;
+  if (event.kind === "escalated") {
+    const [from, to] = event.detail.split(" to ");
+    return from && to ? `${t.priorities[from] ?? from} → ${t.priorities[to] ?? to}` : null;
+  }
+  if (event.kind === "admin_notified") return t.alertKinds[event.detail] ?? null;
+  if (event.kind === "admin_notification_failed" || event.kind === "admin_notification_exhausted")
+    return t.alertErrors[event.detail] ?? event.detail;
+  return null;
+}
+
+function IncidentDetail({
+  id,
+  t,
+  locale,
+  canManage,
+  permissionKnown,
+  errorColumns,
+  deliveryColumns,
+  onClose,
+  onChanged,
+}: {
+  id: string;
+  t: Copy;
+  locale: "en" | "fr";
+  canManage: boolean;
+  permissionKnown: boolean;
+  errorColumns: Column<SystemError>[];
+  deliveryColumns: Column<AlertDelivery>[];
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const common = useCommon();
+  const errorText = useErrorText();
+  const loadError = useLoadErrorText();
+  const action = useAdminAction();
+  const headingId = useId();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const [confirming, setConfirming] = useState(false);
+  const detail = useAdminData<DetailResponse>(`/api/admin/incidents/${encodeURIComponent(id)}`);
+  const loaded = Boolean(detail.data);
+
+  // Move keyboard and screen-reader focus to the details once they have loaded.
+  useEffect(() => {
+    if (loaded) heading.current?.focus();
+  }, [loaded]);
+
+  const when = (iso: string) => formatDateTime(iso, locale);
+
+  async function change(kind: "acknowledge" | "resolve") {
+    const result = await action.run(() =>
+      adminFetch(`/api/admin/incidents/${encodeURIComponent(id)}/${kind}`, { method: "POST", body: {} }),
+    );
+    if (result) {
+      setConfirming(false);
+      detail.refresh();
+      onChanged();
+    }
+  }
+
+  const incident = detail.data?.incident;
+  const priority: DisplayPriority = incident ? priorityOf(incident) : "warning";
+
+  return (
+    <section className={`${card} flex flex-col gap-4 border-navy/30`} aria-labelledby={headingId}>
+      {!incident ? (
+        detail.error ? (
+          <div className="flex flex-col gap-2">
+            <Notice tone="bad">{loadError(detail.error, t.detailLoadError)}</Notice>
+            <div className="flex gap-2">
+              <button type="button" className={secondaryButton} onClick={detail.refresh}>{common.retry}</button>
+              <button type="button" className={secondaryButton} onClick={onClose}>{common.close}</button>
+            </div>
+          </div>
+        ) : (
+          <p id={headingId} role="status" className="text-sm text-navy/70">{t.detailLoading}</p>
+        )
+      ) : (
+        <>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 id={headingId} ref={heading} tabIndex={-1} className="break-words font-semibold text-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-navy/60">
+                {incident.title}
+              </h2>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge tone={PRIORITY_TONE[priority]}>{t.priorities[priority]}</Badge>
+                <Badge tone={STATUS_TONE[incident.status] ?? "neutral"}>{t.statuses[incident.status] ?? incident.status}</Badge>
+                {incident.simulated ? <Badge tone="info">{t.simulated}</Badge> : null}
+              </div>
+              {incident.summary ? <p className="mt-2 break-words text-sm text-navy/80">{incident.summary}</p> : null}
+            </div>
+            <button type="button" className={secondaryButton} onClick={onClose}>{common.close}</button>
+          </div>
+
+          <dl className="grid gap-x-4 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Fact label={t.service}>{t.serviceNames[incident.service] ?? incident.service}</Fact>
+            {incident.category ? <Fact label={t.category}><code className="break-all text-xs">{incident.category}</code></Fact> : null}
+            <Fact label={t.occurrences}>{incident.occurrenceCount ?? 1}</Fact>
+            <Fact label={t.firstSeen}>{when(incident.firstSeenAt ?? incident.createdAt)}</Fact>
+            <Fact label={t.lastSeen}>{when(incident.lastSeenAt ?? incident.createdAt)}</Fact>
+            {incident.reopenCount ? <Fact label={t.reopenedTimes}>{incident.reopenCount}</Fact> : null}
+            <Fact label={t.business}><BusinessCell organizationId={incident.organizationId} t={t} /></Fact>
+            {incident.affectedBusinesses ? <Fact label={t.affected}>{incident.affectedBusinesses}</Fact> : null}
+            {incident.acknowledgedAt ? (
+              <Fact label={t.acknowledgedBy}>
+                {incident.acknowledgedBy ?? "—"} · {when(incident.acknowledgedAt)}
+              </Fact>
+            ) : null}
+            {incident.resolvedAt ? (
+              <Fact label={t.resolvedBy}>
+                {incident.resolvedBy === "auto" ? t.clearedOnItsOwn : (incident.resolvedBy ?? "—")} · {when(incident.resolvedAt)}
+              </Fact>
+            ) : null}
+            <Fact label={t.diagRef}><code className="break-all text-xs">{incident.id}</code></Fact>
+            {incident.correlationId && incident.correlationId !== incident.id ? (
+              <Fact label={t.requestRef}><code className="break-all text-xs">{incident.correlationId}</code></Fact>
+            ) : null}
+          </dl>
+
+          {incident.status !== "resolved" ? (
+            <div className="flex flex-col gap-2">
+              {permissionKnown && !canManage ? <Notice tone="neutral">{t.cannotChange}</Notice> : null}
+              {action.error ? <Notice tone="bad">{errorText(action.error, { default: t.changeFailed })}</Notice> : null}
+              {confirming ? (
+                <ConfirmPanel
+                  title={t.resolveTitle}
+                  description={t.resolveBody}
+                  confirmLabel={t.resolve}
+                  busy={action.pending}
+                  onConfirm={() => void change("resolve")}
+                  onCancel={() => { setConfirming(false); action.reset(); }}
+                />
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {incident.status === "open" ? (
+                    <button type="button" className={primaryButton} disabled={!canManage || action.pending} onClick={() => void change("acknowledge")}>
+                      {action.pending ? common.working : t.acknowledge}
+                    </button>
+                  ) : null}
+                  <button type="button" className={secondaryButton} disabled={!canManage || action.pending} onClick={() => setConfirming(true)}>
+                    {t.resolve}
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : null}
+
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-navy">{t.history}</h3>
+            {detail.data && detail.data.events.length > 0 ? (
+              <ol className="flex flex-col divide-y divide-navy/10 text-sm">
+                {detail.data.events.map((event, index) => {
+                  const extra = eventDetail(t, event);
+                  return (
+                    <li key={`${event.at}-${event.kind}-${index}`} className="flex flex-col gap-0.5 py-1.5 sm:flex-row sm:items-baseline sm:gap-3">
+                      <span className="text-xs text-navy/70 sm:w-44 sm:shrink-0">{when(event.at)}</span>
+                      <span className="min-w-0 break-words text-navy">
+                        {t.eventKinds[event.kind] ?? event.kind}
+                        {extra ? <span className="text-navy/70"> · {extra}</span> : null}
+                        {event.actor ? <span className="text-navy/70"> · {event.actor}</span> : null}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            ) : (
+              <p className="text-sm text-navy/70">{t.noHistory}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-navy">{t.incidentAlerts}</h3>
+            {detail.data && detail.data.deliveries.length > 0 ? (
+              <DataTable columns={deliveryColumns} rows={detail.data.deliveries} rowKey={(row) => row.id} caption={t.incidentAlerts} />
+            ) : (
+              <p className="text-sm text-navy/70">{t.incidentAlertsEmpty}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-semibold text-navy">{t.incidentErrors}</h3>
+            {detail.data && detail.data.errors.length > 0 ? (
+              <DataTable columns={errorColumns} rows={detail.data.errors} rowKey={(row) => row.id} caption={t.incidentErrors} />
+            ) : (
+              <p className="text-sm text-navy/70">{t.incidentErrorsEmpty}</p>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function IncidentRow({
+  incident,
+  t,
+  when,
+  selected,
+  resolved,
+  disabled,
+  pending,
+  onToggle,
+  onSelect,
+}: {
+  incident: Incident;
+  t: Copy;
+  when: (iso: string) => string;
+  selected: boolean;
+  resolved: boolean;
+  disabled: boolean;
+  pending: boolean;
+  onToggle: () => void;
+  onSelect: () => void;
+}) {
+  const priority = priorityOf(incident);
+  const count = incident.occurrenceCount ?? 1;
+  const resolvedBy =
+    incident.resolvedBy === "auto" ? ` · ${t.clearedOnItsOwn}` : incident.resolvedBy ? ` · ${incident.resolvedBy}` : "";
+  return (
+    <li
+      data-incident={incident.id}
+      data-priority={priority}
+      data-resolved={resolved ? "true" : "false"}
+      className="flex flex-wrap items-start gap-x-3 gap-y-1 py-2"
+    >
+      {resolved ? (
+        <span className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+      ) : (
+        <input
+          type="checkbox"
+          checked={pending}
+          disabled={disabled}
+          aria-label={t.markResolvedFor.replace("{title}", incident.title)}
+          onChange={onToggle}
+          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer accent-navy disabled:cursor-not-allowed disabled:opacity-50"
+        />
+      )}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <button
+            type="button"
+            aria-expanded={selected}
+            onClick={onSelect}
+            className="break-words text-left text-sm font-semibold text-navy underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60"
+          >
+            {incident.title}
+          </button>
+          <Badge tone={PRIORITY_TONE[priority]}>{t.priorities[priority]}</Badge>
+          {!resolved ? <Badge tone={STATUS_TONE[incident.status] ?? "neutral"}>{t.statuses[incident.status] ?? incident.status}</Badge> : null}
+          {count > 1 ? <Badge tone="neutral">{t.occurrencesShort.replace("{n}", String(count))}</Badge> : null}
+          {incident.reopenCount ? <Badge tone="warn">{t.reopenedShort.replace("{n}", String(incident.reopenCount))}</Badge> : null}
+          {incident.simulated ? <Badge tone="info">{t.simulated}</Badge> : null}
+          {pending ? <span role="status" className="text-xs text-navy/70">{t.resolvingNow}</span> : null}
+        </div>
+        <p className="mt-0.5 break-words text-xs text-navy/70">
+          {t.serviceNames[incident.service] ?? incident.service}
+          {" · "}
+          {resolved && incident.resolvedAt
+            ? `${t.resolvedAt} ${when(incident.resolvedAt)}${resolvedBy}`
+            : `${t.lastSeen} ${when(incident.lastSeenAt ?? incident.createdAt)}`}
+        </p>
+      </div>
+    </li>
+  );
+}
 
 export function SystemHealthConsole() {
   const locale = useLocaleTag();
   const t: Copy = locale === "fr" ? fr : en;
   const common = useCommon();
   const loadError = useLoadErrorText();
+  const { can, known } = useAdminPermissions();
 
   const [businessId, setBusinessId] = useState("");
   const [status, setStatus] = useState("");
   const [service, setService] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  // The link in an alert email is /admin/system-health?incident=<id>; open that incident.
+  // It only affects what renders once the data has loaded, so the server and the first
+  // client render agree.
+  const [selected, setSelected] = useState<string | null>(linkedIncident);
+  const [priorityFilter, setPriorityFilter] = useState<DisplayPriority | null>(null);
+  const [resolvingId, setResolvingId] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState("");
+  const [tickError, setTickError] = useState(false);
 
   const url = `/api/admin/health${queryString({ businessId, status, service, from, to })}`;
   const { data, error, loading, refresh, updatedAt } = useAdminData<Response>(url, { autoRefreshMs: 60_000 });
   const filtered = Boolean(businessId || status || service || from || to);
 
   const when = (iso: string) => formatDateTime(iso, locale);
-  const orgCell = (organizationId?: string) =>
-    organizationId ? (
-      <Link href={{ pathname: "/admin/businesses/[id]", params: { id: organizationId } }} className="underline">
-        {organizationId}
-      </Link>
-    ) : (
-      <span className="text-navy/70">{t.platformWide}</span>
-    );
+  const orgCell = (organizationId?: string) => <BusinessCell organizationId={organizationId} t={t} />;
+  const plural = (count: number, one: string, many: string) => (count === 1 ? one : many.replace("{n}", String(count)));
+  const canResolve = known && can("admin.manage");
+
+  /** Ticking an incident resolves it on the server, so it stays resolved after a refresh. */
+  async function resolveIncident(incident: Incident) {
+    if (resolvingId) return;
+    setResolvingId(incident.id);
+    setTickError(false);
+    try {
+      await adminFetch(`/api/admin/incidents/${encodeURIComponent(incident.id)}/resolve`, { method: "POST", body: {} });
+      setAnnouncement(t.resolvedAnnounce.replace("{title}", incident.title));
+      if (selected === incident.id) setSelected(null);
+      refresh();
+    } catch {
+      setTickError(true);
+    } finally {
+      setResolvingId(null);
+    }
+  }
 
   const errorColumns: Column<SystemError>[] = [
     { id: "when", header: t.when, primary: true, cell: (row) => when(row.createdAt) },
@@ -239,13 +847,36 @@ export function SystemHealthConsole() {
     { id: "last", header: t.lastError, cell: (row) => <span className="break-words">{row.lastError ?? "—"}</span> },
   ];
 
-  const incidentColumns: Column<Incident>[] = [
-    { id: "title", header: t.titleCol, primary: true, cell: (row) => row.title },
-    { id: "when", header: t.when, cell: (row) => when(row.createdAt) },
-    { id: "service", header: t.service, cell: (row) => t.serviceNames[row.service] ?? row.service },
-    { id: "severity", header: t.severity, cell: (row) => <Badge tone={SEVERITY_TONE[row.severity] ?? "neutral"}>{t.severities[row.severity] ?? row.severity}</Badge> },
-    { id: "status", header: t.status, cell: (row) => <Badge tone={STATUS_TONE[row.status] ?? "neutral"}>{t.statuses[row.status] ?? row.status}</Badge> },
-    { id: "business", header: t.business, cell: (row) => orgCell(row.organizationId) },
+  const deliveryColumnsFor = (withIncident: boolean): Column<AlertDelivery>[] => [
+    { id: "when", header: t.when, primary: true, cell: (row) => when(row.createdAt) },
+    { id: "kind", header: t.kind, cell: (row) => t.alertKinds[row.kind] ?? row.kind },
+    { id: "priority", header: t.priority, cell: (row) => <Badge tone={PRIORITY_TONE[row.priority]}>{t.priorities[row.priority] ?? row.priority}</Badge> },
+    { id: "status", header: t.status, cell: (row) => <Badge tone={DELIVERY_TONE[row.status] ?? "neutral"}>{t.alertStatuses[row.status] ?? row.status}</Badge> },
+    { id: "attempts", header: t.attempts, cell: (row) => row.attempts },
+    {
+      id: "error",
+      header: t.lastError,
+      cell: (row) => (
+        <>
+          <span className="break-words">{row.lastError ? (t.alertErrors[row.lastError] ?? row.lastError) : "—"}</span>
+          {row.status === "pending" ? <span className="mt-1 block text-xs text-navy/70">{t.nextAttempt}: {when(row.nextAttemptAt)}</span> : null}
+        </>
+      ),
+    },
+    ...(withIncident
+      ? [{
+          id: "incident",
+          header: t.titleCol,
+          cell: (row: AlertDelivery) =>
+            row.incidentId ? (
+              <button type="button" className="font-semibold underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60" onClick={() => setSelected(row.incidentId)}>
+                {t.showIncident}
+              </button>
+            ) : (
+              <span className="text-navy/70">—</span>
+            ),
+        }]
+      : []),
   ];
 
   const section = (id: string, title: string, children: ReactNode) => (
@@ -311,9 +942,52 @@ export function SystemHealthConsole() {
         ) : null}
       </FilterBar>
 
-      <DataState loading={loading} error={error} hasData={Boolean(data)} onRetry={refresh} errorText={loadError(error, t.loadError)}>
+      <DataState
+        loading={loading}
+        error={error}
+        hasData={Boolean(data)}
+        onRetry={refresh}
+        errorText={loadError(error, t.loadError)}
+        skeleton={<SkeletonTiles count={4} />}
+      >
         {data ? (
           <>
+            {data.monitor.state === "never" ? <Notice tone="warn">{t.monitorNever}</Notice> : null}
+            {data.monitor.state === "stale" ? (
+              <Notice tone="bad">{t.monitorStale.replace("{ago}", ago(data.monitor.ageMs ?? 0))}</Notice>
+            ) : null}
+            {data.monitor.state === "running" ? (
+              <p className="text-xs text-navy/70">{t.monitorRunning.replace("{ago}", ago(data.monitor.ageMs ?? 0))}</p>
+            ) : null}
+
+            {section("areas-title", t.areasTitle, (
+              <>
+                <p className="text-sm text-navy/70">{t.areasIntro}</p>
+                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {data.areas.map((area) => (
+                    <li key={area.key} data-area={area.key} data-state={area.state} className="flex flex-col gap-2 rounded-md border border-navy/10 bg-white px-4 py-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="font-medium text-navy">{t.areaNames[area.key] ?? area.key}</p>
+                        <Badge tone={AREA_TONE[area.state]}>{t.areaStates[area.state]}</Badge>
+                      </div>
+                      <p className="break-words text-xs text-navy/70">
+                        {area.state === "unknown"
+                          ? (area.reason ? t.areaReasons[area.reason] : null)
+                          : area.activeIncidents > 0
+                            ? area.highest === "warning"
+                              ? plural(area.activeIncidents, t.warningsOne, t.warningsMany)
+                              : plural(area.activeIncidents, t.incidentsOne, t.incidentsMany)
+                            : area.state === "degraded"
+                              ? t.areaDegraded
+                              : t.areaHealthy}
+                      </p>
+                      {area.checkedAt ? <p className="text-xs text-navy/70">{t.checkedAt.replace("{time}", when(area.checkedAt))}</p> : null}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ))}
+
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Tile
                 label={t.overall}
@@ -327,14 +1001,20 @@ export function SystemHealthConsole() {
                 tone={data.database.status === "healthy" ? "good" : data.database.status === "unknown" ? "neutral" : "bad"}
                 note={data.database.detail ?? (t.serviceState[data.database.state] ?? data.database.state)}
               />
-              <Tile label={t.apiRequests} value={data.api.requests} />
+              <Tile label={t.apiRequests} value={data.api.trafficAvailable ? data.api.requests : "—"} note={data.api.trafficAvailable ? undefined : t.noTraffic} />
               <Tile
                 label={t.serverErrors}
-                value={data.api.serverErrors}
+                value={data.api.trafficAvailable ? data.api.serverErrors : "—"}
                 tone={data.api.serverErrors > 0 ? "warn" : "neutral"}
-                note={`${t.errorRate}: ${(data.api.errorRate * 100).toFixed(1)}%`}
+                note={data.api.trafficAvailable ? `${t.errorRate}: ${(data.api.errorRate * 100).toFixed(1)}%` : t.noTraffic}
               />
-              <Tile label={t.latency} value={`${data.api.p95Ms} ms`} note={t.latencyNote.replace("{avg}", String(data.api.averageMs))} />
+              <Tile
+                label={t.latency}
+                value={data.api.trafficAvailable ? `${data.api.p95Ms} ms` : "—"}
+                note={data.api.trafficAvailable ? t.latencyNote.replace("{avg}", String(data.api.p50Ms)) : t.noTraffic}
+              />
+              <Tile label={t.authFailures} value={data.api.trafficAvailable ? data.api.authErrors : "—"} note={t.authFailuresNote} />
+              <Tile label={t.rateLimited} value={data.api.trafficAvailable ? data.api.rateLimited : "—"} note={t.rateLimitedNote} />
               <Tile label={t.openErrors} value={data.totals.openErrors} tone={data.totals.openErrors > 0 ? "warn" : "neutral"} />
               <Tile label={t.webhooks} value={data.totals.webhookFailures} tone={data.totals.webhookFailures > 0 ? "bad" : "neutral"} />
               <Tile
@@ -352,6 +1032,130 @@ export function SystemHealthConsole() {
               {t.note}{" "}
               <Link href="/admin/monitoring" className="font-semibold underline">{t.jobsLink}</Link>
             </p>
+
+            {section("alerts-title", t.alertsTitle, (
+              <>
+                <p className="text-sm text-navy/70">{t.alertsIntro}</p>
+                {data.alerts.summary.exhausted > 0 ? <Notice tone="bad">{t.alertsFailedNotice}</Notice> : null}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Tile label={t.alertsWaiting} value={data.alerts.summary.pending} tone={data.alerts.summary.pending > 0 ? "warn" : "neutral"} />
+                  <Tile label={t.alertsGaveUp} value={data.alerts.summary.exhausted} tone={data.alerts.summary.exhausted > 0 ? "bad" : "neutral"} />
+                  <Tile
+                    label={t.alertsSent}
+                    value={data.alerts.summary.sentLast24h}
+                    note={data.alerts.summary.lastFailureAt ? t.alertsLastFailure.replace("{time}", when(data.alerts.summary.lastFailureAt)) : undefined}
+                  />
+                </div>
+                {data.alerts.failed.length === 0
+                  ? <p className="text-sm text-navy/70">{t.alertsEmpty}</p>
+                  : <DataTable columns={deliveryColumnsFor(true)} rows={data.alerts.failed} rowKey={(row) => row.id} caption={t.alertsTitle} />}
+              </>
+            ))}
+
+            {section("incidents-title", t.incidentsTitle, (
+              <>
+                <p className="text-sm text-navy/70">{t.incidentsIntro}</p>
+                <div role="group" aria-label={t.remaining} className="flex flex-wrap items-center gap-2" data-testid="incident-counts">
+                  <span className="text-xs font-semibold text-navy/70">{t.remaining}</span>
+                  {DISPLAY_PRIORITIES.map((p) => {
+                    const pressed = priorityFilter === p;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        data-priority={p}
+                        aria-pressed={pressed}
+                        aria-label={`${t.priorities[p]}: ${data.incidentCounts[p]}. ${t.filterPriority.replace("{priority}", t.priorities[p])}`}
+                        onClick={() => setPriorityFilter(pressed ? null : p)}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 ${
+                          pressed ? "border-navy bg-navy text-white" : "border-navy/20 bg-white text-navy"
+                        }`}
+                      >
+                        <span>{t.priorities[p]}</span>
+                        <span>{data.incidentCounts[p]}</span>
+                      </button>
+                    );
+                  })}
+                  {priorityFilter ? (
+                    <button type="button" className="text-xs font-semibold text-navy underline" onClick={() => setPriorityFilter(null)}>
+                      {t.showAllPriorities}
+                    </button>
+                  ) : null}
+                </div>
+                {known && !canResolve ? <Notice tone="neutral">{t.cannotTick}</Notice> : null}
+                {tickError ? <Notice tone="bad">{t.tickFailed}</Notice> : null}
+                <p className="sr-only" role="status" aria-live="polite">{announcement}</p>
+                {(() => {
+                  const active = data.incidents.filter((i) => !priorityFilter || priorityOf(i) === priorityFilter);
+                  if (active.length === 0)
+                    return (
+                      <p className="text-sm text-navy/70">
+                        {data.incidents.length === 0 && !filtered ? t.remainingNone : t.incidentsEmpty}
+                      </p>
+                    );
+                  return (
+                    <ul aria-label={t.incidentsTitle} className="divide-y divide-navy/10">
+                      {active.map((incident) => (
+                        <IncidentRow
+                          key={incident.id}
+                          incident={incident}
+                          t={t}
+                          when={when}
+                          selected={selected === incident.id}
+                          resolved={false}
+                          disabled={!canResolve || resolvingId !== null}
+                          pending={resolvingId === incident.id}
+                          onToggle={() => void resolveIncident(incident)}
+                          onSelect={() => setSelected(selected === incident.id ? null : incident.id)}
+                        />
+                      ))}
+                    </ul>
+                  );
+                })()}
+
+                <details className="rounded-md border border-navy/10 bg-white px-4 py-2" data-testid="resolved-history">
+                  <summary className="cursor-pointer text-sm font-semibold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60">
+                    {t.resolvedHistory} ({data.incidentCounts.resolved})
+                  </summary>
+                  <p className="mt-2 text-xs text-navy/70">{t.resolvedHistoryIntro}</p>
+                  {data.resolvedIncidents.length === 0 ? (
+                    <p className="mt-2 text-sm text-navy/70">{t.resolvedHistoryEmpty}</p>
+                  ) : (
+                    <ul aria-label={t.resolvedHistory} className="mt-1 divide-y divide-navy/10">
+                      {data.resolvedIncidents.map((incident) => (
+                        <IncidentRow
+                          key={incident.id}
+                          incident={incident}
+                          t={t}
+                          when={when}
+                          selected={selected === incident.id}
+                          resolved
+                          disabled
+                          pending={false}
+                          onToggle={() => undefined}
+                          onSelect={() => setSelected(selected === incident.id ? null : incident.id)}
+                        />
+                      ))}
+                    </ul>
+                  )}
+                </details>
+              </>
+            ))}
+
+            {selected ? (
+              <IncidentDetail
+                key={selected}
+                id={selected}
+                t={t}
+                locale={locale}
+                canManage={known && can("admin.manage")}
+                permissionKnown={known}
+                errorColumns={errorColumns}
+                deliveryColumns={deliveryColumnsFor(false)}
+                onClose={() => setSelected(null)}
+                onChanged={refresh}
+              />
+            ) : null}
 
             {section("services-title", t.servicesTitle, (
               <>
@@ -392,10 +1196,6 @@ export function SystemHealthConsole() {
             {section("jobs-title", t.jobsTitle, data.failedOperations.length === 0
               ? <p className="text-sm text-navy/70">{t.jobsEmpty}</p>
               : <DataTable columns={jobColumns} rows={data.failedOperations} rowKey={(row) => row.id} caption={t.jobsTitle} />)}
-
-            {section("incidents-title", t.incidentsTitle, data.incidents.length === 0
-              ? <p className="text-sm text-navy/70">{t.incidentsEmpty}</p>
-              : <DataTable columns={incidentColumns} rows={data.incidents} rowKey={(row) => row.id} caption={t.incidentsTitle} />)}
           </>
         ) : null}
       </DataState>

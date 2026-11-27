@@ -17,6 +17,7 @@ const schema = z.object({
   contactEmail: z.string().email(),
   relatedCallId: z.string().max(80).optional(),
   attachmentNames: z.array(z.string().min(1).max(120)).max(3).optional(),
+  idempotencyKey: z.string().trim().min(8).max(100).optional(),
 });
 
 export async function GET(_request: NextRequest, { params }: Params) {

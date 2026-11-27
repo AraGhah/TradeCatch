@@ -1,125 +1,106 @@
+import { LAST_RUN_META, parseHeartbeat } from "./watch";
+import {
+  AlertNotConfiguredError,
+  deliverDueAlerts,
+  serviceLabel,
+  type AlertPayload,
+} from "./alerts";
+import { ReliabilityError } from "./errors";
+import { incidentFingerprint } from "./fingerprint";
+import { createIncidentEngine, type IncidentReport } from "./incidents";
+import { summarizeTraffic } from "./rules";
+import { sanitizeAlertText } from "./sanitize";
 import { reliabilityId, type ReliabilityStore } from "./store";
+import { DEFAULT_THRESHOLDS, type MonitorThresholds } from "./thresholds";
 import {
   redactDiagnostic,
   type HealthStatus,
+  type Priority,
   type ServiceHealth,
   type ServiceName,
   type Severity,
 } from "./types";
 
-export class ReliabilityError extends Error {
-  constructor(
-    message: string,
-    readonly status = 400,
-  ) {
-    super(message);
-    this.name = "ReliabilityError";
-  }
-}
+/** One error type for the whole module: the admin routes import it from here. */
+export { ReliabilityError };
 
 const REQUIRED = new Set<ServiceName>(["api", "database", "jobs"]);
+const MINUTE = 60_000;
+/** The traffic shown on the dashboard covers this long. */
+const TRAFFIC_WINDOW_MS = 15 * MINUTE;
+
+const ERROR_PRIORITY: Partial<Record<Severity, Priority>> = {
+  critical: "critical",
+  high: "high",
+  medium: "warning",
+};
 
 export type Probe = Omit<ServiceHealth, "checkedAt" | "required">;
+
+export type MonitorStatus = {
+  /** never: no run recorded. stale: the last run is older than the gap threshold. */
+  state: "running" | "stale" | "never";
+  lastRunAt: string | null;
+  ageMs: number | null;
+  website: "ok" | "failing" | "not_measured";
+  database: "ok" | "slow" | "unavailable" | "not_measured";
+  degraded: string[];
+};
 
 export type ReliabilityDeps = {
   store: ReliabilityStore;
   now: () => Date;
   environment: () => string;
   probe: () => Promise<Probe[]>;
-  notifyAdmin?: (input: {
-    title: string;
-    severity: Severity;
-    simulated: boolean;
-  }) => Promise<void>;
+  /**
+   * Sends one administrator alert. Receives the finished, already-sanitized
+   * payload. A function written for the older `{ title, severity, simulated }`
+   * input still fits.
+   */
+  notifyAdmin?: (input: AlertPayload) => Promise<void>;
   version?: () => string;
+  thresholds?: MonitorThresholds;
+  /** Public origin used for the "open in the dashboard" link in alert emails. */
+  siteUrl?: () => string | undefined;
 };
 
-function percentile(values: number[], ratio: number) {
-  if (values.length === 0) return 0;
-  const sorted = [...values].sort((a, b) => a - b);
-  const index = Math.min(
-    sorted.length - 1,
-    Math.ceil(sorted.length * ratio) - 1,
-  );
-  return sorted[Math.max(0, index)];
-}
-
 export function createReliabilityService(deps: ReliabilityDeps) {
-  async function openIncident(input: {
-    service: string;
-    severity: Severity;
-    title: string;
-    organizationId?: string;
-    correlationId: string;
-    simulated: boolean;
-  }) {
-    const open = (await deps.store.listIncidents()).find(
-      (row) =>
-        row.status !== "resolved" &&
-        row.service === input.service &&
-        row.organizationId === input.organizationId,
-    );
-    if (open) {
-      await deliverIncident(open, input.simulated);
-      return open;
-    }
-    const incident = {
-      id: reliabilityId("inc"),
-      organizationId: input.organizationId,
-      service: input.service,
-      severity: input.severity,
-      title: input.title,
-      status: "open" as const,
-      correlationId: input.correlationId,
-      createdAt: deps.now().toISOString(),
-    };
-    await deps.store.saveIncident(incident);
-    await deps.store.addIncidentEvent({
-      incidentId: incident.id,
-      kind: "opened",
-      at: incident.createdAt,
-    });
-    await deliverIncident(incident, input.simulated);
-    return incident;
-  }
+  const thresholds = deps.thresholds ?? DEFAULT_THRESHOLDS;
+  const engine = createIncidentEngine({
+    store: deps.store,
+    thresholds,
+    now: deps.now,
+  });
 
-  async function deliverIncident(
-    incident: { id: string; title: string; severity: Severity },
-    simulated: boolean,
-  ) {
-    const events = await deps.store.listIncidentEvents(incident.id);
-    if (events.some((e) => e.kind === "admin_notified")) return;
-    const lastFailure = events
-      .filter((e) => e.kind === "admin_notification_failed")
-      .sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0];
-    if (
-      lastFailure &&
-      deps.now().getTime() - Date.parse(lastFailure.at) < 5 * 60_000
-    )
-      return;
-    try {
-      if (!deps.notifyAdmin) throw new Error("No alert provider");
-      await deps.notifyAdmin({
-        title: incident.title,
-        severity: incident.severity,
-        simulated,
-      });
-      await deps.store.addIncidentEvent({
-        incidentId: incident.id,
-        kind: "admin_notified",
-        at: deps.now().toISOString(),
-      });
-    } catch {
-      await deps.store.addIncidentEvent({
-        incidentId: incident.id,
-        kind: "admin_notification_failed",
-        at: deps.now().toISOString(),
-      });
-      console.warn("[monitoring] Administrator alert remains undelivered");
-    }
+  /**
+   * Sends whatever alerts are due. Never throws: a failed send is recorded on
+   * the alert (and retried later), not raised to the caller.
+   */
+  async function deliverAlerts() {
+    return deliverDueAlerts({
+      store: deps.store,
+      notify:
+        deps.notifyAdmin ??
+        (async () => {
+          throw new AlertNotConfiguredError();
+        }),
+      now: deps.now,
+      thresholds,
+      siteUrl: deps.siteUrl?.(),
+    });
   }
 
   return {
+    thresholds,
+    deliverAlerts,
+    /** Records that a condition is present now; opens, updates or reopens its incident. */
+    reportIncident: (report: IncidentReport) => engine.report(report),
+    /** Resolves incidents whose condition stayed clear, announcing recoveries. */
+    sweepRecovered: () => engine.sweepRecovered(),
+    /** Stores an outage that has already ended (the database could not store it while it happened). */
+    recordPastOutage: (input: Parameters<typeof engine.recordPastOutage>[0]) =>
+      engine.recordPastOutage(input),
+
     async recordError(input: {
       organizationId?: string;
       service: string;
@@ -132,6 +113,12 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       simulated?: boolean;
     }) {
       const requestId = input.requestId || reliabilityId("req");
+      const now = deps.now();
+      const fingerprint = incidentFingerprint({
+        service: input.service,
+        operation: input.operation,
+        code: input.errorCode,
+      });
       const row = {
         id: reliabilityId("err"),
         requestId,
@@ -146,36 +133,99 @@ export function createReliabilityService(deps: ReliabilityDeps) {
         detail: input.detail ? redactDiagnostic(input.detail) : undefined,
         environment: deps.environment(),
         simulated: Boolean(input.simulated),
-        createdAt: deps.now().toISOString(),
+        createdAt: now.toISOString(),
+        fingerprint,
       };
       await deps.store.saveError(row);
-      const recent = (
-        await deps.store.listErrors({ service: input.service })
-      ).filter(
-        (item) =>
-          Date.parse(item.createdAt) > deps.now().getTime() - 5 * 60_000 &&
-          item.severity !== "low",
-      );
-      if (input.severity === "critical" || recent.length >= 3) {
-        await openIncident({
-          service: input.service,
-          severity: input.severity === "critical" ? "critical" : "high",
-          title: `${input.service} ${input.errorCode}`,
-          organizationId: input.organizationId,
-          correlationId: requestId,
-          simulated: row.simulated,
-        });
+
+      // One failure is noise; the same failure repeating is an incident.
+      // Critical errors do not wait. Only the queue is written here: the email
+      // goes out from the monitor run, never from a customer's request.
+      const priority = ERROR_PRIORITY[input.severity];
+      if (!priority) return row;
+      let occurrences = 1;
+      if (input.severity !== "critical") {
+        const rule =
+          input.severity === "high"
+            ? thresholds.errors.high
+            : thresholds.errors.medium;
+        occurrences = await deps.store.countErrors(
+          fingerprint,
+          new Date(now.getTime() - rule.windowMs).toISOString(),
+        );
+        if (occurrences < rule.count) return row;
       }
+      const operation = sanitizeAlertText(input.operation, 80);
+      const code = sanitizeAlertText(input.errorCode, 60);
+      await engine.report({
+        fingerprint,
+        service: input.service,
+        category: operation,
+        priority,
+        title: `${serviceLabel(input.service)}: ${code}`,
+        summary: `${operation} failed with ${code}.`,
+        organizationId: input.organizationId,
+        quietMs:
+          thresholds.errors.quietMs[
+            input.severity === "critical"
+              ? "critical"
+              : input.severity === "high"
+                ? "high"
+                : "medium"
+          ],
+        correlationId: requestId,
+        simulated: row.simulated,
+        initialOccurrences: occurrences,
+      });
       return row;
     },
 
-    async recordRequest(status: number, durationMs: number) {
-      const statusClass = status >= 500 ? "5xx" : status >= 400 ? "4xx" : "2xx";
-      await deps.store.saveObservation({
-        statusClass,
-        durationMs,
-        at: deps.now().toISOString(),
-      });
+    /** When the monitor last ran, and what it could and could not measure. */
+    async monitor(): Promise<MonitorStatus> {
+      const beat = parseHeartbeat(await deps.store.getMeta(LAST_RUN_META));
+      if (!beat)
+        return {
+          state: "never",
+          lastRunAt: null,
+          ageMs: null,
+          website: "not_measured",
+          database: "not_measured",
+          degraded: [],
+        };
+      const ageMs = Math.max(0, deps.now().getTime() - Date.parse(beat.at));
+      return {
+        state: ageMs > thresholds.monitor.gapMs ? "stale" : "running",
+        lastRunAt: beat.at,
+        ageMs,
+        website: beat.website ?? "not_measured",
+        database: beat.database ?? "not_measured",
+        degraded: beat.degraded ?? [],
+      };
+    },
+
+    /** Delivery state of administrator alerts, for the dashboard. */
+    async alertStatus() {
+      return {
+        summary: await deps.store.alertSummary(deps.now().toISOString()),
+        failed: await deps.store.listAlertDeliveries({
+          failedOnly: true,
+          limit: 20,
+        }),
+      };
+    },
+
+    /** An incident with its history, alert deliveries and the errors behind it. */
+    async incidentDetail(id: string) {
+      const incident = await deps.store.getIncident(id);
+      if (!incident) return null;
+      const [events, deliveries, errors] = await Promise.all([
+        deps.store.listIncidentEvents(id),
+        deps.store.listAlertDeliveries({ incidentId: id, limit: 50 }),
+        incident.fingerprint
+          ? deps.store.listErrors({ fingerprint: incident.fingerprint, limit: 25 })
+          : Promise.resolve([]),
+      ]);
+      return { incident, events, deliveries, errors };
     },
 
     async overview(options: { notifyOnFailure?: boolean } = {}) {
@@ -207,26 +257,33 @@ export function createReliabilityService(deps: ReliabilityDeps) {
             service.status === "degraded" ||
             (service.required && service.status === "unknown")
           ) {
-            await openIncident({
-              service: `health:${service.service}`,
-              severity: service.required ? "high" : "medium",
-              title: `${service.service} health check failed or remains unverified`,
+            const name = `health:${service.service}`;
+            await engine.report({
+              fingerprint: incidentFingerprint({ service: name }),
+              service: name,
+              category: "health_check",
+              priority:
+                service.service === "database" &&
+                service.status === "unavailable"
+                  ? "critical"
+                  : service.required
+                    ? "high"
+                    : "warning",
+              title: `${serviceLabel(service.service)} health check failed or remains unverified`,
+              summary: service.detail
+                ? sanitizeAlertText(service.detail, 200)
+                : undefined,
+              quietMs: thresholds.healthChecks.quietMs,
               correlationId: reliabilityId("health"),
               simulated: deps.environment() !== "production",
             });
           }
         }
-        // Retry persisted administrator alerts even if their originating probe recovered.
-        for (const incident of await deps.store.listIncidents()) {
-          if (
-            incident.status !== "resolved" &&
-            incident.service.startsWith("health:")
-          )
-            await deliverIncident(
-              incident,
-              deps.environment() !== "production",
-            );
-        }
+        // A check that has stayed healthy resolves its incident; alerts that
+        // could not be sent earlier (even for a probe that has since
+        // recovered) are retried here.
+        await engine.sweepRecovered();
+        await deliverAlerts();
       }
       const requiredDown = services.some(
         (service) => service.required && service.status === "unavailable",
@@ -241,33 +298,36 @@ export function createReliabilityService(deps: ReliabilityDeps) {
         : requiredDegraded
           ? "degraded"
           : "healthy";
-      const observations = await deps.store.listObservations();
-      const durations = observations.map((row) => row.durationMs);
-      const serverErrors = observations.filter(
-        (row) => row.statusClass === "5xx",
-      ).length;
-      const errorRate =
-        observations.length === 0 ? 0 : serverErrors / observations.length;
+      // Real request outcomes recorded by the Worker (per-minute buckets), never
+      // anything simulated. With no traffic recorded the numbers are zero and
+      // `trafficAvailable` says so, so a quiet system is not shown as a fast one.
+      const now = deps.now();
+      const traffic = summarizeTraffic(
+        await deps.store.listBuckets(
+          new Date(now.getTime() - TRAFFIC_WINDOW_MS).toISOString(),
+        ),
+        now,
+        TRAFFIC_WINDOW_MS,
+        "api",
+      );
       return {
         overall,
         services,
-        requests: observations.length,
-        success: observations.filter((row) => row.statusClass === "2xx").length,
-        clientErrors: observations.filter((row) => row.statusClass === "4xx")
-          .length,
-        serverErrors,
-        errorRate,
-        averageMs: durations.length
-          ? Math.round(
-              durations.reduce((sum, value) => sum + value, 0) /
-                durations.length,
-            )
-          : 0,
-        p95Ms: percentile(durations, 0.95),
+        requests: traffic.requests,
+        success: traffic.success,
+        clientErrors: traffic.clientErrors,
+        serverErrors: traffic.serverErrors,
+        authErrors: traffic.authErrors,
+        rateLimited: traffic.rateLimited,
+        errorRate: traffic.errorRate,
+        /** Upper bound of the latency bin holding the median / 95th percentile. */
+        p50Ms: traffic.p50Ms,
+        p95Ms: traffic.p95Ms,
+        trafficAvailable: traffic.requests > 0,
         incidents: (await deps.store.listIncidents()).filter(
           (row) => row.status !== "resolved",
         ),
-        recentErrors: (await deps.store.listErrors()).slice(-8).reverse(),
+        recentErrors: (await deps.store.listErrors({ limit: 8 })),
       };
     },
 
@@ -279,35 +339,11 @@ export function createReliabilityService(deps: ReliabilityDeps) {
       return deps.store.listIncidents(organizationId);
     },
 
-    async acknowledge(id: string, actor: string) {
-      const incident = await deps.store.getIncident(id);
-      if (!incident) throw new ReliabilityError("Incident not found.", 404);
-      incident.status = "investigating";
-      incident.acknowledgedAt = deps.now().toISOString();
-      await deps.store.saveIncident(incident);
-      await deps.store.addIncidentEvent({
-        incidentId: id,
-        kind: "acknowledged",
-        actor,
-        at: incident.acknowledgedAt,
-      });
-      return incident;
-    },
+    /** Active -> Acknowledged. Idempotent; refused (409) once resolved. */
+    acknowledge: (id: string, actor: string) => engine.acknowledge(id, actor),
 
-    async resolve(id: string, actor: string) {
-      const incident = await deps.store.getIncident(id);
-      if (!incident) throw new ReliabilityError("Incident not found.", 404);
-      incident.status = "resolved";
-      incident.resolvedAt = deps.now().toISOString();
-      await deps.store.saveIncident(incident);
-      await deps.store.addIncidentEvent({
-        incidentId: id,
-        kind: "resolved",
-        actor,
-        at: incident.resolvedAt,
-      });
-      return incident;
-    },
+    /** Manual resolve. Idempotent. A condition that is still present reopens it. */
+    resolve: (id: string, actor: string) => engine.resolve(id, actor),
 
     async recordFailedOperation(input: {
       organizationId?: string;
@@ -416,15 +452,20 @@ export function createReliabilityService(deps: ReliabilityDeps) {
         0,
       );
       const budget = Number(process.env.RELIABILITY_BUDGET_CENTS || 10_000);
-      let level: Severity | null = null;
+      let level: Priority | null = null;
       if (total >= budget) level = "critical";
       else if (total >= budget * 0.8) level = "high";
-      else if (total >= budget * 0.5) level = "medium";
+      else if (total >= budget * 0.5) level = "warning";
       if (level) {
-        await openIncident({
+        await engine.report({
+          fingerprint: "costs:budget",
           service: "costs",
-          severity: level,
+          category: "budget",
+          priority: level,
           title: "Estimated operating cost threshold",
+          summary: `Estimated spend has reached ${Math.round((total / budget) * 100)}% of the budget.`,
+          // Spend only grows, so this stays open for a day after the last report.
+          quietMs: 24 * 60 * MINUTE,
           correlationId: reliabilityId("req"),
           simulated: input.simulated !== false,
         });

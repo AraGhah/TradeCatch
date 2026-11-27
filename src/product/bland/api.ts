@@ -42,28 +42,35 @@ export const MAX_TOOL_BODY_BYTES = 32 * 1024;
  * caller said: both mean "not given", so a blank can never overwrite a value
  * that was already confirmed and a template can never be saved as a name.
  */
-function given(value: string | undefined): string | undefined {
+function given(value: string | null | undefined): string | undefined {
   const text = value?.trim();
   if (!text || /^\{\{[^{}]*\}\}$/.test(text)) return undefined;
   return text;
 }
 
-const short = (max: number) => z.string().max(max).optional().transform(given);
+/**
+ * An optional text field. Bland fills a body template by JSON value, so a
+ * pathway variable that is not set yet arrives as JSON `null` (not "" and not
+ * "{{name}}"): it means "not given", exactly like a missing field.
+ */
+const short = (max: number) => z.string().max(max).nullish().transform(given);
 
 /** "fr", "fr-CA", "EN" -> fr/en; anything else (an unresolved variable) -> undefined. */
 const languageField = z
   .string()
-  .max(20)
-  .optional()
+  // Long enough for a variable Bland left unresolved ("{{conversation_language}}"),
+  // which must be ignored like any other unresolved field, not refused.
+  .max(80)
+  .nullish()
   .transform((value): ReceptionistLanguage | undefined => {
-    const prefix = value?.trim().toLowerCase().slice(0, 2);
+    const prefix = given(value)?.toLowerCase().slice(0, 2);
     return prefix === "fr" || prefix === "en" ? prefix : undefined;
   });
 
 /** Bland renders every template value as text, so booleans arrive as "true". */
 export const boolField = z
   .union([z.boolean(), z.string().max(8)])
-  .optional()
+  .nullish()
   .transform((value) => {
     if (typeof value === "boolean") return value;
     return ["true", "yes", "1"].includes((value ?? "").trim().toLowerCase());

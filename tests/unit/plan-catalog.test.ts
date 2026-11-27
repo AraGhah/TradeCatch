@@ -81,7 +81,23 @@ describe("plan catalog", () => {
     assert.equal(orgHasFeature("professional", "APPOINTMENT_BOOKING"), true);
   });
 
-  it("neither launch plan can transfer calls, clone a voice or run bulk outreach", () => {
+  it("once call transfer is launched, only Professional transfers live calls and routes emergencies", () => {
+    const previous = process.env.LAUNCH_ENABLE_CALL_TRANSFER;
+    process.env.LAUNCH_ENABLE_CALL_TRANSFER = "1";
+    try {
+      assert.equal(orgHasFeature("professional", "AI_CALL_TRANSFER"), true);
+      assert.equal(orgHasFeature("professional", "AI_EMERGENCY_ROUTING"), true);
+      assert.equal(orgHasFeature("professional", "ADVANCED_CALL_ROUTING"), false);
+      assert.equal(orgHasFeature("essential", "AI_CALL_TRANSFER"), false);
+      assert.equal(orgHasFeature("essential", "AI_EMERGENCY_ROUTING"), false);
+      assert.equal(orgHasFeature("growth", "AI_CALL_TRANSFER"), false, "legacy Growth is unchanged");
+    } finally {
+      if (previous === undefined) delete process.env.LAUNCH_ENABLE_CALL_TRANSFER;
+      else process.env.LAUNCH_ENABLE_CALL_TRANSFER = previous;
+    }
+  });
+
+  it("with the launch switch off, neither launch plan can transfer calls, clone a voice or run bulk outreach", () => {
     for (const plan of PLAN_ORDER) {
       for (const feature of [
         "AI_CALL_TRANSFER",

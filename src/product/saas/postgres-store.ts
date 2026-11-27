@@ -1,5 +1,5 @@
-import type { Pool, QueryResultRow } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import type { PoolClient, QueryResultRow } from "pg";
+import { createPostgresPoolCache } from "@/lib/postgres-pool";
 import { newId, slugify } from "./ids";
 import {
   mapOrgRow,
@@ -55,6 +55,28 @@ function mapRefreshToken(row: RefreshTokenRow): RefreshToken {
     expiresAt: row.expires_at.toISOString(),
     createdAt: row.created_at.toISOString(),
     rotatedAt: row.rotated_at?.toISOString(),
+  };
+}
+
+type PasswordTokenRow = {
+  id: string;
+  user_id: string;
+  token_hash: string;
+  kind: string;
+  expires_at: Date;
+  consumed_at: Date | null;
+  created_at: Date;
+};
+
+function mapPasswordToken(row: PasswordTokenRow): PasswordToken {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    tokenHash: row.token_hash,
+    kind: row.kind === "activation" ? "activation" : "reset",
+    expiresAt: row.expires_at.toISOString(),
+    consumedAt: row.consumed_at?.toISOString(),
+    createdAt: row.created_at.toISOString(),
   };
 }
 
@@ -122,16 +144,7 @@ function mapRecovery(row: RecoveryRow): AccountRecoveryRequest {
   };
 }
 
-const pools = new Map<string, Pool>();
-
-function getPool(connectionString: string): Pool {
-  let pool = pools.get(connectionString);
-  if (!pool) {
-    pool = createPostgresPool({ connectionString, max: 5 });
-    pools.set(connectionString, pool);
-  }
-  return pool;
-}
+const getPool = createPostgresPoolCache({ max: 5 });
 
 export function createPostgresSaasStore(connectionString: string): SaasStore {
   const pool = getPool(connectionString);
@@ -141,6 +154,24 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
     params: unknown[] = [],
   ) {
     return pool.query<T>(text, params);
+  }
+
+  /** One connection, BEGIN ... COMMIT; any failure rolls everything back and is rethrown. */
+  async function inTransaction<T>(
+    work: (client: PoolClient) => Promise<T>,
+  ): Promise<T> {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const result = await work(client);
+      await client.query("COMMIT");
+      return result;
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   return {
@@ -700,41 +731,15 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
     },
 
     async findPasswordToken(tokenHash) {
-      const { rows } = await query<{
-        id: string;
-        user_id: string;
-        token_hash: string;
-        kind: string;
-        expires_at: Date;
-        consumed_at: Date | null;
-        created_at: Date;
-      }>(`SELECT * FROM tc_password_tokens WHERE token_hash = $1`, [
-        tokenHash,
-      ]);
-      const row = rows[0];
-      if (!row) return null;
-      const token: PasswordToken = {
-        id: row.id,
-        userId: row.user_id,
-        tokenHash: row.token_hash,
-        kind: row.kind === "activation" ? "activation" : "reset",
-        expiresAt: row.expires_at.toISOString(),
-        consumedAt: row.consumed_at?.toISOString(),
-        createdAt: row.created_at.toISOString(),
-      };
-      return token;
+      const { rows } = await query<PasswordTokenRow>(
+        `SELECT * FROM tc_password_tokens WHERE token_hash = $1`,
+        [tokenHash],
+      );
+      return rows[0] ? mapPasswordToken(rows[0]) : null;
     },
 
     async consumePasswordToken(tokenHash, at) {
-      const { rows } = await query<{
-        id: string;
-        user_id: string;
-        token_hash: string;
-        kind: string;
-        expires_at: Date;
-        consumed_at: Date | null;
-        created_at: Date;
-      }>(
+      const { rows } = await query<PasswordTokenRow>(
         `UPDATE tc_password_tokens
          SET consumed_at = $2::timestamptz
          WHERE token_hash = $1
@@ -743,18 +748,7 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
          RETURNING *`,
         [tokenHash, at],
       );
-      const row = rows[0];
-      if (!row) return null;
-      const token: PasswordToken = {
-        id: row.id,
-        userId: row.user_id,
-        tokenHash: row.token_hash,
-        kind: row.kind === "activation" ? "activation" : "reset",
-        expiresAt: row.expires_at.toISOString(),
-        consumedAt: row.consumed_at?.toISOString(),
-        createdAt: row.created_at.toISOString(),
-      };
-      return token;
+      return rows[0] ? mapPasswordToken(rows[0]) : null;
     },
 
     async invalidatePasswordTokens(userId, at) {
@@ -763,6 +757,76 @@ export function createPostgresSaasStore(connectionString: string): SaasStore {
          WHERE user_id = $1 AND consumed_at IS NULL`,
         [userId, at],
       );
+    },
+
+    async replacePasswordToken(token) {
+      await inTransaction(async (client) => {
+        // Serializes everyone issuing a link for this person: without it, two
+        // requests at the same moment would each cancel "the old one", find
+        // nothing, and both leave a live link. FOR NO KEY UPDATE conflicts only
+        // with itself, so foreign-key checks from other tables are not blocked.
+        await client.query(
+          `SELECT 1 FROM tc_users WHERE id = $1 FOR NO KEY UPDATE`,
+          [token.userId],
+        );
+        await client.query(
+          `UPDATE tc_password_tokens SET consumed_at = $3::timestamptz
+           WHERE user_id = $1 AND kind = $2 AND consumed_at IS NULL`,
+          [token.userId, token.kind, token.createdAt],
+        );
+        await client.query(
+          `INSERT INTO tc_password_tokens
+             (id, user_id, token_hash, kind, expires_at, consumed_at, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            token.id,
+            token.userId,
+            token.tokenHash,
+            token.kind,
+            token.expiresAt,
+            token.consumedAt ?? null,
+            token.createdAt,
+          ],
+        );
+      });
+    },
+
+    async completePasswordReset({ tokenHash, atIso, passwordHash }) {
+      return inTransaction(async (client) => {
+        // The conditional UPDATE is the whole race decision: a second caller
+        // with the same link waits for the row lock, then no longer matches
+        // consumed_at IS NULL and gets nothing back.
+        const spent = await client.query<PasswordTokenRow>(
+          `UPDATE tc_password_tokens
+           SET consumed_at = $2::timestamptz
+           WHERE token_hash = $1
+             AND consumed_at IS NULL
+             AND expires_at > $2::timestamptz
+           RETURNING *`,
+          [tokenHash, atIso],
+        );
+        const row = spent.rows[0];
+        if (!row) return null;
+        await client.query(
+          `INSERT INTO tc_user_passwords (user_id, password_hash, updated_at)
+           VALUES ($1, $2, $3::timestamptz)
+           ON CONFLICT (user_id) DO UPDATE
+             SET password_hash = EXCLUDED.password_hash,
+                 updated_at = EXCLUDED.updated_at`,
+          [row.user_id, passwordHash, atIso],
+        );
+        await client.query(
+          `UPDATE tc_password_tokens SET consumed_at = $2::timestamptz
+           WHERE user_id = $1 AND consumed_at IS NULL`,
+          [row.user_id, atIso],
+        );
+        await client.query(
+          `UPDATE tc_sessions SET revoked_at = $2::timestamptz
+           WHERE user_id = $1 AND revoked_at IS NULL`,
+          [row.user_id, atIso],
+        );
+        return mapPasswordToken(row);
+      });
     },
 
     async createRefreshToken(token) {

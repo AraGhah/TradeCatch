@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type { SupportStore } from "./store";
 import type { AccountRequest, SupportTicket } from "./types";
 
@@ -13,6 +13,15 @@ export function createPostgresSupportStore(connectionString: string): SupportSto
         [row.id, row.organizationId, row.subject, row.category, row.kind, row.description, row.priority, row.status, row.contactEmail, row.relatedCallId ?? null, row.assignedTo ?? null, row.createdAt, row.updatedAt],
       );
     },
+    async insertTicket(row) {
+      const res = await pool.query(
+        `INSERT INTO tc_support_tickets (id, organization_id, subject, category, kind, description, priority, status, contact_email, related_call_id, assigned_to, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+         ON CONFLICT (id) DO NOTHING`,
+        [row.id, row.organizationId, row.subject, row.category, row.kind, row.description, row.priority, row.status, row.contactEmail, row.relatedCallId ?? null, row.assignedTo ?? null, row.createdAt, row.updatedAt],
+      );
+      return (res.rowCount ?? 0) > 0;
+    },
     async listTickets(organizationId, limit) {
       const res = await pool.query(`SELECT * FROM tc_support_tickets WHERE ($1::text IS NULL OR organization_id = $1) ORDER BY created_at DESC LIMIT $2`, [organizationId ?? null,limit ?? null]);
       return res.rows.map(ticketFrom);
@@ -26,6 +35,14 @@ export function createPostgresSupportStore(connectionString: string): SupportSto
         `INSERT INTO tc_support_messages (id, ticket_id, author_role, body, internal, created_at) VALUES ($1,$2,$3,$4,$5,$6)`,
         [row.id, row.ticketId, row.authorRole, row.body, row.internal, row.createdAt],
       );
+    },
+    async insertMessage(row) {
+      const res = await pool.query(
+        `INSERT INTO tc_support_messages (id, ticket_id, author_role, body, internal, created_at) VALUES ($1,$2,$3,$4,$5,$6)
+         ON CONFLICT (id) DO NOTHING`,
+        [row.id, row.ticketId, row.authorRole, row.body, row.internal, row.createdAt],
+      );
+      return (res.rowCount ?? 0) > 0;
     },
     async listMessages(ticketId, limit) {
       const res = await pool.query(`SELECT * FROM tc_support_messages WHERE ticket_id = $1 ORDER BY created_at LIMIT $2`, [ticketId,limit ?? null]);

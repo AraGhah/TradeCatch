@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
 import type { BusinessPage, BusinessSummary } from "@/product/admin-console/businesses";
 import {
@@ -415,8 +416,10 @@ export function BusinessesConsole() {
           </label>
           {createError ? <Notice tone="bad">{createError}</Notice> : null}
           <div className="flex flex-wrap gap-2">
-            <button type="submit" className={primaryButton} disabled={action.pending}>
-              {action.pending ? t.creating : t.submit}
+            <button type="submit" className={primaryButton} disabled={action.pending} aria-busy={action.pending}>
+              <BusyLabel pending={action.pending} busyLabel={t.creating}>
+                {t.submit}
+              </BusyLabel>
             </button>
             <button type="button" className={secondaryButton} disabled={action.pending} onClick={() => setCreating(false)}>
               {common.cancel}

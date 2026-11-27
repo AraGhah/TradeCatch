@@ -2,9 +2,11 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { PasswordField } from "@/components/PasswordField";
 
-const inputClass =
-  "rounded-md border border-navy/15 bg-white px-3 py-2.5 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 const buttonClass =
   "self-start rounded-md bg-orange px-4 py-2.5 text-[15px] font-semibold text-navy transition hover:bg-orange-dark disabled:opacity-60";
 
@@ -38,7 +40,8 @@ export function PasswordSettings({
     null,
   );
 
-  async function onChange(e: FormEvent) {
+  const onChange = useGuarded(onChangeHandler);
+  async function onChangeHandler(e: FormEvent) {
     e.preventDefault();
     setMessage(null);
     if (next !== confirm) {
@@ -47,7 +50,7 @@ export function PasswordSettings({
     }
     setBusy(true);
     try {
-      const res = await fetch("/api/auth/change-password", {
+      const res = await timedFetch("/api/auth/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword: current, newPassword: next }),
@@ -80,11 +83,12 @@ export function PasswordSettings({
     }
   }
 
-  async function onSendLink() {
+  const onSendLink = useGuarded(onSendLinkHandler);
+  async function onSendLinkHandler() {
     setBusy(true);
     setMessage(null);
     try {
-      const res = await fetch("/api/auth/forgot-password", {
+      const res = await timedFetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, locale }),
@@ -115,59 +119,47 @@ export function PasswordSettings({
       {hasPassword ? (
         <form onSubmit={onChange} className="flex flex-col gap-3">
           <p className="text-sm text-navy/70">{t("intro")}</p>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-            {t("current")}
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              maxLength={256}
-              value={current}
-              onChange={(e) => setCurrent(e.target.value)}
-              className={inputClass}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-            {t("new")}
-            <input
-              type="password"
-              required
-              autoComplete="new-password"
-              minLength={10}
-              maxLength={128}
-              value={next}
-              onChange={(e) => setNext(e.target.value)}
-              className={inputClass}
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-navy">
-            {t("confirm")}
-            <input
-              type="password"
-              required
-              autoComplete="new-password"
-              maxLength={128}
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className={inputClass}
-            />
-          </label>
+          <PasswordField
+            label={t("current")}
+            required
+            autoComplete="current-password"
+            maxLength={256}
+            value={current}
+            onChange={setCurrent}
+          />
+          <PasswordField
+            label={t("new")}
+            required
+            autoComplete="new-password"
+            minLength={10}
+            maxLength={128}
+            value={next}
+            onChange={setNext}
+          />
+          <PasswordField
+            label={t("confirm")}
+            required
+            autoComplete="new-password"
+            maxLength={128}
+            value={confirm}
+            onChange={setConfirm}
+          />
           <p className="text-sm text-navy/70">{t("rules")}</p>
-          <button type="submit" disabled={busy} className={buttonClass}>
-            {busy ? t("saving") : t("submit")}
+          <button aria-busy={busy} type="submit" disabled={busy} className={buttonClass}>
+            <BusyLabel pending={busy} busyLabel={t("saving")}>{t("submit")}</BusyLabel>
           </button>
         </form>
       ) : (
         <div className="flex flex-col gap-3">
           <p className="text-sm font-semibold text-navy">{t("noneTitle")}</p>
           <p className="text-sm text-navy/70">{t("noneBody")}</p>
-          <button
+          <button aria-busy={busy}
             type="button"
             disabled={busy}
             onClick={() => void onSendLink()}
             className={buttonClass}
           >
-            {busy ? t("linkSending") : t("sendLink")}
+            <BusyLabel pending={busy} busyLabel={t("linkSending")}>{t("sendLink")}</BusyLabel>
           </button>
         </div>
       )}

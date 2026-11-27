@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import type { Pool } from "pg";
 import { safeEqual } from "@/lib/safe-compare";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import {
   InstallationConflict,
   installationCommand,

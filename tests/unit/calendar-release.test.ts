@@ -2,8 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { googleCalendarPilotAllowed } from "../../src/product/scheduling/availability";
 import { DEFAULT_DEMO_FEATURES } from "../../src/product/demo/types";
-import { createGoogleCalendarPort } from "../../src/product/scheduling/google";
-import type { ScheduleAppointment } from "../../src/product/scheduling/types";
+import { createGoogleClient } from "../../src/product/scheduling/gcal/client";
 
 test("Google Calendar enrollment fails closed and cannot be unlocked by a plan or editable flags alone", () => {
   const org = {
@@ -36,47 +35,39 @@ test("Google Calendar enrollment fails closed and cannot be unlocked by a plan o
   );
 });
 
-test("Google adapter implements free/busy and event create, update and delete contracts (mock provider, not live proof)", async () => {
-  const original = globalThis.fetch;
-  const calls: { url: string; method: string }[] = [];
-  globalThis.fetch = async (url, init) => {
-    calls.push({ url: String(url), method: init?.method ?? "GET" });
-    return Response.json(
-      String(url).endsWith("freeBusy")
-        ? { calendars: { "business@example.invalid": { busy: [] } } }
-        : { id: "test-event" },
-    );
-  };
-  try {
-    const port = createGoogleCalendarPort({
-      tokens: {
-        accessToken: "test",
-        refreshToken: "test",
-        expiresAt: "2099-01-01T00:00:00Z",
-      },
-      calendarId: "business@example.invalid",
-    });
-    const appointment = {
-      serviceName: "Test visit",
-      startAt: "2026-10-26T14:00:00Z",
-      endAt: "2026-10-26T15:00:00Z",
-      timezone: "America/Toronto",
-    } as ScheduleAppointment;
-    assert.deepEqual(
-      await port.freeBusy(appointment.startAt, appointment.endAt),
-      [],
-    );
-    assert.deepEqual(await port.createEvent(appointment), { id: "test-event" });
-    assert.deepEqual(await port.updateEvent("test-event", appointment), {
-      ok: true,
-    });
-    assert.deepEqual(await port.deleteEvent("test-event"), { ok: true });
-    assert.deepEqual(
-      calls.map((call) => call.method),
-      ["POST", "POST", "PATCH", "DELETE"],
-    );
-    assert.ok(calls[1].url.includes("business%40example.invalid"));
-  } finally {
-    globalThis.fetch = original;
-  }
+test("Google client speaks the Calendar contract: list, create, update and delete (mock provider, not live proof)", async () => {
+  const calls: { url: string; method: string; body?: string }[] = [];
+  const client = createGoogleClient({
+    tokens: {
+      accessToken: "test",
+      refreshToken: "test",
+      expiresAt: "2099-01-01T00:00:00Z",
+    },
+    fetchImpl: (async (url: URL, init?: RequestInit) => {
+      calls.push({
+        url: String(url),
+        method: init?.method ?? "GET",
+        body: init?.body as string | undefined,
+      });
+      return Response.json(
+        String(url).includes("calendarList")
+          ? { items: [{ id: "business@example.invalid", primary: true, accessRole: "owner", summary: "Work" }] }
+          : { id: "test-event", etag: "\"1\"" },
+      );
+    }) as typeof fetch,
+  });
+  const calendars = await client.listCalendars();
+  assert.ok(calendars.ok);
+  assert.equal(calendars.accountEmail, "business@example.invalid");
+  const body = { id: "test-event", summary: "Test visit" };
+  assert.ok((await client.insertEvent("business@example.invalid", body)).ok);
+  assert.ok((await client.patchEvent("business@example.invalid", "test-event", body)).ok);
+  // A DELETE answers with no body.
+  assert.deepEqual(
+    calls.map((call) => call.method),
+    ["GET", "POST", "PATCH"],
+  );
+  assert.ok(calls[1].url.includes("business%40example.invalid"));
+  // Nobody is emailed by Google because TradeCatch wrote to a calendar.
+  assert.ok(calls[1].url.includes("sendUpdates=none"));
 });

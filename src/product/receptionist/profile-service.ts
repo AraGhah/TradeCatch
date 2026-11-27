@@ -51,7 +51,18 @@ export async function saveOwnerSettings(
     };
   }
 
-  const parsed = profileSettingsSchema.safeParse(input.body);
+  // A save names the fields its page edits. Everything else (phone
+  // settings, voices, what to collect...) is kept as saved, never reset to
+  // defaults by a page that does not show it.
+  const existing = await deps.profiles.getProfile(input.organization.id);
+  const body =
+    existing &&
+    input.body &&
+    typeof input.body === "object" &&
+    !Array.isArray(input.body)
+      ? { ...existing.settings, ...(input.body as Record<string, unknown>) }
+      : input.body;
+  const parsed = profileSettingsSchema.safeParse(body);
   if (!parsed.success) {
     return {
       status: 400,
@@ -98,7 +109,6 @@ export async function saveOwnerSettings(
     };
   }
 
-  const existing = await deps.profiles.getProfile(input.organization.id);
   const checked = validateProfile(
     {
       organizationId: input.organization.id,

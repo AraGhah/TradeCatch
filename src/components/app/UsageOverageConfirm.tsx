@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
+
 export type OverageRow = {
   metric: "smsSegmentsPerMonth" | "voiceMinutesPerMonth";
   status: "pending" | "confirmed" | "declined";
@@ -12,19 +16,24 @@ export type OverageRow = {
 /** Lets the owner confirm or decline billing for usage past the allowance. */
 export function UsageOverageConfirm({ rows }: { rows: OverageRow[] }) {
   const t = useTranslations("app.account");
+  const tFeedback = useTranslations("feedback");
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
+  // Which of the two buttons was pressed, so only that one shows the spinner.
+  const [deciding, setDeciding] = useState<"confirmed" | "declined" | null>(null);
   const [error, setError] = useState(false);
 
-  async function decide(
+  const decide = useGuarded(decideHandler);
+  async function decideHandler(
     metric: OverageRow["metric"],
     decision: "confirmed" | "declined",
   ) {
     if (busy) return;
     setBusy(metric);
+    setDeciding(decision);
     setError(false);
     try {
-      const res = await fetch("/api/billing/usage-overage", {
+      const res = await timedFetch("/api/billing/usage-overage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ metric, decision }),
@@ -38,6 +47,7 @@ export function UsageOverageConfirm({ rows }: { rows: OverageRow[] }) {
       setError(true);
     } finally {
       setBusy(null);
+      setDeciding(null);
     }
   }
 
@@ -62,18 +72,30 @@ export function UsageOverageConfirm({ rows }: { rows: OverageRow[] }) {
                 <button
                   type="button"
                   disabled={busy !== null}
+                  aria-busy={busy === row.metric && deciding === "confirmed"}
                   onClick={() => void decide(row.metric, "confirmed")}
                   className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
                 >
-                  {t("overageConfirm")}
+                  <BusyLabel
+                    pending={busy === row.metric && deciding === "confirmed"}
+                    busyLabel={tFeedback("saving")}
+                  >
+                    {t("overageConfirm")}
+                  </BusyLabel>
                 </button>
                 <button
                   type="button"
                   disabled={busy !== null}
+                  aria-busy={busy === row.metric && deciding === "declined"}
                   onClick={() => void decide(row.metric, "declined")}
                   className="rounded-md border border-navy/30 px-3 py-2 text-sm font-semibold text-navy disabled:opacity-60"
                 >
-                  {t("overageDecline")}
+                  <BusyLabel
+                    pending={busy === row.metric && deciding === "declined"}
+                    busyLabel={tFeedback("saving")}
+                  >
+                    {t("overageDecline")}
+                  </BusyLabel>
                 </button>
               </div>
             ) : null}

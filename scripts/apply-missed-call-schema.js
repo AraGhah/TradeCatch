@@ -90,6 +90,24 @@ async function main() {
       ["src", "product", "scheduling", "schema.sql"],
       "012_scheduling",
     );
+    // Later scheduling changes, each its own step. They used to be appended to
+    // scheduling/schema.sql under 012_scheduling, which a database that already
+    // had 012 recorded never received. One file per id, never appended to.
+    await applyFile(
+      client,
+      ["src", "product", "scheduling", "060-confirmation-recovery.sql"],
+      "060_scheduling_confirmation_recovery",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "scheduling", "061-calcom.sql"],
+      "061_scheduling_calcom",
+    );
+    await applyFile(
+      client,
+      ["src", "product", "scheduling", "062-google-sync.sql"],
+      "062_scheduling_google_sync",
+    );
     await applyFile(
       client,
       ["src", "product", "notifications", "schema.sql"],
@@ -240,6 +258,14 @@ async function main() {
       client,
       ["src", "product", "admin-console", "schema.sql"],
       "041_admin_console",
+    );
+    // Monitoring and administrator alerts (KAN-28): incident fingerprints and
+    // lifecycle columns, the alert outbox, probe results and request buckets.
+    // Additive on 014_reliability, so it must run after it.
+    await applyFile(
+      client,
+      ["src", "product", "reliability", "monitoring.sql"],
+      "063_monitoring_alerts",
     );
   } finally {
     await client.end();

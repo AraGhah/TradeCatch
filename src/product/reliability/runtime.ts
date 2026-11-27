@@ -1,11 +1,15 @@
 import { isE2eHarness } from "@/lib/config";
 import { providerProbes } from "./probes";
 import { scheduledJobFailures } from "./job-health";
-import { openTokens } from "@/product/scheduling/google";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { databaseFailureCode, getPgPool } from "@/lib/postgres-pool";
+import type { AlertPayload } from "./alerts";
+import { collectSignals, createWebsiteCheck, probeDatabase } from "./collectors";
+import { createAdminAlertNotifier } from "./notify";
 import { createPostgresReliabilityStore } from "./postgres-store";
 import { createReliabilityService, type Probe } from "./service";
 import { createMemoryReliabilityStore, type ReliabilityStore } from "./store";
+import { resolveThresholds } from "./thresholds";
+import { runMonitor } from "./watch";
 import type { ServiceName } from "./types";
 
 const globalForReliability = globalThis as unknown as {
@@ -36,14 +40,27 @@ export async function probe(): Promise<Probe[]> {
     },
   ];
   const url = process.env.DATABASE_URL?.trim();
+  const durableRequired =
+    (process.env.MISSED_CALL_DURABLE_STORE === "1" ||
+      process.env.SAAS_DURABLE_STORE === "1") &&
+    !isE2eHarness();
   let database = false;
   if (!url)
-    probes.push({
-      service: "database",
-      status: "unknown",
-      state: "unconfigured",
-      detail: "Database not configured",
-    });
+    probes.push(
+      durableRequired
+        ? {
+            service: "database",
+            status: "unavailable",
+            state: "unconfigured",
+            detail: "DATABASE_URL is not set although durable storage is required (NOT_CONFIGURED)",
+          }
+        : {
+            service: "database",
+            status: "unknown",
+            state: "unconfigured",
+            detail: "Database not configured",
+          },
+    );
   else {
     try {
       await getPgPool(url).query("SELECT 1");
@@ -54,12 +71,14 @@ export async function probe(): Promise<Probe[]> {
         state: "operational",
         detail: "SELECT 1 succeeded",
       });
-    } catch {
+    } catch (error) {
       probes.push({
         service: "database",
         status: "unavailable",
         state: "configured",
-        detail: "Required query failed",
+        // The code only (SQLSTATE such as 28P01, or a network/timeout name),
+        // never the driver message: it can quote the connection string.
+        detail: `Required query failed (${databaseFailureCode(error)})`,
       });
     }
   }
@@ -94,55 +113,42 @@ export async function probe(): Promise<Probe[]> {
   if (database && url) {
     const pool = getPgPool(url);
     try {
-      const r = await pool.query(
-        "SELECT calendar_id,token_ciphertext FROM tc_calendar_connections WHERE status='connected' AND token_ciphertext IS NOT NULL AND calendar_id IS NOT NULL ORDER BY updated_at DESC LIMIT 1",
+      // What the synchronization itself last recorded, not a fresh call with a
+      // stored token: counts only, never a business, an address or an event.
+      const r = await pool.query(`SELECT
+        count(*) FILTER (WHERE c.status = 'connected')::int AS connected,
+        count(*) FILTER (WHERE c.status = 'connected'
+          AND s.last_synced_at > now() - interval '30 minutes'
+          AND s.last_error IS NULL)::int AS healthy,
+        count(*) FILTER (WHERE c.status = 'expired')::int AS revoked,
+        max(s.last_synced_at) FILTER (WHERE s.last_error IS NULL) AS last_ok
+        FROM tc_calendar_connections c
+        LEFT JOIN tc_calendar_sync_state s ON s.organization_id = c.organization_id
+        WHERE c.token_ciphertext IS NOT NULL AND c.calendar_id IS NOT NULL`);
+      const links = await pool.query(
+        `SELECT count(*)::int AS failed FROM tc_gcal_event_links WHERE state = 'failed'`,
       );
-      if (r.rows[0] && !isE2eHarness()) {
-        const row = r.rows[0],
-          tokens = openTokens(row.token_ciphertext);
-        const response = await fetch(
-          "https://www.googleapis.com/calendar/v3/freeBusy",
-          {
-            method: "POST",
-            redirect: "error",
-            signal: AbortSignal.timeout(4000),
-            headers: {
-              authorization: `Bearer ${tokens.accessToken}`,
-              "content-type": "application/json",
-            },
-            body: JSON.stringify({
-              timeMin: new Date().toISOString(),
-              timeMax: new Date(Date.now() + 60_000).toISOString(),
-              items: [{ id: row.calendar_id }],
-            }),
-          },
-        );
-        const data = response.ok
-          ? ((await response.json()) as {
-              calendars?: Record<
-                string,
-                { busy?: unknown[]; errors?: unknown[] }
-              >;
-              account_sid?: string;
-              status?: string;
-            })
-          : null;
-        if (!response.ok) await response.body?.cancel();
-        const item = data?.calendars?.[row.calendar_id];
-        calendar.status =
-          response.ok && Array.isArray(item?.busy) && !item.errors?.length
-            ? "healthy"
-            : "degraded";
-        calendar.state =
-          calendar.status === "healthy" ? "operational" : "configured";
-        calendar.detail =
-          calendar.status === "healthy"
-            ? "One connected calendar availability read succeeded; other calendars and writes not verified"
-            : "Connected calendar availability check failed";
+      const row = r.rows[0];
+      const lagging = row.connected - row.healthy;
+      const failed = links.rows[0]?.failed ?? 0;
+      if (row.connected === 0) {
+        calendar.detail = "No business has Google Calendar connected";
+      } else if (lagging > 0 || failed > 0) {
+        calendar.status = "degraded";
+        calendar.detail = `${lagging} of ${row.connected} connected calendar(s) behind or failing; ${failed} change(s) not delivered`;
+      } else {
+        calendar.status = "healthy";
+        calendar.state = "operational";
+        if (row.last_ok) calendar.evidenceAt = new Date(row.last_ok).toISOString();
+        calendar.detail = `${row.connected} connected calendar(s) synchronized in the last 30 minutes${
+          row.revoked ? `; ${row.revoked} need to be reconnected by their owner` : ""
+        }`;
       }
-    } catch {
+    } catch (error) {
       calendar.status = "degraded";
-      calendar.detail = "Calendar check unavailable";
+      // The SQLSTATE says why: 42P01/42703 mean the Google Calendar tables or
+      // columns are not in this database (scheduling schema not applied).
+      calendar.detail = `Calendar check unavailable (${databaseFailureCode(error)})`;
     }
     try {
       const r = await pool.query(`SELECT
@@ -218,36 +224,85 @@ export async function probe(): Promise<Probe[]> {
   return probes;
 }
 
+function environmentName(): string {
+  return isE2eHarness()
+    ? "staging"
+    : process.env.TRADECATCH_ENV?.trim() ||
+        process.env.NODE_ENV ||
+        "development";
+}
+
+/** Sends one administrator alert email. Needs no database. */
+async function notifyAdmin(payload: AlertPayload): Promise<void> {
+  const { sendBusinessNotifyEmail } = await import("@/lib/business-notifications");
+  return createAdminAlertNotifier({
+    env: process.env,
+    send: sendBusinessNotifyEmail,
+  })(payload);
+}
+
 export function getReliabilityService() {
   return createReliabilityService({
     store: store(),
     now: () => new Date(),
-    environment: () =>
-      isE2eHarness()
-        ? "staging"
-        : process.env.TRADECATCH_ENV?.trim() ||
-          process.env.NODE_ENV ||
-          "development",
+    environment: environmentName,
     probe,
     version: () => process.env.TRADECATCH_VERSION?.trim() || "0.1.0",
-    async notifyAdmin(input) {
-      if (input.simulated) return;
-      const to =
-        process.env.ADMIN_ALERT_EMAIL?.trim() ||
-        process.env.RESEND_NOTIFY_EMAIL?.trim();
-      if (!to)
-        throw new Error("Administrator alert destination not configured");
-      const { sendBusinessNotifyEmail } =
-        await import("@/lib/business-notifications");
-      const result = await sendBusinessNotifyEmail({
-        toEmail: to,
-        subject: `TradeCatch incident: ${input.title}`,
-        title: input.title,
-        lines: [{ label: "Severity", value: input.severity }],
-      });
-      if (!result.sent) throw new Error("Administrator alert delivery failed");
-    },
+    thresholds: resolveThresholds(),
+    siteUrl: () => process.env.NEXT_PUBLIC_SITE_URL?.trim() || undefined,
+    notifyAdmin,
   });
+}
+
+/**
+ * One run of the once-a-minute monitor against the real system. The database
+ * checks and signal queries need PostgreSQL; without it (local development,
+ * the e2e harness) they are reported as "not measured" rather than faked, and
+ * the site is only probed when it has a real public address.
+ */
+export async function runMonitorOnce() {
+  const service = getReliabilityService();
+  const thresholds = service.thresholds;
+  const now = () => new Date();
+  const url = process.env.DATABASE_URL?.trim();
+  const durable =
+    process.env.MISSED_CALL_DURABLE_STORE === "1" ||
+    process.env.SAAS_DURABLE_STORE === "1";
+  const db = url && durable ? getPgPool(url) : undefined;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || undefined;
+  return runMonitor({
+    store: store(),
+    engine: {
+      report: service.reportIncident,
+      sweepRecovered: service.sweepRecovered,
+      recordPastOutage: service.recordPastOutage,
+    },
+    deliverAlerts: service.deliverAlerts,
+    checkWebsite: isE2eHarness()
+      ? undefined
+      : createWebsiteCheck({
+          siteUrl,
+          fetchImpl: fetch,
+          now,
+          timeoutMs: thresholds.website.probeTimeoutMs,
+        }),
+    checkDatabase: db ? () => probeDatabase(db, thresholds) : undefined,
+    collectSignals: db ? () => collectSignals(db, now(), thresholds) : undefined,
+    emergencyNotify: notifyAdmin,
+    // A durable store without a database URL means the Worker secret is gone:
+    // with the bundled .env fallback stripped (scripts/strip-bundled-env-secrets.js)
+    // nothing else would notice. The e2e harness runs without one on purpose.
+    databaseUnconfigured: durable && !url && !isE2eHarness(),
+    thresholds,
+    now,
+    siteUrl,
+    simulated: environmentName() !== "production",
+  });
+}
+
+/** The shared reliability store (PostgreSQL when durable storage is enabled, otherwise memory). */
+export function getReliabilityStore(): ReliabilityStore {
+  return store();
 }
 
 export function resetReliabilityRuntimeForTests() {

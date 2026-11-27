@@ -59,6 +59,54 @@ test.describe("pricing page", () => {
     expect(text).not.toMatch(/voice cloning|call transfer|free month/i);
   });
 
+  test("the two plan cards are level, and only Professional reaches the booking step", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1366, height: 900 });
+    await page.goto("/pricing");
+    await settle(page);
+    const cards = [planCard(page, "Essential"), planCard(page, "Professional")];
+    const boxes = await Promise.all(cards.map((card) => card.boundingBox()));
+    expect(Math.abs(boxes[0]!.height - boxes[1]!.height)).toBeLessThanOrEqual(1);
+    const buttons = await Promise.all(
+      cards.map((card, i) =>
+        card.getByRole("link", { name: i ? "Choose Professional" : "Choose Essential" }).boundingBox(),
+      ),
+    );
+    expect(Math.abs(buttons[0]!.y - buttons[1]!.y)).toBeLessThanOrEqual(1);
+    for (const button of buttons) expect(button!.y + button!.height).toBeLessThanOrEqual(900);
+
+    await expect(cards[0]!.locator('[data-testid="offer-rail"] [data-reached="false"]')).toHaveText(/Job booked.*Not included/);
+    await expect(cards[1]!.locator('[data-testid="offer-rail"] [data-reached="false"]')).toHaveCount(0);
+    // Each button carries its own plan into the demo request.
+    await expect(cards[0]!.getByRole("link", { name: "Choose Essential" })).toHaveAttribute("href", "/book-audit?plan=essential");
+    await expect(cards[1]!.getByRole("link", { name: "Choose Professional" })).toHaveAttribute("href", "/book-audit?plan=professional");
+  });
+
+  for (const path of ["/pricing", "/fr/tarifs", "/referral", "/fr/parrainage"]) {
+    test(`${path} never scrolls sideways, from phone to desktop`, async ({ page }) => {
+      for (const width of [320, 390, 768, 1366]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth),
+          `${width}px`,
+        ).toBeLessThanOrEqual(0);
+      }
+    });
+  }
+
+  for (const path of ["/referral", "/fr/parrainage"]) {
+    test(`${path} has no WCAG A/AA violations`, async ({ page }) => {
+      await page.goto(path);
+      const results = await new AxeBuilder({ page })
+        .include("main")
+        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+        .analyze();
+      expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((n) => n.target).join(" ")}`)).toEqual([]);
+    });
+  }
+
   test("French: the same prices in Québec format", async ({ page }) => {
     await page.goto("/fr/tarifs");
     await settle(page);

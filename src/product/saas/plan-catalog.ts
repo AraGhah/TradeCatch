@@ -24,6 +24,8 @@ import {
   PLAN_FEATURES,
   PLAN_IDS,
   PUBLIC_PLAN_IDS,
+  isPlanId,
+  isPublicPlanId,
   orgHasFeature,
   type FeatureId,
   type PlanId,
@@ -259,15 +261,11 @@ function round2(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export function isPlanId(value: unknown): value is PlanId {
-  return typeof value === "string" && (PLAN_IDS as readonly string[]).includes(value);
-}
+export { isPlanId };
 
 /** True for the two plans the public site sells. */
 export function isSoldPlan(value: unknown): value is PublicPlanId {
-  return (
-    typeof value === "string" && (PUBLIC_PLAN_IDS as readonly string[]).includes(value)
-  );
+  return isPublicPlanId(value);
 }
 
 /* -------------------------------------------------------------------------- */

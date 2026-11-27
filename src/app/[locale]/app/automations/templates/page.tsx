@@ -23,7 +23,7 @@ export default async function TemplatesPage({
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+        <h1 className="font-heading text-2xl font-extrabold text-navy">
           {t("templatesTitle")}
         </h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("templatesIntro")}</p>
@@ -45,7 +45,7 @@ export default async function TemplatesPage({
           language: t("fields.language"),
           variables: t("templateUi.variables"),
           preview: t("templateUi.preview"),
-          save: t("save"),
+          save: t("actions.save"),
           reset: t("templateUi.reset"),
           chars: t("templateUi.chars"),
           segments: t("templateUi.segments"),
@@ -58,6 +58,7 @@ export default async function TemplatesPage({
             too_long: t("templateUi.errors.too_long"),
             missing_business_identification: t(
               "templateUi.errors.missing_business_identification",
+              { example: "{{business_name}}" },
             ),
             missing_opt_out: t("templateUi.errors.missing_opt_out"),
             unknown_variable: t("templateUi.errors.unknown_variable"),

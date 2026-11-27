@@ -231,6 +231,8 @@ describe("which routes are offered cross-origin", () => {
       "/api/missed-call/ops/provision-organization",
       "/api/missed-call/escalations/tick",
       "/api/monitoring/tick",
+      "/api/monitoring/watch",
+      "/api/monitoring/ingest",
       "/api/gmail/sync/tick",
       "/api/book-audit/notifications/tick",
       "/api/app/tick",

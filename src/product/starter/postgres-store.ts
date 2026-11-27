@@ -1,5 +1,4 @@
-import type { Pool } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import { createPostgresPoolCache } from "@/lib/postgres-pool";
 import type { StarterStore } from "./memory-store";
 import type {
   InboxItem,
@@ -9,16 +8,7 @@ import type {
 } from "./types";
 import { createId } from "./types";
 
-const pools = new Map<string, Pool>();
-
-function getPool(url: string) {
-  let pool = pools.get(url);
-  if (!pool) {
-    pool = createPostgresPool({ connectionString: url, max: 5 });
-    pools.set(url, pool);
-  }
-  return pool;
-}
+const getPool = createPostgresPoolCache({ max: 5 });
 
 function mapWebsite(row: Record<string, unknown>): WebsiteLead {
   const payload =
@@ -105,21 +95,18 @@ export function createPostgresStarterStore(connectionString: string): StarterSto
 
   return {
     async createWebsiteLead(input) {
-      if (input.idempotencyKey) {
-        const existing = await pool.query(
-          `SELECT * FROM tc_website_leads
-           WHERE organization_id = $1 AND idempotency_key = $2`,
-          [input.organizationId, input.idempotencyKey],
-        );
-        if (existing.rows[0]) return mapWebsite(existing.rows[0]);
-      }
       const id = input.id ?? createId("wlead");
+      // A concurrent request with the same key loses the insert quietly and
+      // reads the winner's row instead of failing on the unique index.
       const { rows } = await pool.query(
         `INSERT INTO tc_website_leads (
            id, organization_id, source, name, email, phone_e164, message,
            service_requested, source_url, status, conversation_mode,
            idempotency_key, consent_at, consent_wording, opening_sms_sent
          ) VALUES ($1,$2,'website',$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         ON CONFLICT (organization_id, idempotency_key)
+           WHERE idempotency_key IS NOT NULL
+           DO NOTHING
          RETURNING *`,
         [
           id,
@@ -138,7 +125,13 @@ export function createPostgresStarterStore(connectionString: string): StarterSto
           input.openingSmsSent ?? false,
         ],
       );
-      return mapWebsite(rows[0]);
+      if (rows[0]) return mapWebsite(rows[0]);
+      const existing = await pool.query(
+        `SELECT * FROM tc_website_leads
+         WHERE organization_id = $1 AND idempotency_key = $2`,
+        [input.organizationId, input.idempotencyKey],
+      );
+      return mapWebsite(existing.rows[0]);
     },
 
     async getWebsiteLead(id, organizationId) {

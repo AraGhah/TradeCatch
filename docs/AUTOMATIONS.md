@@ -4,6 +4,9 @@ Applies to the Automations screens (`/app/automations/*`), the SMS automation mo
 (`src/product/sms-automation`), its API (`/api/businesses/{id}/automation*`), and the cron
 tick (`/api/automations/tick`).
 
+The words on these screens (English and French), the Active / Paused / Scheduled / Needs Attention
+status and how it is decided are described in [KAN-24-AUTOMATIONS-COPY.md](KAN-24-AUTOMATIONS-COPY.md).
+
 ## Root causes
 
 | # | Symptom | Cause | Fix |

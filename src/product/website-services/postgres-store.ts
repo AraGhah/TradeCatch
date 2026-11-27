@@ -1,6 +1,6 @@
 import type { Pool } from "pg";
 import { createId } from "@/lib/id";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type {
   WebsiteFocusArea,
   WebsiteNotificationStatus,
@@ -265,6 +265,14 @@ export function createPostgresWebsiteRequestStore(
          INSERT INTO tc_website_request_events (id, request_id, kind, note, created_at)
          SELECT $3, id, 'notified', $2, $4::timestamptz FROM upd`,
         [id, status, createId("wse"), at],
+      );
+    },
+
+    async recordCustomerNotification(id, note, at) {
+      await db.query(
+        `INSERT INTO tc_website_request_events (id, request_id, kind, note, created_at)
+         SELECT $1, id, 'notified', $3, $4::timestamptz FROM tc_website_requests WHERE id = $2`,
+        [createId("wse"), id, note.slice(0, 1000), at],
       );
     },
 

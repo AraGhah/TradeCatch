@@ -57,8 +57,10 @@ for (const locale of ["en", "fr"] as const) {
       exact: true,
     });
     await save.click();
+    // The save got no answer, so it must NOT claim "saved" or "failed": it says
+    // it cannot tell.
     await expect(form.getByRole("status")).toContainText(
-      fr ? "Impossible" : "Could not",
+      fr ? "ne pouvons pas savoir" : "cannot tell",
     );
     await expect(save).toBeEnabled();
     await expect(language).toHaveValue("fr");

@@ -143,6 +143,29 @@ export function requireTenantContext() {
   return resolveTenantContext();
 }
 
+export type TenantFeatureGate =
+  | { ok: true; ctx: TenantContext }
+  | { ok: false; response: Response };
+
+/**
+ * A signed-in, active tenant whose plan includes `feature`. Fails in the same
+ * order and with the same bodies routes always used: 401 (every auth failure,
+ * including an inactive organization) before 402 for a missing feature.
+ * Pinned by tests/unit/tenant-feature-gate.test.ts.
+ */
+export async function requireTenantFeature(
+  feature: FeatureId,
+): Promise<TenantFeatureGate> {
+  const auth = await requireTenantContext();
+  if (!auth.ok) {
+    return { ok: false, response: unauthorizedTenantResponse(auth.error) };
+  }
+  if (!tenantHasFeature(auth.ctx, feature)) {
+    return { ok: false, response: forbiddenFeatureResponse(feature) };
+  }
+  return { ok: true, ctx: auth.ctx };
+}
+
 /** Billing recovery only. Never use this helper to authorize product features. */
 export function requireBillingContext() {
   return resolveTenantContext(true);

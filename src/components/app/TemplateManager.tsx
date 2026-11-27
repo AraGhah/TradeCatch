@@ -5,8 +5,10 @@ import { useTranslations } from "next-intl";
 import { ApiError, requestJson } from "@/lib/client/request";
 import type { TemplateKey, TemplateRecord } from "@/product/sms-automation/types";
 import { TEMPLATE_VARIABLES } from "@/product/sms-automation/types";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { describeFailure, useFailureText, useKeyedSingleFlight } from "./automation-client";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
 type Preview = {
   body: string;
   errors: string[];
@@ -43,6 +45,7 @@ export function TemplateManager({
   };
 }) {
   const t = useTranslations("app.automations");
+  const tFeedback = useTranslations("feedback");
   const failureText = useFailureText();
   // The saved templates as the server last confirmed them. A save replaces its row here,
   // so going to another template and back shows what was saved, not the page's first load.
@@ -97,7 +100,8 @@ export function TemplateManager({
     edit(`${body}{{${name}}}`);
   }
 
-  async function runPreview() {
+  const runPreview = useGuarded(runPreviewHandler);
+  async function runPreviewHandler() {
     await flight.run("preview", async () => {
       setError(null);
       try {
@@ -113,9 +117,10 @@ export function TemplateManager({
     });
   }
 
-  async function save(reset = false) {
+  const save = useGuarded(saveHandler);
+  async function saveHandler(reset = false) {
     if (!current) return;
-    await flight.run("save", async () => {
+    await flight.run(reset ? "reset" : "save", async () => {
       setError(null);
       setMessage(null);
       const sent = draftKey(current.templateKey, current.locale);
@@ -143,7 +148,7 @@ export function TemplateManager({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
-      <ul className="rounded-md border border-navy/10 bg-white">
+      <ul className="rounded-xl border border-navy/10 bg-white">
         {keys.map((templateKey) => (
           <li key={templateKey}>
             <button
@@ -158,7 +163,7 @@ export function TemplateManager({
           </li>
         ))}
       </ul>
-      <div className="flex flex-col gap-3 rounded-md border border-navy/10 bg-white p-4">
+      <div className="flex flex-col gap-3 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <label className="text-xs text-navy/70">
           {labels.language}
           <select
@@ -178,12 +183,15 @@ export function TemplateManager({
               type="button"
               disabled={busy}
               onClick={() => insertVariable(name)}
-              className="rounded-md border border-navy/15 px-2 py-1 font-mono text-xs text-navy"
+              className="rounded-md border border-navy/15 px-2 py-1 text-xs text-navy"
             >
-              {`{{${name}}}`}
+              {t(`templateUi.variableNames.${name}`)}
             </button>
           ))}
         </div>
+        <p className="text-xs text-navy/60">
+          {t("templateUi.variablesHint", { example: "{{business_name}}" })}
+        </p>
         <textarea
           value={body}
           disabled={busy}
@@ -201,27 +209,33 @@ export function TemplateManager({
         </p>
         <div className="flex flex-wrap gap-2">
           <button type="button" disabled={busy} aria-busy={flight.isPending("preview")} onClick={() => void runPreview()} className="rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy disabled:opacity-60">
-            {labels.preview}
+            <BusyLabel pending={flight.isPending("preview")} busyLabel={tFeedback("working")}>{labels.preview}</BusyLabel>
           </button>
           <button type="button" disabled={busy} aria-busy={flight.isPending("save")} onClick={() => void save(false)} className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60">
-            {flight.isPending("save") ? t("saving") : labels.save}
+            <BusyLabel pending={flight.isPending("save")} busyLabel={t("actions.saving")}>{labels.save}</BusyLabel>
           </button>
-          <button type="button" disabled={busy} onClick={() => void save(true)} className="rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:opacity-60">
-            {labels.reset}
+          <button type="button" disabled={busy} aria-busy={flight.isPending("reset")} onClick={() => void save(true)} className="rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:opacity-60">
+            <BusyLabel pending={flight.isPending("reset")} busyLabel={t("actions.saving")}>{labels.reset}</BusyLabel>
           </button>
         </div>
         {preview ? (
           <div className="rounded-md bg-[var(--color-surface,#f7f5f1)] p-3 text-sm text-navy">
             <p>{preview.body}</p>
             <p className="mt-2 text-xs text-navy/60">
-              {labels.chars}: {preview.chars} · {labels.segments}: {preview.segments} ({preview.encoding})
+              {labels.chars}: {preview.chars} · {labels.segments}: {preview.segments}
             </p>
             {preview.segments > 1 ? (
               <p className="mt-1 text-xs text-navy">{labels.segmentWarning}</p>
             ) : null}
+            {preview.encoding === "ucs2" ? (
+              <p className="mt-1 text-xs text-navy/60">{t("templateUi.shorterParts")}</p>
+            ) : null}
             {preview.missing.length > 0 ? (
               <p className="mt-1 text-xs text-red-800">
-                {labels.missing}: {preview.missing.join(", ")}
+                {labels.missing}:{" "}
+                {preview.missing
+                  .map((name) => (t.has(`templateUi.variableNames.${name}`) ? t(`templateUi.variableNames.${name}`) : name))
+                  .join(", ")}
               </p>
             ) : null}
             {preview.errors.length > 0 ? (

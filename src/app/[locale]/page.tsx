@@ -7,9 +7,13 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { PricingPreview } from "@/components/PricingPreview";
 import { HomeMobile } from "@/components/home/HomeMobile";
-import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { LossRecovery } from "@/components/home/LossRecovery";
+import { SignalFlow } from "@/components/home/SignalFlow";
+import { lossRecoveryCopy } from "@/components/home/loss-recovery-copy";
+import { TradeCatchCinematicHero } from "@/components/ui/tradecatch-cinematic-hero";
 import { StoryDemos } from "@/components/StoryDemos";
-import { localizedAnchor } from "@/lib/anchors";
+import { WatchDemoButton } from "@/components/WatchDemoButton";
+import { schedulingVerified } from "@/lib/launch-flags";
 import { buildMetadata } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -22,21 +26,9 @@ export async function generateMetadata({
   return buildMetadata({
     locale,
     pathname: "/",
-    title: t("hero.headline"),
-    description: t("hero.subheadline"),
+    title: t("meta.title"),
+    description: t("meta.description"),
   });
-}
-
-function accentHeadline(headline: string, accentWord: string) {
-  const idx = headline.lastIndexOf(accentWord);
-  if (idx === -1) return headline;
-  return (
-    <>
-      {headline.slice(0, idx)}
-      <span className="text-orange">{accentWord}</span>
-      {headline.slice(idx + accentWord.length)}
-    </>
-  );
 }
 
 export default async function HomePage({
@@ -50,10 +42,6 @@ export default async function HomePage({
   const cta = await getTranslations("cta");
   const site = await getTranslations("site");
 
-  const tryHref = localizedAnchor(locale, "/receptionist#try-it");
-  const headline = t("hero.headline");
-  const accentWord = t("hero.accentWord");
-  const leakCards = t.raw("leaks.cards") as { title: string; body: string }[];
   const systemSteps = t.raw("system.steps") as {
     title: string;
     body: string;
@@ -61,67 +49,12 @@ export default async function HomePage({
 
   return (
     <>
+      {/* One hero for every width; the sections below differ by screen size. */}
+      <TradeCatchCinematicHero showScheduling={schedulingVerified()} />
+
       <HomeMobile locale={locale} />
 
       <div className="hidden lg:block">
-        {/* 1. Hero */}
-        <section
-          className="relative overflow-hidden bg-navy text-white"
-          style={{
-            padding: "clamp(40px, 5vw, 72px) 0 clamp(44px, 5.4vw, 80px)",
-          }}
-        >
-          <div
-            aria-hidden
-            className="bg-grid-ink pointer-events-none absolute inset-0"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute top-[-160px] right-[-120px] h-[520px] w-[520px] rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle, rgba(228,118,43,0.16), transparent 66%)",
-            }}
-          />
-          <Container className="relative text-center">
-            <div className="mx-auto max-w-[46rem]">
-              <span className="inline-flex items-center gap-[9px] text-[13px] font-medium text-white/78">
-                <span className="animate-tc-pulse block h-[7px] w-[7px] rounded-full bg-green" />
-                {t("hero.eyebrow")}
-              </span>
-
-              <h1 className="text-hero mt-5 text-white">
-                {accentHeadline(headline, accentWord)}
-              </h1>
-
-              <p className="text-lede mx-auto mt-4 max-w-[38em] text-white/72">
-                {t("hero.subheadline")}
-              </p>
-
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <CTAButton href="/book-audit" variant="ember" size="lg">
-                  {t("hero.ctaPrimary")}
-                </CTAButton>
-                <WatchDemoButton className="inline-flex items-center justify-center gap-2.5 rounded-[12px] border border-white/20 bg-transparent px-[26px] py-[17px] text-[16.5px] font-semibold tracking-[-0.01em] text-white transition-[translate,scale,background,border-color] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:border-white/40 hover:bg-white/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2">
-                  {cta("watchDemo")}
-                </WatchDemoButton>
-              </div>
-
-              <CTAButton
-                href={tryHref}
-                variant="link-ink"
-                className="mt-4 text-[15.5px]"
-              >
-                {t("hero.ctaTry")} <span aria-hidden>→</span>
-              </CTAButton>
-
-              <p className="mt-4 font-mono text-[11.5px] tracking-[0.1em] text-[rgba(255,255,255,0.7)] uppercase">
-                {t("hero.reassurance")}
-              </p>
-            </div>
-          </Container>
-        </section>
-
         {/* 2. The problem: where revenue leaks */}
         <section
           className="border-b border-[rgb(var(--ink-rgb)/0.08)] bg-surface"
@@ -135,35 +68,23 @@ export default async function HomePage({
               intro={t("leaks.intro")}
             />
 
-            <ol className="m-0 mt-[clamp(20px,2.4vw,28px)] grid list-none gap-5 p-0 lg:grid-cols-3">
-              {leakCards.map((card, i) => (
-                <li
-                  key={card.title}
-                  className="flex flex-col rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-paper p-6"
-                >
-                  <span className="font-mono text-[12px] font-semibold tracking-[0.08em] text-ember-text">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <h3 className="mt-2 font-heading text-[clamp(19px,1.7vw,22px)] leading-[1.2] font-bold tracking-[-0.028em] text-heading">
-                    {card.title}
-                  </h3>
-                  <p className="mt-2 text-[15px] leading-[1.6] text-muted">
-                    {card.body}
-                  </p>
-                </li>
-              ))}
-            </ol>
+            <LossRecovery copy={await lossRecoveryCopy()} />
 
             <div className="mt-6 flex justify-center">
-              <CTAButton href="/book-audit" variant="ember">
+              <CTAButton href="/book-audit" variant="ink">
                 {t("leaks.cta")}
               </CTAButton>
             </div>
           </Container>
         </section>
 
-        {/* 3. The system: how a missed call becomes a tracked outcome */}
-        <section className="bg-paper" style={{ padding: "var(--section-y) 0" }}>
+        {/* 3. The system: how a missed call becomes a tracked outcome. The
+            seam continues the problem section's line into the diagram. */}
+        <section
+          className="relative bg-paper"
+          style={{ padding: "var(--section-y) 0" }}
+        >
+          <span aria-hidden data-reveal="seam" className="tc-seam" />
           <Container>
             <div data-reveal>
               <SectionHeading
@@ -173,47 +94,32 @@ export default async function HomePage({
               />
             </div>
 
-            <div className="mt-[clamp(20px,2.4vw,28px)] grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {systemSteps.map((step, i) => (
-                <div
-                  key={step.title}
-                  data-reveal
-                  className={`rounded-[14px] p-5 ${
-                    i === systemSteps.length - 1
-                      ? "border border-orange/45 bg-[rgba(228,118,43,0.07)]"
-                      : "border border-[rgb(var(--ink-rgb)/0.1)] bg-surface"
-                  }`}
-                >
-                  <div className="flex items-baseline gap-3">
-                    <span className="font-mono text-[11px] font-semibold tracking-[0.08em] text-ember-text">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <h3 className="font-heading text-[18px] leading-[1.25] font-bold tracking-[-0.028em] text-heading">
-                      {step.title}
-                    </h3>
-                  </div>
-                  <p className="mt-1.5 text-[14.5px] leading-[1.55] text-muted">
-                    {step.body}
-                  </p>
-                </div>
-              ))}
+            <div className="mt-[clamp(20px,2.4vw,28px)]">
+              <SignalFlow
+                copy={{
+                  label: t("signalFlow.label"),
+                  nodes: t.raw("signalFlow.nodes"),
+                  packets: t.raw("signalFlow.packets"),
+                  stop: t("signalFlow.stop"),
+                  replay: t("signalFlow.replay"),
+                  steps: systemSteps,
+                }}
+              />
             </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-              <WatchDemoButton
-                className="inline-flex items-center justify-center gap-2.5 rounded-[11px] bg-orange px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-navy shadow-cta transition-[translate,scale,background] duration-200 hover:translate-y-[-2px] active:scale-[0.97] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
+              <WatchDemoButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-navy px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-white transition-colors hover:bg-navy-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange">
                 {t("proofExamples.demoCta")}
               </WatchDemoButton>
               <CTAButton href="/how-it-works" variant="secondary">
-                {t("system.cta")} →
+                {t("system.cta")}
               </CTAButton>
             </div>
           </Container>
         </section>
 
         {/* 3b. The one public demo video */}
-        <StoryDemos locale={locale} id="on-the-job" />
+        <StoryDemos locale={locale} id="on-the-job" simulator />
 
         {/* 4. The two plans (full detail lives on /pricing) */}
         <section
@@ -248,7 +154,6 @@ export default async function HomePage({
               headline={t("founder.headline")}
               name={t("founder.name")}
               role={t("founder.role")}
-              floatLabel={t("founder.floatLabel")}
               statement={t("founder.statement")}
               points={t.raw("founder.points")}
               workLabel={t("founder.workLabel")}
@@ -295,9 +200,14 @@ export default async function HomePage({
 
         {/* 7. Final call to action */}
         <section
-          className="bg-navy text-white"
+          className="relative isolate overflow-hidden bg-navy text-white"
           style={{ padding: "var(--section-y) 0" }}
         >
+          <span
+            aria-hidden
+            data-ambient
+            className="tc-ambient tc-ambient-ink"
+          />
           <Container className="text-center">
             <h2 className="font-heading text-[clamp(28px,3.2vw,40px)] font-extrabold leading-[1.08] tracking-[-0.04em] text-white">
               {t("mobile.finalCta.headline")}

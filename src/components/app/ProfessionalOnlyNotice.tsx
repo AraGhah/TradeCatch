@@ -9,8 +9,8 @@ import { Link } from "@/i18n/navigation";
 export async function ProfessionalOnlyNotice() {
   const t = await getTranslations("app.professionalOnly");
   return (
-    <section className="max-w-xl rounded-md border border-navy/10 bg-white px-5 py-5">
-      <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+    <section className="max-w-xl rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
+      <h1 className="font-heading text-2xl font-extrabold text-navy">
         {t("title")}
       </h1>
       <p className="mt-2 text-navy/70">{t("body")}</p>

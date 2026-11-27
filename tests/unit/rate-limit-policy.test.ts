@@ -190,13 +190,21 @@ describe("which routes the default limit covers", () => {
     // signature or a shared secret. /api/health is public on purpose.
     const proofs = [
       "assertTwilioWebhook",
+      "readVerifiedTwilioForm",
       "verifyStripeSignature",
       "authorizeGmailPush",
       "authorizeOpsRequest",
+      // ConversationRelay turns: HMAC from the VoiceRelaySession Durable Object.
+      "verifyRelayTurn",
+      "guardOpsRequest",
       "handleAgentRequest",
       // Bland: bearer BLAND_TOOL_SECRET (tools) / HMAC signature (webhook).
       "handleBlandRequest",
       "handleBlandWebhook",
+      // Google Calendar: receive() hashes the channel token and compares it,
+      // in constant time, with the one stored for that channel's business;
+      // anything else is "unauthorized" and the route answers 401.
+      "getGoogleSync().receive",
       "safeEqual",
       "/api/twilio/",
     ];

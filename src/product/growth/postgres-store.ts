@@ -1,5 +1,4 @@
-import type { Pool } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import { createPostgresPoolCache } from "@/lib/postgres-pool";
 import {
   defaultOrgSettings,
   type OrgSettings,
@@ -18,16 +17,7 @@ import {
   type TimelineEvent,
 } from "./memory-store";
 
-const pools = new Map<string, Pool>();
-
-function getPool(url: string) {
-  let pool = pools.get(url);
-  if (!pool) {
-    pool = createPostgresPool({ connectionString: url, max: 5 });
-    pools.set(url, pool);
-  }
-  return pool;
-}
+const getPool = createPostgresPoolCache({ max: 5 });
 
 function mapSettings(row: Record<string, unknown>): OrgSettings {
   const rawQs = row.qualification_json;
@@ -431,6 +421,7 @@ export function createPostgresGrowthStore(
            id, organization_id, customer_phone_e164, customer_name, status,
            appointment_id, scheduled_for
          ) VALUES ($1,$2,$3,$4,$5,$6,$7)
+         ON CONFLICT (id) DO NOTHING
          RETURNING *`,
         [
           id,
@@ -442,7 +433,13 @@ export function createPostgresGrowthStore(
           input.scheduledFor,
         ],
       );
-      return mapReview(rows[0]);
+      if (rows[0]) return mapReview(rows[0]);
+      const existing = await pool.query(
+        `SELECT * FROM tc_review_requests WHERE id = $1 AND organization_id = $2`,
+        [id, input.organizationId],
+      );
+      if (!existing.rows[0]) throw new Error("Review request id is taken.");
+      return mapReview(existing.rows[0]);
     },
 
     async listReviewRequests(organizationId) {

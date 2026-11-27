@@ -59,7 +59,10 @@ export function describeFailure(err: unknown): Failure {
         return { kind: "denied" };
       case "client":
         if (err.status === 409) return { kind: "conflict", detail };
-        return { kind: "invalid", detail, fields };
+        // A refused setting (400/422). Anything else a client error can be, such as a
+        // missing automation (404), is not something the person typed wrong.
+        if (err.status === 400 || err.status === 422) return { kind: "invalid", detail, fields };
+        return { kind: "generic" };
       case "invalid_response":
         return { kind: "unconfirmed" };
       default:
@@ -67,6 +70,17 @@ export function describeFailure(err: unknown): Failure {
     }
   }
   return { kind: "generic" };
+}
+
+/**
+ * Which explanation fits a 409. The server says why in English; this only picks the
+ * matching sentence in the person's language and never shows the server's words.
+ * Pinned against the server's real messages in tests/unit/automations-copy.test.ts.
+ */
+export function conflictKey(detail: string | undefined): "failures.turnOnFirst" | "failures.notAvailable" | "failures.conflict" {
+  if (detail && /before simulating|recovery first|follow-up first/i.test(detail)) return "failures.turnOnFirst";
+  if (detail && /not operational/i.test(detail)) return "failures.notAvailable";
+  return "failures.conflict";
 }
 
 /** The sentence for a failure, in the person's language. */
@@ -92,10 +106,12 @@ export function useFailureText() {
             .map((field) => (t.has(`invalid.${field}`) ? t(`invalid.${field}` as "invalid.initial_delay") : null))
             .filter((line): line is string => Boolean(line));
           if (named.length > 0) return named.join(" ");
-          return failure.detail ?? t("failures.generic");
+          // The server's own sentence is English and written for developers ("Invalid
+          // settings."), so it is never shown; the screen explains in the person's language.
+          return t("failures.invalid");
         }
         case "conflict":
-          return failure.detail ?? t("failures.generic");
+          return t(conflictKey(failure.detail));
         default:
           return t("failures.generic");
       }

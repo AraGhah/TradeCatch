@@ -1,11 +1,12 @@
 import { createId } from "@/lib/id";
 import type { Pool } from "pg";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type {
   CalcomBookingRecord,
   CalcomConnection,
   CalcomRoute,
 } from "./calcom/types";
+import type { EventLink, ExternalEvent, SyncState } from "./gcal/types";
 import type { SchedulingStore, StoredConnection } from "./store";
 import type {
   AvailabilityRules,
@@ -98,6 +99,47 @@ export function createPostgresSchedulingStore(
   connectionString: string,
 ): SchedulingStore {
   const pool = getPgPool(connectionString);
+
+  async function writeMirror(
+    client: { query: Pool["query"] },
+    organizationId: string,
+    calendarId: string,
+    events: ExternalEvent[],
+  ) {
+    for (const event of events) {
+      await client.query(
+        `INSERT INTO tc_gcal_events (
+          organization_id, calendar_id, event_id, start_at, end_at, all_day,
+          transparent, status, declined, informational, etag, appointment_id, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,now())
+        ON CONFLICT (organization_id, calendar_id, event_id) DO UPDATE SET
+          start_at = EXCLUDED.start_at,
+          end_at = EXCLUDED.end_at,
+          all_day = EXCLUDED.all_day,
+          transparent = EXCLUDED.transparent,
+          status = EXCLUDED.status,
+          declined = EXCLUDED.declined,
+          informational = EXCLUDED.informational,
+          etag = EXCLUDED.etag,
+          appointment_id = EXCLUDED.appointment_id,
+          updated_at = now()`,
+        [
+          organizationId,
+          calendarId,
+          event.eventId,
+          event.startAt,
+          event.endAt,
+          event.allDay,
+          event.transparent,
+          event.status,
+          event.declined,
+          event.informational,
+          event.etag ?? null,
+          event.appointmentId ?? null,
+        ],
+      );
+    }
+  }
 
   async function writeAppointment(
     row: ScheduleAppointment,
@@ -414,23 +456,39 @@ export function createPostgresSchedulingStore(
         lastError: row.last_error ?? undefined,
         tokenCiphertext: row.token_ciphertext ?? undefined,
         scope: row.scope ?? undefined,
+        eventDetail: row.event_detail === "standard" ? "standard" : "minimal",
+        cancelPolicy:
+          row.cancel_policy === "mark_canceled" ? "mark_canceled" : "remove",
+        connectedAt: isoOrUndefined(row.connected_at),
       } satisfies StoredConnection;
     },
     async saveConnection(row) {
       await pool.query(
         `INSERT INTO tc_calendar_connections (
           organization_id, provider, status, calendar_id, calendar_summary, account_email,
-          token_ciphertext, scope, expires_at, last_error, updated_at
-        ) VALUES ($1,'google',$2,$3,$4,$5,$6,$7,$8,$9,now())
+          token_ciphertext, scope, expires_at, last_error, event_detail, cancel_policy,
+          connected_at, updated_at
+        ) VALUES ($1,'google',$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,now())
         ON CONFLICT (organization_id) DO UPDATE SET
           status = EXCLUDED.status,
           calendar_id = EXCLUDED.calendar_id,
           calendar_summary = EXCLUDED.calendar_summary,
           account_email = EXCLUDED.account_email,
-          token_ciphertext = COALESCE(EXCLUDED.token_ciphertext, tc_calendar_connections.token_ciphertext),
-          scope = COALESCE(EXCLUDED.scope, tc_calendar_connections.scope),
+          -- A disconnected business keeps no credential. Every other save that
+          -- carries no token (a status change) keeps the one on file.
+          token_ciphertext = CASE
+            WHEN EXCLUDED.status = 'disconnected' THEN NULL
+            ELSE COALESCE(EXCLUDED.token_ciphertext, tc_calendar_connections.token_ciphertext)
+          END,
+          scope = CASE
+            WHEN EXCLUDED.status = 'disconnected' THEN NULL
+            ELSE COALESCE(EXCLUDED.scope, tc_calendar_connections.scope)
+          END,
           expires_at = EXCLUDED.expires_at,
           last_error = EXCLUDED.last_error,
+          event_detail = EXCLUDED.event_detail,
+          cancel_policy = EXCLUDED.cancel_policy,
+          connected_at = EXCLUDED.connected_at,
           updated_at = now()`,
         [
           row.organizationId,
@@ -442,6 +500,9 @@ export function createPostgresSchedulingStore(
           row.scope ?? null,
           row.expiresAt ?? null,
           row.lastError ?? null,
+          row.eventDetail ?? "minimal",
+          row.cancelPolicy ?? "remove",
+          row.connectedAt ?? null,
         ],
       );
     },
@@ -466,12 +527,6 @@ export function createPostgresSchedulingStore(
             ],
           );
         }
-        await client.query(
-          `INSERT INTO tc_calendar_sync_state (organization_id, last_synced_at)
-           VALUES ($1, now())
-           ON CONFLICT (organization_id) DO UPDATE SET last_synced_at = now()`,
-          [organizationId],
-        );
         await client.query("COMMIT");
       } catch (error) {
         await client.query("ROLLBACK");
@@ -490,6 +545,270 @@ export function createPostgresSchedulingStore(
         endAt: new Date(String(row.end_at)).toISOString(),
         externalId: row.external_id ? String(row.external_id) : undefined,
       }));
+    },
+
+    async getEventLink(organizationId, appointmentId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_gcal_event_links
+         WHERE organization_id = $1 AND appointment_id = $2`,
+        [organizationId, appointmentId],
+      );
+      return res.rows[0] ? eventLinkFrom(res.rows[0]) : null;
+    },
+    async findEventLinkByEventId(organizationId, calendarId, eventId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_gcal_event_links
+         WHERE organization_id = $1 AND calendar_id = $2 AND event_id = $3`,
+        [organizationId, calendarId, eventId],
+      );
+      return res.rows[0] ? eventLinkFrom(res.rows[0]) : null;
+    },
+    async saveEventLink(link) {
+      await pool.query(
+        `INSERT INTO tc_gcal_event_links (
+          organization_id, appointment_id, calendar_id, event_id, generation, state,
+          pending_op, attempts, next_attempt_at, last_error, last_synced_at, remote_etag,
+          synced_start_at, synced_end_at, external_start_at, external_end_at, updated_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,now())
+        ON CONFLICT (organization_id, appointment_id) DO UPDATE SET
+          calendar_id = EXCLUDED.calendar_id,
+          event_id = EXCLUDED.event_id,
+          generation = EXCLUDED.generation,
+          state = EXCLUDED.state,
+          pending_op = EXCLUDED.pending_op,
+          attempts = EXCLUDED.attempts,
+          next_attempt_at = EXCLUDED.next_attempt_at,
+          last_error = EXCLUDED.last_error,
+          last_synced_at = EXCLUDED.last_synced_at,
+          remote_etag = EXCLUDED.remote_etag,
+          synced_start_at = EXCLUDED.synced_start_at,
+          synced_end_at = EXCLUDED.synced_end_at,
+          external_start_at = EXCLUDED.external_start_at,
+          external_end_at = EXCLUDED.external_end_at,
+          updated_at = now()`,
+        [
+          link.organizationId,
+          link.appointmentId,
+          link.calendarId,
+          link.eventId,
+          link.generation,
+          link.state,
+          link.pendingOp,
+          link.attempts,
+          link.nextAttemptAt ?? null,
+          link.lastError ?? null,
+          link.lastSyncedAt ?? null,
+          link.remoteEtag ?? null,
+          link.syncedStartAt ?? null,
+          link.syncedEndAt ?? null,
+          link.externalStartAt ?? null,
+          link.externalEndAt ?? null,
+        ],
+      );
+    },
+    async listEventLinks(organizationId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_gcal_event_links WHERE organization_id = $1`,
+        [organizationId],
+      );
+      return res.rows.map(eventLinkFrom);
+    },
+    async claimEventLinks(query) {
+      const res = await pool.query(
+        `WITH due AS (
+           SELECT organization_id, appointment_id
+           FROM tc_gcal_event_links
+           WHERE state = 'pending' AND pending_op IS NOT NULL
+             AND (next_attempt_at IS NULL OR next_attempt_at <= $1)
+             AND ($2::text IS NULL OR organization_id = $2)
+             AND ($3::text IS NULL OR appointment_id = $3)
+           ORDER BY COALESCE(next_attempt_at, updated_at)
+           LIMIT $4
+           FOR UPDATE SKIP LOCKED
+         )
+         UPDATE tc_gcal_event_links l
+         SET next_attempt_at = $5
+         FROM due
+         WHERE l.organization_id = due.organization_id
+           AND l.appointment_id = due.appointment_id
+         RETURNING l.*`,
+        [
+          query.now.toISOString(),
+          query.organizationId ?? null,
+          query.appointmentId ?? null,
+          query.limit,
+          new Date(query.now.getTime() + query.leaseMs).toISOString(),
+        ],
+      );
+      return res.rows.map(eventLinkFrom);
+    },
+    async getSyncState(organizationId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_calendar_sync_state WHERE organization_id = $1`,
+        [organizationId],
+      );
+      return res.rows[0] ? syncStateFrom(res.rows[0]) : null;
+    },
+    async saveSyncState(state) {
+      await pool.query(
+        `INSERT INTO tc_calendar_sync_state (
+          organization_id, calendar_id, sync_token, channel_token_hash, channel_id,
+          resource_id, channel_expires_at, last_message_number, last_synced_at,
+          last_full_sync_at, last_error, consecutive_failures, next_attempt_at
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+        ON CONFLICT (organization_id) DO UPDATE SET
+          calendar_id = EXCLUDED.calendar_id,
+          sync_token = EXCLUDED.sync_token,
+          channel_token_hash = EXCLUDED.channel_token_hash,
+          channel_id = EXCLUDED.channel_id,
+          resource_id = EXCLUDED.resource_id,
+          channel_expires_at = EXCLUDED.channel_expires_at,
+          last_message_number = EXCLUDED.last_message_number,
+          last_synced_at = EXCLUDED.last_synced_at,
+          last_full_sync_at = EXCLUDED.last_full_sync_at,
+          last_error = EXCLUDED.last_error,
+          consecutive_failures = EXCLUDED.consecutive_failures,
+          next_attempt_at = EXCLUDED.next_attempt_at`,
+        [
+          state.organizationId,
+          state.calendarId ?? null,
+          state.syncToken ?? null,
+          state.channelTokenHash ?? null,
+          state.channelId ?? null,
+          state.resourceId ?? null,
+          state.channelExpiresAt ?? null,
+          state.lastMessageNumber ?? null,
+          state.lastSyncedAt ?? null,
+          state.lastFullSyncAt ?? null,
+          state.lastError ?? null,
+          state.consecutiveFailures,
+          state.nextAttemptAt ?? null,
+        ],
+      );
+    },
+    async findSyncStateByChannel(channelId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_calendar_sync_state WHERE channel_id = $1`,
+        [channelId],
+      );
+      return res.rows[0] ? syncStateFrom(res.rows[0]) : null;
+    },
+    async listSyncStates() {
+      const res = await pool.query(
+        `SELECT * FROM tc_calendar_sync_state WHERE calendar_id IS NOT NULL`,
+      );
+      return res.rows.map(syncStateFrom);
+    },
+    async tryLease(organizationId, now, until) {
+      const res = await pool.query(
+        `INSERT INTO tc_calendar_sync_state (organization_id, lease_until)
+         VALUES ($1, $3)
+         ON CONFLICT (organization_id) DO UPDATE SET lease_until = EXCLUDED.lease_until
+         WHERE tc_calendar_sync_state.lease_until IS NULL
+            OR tc_calendar_sync_state.lease_until <= $2
+         RETURNING organization_id`,
+        [organizationId, now.toISOString(), until.toISOString()],
+      );
+      return (res.rowCount ?? 0) > 0;
+    },
+    async releaseLease(organizationId) {
+      await pool.query(
+        `UPDATE tc_calendar_sync_state SET lease_until = NULL WHERE organization_id = $1`,
+        [organizationId],
+      );
+    },
+    async requestRerun(organizationId) {
+      await pool.query(
+        `INSERT INTO tc_calendar_sync_state (organization_id, rerun_requested)
+         VALUES ($1, true)
+         ON CONFLICT (organization_id) DO UPDATE SET rerun_requested = true`,
+        [organizationId],
+      );
+    },
+    async consumeRerun(organizationId) {
+      const res = await pool.query(
+        `UPDATE tc_calendar_sync_state SET rerun_requested = false
+         WHERE organization_id = $1 AND rerun_requested = true
+         RETURNING organization_id`,
+        [organizationId],
+      );
+      return (res.rowCount ?? 0) > 0;
+    },
+    async listMirror(organizationId, calendarId) {
+      const res = await pool.query(
+        `SELECT * FROM tc_gcal_events WHERE organization_id = $1 AND calendar_id = $2`,
+        [organizationId, calendarId],
+      );
+      return res.rows.map(mirrorFrom);
+    },
+    async replaceMirror(organizationId, calendarId, events) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          `DELETE FROM tc_gcal_events WHERE organization_id = $1`,
+          [organizationId],
+        );
+        await writeMirror(client, organizationId, calendarId, events);
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+    async applyMirror(organizationId, calendarId, upserts, deletedEventIds) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        if (deletedEventIds.length > 0) {
+          await client.query(
+            `DELETE FROM tc_gcal_events
+             WHERE organization_id = $1 AND calendar_id = $2 AND event_id = ANY($3::text[])`,
+            [organizationId, calendarId, deletedEventIds],
+          );
+        }
+        await writeMirror(client, organizationId, calendarId, upserts);
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
+    },
+    async clearGoogleSync(organizationId, now) {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query(
+          `DELETE FROM tc_gcal_events WHERE organization_id = $1`,
+          [organizationId],
+        );
+        await client.query(
+          `DELETE FROM tc_calendar_sync_state WHERE organization_id = $1`,
+          [organizationId],
+        );
+        await client.query(
+          `DELETE FROM tc_calendar_busy WHERE organization_id = $1`,
+          [organizationId],
+        );
+        await client.query(
+          `UPDATE tc_gcal_event_links
+           SET state = 'detached', pending_op = NULL, attempts = 0,
+               next_attempt_at = NULL, last_error = NULL,
+               external_start_at = NULL, external_end_at = NULL, updated_at = $2
+           WHERE organization_id = $1`,
+          [organizationId, now.toISOString()],
+        );
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+      } finally {
+        client.release();
+      }
     },
 
     async getCalcomConnection(organizationId) {
@@ -596,6 +915,71 @@ export function createPostgresSchedulingStore(
       );
       return res.rows.map(calcomBookingFrom);
     },
+  };
+}
+
+const isoOrUndefined = (value: unknown): string | undefined =>
+  value == null ? undefined : new Date(String(value)).toISOString();
+
+function eventLinkFrom(row: Record<string, unknown>): EventLink {
+  return {
+    organizationId: String(row.organization_id),
+    appointmentId: String(row.appointment_id),
+    calendarId: String(row.calendar_id),
+    eventId: row.event_id == null ? null : String(row.event_id),
+    generation: Number(row.generation),
+    state: String(row.state) as EventLink["state"],
+    pendingOp:
+      row.pending_op == null
+        ? null
+        : (String(row.pending_op) as EventLink["pendingOp"]),
+    attempts: Number(row.attempts),
+    nextAttemptAt: isoOrUndefined(row.next_attempt_at),
+    lastError: row.last_error == null ? undefined : String(row.last_error),
+    lastSyncedAt: isoOrUndefined(row.last_synced_at),
+    remoteEtag: row.remote_etag == null ? undefined : String(row.remote_etag),
+    syncedStartAt: isoOrUndefined(row.synced_start_at),
+    syncedEndAt: isoOrUndefined(row.synced_end_at),
+    externalStartAt: isoOrUndefined(row.external_start_at),
+    externalEndAt: isoOrUndefined(row.external_end_at),
+    updatedAt: isoOrUndefined(row.updated_at) ?? new Date().toISOString(),
+  };
+}
+
+function syncStateFrom(row: Record<string, unknown>): SyncState {
+  return {
+    organizationId: String(row.organization_id),
+    calendarId: row.calendar_id == null ? undefined : String(row.calendar_id),
+    syncToken: row.sync_token == null ? undefined : String(row.sync_token),
+    channelTokenHash:
+      row.channel_token_hash == null ? undefined : String(row.channel_token_hash),
+    channelId: row.channel_id == null ? undefined : String(row.channel_id),
+    resourceId: row.resource_id == null ? undefined : String(row.resource_id),
+    channelExpiresAt: isoOrUndefined(row.channel_expires_at),
+    lastMessageNumber:
+      row.last_message_number == null ? undefined : Number(row.last_message_number),
+    lastSyncedAt: isoOrUndefined(row.last_synced_at),
+    lastFullSyncAt: isoOrUndefined(row.last_full_sync_at),
+    lastError: row.last_error == null ? undefined : String(row.last_error),
+    consecutiveFailures: Number(row.consecutive_failures ?? 0),
+    nextAttemptAt: isoOrUndefined(row.next_attempt_at),
+    leaseUntil: isoOrUndefined(row.lease_until),
+  };
+}
+
+function mirrorFrom(row: Record<string, unknown>): ExternalEvent {
+  return {
+    eventId: String(row.event_id),
+    startAt: new Date(String(row.start_at)).toISOString(),
+    endAt: new Date(String(row.end_at)).toISOString(),
+    allDay: Boolean(row.all_day),
+    transparent: Boolean(row.transparent),
+    status: String(row.status) as ExternalEvent["status"],
+    declined: Boolean(row.declined),
+    informational: Boolean(row.informational),
+    etag: row.etag == null ? undefined : String(row.etag),
+    appointmentId:
+      row.appointment_id == null ? undefined : String(row.appointment_id),
   };
 }
 

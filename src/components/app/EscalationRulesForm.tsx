@@ -7,6 +7,11 @@ import type {
   EscalationRule,
 } from "@/product/notifications/types";
 
+import { RequestTimeoutError, timedFetch } from "@/lib/client/timed-fetch";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { LoadingRegion, SkeletonLines } from "@/components/ui/Skeleton";
+import { BusyLabel } from "@/components/ui/Spinner";
+
 const fieldClass = "mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5";
 
 export function EscalationRulesForm({
@@ -15,6 +20,7 @@ export function EscalationRulesForm({
   organizationId: string;
 }) {
   const t = useTranslations("app.alerts");
+  const tFeedback = useTranslations("feedback");
   const [rule, setRule] = useState<EscalationRule | null>(null);
   const [contacts, setContacts] = useState<EscalationContact[]>([]);
   const [loadFailed, setLoadFailed] = useState(false);
@@ -22,11 +28,58 @@ export function EscalationRulesForm({
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
+  // Declared before the early returns below (hooks run on every render), and
+  // guarded so a burst of clicks or a held Enter key sends one request.
+  const save = useGuarded(async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!rule) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await timedFetch(
+        `/api/businesses/${organizationId}/escalation-rules`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rule),
+        },
+      );
+      const data = (await response.json()) as {
+        rule?: EscalationRule;
+        code?: string;
+      };
+      if (!response.ok) {
+        const codes = [
+          "contactUnavailable",
+          "sameContact",
+          "smsNeedsVerifiedPhones",
+        ] as const;
+        const code = codes.find((candidate) => candidate === data.code);
+        setMessage(code ? t(code) : t("error"));
+      } else {
+        if (!data.rule) throw new Error("invalid_response");
+        setRule(data.rule);
+        setMessage(t("saved"));
+      }
+    } catch (cause) {
+      // No answer in time, or the connection dropped: it may have been saved.
+      setMessage(
+        cause instanceof RequestTimeoutError
+          ? tFeedback("errors.timeoutUnknown")
+          : cause instanceof TypeError
+            ? tFeedback("errors.networkUnknown")
+            : t("error"),
+      );
+    } finally {
+      setSaving(false);
+    }
+  });
+
   useEffect(() => {
     const controller = new AbortController();
     void (async () => {
       try {
-        const response = await fetch(
+        const response = await timedFetch(
           `/api/businesses/${organizationId}/escalation-rules`,
           { signal: controller.signal },
         );
@@ -64,9 +117,9 @@ export function EscalationRulesForm({
     );
   if (!rule)
     return (
-      <p role="status" className="text-sm text-navy/70">
-        {t("contactsLoading")}
-      </p>
+      <LoadingRegion label={t("contactsLoading")}>
+        <SkeletonLines lines={4} />
+      </LoadingRegion>
     );
 
   const contactSelect = (
@@ -105,43 +158,8 @@ export function EscalationRulesForm({
   return (
     <form
       className="grid max-w-lg gap-3"
-      onSubmit={async (event) => {
-        event.preventDefault();
-        if (saving) return;
-        setSaving(true);
-        setMessage(null);
-        try {
-          const response = await fetch(
-            `/api/businesses/${organizationId}/escalation-rules`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(rule),
-            },
-          );
-          const data = (await response.json()) as {
-            rule?: EscalationRule;
-            code?: string;
-          };
-          if (!response.ok) {
-            const codes = [
-              "contactUnavailable",
-              "sameContact",
-              "smsNeedsVerifiedPhones",
-            ] as const;
-            const code = codes.find((candidate) => candidate === data.code);
-            setMessage(code ? t(code) : t("error"));
-          } else {
-            if (!data.rule) throw new Error("invalid_response");
-            setRule(data.rule);
-            setMessage(t("saved"));
-          }
-        } catch {
-          setMessage(t("error"));
-        } finally {
-          setSaving(false);
-        }
-      }}
+      aria-busy={saving}
+      onSubmit={(event) => void save(event)}
     >
       <fieldset disabled={saving} className="grid gap-3">
         <label className="text-sm">
@@ -231,11 +249,11 @@ export function EscalationRulesForm({
           />{" "}
           {t("sms")}
         </label>
-        <button
+        <button aria-busy={saving}
           type="submit"
           className="w-fit rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white"
         >
-          {saving ? t("saving") : t("save")}
+          <BusyLabel pending={saving} busyLabel={t("saving")}>{t("save")}</BusyLabel>
         </button>
       </fieldset>
       {message ? (

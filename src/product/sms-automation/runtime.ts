@@ -43,6 +43,31 @@ export function resetAutomationRuntimeForTests() {
   delete globalForAutomation.__tradecatchSmsAutomation;
 }
 
+/**
+ * The number a business texts from, or null when it has none. A database error is not "no
+ * sender": it throws, and the job is tried again later instead of being failed for good
+ * because of a passing outage.
+ */
+async function lookupSmsFrom(organizationId: string): Promise<string | null> {
+  const org = await getSaasStore().getOrganization(organizationId);
+  if (!org?.missedCallClientId) return null;
+  const { store } = await ensureMissedCallReady();
+  const client = await store.getClient(org.missedCallClientId);
+  return client?.smsFromNumber ?? null;
+}
+
+/**
+ * For the Automations screen: can this business send a text at all? `null` means it could
+ * not be read just now (a passing outage), which the screen treats as "unknown", never as "no".
+ */
+export async function hasSmsSender(organizationId: string): Promise<boolean | null> {
+  try {
+    return Boolean(await lookupSmsFrom(organizationId));
+  } catch {
+    return null;
+  }
+}
+
 function deps(): AutomationDeps {
   const sms = createTwilioSmsPort();
   return {
@@ -63,15 +88,7 @@ function deps(): AutomationDeps {
         accountType: org.accountType,
       };
     },
-    async smsFrom(organizationId) {
-      const org = await getSaasStore().getOrganization(organizationId);
-      if (!org?.missedCallClientId) return null;
-      // A database error is not "no sender": it throws, and the job is tried again
-      // later instead of being failed for good because of a passing outage.
-      const { store } = await ensureMissedCallReady();
-      const client = await store.getClient(org.missedCallClientId);
-      return client?.smsFromNumber ?? null;
-    },
+    smsFrom: lookupSmsFrom,
     async isSuppressedElsewhere(organizationId, phoneE164) {
       const org = await getSaasStore().getOrganization(organizationId);
       if (!org?.missedCallClientId) return false;

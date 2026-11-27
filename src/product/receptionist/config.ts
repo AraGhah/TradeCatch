@@ -1,21 +1,14 @@
 import { z } from "zod";
+import { isValidTimeZone } from "@/lib/time-zone";
 import { isReservedDemoPhone } from "@/product/missed-call/client-config";
 import type { ClientAccount } from "@/product/missed-call/types";
 import { defaultUrgencyRubric } from "@/product/missed-call/urgency";
 import { receptionistNameOrDefault } from "./persona";
+import { ownerPhone, primaryPhone } from "./roster-phones";
 import type { ReceptionistConfig } from "./types";
 
 const E164_PHONE = /^\+[1-9]\d{7,14}$/;
 const HH_MM_TIME = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
-
-function isValidTimeZone(timezone: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format();
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 const e164 = z
   .string()
@@ -125,6 +118,9 @@ export const receptionistConfigSchema = z.object({
   transferHours: z.enum(["always", "business_hours"]).default("business_hours"),
   transferTimeoutSeconds: z.number().int().min(10).max(120).default(30),
   allowVoicemailOnly: z.boolean().default(false),
+  failedTransferAction: z
+    .enum(["take_message", "urgent_lead", "voicemail"])
+    .optional(),
   faqs: z
     .array(
       z.object({
@@ -272,21 +268,6 @@ export function validateReceptionistConfig(config: ReceptionistConfig): {
     ids.add(r.id);
   }
   return { ok: errors.length === 0, errors };
-}
-
-function ownerPhone(client: ClientAccount): string | undefined {
-  const owner = client.ownerTechnicianId
-    ? client.technicianRoster.find(
-        (t) => t.id === client.ownerTechnicianId && t.active,
-      )
-    : undefined;
-  return owner?.phone;
-}
-
-function primaryPhone(client: ClientAccount): string | undefined {
-  return client.technicianRoster.find(
-    (t) => t.id === client.mainTechnicianId && t.active,
-  )?.phone;
 }
 
 /**

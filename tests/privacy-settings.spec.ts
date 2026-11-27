@@ -99,7 +99,13 @@ test("a failed save shows an error, never success, marks the value unsaved, and 
     });
     await page.getByRole("checkbox", { name: "Record voicemails" }).check();
     await page.getByRole("button", { name: "Save privacy settings" }).click();
-    await expect(page.getByRole("alert").filter({ hasText: "Your changes were not saved" })).toBeVisible();
+    // A refusal from the server says "not saved"; a dropped connection cannot
+    // know, so it says it could not confirm (KAN-26: never claim more than is known).
+    await expect(
+      page.getByRole("alert").filter({
+        hasText: failure === "server" ? "Your changes were not saved" : "could not confirm that your changes were saved",
+      }),
+    ).toBeVisible();
     await expect(page.getByText("Privacy settings saved.")).toHaveCount(0);
     await expect(page.getByTestId("unsaved-callRecordingEnabled")).toBeVisible();
     await expect(page.getByRole("button", { name: "Save privacy settings" })).toBeEnabled();

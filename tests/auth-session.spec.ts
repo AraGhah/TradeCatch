@@ -443,7 +443,7 @@ test.describe("lost-email recovery, end to end", () => {
       });
       const { devToken } = (await reset.json()) as { devToken?: string };
       expect(devToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
-      await page.goto(`/set-password?token=${encodeURIComponent(devToken!)}`);
+      await page.goto(`/set-password#token=${encodeURIComponent(devToken!)}`);
       await waitForFormHydration(page);
       await page.getByLabel("New password").fill(PASSWORD);
       await page.getByLabel("Confirm password").fill(PASSWORD);

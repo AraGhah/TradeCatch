@@ -480,7 +480,7 @@ describe("SIM-03 receptionist routing is respected", () => {
 
   it("on a plan without live transfer a contractor-first setting cannot ring, and the simulation says so like a live call", async () => {
     const w = await business({ strategy: "human_first" });
-    await saas.updateOrganizationPlan(w.orgId, "professional");
+    await saas.updateOrganizationPlan(w.orgId, "essential");
     await getReceptionistRuntime().refresh(true);
     const sim = await simulateVia(w, "receptionist_response");
     assert.equal(sim.status, 200);
@@ -1124,7 +1124,7 @@ describe("SIM-11 invalid configuration and failures give clear errors", () => {
 
   it("a transfer scenario on a plan that has no live transfer", async () => {
     const w = await business({ strategy: "ai_first" });
-    await saas.updateOrganizationPlan(w.orgId, "professional");
+    await saas.updateOrganizationPlan(w.orgId, "essential");
     await getReceptionistRuntime().refresh(true);
     assertActionable(await simulateVia(w, "transfer_request"), 409, "no_transfer_destination");
   });
@@ -1240,7 +1240,8 @@ describe("SIM-12 the live test button never places a call", () => {
     const component = readFileSync(join(process.cwd(), "src/components/app/LivePhoneTesting.tsx"), "utf8");
     assert.doesNotMatch(component, /useEffect|useLayoutEffect|setInterval|setTimeout/);
     assert.doesNotMatch(component, /tel:|sms:|window\.location|navigator\./);
-    assert.equal((component.match(/\bfetch\(/g) ?? []).length, 1);
+    // KAN-26: the one request goes through timedFetch (it always ends), still exactly one call site.
+    assert.equal((component.match(/\b(?:timedFetch|fetch)\(/g) ?? []).length, 1);
     assert.equal((component.match(/\bpost\(/g) ?? []).length, 3, "the helper and its two callers");
     // Each request is made by a handler that only a button's onClick reaches.
     assert.match(component, /onClick=\{\(\) => void runSimulation\(\)\}/);

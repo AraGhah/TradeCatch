@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { usePathname } from "@/i18n/navigation";
+import { NavigationProgress } from "@/components/ui/NavigationProgress";
 
 /**
  * Hides marketing Header/Footer on the founder pilot shell (/login, /app/*)
@@ -29,6 +30,7 @@ export function MarketingChrome({
 
   return (
     <>
+      <NavigationProgress />
       <a
         href="#main-content"
         className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:top-3 focus-visible:left-3 focus-visible:z-[100] focus-visible:rounded-md focus-visible:bg-navy focus-visible:px-4 focus-visible:py-3 focus-visible:text-sm focus-visible:font-semibold focus-visible:text-white focus-visible:shadow-lg focus-visible:outline-2 focus-visible:outline-orange focus-visible:outline-offset-2"

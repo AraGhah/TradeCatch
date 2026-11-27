@@ -68,7 +68,7 @@ export function DashboardCharts({
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(16rem,0.8fr)]">
       <section className="rounded-xl border border-navy/10 bg-white p-4 shadow-[var(--shadow-card)]">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
+          <h2 className="font-heading text-base font-extrabold text-navy">
             {t("chart.title")}
           </h2>
           <div className="flex flex-wrap gap-2">
@@ -183,7 +183,7 @@ export function DashboardCharts({
       </section>
 
       <section className="rounded-xl border border-navy/10 bg-white p-4 shadow-[var(--shadow-card)]">
-        <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
+        <h2 className="font-heading text-base font-extrabold text-navy">
           {t("chart.outcomes")}
         </h2>
         {outcomes.length === 0 ? (

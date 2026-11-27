@@ -357,13 +357,22 @@ describe("Bland tenant resolution", () => {
     const professional = await resolveBlandTenant(BLAND_LINE, deps({ configs: [book], plan: "professional" }));
     assert.ok(professional.ok);
     assert.equal(professional.tenant.config.phoneBooking, true);
-    assert.equal(professional.tenant.config.fallbackTransferE164, undefined, "no live transfer on Professional");
-    assert.equal(professional.tenant.config.emergencyTransferE164, undefined);
+    assert.equal(professional.tenant.config.fallbackTransferE164, NORMAL, "Professional transfers live calls");
+    assert.deepEqual(professional.tenant.capabilities, voiceCapabilitiesForPlan("professional"));
+    assert.equal(professional.tenant.capabilities?.transfer, true);
+    assert.equal(professional.tenant.capabilities?.emergencyRouting, true);
     assert.equal(professional.tenant.organizationId, "org_1");
 
     const essential = await resolveBlandTenant(BLAND_LINE, deps({ configs: [book], plan: "essential" }));
     assert.ok(essential.ok);
     assert.equal(essential.tenant.config.phoneBooking, false, "booking needs Professional");
+    assert.equal(essential.tenant.config.fallbackTransferE164, undefined, "no live transfer on Essential");
+    assert.equal(essential.tenant.config.emergencyTransferE164, undefined);
+
+    const growth = await resolveBlandTenant(BLAND_LINE, deps({ configs: [book], plan: "growth" }));
+    assert.ok(growth.ok);
+    assert.equal(growth.tenant.config.phoneBooking, false, "legacy Growth keeps exactly what it was sold");
+    assert.equal(growth.tenant.config.fallbackTransferE164, undefined);
 
     const plus = await resolveBlandTenant(BLAND_LINE, deps({ configs: [book], plan: "receptionist" }));
     assert.ok(plus.ok);

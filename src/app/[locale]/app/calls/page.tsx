@@ -95,7 +95,7 @@ export default async function AppCallsPage({
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+          <h1 className="font-heading text-2xl font-extrabold text-navy">
             {t("calls.headline")}
           </h1>
           <p className="mt-2 text-navy/70">{t("calls.intro")}</p>
@@ -145,7 +145,7 @@ export default async function AppCallsPage({
           ).map((key) => (
             <div
               key={key}
-              className="rounded-md border border-navy/10 bg-white px-4 py-3"
+              className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
             >
               <dt className="text-xs text-navy/60">{t(`calls.stats.${key}`)}</dt>
               <dd className="m-0 mt-1 text-2xl font-extrabold text-navy">
@@ -161,7 +161,7 @@ export default async function AppCallsPage({
           {t("calls.empty")}
         </p>
       ) : (
-        <ul className="divide-y divide-navy/10 overflow-hidden rounded-md border border-navy/10 bg-white">
+        <ul className="divide-y divide-navy/10 overflow-hidden rounded-xl border border-navy/10 bg-white">
           {calls.map((call) => {
             const s = call.summary;
             const state = callState(call);

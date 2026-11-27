@@ -143,13 +143,19 @@ const ESSENTIAL_FEATURES = [
 ] as const satisfies readonly FeatureId[];
 
 /**
- * PROFESSIONAL: everything in Essential, plus appointments. The receptionist
- * checks availability and books during the call, and the dashboard gets the
- * calendar, reminders and appointment history.
+ * PROFESSIONAL: everything in Essential, plus appointments and live transfer.
+ * The receptionist checks availability and books during the call, and the
+ * dashboard gets the calendar, reminders and appointment history. It can also
+ * hand a live call to the business's own transfer number (and an emergency to
+ * the on-call line); both stay withheld until the `callTransfer` launch flag
+ * is on (LAUNCH_GATED_FEATURES below), so granting them here changes nothing
+ * until the operator switches transfer on.
  */
 const PROFESSIONAL_EXTRA = [
   "APPOINTMENT_BOOKING",
   "AI_PHONE_BOOKING",
+  "AI_CALL_TRANSFER",
+  "AI_EMERGENCY_ROUTING",
 ] as const satisfies readonly FeatureId[];
 
 /**
@@ -186,8 +192,10 @@ export function featureIsLaunchEnabled(feature: FeatureId): boolean {
   return flag === undefined || launchFlagEnabled(flag);
 }
 
-export function isPlanId(value: string): value is PlanId {
-  return (PLAN_IDS as readonly string[]).includes(value);
+export function isPlanId(value: unknown): value is PlanId {
+  return (
+    typeof value === "string" && (PLAN_IDS as readonly string[]).includes(value)
+  );
 }
 
 export function isFeatureId(value: string): value is FeatureId {

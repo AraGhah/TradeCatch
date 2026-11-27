@@ -2,7 +2,7 @@ import {
   isDurableMissedCallStoreConfigured,
   isLeadsWebhookConfigured,
 } from "@/lib/config";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import type { SalesLead } from "./types";
 
 function database() {

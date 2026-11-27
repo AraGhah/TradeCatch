@@ -341,6 +341,44 @@ export function createMemorySaasStore(): SaasStore {
       }
     },
 
+    // No await between the steps: nothing else can run in the middle.
+    async replacePasswordToken(token) {
+      for (const [hash, existing] of passwordTokens) {
+        if (
+          existing.userId === token.userId &&
+          existing.kind === token.kind &&
+          !existing.consumedAt
+        ) {
+          passwordTokens.set(hash, { ...existing, consumedAt: token.createdAt });
+        }
+      }
+      passwordTokens.set(token.tokenHash, { ...token });
+    },
+
+    async completePasswordReset({ tokenHash, atIso, passwordHash }) {
+      const token = passwordTokens.get(tokenHash);
+      if (!token || token.consumedAt) return null;
+      if (Date.parse(token.expiresAt) <= Date.parse(atIso)) return null;
+      const consumed = { ...token, consumedAt: atIso };
+      passwordTokens.set(tokenHash, consumed);
+      passwords.set(token.userId, {
+        userId: token.userId,
+        hash: passwordHash,
+        updatedAt: atIso,
+      });
+      for (const [hash, other] of passwordTokens) {
+        if (other.userId === token.userId && !other.consumedAt) {
+          passwordTokens.set(hash, { ...other, consumedAt: atIso });
+        }
+      }
+      for (const [id, session] of sessions) {
+        if (session.userId === token.userId && !session.revokedAt) {
+          sessions.set(id, { ...session, revokedAt: atIso });
+        }
+      }
+      return { ...consumed };
+    },
+
     async createRefreshToken(token) {
       refreshTokens.set(token.tokenHash, { ...token });
     },

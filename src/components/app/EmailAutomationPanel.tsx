@@ -9,13 +9,18 @@ import type {
   EmailTemplate,
 } from "@/product/email-automation/types";
 
+import { RequestTimeoutError, timedFetch } from "@/lib/client/timed-fetch";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { InlineStatus } from "@/components/ui/Spinner";
+import { APP_CARD } from "@/components/app/card-classes";
+
 const INPUT =
   "mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy";
 const BUTTON =
   "rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
 const BUTTON_GHOST =
   "rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy hover:bg-navy/5 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
-const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
+const CARD = APP_CARD;
 
 function parseVars(raw: string): Record<string, string> {
   const vars: Record<string, string> = {};
@@ -29,13 +34,15 @@ function parseVars(raw: string): Record<string, string> {
 }
 
 async function post(body: Record<string, unknown>) {
-  const res = await fetch("/api/app/email-automation", {
+  const res = await timedFetch("/api/app/email-automation", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
-  if (!res.ok) throw new Error((data?.error as string) || `HTTP ${res.status}`);
+  // The server's own wording when it gave one; otherwise empty, so the panel
+  // shows its translated message instead of a bare "HTTP 500".
+  if (!res.ok) throw new Error((data?.error as string) || "");
   return data ?? {};
 }
 
@@ -53,6 +60,7 @@ export function EmailAutomationPanel({
   enrollments: EmailEnrollment[];
 }) {
   const t = useTranslations("app");
+  const tFeedback = useTranslations("feedback");
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,21 +91,31 @@ export function EmailAutomationPanel({
   const fmt = (iso?: string) =>
     iso ? new Date(iso).toLocaleString(locale === "fr" ? "fr-CA" : "en-CA") : "—";
 
-  async function run(fn: () => Promise<void>) {
+  // Every form and button below goes through here, so this one guard means a
+  // double click (or Enter held down) can never send a second request.
+  const run = useGuarded(runHandler);
+  async function runHandler(fn: () => Promise<void>) {
     setBusy(true);
     setError(null);
     try {
       await fn();
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("email.error"));
+      setError(
+        err instanceof RequestTimeoutError
+          ? tFeedback("errors.timeoutUnknown")
+          : err instanceof TypeError
+            ? tFeedback("errors.networkUnknown")
+            : (err instanceof Error && err.message) || t("email.error"),
+      );
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6" aria-busy={busy}>
+      {busy ? <InlineStatus>{tFeedback("saving")}</InlineStatus> : null}
       {error ? (
         <p role="alert" className="rounded-md border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-800">
           {error}

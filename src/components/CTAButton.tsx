@@ -18,37 +18,46 @@ function isAnchorHref(href: unknown): href is AnchorHref {
   );
 }
 
-type Variant = "ember" | "ink" | "ghost" | "ghost-ink" | "outline" | "primary" | "secondary" | "link" | "link-ink";
+type Variant =
+  | "ember"
+  | "ink"
+  | "ghost"
+  | "ghost-ink"
+  | "outline"
+  | "primary"
+  | "secondary"
+  | "link"
+  | "link-ink";
 type Size = "sm" | "md" | "lg";
 
 const styles: Record<string, string> = {
   ember:
-    // Fixed dark text — the orange fill doesn't change between themes, so
-    // its text must not flip to the light dark-mode heading color either.
-    "bg-orange text-navy shadow-cta hover:bg-orange-dark hover:translate-y-[-2px]",
-  ink: "bg-navy text-white shadow-[0_8px_20px_-10px_rgb(var(--ink-rgb)/.6)] hover:bg-navy-light hover:translate-y-[-1px]",
+    "bg-orange text-navy shadow-cta hover:bg-orange-dark hover:translate-y-[-1px]",
+  ink: "bg-navy text-white shadow-[0_8px_20px_-10px_rgb(var(--ink-rgb)/.55)] hover:bg-navy-light hover:translate-y-[-1px]",
   ghost:
-    "bg-surface text-heading border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] hover:border-navy hover:translate-y-[-2px]",
+    "bg-surface text-heading border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] hover:border-navy hover:bg-paper",
   "ghost-ink":
     "bg-transparent text-white border border-white/20 hover:bg-white/[0.07] hover:border-white/40",
   outline:
-    "bg-transparent text-heading border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] w-full hover:bg-navy hover:text-white hover:border-navy",
+    "bg-transparent text-heading border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] hover:bg-navy hover:text-white hover:border-navy",
   link: "bg-transparent text-ember-text underline underline-offset-[6px] decoration-[1.5px] decoration-ember-text/40 hover:text-heading hover:decoration-navy px-0 py-0 rounded-none",
-  // Text link for navy sections: ember underline, ember on hover.
   "link-ink":
     "bg-transparent text-white underline underline-offset-[6px] decoration-[1.5px] decoration-orange hover:text-orange px-0 py-0 rounded-none",
 };
 
 const sizes: Record<Size, string> = {
-  sm: "px-5 py-3 text-[14px] rounded-[10px]",
-  md: "px-[22px] py-[14px] text-[15px] rounded-[11px]",
-  lg: "px-[26px] py-[17px] text-[16.5px] rounded-[12px]",
+  sm: "min-h-11 px-5 py-3 text-[14px] rounded-[var(--radius-md)]",
+  md: "min-h-12 px-[22px] py-[14px] text-[15px] rounded-[var(--radius-md)]",
+  lg: "min-h-12 px-[26px] py-[17px] text-[16px] rounded-[var(--radius-md)]",
 };
 
+/**
+ * Map aliases to concrete styles. `secondary` = bordered surface button.
+ * `ghost` stays bordered (not a text link) — use `link` / `link-ink` for text.
+ */
 function resolveVariant(variant: Variant): string {
   if (variant === "primary") return "ember";
   if (variant === "secondary") return "ghost";
-  if (variant === "ghost") return "link";
   return variant;
 }
 
@@ -59,7 +68,6 @@ export function CTAButton({
   className = "",
   children,
   onClick,
-  showDot = false,
   ...props
 }: {
   href: ComponentProps<typeof Link>["href"] | AnchorHref;
@@ -67,28 +75,14 @@ export function CTAButton({
   size?: Size;
   className?: string;
   children: React.ReactNode;
-  showDot?: boolean;
 } & Omit<ComponentProps<typeof Link>, "href">) {
   const styleKey = resolveVariant(variant);
   const isLink = styleKey === "link" || styleKey === "link-ink";
-  const withDot = showDot;
 
-  const classes = `inline-flex items-center justify-center gap-2.5 font-semibold tracking-[-0.01em] transition-[translate,scale,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 ${styles[styleKey]} ${isLink ? "" : `${sizes[size]} active:scale-[0.97]`} ${className}`;
+  // tc-cta: a short press (scale) and a nudge of a trailing arrow on hover.
+  const classes = `tc-cta inline-flex items-center justify-center gap-2 font-semibold tracking-[-0.01em] transition-[translate,scale,background,border-color,box-shadow,color] duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange ${styles[styleKey]} ${isLink ? "" : `${sizes[size]} active:scale-[0.98]`} ${className}`;
 
-  const content = (
-    <>
-      {children}
-      {withDot ? (
-        <span
-          aria-hidden
-          className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-orange"
-        />
-      ) : null}
-    </>
-  );
-
-  // Anchor links bypass the typed locale pathnames, which cannot carry a hash:
-  // callers pass an already localized path (see localizedAnchor) or "#id".
+  // Anchor links bypass typed locale pathnames (see localizedAnchor).
   if (isAnchorHref(href)) {
     return (
       <NextLink
@@ -100,7 +94,7 @@ export function CTAButton({
         className={classes}
         {...(props as Omit<ComponentProps<typeof NextLink>, "href">)}
       >
-        {content}
+        {children}
       </NextLink>
     );
   }
@@ -115,7 +109,7 @@ export function CTAButton({
       className={classes}
       {...props}
     >
-      {content}
+      {children}
     </Link>
   );
 }

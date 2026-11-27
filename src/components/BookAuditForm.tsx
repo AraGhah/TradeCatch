@@ -26,6 +26,9 @@ import {
 import { randomUUID } from "@/lib/id";
 import { referralCodeForThisVisit } from "@/lib/referral-capture";
 
+import { BusyLabel } from "@/components/ui/Spinner";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 const DRAFT_STORAGE_KEY = "tradecatch-book-audit-draft";
 const PLAN_INTEREST_VALUES = ["essential", "professional"] as const;
 
@@ -416,7 +419,8 @@ export function BookAuditForm() {
     goNext();
   }
 
-  async function submitAudit() {
+  const submitAudit = useGuarded(submitAuditHandler);
+  async function submitAuditHandler() {
     if (!turnstileToken || !answers.serviceConsent) return;
     if (submitInFlight.current) return;
     submitInFlight.current = true;
@@ -453,7 +457,7 @@ export function BookAuditForm() {
     }
     setSubmitStatus("submitting");
     try {
-      const response = await fetch("/api/book-audit", {
+      const response = await timedFetch("/api/book-audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -547,10 +551,9 @@ export function BookAuditForm() {
   const satisfied = isStepSatisfied(step);
   const showEnterHint =
     (kind === "text" || kind === "name") && satisfied && !onReview;
+  const submitting = onReview && submitStatus === "submitting";
   const nextLabel = onReview
-    ? submitStatus === "submitting"
-      ? t("wizard.submitting")
-      : t("wizard.submit")
+    ? t("wizard.submit")
     : kind === "consent"
       ? t("wizard.reviewAnswers")
       : t("wizard.continue");
@@ -753,16 +756,18 @@ export function BookAuditForm() {
           <div className="mt-[clamp(32px,4vw,48px)] flex flex-wrap items-center gap-3.5">
             <button
               type="submit"
-              disabled={onReview && submitStatus === "submitting"}
+              disabled={submitting}
               aria-disabled={!satisfied || undefined}
-              aria-busy={onReview && submitStatus === "submitting"}
+              aria-busy={submitting}
               className={
                 satisfied
                   ? "inline-flex items-center gap-3 rounded-[12px] bg-orange px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
                   : "inline-flex cursor-pointer items-center gap-3 rounded-[12px] bg-[rgb(var(--ink-rgb)/0.08)] px-7 py-[17px] text-[16.5px] font-bold tracking-[-0.015em] text-muted"
               }
             >
-              {nextLabel}
+              <BusyLabel pending={submitting} busyLabel={t("wizard.submitting")}>
+                {nextLabel}
+              </BusyLabel>
               {satisfied && !onReview ? (
                 <span aria-hidden className="font-mono text-[15px]">
                   →
@@ -791,7 +796,7 @@ export function BookAuditForm() {
             ) : null}
 
             {showEnterHint ? (
-              <span className="font-mono text-[11px] tracking-[0.08em] text-muted uppercase">
+              <span className="text-[12px] font-medium text-muted">
                 {t("wizard.enterHint")}
               </span>
             ) : null}
@@ -822,13 +827,11 @@ function ProgressBar({
         <div className="flex items-center justify-between gap-4">
           <p
             id={summaryId}
-            className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase"
+            className="m-0 text-[12px] font-medium text-muted"
           >
             {counterText}
           </p>
-          <p className="m-0 font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
-            {timeLeft}
-          </p>
+          <p className="m-0 text-[12px] font-medium text-muted">{timeLeft}</p>
         </div>
         <div
           role="progressbar"
@@ -1218,9 +1221,7 @@ function UnderlineField({
   return (
     <label className="flex flex-col gap-2.5">
       {label ? (
-        <span className="font-mono text-[11px] tracking-[0.12em] text-muted uppercase">
-          {label}
-        </span>
+        <span className="text-[12.5px] font-medium text-muted">{label}</span>
       ) : null}
       <input
         id={name ? `audit-field-${name}` : undefined}
@@ -1263,9 +1264,7 @@ function ReviewRow({
 }) {
   return (
     <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] items-baseline gap-2 gap-x-5 border-b border-[rgb(var(--ink-rgb)/0.1)] py-[15px]">
-      <p className="m-0 font-mono text-[11px] tracking-[0.1em] text-muted uppercase">
-        {label}
-      </p>
+      <p className="m-0 text-[12.5px] font-medium text-muted">{label}</p>
       <div className="flex items-baseline justify-between gap-4">
         <p className="m-0 text-[16.5px] leading-[1.5] text-text">{value}</p>
         <button

@@ -42,14 +42,17 @@ function stripSecretKeys(env) {
     throw new Error("Bundled env mode must be a plain object.");
   const cleaned = {};
   let removed = 0;
+  /** Names (never values) of removed keys that held a value. */
+  const removedKeys = [];
   for (const [key, value] of Object.entries(env)) {
     if (isSecretKey(key)) {
       removed += 1;
+      if (typeof value === "string" && value.trim() !== "") removedKeys.push(key);
       continue;
     }
     cleaned[key] = value;
   }
-  return { cleaned, removed };
+  return { cleaned, removed, removedKeys };
 }
 
 /**
@@ -61,6 +64,8 @@ function stripBundledEnvSecrets(source) {
     throw new Error("Bundled env module source must be a string.");
   let removed = 0;
   let modes = 0;
+  // The Worker reads the "production" fallbacks unless NEXTJS_ENV says otherwise.
+  let removedKeys = [];
   const rewritten = source.replace(EXPORT_LINE, (_match, mode, json) => {
     modes += 1;
     let parsed;
@@ -71,8 +76,9 @@ function stripBundledEnvSecrets(source) {
         `Release blocked: could not parse bundled env for mode "${mode}".`,
       );
     }
-    const { cleaned, removed: count } = stripSecretKeys(parsed);
+    const { cleaned, removed: count, removedKeys: names } = stripSecretKeys(parsed);
     removed += count;
+    if (mode === "production") removedKeys = names;
     return `export const ${mode} = ${JSON.stringify(cleaned)};`;
   });
   if (modes !== 3)
@@ -83,7 +89,11 @@ function stripBundledEnvSecrets(source) {
     throw new Error(
       "Release blocked: a database URL with a password remains in the OpenNext env fallback after stripping secrets.",
     );
-  return { source: rewritten.endsWith("\n") ? rewritten : `${rewritten}\n`, removed };
+  return {
+    source: rewritten.endsWith("\n") ? rewritten : `${rewritten}\n`,
+    removed,
+    removedKeys,
+  };
 }
 
 function stripBundledEnvFile(
@@ -99,14 +109,14 @@ function stripBundledEnvFile(
       `Release blocked: missing OpenNext env module at ${filePath}. Run the Cloudflare build first.`,
     );
   }
-  const { source, removed } = stripBundledEnvSecrets(original);
+  const { source, removed, removedKeys } = stripBundledEnvSecrets(original);
   if (source !== original) writeFile(resolved, source, "utf8");
   if (removed > 0)
     console.log(
       `Removed ${removed} secret key(s) from OpenNext env fallback (${filePath}). Use Worker secrets for DATABASE_URL and credentials.`,
     );
   else console.log(`OpenNext env fallback has no secret keys (${filePath}).`);
-  return { removed, path: resolved };
+  return { removed, removedKeys, path: resolved };
 }
 
 if (require.main === module) {

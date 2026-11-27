@@ -1,11 +1,6 @@
 import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 import { getGrowthStore } from "@/product/growth";
 import { defaultProfileSettings } from "@/product/receptionist/profile";
@@ -13,15 +8,6 @@ import { saveOwnerSettings } from "@/product/receptionist/profile-service";
 import { getReceptionistRuntime } from "@/product/receptionist/runtime";
 
 export const dynamic = "force-dynamic";
-
-async function context() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return { error: unauthorizedTenantResponse(auth.error) };
-  if (!tenantHasFeature(auth.ctx, "MISSED_CALL_RECOVERY")) {
-    return { error: forbiddenFeatureResponse("MISSED_CALL_RECOVERY") };
-  }
-  return { ctx: auth.ctx };
-}
 
 async function getClient(clientId: string) {
   try {
@@ -34,8 +20,8 @@ async function getClient(clientId: string) {
 
 /** Current profile + what the receptionist falls back to when a field is blank. */
 export async function GET() {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("MISSED_CALL_RECOVERY");
+  if (!c.ok) return c.response;
   const { organization } = c.ctx;
 
   const profile = await getReceptionistRuntime().profileStore.getProfile(
@@ -63,8 +49,8 @@ export async function GET() {
 
 /** Owner / admin saves content settings. Number + activation stay with ops. */
 export async function PUT(request: NextRequest) {
-  const c = await context();
-  if ("error" in c) return c.error;
+  const c = await requireTenantFeature("MISSED_CALL_RECOVERY");
+  if (!c.ok) return c.response;
   const { organization, membership, user } = c.ctx;
 
   let body: unknown;

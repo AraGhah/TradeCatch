@@ -152,8 +152,8 @@ export function applyManualCorrection(
     note,
   };
   lead.manualCorrections.push(correction);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (lead as any)[field] = newValue;
+  // `field` and `newValue` were both checked against LEAD_PATCH_FIELDS above.
+  (lead as unknown as Record<string, unknown>)[field] = newValue;
   lead.updatedAt = correction.at;
   return true;
 }

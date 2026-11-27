@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 type Service = {
   id?: string;
   name: string;
@@ -33,7 +36,7 @@ export function ServiceTypeEditor({
 
   const load = useCallback(
     () =>
-      fetch(`/api/businesses/${organizationId}/service-types`, {
+      timedFetch(`/api/businesses/${organizationId}/service-types`, {
         cache: "no-store",
       })
         .then(async (response) => {
@@ -54,13 +57,14 @@ export function ServiceTypeEditor({
     void load();
   }, [load]);
 
-  async function save(service: Service, isNew = false) {
+  const save = useGuarded(saveHandler);
+  async function saveHandler(service: Service, isNew = false) {
     if (busy) return;
     setBusy(true);
     setMessage(null);
     setMessageError(false);
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/service-types`,
         {
           method: "POST",
@@ -113,7 +117,7 @@ export function ServiceTypeEditor({
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm text-navy/70">{t("servicesIntro")}</p>
-      <ul className="divide-y divide-navy/10 rounded-md border border-navy/10 bg-white">
+      <ul className="divide-y divide-navy/10 rounded-xl border border-navy/10 bg-white">
         {services.map((service) => (
           <li
             key={service.id}
@@ -156,7 +160,7 @@ export function ServiceTypeEditor({
         ))}
       </ul>
       <form
-        className="grid gap-2 rounded-md border border-navy/10 bg-white p-4"
+        className="grid gap-2 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
         onSubmit={(event) => {
           event.preventDefault();
           void save(draft, true);
@@ -210,12 +214,12 @@ export function ServiceTypeEditor({
           <option value="manual_approval">{t("manual")}</option>
           <option value="escalate">{t("escalate")}</option>
         </select>
-        <button
+        <button aria-busy={busy}
           type="submit"
           disabled={busy}
           className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
         >
-          {busy ? t("saving") : t("save")}
+          <BusyLabel pending={busy} busyLabel={t("saving")}>{t("save")}</BusyLabel>
         </button>
       </form>
       {message ? (

@@ -17,7 +17,7 @@ export function HelpArticleBody({
   return (
     <article className="flex max-w-2xl flex-col gap-3">
       <h1
-        className={`font-[family-name:var(--font-archivo)] font-extrabold text-heading ${large ? "text-3xl" : "text-2xl"}`}
+        className={`font-heading font-extrabold text-heading ${large ? "text-3xl" : "text-2xl"}`}
       >
         {title}
       </h1>

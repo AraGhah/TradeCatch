@@ -13,6 +13,7 @@ import {
   livekitSipUri,
   type LivekitSipTarget,
 } from "@/product/telephony/livekit-handoff";
+import { escapeXml } from "@/lib/escape";
 import { toSpeechMarkup } from "./speech-style";
 import type {
   ReceptionistLanguage,
@@ -70,14 +71,8 @@ export function gatherTuning(env: Record<string, string | undefined> = process.e
   };
 }
 
-export function escapeXml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
+/** Re-exported: conversation-relay.ts builds TwiML with the same escape. */
+export { escapeXml };
 
 export type TwimlCallbackUrl = (
   step: VoiceCallbackStep,

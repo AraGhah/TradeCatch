@@ -1,10 +1,12 @@
 import http from "node:http";
 import { testGoogleJwks } from "./gmail-push-token";
-import type { FakeGoogle } from "./fake-google";
 
-/** Serves a FakeGoogle over real HTTP so a separate Next.js process can call it. */
+/** Anything that answers a Request like Google would (the Gmail or the Calendar fake). */
+export type FakeGoogleHandler = { handle(request: Request): Promise<Response> };
+
+/** Serves a fake Google over real HTTP so a separate Next.js process can call it. */
 export function startFakeGoogleServer(
-  google: FakeGoogle,
+  google: FakeGoogleHandler,
   port: number,
 ): Promise<http.Server> {
   const server = http.createServer(async (req, res) => {

@@ -6,6 +6,9 @@ import { VoiceRecorder } from "@/components/app/VoiceRecorder";
 import { Link } from "@/i18n/navigation";
 import type { VoiceStatusView } from "@/product/receptionist/custom-voice/model";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { BusyLabel } from "@/components/ui/Spinner";
 const API = "/api/app/receptionist/voice";
 
 const KNOWN_ERRORS = new Set([
@@ -93,9 +96,9 @@ export function ReceptionistVoicePanel({
 
   async function request(
     path: string,
-    init: RequestInit,
+    init: RequestInit & { timeoutMs?: number },
   ): Promise<{ ok: boolean; data: Record<string, unknown> | null; res: Response }> {
-    const res = await fetch(`${API}${path}`, { credentials: "same-origin", ...init });
+    const res = await timedFetch(`${API}${path}`, { credentials: "same-origin", ...init });
     const data = res.headers.get("content-type")?.includes("application/json")
       ? ((await res.json().catch(() => null)) as Record<string, unknown> | null)
       : null;
@@ -112,7 +115,11 @@ export function ReceptionistVoicePanel({
     if (next) setStatus(next);
   }
 
-  async function run(
+  // Every voice action goes through here, so this one guard means a burst of
+  // clicks starts one operation. It resolves to true/false; undefined (a dropped
+  // second call) is treated as "nothing happened" by the callers.
+  const run = useGuarded(runHandler);
+  async function runHandler(
     kind: Exclude<Busy, null>,
     work: () => Promise<{ ok: boolean; data: Record<string, unknown> | null } | void>,
     success?: string,
@@ -161,7 +168,9 @@ export function ReceptionistVoicePanel({
         form.set("signerName", signer.trim());
         form.set("challengeToken", challenge.token);
         form.set("sample", sample, sample.name);
-        const result = await request("/clone", { method: "POST", body: form });
+        // Uploading a recording and cloning a voice is slow: it gets a long
+        // but finite wait, so the spinner still always ends.
+        const result = await request("/clone", { method: "POST", body: form, timeoutMs: 120_000 });
         if (result.ok) applyStatus(result.data);
         return result;
       },
@@ -182,8 +191,9 @@ export function ReceptionistVoicePanel({
 
   async function preview() {
     await run("preview", async () => {
-      const res = await fetch(`${API}/preview`, {
+      const res = await timedFetch(`${API}/preview`, {
         method: "POST",
+        timeoutMs: 90_000,
         credentials: "same-origin",
         ...json({ locale }),
       });
@@ -378,8 +388,8 @@ export function ReceptionistVoicePanel({
           <p className="text-sm text-navy/70">{t("preview.intro")}</p>
           {canManage ? (
             <div className="flex flex-wrap items-center gap-3">
-              <button type="button" className={PRIMARY} disabled={disabled} onClick={preview}>
-                {busy === "preview" ? t("preview.loading") : t("preview.button")}
+              <button type="button" className={PRIMARY} disabled={disabled} aria-busy={busy === "preview"} onClick={preview}>
+                <BusyLabel pending={busy === "preview"} busyLabel={t("preview.loading")}>{t("preview.button")}</BusyLabel>
               </button>
               <button
                 type="button"
@@ -596,13 +606,13 @@ function DeleteControls({
       <div className="flex flex-col gap-3" role="group" aria-label={t(`remove.${confirm}.confirmTitle`)}>
         <p className="text-sm font-semibold text-navy">{t(`remove.${confirm}.confirmBody`)}</p>
         <div className="flex flex-wrap gap-3">
-          <button
+          <button aria-busy={working}
             type="button"
             className={DANGER}
             disabled={working}
             onClick={() => remove(confirm)}
           >
-            {working ? t("remove.working") : t(`remove.${confirm}.confirmButton`)}
+            <BusyLabel pending={working} busyLabel={t("remove.working")}>{t(`remove.${confirm}.confirmButton`)}</BusyLabel>
           </button>
           <button
             type="button"

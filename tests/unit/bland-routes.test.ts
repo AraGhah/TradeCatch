@@ -223,6 +223,26 @@ describe("Bland tool endpoints", () => {
       const res = await get({ to: LINE_B, call_id: "call-bland-b1", language: "{{language}}" });
       assert.equal(res.status, 200);
       assert.equal(((await json(res)).config as Json).language, "en");
+      // A long variable name (longer than any language code) is ignored the same
+      // way, never refused: Bland sends "{{conversation_language}}" when the
+      // pathway has not set it yet, and a 400 left the agent stuck mid-booking.
+      const long = await get({ to: LINE_B, call_id: "call-bland-b2", language: "{{conversation_language}}" });
+      assert.equal(long.status, 200);
+      assert.equal(((await json(long)).config as Json).language, "en");
+      const posted = await post(report, { ...A, call_id: "call-bland-a9", language: "{{conversation_language}}", issue: "x" });
+      assert.equal(posted.status, 200);
+    });
+
+    it("a pathway variable that is not set yet (JSON null) counts as not given, never as a bad request", async () => {
+      // Bland fills "{{caller_name}}" with JSON null while the variable is unset:
+      // a 400 here left the agent stuck before it could offer any time.
+      const nulls = { caller_name: null, unit: null, city: null, province: null, postal_code: null, street: null, callback_phone: null, use_caller_id: null, language: null };
+      const saved = await post(details, { ...A, call_id: "call-bland-a10", ...nulls, caller_name: "Marie Tremblay" });
+      assert.equal(saved.status, 200);
+      const session = await getReceptionistRuntime().store.getSessionByCallSid("bl_call-bland-a10");
+      assert.equal(session?.slots.callerName, "Marie Tremblay");
+      const noted = await post(report, { ...A, call_id: "call-bland-a10", intent: null, issue: null, message: "Rappel svp", emergency: null });
+      assert.equal(noted.status, 200);
     });
 
     it("the same call id cannot be used on another business", async () => {

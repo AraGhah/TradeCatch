@@ -3,17 +3,21 @@
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 export function ApiKeyCreateButton() {
   const t = useTranslations("app");
   const [token, setToken] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function createKey() {
+  const createKey = useGuarded(createKeyHandler);
+  async function createKeyHandler() {
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/app/api-keys", {
+      const res = await timedFetch("/api/app/api-keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ label: "website" }),
@@ -34,13 +38,13 @@ export function ApiKeyCreateButton() {
 
   return (
     <div className="mt-4 space-y-3">
-      <button
+      <button aria-busy={busy}
         type="button"
         disabled={busy}
         onClick={() => void createKey()}
         className="rounded-md border border-navy/20 bg-white px-3 py-2 text-sm font-medium text-navy hover:bg-navy/5 disabled:opacity-50"
       >
-        {busy ? t("settings.apiKeyCreating") : t("settings.apiKeyCreate")}
+        <BusyLabel pending={busy} busyLabel={t("settings.apiKeyCreating")}>{t("settings.apiKeyCreate")}</BusyLabel>
       </button>
       {error ? (
         <p className="text-sm text-red-700" role="alert">

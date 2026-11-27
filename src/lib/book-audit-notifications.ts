@@ -12,7 +12,7 @@ import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
 import { randomUUID } from "@/lib/id";
 import { forwardLeadToCrm } from "@/lib/leads";
 import type { BookAuditContactPayload } from "@/lib/validation/book-audit";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 
 export type BookAuditNotificationChannel =
   "notify_email" | "customer_email" | "crm" | "admin_alert";

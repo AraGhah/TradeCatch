@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 type Technician = {
   id: string;
   name: string;
@@ -26,11 +29,12 @@ export function TeamCalendarsPanel({
   const activeCount = technicians.filter((tech) => tech.active).length;
   const atLimit = activeCount >= calendarLimit;
 
-  async function upsert(body: Record<string, unknown>) {
+  const upsert = useGuarded(upsertHandler);
+  async function upsertHandler(body: Record<string, unknown>) {
     setSaving(true);
     setError(null);
     try {
-      const response = await fetch("/api/app/team/technicians", {
+      const response = await timedFetch("/api/app/team/technicians", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -118,13 +122,13 @@ export function TeamCalendarsPanel({
             disabled={atLimit || saving}
             className="min-w-[160px] flex-1 rounded-md border border-navy/20 px-2 py-1.5 text-sm"
           />
-          <button
+          <button aria-busy={saving}
             type="button"
             disabled={atLimit || saving || !name.trim()}
             onClick={() => void addTechnician()}
             className="rounded-md bg-navy px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {saving ? t("saving") : t("add")}
+            <BusyLabel pending={saving} busyLabel={t("saving")}>{t("add")}</BusyLabel>
           </button>
         </div>
       </div>

@@ -288,7 +288,10 @@ businesses,health,me,overview,payments,subscriptions}/**`,
 `src/components/admin/console/*`, the five new pages under
 `src/app/[locale]/admin/`, `tests/admin-dashboard.spec.ts`,
 `tests/support/admin-session.ts`, `tests/unit/admin-*.test.ts`,
-`tests/unit/support/pglite-db.ts`.
+`tests/unit/support/pglite-db.ts` (also runs the same suites on a real local
+PostgreSQL when `TEST_DATABASE_URL` is set), `tests/unit/e2e-harness-isolation.test.ts`,
+`tests/unit/admin-real-postgres.test.ts` and `tests/unit/admin-stripe-mock.test.ts`
+(the last two skip unless `TEST_DATABASE_URL` / `STRIPE_MOCK_URL` is set).
 
 Modified: `src/lib/admin-auth.ts`, `src/lib/rate-limit-policy.ts`,
 `src/product/saas/platform-admin.ts`, `src/product/security/*`,
@@ -303,7 +306,8 @@ Modified: `src/lib/admin-auth.ts`, `src/lib/rate-limit-policy.ts`,
 `src/app/[locale]/admin/{page,billing/page,businesses/page,businesses/[id]/page}.tsx`,
 `src/i18n/routing.ts`, `src/messages/{en,fr}.json`,
 `scripts/apply-missed-call-schema.js`, `docs/RATE_LIMITS.md`,
-`playwright.config.ts` (synthetic administrators only).
+`playwright.config.ts` (synthetic administrators, and `__NEXT_PROCESSED_ENV` so
+the e2e server reads no `.env*` file).
 
 **Changed after the first build, outside the admin console** (price change and
 the accessibility failures the wider browser run turned up; each is small):
@@ -403,21 +407,67 @@ not set out to touch; each was reproduced, fixed and re-run:
   provisions the same account twice and fails on that line. Stability was checked
   with separate runs instead.
 
+## Verified against real services (local, throwaway), 2026-11-19
+
+A second pass ran the work against a real PostgreSQL server and Stripe's own API
+validator instead of fakes. All of it was local: a Docker container bound to
+`127.0.0.1`, deleted afterwards. Nothing touched production, staging or a real
+Stripe account.
+
+| Check | Result |
+| --- | --- |
+| Browser harness isolation | In a checkout that has a production `.env.local`, all 18 admin tests failed at setup (500, `Refusing in-memory SaaS store when SAAS_REQUIRE_DURABLE=1`) and about 58 further production names (live provider keys among them) reached the test server. `playwright.config.ts` now sets `__NEXT_PROCESSED_ENV`, so `next build` and `next start` read no `.env*` file. With a synthetic `.env.local` containing `SAAS_REQUIRE_DURABLE=1` planted, the admin spec passes 18 of 18, and also 18 of 18 in the clean worktree. `tests/unit/e2e-harness-isolation.test.ts` proves it on the installed Next (with a control showing the leak is real) and fails loudly if an upgrade changes it. |
+| Real migration chain | PostgreSQL 16.14. `npm run db:schema` applied all 41 files, twice, exit 0 both times. Migration `041_admin_console` recorded; the four tables and both append-only triggers exist. |
+| Store suites on the real server | `admin-audit`, `admin-billing`, `admin-website-requests`: 72 of 72 on PGlite and on PostgreSQL 16 (3 runs, 75 tests with the lock tests below). Run them on a real server with `TEST_DATABASE_URL` (a local host only; each test gets its own database, dropped afterwards). |
+| Advisory lock across connections | `tests/unit/admin-real-postgres.test.ts`: six connections asking for one key run one at a time; different keys run together; the lock is released when the work throws; `pg_locks` shows none left. |
+| Two live app instances, one database | The production build on ports 3101 and 3102, ops secret. All 7 admin GET APIs 200, health `SELECT 1 succeeded`. Eight concurrent creates for one owner email, split across both instances: one 201, seven 409. In the database: 1 organization, 1 user, 1 membership; audit rows 1 `admin_business_created`, 7 `admin_business_create_refused`, actor `ops:...`; an `UPDATE` on the audit table is rejected by the trigger. No errors in either server log. |
+| Requests against Stripe's API specification | `stripe-mock` 0.206.0 (Stripe's official validator) with the console's real client: every subscription status filter, every invoice filter, pagination cursors, price and subscription retrieval, the plan-switch request (`items[0][id]`, `items[0][price]`, `proration_behavior=none`, `payment_behavior=error_if_incomplete`) and resume are accepted. A bad enum value, a misspelled parameter and a non-boolean are each refused with 400, so the test can fail. `tests/unit/admin-stripe-mock.test.ts`, opt in with `STRIPE_MOCK_URL`. |
+
+Full default unit suite after these changes: 3169 tests, 3165 pass, 3 skipped,
+1 fail (the known `call-activity` Vancouver time-zone test on this Node).
+`tsc --noEmit` and lint are clean.
+
+**Things the real server showed that the in-process one hid**
+
+- The `tests/unit/admin-website-requests.test.ts` double-click test assumed that
+  of two concurrent approvals exactly one succeeds. Over 200 runs on PostgreSQL,
+  199 gave one success and one `conflict`, and 1 gave two successes: the second
+  call read the request after the first committed, saw it already approved, and
+  succeeded as a no-op. The history held exactly one `approved` row in all 200.
+  The test now asserts that invariant (one history row; a loser is refused with
+  `conflict`) instead of the scheduling assumption. **Residual:** in that rare
+  race the route audits both calls from the `before` it read earlier, so one
+  extra `admin_website_request_updated` audit row can repeat a change the other
+  call made. State and history are never duplicated. Not changed; fixing it means
+  letting `adminUpdate` report "nothing changed" so the route can skip the row.
+- `withAdvisoryLock` takes a session-level `pg_advisory_lock`, which waits without
+  limit, although its comment says a lock that cannot be taken never blocks the
+  work forever. It is correct on a direct connection (tested above). It is only
+  safe if `DATABASE_URL` is a direct or **session-mode** connection (port 5432).
+  Through a transaction-mode pooler (Supabase port 6543, PgBouncer transaction
+  mode, Cloudflare Hyperdrive) the lock and its unlock can land on different
+  backends, so a lock can stay held and later creates for that email would wait.
+  Which one production uses was not checked. Decide before deploying whether to
+  confirm session mode or switch to `pg_try_advisory_lock` with a time limit.
+
 ## What was not verified
 
 These need an environment this session did not have. Until they are checked,
 KAN-20 should not be called complete.
 
-- **Real Stripe.** No call was made to Stripe, test mode or live. Every Stripe
-  path ran against an injected fake. ADM-06, ADM-07 and ADM-10 are UI-contract
-  tests in the browser. The catalog now says `$249.99` / `$349.99`, which is what
-  the live Stripe prices were reported to be; that was taken from earlier notes
-  and not re-read from Stripe in this session, so the first real look at the
-  Subscriptions page will confirm whether Stripe and the catalog agree.
-- **Real PostgreSQL.** The SQL runs on PGlite (in-process Postgres), and the
-  browser tests use in-memory stores (`DATABASE_URL=""`). Migration `041` has not
-  been run on staging or production. The advisory lock on a real connection pool
-  and concurrent writers from several connections were not exercised.
+- **Real Stripe.** No call was made to a real Stripe account, test mode or live.
+  `stripe-mock` (above) proves the requests are valid against Stripe's
+  specification; it returns canned fixtures, so it cannot show real prices,
+  statuses, invoices, proration or what a plan change does to a real customer.
+  ADM-06, ADM-07 and ADM-10 remain UI-contract tests in the browser. The catalog
+  says `$249.99` / `$349.99`, which is what the live Stripe prices were reported
+  to be; that came from earlier notes and was not re-read from Stripe, so the
+  first real look at the Subscriptions page will confirm whether they agree. The
+  webhook signature path was not exercised against Stripe either.
+- **Production-like PostgreSQL.** The migration, the stores and the lock now run
+  on a real PostgreSQL 16 (above), but a plain local server: no SSL, not the
+  production pooler or connection mode, and migration `041` has not been run on
+  staging or production.
 - **Real email.** The `sent` and `failed` notification states are unit-tested
   with an injected sender. No message was delivered; the browser test shows
   `Not configured`.

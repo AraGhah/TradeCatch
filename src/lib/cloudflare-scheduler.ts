@@ -2,9 +2,13 @@ export const CLOUDFLARE_CRON_ROUTES = {
   "* * * * *": [
     "/api/book-audit/notifications/tick",
     "/api/gmail/sync/tick",
+    "/api/calendar/google/tick",
     "/api/missed-call/escalations/tick",
     "/api/automations/tick",
     "/api/notifications/tick",
+    // Listed last, but run alongside the jobs above (see MONITOR_ROUTES): it
+    // neither waits behind them nor delays them.
+    "/api/monitoring/watch",
   ],
   "*/15 * * * *": [
     "/api/starter/quotes/tick",
@@ -21,6 +25,20 @@ export const CLOUDFLARE_CRON_ROUTES = {
 } as const;
 
 export type TradeCatchCron = keyof typeof CLOUDFLARE_CRON_ROUTES;
+
+/**
+ * Monitoring routes start at the same time as their schedule's other jobs
+ * instead of after them. Queued last, the monitor only ran once every job
+ * before it had finished. During the 2026-11-24 database outage, when each of
+ * those jobs had to wait on a database that did not answer, the database-down
+ * emails went out 39 to 59 seconds after the cron fired, and only 14 of the
+ * outage's ~71 fifteen-minute windows got one. The other jobs stay sequential
+ * (one connection at a time); the monitor adds at most one more.
+ */
+export const MONITOR_ROUTES: ReadonlySet<string> = new Set([
+  "/api/monitoring/watch",
+  "/api/monitoring/tick",
+]);
 
 export type SchedulerEnvironment = {
   MONITORING_SECRET?: string;
@@ -42,7 +60,7 @@ export function cloudflareSchedulerSecret(
   )
     throw new Error("Unknown scheduled route");
   const dedicated =
-    path === "/api/monitoring/tick"
+    path === "/api/monitoring/tick" || path === "/api/monitoring/watch"
       ? env.MONITORING_SECRET
       : path === "/api/book-audit/notifications/tick"
         ? env.BOOK_AUDIT_RETRY_SECRET
@@ -84,13 +102,11 @@ export async function runCloudflareCron(
     throw new Error(`Unsupported Cloudflare cron expression: ${cron}`);
   }
 
-  const completed: string[] = [];
-  const failures: Error[] = [];
+  // One outcome per route, by position, so `completed` and the failure list
+  // keep the schedule's order however the concurrent monitor interleaves.
+  const outcomes: (Error | null)[] = routes.map(() => null);
 
-  // Run sequentially so one scheduled event does not create a burst of
-  // concurrent database connections. A failure never prevents later jobs in
-  // the same schedule from running.
-  for (const path of routes) {
+  async function runRoute(path: string, index: number): Promise<void> {
     let stage = "invoke";
     let httpStatus: number | undefined;
     try {
@@ -120,7 +136,6 @@ export async function runCloudflareCron(
       }
       stage = "observation";
       await observe?.(path, true);
-      completed.push(path);
     } catch (error) {
       // Retain route/stage evidence without copying provider bodies, request
       // headers, credentials, or arbitrary error messages into monitoring logs.
@@ -144,14 +159,29 @@ export async function runCloudflareCron(
           }),
         );
       }
-      failures.push(
+      outcomes[index] =
         error instanceof Error
           ? error
-          : new Error(`${path} failed with an unknown error`),
-      );
+          : new Error(`${path} failed with an unknown error`);
     }
   }
 
+  // Monitoring starts now, beside the chain, not after it.
+  const monitors = routes.flatMap((path, index) =>
+    MONITOR_ROUTES.has(path) ? [runRoute(path, index)] : [],
+  );
+  // The other jobs run sequentially so one scheduled event does not create a
+  // burst of concurrent database connections. A failure never prevents later
+  // jobs in the same schedule from running.
+  for (const [index, path] of routes.entries()) {
+    if (!MONITOR_ROUTES.has(path)) await runRoute(path, index);
+  }
+  await Promise.all(monitors);
+
+  const completed = routes.filter((_, index) => outcomes[index] === null);
+  const failures = outcomes.filter(
+    (outcome): outcome is Error => outcome !== null,
+  );
   if (failures.length > 0) {
     throw new AggregateError(
       failures,

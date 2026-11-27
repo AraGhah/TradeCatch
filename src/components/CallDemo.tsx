@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
 import { CallSummaryCard } from "@/components/CallSummaryCard";
 import { CTAButton } from "@/components/CTAButton";
 import { IllustrativeBadge } from "@/components/IllustrativeBadge";
@@ -8,6 +9,8 @@ import { useDemoVoice, type VoiceFailure } from "@/components/useDemoVoice";
 import { OUTCOME_LABEL } from "@/product/receptionist/summary";
 import type { DemoMessage, DemoResponse } from "@/product/receptionist/demo";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 export type CallDemoCopy = {
   eyebrow: string;
   title: string;
@@ -29,6 +32,10 @@ export type CallDemoCopy = {
   restart: string;
   error: string;
   rateLimited: string;
+  /** Shown on the Send button while a turn is on its way. */
+  sending: string;
+  /** Shown in the transcript while the receptionist's reply is awaited. */
+  replying: string;
   summaryLabel: string;
   summaryPlaceholder: string;
   summaryBadge: string;
@@ -116,6 +123,7 @@ export function CallDemo({
   locale: "fr" | "en";
 }) {
   const voice = useDemoVoice(locale);
+
   const [scenario, setScenario] = useState<Scenario>("open");
   const [lines, setLines] = useState<Line[]>([]);
   const [started, setStarted] = useState(false);
@@ -208,15 +216,17 @@ export function CallDemo({
     else resume();
   }
 
-  async function call(
+  const call = useGuarded(callHandler);
+  async function callHandler(
     body: Record<string, unknown>,
   ): Promise<DemoResponse | null> {
     busyRef.current = true;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/receptionist/demo", {
+      const res = await timedFetch("/api/receptionist/demo", {
         method: "POST",
+        timeoutMs: 60_000,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
@@ -383,7 +393,7 @@ export function CallDemo({
             {voice.ready ? (
               voice.canListen ? (
                 <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
-                  <legend className="mb-2 p-0 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase">
+                  <legend className="mb-2 p-0 text-[12.5px] font-medium text-muted">
                     {copy.voice.modeLabel}
                   </legend>
                   <div className="inline-flex w-fit border border-[rgb(var(--ink-rgb)/0.25)]">
@@ -432,7 +442,7 @@ export function CallDemo({
             <div className="flex flex-col gap-3">
               <p
                 id="demo-scenario-heading"
-                className="m-0 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase"
+                className="m-0 text-[12.5px] font-medium text-muted"
               >
                 {copy.startHeading}
               </p>
@@ -483,7 +493,7 @@ export function CallDemo({
                           : "mr-auto max-w-[85%]"
                     }
                   >
-                    <p className="mb-1 font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
+                    <p className="mb-1 text-[12px] font-medium text-muted">
                       {label(line.role)}
                     </p>
                     <p
@@ -500,8 +510,8 @@ export function CallDemo({
                   </li>
                 ))}
                 {busy ? (
-                  <li className="mr-auto text-muted" aria-hidden>
-                    …
+                  <li className="mr-auto">
+                    <InlineStatus>{copy.replying}</InlineStatus>
                   </li>
                 ) : null}
               </ol>
@@ -560,7 +570,7 @@ export function CallDemo({
 
                 {suggestions.length > 0 ? (
                   <div>
-                    <p className="mb-2 font-mono text-[10px] tracking-[0.1em] text-muted uppercase">
+                    <p className="mb-2 text-[12px] font-medium text-muted">
                       {copy.suggestionsLabel}
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -626,9 +636,12 @@ export function CallDemo({
                   <button
                     type="submit"
                     disabled={busy || !input.trim()}
+                    aria-busy={busy}
                     className={`rounded-md bg-navy px-4 py-2.5 text-[14px] font-semibold text-white disabled:opacity-50 ${FOCUS}`}
                   >
-                    {copy.send}
+                    <BusyLabel pending={busy} busyLabel={copy.sending}>
+                      {copy.send}
+                    </BusyLabel>
                   </button>
                 </form>
                 {scenario === "after_hours" ? (

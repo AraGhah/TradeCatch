@@ -77,7 +77,7 @@ export default async function AppSettingsPage({
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+        <h1 className="font-heading text-2xl font-extrabold text-navy">
           {t("headline")}
         </h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("intro")}</p>
@@ -94,7 +94,7 @@ export default async function AppSettingsPage({
         notice={asNotice(query.gmail)}
       />
 
-      <section className="rounded-md border border-navy/10 bg-white px-5 py-4">
+      <section className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">
           {t("plan")}
         </h2>
@@ -157,7 +157,7 @@ export default async function AppSettingsPage({
         </ul>
       </section>
 
-      <section className="rounded-md border border-navy/10 bg-white px-5 py-4">
+      <section className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <BusinessFeaturesForm
           organizationId={organization.id}
           initial={organization.features}
@@ -169,7 +169,7 @@ export default async function AppSettingsPage({
         />
       </section>
 
-      <section className="rounded-md border border-navy/10 bg-white px-5 py-4">
+      <section className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
         <h2 className="text-sm font-semibold uppercase tracking-[0.06em] text-navy/50">
           {t("integrations")}
         </h2>
@@ -187,7 +187,7 @@ export default async function AppSettingsPage({
       </section>
 
       {orgHasFeature(organization.plan, "WEBSITE_LEAD_CAPTURE") ? (
-        <details className="rounded-md border border-navy/10 bg-white px-5 py-4">
+        <details className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
           <summary className="cursor-pointer text-sm font-semibold text-navy">
             {t("apiKeyTitle")}
           </summary>

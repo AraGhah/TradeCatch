@@ -3,12 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { enforcePolicy } from "@/lib/rate-limit-response";
 import { z } from "zod";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { hashToken, randomToken } from "@/product/saas/ids";
 import { getStarterStore } from "@/product/starter/runtime";
 
@@ -23,11 +18,8 @@ const createSchema = z.object({
  * Plaintext token is returned once — store hashes only.
  */
 export async function POST(request: NextRequest) {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "WEBSITE_LEAD_CAPTURE")) {
-    return forbiddenFeatureResponse("WEBSITE_LEAD_CAPTURE");
-  }
+  const auth = await requireTenantFeature("WEBSITE_LEAD_CAPTURE");
+  if (!auth.ok) return auth.response;
 
   const denied = forbiddenUnless(
     auth.ctx.membership.role,

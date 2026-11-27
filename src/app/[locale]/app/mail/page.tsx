@@ -29,7 +29,7 @@ export default async function MailPage({ params }: { params: Promise<{ locale: s
     <div className="flex flex-col gap-6">
       <header>
         <div className="flex items-center">
-          <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+          <h1 className="font-heading text-2xl font-extrabold text-navy">
             {t("inboxTitle")}
           </h1>
           {/* Keeps the inbox in sync and shows the unread count while this page is open. */}

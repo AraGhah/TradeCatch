@@ -3,7 +3,11 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Container } from "@/components/Container";
 import { ReferralCapture } from "@/components/ReferralCapture";
 import { ReferralForm } from "@/components/ReferralForm";
-import { Link } from "@/i18n/navigation";
+import {
+  TradeCatchOfferSection,
+  type TradeCatchOffer,
+} from "@/components/ui/tradecatch-offer-section";
+import { CTAButton } from "@/components/CTAButton";
 import { getPathname } from "@/i18n/pathname";
 import { formatPlanMoney } from "@/lib/plans";
 import { buildMetadata } from "@/lib/seo";
@@ -16,7 +20,7 @@ import {
   type ReferralSettings,
 } from "@/product/referrals/model";
 import { getReferralServiceReady } from "@/product/referrals/runtime";
-import { PLAN_ORDER } from "@/product/saas/plan-catalog";
+import { PLAN_ORDER, PREMIUM_PLAN } from "@/product/saas/plan-catalog";
 import { requireTenantContext } from "@/product/saas/tenant";
 
 export const dynamic = "force-dynamic";
@@ -103,180 +107,154 @@ export default async function ReferralPage({
   const amounts = referralAmounts(settings, lang);
   const bonusCents = websiteBonusAmountCents(settings);
 
+  // One card per plan on sale; the amounts are the administrator's current settings.
+  const flow = t.raw("flow") as Record<"label" | "referred" | "paid" | "reward" | "unavailable", string>;
+  const offers: TradeCatchOffer[] = settings.programEnabled
+    ? PLAN_ORDER.map((plan) => {
+        const cents = rewardAmountCents(settings, plan);
+        return {
+          id: plan,
+          title: plans(`names.${plan}`),
+          tagline: plans(`kind.${plan}`),
+          featured: plan === PREMIUM_PLAN,
+          amountLabel: t("youEarn"),
+          amount: cents > 0 ? money(cents) : t("noReward"),
+          amountSuffix: cents > 0 ? t("giftCard") : undefined,
+          rail: {
+            label: flow.label,
+            unreachedLabel: flow.unavailable,
+            stages: [
+              { icon: "referral", label: flow.referred, reached: true },
+              { icon: "setup", label: flow.paid, reached: true },
+              { icon: "payout", label: flow.reward, reached: cents > 0 },
+            ],
+          },
+          cta: { label: form("title"), href: "#refer" },
+        };
+      })
+    : [];
+
   return (
     <>
       <ReferralCapture code={codeIsLive ? code : null} />
 
-      <section className="relative overflow-hidden bg-navy pt-[clamp(44px,5.4vw,72px)] pb-[clamp(40px,5vw,64px)]">
-        <Container className="relative">
-          <p className="text-[13px] font-medium text-orange">{t("eyebrow")}</p>
-          <h1
-            className="mt-4 max-w-[16em] font-heading font-extrabold text-white"
-            style={{
-              fontSize: "clamp(34px, 5vw, 56px)",
-              lineHeight: 1,
-              letterSpacing: "-0.04em",
-            }}
-          >
-            {t("headline", amounts)}
-          </h1>
-          <p className="mt-5 max-w-[36em] text-[clamp(16px,1.35vw,18px)] leading-[1.6] text-white/70">
-            {t("intro", amounts)}
-          </p>
-          {codeIsLive ? (
-            <p
-              className="mt-6 max-w-[36em] rounded-md border border-white/20 bg-white/10 px-4 py-3 text-[15px] text-white"
-              role="status"
-            >
-              {t("referredBanner")}
-            </p>
-          ) : null}
-          {settings.programEnabled ? (
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <a
-                href={getLinkHref}
-                data-testid="referral-get-link-cta"
-                className="inline-flex items-center justify-center rounded-[12px] bg-orange px-6 py-3.5 text-[16px] font-bold tracking-[-0.01em] text-navy shadow-cta transition-colors hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      <TradeCatchOfferSection
+        mode="referral"
+        eyebrow={t("eyebrow")}
+        title={t("headline", amounts)}
+        description={t("intro", amounts)}
+        headerExtra={
+          <>
+            {codeIsLive ? (
+              <p
+                className="mx-auto mt-5 max-w-[36em] rounded-[var(--radius-md)] border border-orange/40 bg-orange/10 px-4 py-3 text-[15px] text-heading"
+                role="status"
               >
-                {t("getLink")}
-              </a>
-              <a
-                href="#refer"
-                className="inline-flex items-center justify-center rounded-[12px] border border-white/25 px-6 py-3.5 text-[16px] font-semibold tracking-[-0.01em] text-white transition-colors hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-              >
-                {form("title")} ↓
-              </a>
-            </div>
-          ) : null}
-        </Container>
-      </section>
-
-      {!settings.programEnabled ? (
-        <section className="bg-paper py-[clamp(56px,7vw,96px)]">
-          <Container>
-            <p
-              className="rounded-md border border-[rgb(var(--ink-rgb)/0.12)] bg-surface px-5 py-4 text-heading"
-              role="status"
-            >
-              {t("paused")}
-            </p>
-          </Container>
-        </section>
-      ) : (
-        <>
-          <section className="bg-paper py-[clamp(56px,7vw,96px)]">
-            <Container>
-              <h2 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-heading">
-                {t("rewardsTitle")}
-              </h2>
-              <p className="mt-2 max-w-[40em] text-muted">
-                {t("rewardsIntro", amounts)}
+                {t("referredBanner")}
               </p>
-              <ul className="mt-8 grid list-none gap-4 p-0 md:grid-cols-3">
-                {PLAN_ORDER.map((plan) => {
-                  const cents = rewardAmountCents(settings, plan);
-                  return (
-                    <li
-                      key={plan}
-                      className="rounded-lg border border-[rgb(var(--ink-rgb)/0.12)] bg-surface px-6 py-7 text-heading"
-                    >
-                      <p className="text-sm text-muted">{plans(`kind.${plan}`)}</p>
-                      <h3 className="mt-1 font-heading text-xl font-extrabold">
-                        {plans(`names.${plan}`)}
-                      </h3>
-                      <p className="mt-5 text-sm text-muted">{t("youEarn")}</p>
-                      <p className="font-heading text-4xl font-extrabold tracking-[-0.03em]">
-                        {cents > 0 ? money(cents) : t("noReward")}
-                      </p>
-                      <p className="mt-1 text-sm text-muted">
-                        {cents > 0 ? t("giftCard") : ""}
-                      </p>
-                    </li>
-                  );
-                })}
-                {bonusCents > 0 ? (
-                  <li
-                    data-testid="referral-website-bonus"
-                    className="rounded-lg border border-orange/50 bg-surface px-6 py-7 text-heading ring-1 ring-orange/20"
-                  >
-                    <p className="text-sm text-muted">{t("bonusLabel")}</p>
-                    <h3 className="mt-1 font-heading text-xl font-extrabold">
+            ) : null}
+            {settings.programEnabled ? (
+              <div className="mt-6 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+                <a
+                  href={getLinkHref}
+                  data-testid="referral-get-link-cta"
+                  className="inline-flex min-h-12 items-center justify-center rounded-[var(--radius-md)] bg-orange px-6 py-3.5 text-[15px] font-bold text-navy shadow-cta transition-colors hover:bg-orange-dark"
+                >
+                  {t("getLink")}
+                </a>
+                <CTAButton href="#refer" variant="ghost">
+                  {form("title")} ↓
+                </CTAButton>
+              </div>
+            ) : (
+              <p
+                className="mx-auto mt-6 max-w-[36em] rounded-[var(--radius-md)] border border-[rgb(var(--ink-rgb)/0.14)] bg-surface px-5 py-4 text-heading"
+                role="status"
+              >
+                {t("paused")}
+              </p>
+            )}
+          </>
+        }
+        cardsHeading={{ title: t("rewardsTitle"), intro: t("rewardsIntro", amounts) }}
+        offers={offers}
+        afterOffers={
+          settings.programEnabled ? (
+            <>
+              {bonusCents > 0 ? (
+                <div
+                  data-testid="referral-website-bonus"
+                  className="flex flex-col gap-x-6 gap-y-2 rounded-[var(--radius-lg)] border border-dashed border-orange/60 bg-surface px-5 py-4 sm:flex-row sm:items-center sm:px-7"
+                >
+                  <p className="m-0 shrink-0 font-heading text-[34px] leading-none font-extrabold tracking-[-0.04em] text-heading tabular-nums">
+                    + {money(bonusCents)}
+                  </p>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="m-0 font-heading text-[17px] font-bold text-heading">
                       {t("bonusTitle")}
                     </h3>
-                    <p className="mt-5 text-sm text-muted">{t("bonusPlus")}</p>
-                    <p className="font-heading text-4xl font-extrabold tracking-[-0.03em]">
-                      + {money(bonusCents)}
+                    <p className="m-0 mt-1 text-[14px] leading-[1.45] text-muted">
+                      {t("bonusLabel")} · {t("giftCard")}
                     </p>
-                    <p className="mt-1 text-sm text-muted">{t("giftCard")}</p>
-                  </li>
-                ) : null}
-              </ul>
-              <p className="mt-4 text-sm font-medium text-heading">
+                  </div>
+                </div>
+              ) : null}
+              <p className="mt-3 text-[14.5px] font-bold text-heading">
                 {t("maxNote", amounts)}
               </p>
-              <p className="mt-4 text-sm text-muted">{t("amountsNote")}</p>
-            </Container>
-          </section>
+              <p className="mt-1 text-[13.5px] text-muted">{t("amountsNote")}</p>
+            </>
+          ) : null
+        }
+        steps={{
+          title: t("stepsTitle"),
+          items: (["share", "book", "earn"] as const).map((step) => ({
+            title: t(`steps.${step}.title`),
+            description: t(`steps.${step}.body`),
+          })),
+          footer: (
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
+              <CTAButton
+                href={
+                  codeIsLive && code
+                    ? { pathname: "/book-audit", query: { ref: code } }
+                    : "/book-audit"
+                }
+                variant="ink"
+              >
+                {t("cta")}
+              </CTAButton>
+              <a
+                href={getLinkHref}
+                className="text-sm font-medium text-heading underline underline-offset-2"
+              >
+                {t("existingCustomer")}
+              </a>
+            </div>
+          ),
+        }}
+      />
 
-          <section
-            id="refer"
-            className="scroll-mt-28 border-y border-[rgb(var(--ink-rgb)/0.08)] bg-surface py-[clamp(56px,7vw,96px)]"
-          >
-            <Container>
+      {settings.programEnabled ? (
+        <section
+          id="refer"
+          className="scroll-mt-28 border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface py-[clamp(36px,5vw,64px)]"
+        >
+          <Container>
+            <div className="mx-auto max-w-5xl">
               <h2 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-heading">
                 {form("title")}
               </h2>
-              <p className="mt-2 mb-8 max-w-[40em] text-muted">
-                {form("intro")}
-              </p>
+              <p className="mt-2 mb-6 max-w-[40em] text-muted">{form("intro")}</p>
               <ReferralForm />
-            </Container>
-          </section>
-        </>
-      )}
+            </div>
+          </Container>
+        </section>
+      ) : null}
 
-      <section className="bg-paper py-[clamp(56px,7vw,96px)]">
+      <section className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-paper py-[clamp(32px,4vw,56px)]">
         <Container>
-          <h2 className="font-heading text-2xl font-extrabold tracking-[-0.03em] text-heading">
-            {t("stepsTitle")}
-          </h2>
-          <ol className="mt-8 grid list-none gap-6 p-0 md:grid-cols-3">
-            {(["share", "book", "earn"] as const).map((step, index) => (
-              <li key={step} className="flex flex-col gap-2">
-                <span className="font-heading text-3xl font-extrabold text-orange">
-                  {index + 1}
-                </span>
-                <h3 className="font-heading text-lg font-bold text-heading">
-                  {t(`steps.${step}.title`)}
-                </h3>
-                <p className="text-muted">{t(`steps.${step}.body`)}</p>
-              </li>
-            ))}
-          </ol>
-
-          <div className="mt-10 flex flex-wrap items-center gap-4">
-            <Link
-              href={
-                codeIsLive && code
-                  ? { pathname: "/book-audit", query: { ref: code } }
-                  : "/book-audit"
-              }
-              className="inline-flex items-center rounded-md bg-orange px-5 py-3 font-semibold text-navy hover:bg-orange-dark focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 focus-visible:ring-offset-paper"
-            >
-              {t("cta")}
-            </Link>
-            <a
-              href={getLinkHref}
-              className="text-sm font-medium text-heading underline underline-offset-2"
-            >
-              {t("existingCustomer")}
-            </a>
-          </div>
-        </Container>
-      </section>
-
-      <section className="border-t border-[rgb(var(--ink-rgb)/0.08)] bg-surface py-[clamp(48px,6vw,80px)]">
-        <Container>
+          <div className="mx-auto max-w-5xl">
           <h2 className="font-heading text-xl font-extrabold tracking-[-0.02em] text-heading">
             {t("rulesTitle")}
           </h2>
@@ -297,6 +275,7 @@ export default async function ReferralPage({
               </li>
             ))}
           </ul>
+          </div>
         </Container>
       </section>
     </>

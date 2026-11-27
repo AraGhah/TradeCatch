@@ -42,6 +42,7 @@ describe("Cloudflare scheduler", () => {
       ["/api/notifications/tick", "notifications"],
       ["/api/notifications/daily-summary/tick", "notifications"],
       ["/api/monitoring/tick", "monitoring"],
+      ["/api/monitoring/watch", "monitoring"],
       ["/api/automations/tick", "ops"],
     ])
       assert.equal(cloudflareSchedulerSecret(env, path), expected);
@@ -183,9 +184,12 @@ describe("Cloudflare scheduler", () => {
     assert.deepEqual(routesForCloudflareCron("* * * * *"), [
       "/api/book-audit/notifications/tick",
       "/api/gmail/sync/tick",
+      "/api/calendar/google/tick",
       "/api/missed-call/escalations/tick",
       "/api/automations/tick",
       "/api/notifications/tick",
+      // Listed last; it runs alongside the jobs above (MONITOR_ROUTES).
+      "/api/monitoring/watch",
     ]);
     assert.deepEqual(routesForCloudflareCron("*/15 * * * *"), [
       "/api/starter/quotes/tick",
@@ -230,6 +234,67 @@ describe("Cloudflare scheduler", () => {
     );
   });
 
+  it("starts monitoring with the other jobs instead of behind them", async () => {
+    // 2026-11-24: while the database did not answer, every job before the
+    // monitor waited on it, and the database-down email went out late or never.
+    for (const cron of ["* * * * *", "*/15 * * * *"]) {
+      const started: string[] = [];
+      let releaseChain!: () => void;
+      const chainBlocked = new Promise<void>((resolve) => {
+        releaseChain = resolve;
+      });
+      let active = 0;
+      let peak = 0;
+      // The first customer-facing job hangs like a socket to a dead database.
+      const hung = routesForCloudflareCron(cron)[0];
+      const run = runCloudflareCron(cron, async (path) => {
+        started.push(path);
+        active += 1;
+        peak = Math.max(peak, active);
+        try {
+          if (path === hung) await chainBlocked;
+          return Response.json({ ok: true });
+        } finally {
+          active -= 1;
+        }
+      });
+      await new Promise((resolve) => setImmediate(resolve));
+      const monitor = cron === "* * * * *" ? "/api/monitoring/watch" : "/api/monitoring/tick";
+      assert.ok(started.includes(monitor), `${monitor} must not wait for the hung job`);
+      assert.equal(
+        started.filter((path) => !path.includes("/api/monitoring/")).length,
+        1,
+        "the customer-facing jobs stay one at a time",
+      );
+      releaseChain();
+      const result = await run;
+      assert.deepEqual(result.completed, routesForCloudflareCron(cron), "reported in schedule order");
+      assert.ok(peak <= 2, "at most the monitor plus one job at a time");
+    }
+  });
+
+  it("records a failed monitor run like any other job and still completes the rest", async () => {
+    const results: { path: string; ok: boolean }[] = [];
+    await assert.rejects(
+      runCloudflareCron(
+        "* * * * *",
+        async (path) =>
+          path === "/api/monitoring/watch"
+            ? Response.json({ ok: false, error: "storage_unavailable" }, { status: 503 })
+            : Response.json({ ok: true }),
+        async (path, ok) => {
+          results.push({ path, ok });
+        },
+      ),
+      /failed for 1 route/,
+    );
+    assert.equal(results.length, routesForCloudflareCron("* * * * *").length);
+    assert.deepEqual(
+      results.filter((r) => !r.ok).map((r) => r.path),
+      ["/api/monitoring/watch"],
+    );
+  });
+
   it("returns the completed routes when every invocation succeeds", async () => {
     const result = await runCloudflareCron("* * * * *", async () =>
       Response.json({ ok: true }),
@@ -238,9 +303,11 @@ describe("Cloudflare scheduler", () => {
     assert.deepEqual(result.completed, [
       "/api/book-audit/notifications/tick",
       "/api/gmail/sync/tick",
+      "/api/calendar/google/tick",
       "/api/missed-call/escalations/tick",
       "/api/automations/tick",
       "/api/notifications/tick",
+      "/api/monitoring/watch",
     ]);
   });
 });

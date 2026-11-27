@@ -11,6 +11,8 @@ import {
   type ReactNode,
 } from "react";
 import { useLocale } from "next-intl";
+import { LoadingRegion, SkeletonRows } from "@/components/ui/Skeleton";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { AdminApiError, useAdminData } from "./api";
 
 /**
@@ -55,6 +57,8 @@ const en = {
   filters: "Filters",
   clearFilters: "Clear filters",
   errNetwork: "The server could not be reached. Check your connection and try again.",
+  errTimeout:
+    "No answer arrived in time. If you were making a change, refresh and check its current state before trying again.",
   errSession: "Your session has ended. Sign in again to continue.",
   errForbidden: "Your administrator role does not allow this.",
   errRate: "Too many requests. Wait a moment and try again.",
@@ -94,6 +98,8 @@ const fr: Common = {
   filters: "Filtres",
   clearFilters: "Effacer les filtres",
   errNetwork: "Le serveur est injoignable. Vérifiez votre connexion et réessayez.",
+  errTimeout:
+    "Aucune réponse n’est arrivée à temps. Si vous faisiez une modification, actualisez et vérifiez son état actuel avant de réessayer.",
   errSession: "Votre session est terminée. Reconnectez-vous pour continuer.",
   errForbidden: "Votre rôle d’administrateur ne permet pas cette action.",
   errRate: "Trop de requêtes. Patientez un instant puis réessayez.",
@@ -116,6 +122,7 @@ export function useErrorText() {
   return (error: AdminApiError | undefined, specific?: Record<string, string>) => {
     if (!error) return "";
     if (error.code && specific?.[error.code]) return specific[error.code];
+    if (error.code === "timeout") return t.errTimeout;
     if (error.status === 0) return t.errNetwork;
     if (error.status === 401) return t.errSession;
     if (error.status === 403) return t.errForbidden;
@@ -134,6 +141,7 @@ export function useLoadErrorText() {
   const errorText = useErrorText();
   return (error: AdminApiError | undefined, fallback: string) => {
     if (!error) return "";
+    // A timeout is status 0 too: it is about the connection, not about the data.
     return [0, 401, 403, 429].includes(error.status) ? errorText(error) : fallback;
   };
 }
@@ -274,7 +282,7 @@ export function PageHeader({
   return (
     <header className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
       <div className="min-w-0">
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy md:text-3xl">
+        <h1 className="font-heading text-2xl font-extrabold text-navy md:text-3xl">
           {title}
         </h1>
         {intro ? <p className="mt-2 max-w-2xl text-sm text-navy/70">{intro}</p> : null}
@@ -291,9 +299,12 @@ export function PageHeader({
             type="button"
             onClick={onRefresh}
             disabled={loading}
+            aria-busy={loading}
             className={secondaryButton}
           >
-            {loading ? t.refreshing : t.refresh}
+            <BusyLabel pending={Boolean(loading)} busyLabel={t.refreshing}>
+              {t.refresh}
+            </BusyLabel>
           </button>
         ) : null}
       </div>
@@ -313,6 +324,8 @@ export function DataState({
   empty,
   onRetry,
   errorText,
+  loadingLabel,
+  skeleton,
   children,
 }: {
   loading: boolean;
@@ -322,14 +335,20 @@ export function DataState({
   empty?: boolean;
   onRetry: () => void;
   errorText: string;
+  /** What is loading, in words: "Loading customers…". Defaults to "Loading…". */
+  loadingLabel?: string;
+  /** A placeholder shaped like the data (tiles, rows). Defaults to table rows. */
+  skeleton?: ReactNode;
   children: ReactNode;
 }) {
   const t = useCommon();
   if (!hasData && loading) {
+    // A placeholder of the data's rough shape, so the page does not jump when it
+    // arrives and there is no full-page spinner.
     return (
-      <p role="status" className="rounded-md border border-navy/10 bg-white px-4 py-6 text-sm text-navy/70">
-        {t.loading}
-      </p>
+      <LoadingRegion label={loadingLabel ?? t.loading}>
+        {skeleton ?? <SkeletonRows rows={5} columns={4} />}
+      </LoadingRegion>
     );
   }
   if (!hasData && error) {
@@ -626,8 +645,15 @@ export function ConfirmPanel({
         </p>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <button type="submit" disabled={!ready || busy} className={tone === "danger" ? dangerButton : primaryButton}>
-          {busy ? t.working : confirmLabel}
+        <button
+          type="submit"
+          disabled={!ready || busy}
+          aria-busy={busy}
+          className={tone === "danger" ? dangerButton : primaryButton}
+        >
+          <BusyLabel pending={busy} busyLabel={t.working}>
+            {confirmLabel}
+          </BusyLabel>
         </button>
         <button type="button" onClick={onCancel} disabled={busy} className={secondaryButton}>
           {t.cancel}
@@ -698,7 +724,7 @@ export function Tile({
   return (
     <div className={`rounded-md border px-4 py-3 ${tone && tone !== "neutral" ? TONE[tone] : "border-navy/10 bg-white"}`}>
       <p className="text-sm text-navy/70">{label}</p>
-      <p className="mt-1 font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{value}</p>
+      <p className="mt-1 font-heading text-2xl font-extrabold text-navy">{value}</p>
       {note ? <p className="mt-1 text-xs text-navy/70">{note}</p> : null}
       {href ? <div className="mt-2 text-xs">{href}</div> : null}
     </div>

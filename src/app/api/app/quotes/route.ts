@@ -2,12 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextRequest, NextResponse } from "next/server";
 import { forbiddenUnless } from "@/product/security/access";
 import { z } from "zod";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { parsePhoneInput } from "@/product/crm/phone";
 import { getStarterStore } from "@/product/starter/runtime";
 import {
@@ -41,11 +36,8 @@ const stopSchema = z.object({
 });
 
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "QUOTE_FOLLOW_UP")) {
-    return forbiddenFeatureResponse("QUOTE_FOLLOW_UP");
-  }
+  const auth = await requireTenantFeature("QUOTE_FOLLOW_UP");
+  if (!auth.ok) return auth.response;
 
   const threads = await getStarterStore().listQuoteThreads(
     auth.ctx.organization.id,
@@ -72,11 +64,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireTenantContext();
-  if (!auth.ok) return unauthorizedTenantResponse(auth.error);
-  if (!tenantHasFeature(auth.ctx, "QUOTE_FOLLOW_UP")) {
-    return forbiddenFeatureResponse("QUOTE_FOLLOW_UP");
-  }
+  const auth = await requireTenantFeature("QUOTE_FOLLOW_UP");
+  if (!auth.ok) return auth.response;
   const denied = forbiddenUnless(
     auth.ctx.membership.role,
     "write_leads",

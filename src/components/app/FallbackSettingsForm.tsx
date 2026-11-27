@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
+
 type Settings = {
   aiUnavailable: "transfer" | "voicemail";
   calendarUnavailable: "collect_request";
@@ -24,7 +28,7 @@ export function FallbackSettingsForm({
   const [busy, setBusy] = useState(false);
 
   function fetchSettings() {
-    return fetch(`/api/businesses/${organizationId}/fallback-settings`)
+    return timedFetch(`/api/businesses/${organizationId}/fallback-settings`)
       .then((response) => {
         if (!response.ok) throw new Error("Fallback settings unavailable");
         return response.json();
@@ -49,13 +53,14 @@ export function FallbackSettingsForm({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
-  async function save() {
+  const save = useGuarded(saveHandler);
+  async function saveHandler() {
     if (!settings || busy) return;
     setBusy(true);
     setMessage("");
     setMessageError(false);
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/fallback-settings`,
         {
           method: "PUT",
@@ -94,7 +99,7 @@ export function FallbackSettingsForm({
   }
 
   if (loading || !settings)
-    return <p role="status" className="text-sm text-navy/70">{t("fallbackLoading")}</p>;
+    return <InlineStatus>{t("fallbackLoading")}</InlineStatus>;
 
   return (
     <form
@@ -107,12 +112,12 @@ export function FallbackSettingsForm({
       <p className="text-sm text-navy">{t("fallbackAiUnavailableNote")}</p>
       <p className="text-sm text-navy/70">{t("fallbackCalendarNote")}</p>
       <p className="text-sm text-navy/70">{t("fallbackDatabaseNote")}</p>
-      <button
+      <button aria-busy={busy}
         type="submit"
         disabled={busy}
         className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
       >
-        {busy ? t("fallbackSaving") : t("fallbackSave")}
+        <BusyLabel pending={busy} busyLabel={t("fallbackSaving")}>{t("fallbackSave")}</BusyLabel>
       </button>
       {message ? (
         <p

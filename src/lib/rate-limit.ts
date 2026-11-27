@@ -89,7 +89,7 @@ async function postgresTokenBucket(
   url: string,
 ): Promise<BucketDecision> {
   const [{ getPgPool }, shared] = await Promise.all([
-    import("../product/missed-call/postgres-store"),
+    import("./postgres-pool"),
     import("./pg-rate-limit"),
   ]);
   const pool = getPgPool(url);

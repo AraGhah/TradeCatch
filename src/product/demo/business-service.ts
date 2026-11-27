@@ -2,7 +2,7 @@ import { z } from "zod";
 import { getGrowthStore } from "@/product/growth";
 import { demoClientAccount } from "@/product/missed-call/fixtures";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { purgeBusinessVoice } from "@/product/receptionist/custom-voice/runtime";
 import { newId } from "@/product/saas/ids";
 import { getSaasStore } from "@/product/saas/runtime";

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { useState } from "react";
 import type { ProfileSettings } from "@/product/receptionist/profile";
 import type { VoiceCapabilities } from "@/product/receptionist/plan-limits";
@@ -12,6 +13,11 @@ import {
   PROMPT_PLACEHOLDERS,
   renderPromptTemplate,
 } from "@/product/receptionist/system-prompt";
+
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { RequestTimeoutError, timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
+import { APP_CARD } from "@/components/app/card-classes";
 
 type Hours = { start: string; end: string; days: number[] };
 
@@ -25,7 +31,7 @@ type FaqRow = {
 
 const INPUT =
   "mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:bg-navy/5";
-const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
+const CARD = APP_CARD;
 const BUTTON =
   "rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy/60 focus-visible:ring-offset-2";
 const BUTTON_GHOST =
@@ -58,6 +64,7 @@ export function ReceptionistSettingsForm({
   voiceCapabilities?: VoiceCapabilities;
 }) {
   const t = useTranslations("app.receptionist");
+  const tFeedback = useTranslations("feedback");
   const router = useRouter();
   const canPhoneBook = voiceCapabilities?.phoneBooking !== false;
   const canTransfer = voiceCapabilities?.transfer !== false;
@@ -137,37 +144,26 @@ export function ReceptionistSettingsForm({
   const [emergency, setEmergency] = useState(
     initial.emergencyTransferE164 ?? "",
   );
+  // The number the receptionist really dials: the phone settings copy wins
+  // when the config is built (profile.ts), so show that one first.
   const [primaryTransfer, setPrimaryTransfer] = useState(
-    initial.transferSettings.primaryTransferE164 ??
+    initial.phoneSettings?.humanTransferE164 ??
+      initial.transferSettings.primaryTransferE164 ??
       initial.fallbackTransferE164 ??
       "",
   );
   const [secondaryTransfer, setSecondaryTransfer] = useState(
-    initial.transferSettings.secondaryTransferE164 ?? "",
+    (initial.phoneSettings?.humanTransferE164
+      ? initial.phoneSettings.backupTransferE164
+      : undefined) ??
+      initial.transferSettings.secondaryTransferE164 ??
+      "",
   );
   const [transferTimeout, setTransferTimeout] = useState(
     initial.transferSettings.timeoutSeconds,
   );
   const [failedTransfer, setFailedTransfer] = useState(
     initial.transferSettings.failedAction,
-  );
-  const [duration, setDuration] = useState(
-    initial.appointmentSettings.durationMinutes,
-  );
-  const [buffer, setBuffer] = useState(
-    initial.appointmentSettings.bufferMinutes,
-  );
-  const [notice, setNotice] = useState(
-    initial.appointmentSettings.bookingNoticeHours,
-  );
-  const [maxDaily, setMaxDaily] = useState(
-    initial.appointmentSettings.maxDailyBookings?.toString() ?? "",
-  );
-  const [confirmMethod, setConfirmMethod] = useState(
-    initial.appointmentSettings.confirmationMethod,
-  );
-  const [bookable, setBookable] = useState(
-    initial.appointmentSettings.bookableServices.join(", "),
   );
   const [phoneBooking, setPhoneBooking] = useState(
     initial.appointmentSettings.phoneBooking ?? false,
@@ -205,7 +201,8 @@ export function ReceptionistSettingsForm({
     });
   }
 
-  async function onSubmit(e: React.FormEvent) {
+  const onSubmit = useGuarded(onSubmitHandler);
+  async function onSubmitHandler(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setSaved(false);
@@ -271,19 +268,13 @@ export function ReceptionistSettingsForm({
         secondaryTransferE164: secondaryTransfer.trim(),
         timeoutSeconds: transferTimeout,
         failedAction: failedTransfer,
-        conditions: ["caller_request", "urgent", "unknown_answer"],
-        transferHours: "always",
+        // Not edited on this page: sent back as saved, never reset.
+        conditions: initial.transferSettings.conditions,
+        transferHours: initial.transferSettings.transferHours,
       },
-      appointmentSettings: {
-        calendarProvider: "simulated",
-        durationMinutes: duration,
-        bufferMinutes: buffer,
-        bookingNoticeHours: notice,
-        maxDailyBookings: maxDaily ? Number(maxDaily) : undefined,
-        confirmationMethod: confirmMethod,
-        bookableServices: listLines(bookable),
-        phoneBooking,
-      },
+      // Durations, buffers, notice and services live in the calendar
+      // availability (the only rules booking reads); the rest is kept as saved.
+      appointmentSettings: { ...initial.appointmentSettings, phoneBooking },
       notifyEmail: notifyEmail.trim(),
       notifySmsE164: notifySms.trim(),
       notifySmsEnabled: notifySmsOn,
@@ -295,7 +286,7 @@ export function ReceptionistSettingsForm({
       const url = organizationId
         ? `/api/businesses/${organizationId}/ai-receptionist`
         : "/api/app/receptionist";
-      const res = await fetch(url, {
+      const res = await timedFetch(url, {
         method: organizationId ? "PATCH" : "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -313,8 +304,16 @@ export function ReceptionistSettingsForm({
       }
       setSaved(true);
       router.refresh();
-    } catch {
-      setError(t("error"));
+    } catch (cause) {
+      // No answer (timeout, dropped connection): the save may have gone
+      // through. Say that, never "Saved" and never a flat "failed".
+      setError(
+        tFeedback(
+          cause instanceof RequestTimeoutError
+            ? "errors.timeoutUnknown"
+            : "errors.networkUnknown",
+        ),
+      );
     } finally {
       setBusy(false);
     }
@@ -1035,79 +1034,14 @@ export function ReceptionistSettingsForm({
         <p id="phone-booking-help" className="mt-1 text-xs text-navy/70">
           {t("phoneBookingHelp")}
         </p>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="text-xs text-navy/70">
-            {t("duration")}
-            <input
-              type="number"
-              min={15}
-              max={240}
-              step={15}
-              value={duration}
-              onChange={(e) => setDuration(Number(e.target.value) || 60)}
-              className={INPUT}
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("buffer")}
-            <input
-              type="number"
-              min={0}
-              max={120}
-              value={buffer}
-              onChange={(e) => setBuffer(Number(e.target.value) || 0)}
-              className={INPUT}
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("bookingNotice")}
-            <input
-              type="number"
-              min={0}
-              max={168}
-              value={notice}
-              onChange={(e) => setNotice(Number(e.target.value) || 0)}
-              className={INPUT}
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("maxDaily")}
-            <input
-              type="number"
-              min={1}
-              max={50}
-              value={maxDaily}
-              onChange={(e) => setMaxDaily(e.target.value)}
-              className={INPUT}
-              placeholder="—"
-            />
-          </label>
-          <label className="text-xs text-navy/70">
-            {t("confirmationMethod")}
-            <select
-              className={INPUT}
-              value={confirmMethod}
-              onChange={(e) =>
-                setConfirmMethod(
-                  e.target
-                    .value as ProfileSettings["appointmentSettings"]["confirmationMethod"],
-                )
-              }
-            >
-              <option value="sms">SMS</option>
-              <option value="email">Email</option>
-              <option value="both">{t("confirmBoth")}</option>
-              <option value="none">{t("confirmNone")}</option>
-            </select>
-          </label>
-          <label className="text-xs text-navy/70 sm:col-span-2">
-            {t("bookableServices")}
-            <input
-              value={bookable}
-              onChange={(e) => setBookable(e.target.value)}
-              className={INPUT}
-            />
-          </label>
+        <div className="mt-4 flex flex-col gap-2 rounded-lg border border-navy/10 bg-navy/[0.03] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-navy/75">{t("bookingRulesWhere")}</p>
+          <Link
+            href="/app/bookings/availability"
+            className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-navy underline underline-offset-4 hover:text-navy/80"
+          >
+            {t("bookingRulesLink")}
+          </Link>
         </div>
       </fieldset>
 
@@ -1200,8 +1134,8 @@ export function ReceptionistSettingsForm({
       ) : null}
 
       <div>
-        <button type="submit" disabled={dis} className={BUTTON}>
-          {busy ? t("saving") : t("save")}
+        <button aria-busy={busy} type="submit" disabled={dis} className={BUTTON}>
+          <BusyLabel pending={busy} busyLabel={t("saving")}>{t("save")}</BusyLabel>
         </button>
       </div>
     </form>

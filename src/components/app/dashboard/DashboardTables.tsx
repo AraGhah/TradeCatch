@@ -123,7 +123,7 @@ export function CallsTable({
     <section id="calls" className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-[var(--shadow-card)]">
       <div className="flex flex-col gap-3 border-b border-navy/10 px-4 py-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
+          <h2 className="font-heading text-base font-extrabold text-navy">
             {t("sectionCalls")}
           </h2>
           <p className="mt-1 text-sm text-navy/70">
@@ -259,7 +259,7 @@ export function LeadsTable({
     <section id="leads" className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-[var(--shadow-card)]">
       <div className="flex flex-col gap-3 border-b border-navy/10 px-4 py-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
+          <h2 className="font-heading text-base font-extrabold text-navy">
             {t("sectionLeads")}
           </h2>
           <p className="mt-1 text-sm text-navy/70">{t("showing", { count: filtered.length })}</p>
@@ -400,7 +400,7 @@ export function AppointmentsTable({
     <section id="appointments" className="overflow-hidden rounded-xl border border-navy/10 bg-white shadow-[var(--shadow-card)]">
       <div className="flex flex-col gap-3 border-b border-navy/10 px-4 py-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-[family-name:var(--font-archivo)] text-base font-extrabold text-navy">
+          <h2 className="font-heading text-base font-extrabold text-navy">
             {t("sectionAppointments")}
           </h2>
           <p className="mt-1 text-sm text-navy/70">{t("showing", { count: filtered.length })}</p>

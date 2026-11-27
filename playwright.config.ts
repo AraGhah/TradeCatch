@@ -19,15 +19,22 @@ export const E2E_ORIGIN = `http://localhost:${E2E_PORT}`;
  */
 const ADMIN_CONSOLE_ADMINS = [
   ...Array.from(
-    { length: 30 },
+    { length: 40 },
     (_, index) => `adm-${String(index + 1).padStart(2, "0")}@example.test`,
   ),
   "adm-support@example.test:support",
   "adm-readonly@example.test:read_only",
+  // tests/monitoring-health.spec.ts (KAN-28) has its own role identities, so it never
+  // shares a session or an organization with ADM-15.
+  "adm-mon-support@example.test:support",
+  "adm-mon-readonly@example.test:read_only",
 ].join(",");
 /** Where tests/gmail.spec.ts serves its stand-in for Google. */
 export const GMAIL_E2E_PORT = Number(
   process.env.TRADECATCH_GMAIL_E2E_PORT || 4010,
+);
+export const GCAL_E2E_PORT = Number(
+  process.env.TRADECATCH_GCAL_E2E_PORT || 4011,
 );
 
 /**
@@ -57,12 +64,19 @@ export default defineConfig({
       PORT: String(E2E_PORT),
       NEXT_PUBLIC_SITE_URL: E2E_ORIGIN,
       TRADECATCH_E2E: "1",
+      // Never read .env, .env.local or .env.production.local, for `next build` or `next start`. A developer
+      // checkout keeps PRODUCTION values there: blanking the few names listed below left dozens of others
+      // (live Bland/OpenAI/Anthropic keys, SAAS_REQUIRE_DURABLE=1, ...) flowing into the test server, and
+      // SAAS_REQUIRE_DURABLE=1 alone made every database-less test fail with a 500 on its first write.
+      // @next/env skips every dotenv file when this flag is set (Next sets it itself for child processes);
+      // tests/unit/e2e-harness-isolation.test.ts proves that on the installed Next.
+      __NEXT_PROCESSED_ENV: "true",
       // Parallel specs share one Node server; unidentified api.write traffic
       // hits the default per-address backstop and flakes as HTTP 429 (see
       // docs/KAN-12_AUTHENTICATION.md). Named route policies stay enforced.
       RATE_LIMIT_MODE: "off",
       // The default harness exercises storage-disabled behavior. Never inherit
-      // a developer's production database or provider keys from .env.local.
+      // a developer's production database or provider keys from the shell.
       DATABASE_URL: "",
       MISSED_CALL_DURABLE_STORE: "",
       SAAS_DURABLE_STORE: "",
@@ -103,6 +117,11 @@ export default defineConfig({
       GMAIL_PUSH_AUDIENCE: `${E2E_ORIGIN}/api/webhooks/gmail`,
       GMAIL_PUSH_SERVICE_ACCOUNT: "gmail-push@e2e.iam.gserviceaccount.com",
       GMAIL_PUBSUB_TOPIC: "projects/e2e/topics/gmail",
+      // Google Calendar: the app talks to tests/support/fake-google-calendar instead of Google.
+      GOOGLE_CALENDAR_CLIENT_ID: "e2e-calendar-client-id",
+      GOOGLE_CALENDAR_CLIENT_SECRET: "e2e-calendar-client-secret",
+      GOOGLE_CALENDAR_REDIRECT_URI: `${E2E_ORIGIN}/api/calendar/oauth/callback`,
+      GCAL_TEST_GOOGLE_BASE: `http://127.0.0.1:${GCAL_E2E_PORT}`,
     },
   },
   use: {

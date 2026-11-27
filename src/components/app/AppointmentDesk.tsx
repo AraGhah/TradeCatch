@@ -33,6 +33,11 @@ import {
   timezoneLabel,
 } from "./schedule-picker-utils";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
+import { LoadingRegion, Skeleton, SkeletonCalendar } from "@/components/ui/Skeleton";
+
 type Appointment = {
   id: string;
   customerName?: string;
@@ -143,13 +148,15 @@ export function AppointmentDesk({
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  // False until the appointment list has answered (or failed): the skeleton shows meanwhile.
+  const [loaded, setLoaded] = useState(false);
   const inFlight = useRef(false);
   const attemptKey = useRef("");
 
   const load = useCallback(
     () =>
       // Never a cached copy: a calendar that is out of date is a wrong calendar.
-      fetch(`/api/businesses/${organizationId}/appointments`, {
+      timedFetch(`/api/businesses/${organizationId}/appointments`, {
         cache: "no-store",
       })
         .then(async (response) => {
@@ -175,9 +182,17 @@ export function AppointmentDesk({
           setCalendarMode(data.calendarMode ?? "");
           setLoadError(false);
         })
-        .catch(() => setLoadError(true)),
+        .catch(() => setLoadError(true))
+        // Answered or not, the first load is over: the skeleton must never outlive it.
+        .finally(() => setLoaded(true)),
     [organizationId, setTimezone],
   );
+
+  function retryLoad() {
+    setLoadError(false);
+    setLoaded(false);
+    void load();
+  }
 
   /** What the server just saved goes on the calendar at once; the reload that follows only confirms it. */
   const upsert = useCallback((saved: Appointment | undefined) => {
@@ -191,7 +206,7 @@ export function AppointmentDesk({
 
   const loadServices = useCallback(
     () =>
-      fetch(`/api/businesses/${organizationId}/service-types`, {
+      timedFetch(`/api/businesses/${organizationId}/service-types`, {
         cache: "no-store",
       })
         .then((res) => res.json())
@@ -337,8 +352,11 @@ export function AppointmentDesk({
     setBusy(true);
     setMessage(null);
     setMessageError(false);
+    // The calendar is re-read after the answer, but NOT while the button is
+    // still locked: a slow reload must not keep "Saving…" on screen.
+    let refreshAfter = false;
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/appointments`,
         {
           method: "POST",
@@ -426,13 +444,21 @@ export function AppointmentDesk({
         setStartAt("");
         setReloadKey((n) => n + 1);
       }
-      await load();
+      refreshAfter = true;
     } catch {
+      // No answer (timeout, dropped connection): the booking may have been
+      // saved. Say so instead of "failed", keep the chosen time and its
+      // idempotency key (confirming again books it once), and re-read the
+      // appointment list so the person can see which it was. The time picker
+      // is deliberately NOT refreshed: if the booking did go through, its own
+      // slot would read as "taken" and replace this message with a misleading one.
       setMessageError(true);
-      setMessage(t("error"));
+      setMessage(t("bookUnconfirmed"));
+      refreshAfter = true;
     } finally {
       inFlight.current = false;
       setBusy(false);
+      if (refreshAfter) void load();
     }
   }
 
@@ -444,12 +470,13 @@ export function AppointmentDesk({
     setMessage(null);
     setMessageError(false);
     setConfirmingCancel(false);
+    let refreshAfter = false;
     try {
       const url =
         path === "complete"
           ? `/api/businesses/${organizationId}/appointments/${selected.id}`
           : `/api/businesses/${organizationId}/appointments/${selected.id}/${path}`;
-      const res = await fetch(url, {
+      const res = await timedFetch(url, {
         method: path === "complete" ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
@@ -513,13 +540,18 @@ export function AppointmentDesk({
         setMessageError(true);
         setMessage(failureText(path, res.status, data));
       }
-      await load();
+      refreshAfter = true;
     } catch {
+      // No answer: the change may have been saved. Never "failed", never "saved".
+      // Only the appointment list is re-read (see book()): refreshing the time
+      // picker could report the change's own new time as taken.
       setMessageError(true);
-      setMessage(t("error"));
+      setMessage(t("changeUnconfirmed"));
+      refreshAfter = true;
     } finally {
       inFlight.current = false;
       setBusy(false);
+      if (refreshAfter) void load();
     }
   }
 
@@ -542,7 +574,8 @@ export function AppointmentDesk({
     return t("error");
   }
 
-  async function saveEdit() {
+  const saveEdit = useGuarded(saveEditHandler);
+  async function saveEditHandler() {
     if (!selected || inFlight.current || !editName.trim()) return;
     const typedPhone = editPhone.trim();
     if (typedPhone && !looksLikePhone(typedPhone)) {
@@ -554,8 +587,9 @@ export function AppointmentDesk({
     setBusy(true);
     setMessage(null);
     setMessageError(false);
+    let refreshAfter = false;
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/appointments/${selected.id}`,
         {
           method: "PATCH",
@@ -594,13 +628,15 @@ export function AppointmentDesk({
         setMessageError(true);
         setMessage(failureText("edit", res.status, data));
       }
-      await load();
+      refreshAfter = true;
     } catch {
       setMessageError(true);
-      setMessage(t("error"));
+      setMessage(t("changeUnconfirmed"));
+      refreshAfter = true;
     } finally {
       inFlight.current = false;
       setBusy(false);
+      if (refreshAfter) void load();
     }
   }
 
@@ -627,7 +663,7 @@ export function AppointmentDesk({
   useEffect(() => {
     if (!selectedId) return;
     let live = true;
-    fetch(`/api/businesses/${organizationId}/appointments/${selectedId}`, {
+    timedFetch(`/api/businesses/${organizationId}/appointments/${selectedId}`, {
       cache: "no-store",
     })
       .then(async (res) =>
@@ -686,7 +722,7 @@ export function AppointmentDesk({
     <section
       aria-labelledby="appointment-details-title"
       data-testid="appointment-details"
-      className="rounded-md border border-navy/10 bg-white p-4 lg:sticky lg:top-4"
+      className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6 lg:sticky lg:top-4"
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <h2
@@ -756,13 +792,13 @@ export function AppointmentDesk({
             </label>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            <button
+            <button aria-busy={busy}
               type="button"
               disabled={busy || !editName.trim()}
               onClick={() => void saveEdit()}
               className="rounded-md bg-navy px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-50"
             >
-              {busy ? t("saving") : t("saveChanges")}
+              <BusyLabel pending={busy} busyLabel={t("saving")}>{t("saveChanges")}</BusyLabel>
             </button>
             <button
               type="button"
@@ -1013,7 +1049,7 @@ export function AppointmentDesk({
           <button
             type="button"
             className="mt-1 font-semibold underline"
-            onClick={() => void load()}
+            onClick={retryLoad}
           >
             {t("retry")}
           </button>
@@ -1027,12 +1063,19 @@ export function AppointmentDesk({
         ].map(([label, value]) => (
           <div
             key={String(label)}
-            className="rounded-md border border-navy/10 bg-white px-4 py-3"
+            className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
           >
             <p className="text-xs uppercase tracking-wide text-navy/50">
               {label}
             </p>
-            <p className="text-2xl font-extrabold text-navy">{value}</p>
+            {loaded ? (
+              <p className="text-2xl font-extrabold text-navy">{value}</p>
+            ) : (
+              // A skeleton, not "0": zero would be a claim about a calendar not read yet.
+              <div className="py-1">
+                <Skeleton className="h-6 w-10" />
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -1146,30 +1189,38 @@ export function AppointmentDesk({
             : "grid gap-4"
         }
       >
-        <div className="flex min-w-0 flex-col gap-2">
-          <AppointmentCalendar
-            view={view}
-            anchor={first}
-            rows={visible}
-            zone={zone}
-            locale={locale}
-            todayKey={todayKey}
-            now={now}
-            hours={hours}
-            selectedId={selectedId}
-            caption={rangeLabel}
-            onSelect={openAppointment}
-            onPickDay={showDay}
-          />
-          {visible.length === 0 ? (
-            <p className="m-0 text-center text-sm text-navy/70">{t("empty")}</p>
-          ) : null}
+        <div className="flex min-w-0 flex-col gap-2" aria-busy={!loaded}>
+          {loaded ? (
+            <>
+              <AppointmentCalendar
+                view={view}
+                anchor={first}
+                rows={visible}
+                zone={zone}
+                locale={locale}
+                todayKey={todayKey}
+                now={now}
+                hours={hours}
+                selectedId={selectedId}
+                caption={rangeLabel}
+                onSelect={openAppointment}
+                onPickDay={showDay}
+              />
+              {visible.length === 0 ? (
+                <p className="m-0 text-center text-sm text-navy/70">{t("empty")}</p>
+              ) : null}
+            </>
+          ) : (
+            <LoadingRegion label={t("loadingAppointments")}>
+              <SkeletonCalendar />
+            </LoadingRegion>
+          )}
         </div>
         {selected ? detailsPanel : null}
       </div>
 
       <section
-        className="grid gap-3 rounded-md border border-navy/10 bg-white p-4 sm:grid-cols-2"
+        className="grid gap-3 rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6 sm:grid-cols-2"
         aria-labelledby="add-appointment-title"
       >
         <h2

@@ -120,6 +120,11 @@ export type AgentConfig = {
    * falls back to the standard voice if the cloned one cannot be used.
    */
   voice: AgentVoice;
+  /**
+   * How long a transfer rings before the agent gives up, from the owner's
+   * transfer timeout. Null = the agent's own default. The agent clamps it.
+   */
+  transferRingSeconds: number | null;
 };
 
 /** Roughly what each owner setting means in words per minute, for the model. */
@@ -196,8 +201,16 @@ export function voiceAgentContext(input: {
   faqs?: { question?: string; answerFr: string; answerEn: string }[];
   /** The language the owner reads the saved record in (the business's default). */
   recordLanguage?: ReceptionistLanguage;
+  /** The owner's tone and personality (communication style + free text). */
+  personality?: string;
+  /** What the owner wants when a transfer is not answered. */
+  failedTransferAction?: "take_message" | "urgent_lead" | "voicemail";
+  /** False when the owner does not want callers asked for a day and time. */
+  askPreferredTime?: boolean;
 }): string {
+  const askTime = input.askPreferredTime !== false;
   const lines = [
+    ...personalitySection(input.personality),
     ...approvedFactsSection(input.businessFacts, input.faqs),
     "# THIS CALL — WHAT YOU CAN ACTUALLY DO (overrides anything above that says otherwise)",
     "",
@@ -251,6 +264,7 @@ export function voiceAgentContext(input: {
       '* To connect the caller with a person, you MUST call the transfer_to_human tool (transfer_emergency for an emergency). Saying "I\'ll transfer you" without calling it does nothing and leaves the caller waiting in silence.',
       "* The transfer tools speak the transfer announcement themselves and only ring the business's own lines: never say or ask for a number to transfer to, and 911 is never a transfer destination.",
       "* After calling a transfer tool, say nothing more. If it returns a failure, the caller is still with you: never hang up. Tell them briefly and offer to take their details for a callback.",
+      FAILED_TRANSFER_RULE[input.failedTransferAction ?? "take_message"],
     );
     if (input.afterHours && !input.canTransfer && input.canTransferEmergency) {
       lines.push(
@@ -279,9 +293,13 @@ export function voiceAgentContext(input: {
     "1. The problem, described clearly: what is wrong or what is wanted, where in the home, since when, and anything urgent. Keep asking short follow-up questions until you could explain it to a technician in two sentences. Save it as reason, in your own words, one or two full sentences (never a single word, never the caller's filler).",
     "2. Their name and a callback number (confirm the number they are calling from instead of asking for it).",
     "3. The street address of the work: number, street and city. A city or neighbourhood alone is not enough; ask for the rest (the postal code only if they offer it).",
-    input.bookingEnabled
-      ? "4. The appointment. Always offer one, even if they did not ask: ask which day and time of day suit them, then follow the booking steps above."
-      : "4. The appointment. Always ask, even if they did not mention one: which day and time of day suit them, saved as preferred_time. Say the team will call to confirm the time; never say it is booked.",
+    !askTime
+      ? "4. The appointment. The business does not want callers asked for a day or time: do not ask. If the caller offers one, save it as preferred_time" +
+          (input.bookingEnabled ? " (or book it if they ask to book, following the steps above)" : "") +
+          ", and say the team will call to arrange the visit."
+      : input.bookingEnabled
+        ? "4. The appointment. Always offer one, even if they did not ask: ask which day and time of day suit them, then follow the booking steps above."
+        : "4. The appointment. Always ask, even if they did not mention one: which day and time of day suit them, saved as preferred_time. Say the team will call to confirm the time; never say it is booked.",
     "5. Read back the problem, the address and the time in one or two sentences and ask if that is right. Save any correction, then say goodbye.",
     "An emergency skips the name and the appointment: safety first, then the address and a callback number. A wrong number or a transfer needs none of this.",
     "",
@@ -294,6 +312,33 @@ export function voiceAgentContext(input: {
     "Never end a reply with only the answer, and never go quiet after it. Say goodbye only when the caller clearly says they need nothing else, or it was a wrong number or a transfer. If they decline the follow-up, answer anything else they ask, then wrap up.",
   );
   return lines.join("\n");
+}
+
+/** What to do after an unanswered or failed transfer, per the owner's setting. */
+const FAILED_TRANSFER_RULE: Record<
+  "take_message" | "urgent_lead" | "voicemail",
+  string
+> = {
+  take_message:
+    "* When a transfer is not answered: take a message (name, number, reason) for the team.",
+  urgent_lead:
+    "* When a transfer is not answered: take the caller's name, number and reason, save it with record_details marked as urgent (emergency only if it really is one), and say the team will see it as a priority.",
+  voicemail:
+    "* When a transfer is not answered: offer to take a detailed message for the team, in the caller's own words, and save it as message.",
+};
+
+const MAX_PERSONALITY_CHARS = 800;
+
+/** The owner's tone, ahead of the facts. Never overrides the rules below it. */
+function personalitySection(personality: string | undefined): string[] {
+  const text = personality?.trim().slice(0, MAX_PERSONALITY_CHARS);
+  if (!text) return [];
+  return [
+    "# HOW THIS BUSINESS WANTS YOU TO SOUND",
+    "",
+    `The owner describes the tone they want: "${text}". Follow it in how you speak; it never changes the rules or what you are allowed to do.`,
+    "",
+  ];
 }
 
 function languageSelectFor(
@@ -391,6 +436,9 @@ export function buildAgentConfig(
       businessFacts: config.businessFacts,
       faqs: config.faqs,
       recordLanguage: config.defaultLanguage,
+      personality: config.personality,
+      failedTransferAction: config.failedTransferAction,
+      askPreferredTime: config.collectPreferredTime,
     })}`,
     greetings: {
       fr: config.greetingFr,
@@ -420,5 +468,6 @@ export function buildAgentConfig(
     emergencyTransferE164: emergency,
     departments,
     voice,
+    transferRingSeconds: config.transferTimeoutSeconds ?? null,
   };
 }

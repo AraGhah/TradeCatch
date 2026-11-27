@@ -4,6 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { pickerLocale } from "./schedule-picker-utils";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { isValidTimeZone } from "@/lib/time-zone";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 type Day = { open: string; close: string } | null;
 type Rules = {
   timezone: string;
@@ -52,15 +56,6 @@ const PROBLEM_MESSAGE = {
 } as const;
 const INPUT = "mt-1 w-full rounded-md border border-navy/15 px-2 py-1.5";
 
-function isZone(timeZone: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-CA", { timeZone }).format();
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function otherZones(): string[] {
   try {
     return Intl.supportedValuesOf("timeZone").filter(
@@ -105,7 +100,7 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
   const zones = useMemo(() => otherZones(), []);
 
   function fetchRules() {
-    return fetch(`/api/businesses/${organizationId}/availability`)
+    return timedFetch(`/api/businesses/${organizationId}/availability`)
       .then((res) => {
         if (!res.ok) throw new Error("Availability unavailable");
         return res.json();
@@ -131,6 +126,9 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
+  // Declared before the early returns below: hooks must run on every render.
+  const save = useGuarded(saveHandler);
+
   if (loadError) {
     return (
       <div role="alert" className="max-w-xl text-sm text-red-700">
@@ -153,7 +151,7 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
     setMessage(t(PROBLEM_MESSAGE[problem]));
   }
 
-  async function save() {
+  async function saveHandler() {
     if (!rules || busy) return;
     setMessage(null);
     setMessageError(false);
@@ -161,7 +159,7 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
       .split(/[,\s]+/)
       .map((item) => item.trim())
       .filter(Boolean);
-    if (!isZone(rules.timezone)) return fail("invalid_timezone");
+    if (!isValidTimeZone(rules.timezone)) return fail("invalid_timezone");
     const badHours = DAY_KEYS.some((key) => {
       const hours = rules.days[key];
       return (
@@ -177,7 +175,7 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
     if (!holidays.every(isRealDay)) return fail("invalid_holiday");
     setBusy(true);
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/availability`,
         {
           method: "PUT",
@@ -357,12 +355,12 @@ export function AvailabilityEditor({ organizationId }: { organizationId: string 
           className={INPUT}
         />
       </label>
-      <button
+      <button aria-busy={busy}
         type="submit"
         disabled={busy}
         className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
       >
-        {busy ? t("saving") : t("save")}
+        <BusyLabel pending={busy} busyLabel={t("saving")}>{t("save")}</BusyLabel>
       </button>
       {message ? (
         <p

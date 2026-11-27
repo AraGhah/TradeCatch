@@ -1,21 +1,20 @@
-import { NextResponse } from "next/server";
-import { authorizeAdminRequest } from "@/lib/admin-auth";
+import { adminReply, guardAdmin } from "@/lib/admin-route";
 import { getReliabilityService } from "@/product/reliability/runtime";
 
 export const dynamic = "force-dynamic";
 type Params = { params: Promise<{ id: string }> };
 
+/**
+ * One incident with its history (opened, alerted, acknowledged, escalated,
+ * resolved), the alert emails sent for it and the recent errors behind it.
+ * Alert delivery failures carry a short code only, and recorded error details
+ * are redacted when they are stored.
+ */
 export async function GET(request: Request, { params }: Params) {
-  const access = await authorizeAdminRequest(request);
-  if (!access.ok)
-    return NextResponse.json(
-      { error: access.error },
-      { status: access.status },
-    );
+  const guard = await guardAdmin(request, "admin.read");
+  if (!guard.ok) return guard.response;
   const { id } = await params;
-  const incidents = await getReliabilityService().listIncidents();
-  const incident = incidents.find((row) => row.id === id) ?? null;
-  if (!incident)
-    return NextResponse.json({ error: "Incident not found." }, { status: 404 });
-  return NextResponse.json({ ok: true, incident });
+  const detail = await getReliabilityService().incidentDetail(id.slice(0, 120));
+  if (!detail) return adminReply({ error: "Incident not found." }, 404);
+  return adminReply({ ok: true, ...detail });
 }

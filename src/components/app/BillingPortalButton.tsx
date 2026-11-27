@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { ApiError, requestJson } from "@/lib/client/request";
 import { useCooldown, useSingleFlight } from "@/lib/client/use-single-flight";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { isStripePortalUrl } from "@/product/saas/billing-access";
 
 export function BillingPortalButton() {
@@ -58,7 +59,9 @@ export function BillingPortalButton() {
         className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
         onClick={() => void open()}
       >
-        {opening ? t("billingOpening") : t("billing")}
+        <BusyLabel pending={opening} busyLabel={t("billingOpening")}>
+          {t("billing")}
+        </BusyLabel>
       </button>
       {error ? (
         <p role="alert" className="text-sm text-navy">

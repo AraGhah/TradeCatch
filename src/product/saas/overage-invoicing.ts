@@ -26,7 +26,7 @@
  *    subscription invoice; it does not charge a card by itself.
  */
 import type { PlanId } from "@/lib/plans";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { stripeSecretKey } from "./stripe-key";
 import {
   confirmedOverageUnits,

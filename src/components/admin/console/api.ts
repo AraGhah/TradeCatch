@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { RequestTimeoutError, timedFetch } from "@/lib/client/timed-fetch";
 
 /**
  * Client plumbing for the administration console: one way to call the admin API,
@@ -32,7 +33,9 @@ export async function adminFetch<T>(
 ): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(url, {
+    // Never waits forever: a request that does not answer ends as a "timeout"
+    // error, so a view's spinner or an action's disabled button always clears.
+    response = await timedFetch(url, {
       method: options.method ?? "GET",
       cache: "no-store",
       signal: options.signal,
@@ -42,6 +45,7 @@ export async function adminFetch<T>(
     });
   } catch (error) {
     if ((error as { name?: string }).name === "AbortError") throw error;
+    if (error instanceof RequestTimeoutError) throw new AdminApiError("timeout", 0, "timeout");
     throw new AdminApiError("network", 0);
   }
   const body = (await response.json().catch(() => null)) as
@@ -154,8 +158,16 @@ export type ActionState = {
  */
 export function useAdminAction(): ActionState {
   const busy = useRef(false);
+  const mounted = useRef(true);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<AdminApiError>();
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const run = useCallback(async <R,>(work: () => Promise<R>, onError?: (error: AdminApiError) => void) => {
     if (busy.current) return undefined;
@@ -166,12 +178,15 @@ export function useAdminAction(): ActionState {
       return await work();
     } catch (caught) {
       const failure = caught instanceof AdminApiError ? caught : new AdminApiError("error", 0);
-      setError(failure);
-      onError?.(failure);
+      // Nothing is written to a screen the administrator has already left.
+      if (mounted.current) {
+        setError(failure);
+        onError?.(failure);
+      }
       return undefined;
     } finally {
       busy.current = false;
-      setPending(false);
+      if (mounted.current) setPending(false);
     }
   }, []);
 

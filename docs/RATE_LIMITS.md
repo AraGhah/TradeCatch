@@ -63,7 +63,9 @@ Which route uses which policy is found by searching the policy id, for example `
 | `auth.password-login` | 20 | 1 per 45 s | ip | 200, 1 per 4.5 s | Password guessing. Per-account lockout sits behind this. |
 | `auth.magic-link` | 5 | 1 per 3 min | ip | same | Sign-in e-mails sent to other people. |
 | `auth.forgot-password` | 5 | 1 per 3 min | ip | 100, 1 per 9 s | Reset e-mails sent to other people. |
+| `auth.forgot-password-account` | 5 | 1 per 12 min | other | same | E-mail bombing one address with reset links, from many addresses. Spent for every address typed, so a refusal reveals nothing about accounts. |
 | `auth.set-password` | 20 | 1 per 45 s | ip | 200, 1 per 4.5 s | Guessing reset tokens. |
+| `auth.set-password-check` | 30 | 1 per 30 s | ip | 300, 1 per 3 s | Guessing reset tokens through the link check that runs when the page opens. |
 | `auth.callback` | 60 | 1 per 10 s | ip | 600, 1 per 1 s | Guessing magic-link tokens. |
 | `auth.change-password` | 20 | 1 per 45 s | user | same | Guessing the current password from a stolen session. |
 | `auth.refresh` | 60 | 1 per 10 s | ip | 600, 1 per 1 s | Guessing refresh tokens. A signed-in tab renews about every 14 minutes. |

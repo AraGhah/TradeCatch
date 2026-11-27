@@ -9,6 +9,8 @@
  *   comparisons: ==, != against "quoted strings" or numbers; `not var`
  */
 
+import { escapeHtml } from "@/lib/escape";
+
 export type TemplateVars = Record<
   string,
   string | number | boolean | null | undefined
@@ -145,15 +147,6 @@ function evalCondition(cond: Condition, vars: TemplateVars): boolean {
   else if (cond.op === "==") result = raw === (cond.value ?? "");
   else result = raw !== (cond.value ?? "");
   return cond.negate ? !result : result;
-}
-
-export function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 }
 
 function renderNodes(nodes: Node[], vars: TemplateVars, html: boolean): string {

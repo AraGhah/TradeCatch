@@ -133,13 +133,30 @@ function lifecycle(label: string, make: () => Promise<WebsiteRequestService>) {
       const bare = await service.adminUpdate(request.id, { status: "rejected" }, "a");
       assert.deepEqual(bare, { ok: false, error: "review_note_required" });
 
-      const rejected = await service.adminUpdate(
+      // The internal note alone is not enough: the customer must be told why.
+      const noCustomerReason = await service.adminUpdate(
         request.id,
         { status: "rejected", reviewNote: "Outside our service area" },
         "a",
       );
+      assert.deepEqual(noCustomerReason, { ok: false, error: "customer_reason_required" });
+
+      const rejected = await service.adminUpdate(
+        request.id,
+        {
+          status: "rejected",
+          reviewNote: "Outside our service area",
+          customerReason: "We only build sites for businesses in Greater Montreal.",
+        },
+        "a",
+      );
       assert.equal(rejected.ok && rejected.request.status, "rejected");
       assert.equal(rejected.ok && rejected.request.reviewNote, "Outside our service area");
+      const notes = (await service.history(request.id)).map((e) => e.note);
+      assert.ok(
+        notes.includes("Reason given to the customer: We only build sites for businesses in Greater Montreal."),
+        "the reason the customer received is in the history",
+      );
       const after = await service.adminUpdate(request.id, { status: "in_review" }, "a");
       assert.deepEqual(after, { ok: false, error: "invalid_transition" });
     });
@@ -156,11 +173,18 @@ function lifecycle(label: string, make: () => Promise<WebsiteRequestService>) {
     it("a double click applies a change once: the second concurrent update does not duplicate it", async () => {
       const { request } = await submit(service, "Double Click");
       await service.adminUpdate(request.id, { status: "in_review" }, "a");
-      const [first, second] = await Promise.all([
+      const results = await Promise.all([
         service.adminUpdate(request.id, { status: "approved" }, "a"),
         service.adminUpdate(request.id, { status: "approved" }, "a"),
       ]);
-      assert.equal([first, second].filter((r) => r.ok).length, 1);
+      // One call wins. The other is normally refused with `conflict`. On a real server with several
+      // connections (TEST_DATABASE_URL; measured at about 1 run in 200) the second call can instead
+      // read the request after the winner committed, see it already approved and succeed as a no-op.
+      // What must always hold is that the change is applied once, which the history below proves.
+      assert.ok(results.some((r) => r.ok));
+      for (const r of results) {
+        if (!r.ok) assert.equal(r.error, "conflict");
+      }
       const history = await service.history(request.id);
       assert.equal(
         history.filter((e) => e.kind === "status_changed" && e.toStatus === "approved").length,

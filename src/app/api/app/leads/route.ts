@@ -1,22 +1,12 @@
 import { NextResponse } from "next/server";
-import {
-  forbiddenFeatureResponse,
-  requireTenantContext,
-  tenantHasFeature,
-  unauthorizedTenantResponse,
-} from "@/product/saas/tenant";
+import { requireTenantFeature } from "@/product/saas/tenant";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const auth = await requireTenantContext();
-  if (!auth.ok) {
-    return unauthorizedTenantResponse(auth.error);
-  }
-  if (!tenantHasFeature(auth.ctx, "MISSED_CALL_RECOVERY")) {
-    return forbiddenFeatureResponse("MISSED_CALL_RECOVERY");
-  }
+  const auth = await requireTenantFeature("MISSED_CALL_RECOVERY");
+  if (!auth.ok) return auth.response;
 
   const clientId = auth.ctx.organization.missedCallClientId;
   if (!clientId) {

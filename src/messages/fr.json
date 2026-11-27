@@ -32,11 +32,16 @@
     "close": "Fermer",
     "skipToContent": "Passer au contenu principal",
     "aiReceptionist": "Réceptionniste",
-    "referral": "Programme de parrainage",
+    "referral": "Récompenses",
     "demo": "Démo",
     "login": "Connexion",
     "more": "Plus",
-    "emailUs": "Nous écrire"
+    "emailUs": "Nous écrire",
+    "account": "Compte",
+    "accountDashboard": "Mon tableau de bord",
+    "accountAdmin": "Tableau de bord admin",
+    "accountBilling": "Facturation",
+    "navigating": "Chargement de la page…"
   },
   "cta": {
     "primary": "Réserver une démo gratuite",
@@ -86,15 +91,22 @@
     }
   },
   "home": {
+    "meta": {
+      "title": "Chaque appel mérite une réponse.",
+      "description": "TradeCatch prend en charge vos appels, recueille les demandes de vos clients et vous aide à ne manquer aucune occasion d’affaires."
+    },
     "hero": {
-      "eyebrow": "Pour les entrepreneurs qui travaillent sur le terrain",
-      "headline": "Vous êtes sur le chantier. On s'occupe des appels.",
-      "accentWord": "On s'occupe des appels.",
-      "subheadline": "TradeCatch répond à vos appels clients et saisit chaque demande, pour que vous puissiez continuer à travailler.",
-      "ctaPrimary": "Réserver une démo gratuite",
-      "ctaSecondary": "Écouter la réceptionniste",
-      "ctaTry": "Essayer la démo live",
-      "reassurance": "Démo gratuite. Aucun accès système requis. Vous parlez avec le fondateur."
+      "eyebrow": "Conçu pour les entrepreneurs",
+      "headline": "Ne laissez plus un appel manqué",
+      "highlight": "vous coûter un contrat.",
+      "subheadline": "TradeCatch prend en charge vos appels, qualifie vos demandes et vous aide à transformer davantage d’occasions en contrats.",
+      "ctaPrimary": "Découvrir nos forfaits",
+      "ctaSecondary": "Voir la démo",
+      "ctaContact": "Réserver une démo gratuite",
+      "benefitsLabel": "Ce que fait TradeCatch",
+      "benefitReception": "Réception téléphonique",
+      "benefitRequests": "Demandes qualifiées",
+      "benefitDashboard": "Tableau de bord centralisé"
     },
     "leaks": {
       "eyebrow": "Le problème",
@@ -179,7 +191,6 @@
       "headline": "Vous n'achetez pas un logiciel. Vous embauchez la personne qui le construit.",
       "name": "Ara Ghahramanyan",
       "role": "Fondateur, TradeCatch",
-      "floatLabel": "Conçoit et gère votre système",
       "quote": "Je m'assois avec votre équipe, je cartographie comment les appels et les soumissions circulent vraiment dans votre entreprise, j'écris chaque message avec vous, et je teste chaque scénario avant qu'un seul client le voie. Ensuite, je continue de surveiller après le lancement.",
       "bio": "TradeCatch n'est pas un logiciel que vous devez configurer seul. J'analyse votre processus, connecte vos outils, teste les scénarios avec votre équipe et surveille le système après son lancement.",
       "points": [
@@ -196,19 +207,19 @@
       "work": [
         {
           "title": "Audit",
-          "body": "On cartographie le parcours réel de vos appels, soumissions et chantiers."
+          "body": "Cartographier le parcours réel du client : appels, soumissions et chantiers."
         },
         {
           "title": "Construction",
-          "body": "Messages, acheminement et conditions d’arrêt écrits avec vous, jamais en gabarit."
+          "body": "Personnaliser les messages, l’acheminement et les règles d’affaires."
         },
         {
           "title": "Tests",
-          "body": "Chaque scénario est testé de bout en bout avant qu’un client le voie."
+          "body": "Tester chaque scénario de bout en bout avant le lancement."
         },
         {
-          "title": "Surveillance",
-          "body": "Le système reste surveillé après le lancement et ajusté selon votre saison."
+          "title": "Suivi",
+          "body": "Surveiller le système en continu et l’ajuster après le lancement."
         }
       ]
     },
@@ -351,6 +362,57 @@
         "note": "Sans pression. Des prix clairs. Un soutien direct du fondateur."
       },
       "stickyCta": "Réserver une démo gratuite"
+    },
+    "lossRecovery": {
+      "label": "Comparer les trois mêmes moments",
+      "without": "Sans TradeCatch",
+      "with": "Avec TradeCatch",
+      "lost": "Contrat perdu",
+      "recovered": "Contrat récupéré",
+      "saved": [
+        [
+          "L’appel est manqué pendant que vous travaillez",
+          "Un texto part aussitôt vers le client",
+          "Il répond, et la demande vous parvient"
+        ],
+        [
+          "La réceptionniste prend l’appel",
+          "Nom, adresse et service sont notés",
+          "La demande vous attend dans votre compte, prête à lire"
+        ],
+        [
+          "Vous envoyez la soumission et retournez au travail",
+          "Des relances par texto partent aux jours 1, 3, 7 et 14",
+          "Le client répond, et vous reprenez le dossier"
+        ]
+      ]
+    },
+    "signalFlow": {
+      "label": "Comment un appel circule entre votre client, TradeCatch et vous",
+      "nodes": [
+        {
+          "title": "Votre client",
+          "body": "Appelle votre ligne"
+        },
+        {
+          "title": "TradeCatch",
+          "body": "Répond, questionne, note"
+        },
+        {
+          "title": "Vous",
+          "body": "Recevez les détails"
+        }
+      ],
+      "packets": [
+        "Appel",
+        "Questions",
+        "Détails",
+        "Alerte",
+        "Texto de suivi",
+        "Rendez-vous"
+      ],
+      "stop": "Arrêter l’animation",
+      "replay": "Rejouer"
     }
   },
   "services": {
@@ -588,8 +650,8 @@
   },
   "pricing": {
     "eyebrow": "Tarifs",
-    "headline": "Deux forfaits. Un choix simple.",
-    "intro": "Essential répond à vos appels et capte vos clients. Professional prend aussi vos rendez-vous. Tous les prix sont en dollars canadiens.",
+    "headline": "Des forfaits simples. Plus d’occasions saisies.",
+    "intro": "Choisissez la solution adaptée à votre entreprise. Une tarification claire, sans mauvaise surprise. Tous les prix sont en dollars canadiens.",
     "reassurance": "Mois par mois après l’installation. Annulation avec préavis.",
     "metaDescription": "Tarifs TradeCatch en CAD : Essential à 249,99 $ par mois et Professional à 349,99 $ par mois, avec des frais d’installation uniques de 1 999,99 $. Service de site web facultatif à 699,99 $.",
     "principles": [
@@ -602,7 +664,7 @@
       {
         "name": "Essential",
         "tagline": "Nous répondons à vos appels et captons vos clients.",
-        "outcome": "Chaque appel reçoit une réponse, jour et nuit, en français ou en anglais. Vous recevez le nom, le numéro et le besoin de l’appelant, pour qu’aucun travail ne vous file entre les doigts.",
+        "outcome": "Chaque appel reçoit une réponse, jour et nuit, en français ou en anglais. Vous recevez le nom, le numéro et le besoin de l’appelant, pour qu’aucun travail ne vous file entre les doigts. Les demandes de rendez-vous sont transmises à votre équipe, qui les confirme.",
         "price": "1 999,99 $ d’installation",
         "setupAmount": "1 999,99 $",
         "cadence": "249,99 $ / mois",
@@ -624,6 +686,7 @@
             "items": [
               "Nom et numéro de téléphone",
               "Demandes de service et de soumission",
+              "Demandes de rendez-vous à confirmer par votre équipe",
               "Demandes urgentes signalées tout de suite",
               "Relances par texto liées aux demandes des clients"
             ]
@@ -646,22 +709,23 @@
             ]
           }
         ],
+        "ctaLabel": "Choisir Essential",
         "planInterest": "essential"
       },
       {
         "name": "Professional",
-        "badge": "Prend vos rendez-vous",
+        "badge": "Recommandé",
         "emphasis": "featured",
-        "tagline": "Nous répondons à vos appels et prenons vos rendez-vous.",
-        "outcome": "Tout ce qui est dans Essential, plus la prise de rendez-vous automatique avec votre Google Agenda. L’appelant se voit offrir une plage réellement libre, et vous la voyez dans votre agenda.",
+        "tagline": "La réceptionniste complète : elle répond, qualifie et réserve le travail.",
+        "outcome": "Tout ce qui est dans Essential, plus des rendez-vous confirmés. Pendant l’appel, la réceptionniste vérifie vos vraies disponibilités, réserve une plage réellement libre et l’ajoute à votre Google Agenda. Le client reçoit une confirmation et un rappel par texto.",
         "price": "1 999,99 $ d’installation",
         "setupAmount": "1 999,99 $",
         "cadence": "349,99 $ / mois",
         "monthlyAmount": "349,99 $",
-        "idealFor": "Pour les entrepreneurs qui veulent des rendez-vous confirmés, pas seulement des demandes.",
+        "idealFor": "Pour les entrepreneurs qui veulent des travaux réservés à l’agenda, pas une liste de gens à rappeler.",
         "reassuranceLine": "L’installation est payée une seule fois, à la caisse. Le premier paiement mensuel de 349,99 $ a lieu un mois après l’installation.",
         "includesPrevious": "Tout ce qui est dans Essential, plus :",
-        "stepUp": "Ajoute la prise de rendez-vous pour 100 $ de plus par mois. Les frais d’installation sont les mêmes.",
+        "stepUp": "Pour 100 $ de plus par mois, la réceptionniste réserve le travail au lieu de transmettre une demande. Les frais d’installation sont les mêmes.",
         "groups": [
           {
             "title": "Prend les rendez-vous",
@@ -696,6 +760,7 @@
             ]
           }
         ],
+        "ctaLabel": "Choisir Professional",
         "planInterest": "professional"
       }
     ],
@@ -745,7 +810,7 @@
     "comparison": {
       "eyebrow": "Comparer",
       "title": "Ce que Professional ajoute",
-      "intro": "Professional inclut tout ce qui est dans Essential et ajoute la prise de rendez-vous.",
+      "intro": "Professional inclut tout ce qui est dans Essential et réserve des rendez-vous confirmés pendant l’appel.",
       "featureLabel": "Fonction",
       "includedLabel": "Inclus",
       "notIncludedLabel": "Non inclus",
@@ -755,8 +820,15 @@
     },
     "onceLabel": "payé une fois",
     "monthlyEyebrow": "Chaque mois",
+    "periodLabel": "mois",
     "websiteMention": "Besoin d’un site web? Ajoutez notre service de site web pour 699,99 $.",
     "billingBanner": "À la caisse, vous payez les frais d’installation uniques. Votre premier paiement mensuel a lieu un mois plus tard.",
+    "flow": {
+      "label": "Ce qui arrive à un appel",
+      "answered": "Appel répondu",
+      "captured": "Client capté",
+      "booked": "Rendez-vous pris"
+    },
     "schedulingNote": "La prise de rendez-vous est activée pour votre entreprise une fois qu’elle a été testée avec votre Google Agenda pendant l’installation."
   },
   "about": {
@@ -1502,7 +1574,74 @@
       "Répond en français ou en anglais, sous le nom de votre entreprise.",
       "Recueille le nom, l’adresse, le service demandé et l’urgence.",
       "Vous transmet la demande pour que vous rappeliez quand vous êtes libre."
-    ]
+    ],
+    "simulator": {
+      "tabsLabel": "Démo",
+      "tabWatch": "Voir l’histoire",
+      "tabTry": "Simuler un appel manqué",
+      "badge": "Simulation",
+      "title": "Manquez un appel exprès.",
+      "intro": "Choisissez un métier, puis laissez sonner. Voyez ce que reçoit le client et ce qui arrive dans votre tableau de bord.",
+      "tradeLabel": "Métier",
+      "trades": [
+        {
+          "id": "plumbing",
+          "label": "Plomberie",
+          "ask": "Mon chauffe-eau fuit. Quelqu’un peut passer cette semaine ?",
+          "service": "Fuite de chauffe-eau"
+        },
+        {
+          "id": "electrical",
+          "label": "Électricité",
+          "ask": "La moitié de mes prises ne fonctionnent plus. Quelqu’un peut vérifier cette semaine ?",
+          "service": "Prises hors service"
+        },
+        {
+          "id": "heating",
+          "label": "Chauffage",
+          "ask": "Ma fournaise ne démarre plus. Quelqu’un peut passer cette semaine ?",
+          "service": "Fournaise qui ne démarre pas"
+        }
+      ],
+      "start": "Manquer l’appel",
+      "again": "Recommencer",
+      "skip": "Passer à la fin",
+      "note": "Tout se passe dans votre navigateur. Aucun appel n’est fait et aucun texto n’est envoyé.",
+      "appTitle": "Demandes",
+      "today": "Aujourd’hui",
+      "newToday": "Nouvelles aujourd’hui",
+      "empty": "Aucune nouvelle demande",
+      "newCustomer": "Nouveau client",
+      "textBack": "Désolés d’avoir manqué votre appel. Comment pouvons-nous vous aider ?",
+      "threadLabel": "Conversation texto",
+      "fieldService": "Service",
+      "fieldName": "Nom",
+      "fieldAddress": "Adresse",
+      "fieldBooked": "Rendez-vous",
+      "fieldRequest": "Préférence",
+      "name": "Sam",
+      "address": "24 rue des Érables",
+      "prefers": "Jeudi matin",
+      "weekLabel": "Cette semaine",
+      "days": [
+        "lun.",
+        "mar.",
+        "mer.",
+        "jeu.",
+        "ven."
+      ],
+      "otherJob": "Autre chantier",
+      "tentative": "À confirmer",
+      "status": {
+        "ringing": "Appel entrant",
+        "missed": "Appel manqué",
+        "texted": "Texto envoyé automatiquement",
+        "replied": "Le client a répondu",
+        "captured": "Détails notés",
+        "booked": "Réservé",
+        "request": "Heure à confirmer"
+      }
+    }
   },
   "errors": {
     "eyebrow": "Une erreur est survenue",
@@ -1511,10 +1650,36 @@
     "retry": "Réessayer",
     "home": "Retour à l'accueil"
   },
+  "feedback": {
+    "retry": "Réessayer",
+    "retrying": "Nouvelle tentative…",
+    "dismiss": "Fermer",
+    "loading": "Chargement…",
+    "saving": "Enregistrement…",
+    "working": "En cours…",
+    "sending": "Envoi…",
+    "replying": "Réponse en cours…",
+    "errors": {
+      "timeout": "Cela prend plus de temps que prévu. Veuillez réessayer.",
+      "timeoutUnknown": "Nous n’avons pas reçu de confirmation à temps et ne pouvons pas savoir si l’action a été effectuée. Vérifiez les renseignements actuels avant de réessayer.",
+      "network": "Nous n’avons pas pu joindre TradeCatch. Vérifiez votre connexion et réessayez. Ce que vous avez saisi est toujours là.",
+      "networkUnknown": "La connexion a été interrompue avant la réponse, donc nous ne pouvons pas savoir si l’action a été effectuée. Vérifiez les renseignements actuels avant de réessayer.",
+      "rateLimited": "Trop de tentatives. Attendez {seconds} secondes et réessayez.",
+      "blocked": "Cette demande a été bloquée. Communiquez avec le soutien si cela se répète.",
+      "unavailable": "TradeCatch est brièvement indisponible et l’action n’a pas été effectuée. Réessayez dans un instant.",
+      "server": "Une erreur est survenue de notre côté et l’action n’a pas été effectuée. Veuillez réessayer.",
+      "serverUnknown": "TradeCatch a répondu, mais nous n’avons pas pu lire la réponse : nous ne pouvons donc pas savoir si l’action a abouti. Vérifiez les informations actuelles avant de réessayer.",
+      "unauthorized": "Votre session est terminée. Reconnectez-vous pour continuer. Ce que vous avez saisi est toujours sur cette page.",
+      "forbidden": "Votre rôle ne permet pas cette action.",
+      "invalid": "Vérifiez les renseignements et réessayez.",
+      "conflict": "Ces données ont changé pendant que vous travailliez. Rechargez pour voir la dernière version, puis réessayez.",
+      "unknown": "Une erreur est survenue. Veuillez réessayer."
+    }
+  },
   "login": {
-    "eyebrow": "Centre de compte",
-    "headline": "Connexion à votre compte TradeCatch",
-    "intro": "Connectez-vous avec votre courriel et votre mot de passe. Les comptes sont créés par TradeCatch quand vous devenez client, il n’y a donc pas d’inscription publique.",
+    "eyebrow": "Espace client",
+    "headline": "Bon retour parmi nous.",
+    "intro": "Connectez-vous pour accéder à votre espace TradeCatch.",
     "email": "Courriel professionnel",
     "submit": "M'envoyer un lien de connexion",
     "sending": "Envoi…",
@@ -1535,8 +1700,27 @@
     "errorUnavailable": "Votre compte n’est pas disponible pour le moment. Écrivez à contact@tradecatch.ca.",
     "linkInvalid": "Ce lien de connexion est invalide ou a déjà servi. Demandez-en un nouveau.",
     "linkRateLimited": "Trop de tentatives. Réessayez dans quelques minutes.",
+    "linkUnconfirmed": "Nous n’avons pas pu confirmer l’envoi du lien de connexion. Vérifiez votre boîte de réception et réessayez si rien n’arrive d’ici quelques minutes.",
     "passwordSaved": "Votre mot de passe est enregistré. Connectez-vous ci-dessous.",
-    "errorOutage": "La connexion est temporairement indisponible. Votre courriel et votre mot de passe ne sont pas en cause. Réessayez dans quelques minutes ou écrivez à contact@tradecatch.ca."
+    "errorOutage": "La connexion est temporairement indisponible. Votre courriel et votre mot de passe ne sont pas en cause. Réessayez dans quelques minutes ou écrivez à contact@tradecatch.ca.",
+    "invalidEmail": "Entrez une adresse courriel valide.",
+    "missingPassword": "Entrez votre mot de passe.",
+    "emailPlaceholder": "vous@entreprise.ca",
+    "opening": "Ouverture de votre espace…",
+    "openingStuck": "La page ne s’ouvre pas?",
+    "openingContinue": "Continuer vers mon espace",
+    "secure": "Connexion sécurisée",
+    "backHome": "Retour à l’accueil",
+    "accountsNote": "Les comptes sont créés par TradeCatch quand vous devenez client. Il n’y a pas d’inscription publique.",
+    "help": "Besoin d’aide?",
+    "contact": "Contacter TradeCatch",
+    "privacy": "Confidentialité",
+    "terms": "Conditions",
+    "languageLabel": "Langue"
+  },
+  "passwordToggle": {
+    "show": "Afficher le mot de passe",
+    "hide": "Masquer le mot de passe"
   },
   "app": {
     "demoAccountBadge": "Compte démo",
@@ -1566,6 +1750,7 @@
       "menu": "Menu",
       "closeMenu": "Fermer le menu",
       "logout": "Déconnexion",
+      "loggingOut": "Déconnexion…",
       "receptionist": "Réceptionniste",
       "phoneSettings": "Paramètres téléphone",
       "automations": "Automatisations",
@@ -1598,185 +1783,290 @@
       "accountSettings": "Paramètres du compte"
     },
     "automations": {
-      "headline": "Automatisations",
-      "intro": "Configurez les textos de récupération et les rappels de soumission. L'envoi se fait dans le serveur même si vous n'êtes pas connecté, et seulement après une nouvelle vérification du client, du consentement et de l'horaire.",
-      "missedIntro": "Lorsqu'un appel est manqué et que les règles le permettent, TradeCatch planifie un texto de récupération au nom de votre entreprise. Un appel répondu ne lance pas ce flux.",
-      "quoteIntro": "Les rappels partent seulement tant que la soumission reste sans réponse. Une réponse, une acceptation ou un refus annule ce qui n'a pas encore été remis au fournisseur.",
-      "active": "Active",
-      "inactive": "Inactive",
-      "enable": "Activer",
-      "disable": "Désactiver",
-      "edit": "Modifier la configuration",
-      "test": "Tester l'automatisation",
-      "save": "Enregistrer",
-      "saved": "Enregistré.",
-      "error": "Une erreur s'est produite.",
-      "none": "Aucun pour le moment",
-      "later": "Disponible après les deux flux principaux",
-      "simulated": "simulation",
-      "saving": "Enregistrement…",
-      "unchanged": "Il n'y a rien de nouveau à enregistrer.",
-      "unsaved": "Non enregistré",
-      "quoteAlwaysStops": "Les rappels s'arrêtent toujours quand la soumission est acceptée, refusée ou annulée.",
-      "quietHours": {
-        "label": "Aucun texto de rappel pendant les heures de silence",
-        "help": "Désactivé : l'appelant reçoit le texto tout de suite, à toute heure. Activé : un appel manqué en dehors de la plage d'envoi ci-dessous ne reçoit aucun texto, plutôt qu'un texto qui arrive des heures plus tard."
+      "headline": "Suivis automatiques",
+      "intro": "Ne manquez plus aucune occasion. Relancez automatiquement vos clients, envoyez des rappels de soumission et gardez le contact sans effort. TradeCatch s'occupe des suivis, même lorsque vous n'êtes pas disponible.",
+      "how": {
+        "title": "Comment fonctionnent les suivis automatiques",
+        "onOff": "Utilisez Activer pour démarrer un suivi et Mettre en pause pour l'arrêter. Vous pouvez changer d'avis en tout temps.",
+        "consent": "Nous écrivons seulement aux personnes qui vous ont appelé, qui ont reçu votre soumission ou qui ont pris un rendez-vous. Quiconque répond STOP ne reçoit plus de textos.",
+        "recheck": "Chaque texto est vérifié de nouveau juste avant son envoi. Un suivi en pause n'envoie rien, même si un texto était en attente.",
+        "timing": "Choisissez le moment des envois et les heures de silence dans les réglages de chaque suivi."
       },
-      "toggle": {
-        "enabling": "Activation…",
-        "disabling": "Désactivation…",
-        "enabled": "Activé et enregistré. Il fonctionne désormais seul.",
-        "disabled": "{count, plural, =0 {Désactivé et enregistré.} one {Désactivé et enregistré. 1 texto en attente a été annulé.} other {Désactivé et enregistré. # textos en attente ont été annulés.}}"
-      },
-      "failures": {
-        "generic": "L'enregistrement a échoué. La page affiche ce qui est enregistré.",
-        "rateLimited": "Trop de changements en peu de temps. Réessayez dans {seconds, plural, one {# seconde} other {# secondes}}.",
-        "offline": "Le serveur n'a pas pu être joint, le changement n'est donc pas confirmé. La page affiche ce qui est enregistré.",
-        "unavailable": "Le service est brièvement indisponible. Réessayez dans un instant.",
-        "denied": "Vous n'avez pas la permission de modifier les automatisations.",
-        "signedOut": "Votre session a pris fin. Reconnectez-vous, puis réessayez.",
-        "unconfirmed": "Le serveur n'a pas confirmé le changement. La page affiche ce qui est enregistré."
-      },
-      "invalid": {
-        "number": "Utilisez uniquement des nombres entiers.",
-        "initial_delay": "Le premier délai doit être un nombre de minutes entre 0 et 43 200.",
-        "second_delay": "Le deuxième délai doit être au moins égal au premier, et d'au plus 86 400 minutes.",
-        "max_attempts": "Le nombre maximal de tentatives doit être entre 1 et 5.",
-        "sending_window": "La plage d'envoi doit commencer avant de se terminer, entre 0 et 24.",
-        "language": "Choisissez une langue de message.",
-        "category": "Ce réglage ne peut pas être modifié."
-      },
-      "pendingTitle": "Rappels planifiés",
-      "pendingEmpty": "Aucun rappel de soumission n'est planifié.",
-      "templatesTitle": "Modèles de message",
-      "templatesIntro": "Textes en français et en anglais. Le nom de l'entreprise et la mention STOP restent obligatoires : une personnalisation ne peut pas les retirer.",
-      "historyTitle": "Historique des messages",
-      "historyIntro": "Envoyé n'est pas la même chose que livré. Une ligne annulée n'a jamais été remise au fournisseur téléphonique.",
-      "historyEmpty": "Aucun message automatisé pour le moment.",
       "subnav": {
         "overview": "Aperçu",
-        "missedCall": "Récupération d'appel manqué",
-        "quotes": "Relances de soumission",
+        "missedCall": "Suivi des appels manqués",
+        "quotes": "Rappels de soumission",
         "templates": "Modèles de message",
         "history": "Historique"
       },
-      "table": {
-        "automation": "Automatisation",
-        "status": "Statut",
-        "trigger": "Déclencheur",
-        "action": "Action",
-        "last": "Dernière exécution",
-        "success": "Réussites",
-        "failures": "Échecs",
-        "responses": "Réponses"
-      },
       "names": {
-        "missed_call_recovery": "Récupération d'appel manqué",
-        "quote_followup": "Relance de soumission",
-        "appointment_reminder": "Rappel de rendez-vous",
-        "customer_reengagement": "Relance client inactif",
-        "urgent_lead_notification": "Avis de lead urgent"
+        "missed_call_recovery": "Suivi des appels manqués",
+        "quote_followup": "Rappels de soumission",
+        "appointment_reminder": "Rappels de rendez-vous",
+        "customer_reengagement": "Relance des anciens clients",
+        "urgent_lead_notification": "Alertes de demandes urgentes"
       },
-      "triggers": {
-        "missed_call_recovery": "Appel client manqué",
-        "quote_followup": "Soumission sans réponse",
-        "appointment_reminder": "Rendez-vous qui approche",
-        "customer_reengagement": "Client inactif admissible",
-        "urgent_lead_notification": "Lead urgent détecté"
+      "descriptions": {
+        "missed_call_recovery": "Vous avez manqué un appel? TradeCatch peut envoyer automatiquement un message pour que vous ne perdiez pas un client potentiel.",
+        "quote_followup": "Rappelez automatiquement à vos clients leurs soumissions sans réponse et transformez plus d'occasions en contrats.",
+        "appointment_reminder": "Confirmez chaque rendez-vous et envoyez un rappel la veille, pour réduire les visites manquées.",
+        "customer_reengagement": "Contactez les clients dont vous n'avez pas eu de nouvelles depuis un moment.",
+        "urgent_lead_notification": "Soyez alerté tout de suite quand un client envoie une demande urgente."
+      },
+      "soon": {
+        "customer_reengagement": "Bientôt offert. Seuls les clients qui ont accepté de recevoir des promotions recevront un texto. Rien n'est envoyé pour le moment.",
+        "urgent_lead_notification": "Bientôt offert. Rien n'est envoyé pour le moment."
+      },
+      "status": {
+        "label": "Statut",
+        "paused": "En pause",
+        "active": "Actif",
+        "scheduled": "Planifié",
+        "attention": "Attention requise",
+        "comingSoon": "Bientôt offert"
+      },
+      "statusHelp": {
+        "paused": "Désactivé. Aucun texto ne sera envoyé.",
+        "active": "Activé et prêt. Aucun texto n'attend d'être envoyé pour le moment.",
+        "scheduled": "{count, plural, one {# texto attend d'être envoyé.} other {# textos attendent d'être envoyés.}}",
+        "attention": {
+          "switched_off_by_tradecatch": "TradeCatch a mis en pause les textos d'appel manqué pour le moment, donc aucun n'est envoyé. Communiquez avec le soutien si ce n'est pas ce que vous attendiez.",
+          "no_number": "Votre numéro d'entreprise n'est pas encore configuré pour les textos, donc aucun texto ne peut être envoyé. Communiquez avec le soutien pour terminer la configuration.",
+          "last_failed": "Le dernier texto n'a pas pu être envoyé. Ouvrez l'historique pour voir lequel.",
+          "last_unconfirmed": "Nous n'avons pas pu confirmer l'envoi du dernier texto, et il n'a pas été renvoyé. Ouvrez l'historique pour vérifier."
+        }
+      },
+      "card": {
+        "when": "Moment d'envoi",
+        "lastActivity": "Dernière activité",
+        "noActivity": "Aucune activité pour le moment",
+        "sent": "Textos envoyés",
+        "replies": "Réponses",
+        "failed": "Envois impossibles",
+        "statsNote": "Les textos envoyés comprennent les textos d'essai que vous avez lancés."
+      },
+      "when": {
+        "missedNow": "Lorsqu'un appel reste sans réponse, un texto est envoyé tout de suite.",
+        "missedAfter": "Lorsqu'un appel reste sans réponse, un texto est envoyé environ {delay} plus tard.",
+        "quoteOne": "{kind, select, now {Un rappel est envoyé dès que vous envoyez une soumission.} other {Si une soumission reste sans réponse {first} après son envoi, un rappel est envoyé.}}",
+        "quoteTwo": "{kind, select, now {Un rappel est envoyé dès que vous envoyez une soumission, puis un autre {second} après son envoi.} other {Si une soumission reste sans réponse, des rappels sont envoyés {first} et {second} après son envoi.}}",
+        "appointment": "Une confirmation est envoyée lorsqu'un rendez-vous est pris. Un rappel suit environ 24 heures avant la visite.",
+        "hoursWait": "Les textos sont envoyés seulement entre {start} et {end}{weekends, select, yes {} other {, sauf la fin de semaine}}. Un texto prévu en dehors de ces heures attend leur reprise.",
+        "quietOff": "Les heures de silence sont désactivées : l'appelant reçoit le texto à toute heure.",
+        "quietOn": "Les heures de silence sont activées. Un appel manqué en dehors de {start} à {end}{weekends, select, yes {} other {, ou la fin de semaine,}} ne reçoit aucun texto."
       },
       "actions": {
-        "missed_call_recovery": "Envoyer un texto",
-        "quote_followup": "Envoyer un rappel",
-        "appointment_reminder": "Envoyer un rappel",
-        "customer_reengagement": "Envoyer un suivi",
-        "urgent_lead_notification": "Aviser l'entrepreneur"
+        "enable": "Activer",
+        "pause": "Mettre en pause",
+        "enabling": "Activation…",
+        "pausing": "Mise en pause…",
+        "settings": "Modifier les réglages",
+        "test": "Faire un essai",
+        "history": "Voir l'historique",
+        "save": "Enregistrer les modifications",
+        "saving": "Enregistrement…"
       },
+      "saved": "Modifications enregistrées.",
+      "unchanged": "Il n'y a rien de nouveau à enregistrer.",
+      "unsaved": "Modifications non enregistrées",
+      "error": "Une erreur s'est produite. Veuillez réessayer.",
+      "toggle": {
+        "enabled": "Activé.",
+        "disabled": "{count, plural, =0 {En pause.} one {En pause. 1 texto en attente a été annulé.} other {En pause. # textos en attente ont été annulés.}}"
+      },
+      "failures": {
+        "generic": "Nous n'avons pas pu enregistrer ce changement. La page affiche ce qui est actuellement enregistré. Veuillez réessayer.",
+        "rateLimited": "Vous avez fait beaucoup de changements en peu de temps. Réessayez dans {seconds, plural, one {# seconde} other {# secondes}}.",
+        "offline": "Nous n'avons pas pu joindre TradeCatch, donc le changement n'est pas confirmé. Vérifiez votre connexion et réessayez. La page affiche ce qui est actuellement enregistré.",
+        "unavailable": "TradeCatch est brièvement indisponible. Réessayez dans un instant.",
+        "denied": "Vous n'avez pas la permission de modifier ces réglages. Adressez-vous au propriétaire du compte.",
+        "signedOut": "Votre session est terminée. Reconnectez-vous, puis réessayez.",
+        "unconfirmed": "Nous n'avons pas pu confirmer le changement. La page affiche ce qui est actuellement enregistré.",
+        "invalid": "Certains renseignements n'ont pas pu être acceptés. Vérifiez ce que vous avez saisi et réessayez.",
+        "turnOnFirst": "Activez d'abord ce suivi, puis réessayez.",
+        "notAvailable": "Ce suivi n'est pas encore offert.",
+        "conflict": "Ce changement n'a pas pu être fait pour le moment. Rechargez la page et réessayez."
+      },
+      "invalid": {
+        "number": "Entrez des nombres entiers seulement.",
+        "initial_delay": "Le premier délai doit être entre 0 et 43 200 minutes (30 jours).",
+        "second_delay": "Le deuxième rappel ne peut pas venir avant le premier, et doit se situer dans les 86 400 minutes (60 jours).",
+        "max_attempts": "Entrez un nombre de rappels de 1 à 5.",
+        "sending_window": "Les heures d'envoi doivent commencer avant de se terminer, avec des heures de 0 à 24.",
+        "language": "Choisissez une langue de message.",
+        "category": "Ce réglage ne peut pas être modifié."
+      },
+      "settings": {
+        "scheduling": "Planification des suivis",
+        "schedulingHelp": "Choisissez quand vos clients reçoivent les rappels. TradeCatch s'occupe du reste.",
+        "quoteAlwaysStops": "Les rappels s'arrêtent toujours dès que la soumission est acceptée, refusée ou annulée.",
+        "rulesTitle": "Langue et règles d'arrêt"
+      },
+      "fields": {
+        "delayMissed": "Envoyer le texto après (minutes)",
+        "delayMissedHelp": "Compté à partir de l'appel manqué.",
+        "delayQuote": "Envoyer le premier rappel après (minutes)",
+        "delayQuoteHelp": "Compté à partir de l'envoi de la soumission.",
+        "secondDelay": "Envoyer le deuxième rappel après (minutes)",
+        "secondDelayHelp": "Compté à partir de l'envoi de la soumission. Pas avant le premier rappel.",
+        "language": "Langue du message",
+        "languageCustomer": "Selon la langue du client",
+        "languageEn": "Anglais",
+        "languageFr": "Français",
+        "languageHelp": "Si nous ne connaissons pas la langue du client, la langue de votre entreprise est utilisée.",
+        "reminders": "Nombre de rappels",
+        "remindersHelp": "Jusqu'à 2 rappels sont envoyés pour chaque soumission. Entrez 1 pour envoyer seulement le premier.",
+        "windowStart": "Commencer l'envoi à (heure, de 0 à 24)",
+        "windowEnd": "Arrêter l'envoi à (heure, de 0 à 24)",
+        "weekend": "Envoyer aussi la fin de semaine",
+        "duplicate": "Ne pas envoyer deux textos au même appelant en 24 heures",
+        "stopReply": "Arrêter quand le client répond",
+        "stopHuman": "Arrêter quand quelqu'un de votre équipe communique avec le client",
+        "hint": "Soit {duration}.",
+        "hintNow": "Envoyé tout de suite.",
+        "hourHint": "Soit {time}."
+      },
+      "quietHours": {
+        "label": "Ne pas envoyer de texto pendant les heures de silence",
+        "help": "Désactivé : l'appelant reçoit le texto tout de suite, à toute heure. Activé : vous choisissez vos heures d'envoi, et un appel manqué en dehors de ces heures ne reçoit aucun texto, plutôt qu'un texto qui arrive des heures plus tard."
+      },
+      "duration": {
+        "days": "{count, plural, one {# jour} other {# jours}}",
+        "hours": "{count, plural, one {# heure} other {# heures}}",
+        "minutes": "{count, plural, one {# minute} other {# minutes}}",
+        "and2": "{a} et {b}",
+        "and3": "{a}, {b} et {c}"
+      },
+      "time": {
+        "am": "{hour} h",
+        "pm": "{hour} h",
+        "noon": "midi",
+        "midnight": "minuit",
+        "hour24": "{hour} h"
+      },
+      "results": {
+        "submitted": "Texto envoyé",
+        "simulated": "Texto d'essai (rien n'a vraiment été envoyé)",
+        "retry": "Envoi impossible; nouvel essai sous peu",
+        "failed": "Le texto n'a pas pu être envoyé",
+        "uncertain": "Impossible de confirmer l'envoi du texto",
+        "business_inactive": "Non envoyé : votre compte n'est pas actif",
+        "automation_disabled": "Non envoyé : le suivi était en pause",
+        "invalid_phone": "Non envoyé : le numéro de téléphone n'est pas valide",
+        "opted_out": "Non envoyé : le client a demandé de ne plus recevoir de textos",
+        "already_submitted": "Non renvoyé : il était déjà parti",
+        "max_attempts": "Non envoyé : la limite de rappels était atteinte",
+        "legal_basis": "Non envoyé : le consentement requis du client manquait",
+        "customer_reply": "Arrêté : le client a répondu",
+        "lead_closed": "Arrêté : le dossier était déjà fermé",
+        "human_contact": "Arrêté : quelqu'un de votre équipe avait déjà joint le client",
+        "recovery_sms_disabled": "Non envoyé : TradeCatch a mis en pause les textos d'appel manqué",
+        "stale": "Non envoyé : trop de temps s'était écoulé",
+        "quiet_hours": "Non envoyé : c'était pendant les heures de silence",
+        "template_incomplete": "Non envoyé : il manquait des renseignements dans le message",
+        "missing_sender": "Non envoyé : aucun numéro d'entreprise n'est configuré pour les textos",
+        "quote_accepted": "Arrêté : la soumission a été acceptée",
+        "quote_rejected": "Arrêté : la soumission a été refusée",
+        "quote_stopped": "Arrêté : le suivi de la soumission a été arrêté",
+        "quote_not_found": "Arrêté : la soumission est introuvable",
+        "manual": "Annulé par vous",
+        "unknownError": "Une erreur s'est produite. Le soutien TradeCatch peut voir les détails."
+      },
+      "response": {
+        "awaiting": "En attente d'une réponse",
+        "replied": "Le client a répondu",
+        "opted_out": "Le client a demandé de ne plus recevoir de textos"
+      },
+      "jobStatus": {
+        "pending": "Planifié",
+        "processing": "Envoi en cours",
+        "submitted": "Envoyé",
+        "sent": "Envoyé",
+        "delivered": "Livré",
+        "failed": "Non envoyé",
+        "undelivered": "Non livré",
+        "canceled": "Annulé",
+        "skipped": "Ignoré",
+        "uncertain": "Non confirmé"
+      },
+      "simulated": "essai",
+      "pendingTitle": "Rappels de soumission récents",
+      "pendingEmpty": "Aucun rappel de soumission pour le moment. Ils apparaîtront ici après l'envoi d'une soumission.",
+      "templatesTitle": "Modèles de message",
+      "templatesIntro": "Modifiez les textos que reçoivent vos clients, en français et en anglais. Chaque message doit garder le nom de votre entreprise et la mention « Répondez STOP pour vous désabonner », pour que les clients sachent qui leur écrit et puissent se désabonner.",
+      "historyTitle": "Historique des messages",
+      "historyIntro": "Chaque texto automatique et ce qui lui est arrivé. « Envoyé » veut dire qu'il a quitté TradeCatch. « Livré » veut dire qu'il est arrivé sur le téléphone du client. Un texto annulé ou ignoré n'a jamais été envoyé.",
+      "historyEmpty": "Aucun texto automatique pour le moment. Ils apparaîtront ici dès qu'un suivi activé en aura envoyé un.",
+      "historyCols": {
+        "customer": "Client",
+        "automation": "Suivi",
+        "status": "Statut",
+        "result": "Ce qui s'est passé",
+        "message": "Message",
+        "scheduled": "Prévu pour",
+        "sent": "Envoyé",
+        "reference": "Référence",
+        "cost": "Coût"
+      },
+      "missedIntro": "Vous avez manqué un appel? TradeCatch peut envoyer automatiquement un message pour que vous ne perdiez pas un client potentiel. Un appel auquel on a répondu ne déclenche jamais ce suivi.",
+      "quoteIntro": "Rappelez automatiquement à vos clients leurs soumissions sans réponse et transformez plus d'occasions en contrats. Les rappels s'arrêtent dès que le client répond ou que la soumission est acceptée, refusée ou annulée.",
       "templates": {
-        "missed_call_recovery": "Récupération d'appel manqué",
-        "quote_followup_1": "Relance de soumission 1",
-        "quote_followup_2": "Relance de soumission 2",
+        "missed_call_recovery": "Texto d'appel manqué",
+        "quote_followup_1": "Premier rappel de soumission",
+        "quote_followup_2": "Deuxième rappel de soumission",
         "appointment_confirmation": "Confirmation de rendez-vous",
         "appointment_reminder": "Rappel de rendez-vous",
         "general_followup": "Suivi général",
-        "human_assistance": "Aide humaine",
-        "after_hours": "Réponse hors heures"
-      },
-      "fields": {
-        "delay": "Délai initial",
-        "secondDelay": "Délai du second rappel",
-        "language": "Langue du message",
-        "languageCustomer": "Préférence du client",
-        "languageEn": "Anglais",
-        "languageFr": "Français",
-        "attempts": "Nombre maximal de tentatives",
-        "windowStart": "Début de la plage d'envoi (heure)",
-        "windowEnd": "Fin de la plage d'envoi (heure)",
-        "weekend": "Envoi la fin de semaine",
-        "duplicate": "Protection contre les doublons",
-        "stopReply": "Arrêter quand le client répond",
-        "stopHuman": "Arrêter quand une personne prend le relais",
-        "stopAccepted": "Arrêter si la soumission est acceptée",
-        "stopRejected": "Arrêter si la soumission est refusée",
-        "minutes": "minutes après l'événement"
+        "human_assistance": "Suivi par un membre de l'équipe",
+        "after_hours": "Texto d'appel manqué (hors des heures d'ouverture)"
       },
       "templateUi": {
-        "variables": "Insérer une variable",
+        "variables": "Insérer un renseignement",
+        "variablesHint": "Les renseignements entre doubles accolades, comme {example}, sont remplis pour chaque client.",
+        "variableNames": {
+          "customer_name": "Nom du client",
+          "business_name": "Nom de l'entreprise",
+          "service_name": "Service",
+          "quote_ref": "Numéro de soumission",
+          "appointment_time": "Heure du rendez-vous",
+          "appointment_date": "Date du rendez-vous"
+        },
         "preview": "Aperçu",
-        "reset": "Réinitialiser",
+        "reset": "Rétablir par défaut",
         "chars": "Caractères",
-        "segments": "Segments SMS",
-        "segmentWarning": "Ce message peut utiliser plus d'un segment SMS et coûter plus cher à livrer.",
-        "missing": "Valeurs manquantes",
+        "segments": "Parties du texto",
+        "segmentWarning": "Ce message est long : il peut être envoyé en plus d'un texto et coûter un peu plus cher.",
+        "shorterParts": "Certains caractères, comme les majuscules accentuées ou les émojis, raccourcissent chaque partie.",
+        "missing": "Renseignements manquants",
         "errors": {
           "empty": "Le message est trop court.",
           "too_long": "Le message est trop long. Limitez-le à 1 000 caractères.",
-          "missing_business_identification": "Gardez la variable du nom de l’entreprise dans le message, pour que les clients sachent qui leur écrit.",
+          "missing_business_identification": "Gardez le nom de l'entreprise (écrit {example}) dans le message, pour que les clients sachent qui leur écrit.",
           "missing_opt_out": "Gardez la mention de désabonnement dans le message : « Répondez STOP pour vous désabonner. »",
-          "unknown_variable": "Le message utilise une variable qui n’existe pas. Utilisez seulement les variables indiquées au-dessus du message."
+          "unknown_variable": "Le message utilise un renseignement qui n'existe pas. Utilisez seulement ceux qui sont indiqués au-dessus du message."
         }
       },
       "testPanel": {
-        "title": "Centre de test : flux simulés",
-        "intro": "Ces actions utilisent des numéros fictifs et ne contactent jamais un vrai téléphone. Exécutez la prochaine action pour lancer immédiatement un travail simulé dû.",
-        "missed": "Simuler un appel manqué",
-        "run": "Exécuter la prochaine action planifiée",
-        "reply": "Simuler une réponse client",
-        "quote": "Simuler une soumission",
-        "accept": "Marquer la soumission acceptée",
+        "title": "Faire un essai avec un client fictif",
+        "intro": "Ces essais utilisent de faux numéros de téléphone : aucun vrai client ne reçoit de texto. Activez d'abord le suivi, puis lancez un essai pour voir ce qui se passerait.",
+        "missed": "Essayer un appel manqué",
+        "run": "Envoyer le prochain texto d'essai en attente",
+        "reply": "Essayer une réponse de client",
+        "quote": "Essayer l'envoi d'une soumission",
+        "accept": "Essayer une soumission acceptée",
         "result": "Résultat",
-        "phone": "Téléphone fictif",
-        "name": "Nom fictif",
-        "resultNone": "Rien n’était prévu : aucun message n’a été planifié ni envoyé.",
-        "resultNotScheduled": "Rien n’a été planifié. Vérifiez que cette automatisation est activée.",
+        "phone": "Numéro de téléphone fictif",
+        "name": "Nom de client fictif",
+        "resultNone": "Rien n'était en attente : aucun texto d'essai n'a été envoyé.",
+        "resultNotScheduled": "Rien n'a été planifié. Vérifiez que ce suivi est activé.",
         "resultDuplicate": "Cette réponse a déjà été traitée.",
         "resultJob": "{status} : texto au {phone}, {when}",
         "resultCanceled": "{count, plural, =0 {Aucun texto en attente à annuler.} one {# texto en attente annulé.} other {# textos en attente annulés.}}",
-        "jobStatus": {
-          "pending": "Planifié",
-          "processing": "Envoi en cours",
-          "submitted": "Envoyé",
-          "sent": "Envoyé",
-          "delivered": "Livré",
-          "failed": "Échec",
-          "undelivered": "Non livré",
-          "canceled": "Annulé",
-          "skipped": "Ignoré",
-          "uncertain": "Non confirmé"
-        },
         "reasons": {
-          "call_handled": "Aucun texto n’a été planifié : l’appel a déjà été pris en charge.",
-          "ineligible": "Aucun texto n’a été planifié : ce numéro ne peut pas en recevoir.",
-          "duplicate": "Aucun nouveau texto n’a été planifié : il y en a déjà un de prévu pour cet appelant."
+          "call_handled": "Aucun texto n'a été planifié : l'appel a déjà été pris en charge.",
+          "ineligible": "Aucun texto n'a été planifié : ce numéro ne peut pas recevoir de texto.",
+          "duplicate": "Aucun nouveau texto n'a été planifié : il y en a déjà un de prévu pour cet appelant."
         }
-      },
-      "historyCols": {
-        "customer": "Client",
-        "automation": "Automatisation",
-        "status": "Statut",
-        "result": "Résultat",
-        "message": "Message",
-        "scheduled": "Planifié",
-        "sent": "Remis"
       }
     },
     "testCenter": {
@@ -1787,7 +2077,11 @@
       "notDemo": "Les outils du centre de test sont réservés aux entreprises démo.",
       "adminOnly": "Seuls les administrateurs TradeCatch peuvent générer ou réinitialiser les données démo.",
       "generateData": "Générer des données démo",
+      "generatingData": "Génération…",
+      "generated": "Généré",
       "resetAccount": "Réinitialiser le compte démo",
+      "resettingAccount": "Réinitialisation…",
+      "resetDone": "Réinitialisé",
       "confirmReset": "Réinitialiser ce compte démo ? Les enregistrements générés seront retirés. L’entreprise et le propriétaire restent.",
       "seedOk": "Données démo fictives générées pour cette entreprise seulement.",
       "resetOk": "Compte démo réinitialisé. L’accès propriétaire est conservé.",
@@ -2422,6 +2716,9 @@
       "error": "Le service de planification n’a pas pu terminer cette demande.",
       "connectionError": "Impossible de joindre le service de planification. Vérifiez votre connexion et réessayez.",
       "retry": "Réessayer",
+      "loadingAppointments": "Chargement des rendez-vous…",
+      "bookUnconfirmed": "Nous n’avons pas pu confirmer cette réservation à temps; elle a peut-être quand même été enregistrée. Le calendrier se recharge. Si le rendez-vous n’y est pas, confirmez à nouveau : la même heure n’est réservée qu’une seule fois.",
+      "changeUnconfirmed": "Nous n’avons pas pu confirmer que cette modification a été enregistrée. Le calendrier se recharge : vérifiez le rendez-vous avant de réessayer.",
       "notConfirmed": "Cette heure n’a pas été confirmée. Choisissez une autre disponibilité.",
       "hoursIntro": "Les clients ne reçoivent que des heures à l’intérieur de cet horaire.",
       "timezone": "Fuseau horaire",
@@ -2446,6 +2743,9 @@
       "calendarPilotNotice": "Nous activons Google Agenda pour votre entreprise une fois qu’il a été testé avec votre propre calendrier. Écrivez à contact@tradecatch.ca et nous le configurerons avec vous.",
       "calendarSimulationNotice": "Les rendez-vous d’essai dans votre compte ne touchent jamais votre Google Agenda. Seules les vraies réservations s’y ajoutent, une fois Google Agenda activé.",
       "calendarLoading": "Vérification de la disponibilité du calendrier…",
+      "connecting": "Connexion…",
+      "disconnecting": "Déconnexion…",
+      "calendarUnconfirmed": "Nous n’avons pas pu confirmer si ce changement de calendrier a été enregistré. L’état ci-dessus est actualisé : vérifiez-le avant de réessayer.",
       "status": "État",
       "simulated": "Simulé",
       "connected": "Connecté",
@@ -2553,7 +2853,68 @@
       "calendarSync": "Calendrier",
       "syncedYes": "Dans votre calendrier",
       "syncedNo": "Pas encore dans votre calendrier",
-      "cancelReasonLabel": "Motif d’annulation"
+      "cancelReasonLabel": "Motif d’annulation",
+      "gcalResultConnected": "Google Agenda est connecté. Votre calendrier se synchronise.",
+      "gcalResultChoose": "Google est connecté. Choisissez le calendrier que TradeCatch doit utiliser.",
+      "gcalResultDenied": "Google Agenda n’a pas été connecté, car l’accès n’a pas été autorisé. Rien n’a été modifié et vous pouvez réessayer.",
+      "gcalResultScope": "Google Agenda n’a pas été connecté, car l’autorisation de gérer les événements n’a pas été accordée. Rien n’a été modifié. Réessayez en gardant les deux cases cochées.",
+      "gcalResultExpired": "Cette tentative de connexion a expiré. Recommencez avec Connecter Google Calendar.",
+      "gcalResultForbidden": "Vous n’avez pas la permission de connecter un calendrier pour cette entreprise.",
+      "gcalResultPilot": "Google Agenda n’est pas encore activé pour cette entreprise.",
+      "gcalResultError": "Google Agenda n’a pas pu être connecté. Rien n’a été modifié. Réessayez dans un instant.",
+      "gcalStatusChoose": "Choisir un calendrier",
+      "gcalStatusError": "À vérifier",
+      "gcalReconnect": "Reconnecter Google Calendar",
+      "gcalAccount": "Compte Google",
+      "gcalCalendar": "Calendrier",
+      "gcalLastSync": "Dernière synchronisation réussie",
+      "gcalNeverSynced": "Pas encore",
+      "gcalPushActive": "Les mises à jour instantanées sont activées. TradeCatch vérifie aussi toutes les quelques minutes.",
+      "gcalPushExpiring": "Renouvellement des mises à jour instantanées. TradeCatch vérifie toutes les quelques minutes entre-temps.",
+      "gcalPushOff": "TradeCatch vérifie votre calendrier toutes les quelques minutes.",
+      "gcalPushUnavailable": "Les mises à jour instantanées ne sont pas disponibles pour le moment. TradeCatch vérifie toutes les quelques minutes.",
+      "gcalPermissions": "TradeCatch lit seulement quand vous êtes occupé. Il ne conserve jamais les titres, notes ou invités de vos propres événements, et il ne modifie que les événements qu’il a lui-même créés.",
+      "gcalPickTitle": "Choisir le calendrier à utiliser",
+      "gcalPickLabel": "Calendrier",
+      "gcalPickHelp": "Seuls les calendriers auxquels vous pouvez ajouter des événements sont listés.",
+      "gcalPickLoading": "Chargement de vos calendriers…",
+      "gcalNoCalendars": "Aucun calendrier auquel vous pouvez ajouter des événements n’a été trouvé dans ce compte Google.",
+      "gcalChange": "Changer de calendrier",
+      "gcalChangeNote": "Les événements déjà créés restent dans le calendrier où ils ont été créés.",
+      "gcalSyncNow": "Synchroniser maintenant",
+      "gcalSyncing": "Synchronisation…",
+      "gcalSyncDone": "Synchronisation terminée.",
+      "gcalAllSynced": "Tout est à jour.",
+      "gcalPending": "{count, plural, one {# changement attend d’être envoyé à Google.} other {# changements attendent d’être envoyés à Google.}}",
+      "gcalFailed": "{count, plural, one {# changement n’a pas pu être envoyé après plusieurs essais.} other {# changements n’ont pas pu être envoyés après plusieurs essais.}} Utilisez Synchroniser maintenant pour réessayer.",
+      "gcalProblemTitle": "Dernier problème",
+      "gcalErrAccessRevoked": "Google ne permet plus à TradeCatch d’utiliser ce calendrier. Reconnectez Google Calendar pour continuer. Vos rendez-vous sont en sécurité.",
+      "gcalErrRateLimited": "Google a demandé à TradeCatch de ralentir. Il réessaiera automatiquement.",
+      "gcalErrUnavailable": "Google est injoignable. TradeCatch réessaiera automatiquement.",
+      "gcalErrPermission": "Google a refusé le changement. Vérifiez que ce compte peut modifier le calendrier choisi.",
+      "gcalErrRejected": "Google a rejeté un changement. Utilisez Synchroniser maintenant, ou reconnectez si cela continue.",
+      "gcalErrEventMissing": "Un événement n’était plus dans votre calendrier.",
+      "gcalErrConflict": "Google a signalé un événement en conflit. TradeCatch le règle.",
+      "gcalErrGeneric": "Un problème est survenu pendant la synchronisation. TradeCatch réessaiera automatiquement.",
+      "gcalAttentionTitle": "Modifié dans Google",
+      "gcalAttentionHelp": "TradeCatch ne déplace ni n’annule jamais un rendez-vous à cause d’une modification dans Google. Ouvrez le rendez-vous pour le déplacer ou l’annuler.",
+      "gcalAttentionModified": "{time} : déplacé dans Google. Le rendez-vous garde son heure ici.",
+      "gcalAttentionDeleted": "{time} : supprimé dans Google. Le rendez-vous reste réservé ici.",
+      "gcalAttentionOpen": "Ouvrir les rendez-vous",
+      "gcalOverlapTitle": "Heures qui se chevauchent",
+      "gcalOverlapItem": "{time} : chevauche un autre événement de votre calendrier.",
+      "gcalSettingsTitle": "Événements du calendrier",
+      "gcalDetailLabel": "Ce que Google affiche du client",
+      "gcalDetailMinimal": "Le service seulement. Ni nom, ni téléphone, ni adresse du client.",
+      "gcalDetailStandard": "Le service, le nom, le téléphone et l’adresse du client.",
+      "gcalCancelLabel": "Quand un rendez-vous est annulé",
+      "gcalCancelRemove": "Retirer l’événement de Google Agenda",
+      "gcalCancelMark": "Garder l’événement, marqué comme annulé",
+      "gcalSettingsSave": "Enregistrer les paramètres",
+      "gcalDisconnectConfirm": "Déconnecter Google Agenda ? Vos rendez-vous restent exactement tels quels. Les événements déjà dans Google y restent, et TradeCatch cesse de lire ou de modifier votre calendrier.",
+      "gcalDisconnectYes": "Oui, déconnecter",
+      "gcalKeep": "Rester connecté",
+      "gcalDisconnected": "Google Agenda est déconnecté. Vos rendez-vous ont été conservés."
     },
     "reliabilityTest": {
       "title": "Fiabilité du système",
@@ -2844,7 +3205,9 @@
       "headline": "Sécurité",
       "intro": "Les sessions, la vérification des administrateurs et les droits sont contrôlés par le serveur.",
       "sessions": "Sessions actives",
+      "sessionsLoading": "Chargement des sessions actives…",
       "revoke": "Révoquer",
+      "revoking": "Révocation…",
       "revoked": "Session révoquée.",
       "revokeError": "Impossible de révoquer cette session. Vérifiez votre connexion et réessayez.",
       "loadError": "Impossible de charger les sessions actives. Vérifiez votre connexion et réessayez.",
@@ -2863,6 +3226,7 @@
       "save": "Enregistrer les paramètres de confidentialité",
       "saving": "Enregistrement…",
       "saved": "Paramètres de confidentialité enregistrés.",
+      "saveUnconfirmed": "Nous n’avons pas pu confirmer l’enregistrement de vos changements. Ils sont toujours sur cette page, marqués « Non enregistré ». Enregistrez de nouveau pour en être certain : rien n’est enregistré en double.",
       "unchanged": "Il n'y a aucun changement à enregistrer.",
       "saveError": "Vos changements n'ont pas été enregistrés. Les paramètres marqués « Non enregistré » gardent leur valeur précédente. Réessayez.",
       "stale": "Ces paramètres ont été modifiés ailleurs. Les valeurs actuelles sont affichées; refaites votre changement et enregistrez.",
@@ -3090,9 +3454,15 @@
       "checkoutIntro": "Payez les frais d’installation uniques de {setup} CAD pour démarrer. Votre premier prélèvement mensuel de {monthly} CAD a lieu un mois après l’installation, puis chaque mois.",
       "checkoutStart": "Payer les frais d’installation",
       "checkoutOpening": "Ouverture du paiement…",
+      "checkoutConfirming": "Confirmation de votre paiement…",
+      "checkoutConfirmingNote": "Stripe nous le confirme, ce qui prend généralement quelques secondes. Veuillez ne pas payer de nouveau : cette page se met à jour toute seule.",
+      "checkoutConfirmingSlow": "Nous n’avons pas encore reçu la confirmation de Stripe. Cela peut prendre quelques minutes. Veuillez ne pas payer de nouveau : votre forfait s’active dès qu’elle arrive. Vous pouvez vérifier à nouveau maintenant ou revenir plus tard.",
+      "checkoutConfirmed": "Paiement confirmé. Merci.",
+      "checkoutCanceledNote": "Le paiement a été annulé et rien n’a été débité.",
       "checkoutPending": "Un paiement est déjà en cours. Terminez-le ou réessayez dans quelques minutes.",
       "checkoutPendingNote": "Votre paiement d’installation est en cours. Si vous avez fermé la page de paiement, réessayez ci-dessous.",
       "checkoutError": "Le paiement n’a pas pu démarrer. Réessayez ou contactez le soutien.",
+      "checkoutUnconfirmed": "Nous n’avons pas pu confirmer l’ouverture du paiement, et rien n’a été facturé : vous ne payez que sur la page de Stripe. Réessayez dans un instant. Si un paiement est déjà en cours, patientez quelques minutes.",
       "requestsLimited": "Trop de tentatives. Veuillez patienter {seconds} secondes, puis réessayer.",
       "requestsBlocked": "Cette demande a été bloquée. Contactez le soutien si cela continue.",
       "usageHeadline": "Utilisation ce mois-ci",
@@ -3112,7 +3482,10 @@
       "checkoutWebsiteNote": "Facultatif. Il est ajouté à ce paiement seulement si vous cochez la case. Nous confirmons la portée avec vous par écrit avant de commencer.",
       "errorPhone": "Entrez un numéro de téléphone valide, par exemple 514-555-0123.",
       "errorName": "Le nom de l’entreprise doit compter de 2 à 120 caractères.",
-      "errorValues": "L’un des champs est trop long. Raccourcissez-le et réessayez."
+      "errorValues": "L’un des champs est trop long. Raccourcissez-le et réessayez.",
+      "businessTitle": "Profil de l’entreprise",
+      "dangerTitle": "Supprimer le compte",
+      "shortcutsTitle": "Sécurité et facturation"
     },
     "receptionist": {
       "headline": "Réceptionniste",
@@ -3124,7 +3497,7 @@
       "readOnly": "Seul un propriétaire ou un administrateur peut modifier ces réglages.",
       "save": "Enregistrer les réglages",
       "saving": "Enregistrement…",
-      "saved": "Enregistré. Les nouveaux appels utilisent ces réglages en environ 30 secondes.",
+      "saved": "Enregistré. Votre réceptionniste utilise ces réglages dès le prochain appel.",
       "error": "Impossible d’enregistrer les réglages.",
       "issuesTitle": "À corriger :",
       "phoneHelp": "Numéro canadien au format international, p. ex. +14385551234.",
@@ -3232,7 +3605,7 @@
       "transferTimeout": "Délai de transfert (secondes)",
       "failedTransfer": "Si le transfert échoue",
       "appointmentTitle": "Gestion des rendez-vous",
-      "appointmentIntro": "Règles de réservation. Le calendrier simulé empêche les doubles réservations dans les tests.",
+      "appointmentIntro": "Si la réceptionniste réserve pendant l’appel. Elle propose seulement les plages libres de votre calendrier.",
       "duration": "Durée (minutes)",
       "buffer": "Tampon entre rendez-vous (minutes)",
       "bookingNotice": "Préavis minimum (heures)",
@@ -3343,7 +3716,9 @@
         "notifyEmail": "L’adresse courriel pour les résumés n’est pas valide.",
         "phone": "Un des numéros de téléphone n’est pas valide. Écrivez-le en format international, par exemple +14385551234.",
         "generic": "Une des valeurs n’est pas valide ou est trop longue. Vérifiez ce que vous avez modifié et réessayez."
-      }
+      },
+      "bookingRulesWhere": "La durée des visites, le délai entre deux travaux, le préavis minimum et les services réservables se règlent dans les disponibilités de votre calendrier. La réceptionniste suit ces règles à chaque appel.",
+      "bookingRulesLink": "Modifier les disponibilités"
     },
     "phoneSettings": {
       "headline": "Paramètres téléphone",
@@ -3903,6 +4278,8 @@
       "lessDetails": "Masquer les détails",
       "conversation": "Conversation d'origine",
       "conversationEmpty": "Aucune conversation enregistrée.",
+      "conversationLoading": "Chargement de la conversation…",
+      "conversationError": "La conversation n’a pas pu être chargée. Réessayez.",
       "caller": "Appelant",
       "receptionist": "Réceptionniste",
       "unknownCaller": "Appelant inconnu",
@@ -3979,6 +4356,8 @@
       "restart": "Démarrer un autre appel",
       "error": "La démo est indisponible pour le moment. Réessayez dans un instant.",
       "rateLimited": "Trop d'échanges de démo. Patientez quelques minutes.",
+      "sending": "Envoi…",
+      "replying": "Réponse en cours…",
       "summaryLabel": "Résumé d'appel",
       "summaryPlaceholder": "À la fin de l'appel, le résumé que le propriétaire reçoit par courriel et par texto apparaît ici, construit à partir de ce que vous avez dit.",
       "summaryBadge": "Généré à partir de l'appel de démo. Pas un vrai client.",
@@ -4409,6 +4788,9 @@
     "createButton": "+ Créer une entreprise démo",
     "cancel": "Annuler",
     "submitCreate": "Créer l’entreprise démo",
+    "creating": "Création…",
+    "working": "En cours…",
+    "loadingList": "Chargement des entreprises démo…",
     "empty": "Aucune entreprise démo pour l’instant.",
     "demoBadge": "Démo",
     "openDashboard": "Ouvrir le tableau de bord",
@@ -4439,7 +4821,8 @@
       "seed": "Impossible de générer les données démo.",
       "reset": "Impossible de réinitialiser le compte démo.",
       "delete": "Impossible de supprimer l’entreprise démo.",
-      "switch": "Impossible d’ouvrir le tableau de bord entrepreneur."
+      "switch": "Impossible d’ouvrir le tableau de bord entrepreneur.",
+      "unconfirmed": "Le serveur n’a pas répondu à temps : l’action a peut-être déjà été effectuée. Rafraîchissez la page pour vérifier avant de réessayer."
     },
     "platform": {
       "navOverview": "Aperçu",
@@ -4506,10 +4889,14 @@
       "save": "Enregistrer",
       "saved": "Enregistré.",
       "error": "Ce changement n’a pas été appliqué.",
+      "saving": "Enregistrement…",
+      "unconfirmed": "Nous n’avons pas pu confirmer si ce changement a été appliqué : il a peut-être été effectué. Rechargez la page pour voir l’état actuel avant de réessayer.",
       "announceTitle": "Annonce",
       "announceHint": "Met un avis dans l’application des entreprises actives. L’avis est simulé : il n’est pas envoyé par texto ni par courriel.",
       "announceConfirm": "Tapez announce pour envoyer",
       "announceSend": "Mettre l’annonce en file",
+      "announceSending": "Mise en file…",
+      "announceQueuedShort": "En file",
       "announceQueued": "En file pour {count} entreprises.",
       "tokenWait": "Vérification du jeton administrateur…",
       "tokenError": "Le jeton administrateur n’a pas pu être créé. Rechargez la page.",
@@ -4520,6 +4907,11 @@
       "mfaSetupTitle": "Configurer la vérification administrateur",
       "mfaSetupBody": "L’accès administrateur exige une application d’authentification. Générez une clé de configuration, ajoutez-la à votre application, puis saisissez le code à six chiffres qu’elle affiche.",
       "mfaGenerate": "Générer la clé de configuration",
+      "mfaGenerating": "Génération…",
+      "mfaVerifying": "Vérification…",
+      "mfaNoAnswer": "Le serveur n’a pas répondu. Rien n’a été confirmé; réessayez dans un instant.",
+      "mfaQrLabel": "Code QR de l’application d’authentification pour la vérification administrateur",
+      "mfaQrHint": "Scannez ce code avec Google Authenticator ou Microsoft Authenticator, ou utilisez la clé ci-dessous.",
       "mfaKeyLabel": "Clé de configuration (à saisir manuellement dans votre application d’authentification)",
       "mfaOpenApp": "Ouvrir dans l’application d’authentification",
       "mfaConfirm": "Activer la vérification",
@@ -4795,7 +5187,13 @@
       },
       "bonusTitle": "Bonus du service de site web",
       "bonusLabel": "Ajouté quand elle commande aussi notre service de site web",
-      "bonusPlus": "En plus",
+      "flow": {
+        "label": "Comment cette récompense est gagnée",
+        "referred": "Entreprise parrainée",
+        "paid": "Installation payée",
+        "reward": "Interac envoyé",
+        "unavailable": "Aucune récompense"
+      },
       "maxNote": "Le maximum qu’un parrainage peut rapporter est de {max} CAD.",
       "getLink": "Obtenez votre lien"
     },
@@ -4914,6 +5312,7 @@
     "devLinkCta": "Choisir un nouveau mot de passe",
     "errorGeneric": "Une erreur est survenue. Réessayez.",
     "rateLimited": "Trop de demandes. Réessayez dans quelques minutes.",
+    "unconfirmed": "Nous n’avons pas pu confirmer l’envoi du courriel de réinitialisation. Vérifiez votre boîte de réception et réessayez si rien n’arrive d’ici quelques minutes.",
     "back": "Retour à la connexion",
     "lostEmail": "Vous n’avez plus accès à ce courriel ?",
     "lostEmailCta": "Demandez au soutien de récupérer votre compte"
@@ -4936,6 +5335,7 @@
     "stillHaveEmail": "J’ai encore accès au courriel de mon compte",
     "rateLimited": "Trop de demandes. Réessayez plus tard ou écrivez à contact@tradecatch.ca.",
     "invalid": "Vérifiez les champs : les deux courriels doivent être valides et la description doit compter au moins 10 caractères.",
+    "unconfirmed": "Nous n’avons pas pu confirmer la réception de votre demande. Vérifiez vos courriels pour une confirmation avant de renvoyer la demande, ou écrivez à contact@tradecatch.ca.",
     "errorGeneric": "Une erreur s’est produite. Réessayez ou écrivez à contact@tradecatch.ca."
   },
   "setPassword": {
@@ -4950,8 +5350,13 @@
     "submit": "Enregistrer et me connecter",
     "saving": "Enregistrement…",
     "mismatch": "Les deux mots de passe ne correspondent pas.",
-    "invalidLink": "Ce lien est invalide, expiré ou déjà utilisé.",
+    "headlineInvalid": "Ce lien ne fonctionne plus",
+    "invalidLink": "Ce lien de réinitialisation du mot de passe a expiré ou a déjà été utilisé.",
     "requestNew": "Demander un nouveau lien",
+    "unconfirmed": "Nous n’avons pas pu confirmer l’enregistrement de votre mot de passe. Essayez de vous connecter avec le nouveau mot de passe. Si cela ne fonctionne pas, demandez un nouveau lien.",
+    "checking": "Vérification de votre lien…",
+    "checkFailed": "Nous n’avons pas pu vérifier votre lien. Vérifiez votre connexion et réessayez.",
+    "retry": "Réessayer",
     "errorGeneric": "Une erreur est survenue. Réessayez.",
     "rateLimited": "Trop de tentatives. Réessayez dans quelques minutes."
   },
@@ -4960,5 +5365,130 @@
     "too_long": "Utilisez 128 caractères ou moins.",
     "common": "Ce mot de passe est trop facile à deviner. Choisissez-en un autre.",
     "contains_email": "N’utilisez pas votre adresse courriel dans votre mot de passe."
+  },
+  "productPreview": {
+    "label": "Aperçu du service TradeCatch",
+    "badge": "Récupération des appels manqués",
+    "example": "Exemple de fonctionnement",
+    "screenLabelBooked": "Comment un appel manqué devient un travail réservé",
+    "screenLabelRequest": "Comment TradeCatch fait le suivi d’un appel manqué",
+    "busy": "Sur un chantier",
+    "incoming": "Appel entrant",
+    "line": "Vers votre ligne d’entreprise",
+    "customer": "Nouveau client",
+    "service": "Demande de plomberie",
+    "decline": "Refuser",
+    "answer": "Répondre",
+    "missed": "Appel manqué",
+    "textingBack": "TradeCatch répond par texto",
+    "auto": "Envoyé automatiquement",
+    "sms1": "Bonjour! Ici votre équipe de plomberie. Désolés d’avoir manqué votre appel. Comment pouvons-nous vous aider ? Répondez STOP pour vous désabonner.",
+    "sms2": "Mon chauffe-eau fuit. Quelqu’un peut passer cette semaine ?",
+    "sms3": "Désolés de l’apprendre. Quels sont votre nom et l’adresse du service ?",
+    "sms4": "Sam, 24 rue des Érables",
+    "sms5Booked": "Merci, Sam. Disponibilités : jeudi de 9 h à 11 h ou vendredi de 14 h à 16 h. Laquelle vous convient ?",
+    "sms5Request": "Merci, Sam. Quel jour et quelle heure vous conviennent le mieux ?",
+    "sms6": "Jeudi matin, s’il vous plaît",
+    "sms7Booked": "C’est confirmé : nous vous attendons jeudi, de 9 h à 11 h. Répondez ici si vous devez changer l’heure.",
+    "sms7Request": "Merci! Je transmets votre demande à l’équipe, qui vous confirmera le rendez-vous.",
+    "calTitle": "Votre agenda",
+    "calWorking": "Vérification des disponibilités…",
+    "calFound": "2 plages libres trouvées",
+    "calDone": "Jeudi de 9 h à 11 h réservé",
+    "slotWed": "mer. 13 h à 15 h",
+    "slotThu": "jeu. 9 h à 11 h",
+    "slotFri": "ven. 14 h à 16 h",
+    "slotBusy": "occupé",
+    "reqTitle": "Détails de la demande",
+    "reqWorking": "Organisation de la demande…",
+    "reqDone": "Prête pour que vous confirmiez l’heure",
+    "reqService": "Fuite de chauffe-eau",
+    "reqName": "Sam",
+    "reqAddress": "24 rue des Érables",
+    "notifyApp": "TradeCatch",
+    "notifyNow": "maintenant",
+    "notifyBookedTitle": "Nouveau travail réservé",
+    "notifyBookedBody": "Sam · Fuite de chauffe-eau · jeu. 9 h à 11 h · 24 rue des Érables",
+    "notifyRequestTitle": "Nouvelle demande de travail",
+    "notifyRequestBody": "Sam · Fuite de chauffe-eau · Préfère jeudi matin · 24 rue des Érables",
+    "resultFrom": "Appel manqué",
+    "resultBooked": "Travail réservé",
+    "resultRequest": "Demande de travail",
+    "resultNote": "Récupéré pendant que vous travailliez",
+    "composer": "Texto",
+    "noticeLeft": "Texto instantané",
+    "noticeBooked": "Agenda mis à jour",
+    "noticeRequest": "Détails envoyés",
+    "pause": "Mettre la démo en pause",
+    "play": "Lire la démo",
+    "captionTitle": "Vos appels. Vos clients.",
+    "captionBody": "Concentrez-vous sur vos contrats pendant que TradeCatch prend en charge vos appels.",
+    "call": {
+      "incoming": "Appel entrant",
+      "caller": "Nouveau client",
+      "callerLine": "Cellulaire",
+      "answeredBy": "TradeCatch répond pour vous",
+      "onCall": "En ligne",
+      "callEnded": "Appel terminé",
+      "speakerCaller": "Client",
+      "speakerAgent": "Votre réceptionniste",
+      "caller1": "Bonjour, mon chauffe-eau fuit au sous-sol.",
+      "agent1": "Je peux vous aider. L’eau coule-t-elle encore?",
+      "caller2": "Oui, depuis ce matin. Quelqu’un peut venir aujourd’hui?",
+      "agent2": "Je regarde les plages libres aujourd’hui.",
+      "agent2Request": "Je transmets ça à l’équipe tout de suite.",
+      "qualifyTitle": "Détails du travail",
+      "factService": "Service",
+      "factServiceValue": "Fuite de chauffe-eau",
+      "factUrgency": "Urgence",
+      "factUrgencyValue": "Aujourd’hui",
+      "factAddress": "Adresse",
+      "factAddressValue": "Confirmée",
+      "factContact": "Nom et numéro",
+      "factContactValue": "Enregistrés",
+      "bookTitle": "Vérification de votre agenda",
+      "bookWorking": "Recherche d’une plage libre",
+      "slot1": "13 h 00",
+      "slot2": "15 h 30",
+      "slot3": "17 h 00",
+      "slotTaken": "Prise",
+      "bookDone": "Réservé aujourd’hui, 15 h 30",
+      "bookDoneNote": "Confirmation envoyée par texto",
+      "requestTitle": "Envoi à votre équipe",
+      "requestWorking": "Demande urgente avec le résumé complet",
+      "requestDone": "Demande envoyée à votre équipe",
+      "requestDoneNote": "Le client sait qu’on le rappelle",
+      "notifyApp": "TradeCatch",
+      "notifyNow": "à l’instant",
+      "notifyTitleBooked": "Nouveau travail réservé",
+      "notifyBodyBooked": "Fuite de chauffe-eau, aujourd’hui 15 h 30",
+      "notifyTitleRequest": "Nouvelle demande urgente",
+      "notifyBodyRequest": "Fuite de chauffe-eau, à rappeler aujourd’hui",
+      "dashTitle": "Aujourd’hui dans votre tableau de bord",
+      "dashNew": "Fuite de chauffe-eau",
+      "dashNewMetaBooked": "15 h 30 · Réservé par téléphone",
+      "dashNewMetaRequest": "Urgent · À rappeler aujourd’hui",
+      "dashOld1": "Remplacement de robinet",
+      "dashOld1Meta": "Soumission demandée",
+      "dashOld2": "Débouchage de drain",
+      "dashOld2Meta": "Client rappelé",
+      "railAnswered": "Appel répondu",
+      "railAnsweredDetail": "Jour et nuit",
+      "railTalk": "Conversation",
+      "railTalkDetail": "Comprend le besoin",
+      "railQualified": "Qualifié",
+      "railQualifiedDetail": "Service, urgence, adresse",
+      "railBooked": "Réservé",
+      "railBookedDetail": "Dans une plage libre",
+      "railRequest": "Envoyé à votre équipe",
+      "railRequestDetail": "Prêt pour votre rappel",
+      "railDashboard": "Dans votre tableau de bord",
+      "railDashboardDetail": "Avec le résumé complet",
+      "pause": "Mettre l’animation en pause",
+      "play": "Lancer l’animation",
+      "summaryBooked": "Illustration : un client appelle, TradeCatch répond, pose les questions sur le travail, réserve une plage libre dans votre agenda et ajoute le travail à votre tableau de bord.",
+      "summaryRequest": "Illustration : un client appelle, TradeCatch répond, pose les questions sur le travail, envoie la demande à votre équipe et l’ajoute à votre tableau de bord.",
+      "newBadge": "Nouveau"
+    }
   }
 }

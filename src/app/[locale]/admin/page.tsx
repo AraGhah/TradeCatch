@@ -87,7 +87,7 @@ export default async function AdminHomePage({
             <h2 className="font-semibold">{t("health")}</h2>
             {snapshot.health ? (
               <p className="mt-2">
-                {snapshot.health.overall} · {snapshot.health.averageMs} ms · p95{" "}
+                {snapshot.health.overall} · p50 ≤{snapshot.health.p50Ms} ms · p95 ≤
                 {snapshot.health.p95Ms} ms · {snapshot.health.serverErrors} ·{" "}
                 {snapshot.health.openIncidents}
               </p>

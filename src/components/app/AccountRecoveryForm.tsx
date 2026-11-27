@@ -2,13 +2,14 @@
 
 import { useState, type FormEvent } from "react";
 import { useLocale, useTranslations } from "next-intl";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
+import { requestJson } from "@/lib/client/request";
+import { useAction } from "@/lib/client/use-action";
 
 const inputClass =
   "rounded-md border border-navy/15 bg-white px-3 py-2.5 text-base font-normal text-navy outline-none focus-visible:ring-2 focus-visible:ring-orange";
 const labelClass = "flex flex-col gap-1.5 text-sm font-medium text-navy";
-
-type Status = "idle" | "loading" | "sent" | "error";
 
 /** For a customer who can no longer open the email on their account. */
 export function AccountRecoveryForm() {
@@ -23,8 +24,10 @@ export function AccountRecoveryForm() {
     details: "",
     website: "",
   });
-  const [status, setStatus] = useState<Status>("idle");
+  const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // One request at a time; what was typed stays in the form whatever happens.
+  const action = useAction();
 
   function field(name: keyof typeof form) {
     return {
@@ -36,40 +39,44 @@ export function AccountRecoveryForm() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    if (status === "loading") return;
-    setStatus("loading");
     setError(null);
-    try {
-      const res = await fetch("/api/auth/account-recovery", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          phone: form.phone || undefined,
-          website: form.website || undefined,
-          locale,
+    const outcome = await action.run(
+      (signal) =>
+        requestJson<{ ok?: boolean; error?: string }>("/api/auth/account-recovery", {
+          method: "POST",
+          body: {
+            ...form,
+            phone: form.phone || undefined,
+            website: form.website || undefined,
+            locale,
+          },
+          signal,
         }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-      if (res.ok && data.ok) {
-        setStatus("sent");
-        return;
-      }
-      setStatus("error");
-      setError(
-        data.error === "rate_limited"
-          ? t("rateLimited")
-          : data.error === "invalid_input"
-            ? t("invalid")
-            : t("errorGeneric"),
-      );
-    } catch {
-      setStatus("error");
-      setError(t("errorGeneric"));
+      { write: true },
+    );
+    if (outcome.status === "dropped" || outcome.status === "cancelled") return;
+    if (outcome.status === "ok" && outcome.value?.ok) {
+      setSent(true);
+      return;
     }
+    if (outcome.status === "failed") {
+      const { failure } = outcome;
+      const code = (failure.body as { error?: unknown } | undefined)?.error;
+      setError(
+        failure.outcomeUnknown
+          ? t("unconfirmed")
+          : code === "rate_limited" || failure.kind === "rate_limited"
+            ? t("rateLimited")
+            : code === "invalid_input"
+              ? t("invalid")
+              : t("errorGeneric"),
+      );
+      return;
+    }
+    setError(t("errorGeneric"));
   }
 
-  if (status === "sent") {
+  if (sent) {
     return (
       <div className="mx-auto flex w-full max-w-md flex-col gap-4">
         <p className="rounded-md border border-navy/10 bg-white px-4 py-3 text-sm text-navy" role="status">
@@ -118,10 +125,13 @@ export function AccountRecoveryForm() {
       <p className="text-sm text-navy/70">{t("howItWorks")}</p>
       <button
         type="submit"
-        disabled={status === "loading"}
+        disabled={action.pending}
+        aria-busy={action.pending}
         className="rounded-md bg-orange px-4 py-3 text-[15px] font-semibold text-navy transition hover:bg-orange-dark disabled:opacity-60"
       >
-        {status === "loading" ? t("sending") : t("submit")}
+        <BusyLabel pending={action.pending} busyLabel={t("sending")}>
+          {t("submit")}
+        </BusyLabel>
       </button>
       {error ? (
         <p className="text-sm text-red-700" role="alert">

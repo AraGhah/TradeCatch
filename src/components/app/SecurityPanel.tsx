@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel, InlineStatus } from "@/components/ui/Spinner";
+
 type SessionRow = { id: string; createdAt: string; userAgent?: string };
 
 export function SecurityPanel({
@@ -23,7 +27,7 @@ export function SecurityPanel({
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   function fetchSessions() {
-    return fetch(`/api/businesses/${organizationId}/security`)
+    return timedFetch(`/api/businesses/${organizationId}/security`)
       .then((response) => {
         if (!response.ok) throw new Error("Security sessions unavailable");
         return response.json();
@@ -60,13 +64,14 @@ export function SecurityPanel({
     });
   }
 
-  async function revoke(sessionId: string) {
+  const revoke = useGuarded(revokeHandler);
+  async function revokeHandler(sessionId: string) {
     if (revokingId) return;
     setRevokingId(sessionId);
     setMessage("");
     setMessageError(false);
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/security/sessions/${sessionId}`,
         { method: "POST" },
       );
@@ -96,27 +101,31 @@ export function SecurityPanel({
           </button>
         </div>
       ) : loading ? (
-        <p role="status" className="text-sm text-navy/70">
-          {t("sessions")}…
-        </p>
+        <InlineStatus>{t("sessionsLoading")}</InlineStatus>
       ) : (
         <ul className="flex flex-col gap-2">
-          {sessions.map((session) => (
-            <li
-              key={session.id}
-              className="flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm ring-1 ring-navy/10"
-            >
-              <span>{signedInAt(session.createdAt)}</span>
-              <button
-                type="button"
-                disabled={revokingId === session.id}
-                className="text-navy underline disabled:opacity-50"
-                onClick={() => void revoke(session.id)}
+          {sessions.map((session) => {
+            const revoking = revokingId === session.id;
+            return (
+              <li
+                key={session.id}
+                className="flex items-center justify-between gap-3 rounded-md bg-white px-3 py-2 text-sm ring-1 ring-navy/10"
               >
-                {t("revoke")}
-              </button>
-            </li>
-          ))}
+                <span>{signedInAt(session.createdAt)}</span>
+                <button
+                  type="button"
+                  disabled={revokingId !== null}
+                  aria-busy={revoking || undefined}
+                  className="inline-flex min-h-9 items-center text-navy underline disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => void revoke(session.id)}
+                >
+                  <BusyLabel pending={revoking} busyLabel={t("revoking")}>
+                    {t("revoke")}
+                  </BusyLabel>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
       {isAdmin ? (

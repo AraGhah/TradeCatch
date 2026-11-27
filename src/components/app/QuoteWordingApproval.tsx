@@ -4,6 +4,10 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { BusyLabel } from "@/components/ui/Spinner";
+
 export type QuoteWordingStep = { day: number; text: string };
 
 /**
@@ -21,15 +25,17 @@ export function QuoteWordingApproval({
 }) {
   const t = useTranslations("app");
   const router = useRouter();
+  const tFeedback = useTranslations("feedback");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function setApproved(approved: boolean) {
+  const setApproved = useGuarded(setApprovedHandler);
+  async function setApprovedHandler(approved: boolean) {
     if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch("/api/app/settings", {
+      const res = await timedFetch("/api/app/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quoteFollowUpApproved: approved }),
@@ -52,7 +58,7 @@ export function QuoteWordingApproval({
   return (
     <section
       aria-labelledby="quote-wording-title"
-      className="rounded-md border border-navy/10 bg-white px-4 py-4"
+      className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6"
     >
       <h2 id="quote-wording-title" className="text-sm font-semibold text-navy">
         {t("quotes.wordingTitle")}
@@ -85,10 +91,13 @@ export function QuoteWordingApproval({
       <button
         type="button"
         disabled={busy}
+        aria-busy={busy}
         onClick={() => void setApproved(!approvedAt)}
         className="mt-3 rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
       >
-        {approvedAt ? t("quotes.wordingWithdraw") : t("quotes.wordingApprove")}
+        <BusyLabel pending={busy} busyLabel={tFeedback("saving")}>
+          {approvedAt ? t("quotes.wordingWithdraw") : t("quotes.wordingApprove")}
+        </BusyLabel>
       </button>
     </section>
   );

@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { getSaasRuntime } from "@/product/saas/runtime";
 import { createSaasReferralDirectory } from "./directory";
 import { logReferralFailure } from "./log";

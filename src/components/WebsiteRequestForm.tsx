@@ -16,6 +16,9 @@ import {
   type WebsiteRequestView,
 } from "@/product/website-services/model";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 type Values = {
   requestType: WebsiteRequestType | "";
   businessName: string;
@@ -161,7 +164,8 @@ export function WebsiteRequestForm({
     turnstileRef.current?.reset();
   }
 
-  async function onSubmit(event: FormEvent) {
+  const onSubmit = useGuarded(onSubmitHandler);
+  async function onSubmitHandler(event: FormEvent) {
     event.preventDefault();
     if (status === "submitting") return;
 
@@ -177,7 +181,7 @@ export function WebsiteRequestForm({
     setSubmitError(null);
     const { companyWebsite, ...fields } = values;
     try {
-      const response = await fetch(
+      const response = await timedFetch(
         mode === "public" ? "/api/website-requests" : "/api/app/website-services",
         {
           method: "POST",
@@ -472,7 +476,7 @@ export function WebsiteRequestForm({
           aria-busy={status === "submitting"}
           className="inline-flex items-center justify-center gap-3 rounded-[12px] bg-orange px-7 py-[15px] text-[16px] font-bold tracking-[-0.015em] text-navy shadow-cta transition-[transform,background] duration-200 hover:translate-y-[-2px] hover:bg-orange-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
         >
-          {status === "submitting" ? t("submitting") : t("submit")}
+          <BusyLabel pending={status === "submitting"} busyLabel={t("submitting")}>{t("submit")}</BusyLabel>
         </button>
       </div>
     </form>

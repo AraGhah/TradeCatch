@@ -83,7 +83,7 @@ export default async function MailMessagePage({
         <GmailSyncBadge />
       </div>
       <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+        <h1 className="font-heading text-2xl font-extrabold text-navy">
           {message.subject || t("noSubject")}
         </h1>
         <p className="mt-2 text-sm text-navy">
@@ -108,7 +108,7 @@ export default async function MailMessagePage({
       <p className="-mt-3 text-xs text-navy/70">{t("readNote")}</p>
 
       {thread.length <= 1 ? (
-        <div className="rounded-md border border-navy/10 bg-white">
+        <div className="rounded-xl border border-navy/10 bg-white">
           {renderBody(message)}
         </div>
       ) : (

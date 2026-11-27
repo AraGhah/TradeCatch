@@ -26,7 +26,8 @@ const HOUR_PX = 56;
 const MIN_EVENT_PX = 22;
 
 type Booked = { id: string; startAt: string; endAt: string; status: string };
-type Slot = { dayKey: string; startAt: string };
+/** `today`: the slot is on the business's current local day (see roomyDay). */
+type Slot = { dayKey: string; startAt: string; today: boolean };
 
 /* ----------------------------------------------------------------------------- */
 /* Clock helpers: what the business's wall clock says                            */
@@ -88,18 +89,26 @@ async function freeSlots(page: Page, id: string): Promise<Slot[]> {
   for (const month of months) {
     const body = (await (
       await page.request.get(`/api/businesses/${id}/availability?month=${month}`)
-    ).json()) as { days: Record<string, { startAt: string }[]> };
+    ).json()) as { today: string; days: Record<string, { startAt: string }[]> };
     for (const [dayKey, list] of Object.entries(body.days))
-      for (const slot of list) slots.push({ dayKey, startAt: slot.startAt });
+      for (const slot of list)
+        slots.push({ dayKey, startAt: slot.startAt, today: dayKey === body.today });
   }
   return slots.sort((a, b) => Date.parse(a.startAt) - Date.parse(b.startAt));
 }
 
-/** The first day with enough room for two appointments hours apart. */
+/**
+ * The first day with enough room for two appointments hours apart, never the business's
+ * current day. Today's free times shrink while the tests run (two hours' minimum notice,
+ * advancing with the clock), so a day picked from today's list could lose its first times
+ * before they are booked: on weekdays between about 10:30 and noon Toronto time CAL-04
+ * found only three of its four back-to-back times and failed. A later day is the same
+ * at any hour.
+ */
 function roomyDay(slots: Slot[]) {
   const byDay = new Map<string, Slot[]>();
   for (const slot of slots)
-    byDay.set(slot.dayKey, [...(byDay.get(slot.dayKey) ?? []), slot]);
+    if (!slot.today) byDay.set(slot.dayKey, [...(byDay.get(slot.dayKey) ?? []), slot]);
   for (const [dayKey, list] of byDay) {
     const first = list[0]!;
     const last = list[list.length - 1]!;
@@ -156,6 +165,9 @@ async function chooseView(page: Page, view: "Day" | "Week" | "Month") {
 
 /** Pages forward until the given business-local day is on screen. */
 async function reveal(page: Page, dayKey: string, next = "Next dates") {
+  // While the calendar is still loading it shows a skeleton and no day cells: wait for it, rather than
+  // mistaking "not loaded yet" for "not in this range" and paging away.
+  await expect(grid(page)).toBeVisible();
   const cell = page.locator(
     `[data-testid="calendar-day"][data-date="${dayKey}"]`,
   );

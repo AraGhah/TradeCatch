@@ -17,7 +17,7 @@ export default async function AppHelpPage({
   if (!auth.ok) return null;
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-heading">{t("headline")}</h1>
+      <h1 className="font-heading text-2xl font-extrabold text-heading">{t("headline")}</h1>
       <p className="max-w-2xl text-sm text-muted">{t("intro")}</p>
       <HelpCatalog locale={locale === "fr" ? "fr" : "en"} query={q ?? ""} base="app" />
     </div>

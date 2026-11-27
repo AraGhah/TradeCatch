@@ -32,11 +32,16 @@
     "close": "Close",
     "skipToContent": "Skip to main content",
     "aiReceptionist": "Receptionist",
-    "referral": "Referral program",
+    "referral": "Rewards",
     "demo": "Demo",
     "login": "Login",
     "more": "More",
-    "emailUs": "Email us"
+    "emailUs": "Email us",
+    "account": "Account",
+    "accountDashboard": "My dashboard",
+    "accountAdmin": "Admin dashboard",
+    "accountBilling": "Billing",
+    "navigating": "Loading page…"
   },
   "cta": {
     "primary": "Book a Free Demo",
@@ -86,15 +91,22 @@
     }
   },
   "home": {
+    "meta": {
+      "title": "Every call deserves an answer.",
+      "description": "TradeCatch answers your calls, captures customer requests, and helps you miss fewer opportunities."
+    },
     "hero": {
-      "eyebrow": "For contractors who work with their hands",
-      "headline": "You're on the job. We'll handle the calls.",
-      "accentWord": "We'll handle the calls.",
-      "subheadline": "TradeCatch answers your customer calls and captures every request, so you can keep working.",
-      "ctaPrimary": "Book a Free Demo",
-      "ctaSecondary": "Hear the Receptionist",
-      "ctaTry": "Try the live receptionist demo",
-      "reassurance": "Free demo. No system access needed. You talk with the founder."
+      "eyebrow": "Built for contractors",
+      "headline": "Don’t let another missed call",
+      "highlight": "cost you a job.",
+      "subheadline": "TradeCatch handles your calls, qualifies customer requests and helps turn more opportunities into booked jobs.",
+      "ctaPrimary": "Explore our plans",
+      "ctaSecondary": "Watch the demo",
+      "ctaContact": "Book a free demo",
+      "benefitsLabel": "What TradeCatch does",
+      "benefitReception": "Telephone reception",
+      "benefitRequests": "Qualified requests",
+      "benefitDashboard": "One central dashboard"
     },
     "leaks": {
       "eyebrow": "The problem",
@@ -179,7 +191,6 @@
       "headline": "You're not buying software. You're hiring the person who builds it.",
       "name": "Ara Ghahramanyan",
       "role": "Founder, TradeCatch",
-      "floatLabel": "Builds & runs your system",
       "quote": "I sit down with your team, map how calls and quotes actually move through your business, write every message with you, and test every scenario before a single customer sees it. Then I keep watching it after launch.",
       "bio": "TradeCatch isn't software you're handed to configure alone. I review your process, connect your tools, test every scenario with your team, and keep watching the system after it goes live.",
       "points": [
@@ -196,19 +207,19 @@
       "work": [
         {
           "title": "Audit",
-          "body": "We map how calls, quotes and jobs move through your business today."
+          "body": "Map the actual customer journey, calls, quotes, and jobs."
         },
         {
           "title": "Build",
-          "body": "Messages, routing and stop conditions are written with you, not pulled from a template."
+          "body": "Customize messages, routing, and business rules."
         },
         {
-          "title": "Test",
-          "body": "Every scenario runs end to end before a single customer sees it."
+          "title": "Testing",
+          "body": "Test every scenario end-to-end before launch."
         },
         {
-          "title": "Monitor",
-          "body": "The system stays watched after launch and gets adjusted as your season changes."
+          "title": "Monitoring",
+          "body": "Continuously monitor and adjust the system after launch."
         }
       ]
     },
@@ -351,6 +362,57 @@
         "note": "No pressure. Clear pricing. Direct founder support."
       },
       "stickyCta": "Book a Free Demo"
+    },
+    "lossRecovery": {
+      "label": "Compare the same three moments",
+      "without": "Without TradeCatch",
+      "with": "With TradeCatch",
+      "lost": "Job lost",
+      "recovered": "Job recovered",
+      "saved": [
+        [
+          "The call is missed while you work",
+          "A text goes out to the caller right away",
+          "They reply, and the request reaches you"
+        ],
+        [
+          "The receptionist takes the call",
+          "Name, address and service are written down",
+          "The request waits in your account, ready to read"
+        ],
+        [
+          "You send the quote and get back to work",
+          "Follow-up texts go out on day 1, 3, 7 and 14",
+          "The customer replies, and you pick it back up"
+        ]
+      ]
+    },
+    "signalFlow": {
+      "label": "How a call moves between your customer, TradeCatch and you",
+      "nodes": [
+        {
+          "title": "Your customer",
+          "body": "Calls your business line"
+        },
+        {
+          "title": "TradeCatch",
+          "body": "Answers, asks, records"
+        },
+        {
+          "title": "You",
+          "body": "Get the details"
+        }
+      ],
+      "packets": [
+        "Call",
+        "Questions",
+        "Details",
+        "Alert",
+        "Follow-up text",
+        "Appointment"
+      ],
+      "stop": "Stop the animation",
+      "replay": "Replay"
     }
   },
   "services": {
@@ -588,8 +650,8 @@
   },
   "pricing": {
     "eyebrow": "Pricing",
-    "headline": "Two plans. One simple choice.",
-    "intro": "Essential answers your calls and captures your customers. Professional also books your appointments. All prices are in Canadian dollars.",
+    "headline": "Simple plans. More opportunities caught.",
+    "intro": "Choose the solution that fits your business. Clear pricing, no surprises. All prices are in Canadian dollars.",
     "reassurance": "Month to month after setup. Cancel with notice.",
     "metaDescription": "TradeCatch pricing in CAD: Essential at $249.99 a month and Professional at $349.99 a month, each with a one-time $1,999.99 setup fee. Optional website service for $699.99.",
     "principles": [
@@ -602,7 +664,7 @@
       {
         "name": "Essential",
         "tagline": "We answer your calls and capture your customers.",
-        "outcome": "Every call is answered, day or night, in French or English. You get the caller’s name, number and what they need, so no job slips away.",
+        "outcome": "Every call is answered, day or night, in French or English. You get the caller’s name, number and what they need, so no job slips away. Appointment requests go to your team to confirm.",
         "price": "$1,999.99 setup",
         "setupAmount": "$1,999.99",
         "cadence": "$249.99 / month",
@@ -624,6 +686,7 @@
             "items": [
               "Name and phone number",
               "Service and quote requests",
+              "Appointment requests for your team to confirm",
               "Urgent requests flagged right away",
               "Text follow-ups on customer requests"
             ]
@@ -646,22 +709,23 @@
             ]
           }
         ],
+        "ctaLabel": "Choose Essential",
         "planInterest": "essential"
       },
       {
         "name": "Professional",
-        "badge": "Books appointments",
+        "badge": "Recommended",
         "emphasis": "featured",
-        "tagline": "We answer your calls and book your appointments.",
-        "outcome": "Everything in Essential, plus automatic scheduling with your Google Calendar. Callers are offered a time that is actually free, and you see it on your calendar.",
+        "tagline": "The complete receptionist: it answers, qualifies and books the job.",
+        "outcome": "Everything in Essential, plus confirmed appointments. During the call, the receptionist checks your real availability, books a time that is actually free and adds it to your Google Calendar. The customer gets a text confirmation and a reminder.",
         "price": "$1,999.99 setup",
         "setupAmount": "$1,999.99",
         "cadence": "$349.99 / month",
         "monthlyAmount": "$349.99",
-        "idealFor": "For contractors who want confirmed appointments, not just requests.",
+        "idealFor": "For contractors who want booked jobs on the calendar, not a list of people to call back.",
         "reassuranceLine": "Setup is paid once, at checkout. Your first $349.99 monthly charge comes one month after setup.",
         "includesPrevious": "Everything in Essential, plus:",
-        "stepUp": "Adds appointment scheduling for $100 more a month. The setup fee is the same.",
+        "stepUp": "For $100 more a month, the receptionist books the job instead of passing on a request. The setup fee is the same.",
         "groups": [
           {
             "title": "Books appointments",
@@ -696,6 +760,7 @@
             ]
           }
         ],
+        "ctaLabel": "Choose Professional",
         "planInterest": "professional"
       }
     ],
@@ -745,7 +810,7 @@
     "comparison": {
       "eyebrow": "Compare",
       "title": "What Professional adds",
-      "intro": "Professional includes everything in Essential and adds appointment scheduling.",
+      "intro": "Professional includes everything in Essential and books confirmed appointments during the call.",
       "featureLabel": "Feature",
       "includedLabel": "Included",
       "notIncludedLabel": "Not included",
@@ -755,8 +820,15 @@
     },
     "onceLabel": "paid once",
     "monthlyEyebrow": "Each month",
+    "periodLabel": "month",
     "websiteMention": "Need a website? Add our website service for $699.99.",
     "billingBanner": "At checkout you pay the one-time setup fee. Your first monthly charge comes one month later.",
+    "flow": {
+      "label": "What happens to a call",
+      "answered": "Call answered",
+      "captured": "Lead captured",
+      "booked": "Job booked"
+    },
     "schedulingNote": "Appointment scheduling is switched on for your business once it has been tested with your Google Calendar during setup."
   },
   "about": {
@@ -1502,7 +1574,74 @@
       "Answers in French or English, under your business name.",
       "Captures the name, address, service needed and how urgent it is.",
       "Sends you the request so you can call back when you are free."
-    ]
+    ],
+    "simulator": {
+      "tabsLabel": "Demo",
+      "tabWatch": "Watch the story",
+      "tabTry": "Simulate a missed call",
+      "badge": "Simulation",
+      "title": "Miss a call on purpose.",
+      "intro": "Pick a trade, then let the phone ring out. See what the customer receives and what lands in your dashboard.",
+      "tradeLabel": "Trade",
+      "trades": [
+        {
+          "id": "plumbing",
+          "label": "Plumbing",
+          "ask": "My water heater is leaking. Can someone come this week?",
+          "service": "Water heater leak"
+        },
+        {
+          "id": "electrical",
+          "label": "Electrical",
+          "ask": "Half my outlets stopped working. Can someone check this week?",
+          "service": "Outlets not working"
+        },
+        {
+          "id": "heating",
+          "label": "Heating",
+          "ask": "My furnace won’t turn on. Can someone come this week?",
+          "service": "Furnace not starting"
+        }
+      ],
+      "start": "Miss the call",
+      "again": "Run it again",
+      "skip": "Skip to the end",
+      "note": "Runs in your browser. No call is made and no text is sent.",
+      "appTitle": "Requests",
+      "today": "Today",
+      "newToday": "New today",
+      "empty": "No new requests yet",
+      "newCustomer": "New customer",
+      "textBack": "Sorry we missed your call. How can we help today?",
+      "threadLabel": "Text conversation",
+      "fieldService": "Service",
+      "fieldName": "Name",
+      "fieldAddress": "Address",
+      "fieldBooked": "Appointment",
+      "fieldRequest": "Prefers",
+      "name": "Sam",
+      "address": "24 Maple Street",
+      "prefers": "Thursday morning",
+      "weekLabel": "This week",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "otherJob": "Other job",
+      "tentative": "To confirm",
+      "status": {
+        "ringing": "Incoming call",
+        "missed": "Missed call",
+        "texted": "Text sent automatically",
+        "replied": "Customer replied",
+        "captured": "Details captured",
+        "booked": "Booked",
+        "request": "Needs a time"
+      }
+    }
   },
   "errors": {
     "eyebrow": "Something went wrong",
@@ -1511,10 +1650,36 @@
     "retry": "Try again",
     "home": "Back to home"
   },
+  "feedback": {
+    "retry": "Try again",
+    "retrying": "Trying again…",
+    "dismiss": "Dismiss",
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "working": "Working…",
+    "sending": "Sending…",
+    "replying": "Replying…",
+    "errors": {
+      "timeout": "This is taking longer than expected. Please try again.",
+      "timeoutUnknown": "We did not get a confirmation in time, so we cannot tell whether this went through. Check the current information before trying again.",
+      "network": "We could not reach TradeCatch. Check your connection and try again. What you entered is still here.",
+      "networkUnknown": "The connection dropped before we got an answer, so we cannot tell whether this went through. Check the current information before trying again.",
+      "rateLimited": "Too many attempts. Wait {seconds} seconds and try again.",
+      "blocked": "This request was blocked. Please contact support if this keeps happening.",
+      "unavailable": "TradeCatch is briefly unavailable and this was not completed. Please try again in a moment.",
+      "server": "Something went wrong on our side and this was not completed. Please try again.",
+      "serverUnknown": "TradeCatch answered, but we could not read the answer, so we cannot tell whether this went through. Check the current information before trying again.",
+      "unauthorized": "Your session has ended. Sign in again to continue. What you entered is still on this page.",
+      "forbidden": "Your role does not allow this.",
+      "invalid": "Check the details and try again.",
+      "conflict": "This changed while you were working. Reload to see the latest, then try again.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  },
   "login": {
-    "eyebrow": "Account Center",
-    "headline": "Sign in to your TradeCatch account",
-    "intro": "Sign in with your email and password. Accounts are created by TradeCatch when you become a customer, so there is no public sign-up.",
+    "eyebrow": "Client portal",
+    "headline": "Welcome back.",
+    "intro": "Sign in to access your TradeCatch account.",
     "email": "Work email",
     "submit": "Email me a sign-in link",
     "sending": "Sending…",
@@ -1535,8 +1700,27 @@
     "errorUnavailable": "Your account is not available right now. Email contact@tradecatch.ca.",
     "linkInvalid": "That sign-in link is invalid or has already been used. Request a new one.",
     "linkRateLimited": "Too many attempts. Try again in a few minutes.",
+    "linkUnconfirmed": "We could not confirm that the sign-in link was sent. Check your inbox, and try again if nothing arrives in a few minutes.",
     "passwordSaved": "Your password is saved. Sign in below.",
-    "errorOutage": "Sign-in is temporarily unavailable. This is not a problem with your email or password. Try again in a few minutes, or email contact@tradecatch.ca."
+    "errorOutage": "Sign-in is temporarily unavailable. This is not a problem with your email or password. Try again in a few minutes, or email contact@tradecatch.ca.",
+    "invalidEmail": "Enter a valid email address.",
+    "missingPassword": "Enter your password.",
+    "emailPlaceholder": "you@company.ca",
+    "opening": "Opening your workspace…",
+    "openingStuck": "Page not opening?",
+    "openingContinue": "Continue to my workspace",
+    "secure": "Secure sign-in",
+    "backHome": "Back to homepage",
+    "accountsNote": "TradeCatch creates your account when you become a customer. There is no public sign-up.",
+    "help": "Need help?",
+    "contact": "Contact TradeCatch",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "languageLabel": "Language"
+  },
+  "passwordToggle": {
+    "show": "Show password",
+    "hide": "Hide password"
   },
   "app": {
     "demoAccountBadge": "Demo account",
@@ -1566,6 +1750,7 @@
       "menu": "Menu",
       "closeMenu": "Close menu",
       "logout": "Sign out",
+      "loggingOut": "Signing out…",
       "receptionist": "Receptionist",
       "phoneSettings": "Phone settings",
       "automations": "Automations",
@@ -1598,185 +1783,290 @@
       "accountSettings": "Account settings"
     },
     "automations": {
-      "headline": "Automations",
-      "intro": "Configure recovery texts and quote reminders. Messages are sent by the backend even when you are not signed in, and only after the current customer, consent and schedule are checked again.",
-      "missedIntro": "When a call is missed and the rules allow it, TradeCatch schedules one recovery text in your business name. An answered call does not start this workflow.",
-      "quoteIntro": "Reminders go out only while an estimate is still unanswered. A reply, an acceptance or a rejection cancels what has not been submitted yet.",
-      "active": "Active",
-      "inactive": "Inactive",
-      "enable": "Enable",
-      "disable": "Disable",
-      "edit": "Edit configuration",
-      "test": "Test automation",
-      "save": "Save",
-      "saved": "Saved.",
-      "error": "Something went wrong.",
-      "none": "None yet",
-      "later": "Available after the two primary workflows",
-      "simulated": "simulation",
-      "saving": "Saving…",
-      "unchanged": "There is nothing new to save.",
-      "unsaved": "Not saved",
-      "quoteAlwaysStops": "Reminders always stop when the quote is accepted, rejected or canceled.",
-      "quietHours": {
-        "label": "No recovery text during quiet hours",
-        "help": "Off: the caller gets the text right away, at any hour. On: a call missed outside the sending window below gets no text, rather than one that arrives hours later."
+      "headline": "Automatic Follow-Ups",
+      "intro": "Never miss an opportunity. Automatically follow up with customers, send quote reminders, and stay connected without lifting a finger. TradeCatch handles everything for you, even when you're offline.",
+      "how": {
+        "title": "How automatic follow-ups work",
+        "onOff": "Use Enable to start a follow-up and Pause to stop it. You can change this at any time.",
+        "consent": "We only text people who called you, received your quote or booked an appointment. Anyone who replies STOP is not texted again.",
+        "recheck": "Each text is checked again just before it is sent. A paused follow-up sends nothing, even if a text was waiting.",
+        "timing": "Choose when texts go out, and set quiet hours, in each follow-up's settings."
       },
-      "toggle": {
-        "enabling": "Turning on…",
-        "disabling": "Turning off…",
-        "enabled": "Turned on and saved. It runs on its own from now on.",
-        "disabled": "{count, plural, =0 {Turned off and saved.} one {Turned off and saved. 1 pending text was canceled.} other {Turned off and saved. # pending texts were canceled.}}"
-      },
-      "failures": {
-        "generic": "This could not be saved. The page shows what is stored.",
-        "rateLimited": "Too many changes in a short time. Try again in {seconds, plural, one {# second} other {# seconds}}.",
-        "offline": "The server could not be reached, so the change is not confirmed. The page shows what is stored.",
-        "unavailable": "The service is briefly unavailable. Try again in a moment.",
-        "denied": "You do not have permission to change automations.",
-        "signedOut": "Your session ended. Sign in again, then retry.",
-        "unconfirmed": "The server did not confirm the change. The page shows what is stored."
-      },
-      "invalid": {
-        "number": "Use whole numbers only.",
-        "initial_delay": "The first delay must be a number of minutes from 0 to 43,200.",
-        "second_delay": "The second delay must be at least as long as the first, and at most 86,400 minutes.",
-        "max_attempts": "Maximum attempts must be between 1 and 5.",
-        "sending_window": "The sending window must start before it ends, between 0 and 24.",
-        "language": "Choose a message language.",
-        "category": "This setting cannot be changed."
-      },
-      "pendingTitle": "Scheduled reminders",
-      "pendingEmpty": "No quote reminders are scheduled.",
-      "templatesTitle": "Message templates",
-      "templatesIntro": "French and English texts. The business name and the STOP line stay required, so a customization cannot drop them.",
-      "historyTitle": "Message history",
-      "historyIntro": "Sent is not the same as delivered. Canceled rows never reached the telephone provider.",
-      "historyEmpty": "No automated messages yet.",
       "subnav": {
         "overview": "Overview",
-        "missedCall": "Missed-call recovery",
-        "quotes": "Quote follow-ups",
-        "templates": "Message templates",
+        "missedCall": "Missed-Call Follow-Up",
+        "quotes": "Quote Reminders",
+        "templates": "Message Templates",
         "history": "History"
       },
-      "table": {
-        "automation": "Automation",
-        "status": "Status",
-        "trigger": "Trigger",
-        "action": "Action",
-        "last": "Last execution",
-        "success": "Successful",
-        "failures": "Failures",
-        "responses": "Responses"
-      },
       "names": {
-        "missed_call_recovery": "Missed-call recovery",
-        "quote_followup": "Quote follow-up",
-        "appointment_reminder": "Appointment reminder",
-        "customer_reengagement": "Customer re-engagement",
-        "urgent_lead_notification": "Urgent lead notification"
+        "missed_call_recovery": "Missed-Call Follow-Up",
+        "quote_followup": "Quote Reminders",
+        "appointment_reminder": "Appointment Reminders",
+        "customer_reengagement": "Past-Customer Check-Ins",
+        "urgent_lead_notification": "Urgent Request Alerts"
       },
-      "triggers": {
-        "missed_call_recovery": "Customer call missed",
-        "quote_followup": "Quote remains unanswered",
-        "appointment_reminder": "Appointment approaching",
-        "customer_reengagement": "Eligible inactive customer",
-        "urgent_lead_notification": "Urgent lead detected"
+      "descriptions": {
+        "missed_call_recovery": "Missed a call? TradeCatch can automatically send a message so you don't lose a potential customer.",
+        "quote_followup": "Automatically remind customers about unanswered quotes and turn more opportunities into jobs.",
+        "appointment_reminder": "Confirm each appointment and send a reminder the day before, so fewer visits are missed.",
+        "customer_reengagement": "Reach out to customers you haven't heard from in a while.",
+        "urgent_lead_notification": "Get alerted right away when a customer sends an urgent request."
+      },
+      "soon": {
+        "customer_reengagement": "Coming soon. Only customers who agreed to receive promotions will be texted. Nothing is sent for now.",
+        "urgent_lead_notification": "Coming soon. Nothing is sent for now."
+      },
+      "status": {
+        "label": "Status",
+        "paused": "Paused",
+        "active": "Active",
+        "scheduled": "Scheduled",
+        "attention": "Needs Attention",
+        "comingSoon": "Coming soon"
+      },
+      "statusHelp": {
+        "paused": "Turned off. No texts will be sent.",
+        "active": "Turned on and ready. Nothing is waiting to go out right now.",
+        "scheduled": "{count, plural, one {# text is waiting to go out.} other {# texts are waiting to go out.}}",
+        "attention": {
+          "switched_off_by_tradecatch": "TradeCatch has paused missed-call texts for now, so none are being sent. Contact support if you did not expect this.",
+          "no_number": "Your business number is not set up for texting yet, so no texts can be sent. Contact support to finish setup.",
+          "last_failed": "The last text could not be sent. Open History to see which one.",
+          "last_unconfirmed": "We could not confirm that the last text was sent, so it was not sent again. Open History to check."
+        }
+      },
+      "card": {
+        "when": "When it runs",
+        "lastActivity": "Last activity",
+        "noActivity": "No activity yet",
+        "sent": "Texts sent",
+        "replies": "Replies",
+        "failed": "Could not send",
+        "statsNote": "Texts sent includes any test texts you ran."
+      },
+      "when": {
+        "missedNow": "When a call goes unanswered, one text is sent right away.",
+        "missedAfter": "When a call goes unanswered, one text is sent about {delay} later.",
+        "quoteOne": "{kind, select, now {One reminder is sent as soon as you send a quote.} other {If a quote is still unanswered {first} after you send it, one reminder is sent.}}",
+        "quoteTwo": "{kind, select, now {A reminder is sent as soon as you send a quote, and another {second} after you send it.} other {If a quote is still unanswered, reminders are sent {first} and {second} after you send it.}}",
+        "appointment": "A confirmation is sent when an appointment is booked. A reminder follows about 24 hours before the visit.",
+        "hoursWait": "Texts only go out between {start} and {end}{weekends, select, yes {} other {, not on weekends}}. A text due outside those hours waits until they open.",
+        "quietOff": "Quiet hours are off, so the caller gets the text at any hour.",
+        "quietOn": "Quiet hours are on. A call missed outside {start} to {end}{weekends, select, yes {} other {, or on a weekend,}} gets no text."
       },
       "actions": {
-        "missed_call_recovery": "Send SMS",
-        "quote_followup": "Send reminder",
-        "appointment_reminder": "Send reminder",
-        "customer_reengagement": "Send follow-up",
-        "urgent_lead_notification": "Notify contractor"
+        "enable": "Enable",
+        "pause": "Pause",
+        "enabling": "Turning on…",
+        "pausing": "Pausing…",
+        "settings": "Edit Settings",
+        "test": "Run a Test",
+        "history": "View History",
+        "save": "Save Changes",
+        "saving": "Saving…"
       },
+      "saved": "Changes saved.",
+      "unchanged": "There is nothing new to save.",
+      "unsaved": "Unsaved changes",
+      "error": "Something went wrong. Please try again.",
+      "toggle": {
+        "enabled": "Turned on.",
+        "disabled": "{count, plural, =0 {Paused.} one {Paused. 1 waiting text was canceled.} other {Paused. # waiting texts were canceled.}}"
+      },
+      "failures": {
+        "generic": "We couldn't save that. The page shows what is currently saved. Please try again.",
+        "rateLimited": "You've made a lot of changes in a short time. Try again in {seconds, plural, one {# second} other {# seconds}}.",
+        "offline": "We couldn't reach TradeCatch, so the change was not confirmed. Check your connection and try again. The page shows what is currently saved.",
+        "unavailable": "TradeCatch is briefly unavailable. Please try again in a moment.",
+        "denied": "You don't have permission to change these settings. Ask the account owner.",
+        "signedOut": "Your session has ended. Sign in again, then try again.",
+        "unconfirmed": "We couldn't confirm the change. The page shows what is currently saved.",
+        "invalid": "Some of the information couldn't be accepted. Check what you entered and try again.",
+        "turnOnFirst": "Turn this follow-up on first, then try again.",
+        "notAvailable": "This follow-up isn't available yet.",
+        "conflict": "That change couldn't be made right now. Reload the page and try again."
+      },
+      "invalid": {
+        "number": "Enter whole numbers only.",
+        "initial_delay": "The first delay must be between 0 and 43,200 minutes (30 days).",
+        "second_delay": "The second reminder can't come before the first, and must be within 86,400 minutes (60 days).",
+        "max_attempts": "Enter a number of reminders from 1 to 5.",
+        "sending_window": "Sending hours must start before they end, using hours from 0 to 24.",
+        "language": "Choose a message language.",
+        "category": "This setting can't be changed."
+      },
+      "settings": {
+        "scheduling": "Follow-Up Scheduling",
+        "schedulingHelp": "Choose when customers receive reminders. TradeCatch takes care of the rest.",
+        "quoteAlwaysStops": "Reminders always stop once the quote is accepted, declined or canceled.",
+        "rulesTitle": "Language and Stop Rules"
+      },
+      "fields": {
+        "delayMissed": "Send the text after (minutes)",
+        "delayMissedHelp": "Counted from the missed call.",
+        "delayQuote": "Send the first reminder after (minutes)",
+        "delayQuoteHelp": "Counted from when you send the quote.",
+        "secondDelay": "Send the second reminder after (minutes)",
+        "secondDelayHelp": "Counted from when you send the quote. It can't be before the first reminder.",
+        "language": "Message language",
+        "languageCustomer": "Match the customer's language",
+        "languageEn": "English",
+        "languageFr": "French",
+        "languageHelp": "If we don't know the customer's language, your business language is used.",
+        "reminders": "Number of reminders",
+        "remindersHelp": "Up to 2 reminders are sent for each quote. Enter 1 to send only the first.",
+        "windowStart": "Start sending at (hour, 0 to 24)",
+        "windowEnd": "Stop sending at (hour, 0 to 24)",
+        "weekend": "Also send on weekends",
+        "duplicate": "Don't text the same caller twice within 24 hours",
+        "stopReply": "Stop when the customer replies",
+        "stopHuman": "Stop when someone on your team reaches out",
+        "hint": "That is {duration}.",
+        "hintNow": "Sent right away.",
+        "hourHint": "That is {time}."
+      },
+      "quietHours": {
+        "label": "Don't text during quiet hours",
+        "help": "Off: the caller gets the text right away, at any hour. On: you choose your sending hours, and a call missed outside them gets no text, rather than one that arrives hours later."
+      },
+      "duration": {
+        "days": "{count, plural, one {# day} other {# days}}",
+        "hours": "{count, plural, one {# hour} other {# hours}}",
+        "minutes": "{count, plural, one {# minute} other {# minutes}}",
+        "and2": "{a} and {b}",
+        "and3": "{a}, {b} and {c}"
+      },
+      "time": {
+        "am": "{hour} AM",
+        "pm": "{hour} PM",
+        "noon": "noon",
+        "midnight": "midnight",
+        "hour24": "{hour}:00"
+      },
+      "results": {
+        "submitted": "Text sent",
+        "simulated": "Test text (nothing was really sent)",
+        "retry": "Could not send; trying again shortly",
+        "failed": "The text could not be sent",
+        "uncertain": "We couldn't confirm the text was sent",
+        "business_inactive": "Not sent: your account is not active",
+        "automation_disabled": "Not sent: the follow-up was paused",
+        "invalid_phone": "Not sent: the phone number isn't valid",
+        "opted_out": "Not sent: the customer asked not to receive texts",
+        "already_submitted": "Not sent again: it had already gone out",
+        "max_attempts": "Not sent: the reminder limit was reached",
+        "legal_basis": "Not sent: required customer consent was missing",
+        "customer_reply": "Stopped: the customer replied",
+        "lead_closed": "Stopped: the job was already closed",
+        "human_contact": "Stopped: someone on your team had already reached the customer",
+        "recovery_sms_disabled": "Not sent: TradeCatch has paused missed-call texts",
+        "stale": "Not sent: too much time had passed",
+        "quiet_hours": "Not sent: it was during quiet hours",
+        "template_incomplete": "Not sent: the message was missing some information",
+        "missing_sender": "Not sent: no business number is set up for texting",
+        "quote_accepted": "Stopped: the quote was accepted",
+        "quote_rejected": "Stopped: the quote was declined",
+        "quote_stopped": "Stopped: the quote follow-up was stopped",
+        "quote_not_found": "Stopped: the quote could not be found",
+        "manual": "Canceled by you",
+        "unknownError": "Something went wrong. TradeCatch support can see the details."
+      },
+      "response": {
+        "awaiting": "Waiting for a reply",
+        "replied": "The customer replied",
+        "opted_out": "The customer asked not to receive texts"
+      },
+      "jobStatus": {
+        "pending": "Scheduled",
+        "processing": "Sending",
+        "submitted": "Sent",
+        "sent": "Sent",
+        "delivered": "Delivered",
+        "failed": "Not sent",
+        "undelivered": "Not delivered",
+        "canceled": "Canceled",
+        "skipped": "Skipped",
+        "uncertain": "Not confirmed"
+      },
+      "simulated": "test",
+      "pendingTitle": "Recent Quote Reminders",
+      "pendingEmpty": "No quote reminders yet. They will appear here after you send a quote.",
+      "templatesTitle": "Message Templates",
+      "templatesIntro": "Edit the texts your customers receive, in French and English. Every message must keep your business name and the “Reply STOP to opt out” line, so customers know who is texting them and can opt out.",
+      "historyTitle": "Message History",
+      "historyIntro": "Every automatic text and what happened to it. “Sent” means it left TradeCatch. “Delivered” means it reached the customer's phone. Canceled and skipped texts were never sent.",
+      "historyEmpty": "No automatic texts yet. They will appear here once a follow-up is turned on and sends its first text.",
+      "historyCols": {
+        "customer": "Customer",
+        "automation": "Follow-up",
+        "status": "Status",
+        "result": "What happened",
+        "message": "Message",
+        "scheduled": "Planned for",
+        "sent": "Sent",
+        "reference": "Reference",
+        "cost": "Cost"
+      },
+      "missedIntro": "Missed a call? TradeCatch can automatically send a message so you don't lose a potential customer. An answered call never starts this follow-up.",
+      "quoteIntro": "Automatically remind customers about unanswered quotes and turn more opportunities into jobs. Reminders stop as soon as the customer replies or the quote is accepted, declined or canceled.",
       "templates": {
-        "missed_call_recovery": "Missed-call recovery",
-        "quote_followup_1": "Quote follow-up 1",
-        "quote_followup_2": "Quote follow-up 2",
+        "missed_call_recovery": "Missed-call text",
+        "quote_followup_1": "First quote reminder",
+        "quote_followup_2": "Second quote reminder",
         "appointment_confirmation": "Appointment confirmation",
         "appointment_reminder": "Appointment reminder",
         "general_followup": "General follow-up",
-        "human_assistance": "Human assistance",
-        "after_hours": "After-hours response"
-      },
-      "fields": {
-        "delay": "Initial delay",
-        "secondDelay": "Second reminder delay",
-        "language": "Message language",
-        "languageCustomer": "Customer preference",
-        "languageEn": "English",
-        "languageFr": "French",
-        "attempts": "Maximum attempts",
-        "windowStart": "Sending window starts (hour)",
-        "windowEnd": "Sending window ends (hour)",
-        "weekend": "Weekend sending",
-        "duplicate": "Duplicate protection",
-        "stopReply": "Stop when the customer replies",
-        "stopHuman": "Stop when a person takes over",
-        "stopAccepted": "Stop when the quote is accepted",
-        "stopRejected": "Stop when the quote is rejected",
-        "minutes": "minutes from the event"
+        "human_assistance": "Teammate follow-up",
+        "after_hours": "After-hours missed-call text"
       },
       "templateUi": {
-        "variables": "Insert a variable",
+        "variables": "Insert a detail",
+        "variablesHint": "Details in double braces, like {example}, are filled in for each customer.",
+        "variableNames": {
+          "customer_name": "Customer name",
+          "business_name": "Business name",
+          "service_name": "Service",
+          "quote_ref": "Quote number",
+          "appointment_time": "Appointment time",
+          "appointment_date": "Appointment date"
+        },
         "preview": "Preview",
-        "reset": "Reset",
+        "reset": "Restore Default",
         "chars": "Characters",
-        "segments": "SMS segments",
-        "segmentWarning": "This message may use more than one SMS segment and can cost more to deliver.",
-        "missing": "Missing values",
+        "segments": "Text parts",
+        "segmentWarning": "This message is long, so it may be sent as more than one text and cost a bit more.",
+        "shorterParts": "Some characters, like accented capitals or emoji, make each part shorter.",
+        "missing": "Missing details",
         "errors": {
           "empty": "The message is too short.",
           "too_long": "The message is too long. Keep it under 1,000 characters.",
-          "missing_business_identification": "Keep the business name variable in the message, so customers know who is texting them.",
+          "missing_business_identification": "Keep the business name (written {example}) in the message, so customers know who is texting them.",
           "missing_opt_out": "Keep the opt-out line in the message: “Reply STOP to opt out.”",
-          "unknown_variable": "The message uses a variable that does not exist. Use only the variables listed above the message."
+          "unknown_variable": "The message uses a detail that doesn't exist. Use only the details listed above the message."
         }
       },
       "testPanel": {
-        "title": "Test Center: simulated workflows",
-        "intro": "These actions use fictional numbers and never contact a real handset. Run the next action to execute a due simulated job immediately.",
-        "missed": "Simulate missed call",
-        "run": "Run next scheduled action",
-        "reply": "Simulate customer reply",
-        "quote": "Simulate quote",
-        "accept": "Mark quote accepted",
+        "title": "Try It Out With a Test Customer",
+        "intro": "These tests use made-up phone numbers, so no real customer is ever texted. Turn the follow-up on first, then run a test to see what would happen.",
+        "missed": "Test a Missed Call",
+        "run": "Send the Next Waiting Test Text",
+        "reply": "Test a Customer Reply",
+        "quote": "Test a Sent Quote",
+        "accept": "Test an Accepted Quote",
         "result": "Result",
-        "phone": "Fictional phone",
-        "name": "Fictional name",
-        "resultNone": "Nothing was due, so nothing was scheduled or sent.",
-        "resultNotScheduled": "Nothing was scheduled. Check that this automation is turned on.",
-        "resultDuplicate": "This reply was already processed.",
+        "phone": "Test phone number",
+        "name": "Test customer name",
+        "resultNone": "Nothing was waiting, so no test text was sent.",
+        "resultNotScheduled": "Nothing was scheduled. Make sure this follow-up is turned on.",
+        "resultDuplicate": "We already handled this reply.",
         "resultJob": "{status}: text to {phone}, {when}",
-        "resultCanceled": "{count, plural, =0 {No pending text to cancel.} one {# pending text canceled.} other {# pending texts canceled.}}",
-        "jobStatus": {
-          "pending": "Scheduled",
-          "processing": "Sending",
-          "submitted": "Sent",
-          "sent": "Sent",
-          "delivered": "Delivered",
-          "failed": "Failed",
-          "undelivered": "Not delivered",
-          "canceled": "Canceled",
-          "skipped": "Skipped",
-          "uncertain": "Not confirmed"
-        },
+        "resultCanceled": "{count, plural, =0 {No waiting text to cancel.} one {# waiting text canceled.} other {# waiting texts canceled.}}",
         "reasons": {
           "call_handled": "No text was scheduled: the call was already handled.",
-          "ineligible": "No text was scheduled: this number cannot receive one.",
+          "ineligible": "No text was scheduled: this number can't be texted.",
           "duplicate": "No new text was scheduled: one is already planned for this caller."
         }
-      },
-      "historyCols": {
-        "customer": "Customer",
-        "automation": "Automation",
-        "status": "Status",
-        "result": "Result",
-        "message": "Message",
-        "scheduled": "Scheduled",
-        "sent": "Submitted"
       }
     },
     "testCenter": {
@@ -1787,7 +2077,11 @@
       "notDemo": "Test Center tools are available on demo businesses only.",
       "adminOnly": "Only TradeCatch administrators can seed or reset demo data.",
       "generateData": "Generate demo data",
+      "generatingData": "Generating…",
+      "generated": "Generated",
       "resetAccount": "Reset demo account",
+      "resettingAccount": "Resetting…",
+      "resetDone": "Reset",
       "confirmReset": "Reset this demo account? Generated records will be removed. The business and owner login stay.",
       "seedOk": "Fictional demo data generated for this business only.",
       "resetOk": "Demo account reset. Owner access retained.",
@@ -2422,6 +2716,9 @@
       "error": "The scheduling service could not complete that request.",
       "connectionError": "Could not reach the scheduling service. Check your connection and try again.",
       "retry": "Retry",
+      "loadingAppointments": "Loading appointments…",
+      "bookUnconfirmed": "We could not confirm this booking in time, so it may still have gone through. The calendar is reloading. If the appointment is not there, confirm again: the same time is only booked once.",
+      "changeUnconfirmed": "We could not confirm that this change was saved. The calendar is reloading, so check the appointment before trying again.",
       "notConfirmed": "That time was not confirmed. Choose another opening.",
       "hoursIntro": "Customers can only be offered times inside these hours.",
       "timezone": "Timezone",
@@ -2446,6 +2743,9 @@
       "calendarPilotNotice": "We switch Google Calendar on for your business once we have tested it with your own calendar. Email contact@tradecatch.ca and we will set it up with you.",
       "calendarSimulationNotice": "Practice appointments in your account never touch your Google Calendar. Only real bookings are added to it, once Google Calendar is switched on.",
       "calendarLoading": "Checking calendar availability…",
+      "connecting": "Connecting…",
+      "disconnecting": "Disconnecting…",
+      "calendarUnconfirmed": "We could not confirm whether that calendar change was saved. The status above is being refreshed: check it before trying again.",
       "status": "Status",
       "simulated": "Simulated",
       "connected": "Connected",
@@ -2553,7 +2853,68 @@
       "calendarSync": "Calendar",
       "syncedYes": "On your calendar",
       "syncedNo": "Not on your calendar yet",
-      "cancelReasonLabel": "Cancellation reason"
+      "cancelReasonLabel": "Cancellation reason",
+      "gcalResultConnected": "Google Calendar is connected. Your calendar is syncing.",
+      "gcalResultChoose": "Google is connected. Choose which calendar TradeCatch should use.",
+      "gcalResultDenied": "Google Calendar was not connected because access was not allowed. Nothing was changed, and you can try again.",
+      "gcalResultScope": "Google Calendar was not connected because the permission to manage events was not granted. Nothing was changed. Try again and keep both boxes ticked.",
+      "gcalResultExpired": "That connection attempt expired. Start again with Connect Google Calendar.",
+      "gcalResultForbidden": "You do not have permission to connect a calendar for this business.",
+      "gcalResultPilot": "Google Calendar is not switched on for this business yet.",
+      "gcalResultError": "Google Calendar could not be connected. Nothing was changed. Try again in a moment.",
+      "gcalStatusChoose": "Choose a calendar",
+      "gcalStatusError": "Needs attention",
+      "gcalReconnect": "Reconnect Google Calendar",
+      "gcalAccount": "Google account",
+      "gcalCalendar": "Calendar",
+      "gcalLastSync": "Last successful sync",
+      "gcalNeverSynced": "Not yet",
+      "gcalPushActive": "Instant updates are on. TradeCatch also checks every few minutes.",
+      "gcalPushExpiring": "Renewing instant updates. TradeCatch checks every few minutes meanwhile.",
+      "gcalPushOff": "TradeCatch checks your calendar every few minutes.",
+      "gcalPushUnavailable": "Instant updates are not available right now. TradeCatch checks every few minutes.",
+      "gcalPermissions": "TradeCatch only reads when you are busy. It never stores the titles, notes or guests of your own events, and it only changes events that it created itself.",
+      "gcalPickTitle": "Choose the calendar to use",
+      "gcalPickLabel": "Calendar",
+      "gcalPickHelp": "Only calendars you can add events to are listed.",
+      "gcalPickLoading": "Loading your calendars…",
+      "gcalNoCalendars": "No calendar that you can add events to was found in this Google account.",
+      "gcalChange": "Change calendar",
+      "gcalChangeNote": "Events already created stay in the calendar they were made in.",
+      "gcalSyncNow": "Sync now",
+      "gcalSyncing": "Syncing…",
+      "gcalSyncDone": "Sync finished.",
+      "gcalAllSynced": "Everything is up to date.",
+      "gcalPending": "{count, plural, one {# change is waiting to be sent to Google.} other {# changes are waiting to be sent to Google.}}",
+      "gcalFailed": "{count, plural, one {# change could not be sent after several tries.} other {# changes could not be sent after several tries.}} Use Sync now to try again.",
+      "gcalProblemTitle": "Last problem",
+      "gcalErrAccessRevoked": "Google no longer lets TradeCatch use this calendar. Reconnect Google Calendar to continue. Your appointments are safe.",
+      "gcalErrRateLimited": "Google asked TradeCatch to slow down. It will try again automatically.",
+      "gcalErrUnavailable": "Google could not be reached. TradeCatch will try again automatically.",
+      "gcalErrPermission": "Google refused the change. Check that this account can edit the chosen calendar.",
+      "gcalErrRejected": "Google rejected a change. Use Sync now, or reconnect if it keeps happening.",
+      "gcalErrEventMissing": "An event was no longer in your calendar.",
+      "gcalErrConflict": "Google reported a conflicting event. TradeCatch is resolving it.",
+      "gcalErrGeneric": "Something went wrong while syncing. TradeCatch will try again automatically.",
+      "gcalAttentionTitle": "Changed in Google",
+      "gcalAttentionHelp": "TradeCatch never moves or cancels an appointment because of an edit in Google. Open the appointment to move or cancel it.",
+      "gcalAttentionModified": "{time}: moved in Google. The appointment keeps its time here.",
+      "gcalAttentionDeleted": "{time}: deleted in Google. The appointment is still booked here.",
+      "gcalAttentionOpen": "Open appointments",
+      "gcalOverlapTitle": "Overlapping times",
+      "gcalOverlapItem": "{time}: overlaps another event in your calendar.",
+      "gcalSettingsTitle": "Calendar events",
+      "gcalDetailLabel": "What Google shows about the customer",
+      "gcalDetailMinimal": "Service only. No customer name, phone or address.",
+      "gcalDetailStandard": "Service, customer name, phone and address.",
+      "gcalCancelLabel": "When an appointment is canceled",
+      "gcalCancelRemove": "Remove the event from Google Calendar",
+      "gcalCancelMark": "Keep the event, marked as canceled",
+      "gcalSettingsSave": "Save settings",
+      "gcalDisconnectConfirm": "Disconnect Google Calendar? Your appointments stay exactly as they are. Events already in Google stay there, and TradeCatch stops reading or changing your calendar.",
+      "gcalDisconnectYes": "Yes, disconnect",
+      "gcalKeep": "Keep connected",
+      "gcalDisconnected": "Google Calendar is disconnected. Your appointments were kept."
     },
     "reliabilityTest": {
       "title": "System reliability",
@@ -2844,7 +3205,9 @@
       "headline": "Security",
       "intro": "Sessions, administrator verification, and access checks are enforced on the server.",
       "sessions": "Active sessions",
+      "sessionsLoading": "Loading active sessions…",
       "revoke": "Revoke",
+      "revoking": "Revoking…",
       "revoked": "Session revoked.",
       "revokeError": "Could not revoke that session. Check your connection and try again.",
       "loadError": "Could not load active sessions. Check your connection and try again.",
@@ -2865,6 +3228,7 @@
       "saved": "Privacy settings saved.",
       "unchanged": "There are no changes to save.",
       "saveError": "Your changes were not saved. The settings marked “Not saved” still have their previous value. Try again.",
+      "saveUnconfirmed": "We could not confirm that your changes were saved. They are still on this page, marked “Not saved”. Save again to be sure: nothing is saved twice.",
       "stale": "These settings were changed somewhere else. The current values are shown; make your change again and save.",
       "denied": "Only an owner or administrator can change these settings. Your changes were not saved.",
       "readOnly": "Only an owner or administrator can change these settings.",
@@ -3090,9 +3454,15 @@
       "checkoutIntro": "Pay the one-time setup fee of {setup} CAD to start. Your first monthly charge of {monthly} CAD comes one month after setup, then every month after that.",
       "checkoutStart": "Pay the setup fee",
       "checkoutOpening": "Opening checkout…",
+      "checkoutConfirming": "Confirming your payment…",
+      "checkoutConfirmingNote": "Stripe is confirming it with us, which usually takes a few seconds. Please do not pay again: this page updates on its own.",
+      "checkoutConfirmingSlow": "We have not received Stripe's confirmation yet. It can take a few minutes. Please do not pay again: your plan turns on as soon as it arrives. You can check again now, or come back to this page later.",
+      "checkoutConfirmed": "Payment confirmed. Thank you.",
+      "checkoutCanceledNote": "Checkout was canceled and nothing was charged.",
       "checkoutPending": "A checkout is already in progress. Finish it or try again in a few minutes.",
       "checkoutPendingNote": "Your installation payment is in progress. If you closed the checkout page, try again below.",
       "checkoutError": "Checkout could not be started. Please try again or contact support.",
+      "checkoutUnconfirmed": "We could not confirm that checkout opened, so nothing was charged: you pay only on Stripe's page. Try again in a moment. If it says a checkout is already in progress, wait a few minutes.",
       "requestsLimited": "Too many attempts. Please wait {seconds} seconds and try again.",
       "requestsBlocked": "This request was blocked. Please contact support if it keeps happening.",
       "usageHeadline": "Usage this month",
@@ -3112,7 +3482,10 @@
       "checkoutWebsiteNote": "Optional. It is added to this payment only if you tick the box. We confirm the scope with you in writing before work starts.",
       "errorPhone": "Enter a valid phone number, for example 514-555-0123.",
       "errorName": "The business name must be between 2 and 120 characters.",
-      "errorValues": "One of the fields is too long. Shorten it and try again."
+      "errorValues": "One of the fields is too long. Shorten it and try again.",
+      "businessTitle": "Business profile",
+      "dangerTitle": "Delete the account",
+      "shortcutsTitle": "Security and billing"
     },
     "receptionist": {
       "headline": "Receptionist",
@@ -3124,7 +3497,7 @@
       "readOnly": "Only an owner or admin can change these settings.",
       "save": "Save settings",
       "saving": "Saving…",
-      "saved": "Saved. New calls use these settings within about 30 seconds.",
+      "saved": "Saved. Your receptionist uses these settings from the next call.",
       "error": "Could not save the settings.",
       "issuesTitle": "Please fix:",
       "phoneHelp": "Canadian number in international format, e.g. +14385551234.",
@@ -3232,7 +3605,7 @@
       "transferTimeout": "Transfer timeout (seconds)",
       "failedTransfer": "If transfer fails",
       "appointmentTitle": "Appointment management",
-      "appointmentIntro": "Booking rules. The simulated calendar prevents double bookings in tests.",
+      "appointmentIntro": "Whether the receptionist books during the call. It only offers times your calendar has open.",
       "duration": "Duration (minutes)",
       "buffer": "Buffer between appointments (minutes)",
       "bookingNotice": "Minimum booking notice (hours)",
@@ -3343,7 +3716,9 @@
         "notifyEmail": "The email address for summaries is not valid.",
         "phone": "One of the phone numbers is not valid. Write it in international form, for example +14385551234.",
         "generic": "One of the values is not valid or is too long. Check what you changed and try again."
-      }
+      },
+      "bookingRulesWhere": "Visit length, buffer between jobs, minimum notice and the services callers can book are set in your calendar availability. The receptionist follows those rules on every call.",
+      "bookingRulesLink": "Edit calendar availability"
     },
     "phoneSettings": {
       "headline": "Phone settings",
@@ -3903,6 +4278,8 @@
       "lessDetails": "Hide details",
       "conversation": "Original conversation",
       "conversationEmpty": "No conversation saved.",
+      "conversationLoading": "Loading conversation…",
+      "conversationError": "The conversation could not be loaded. Try again.",
       "caller": "Caller",
       "receptionist": "Receptionist",
       "unknownCaller": "Unknown caller",
@@ -3979,6 +4356,8 @@
       "restart": "Start another call",
       "error": "The demo is unavailable right now. Please try again in a moment.",
       "rateLimited": "Too many demo turns. Please wait a few minutes.",
+      "sending": "Sending…",
+      "replying": "Replying…",
       "summaryLabel": "Call summary",
       "summaryPlaceholder": "When the call ends, the summary the owner receives by email and text appears here, built from what you said.",
       "summaryBadge": "Generated from the demo call. Not a real customer.",
@@ -4409,6 +4788,9 @@
     "createButton": "+ Create Demo Business",
     "cancel": "Cancel",
     "submitCreate": "Create demo business",
+    "creating": "Creating…",
+    "working": "Working…",
+    "loadingList": "Loading demo businesses…",
     "empty": "No demo businesses yet.",
     "demoBadge": "Demo",
     "openDashboard": "Open dashboard",
@@ -4439,7 +4821,8 @@
       "seed": "Could not generate demo data.",
       "reset": "Could not reset the demo account.",
       "delete": "Could not delete the demo business.",
-      "switch": "Could not open the contractor dashboard."
+      "switch": "Could not open the contractor dashboard.",
+      "unconfirmed": "The server did not answer in time, so that action may already have gone through. Refresh the page to check before trying again."
     },
     "platform": {
       "navOverview": "Overview",
@@ -4506,10 +4889,14 @@
       "save": "Save",
       "saved": "Saved.",
       "error": "That change was not applied.",
+      "saving": "Saving…",
+      "unconfirmed": "We could not confirm whether that change was applied, so it may have gone through. Reload the page to see the current state before trying again.",
       "announceTitle": "Announcement",
       "announceHint": "Queues an in-app notice for active businesses. The notice is marked simulated, so it is not sent by text or email.",
       "announceConfirm": "Type announce to send",
       "announceSend": "Queue announcement",
+      "announceSending": "Queuing…",
+      "announceQueuedShort": "Queued",
       "announceQueued": "Queued for {count} businesses.",
       "tokenWait": "Checking the administrator token…",
       "tokenError": "The administrator token could not be created. Reload the page.",
@@ -4520,6 +4907,11 @@
       "mfaSetupTitle": "Set up administrator verification",
       "mfaSetupBody": "Administrator access requires an authenticator app. Generate a setup key, add it to your app, then enter the six-digit code it shows.",
       "mfaGenerate": "Generate setup key",
+      "mfaGenerating": "Generating…",
+      "mfaVerifying": "Verifying…",
+      "mfaNoAnswer": "The server did not answer. Nothing was confirmed; try again in a moment.",
+      "mfaQrLabel": "Authenticator QR code for administrator verification",
+      "mfaQrHint": "Scan this code with Google Authenticator or Microsoft Authenticator, or use the key below.",
       "mfaKeyLabel": "Setup key (enter it manually in your authenticator app)",
       "mfaOpenApp": "Open in authenticator app",
       "mfaConfirm": "Turn on verification",
@@ -4795,7 +5187,13 @@
       },
       "bonusTitle": "Website service bonus",
       "bonusLabel": "Added when they also order our website service",
-      "bonusPlus": "Extra",
+      "flow": {
+        "label": "How this reward is earned",
+        "referred": "Business referred",
+        "paid": "Setup paid",
+        "reward": "Interac sent",
+        "unavailable": "No reward"
+      },
       "maxNote": "The most one referral can earn is {max} CAD.",
       "getLink": "Get your link"
     },
@@ -4914,6 +5312,7 @@
     "devLinkCta": "Choose a new password",
     "errorGeneric": "Something went wrong. Try again.",
     "rateLimited": "Too many requests. Try again in a few minutes.",
+    "unconfirmed": "We could not confirm that the reset email was sent. Check your inbox, and try again if nothing arrives in a few minutes.",
     "back": "Back to sign in",
     "lostEmail": "Can't open that email anymore?",
     "lostEmailCta": "Ask support to recover your account"
@@ -4936,6 +5335,7 @@
     "stillHaveEmail": "I can still open my account email",
     "rateLimited": "Too many requests. Try again later or email contact@tradecatch.ca.",
     "invalid": "Check the fields: both emails must be valid and the description needs at least 10 characters.",
+    "unconfirmed": "We could not confirm that your request was received. Check your email for a confirmation before sending it again, or email contact@tradecatch.ca.",
     "errorGeneric": "Something went wrong. Try again, or email contact@tradecatch.ca."
   },
   "setPassword": {
@@ -4950,8 +5350,13 @@
     "submit": "Save password and sign in",
     "saving": "Saving…",
     "mismatch": "The two passwords do not match.",
-    "invalidLink": "This link is invalid, expired, or already used.",
-    "requestNew": "Request a new link",
+    "invalidLink": "This password reset link has expired or has already been used.",
+    "requestNew": "Request a New Link",
+    "unconfirmed": "We could not confirm that your password was saved. Try signing in with the new password. If that does not work, request a new link.",
+    "headlineInvalid": "This link no longer works",
+    "checking": "Checking your link…",
+    "checkFailed": "We could not check your link. Check your connection and try again.",
+    "retry": "Try again",
     "errorGeneric": "Something went wrong. Try again.",
     "rateLimited": "Too many attempts. Try again in a few minutes."
   },
@@ -4960,5 +5365,130 @@
     "too_long": "Use 128 characters or fewer.",
     "common": "That password is too easy to guess. Choose another.",
     "contains_email": "Do not use your email address in your password."
+  },
+  "productPreview": {
+    "label": "TradeCatch service preview",
+    "badge": "Missed-call recovery",
+    "example": "Illustrative workflow",
+    "screenLabelBooked": "How a missed call becomes a booked job",
+    "screenLabelRequest": "How TradeCatch follows up a missed call",
+    "busy": "On a job site",
+    "incoming": "Incoming call",
+    "line": "To your business line",
+    "customer": "New customer",
+    "service": "Plumbing request",
+    "decline": "Decline",
+    "answer": "Answer",
+    "missed": "Missed call",
+    "textingBack": "TradeCatch is texting back",
+    "auto": "Sent automatically",
+    "sms1": "Hi! It’s your plumbing team. Sorry we missed your call. How can we help today? Reply STOP to opt out.",
+    "sms2": "My water heater is leaking. Can someone come this week?",
+    "sms3": "Sorry to hear that. What’s your name and the service address?",
+    "sms4": "Sam, 24 Maple Street",
+    "sms5Booked": "Thanks, Sam. Open times: Thursday 9 to 11 a.m. or Friday 2 to 4 p.m. Which works?",
+    "sms5Request": "Thanks, Sam. What day and time work best for you?",
+    "sms6": "Thursday morning, please",
+    "sms7Booked": "You’re confirmed: we’ll see you Thursday, 9 to 11 a.m. Reply here if you need to change the time.",
+    "sms7Request": "Thanks! I’m passing your request to the team, who will confirm your appointment.",
+    "calTitle": "Your calendar",
+    "calWorking": "Checking availability…",
+    "calFound": "2 open times found",
+    "calDone": "Thursday 9 to 11 a.m. reserved",
+    "slotWed": "Wed 1 to 3 p.m.",
+    "slotThu": "Thu 9 to 11 a.m.",
+    "slotFri": "Fri 2 to 4 p.m.",
+    "slotBusy": "busy",
+    "reqTitle": "Request details",
+    "reqWorking": "Organizing the request…",
+    "reqDone": "Ready for you to confirm a time",
+    "reqService": "Water heater leak",
+    "reqName": "Sam",
+    "reqAddress": "24 Maple Street",
+    "notifyApp": "TradeCatch",
+    "notifyNow": "now",
+    "notifyBookedTitle": "New job booked",
+    "notifyBookedBody": "Sam · Water heater leak · Thu 9 to 11 a.m. · 24 Maple Street",
+    "notifyRequestTitle": "New job request",
+    "notifyRequestBody": "Sam · Water heater leak · Prefers Thursday morning · 24 Maple Street",
+    "resultFrom": "Missed call",
+    "resultBooked": "Booked job",
+    "resultRequest": "Job request",
+    "resultNote": "Recovered automatically while you worked",
+    "composer": "Text message",
+    "noticeLeft": "Instant text-back",
+    "noticeBooked": "Calendar updated",
+    "noticeRequest": "Details sent to you",
+    "pause": "Pause the demo",
+    "play": "Play the demo",
+    "captionTitle": "Your calls. Your customers.",
+    "captionBody": "Focus on your jobs while TradeCatch takes care of your calls.",
+    "call": {
+      "incoming": "Incoming call",
+      "caller": "New customer",
+      "callerLine": "Mobile",
+      "answeredBy": "TradeCatch answers for you",
+      "onCall": "On call",
+      "callEnded": "Call ended",
+      "speakerCaller": "Customer",
+      "speakerAgent": "Your receptionist",
+      "caller1": "Hi, my water heater is leaking in the basement.",
+      "agent1": "I can help with that. Is water still running?",
+      "caller2": "Yes, since this morning. Can someone come today?",
+      "agent2": "Let me check what is open today.",
+      "agent2Request": "I will get this to the team right away.",
+      "qualifyTitle": "Job details",
+      "factService": "Service",
+      "factServiceValue": "Water heater leak",
+      "factUrgency": "Urgency",
+      "factUrgencyValue": "Today",
+      "factAddress": "Address",
+      "factAddressValue": "Confirmed",
+      "factContact": "Name and number",
+      "factContactValue": "Saved",
+      "bookTitle": "Checking your calendar",
+      "bookWorking": "Looking for an open time",
+      "slot1": "1:00 PM",
+      "slot2": "3:30 PM",
+      "slot3": "5:00 PM",
+      "slotTaken": "Taken",
+      "bookDone": "Booked today, 3:30 PM",
+      "bookDoneNote": "Confirmation text sent",
+      "requestTitle": "Sending to your team",
+      "requestWorking": "Urgent request with the full summary",
+      "requestDone": "Request sent to your team",
+      "requestDoneNote": "Customer told to expect a call",
+      "notifyApp": "TradeCatch",
+      "notifyNow": "now",
+      "notifyTitleBooked": "New job booked",
+      "notifyBodyBooked": "Water heater leak, today 3:30 PM",
+      "notifyTitleRequest": "New urgent request",
+      "notifyBodyRequest": "Water heater leak, call back today",
+      "dashTitle": "Today on your dashboard",
+      "dashNew": "Water heater leak",
+      "dashNewMetaBooked": "3:30 PM · Booked by phone",
+      "dashNewMetaRequest": "Urgent · Call back today",
+      "dashOld1": "Faucet replacement",
+      "dashOld1Meta": "Quote requested",
+      "dashOld2": "Drain cleaning",
+      "dashOld2Meta": "Customer called back",
+      "railAnswered": "Call answered",
+      "railAnsweredDetail": "Day or night",
+      "railTalk": "Conversation",
+      "railTalkDetail": "Understands the need",
+      "railQualified": "Qualified",
+      "railQualifiedDetail": "Service, urgency, address",
+      "railBooked": "Booked",
+      "railBookedDetail": "In a time that is free",
+      "railRequest": "Sent to your team",
+      "railRequestDetail": "Ready for your call back",
+      "railDashboard": "On your dashboard",
+      "railDashboardDetail": "With the full summary",
+      "pause": "Pause the animation",
+      "play": "Play the animation",
+      "summaryBooked": "Illustration: a customer calls, TradeCatch answers, asks about the job, books a free time in your calendar and adds the job to your dashboard.",
+      "summaryRequest": "Illustration: a customer calls, TradeCatch answers, asks about the job, sends the request to your team and adds it to your dashboard.",
+      "newBadge": "New"
+    }
   }
 }

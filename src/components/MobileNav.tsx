@@ -6,17 +6,22 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { BrandLockup } from "@/components/BrandLockup";
 import { LocaleSwitcher } from "@/components/LocaleSwitcher";
+import type { AccountNav } from "@/components/useAccountNav";
+import { LinkPendingHint } from "@/components/ui/LinkPendingHint";
 
 const FOCUS_RING =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/50 focus-visible:ring-offset-2";
 
 export function MobileNav({
   links,
+  account,
   ctaLabel,
   email,
   emailLabel,
 }: {
   links: { href: string; label: string }[];
+  /** The last entry: "Login" when signed out, otherwise the person's dashboard. Same destination as the header icon. */
+  account: AccountNav;
   ctaLabel: string;
   /** The public support and sales address. TradeCatch has no public phone line. */
   email: string;
@@ -110,11 +115,24 @@ export function MobileNav({
             onClick={close}
             // The menu opens rarely, so its links earn a short staggered entrance.
             style={{ animationDelay: `${60 + i * 40}ms` }}
-            className={`animate-tc-in border-b border-white/[0.09] py-3.5 font-heading text-[22px] font-bold tracking-[-0.03em] text-white ${FOCUS_RING}`}
+            className={`animate-tc-in inline-flex items-center border-b border-white/[0.09] py-3.5 font-heading text-[22px] font-bold tracking-[-0.03em] text-white ${FOCUS_RING}`}
           >
             {link.label}
+            <LinkPendingHint />
           </Link>
         ))}
+        <a
+          href={account.href}
+          data-account-state={account.state}
+          aria-busy={account.busy || undefined}
+          onClick={account.onActivate}
+          style={{ animationDelay: `${60 + links.length * 40}ms` }}
+          className={`animate-tc-in border-b border-white/[0.09] py-3.5 font-heading text-[22px] font-bold tracking-[-0.03em] text-white ${
+            account.busy ? "cursor-progress opacity-60" : ""
+          } ${FOCUS_RING}`}
+        >
+          {account.label}
+        </a>
       </nav>
 
       <div className="px-[clamp(20px,4vw,40px)] pb-10 pt-6">
@@ -134,6 +152,7 @@ export function MobileNav({
           className={`flex w-full items-center justify-center gap-2.5 rounded-[12px] bg-orange px-6 py-4 text-[16px] font-bold text-navy shadow-cta ${FOCUS_RING}`}
         >
           {ctaLabel}
+          <LinkPendingHint />
         </Link>
       </div>
     </div>

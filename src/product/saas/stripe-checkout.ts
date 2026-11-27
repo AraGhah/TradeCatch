@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { stripeSecretKey } from "./stripe-key";
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { PLAN_PRICES } from "@/lib/plans";
 import { newId } from "./ids";
 import {

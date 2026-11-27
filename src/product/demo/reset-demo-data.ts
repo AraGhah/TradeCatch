@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { demoClientAccount } from "@/product/missed-call/fixtures";
 import { ensureMissedCallReady } from "@/product/missed-call/runtime";
 
@@ -62,6 +62,8 @@ export const DEMO_RESET_TABLES = [
   "tc_sms_jobs",
   "tc_sms_templates",
   "tc_sms_automations",
+  "tc_gcal_event_links",
+  "tc_gcal_events",
   "tc_calendar_sync_state",
   "tc_calendar_busy",
   "tc_calendar_connections",

@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { BusyLabel } from "@/components/ui/Spinner";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 const SCENARIOS = [
   "ai_timeout",
   "job_failure",
@@ -15,18 +18,21 @@ export function ReliabilityTestPanel({
   organizationId: string;
 }) {
   const t = useTranslations("app.reliabilityTest");
+  const tFeedback = useTranslations("feedback");
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [failed, setFailed] = useState(false);
 
-  async function run(scenario: (typeof SCENARIOS)[number]) {
+  const run = useGuarded(runHandler);
+  async function runHandler(scenario: (typeof SCENARIOS)[number]) {
     if (busy) return;
     setBusy(scenario);
     setMessage("");
     setFailed(false);
     try {
-      const response = await fetch("/api/admin/monitoring/test", {
+      const response = await timedFetch("/api/admin/monitoring/test", {
         method: "POST",
+        timeoutMs: 60_000,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ scenario, organizationId }),
       });
@@ -50,10 +56,13 @@ export function ReliabilityTestPanel({
             key={scenario}
             type="button"
             disabled={busy !== null}
+              aria-busy={busy === scenario}
             className="rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
             onClick={() => void run(scenario)}
           >
-            {t(`actions.${scenario}`)}
+            <BusyLabel pending={busy === scenario} busyLabel={tFeedback("working")}>
+                {t(`actions.${scenario}`)}
+              </BusyLabel>
           </button>
         ))}
       </div>

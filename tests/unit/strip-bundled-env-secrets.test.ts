@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
+import path from "node:path";
 import test from "node:test";
 
 const require = createRequire(import.meta.url);
@@ -56,6 +57,20 @@ test("stripBundledEnvSecrets removes DATABASE_URL fallback that caused 28P01", (
   assert.match(source, /export const test = \{\};/);
 });
 
+test("reports the names, never the values, of production credentials it removed", () => {
+  const { removedKeys } = stripBundledEnvSecrets(
+    [
+      'export const production = {"DATABASE_URL":"postgres://app:StalePassword123@db.example.supabase.co:5432/postgres","STRIPE_SECRET_KEY":"","CRON_SECRET":"  ","AUTH_SECRET":"abcdefghijklmnopqrstuvwxyz012345","TRADECATCH_ENV":"production"};', // secret-scan: allow
+      'export const development = {"OPENAI_API_KEY":"sk-test-not-for-production-xxxxxxxxxxxx"};',
+      "export const test = {};",
+      "",
+    ].join("\n"),
+  );
+  // Only production is what the Worker reads; empty values were never a credential.
+  assert.deepEqual(removedKeys, ["DATABASE_URL", "AUTH_SECRET"]);
+  assert.doesNotMatch(JSON.stringify(removedKeys), /StalePassword123|abcdefgh/);
+});
+
 test("stripBundledEnvSecrets refuses a remaining database URL with a password", () => {
   // Key name deliberately avoids SECRET/TOKEN/PASSWORD so only the URL shape
   // triggers the fail-closed scan after key stripping.
@@ -79,7 +94,9 @@ test("stripBundledEnvSecrets requires all three OpenNext mode exports", () => {
 });
 
 test("stripBundledEnvFile rewrites on disk without printing secret values", () => {
-  const files = new Map([["/tmp/next-env.mjs", SAMPLE]]);
+  // The script resolves its argument, which on Windows prefixes a drive letter.
+  const target = path.resolve("/tmp/next-env.mjs");
+  const files = new Map([[target, SAMPLE]]);
   const logs: string[] = [];
   const originalLog = console.log;
   console.log = (...args: unknown[]) => {
@@ -97,7 +114,7 @@ test("stripBundledEnvFile rewrites on disk without printing secret values", () =
       },
     });
     assert.ok(result.removed >= 3);
-    const written = files.get("/tmp/next-env.mjs")!;
+    const written = files.get(target)!;
     assert.doesNotMatch(written, /DATABASE_URL|StalePassword123|AUTH_SECRET/);
     assert.match(logs.join("\n"), /Removed \d+ secret key/);
     assert.doesNotMatch(logs.join("\n"), /StalePassword123/);

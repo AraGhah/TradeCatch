@@ -85,6 +85,16 @@ export function isDashboardPath(pathname: string) {
 }
 
 /**
+ * Pages opened from an emailed link that carries a secret (set-password, in
+ * English and French). The address of such a page must never reach a third
+ * party, and Google's tag reports the full page address with every event, so
+ * these pages are never measured, whatever the visitor's cookie choice.
+ */
+export function isSecretLinkPath(pathname: string) {
+  return /^(?:\/fr)?\/(?:set-password|definir-mot-de-passe)\/?$/.test(pathname);
+}
+
+/**
  * Set by the dashboard layout from the business's privacy setting
  * (analyticsEnabled). Until it is set, dashboard pages are not measured.
  */
@@ -98,12 +108,14 @@ export function setBusinessAnalytics(allowed: boolean | undefined) {
 
 /**
  * Marketing pages need only the visitor's cookie consent. Dashboard pages also
- * need the business to allow analytics; unknown counts as no.
+ * need the business to allow analytics; unknown counts as no. Pages whose
+ * address carries a secret are never measured.
  */
 export function analyticsAllowed(pathname?: string) {
   if (typeof window === "undefined") return false;
   if (!hasAnalyticsConsent()) return false;
   const path = pathname ?? window.location.pathname;
+  if (isSecretLinkPath(path)) return false;
   if (!isDashboardPath(path)) return true;
   return (window as BusinessAnalyticsWindow).__tcBusinessAnalytics === true;
 }

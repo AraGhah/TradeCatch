@@ -485,6 +485,22 @@ Do not put the caller's name, number or address here: only `save_caller_details`
 
 Instead of (or in addition to) calling `get_business_config`, Bland's inbound-number **dynamic data** can load the same endpoint before the agent speaks. Use `GET https://YOUR_TRADECATCH_HOST/api/bland/config?to={{to}}&from={{from}}&call_id={{call_id}}` with the same bearer header and the same `response` mapping. Bland waits only about 2 seconds for it by default, which is tight for a cold start, so the tool above is the recommended path. If the dynamic data does not arrive, the pathway must still call `get_business_config`.
 
+## Wiring an existing pathway (script)
+
+A pathway built in the Bland dashboard does not call TradeCatch by itself. Without these calls it cannot see the calendar, cannot save a booking, and its transfer gates stay closed. `scripts/bland-pathway-wire.js` adds the missing steps to a **new pathway version** and leaves the live version untouched:
+
+```bash
+node --env-file=.env.local scripts/bland-pathway-wire.js --pathway <pathway_id> --host https://tradecatch.ca            # creates version N+1
+node --env-file=.env.local scripts/bland-pathway-wire.js --pathway <pathway_id> --host https://tradecatch.ca --promote  # and makes it live
+```
+
+It reads `BLAND_API_KEY` and `BLAND_TOOL_SECRET` from the environment and never prints them. It adds:
+
+- `tc-load-config`: a silent GET of `/api/bland/config` right after the start node. It sets `business_name`, `tc_booking_enabled` and the transfer variables the pathway already gates on: `tc_regular_transfer_ready`/`_number` from `transfer_available`/`normal_transfer_number`, and `tc_emergency_transfer_ready`/`_number` from the emergency pair. Nothing else sets them, so if the call fails every gate stays closed.
+- The booking chain: `scheduling` → `tc-booking-gate` (only when `tc_booking_enabled` is `"true"`) → `tc-availability` → `tc-offer` (only returned labels, exact `startAt`) → `tc-collect-details` → `tc-save-details` → `tc-book` → `tc-booked` / `tc-taken` / `tc-booking-callback`. `tc-booked` is reached only from `booking_status == confirmed`. Every other answer, a timeout or an error goes to a callback offer that says nothing was booked.
+
+Re-running it on a wired version replaces its own `tc-*` steps instead of adding copies. Try the new version with Bland's pathway chat (`pathway_version`) before promoting. Roll back by promoting the previous version number (`POST /v1/pathway/<id>/publish` with `version_id`). The bearer secret is stored in the pathway's webhook headers, so anyone with access to the Bland account can read it. If that access changes, rotate `BLAND_TOOL_SECRET` (a Worker secret) and re-run the script.
+
 ## Transfers: pathway variables
 
 TradeCatch never lets the model, the caller or Bland pick a number. `get_business_config` returns the only numbers a Transfer node may dial, taken from the business configuration and re-validated at the boundary.
@@ -506,7 +522,7 @@ Pathway wiring:
 
 A number becomes a variable only when:
 
-- the business's plan includes live transfer (Receptionist Plus) **and** the operator has set `LAUNCH_ENABLE_CALL_TRANSFER=1` (off by default at launch, so on a default deployment `transfer_available` is `"false"` for every business);
+- the business's plan includes live transfer (Professional, or the legacy Receptionist Plus; never Essential or legacy Growth) **and** the operator has set `LAUNCH_ENABLE_CALL_TRANSFER=1` (off by default at launch, so on a default deployment `transfer_available` is `"false"` for every business);
 - for the normal line, it is inside the owner's transfer hours (`transferHours`: business hours only, or always);
 - it is E.164, not a premium (900/976) or N11 number, and, for an owner's profile, a Canadian geographic number (the same rule as the settings form);
 - it does not loop back into the line the call came in on: the business's own line, its text number, or **any** Bland number or Bland text number in `BLAND_ROUTES_JSON`.

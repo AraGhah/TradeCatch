@@ -76,6 +76,12 @@ export type WebsiteRequestStore = {
     status: WebsiteNotificationStatus,
     at: string,
   ): Promise<void>;
+  /**
+   * Records an email to the customer in the history ("notified", with the
+   * note saying which one and whether it went out). Leaves the team
+   * notification status alone.
+   */
+  recordCustomerNotification(id: string, note: string, at: string): Promise<void>;
   /** Oldest first. */
   listEvents(requestId: string): Promise<WebsiteRequestEvent[]>;
 };
@@ -216,6 +222,10 @@ export function createMemoryWebsiteRequestStore(): WebsiteRequestStore {
       if (!current) return;
       rows.set(id, { ...current, notificationStatus: status });
       push(id, { kind: "notified", note: status }, at);
+    },
+    async recordCustomerNotification(id, note, at) {
+      if (!rows.has(id)) return;
+      push(id, { kind: "notified", note }, at);
     },
     async listEvents(requestId) {
       return events

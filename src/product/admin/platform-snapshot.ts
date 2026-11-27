@@ -1,4 +1,4 @@
-import { getPgPool } from "@/product/missed-call/postgres-store";
+import { getPgPool } from "@/lib/postgres-pool";
 import { getSaasStore } from "@/product/saas/runtime";
 import type { Organization } from "@/product/saas/types";
 import {
@@ -10,7 +10,7 @@ import {
 
 export type PlatformHealth = {
   overall: string;
-  averageMs: number;
+  p50Ms: number;
   p95Ms: number;
   serverErrors: number;
   openIncidents: number;
@@ -128,7 +128,7 @@ async function health(): Promise<PlatformHealth | null> {
     const overview = await getReliabilityService().overview();
     return {
       overall: overview.overall,
-      averageMs: overview.averageMs,
+      p50Ms: overview.p50Ms,
       p95Ms: overview.p95Ms,
       serverErrors: overview.serverErrors,
       openIncidents: overview.incidents.length,

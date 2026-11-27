@@ -24,7 +24,7 @@ export function FaqAccordion({
       {items.map((item) => (
         <details
           key={item.q}
-          className="group border-b border-[rgb(var(--ink-rgb)/0.12)] last:border-b-0"
+          className="tc-acc group border-b border-[rgb(var(--ink-rgb)/0.12)] last:border-b-0"
         >
           <summary
             className={`flex cursor-pointer list-none items-center justify-between gap-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange [&::-webkit-details-marker]:hidden ${

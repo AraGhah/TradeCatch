@@ -2,6 +2,7 @@ import { readJsonBounded } from "@/lib/request-body";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { authorizeAdminRequest } from "@/lib/admin-auth";
+import { queueAnnouncement } from "@/product/admin/announcements";
 import { clearPlatformSnapshot } from "@/product/admin/platform-snapshot";
 import { getNotificationService } from "@/product/notifications/runtime";
 import { recordSecurityEvent } from "@/product/security/hooks";
@@ -12,6 +13,7 @@ export const dynamic = "force-dynamic";
 const schema = z.object({
   message: z.string().trim().min(3).max(500),
   confirm: z.literal("announce"),
+  idempotencyKey: z.string().trim().min(8).max(120).optional(),
 });
 
 export async function POST(request: Request) {
@@ -32,16 +34,19 @@ export async function POST(request: Request) {
     .filter((org) => org.status === "active" && org.accountType !== "demo")
     .slice(0, 100);
   const service = getNotificationService();
-  const stamp = Date.now().toString(36);
-  let queued = 0;
-  for (const org of orgs) {
-    const result = await service.enqueue({
-      organizationId: org.id,
-      type: "support_update",
-      idempotencyKey: `announce:${stamp}:${org.id}`,
-      payload: { simulated: true, message: parsed.data.message },
+  const { queued, alreadyQueued } = await queueAnnouncement({
+    organizationIds: orgs.map((org) => org.id),
+    message: parsed.data.message,
+    idempotencyKey: parsed.data.idempotencyKey,
+    enqueue: (event) => service.enqueue(event),
+  });
+  // A repeat changed nothing: answer as the first request did, without a second audit entry.
+  if (queued === 0 && alreadyQueued > 0) {
+    return NextResponse.json({
+      ok: true,
+      queued: alreadyQueued,
+      duplicate: true,
     });
-    if (result.queued) queued += 1;
   }
   clearPlatformSnapshot();
   await recordSecurityEvent({

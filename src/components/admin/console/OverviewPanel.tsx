@@ -1,6 +1,7 @@
 "use client";
 
 import { Link } from "@/i18n/navigation";
+import { SkeletonTiles } from "@/components/ui/Skeleton";
 import type { Overview, OverviewAlert } from "@/product/admin-console/overview";
 import { useAdminData } from "./api";
 import {
@@ -134,6 +135,7 @@ export function AdminOverviewPanel() {
         hasData={Boolean(data)}
         onRetry={refresh}
         errorText={loadError(error, t.loadError)}
+        skeleton={<SkeletonTiles count={6} />}
       >
         {kpis ? (
           <>

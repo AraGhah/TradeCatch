@@ -88,6 +88,7 @@ from transfer import (
     hold_line,
     transfer_event,
     transfer_settings,
+    with_business_ring_time,
 )
 from tuning import delegation_options, persona_voice_settings, turn_handling_from_env
 from voice import CustomVoice, call_voice, cascade_settings, delivery_settings
@@ -167,7 +168,9 @@ class ReceptionistAgent(Agent):
         self._call = call
         self._client = client
         self._sip_identity = sip_identity
-        self._transfer_settings = transfers or transfer_settings(os.environ)
+        self._transfer_settings = with_business_ring_time(
+            transfers or transfer_settings(os.environ), cfg
+        )
         self._transfer_rounds = 0
         self._active_transfer: ScreenedTransfer | None = None
         # True once a person has the call. The process then stays alive only to end

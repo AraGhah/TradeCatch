@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useId, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { BusyLabel } from "@/components/ui/Spinner";
 import type { AutomationConfig, AutomationRecord } from "@/product/sms-automation/types";
+import { StatusHelp, StatusPill, stateOf, type StatusInputs } from "./AutomationStatus";
+import { formatDuration, formatHour, type Translate } from "./automation-copy";
 import {
   describeFailure,
   readStored,
@@ -54,44 +57,24 @@ function toText(config: AutomationConfig): Record<NumberField, string> {
   };
 }
 
+const INPUT = "mt-1 w-full min-w-0 rounded-md border border-navy/20 px-3 py-2 text-sm text-navy";
+const HELP = "mt-1 text-xs text-navy/60";
+
 export function AutomationSettingsForm({
   organizationId,
   automation,
-  labels,
-  showSecondDelay,
+  status,
 }: {
   organizationId: string;
   automation: AutomationRecord;
-  showSecondDelay?: boolean;
-  labels: {
-    save: string;
-    saved: string;
-    error: string;
-    status: string;
-    active: string;
-    inactive: string;
-    enable: string;
-    disable: string;
-    delay: string;
-    secondDelay: string;
-    language: string;
-    languageCustomer: string;
-    languageEn: string;
-    languageFr: string;
-    attempts: string;
-    windowStart: string;
-    windowEnd: string;
-    weekend: string;
-    duplicate: string;
-    stopReply: string;
-    stopHuman: string;
-    stopAccepted: string;
-    stopRejected: string;
-    minutes: string;
-  };
+  /** What the status is worked out from: the queue, whether the business can text, and the clock. */
+  status: StatusInputs;
 }) {
   const t = useTranslations("app.automations");
+  const locale = useLocale();
+  const translate = t as unknown as Translate;
   const failureText = useFailureText();
+  const ids = useId();
   const isMissedCall = automation.type === "missed_call_recovery";
   const isQuote = automation.type === "quote_followup";
 
@@ -106,12 +89,13 @@ export function AutomationSettingsForm({
   // A missed-call text answers the caller's own call and goes out at once. The sending
   // window only applies to it when the owner asks for quiet hours.
   const windowApplies = !isMissedCall || draft.respectQuietHours === true;
+  const state = stateOf(stored, status);
 
   /** The draft as numbers, or the first box that is not a whole number. */
   function readNumbers(): { ok: true; values: Partial<AutomationConfig> } | { ok: false } {
     const values: Partial<AutomationConfig> = {};
     for (const field of NUMBER_FIELDS) {
-      if (field === "secondDelayMinutes" && !showSecondDelay) continue;
+      if (field === "secondDelayMinutes" && !isQuote) continue;
       if ((field === "windowStartHour" || field === "windowEndHour") && !windowApplies) continue;
       const raw = text[field].trim();
       if (!/^\d+$/.test(raw)) return { ok: false };
@@ -152,6 +136,21 @@ export function AutomationSettingsForm({
     setDraft((current) => ({ ...current, [field]: value }));
   }
 
+  /** "That is 1 day." under a box of minutes, as long as the box holds a whole number. */
+  function minutesHint(field: NumberField): string | null {
+    const raw = text[field].trim();
+    if (!/^\d+$/.test(raw)) return null;
+    const minutes = Number(raw);
+    return minutes === 0 ? t("fields.hintNow") : t("fields.hint", { duration: formatDuration(minutes, translate) });
+  }
+
+  /** "That is 8 a.m." under a box of hours, as long as it holds an hour from 0 to 24. */
+  function hourHint(field: NumberField): string | null {
+    const raw = text[field].trim();
+    if (!/^\d+$/.test(raw) || Number(raw) > 24) return null;
+    return t("fields.hourHint", { time: formatHour(Number(raw), locale, translate) });
+  }
+
   async function save(event: React.FormEvent) {
     event.preventDefault();
     await flight.run("save", async () => {
@@ -170,7 +169,7 @@ export function AutomationSettingsForm({
         setStored(saved);
         setDraft(saved.config);
         setText(toText(saved.config));
-        setNotice({ kind: "ok", text: labels.saved });
+        setNotice({ kind: "ok", text: t("saved") });
       } catch (err) {
         // Keep what was typed (it stays marked unsaved) and learn what is really stored.
         const current = await readStored(organizationId, stored.id);
@@ -199,116 +198,117 @@ export function AutomationSettingsForm({
     });
   }
 
-  const input = "mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy";
+  const delayLabel = isQuote ? t("fields.delayQuote") : t("fields.delayMissed");
+  const delayHelp = isQuote ? t("fields.delayQuoteHelp") : t("fields.delayMissedHelp");
 
   return (
     <form
       onSubmit={(event) => void save(event)}
       aria-busy={busy}
-      className="flex flex-col gap-4 rounded-md border border-navy/10 bg-white p-4"
+      className="flex flex-col gap-5 rounded-md border border-navy/10 bg-white p-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-navy" data-testid="automation-status">
-          {labels.status}: {stored.enabled ? labels.active : labels.inactive}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-navy">{t("status.label")}</span>
+            <StatusPill state={state} testId="automation-status" />
+          </div>
+          {state ? <StatusHelp state={state} testId="automation-status-help" /> : null}
+        </div>
         <button
           type="button"
           disabled={busy}
+          aria-busy={flight.isPending("toggle")}
           onClick={() => void setEnabled(!stored.enabled)}
           className="rounded-md bg-navy px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {flight.isPending("toggle")
-            ? stored.enabled
-              ? t("toggle.disabling")
-              : t("toggle.enabling")
-            : stored.enabled
-              ? labels.disable
-              : labels.enable}
+          <BusyLabel
+            pending={flight.isPending("toggle")}
+            busyLabel={stored.enabled ? t("actions.pausing") : t("actions.enabling")}
+          >
+            {stored.enabled ? t("actions.pause") : t("actions.enable")}
+          </BusyLabel>
         </button>
       </div>
+
       <fieldset disabled={busy} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-xs text-navy/70">
-            {labels.delay} ({labels.minutes})
+        <legend className="mb-1 p-0 font-semibold text-navy">{t("settings.scheduling")}</legend>
+        <p className="-mt-2 text-sm text-navy/70">{t("settings.schedulingHelp")}</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id={`${ids}-delay`} label={delayLabel} help={[delayHelp, minutesHint("initialDelayMinutes")]}>
             <input
+              id={`${ids}-delay`}
               type="text"
               inputMode="numeric"
               name="initialDelayMinutes"
               value={text.initialDelayMinutes}
               onChange={(event) => setNumber("initialDelayMinutes", event.target.value)}
-              className={input}
+              aria-describedby={`${ids}-delay-help`}
+              className={INPUT}
             />
-          </label>
-          {showSecondDelay ? (
-            <label className="text-xs text-navy/70">
-              {labels.secondDelay} ({labels.minutes})
+          </Field>
+          {isQuote ? (
+            <Field
+              id={`${ids}-second`}
+              label={t("fields.secondDelay")}
+              help={[t("fields.secondDelayHelp"), minutesHint("secondDelayMinutes")]}
+            >
               <input
+                id={`${ids}-second`}
                 type="text"
                 inputMode="numeric"
                 name="secondDelayMinutes"
                 value={text.secondDelayMinutes}
                 onChange={(event) => setNumber("secondDelayMinutes", event.target.value)}
-                className={input}
+                aria-describedby={`${ids}-second-help`}
+                className={INPUT}
               />
-            </label>
+            </Field>
           ) : null}
-          <label className="text-xs text-navy/70">
-            {labels.language}
-            <select
-              value={draft.language}
-              onChange={(event) => {
-                setNotice(null);
-                setDraft((current) => ({
-                  ...current,
-                  language: event.target.value as AutomationConfig["language"],
-                }));
-              }}
-              className={input}
-            >
-              <option value="customer">{labels.languageCustomer}</option>
-              <option value="en">{labels.languageEn}</option>
-              <option value="fr">{labels.languageFr}</option>
-            </select>
-          </label>
-          <label className="text-xs text-navy/70">
-            {labels.attempts}
-            <input
-              type="text"
-              inputMode="numeric"
-              name="maxAttempts"
-              value={text.maxAttempts}
-              onChange={(event) => setNumber("maxAttempts", event.target.value)}
-              className={input}
-            />
-          </label>
+          {isQuote ? (
+            <Field id={`${ids}-reminders`} label={t("fields.reminders")} help={[t("fields.remindersHelp")]}>
+              <input
+                id={`${ids}-reminders`}
+                type="text"
+                inputMode="numeric"
+                name="maxAttempts"
+                value={text.maxAttempts}
+                onChange={(event) => setNumber("maxAttempts", event.target.value)}
+                aria-describedby={`${ids}-reminders-help`}
+                className={INPUT}
+              />
+            </Field>
+          ) : null}
           {windowApplies ? (
             <>
-              <label className="text-xs text-navy/70">
-                {labels.windowStart}
+              <Field id={`${ids}-start`} label={t("fields.windowStart")} help={[hourHint("windowStartHour")]}>
                 <input
+                  id={`${ids}-start`}
                   type="text"
                   inputMode="numeric"
                   name="windowStartHour"
                   value={text.windowStartHour}
                   onChange={(event) => setNumber("windowStartHour", event.target.value)}
-                  className={input}
+                  aria-describedby={`${ids}-start-help`}
+                  className={INPUT}
                 />
-              </label>
-              <label className="text-xs text-navy/70">
-                {labels.windowEnd}
+              </Field>
+              <Field id={`${ids}-end`} label={t("fields.windowEnd")} help={[hourHint("windowEndHour")]}>
                 <input
+                  id={`${ids}-end`}
                   type="text"
                   inputMode="numeric"
                   name="windowEndHour"
                   value={text.windowEndHour}
                   onChange={(event) => setNumber("windowEndHour", event.target.value)}
-                  className={input}
+                  aria-describedby={`${ids}-end-help`}
+                  className={INPUT}
                 />
-              </label>
+              </Field>
             </>
           ) : null}
         </div>
-        <div className="grid gap-2 text-sm text-navy">
+        <div className="grid gap-3 text-sm text-navy">
           {isMissedCall ? (
             <div>
               <Check
@@ -320,14 +320,60 @@ export function AutomationSettingsForm({
             </div>
           ) : null}
           {windowApplies ? (
-            <Check label={labels.weekend} checked={draft.weekendSending} onChange={(value) => setFlag("weekendSending", value)} />
+            <Check
+              label={t("fields.weekend")}
+              checked={draft.weekendSending}
+              onChange={(value) => setFlag("weekendSending", value)}
+            />
           ) : null}
-          <Check label={labels.duplicate} checked={draft.duplicateProtection} onChange={(value) => setFlag("duplicateProtection", value)} />
-          <Check label={labels.stopReply} checked={draft.stopOnCustomerReply} onChange={(value) => setFlag("stopOnCustomerReply", value)} />
-          <Check label={labels.stopHuman} checked={draft.stopOnHumanContact} onChange={(value) => setFlag("stopOnHumanContact", value)} />
-          {isQuote ? <p className="text-xs text-navy/60">{t("quoteAlwaysStops")}</p> : null}
         </div>
       </fieldset>
+
+      <fieldset disabled={busy} className="m-0 flex min-w-0 flex-col gap-4 border-0 p-0">
+        <legend className="mb-1 p-0 font-semibold text-navy">{t("settings.rulesTitle")}</legend>
+        <div className="sm:max-w-sm">
+          <Field id={`${ids}-language`} label={t("fields.language")} help={[t("fields.languageHelp")]}>
+            <select
+              id={`${ids}-language`}
+              value={draft.language}
+              onChange={(event) => {
+                setNotice(null);
+                setDraft((current) => ({
+                  ...current,
+                  language: event.target.value as AutomationConfig["language"],
+                }));
+              }}
+              aria-describedby={`${ids}-language-help`}
+              className={INPUT}
+            >
+              <option value="customer">{t("fields.languageCustomer")}</option>
+              <option value="en">{t("fields.languageEn")}</option>
+              <option value="fr">{t("fields.languageFr")}</option>
+            </select>
+          </Field>
+        </div>
+        <div className="grid gap-3 text-sm text-navy">
+          {isMissedCall ? (
+            <Check
+              label={t("fields.duplicate")}
+              checked={draft.duplicateProtection}
+              onChange={(value) => setFlag("duplicateProtection", value)}
+            />
+          ) : null}
+          <Check
+            label={t("fields.stopReply")}
+            checked={draft.stopOnCustomerReply}
+            onChange={(value) => setFlag("stopOnCustomerReply", value)}
+          />
+          <Check
+            label={t("fields.stopHuman")}
+            checked={draft.stopOnHumanContact}
+            onChange={(value) => setFlag("stopOnHumanContact", value)}
+          />
+          {isQuote ? <p className="text-xs text-navy/60">{t("settings.quoteAlwaysStops")}</p> : null}
+        </div>
+      </fieldset>
+
       <div aria-live="polite" className="min-h-5">
         {notice ? (
           <p
@@ -345,7 +391,7 @@ export function AutomationSettingsForm({
           aria-busy={flight.isPending("save")}
           className="w-fit rounded-md border border-navy/20 px-3 py-2 text-sm font-semibold text-navy disabled:opacity-60"
         >
-          {flight.isPending("save") ? t("saving") : labels.save}
+          <BusyLabel pending={flight.isPending("save")} busyLabel={t("actions.saving")}>{t("actions.save")}</BusyLabel>
         </button>
         {unsaved && !busy ? (
           <span data-testid="unsaved" className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-semibold text-amber-900">
@@ -354,6 +400,32 @@ export function AutomationSettingsForm({
         ) : null}
       </div>
     </form>
+  );
+}
+
+/** A labelled box. The label holds only the label; the help sits beside it, linked by aria-describedby. */
+function Field({
+  id,
+  label,
+  help,
+  children,
+}: {
+  id: string;
+  label: string;
+  help: (string | null)[];
+  children: React.ReactNode;
+}) {
+  const lines = help.filter(Boolean).join(" ");
+  return (
+    <div className="min-w-0 text-sm text-navy">
+      <label htmlFor={id} className="block">
+        {label}
+      </label>
+      {children}
+      <p id={`${id}-help`} className={HELP}>
+        {lines}
+      </p>
+    </div>
   );
 }
 
@@ -367,9 +439,14 @@ function Check({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2">
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
-      {label}
+    <label className="flex items-start gap-2">
+      <input
+        type="checkbox"
+        className="mt-0.5"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+      <span className="min-w-0">{label}</span>
     </label>
   );
 }

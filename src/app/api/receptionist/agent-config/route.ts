@@ -45,14 +45,26 @@ export async function GET(request: NextRequest) {
   await runtime.refresh(false);
   // Exact number match only: an unknown number must never be answered as some
   // other business.
-  const config = runtime.configs.find(
-    (c) => c.enabled && digits(c.phoneNumberE164) === digits(number),
-  );
+  const findConfig = () =>
+    runtime.configs.find(
+      (c) => c.enabled && digits(c.phoneNumberE164) === digits(number),
+    );
+  let config = findConfig();
 
   // The cached profile set can be ~30 s old on this instance. A business that
   // just switched its receptionist off must not have it answer another call,
-  // so a tenant line is confirmed against the database on every call.
-  const stillOn = config ? await runtime.confirmLineActive(config) : false;
+  // so a tenant line is confirmed against the database on every call — and a
+  // profile saved since the load is reloaded, so the owner's change is what
+  // this call gets.
+  let line = config
+    ? await runtime.lineState(config)
+    : { active: false, stale: false };
+  if (config && line.active && line.stale) {
+    await runtime.refresh(true);
+    config = findConfig();
+    line = config ? await runtime.lineState(config) : line;
+  }
+  const stillOn = config ? line.active : false;
   if (!config || !stillOn) {
     const off =
       (await runtime.describeInactiveLine(number)) ??

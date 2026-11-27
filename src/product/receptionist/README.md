@@ -106,6 +106,16 @@ Production validation (`validateReceptionistConfig`) rejects reserved demo /
 `555` numbers, requires a live human (`emergencyTransferE164` or
 `fallbackTransferE164`) and at least one notification channel.
 
+A founder env config (`RECEPTIONIST_CONFIG_JSON`, or `RECEPTIONIST_ENABLED=1`
+with its Module A client) that fails that validation is refused and answers no
+calls, but it does not stop the runtime: tenant profiles and the Bland/LiveKit
+agent tools keep working. The refusal is logged as
+`tradecatch.receptionist.env_config_rejected`, recorded as a critical
+`RECEPTIONIST_ENV_CONFIG_INVALID` incident (service `ai_receptionist`), and
+shown as `receptionist.error` in the ops view of `/api/health`. The production
+release also refuses a Worker bundle whose `.env*` fallbacks carry demo routing
+(`scripts/check-bundled-demo-config.js`).
+
 ## Conversation brain
 
 | `RECEPTIONIST_LLM_PROVIDER` | Behavior |
@@ -243,6 +253,9 @@ the open question resumes. Where the pieces live:
 | `speech-style.ts` | Pacing markup: slower numbers/addresses, short pauses (kill switch `RECEPTIONIST_SSML=0`) |
 | `prompts.ts` | All spoken wording, French and English, varied acknowledgements |
 | `agent-api.ts`, `agent-calls.ts` | Server side of the LiveKit agent (availability, book, report) |
+| `voice-plans.ts` | Pure voice-plan pieces the engine builds from: `listen` (gather, keypad rules per step), `say`, the opening, hang-up / SIP hand-off / personal-caller plans |
+| `call-session.ts` | Pure call-record helpers: `bareSession`, `cleanDuration`, flag and urgency merging (urgency never downgrades), the emergency-transfer rule |
+| `simulation.ts` | In-memory engine (rule brain, silent notifier, fixed clock) shared by the website demo (`demo.ts`) and the owner's test call (`business-test.ts`) |
 
 Behaviours worth knowing:
 

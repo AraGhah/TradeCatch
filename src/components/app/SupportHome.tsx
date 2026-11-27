@@ -2,8 +2,15 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useFailureText } from "@/components/ui/FeedbackMessage";
+import { LoadingRegion, SkeletonRows } from "@/components/ui/Skeleton";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { Link } from "@/i18n/navigation";
+import { classifyFailure } from "@/lib/client/use-action";
 
+import { useAttemptKey } from "@/lib/client/attempt-key";
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
 type Ticket = {
   id: string;
   subject: string;
@@ -24,6 +31,8 @@ export function SupportHome({
   contactEmail: string;
 }) {
   const t = useTranslations("app.support");
+  const tFeedback = useTranslations("feedback");
+  const failureText = useFailureText();
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -35,10 +44,11 @@ export function SupportHome({
   const [message, setMessage] = useState("");
   const [messageError, setMessageError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const attempt = useAttemptKey();
 
   const load = useCallback(
     () =>
-      fetch(`/api/businesses/${organizationId}/support/tickets`, {
+      timedFetch(`/api/businesses/${organizationId}/support/tickets`, {
         cache: "no-store",
       })
         .then(async (response) => {
@@ -59,38 +69,48 @@ export function SupportHome({
     void load();
   }, [load]);
 
-  async function submit(event: React.FormEvent) {
+  const submit = useGuarded(submitHandler);
+  async function submitHandler(event: React.FormEvent) {
     event.preventDefault();
     if (busy) return;
     setBusy(true);
     setMessage("");
     setMessageError(false);
     try {
-      const response = await fetch(
+      const ticket = {
+        subject: subject.trim(),
+        description: description.trim(),
+        category,
+        priority,
+        kind,
+        contactEmail,
+      };
+      const response = await timedFetch(
         `/api/businesses/${organizationId}/support/tickets`,
         {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            subject: subject.trim(),
-            description: description.trim(),
-            category,
-            priority,
-            kind,
-            contactEmail,
+            ...ticket,
+            idempotencyKey: attempt.for(JSON.stringify(ticket)),
           }),
         },
       );
       setMessageError(!response.ok);
       setMessage(response.ok ? t("sent") : t("error"));
       if (response.ok) {
+        attempt.done();
         setSubject("");
         setDescription("");
         await load();
       }
-    } catch {
+    } catch (err) {
+      // No answer: the ticket may have been created. Keep what was typed, say so, and re-read the list
+      // so a ticket that did arrive shows up before anyone sends it a second time.
+      const failure = classifyFailure(err, { write: true });
       setMessageError(true);
-      setMessage(t("error"));
+      setMessage(failure.outcomeUnknown ? failureText(failure) : t("error"));
+      if (failure.outcomeUnknown) void load();
     } finally {
       setBusy(false);
     }
@@ -181,9 +201,12 @@ export function SupportHome({
         <button
           type="submit"
           disabled={busy}
+          aria-busy={busy}
           className="w-fit rounded-md bg-navy px-3 py-2 text-sm text-white disabled:opacity-50"
         >
-          {t("submit")}
+          <BusyLabel pending={busy} busyLabel={tFeedback("sending")}>
+            {t("submit")}
+          </BusyLabel>
         </button>
         {message ? (
           <p
@@ -205,13 +228,16 @@ export function SupportHome({
           <button
             type="button"
             disabled={loading}
+            aria-busy={loading}
             className="min-h-9 text-sm font-semibold text-navy underline disabled:opacity-50"
             onClick={() => {
               setLoading(true);
               void load();
             }}
           >
-            {t("refresh")}
+            <BusyLabel pending={loading} busyLabel={tFeedback("loading")}>
+              {t("refresh")}
+            </BusyLabel>
           </button>
         </div>
         {loadError ? (
@@ -220,9 +246,9 @@ export function SupportHome({
           </p>
         ) : null}
         {tickets === null && !loadError ? (
-          <p role="status" className="mt-2 text-sm text-navy/70">
-            {t("loading")}
-          </p>
+          <LoadingRegion label={t("loading")} className="mt-2">
+            <SkeletonRows rows={3} columns={2} />
+          </LoadingRegion>
         ) : null}
         <ul className="mt-3 flex flex-col gap-2">
           {(tickets ?? []).map((ticket) => (

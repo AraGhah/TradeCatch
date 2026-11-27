@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ApiError, requestJson } from "@/lib/client/request";
 import { useCooldown, useSingleFlight } from "@/lib/client/use-single-flight";
+import { BusyLabel } from "@/components/ui/Spinner";
 import { isStripeCheckoutUrl } from "@/product/saas/billing-access";
 
 export function InstallationCheckoutButton({
@@ -24,7 +25,12 @@ export function InstallationCheckoutButton({
   // Never ticked for the customer: the website service is charged only when this is chosen.
   const [websiteService, setWebsiteService] = useState(false);
   const [error, setError] = useState<
-    "checkoutError" | "checkoutPending" | "requestsLimited" | "requestsBlocked" | null
+    | "checkoutError"
+    | "checkoutPending"
+    | "checkoutUnconfirmed"
+    | "requestsLimited"
+    | "requestsBlocked"
+    | null
   >(null);
   const opening = flight.pending || redirecting;
   async function start() {
@@ -54,6 +60,9 @@ export function InstallationCheckoutButton({
           (cause.body as { code?: string } | undefined)?.code === "already_pending"
         ) {
           setError("checkoutPending");
+        } else if (cause instanceof ApiError && cause.kind === "network") {
+          // No answer in time: the session may or may not exist. Never "failed".
+          setError("checkoutUnconfirmed");
         } else {
           setError("checkoutError");
         }
@@ -86,7 +95,9 @@ export function InstallationCheckoutButton({
         className="rounded-md bg-orange px-3 py-2 text-sm font-semibold text-navy disabled:opacity-60"
         onClick={() => void start()}
       >
-        {opening ? t("checkoutOpening") : t("checkoutStart")}
+        <BusyLabel pending={opening} busyLabel={t("checkoutOpening")}>
+          {t("checkoutStart")}
+        </BusyLabel>
       </button>
       {error ? (
         <p role="alert" className="text-sm text-navy">

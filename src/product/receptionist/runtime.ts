@@ -1,5 +1,6 @@
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
 import { runAfterResponse } from "@/lib/after-response";
+import { databaseFailureCode } from "@/lib/postgres-pool";
 import {
   isDurableMissedCallStoreConfigured,
   isE2eHarness,
@@ -57,7 +58,11 @@ type RuntimeState = {
   envConfigs: ReceptionistConfig[];
   profileConfigs: ReceptionistConfig[];
   profilesLoadedAt: number;
+  /** organizationId -> updatedAt of each profile in the last load (staleness check). */
+  profileVersions?: Map<string, string>;
   profileLoadError?: string;
+  /** Founder env configs were refused by production validation (see loadEnvConfigs). */
+  envConfigError?: string;
   refreshing?: Promise<void>;
   llm: LlmClient | null;
   durable: boolean;
@@ -110,8 +115,38 @@ function createStores(): {
   };
 }
 
-/** Founder-managed configs from env. Zero profiles is valid (tenant profiles only). */
-function loadEnvConfigs(): ReceptionistConfig[] {
+/** Error code recorded when the founder env configs fail production validation. */
+export const ENV_CONFIG_INVALID_CODE = "RECEPTIONIST_ENV_CONFIG_INVALID";
+
+type EnvConfigLoad = {
+  configs: ReceptionistConfig[];
+  /** Set when the founder env configs were refused; the validation messages, no values. */
+  rejected?: string;
+};
+
+/**
+ * What production validation said, for ops: the messages name fields and
+ * technician ids, never values; any phone-like digit run is masked anyway.
+ */
+function rejectionDetail(err: unknown): string {
+  const message = err instanceof Error ? err.message : "unknown error";
+  return message
+    .replace(/^\[[a-z-]+\]\s*/i, "")
+    .replace(/\+?\d[\d\s().-]{6,}\d/g, "[number]")
+    .slice(0, 500);
+}
+
+/**
+ * Founder-managed configs from env. Zero profiles is valid (tenant profiles only).
+ *
+ * A founder config that fails production validation (demo client id, reserved
+ * 555 numbers, no human fallback...) is refused, never used: it does not
+ * answer a single call. It also must not take the whole runtime down with it,
+ * because tenant profiles and the Bland/LiveKit agent tools share this runtime;
+ * on 2026-10-25 a demo `.env.local` bundled into the Worker did exactly that.
+ * The refusal is reported as a critical incident instead (see bootstrap).
+ */
+function loadEnvConfigs(): EnvConfigLoad {
   const explicit =
     Boolean(process.env.RECEPTIONIST_CONFIG_JSON?.trim()) ||
     process.env.RECEPTIONIST_ENABLED === "1";
@@ -121,10 +156,15 @@ function loadEnvConfigs(): ReceptionistConfig[] {
   } catch (err) {
     // The env client is only needed for the derived (RECEPTIONIST_ENABLED=1)
     // profile; a multi-tenant deployment legitimately has none.
-    if (process.env.RECEPTIONIST_ENABLED === "1") throw err;
+    if (process.env.RECEPTIONIST_ENABLED === "1")
+      return { configs: [], rejected: rejectionDetail(err) };
   }
-  if (!explicit) return [];
-  return loadReceptionistConfigsFromEnv(client);
+  if (!explicit) return { configs: [] };
+  try {
+    return { configs: loadReceptionistConfigsFromEnv(client) };
+  } catch (err) {
+    return { configs: [], rejected: rejectionDetail(err) };
+  }
 }
 
 /** Real stores behind the lead-sync module (loaded lazily: SaaS/Growth are optional at boot). */
@@ -161,15 +201,28 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
     // Read-only: tenant profiles are DB-backed and must not require an
     // env-provisioned missed-call client (production legitimately has none).
     const missedCall = getMissedCallReadStore();
+    const versions = new Map<string, string>();
+    const store = state.profileStore;
     state.profileConfigs = await loadProfileConfigs({
-      profiles: state.profileStore,
+      // Same store; the load also notes which version of each profile it used.
+      profiles: {
+        ...store,
+        async listActivatedProfiles() {
+          const list = await store.listActivatedProfiles();
+          for (const p of list) versions.set(p.organizationId, p.updatedAt);
+          return list;
+        },
+      },
       getOrganization: (id) => saas.getOrganization(id),
       getClient: (id) => missedCall.getClient(id),
       getPrivacy: (ids) => getPrivacyStore().getMany(ids),
       onPrivacyError: (error) =>
         console.error(
           "[receptionist] privacy settings unavailable; recording and transcripts off for this reload",
-          error instanceof Error ? error.name : "error",
+          // pg names every server error "error", so the name said nothing. The
+          // code does (42P01 = tc_privacy_settings missing: migration 040 not
+          // applied); never the driver message, which can quote values.
+          databaseFailureCode(error),
         ),
       onSkip: (organizationId, reason) =>
         logReceptionistDiagnostic({
@@ -179,6 +232,7 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
         }),
     });
     state.profilesLoadedAt = Date.now();
+    state.profileVersions = versions;
     state.profileLoadError = undefined;
     logReceptionistDiagnostic({
       event: "profiles_loaded",
@@ -245,21 +299,28 @@ function callerTextPort(
  * not switched from the dashboard and stay as loaded. A database error keeps
  * the last good answer: one slow query must not drop a customer's call.
  */
-async function confirmLineActive(
+async function lineState(
   profileStore: ProfileStore,
+  versions: Map<string, string> | undefined,
   config: ReceptionistConfig,
-): Promise<boolean> {
-  if (config.source !== "profile") return true;
+): Promise<{ active: boolean; stale: boolean }> {
+  if (config.source !== "profile") return { active: true, stale: false };
+  const organizationId = config.id.replace(/^rc_org_/, "");
   try {
-    const profile = await profileStore.getProfile(
-      config.id.replace(/^rc_org_/, ""),
-    );
-    return Boolean(
-      profile?.activated && profile.settings.callHandlingMode !== "disabled",
-    );
+    const profile = await profileStore.getProfile(organizationId);
+    return {
+      active: Boolean(
+        profile?.activated && profile.settings.callHandlingMode !== "disabled",
+      ),
+      // Saved since this instance loaded it: the owner's change must be live
+      // on this very call, not up to PROFILE_CACHE_TTL_MS later.
+      stale: Boolean(
+        profile && versions?.get(organizationId) !== profile.updatedAt,
+      ),
+    };
   } catch (err) {
     logReceptionistDiagnostic({ event: "activation_check_failed", error: err });
-    return true;
+    return { active: true, stale: false };
   }
 }
 
@@ -284,7 +345,25 @@ async function describeInactiveLine(
 
 function bootstrap(): RuntimeState {
   const { store, profileStore, durable } = createStores();
-  const envConfigs = loadEnvConfigs();
+  const { configs: envConfigs, rejected } = loadEnvConfigs();
+  if (rejected) {
+    logReceptionistDiagnostic({
+      event: "env_config_rejected",
+      code: ENV_CONFIG_INVALID_CODE,
+    });
+    // Once per instance; the incident engine folds repeats into one incident.
+    void runAfterResponse(async () => {
+      const { recordFailure } = await import("@/product/reliability/hooks");
+      await recordFailure({
+        service: "ai_receptionist",
+        operation: "env_config",
+        errorCode: ENV_CONFIG_INVALID_CODE,
+        severity: "critical",
+        retryable: false,
+        detail: rejected,
+      });
+    });
+  }
   const llm = createLlmClientFromEnv();
   const sms = createTwilioSmsPort();
   // Scheduling for businesses that turned on phone booking in their profile.
@@ -309,6 +388,7 @@ function bootstrap(): RuntimeState {
     store,
     profileStore,
     envConfigs,
+    envConfigError: rejected,
     profileConfigs: [] as ReceptionistConfig[],
     profilesLoadedAt: 0,
     llm,
@@ -321,7 +401,8 @@ function bootstrap(): RuntimeState {
     configs: () => [...state.envConfigs, ...state.profileConfigs],
     brain: llm ? createLlmBrain(llm) : createRuleBrain(),
     llm,
-    confirmActive: (config) => confirmLineActive(profileStore, config),
+    confirmActive: async (config) =>
+      (await lineState(profileStore, state.profileVersions, config)).active,
     notifier: createReceptionistNotifier({
       sms,
       sendEmail: sendBusinessNotifyEmail,
@@ -429,13 +510,20 @@ export function getReceptionistRuntime() {
     llm: s.llm,
     durable: s.durable,
     /** Uncached check that a tenant line is still switched on (see confirmLineActive). */
-    confirmLineActive: (config: ReceptionistConfig) =>
-      confirmLineActive(s.profileStore, config),
+    confirmLineActive: async (config: ReceptionistConfig) =>
+      (await lineState(s.profileStore, s.profileVersions, config)).active,
+    /** Uncached: is the line on, and was its profile saved after this instance loaded it? */
+    lineState: (config: ReceptionistConfig) =>
+      lineState(s.profileStore, s.profileVersions, config),
     /** Set when the number belongs to a business that switched its receptionist off. */
     describeInactiveLine: (numberE164: string) =>
       describeInactiveLine(s.profileStore, numberE164),
     get profileLoadError(): string | undefined {
       return s.profileLoadError;
+    },
+    /** Why the founder env configs were refused at boot (validation messages, no values). */
+    get envConfigError(): string | undefined {
+      return s.envConfigError;
     },
     /** Founder env configs + activated tenant profiles (as of the last refresh). */
     get configs(): ReceptionistConfig[] {
@@ -496,9 +584,11 @@ export function receptionistReadiness(): {
       profiles: rt.configs.length,
       brain: rt.llm ? `${rt.llm.provider}:${rt.llm.model}` : "rules",
       durable: rt.durable,
-      ...(rt.profileLoadError
-        ? { error: `PROFILE_RELOAD_FAILED:${rt.profileLoadError}` }
-        : {}),
+      ...(rt.envConfigError
+        ? { error: ENV_CONFIG_INVALID_CODE }
+        : rt.profileLoadError
+          ? { error: `PROFILE_RELOAD_FAILED:${rt.profileLoadError}` }
+          : {}),
     };
   } catch (err) {
     return {

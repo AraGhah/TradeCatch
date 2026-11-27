@@ -20,9 +20,7 @@ export async function DemoModeBanner() {
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm md:px-6">
         <p className="font-semibold tracking-wide">
-          <span className="font-mono text-[11px] uppercase tracking-[0.14em]">
-            {t("badge")}
-          </span>
+          <span className="text-[13px] font-semibold">{t("badge")}</span>
           <span className="mx-2 text-[rgb(40_24_0/0.45)]" aria-hidden>
             ·
           </span>

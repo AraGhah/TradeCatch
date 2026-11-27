@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
 export function SettingsIntegrationsForm({
   initialNotifyEmail,
   initialGoogleReviewUrl,
@@ -31,12 +34,13 @@ export function SettingsIntegrationsForm({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  async function save() {
+  const save = useGuarded(saveHandler);
+  async function saveHandler() {
     setBusy(true);
     setError(null);
     setSaved(false);
     try {
-      const res = await fetch("/api/app/settings", {
+      const res = await timedFetch("/api/app/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -118,13 +122,13 @@ export function SettingsIntegrationsForm({
       {saved ? (
         <p className="text-sm text-green-800">{t("settings.saved")}</p>
       ) : null}
-      <button
+      <button aria-busy={busy}
         type="button"
         disabled={busy}
         onClick={() => void save()}
         className="rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy/90 disabled:opacity-50"
       >
-        {busy ? t("settings.saving") : t("settings.save")}
+        <BusyLabel pending={busy} busyLabel={t("settings.saving")}>{t("settings.save")}</BusyLabel>
       </button>
     </div>
   );

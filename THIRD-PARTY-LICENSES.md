@@ -1,8 +1,8 @@
 # Third-Party Licences
 
-This project depends on the following open-source packages. All are
+This project depends on the following third-party packages. All are
 permissively licensed (MIT or Apache-2.0) and compatible with commercial,
-closed-source use. Versions reflect what was installed at the time of this
+closed-source use, except GSAP, which has its own licence (see Notes). Versions reflect what was installed at the time of this
 audit — re-run `npm ls --depth=0` to confirm current versions before relying
 on this list.
 
@@ -17,6 +17,7 @@ on this list.
 | framer-motion | 12.42.2 | MIT |
 | zod | 4.4.3 | MIT |
 | resend | 6.17.2 | MIT |
+| gsap | 3.15.1 | GSAP Standard "no charge" licence (not open-source) |
 
 ## Direct development dependencies (not shipped to the browser)
 
@@ -32,6 +33,9 @@ on this list.
 
 ## Notes
 
+- GSAP (home page hero entrance only) is free of charge, including for
+  commercial sites, but it is not MIT or Apache: its terms restrict some uses.
+  Review https://gsap.com/standard-license before relying on it.
 - No package here carries a copyleft (GPL/AGPL) licence; none require this
   project's own source to be published.
 - `playwright` is a devDependency used only for internal QA screenshots and

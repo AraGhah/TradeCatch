@@ -53,6 +53,59 @@ export function useSingleFlight() {
   return { run, pending };
 }
 
+/** A submit event: dropping it must still stop the browser's own form submission. */
+function stopNativeSubmit(args: unknown[]) {
+  const event = args[0] as
+    { type?: unknown; preventDefault?: unknown } | undefined;
+  if (event?.type === "submit" && typeof event.preventDefault === "function") {
+    (event.preventDefault as () => void).call(event);
+  }
+}
+
+/**
+ * Wraps an event handler so a second call made while the first is still
+ * running is dropped. The lock is a plain object set synchronously, so it holds
+ * for fifty clicks in the same tick, which a `disabled` button (applied only
+ * after React re-renders) does not.
+ *
+ * A dropped `submit` event is still `preventDefault()`ed. The handler normally
+ * does that itself, but a handler that never runs cannot, and the browser would
+ * then submit the form natively and reload the page.
+ *
+ * Resolves to the handler's result, or `undefined` when the call was dropped.
+ */
+export function createGuardedHandler<A extends unknown[], R>(
+  flight: ReturnType<typeof createSingleFlight>,
+  current: () => (...args: A) => Promise<R> | R,
+): (...args: A) => Promise<R | undefined> {
+  return (...args: A) => guardedCall(flight, current(), args);
+}
+
+function guardedCall<A extends unknown[], R>(
+  flight: ReturnType<typeof createSingleFlight>,
+  handler: (...args: A) => Promise<R> | R,
+  args: A,
+): Promise<R | undefined> {
+  stopNativeSubmit(args);
+  return flight.run(async () => handler(...args));
+}
+
+/** `createGuardedHandler` for a component: the returned function is stable and always calls the latest `handler`. */
+export function useGuarded<A extends unknown[], R>(
+  handler: (...args: A) => Promise<R> | R,
+): (...args: A) => Promise<R | undefined> {
+  const flight = useRef(createSingleFlight());
+  const latest = useRef(handler);
+  useEffect(() => {
+    latest.current = handler;
+  });
+  // The refs are read only when the person acts, never while rendering.
+  return useCallback(
+    (...args: A) => guardedCall(flight.current, latest.current, args),
+    [],
+  );
+}
+
 /**
  * A wait the person can see: after a 429 the button stays disabled until the
  * server's Retry-After has passed. `start(ms)` begins it; `secondsLeft` is 0

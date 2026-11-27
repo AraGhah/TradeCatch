@@ -201,6 +201,19 @@ export async function patchAiReceptionistSettings(
     },
   });
 
+  // One transfer number, two pages: the phone settings copy wins when the
+  // config is built, so a number saved here must also land there, or the
+  // receptionist keeps dialing the old one (the phone settings route mirrors
+  // the other way).
+  const sentTransfer = parsed.data.transferSettings;
+  if (sentTransfer && "primaryTransferE164" in sentTransfer) {
+    merged.phoneSettings = {
+      ...merged.phoneSettings,
+      humanTransferE164: sentTransfer.primaryTransferE164,
+      backupTransferE164: sentTransfer.secondaryTransferE164,
+    };
+  }
+
   const checked = validateProfile(
     {
       organizationId: input.organizationId,

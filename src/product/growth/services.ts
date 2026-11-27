@@ -1,4 +1,5 @@
 import type { SmsPort } from "@/product/missed-call/types";
+import { idempotentId } from "@/lib/idempotent-id";
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
 import { forwardProductEventToCrm } from "@/lib/product-crm";
 import type { GrowthStore, PipelineStage } from "./memory-store";
@@ -223,6 +224,9 @@ export function createGrowthServices(deps: {
       if (settings.googleReviewUrl && appt.customerPhoneE164) {
         const hours = input.scheduleReviewHours ?? 24;
         await store.createReviewRequest({
+          // One request per appointment: completing it again (a second tab, a
+          // retry after a lost answer) must not text the customer twice.
+          id: idempotentId("revq", input.organizationId, `appointment:${appt.id}`),
           organizationId: input.organizationId,
           customerPhoneE164: appt.customerPhoneE164,
           customerName: appt.customerName,

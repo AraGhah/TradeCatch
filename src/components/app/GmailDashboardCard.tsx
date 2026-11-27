@@ -54,7 +54,7 @@ export async function GmailDashboardCard({
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2
           id="gmail-card-title"
-          className="font-[family-name:var(--font-archivo)] text-lg font-extrabold text-navy"
+          className="font-heading text-lg font-extrabold text-navy"
         >
           {t("inboxTitle")}
         </h2>

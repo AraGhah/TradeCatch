@@ -44,7 +44,7 @@ Only configured Canadian transfer numbers are dialed — never model-invented nu
 | Engine | Status |
 | --- | --- |
 | `gather` | Default. TwiML `<Gather>` + existing receptionist engine. Live-ready. |
-| `conversation_relay` | TwiML `<Connect><ConversationRelay>` rendered. Production WebSockets need Cloudflare Durable Objects; staging can POST relay JSON to `/api/voice/socket` (ops bearer required; 404 on real production unless `MISSED_CALL_SANDBOX=1`). |
+| `conversation_relay` | Calls spoken by ElevenLabs through `<Connect><ConversationRelay>`, when `CONVERSATION_RELAY_MODE` is `opt_in` or `all` (`all` also moves `gather` businesses). The `VoiceRelaySession` Durable Object holds the socket; turns run on the same engine. Off by default. Setup and rollback: [ELEVENLABS_VOICE_RELAY.md](./ELEVENLABS_VOICE_RELAY.md). Staging can still POST relay JSON to `/api/voice/socket` (ops bearer required; 404 on real production unless `MISSED_CALL_SANDBOX=1`). |
 
 ## Simulation vs live testing (Test Center → Live phone testing)
 

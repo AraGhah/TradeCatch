@@ -3,33 +3,19 @@ import { getTranslations } from "next-intl/server";
 import { Container } from "@/components/Container";
 import { CTAButton } from "@/components/CTAButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
+import { LossRecovery } from "@/components/home/LossRecovery";
+import { lossRecoveryCopy } from "@/components/home/loss-recovery-copy";
 import { StickyAuditCta } from "@/components/StickyAuditCta";
 import { StoryDemos } from "@/components/StoryDemos";
-import { WatchDemoButton } from "@/components/WatchDemoButton";
 import { WebsiteServiceAddOn } from "@/components/WebsiteServiceAddOn";
 import { formatPlanPrice, PLAN_PRICES } from "@/lib/plans";
-import { localizedAnchor } from "@/lib/anchors";
 import { websiteServiceAddOn } from "@/lib/plan-marketing";
 
-function accentHeadline(headline: string, accentWord: string) {
-  const idx = headline.lastIndexOf(accentWord);
-  if (idx === -1) return headline;
-  return (
-    <>
-      {headline.slice(0, idx)}
-      <span className="text-orange">{accentWord}</span>
-      {headline.slice(idx + accentWord.length)}
-    </>
-  );
-}
+const SECTION = "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-6 sm:py-8";
 
-const SECTION =
-  "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-6 sm:py-8";
-
-const EYEBROW =
-  "font-mono text-[10.5px] tracking-[0.12em] text-ember-text uppercase";
+const EYEBROW = "text-ui text-[13px] font-medium text-ember-text";
 const H2 =
-  "mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-extrabold leading-[1.12] tracking-[-0.035em] text-heading md:text-[1.65rem]";
+  "mt-2 font-heading text-[clamp(1.45rem,5.5vw,1.9rem)] font-bold leading-[1.12] tracking-[-0.03em] text-heading md:text-[1.65rem]";
 
 /**
  * Heading block, content and an optional action. On a phone they stack in that
@@ -90,13 +76,6 @@ export async function HomeMobile({ locale }: { locale: string }) {
   const t = await getTranslations("home");
   const cta = await getTranslations("cta");
   const plans = await getTranslations("plans");
-  const tryHref = localizedAnchor(locale, "/receptionist#try-it");
-  const headline = t("hero.headline");
-  const accentWord = t("hero.accentWord");
-  const benefits = t.raw("mobile.benefits.items") as {
-    title: string;
-    body: string;
-  }[];
   const steps = t.raw("mobile.howItWorks.steps") as {
     title: string;
     body: string;
@@ -129,74 +108,17 @@ export async function HomeMobile({ locale }: { locale: string }) {
 
   return (
     <div className="lg:hidden">
-      {/* 1. Hero */}
-      <section className="relative overflow-hidden bg-navy px-0 py-8 text-white sm:py-9">
-        <div
-          aria-hidden
-          className="bg-grid-ink pointer-events-none absolute inset-0"
-        />
-        <Container className="relative">
-          <span className="inline-flex items-center gap-2 text-[12px] font-medium text-white/75">
-            <span className="block h-1.5 w-1.5 rounded-full bg-green" />
-            {t("hero.eyebrow")}
-          </span>
-          <h1 className="mt-3 font-heading text-[clamp(1.85rem,7.2vw,2.45rem)] font-extrabold leading-[1.08] tracking-[-0.04em] text-white">
-            {accentHeadline(headline, accentWord)}
-          </h1>
-          <p className="mt-3 max-w-[34em] text-[15.5px] leading-[1.55] text-white/70">
-            {t("hero.subheadline")}
-          </p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <CTAButton
-              href="/book-audit"
-              variant="ember"
-              size="lg"
-              className="w-full justify-center sm:w-auto"
-            >
-              {t("hero.ctaPrimary")}
-            </CTAButton>
-            <WatchDemoButton className="inline-flex w-full items-center justify-center gap-2 rounded-[12px] border border-white/25 bg-transparent px-5 py-3.5 text-[15px] font-semibold text-white sm:w-auto">
-              {cta("watchDemo")}
-            </WatchDemoButton>
-            <CTAButton
-              href={tryHref}
-              variant="link-ink"
-              className="justify-center text-[15px]"
-            >
-              {t("hero.ctaTry")} <span aria-hidden>→</span>
-            </CTAButton>
-          </div>
-          <p className="mt-3 text-[12.5px] leading-[1.45] text-white/65">
-            {t("hero.reassurance")}
-          </p>
-        </Container>
-      </section>
+      {/* Story demos remain below the hero for mobile conversion. */}
+      <StoryDemos locale={locale} compact simulator />
 
-      {/* 2b. The one public demo video */}
-      <StoryDemos locale={locale} compact />
-
-      {/* 3. Benefits */}
+      {/* 3. The problem, told as the same three moments with and without TradeCatch. */}
       <SplitSection
         className="bg-paper"
         eyebrow={t("mobile.benefits.eyebrow")}
         title={t("mobile.benefits.headline")}
         intro={t("mobile.benefits.intro")}
       >
-        <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0">
-          {benefits.map((item) => (
-            <li
-              key={item.title}
-              className="rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-3"
-            >
-              <h3 className="font-heading text-[14.5px] font-bold leading-snug tracking-[-0.02em] text-heading">
-                {item.title}
-              </h3>
-              <p className="mt-1 text-[12.5px] leading-[1.45] text-muted">
-                {item.body}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <LossRecovery copy={await lossRecoveryCopy()} compact />
       </SplitSection>
 
       {/* 4. How it works */}
@@ -278,14 +200,17 @@ export async function HomeMobile({ locale }: { locale: string }) {
           same HTML (CSS hides one), so the id must differ from the desktop
           `plans` section: duplicate ids are invalid and `#plans` would
           resolve to the hidden copy. */}
-      <section id="plans-mobile" className={`${SECTION} scroll-mt-24 bg-surface`}>
+      <section
+        id="plans-mobile"
+        className={`${SECTION} scroll-mt-24 bg-surface`}
+      >
         <Container>
           <p className={EYEBROW}>{t("mobile.pricing.eyebrow")}</p>
           <h2 className={H2}>{t("mobile.pricing.headline")}</h2>
           <p className="mt-2 text-[15px] leading-[1.55] text-muted">
             {t("mobile.pricing.intro")}
           </p>
-          <p className="mt-3 rounded-[12px] border border-orange/30 bg-[rgba(228,118,43,0.08)] px-3.5 py-2.5 text-[13.5px] leading-[1.45] text-heading">
+          <p className="tc-card-quiet mt-3 px-3.5 py-2.5 text-[13.5px] leading-[1.45] text-heading">
             {t("mobile.pricing.billingNote")}
           </p>
           <ol className="m-0 mt-4 grid list-none grid-cols-2 gap-3 p-0">
@@ -295,20 +220,17 @@ export async function HomeMobile({ locale }: { locale: string }) {
               return (
                 <li
                   key={id}
-                  className={`flex flex-col rounded-[16px] border p-4 ${
-                    recommended
-                      ? "border-orange/45 bg-paper ring-1 ring-orange/15"
-                      : "border-[rgb(var(--ink-rgb)/0.1)] bg-paper"
+                  className={`flex flex-col p-4 ${
+                    recommended ? "tc-card-recommended" : "tc-card"
                   }`}
                 >
-                  {/* Same height in both cards, so names and prices line up. */}
                   <p
                     aria-hidden={recommended ? undefined : true}
-                    className="mb-2 min-h-[2.6em] font-mono text-[10px] leading-[1.3] tracking-[0.1em] text-ember-text uppercase"
+                    className="mb-2 min-h-[1.4em] text-[11px] font-medium text-ember-text"
                   >
                     {recommended ? t("mobile.pricing.recommended") : null}
                   </p>
-                  <h3 className="font-heading text-[20px] font-extrabold tracking-[-0.03em] text-heading">
+                  <h3 className="text-card-title text-heading">
                     {planNames[i]}
                   </h3>
                   <p className="mt-1 text-[14px] leading-[1.45] text-secondary">

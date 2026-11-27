@@ -45,6 +45,17 @@ scheduler or unavailable database cannot deliver its own alert. Access to that
 external monitor is an operational requirement, not evidence supplied by an API
 key. Current unconfigured jobs stay degraded until actually configured and run.
 
+## Incident detection and alerting (KAN-28)
+
+The paragraph above describes the 15-minute provider/job check. Failure
+detection across the website, API, receptionist, SMS, calendar, Stripe and
+database, incident grouping, the administrator alert emails (with bounded
+retries and recovery notices) and the System health dashboard are described in
+[`KAN-28-MONITORING.md`](KAN-28-MONITORING.md). Where the two differ about
+alert retries and cooldowns, that document is current: alerts now go through a
+persistent outbox with up to five attempts, and a failed delivery is shown on the
+dashboard.
+
 ## Validation
 
 `provider-health.test.ts` verifies that credentials/connection reads cannot turn

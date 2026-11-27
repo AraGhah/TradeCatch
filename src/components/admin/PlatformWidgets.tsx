@@ -4,7 +4,7 @@ export function StatGrid({ items }: { items: { label: string; value: string }[] 
       {items.map((item) => (
         <div key={item.label} className="rounded-md border border-navy/10 bg-white px-4 py-3">
           <p className="text-sm text-navy/60">{item.label}</p>
-          <p className="mt-1 font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">{item.value}</p>
+          <p className="mt-1 font-heading text-2xl font-extrabold text-navy">{item.value}</p>
         </div>
       ))}
     </div>

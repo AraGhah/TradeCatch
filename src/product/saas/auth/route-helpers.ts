@@ -4,6 +4,7 @@ import type { SessionTokens } from "./refresh-token";
 import { safeReturnPath } from "./return-path";
 import type { StartedSession } from "./session-start";
 import { refreshCookieOptions, sessionCookieOptions } from "./session-token";
+import { trustedSiteOrigin } from "./site-origin";
 
 /** Sign-in answers must never be cached by a browser, proxy or CDN. */
 export const NO_STORE = { "Cache-Control": "no-store, private" } as const;
@@ -12,11 +13,12 @@ export function authJson(body: unknown, status = 200) {
   return NextResponse.json(body, { status, headers: NO_STORE });
 }
 
+/**
+ * The address an emailed link points to. Configured, not request-derived, in
+ * production (see site-origin.ts).
+ */
 export function authOrigin(request: NextRequest): string {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
-    request.nextUrl.origin
-  );
+  return trustedSiteOrigin(request.nextUrl.origin);
 }
 
 export function localePath(locale: "en" | "fr", english: string, french: string) {

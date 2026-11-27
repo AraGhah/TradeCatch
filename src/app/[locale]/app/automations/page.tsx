@@ -1,17 +1,12 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { AutomationBoard } from "@/components/app/AutomationBoard";
 import { AutomationSubnav } from "@/components/app/AutomationSubnav";
+import { describeSchedule, formatWhen, type Translate } from "@/components/app/automation-copy";
+import { usableTimeZone } from "@/product/scheduling/slots";
 import { requireTenantContext } from "@/product/saas/tenant";
 import { getAutomationServices } from "@/product/sms-automation/runtime";
-import type { AutomationType } from "@/product/sms-automation/types";
-
-const TYPES: AutomationType[] = [
-  "missed_call_recovery",
-  "quote_followup",
-  "appointment_reminder",
-  "customer_reengagement",
-  "urgent_lead_notification",
-];
+import { loadStatusInputs } from "@/product/sms-automation/status-input";
+import { AUTOMATION_TYPES, type AutomationType } from "@/product/sms-automation/types";
 
 export default async function AutomationsPage({
   params,
@@ -23,21 +18,29 @@ export default async function AutomationsPage({
   const t = await getTranslations("app.automations");
   const auth = await requireTenantContext();
   if (!auth.ok) return null;
-  const automations = await getAutomationServices().list(auth.ctx.organization.id);
-  const names = Object.fromEntries(
-    TYPES.map((type) => [type, t(`names.${type}`)]),
-  ) as Record<AutomationType, string>;
-  const triggers = Object.fromEntries(
-    TYPES.map((type) => [type, t(`triggers.${type}`)]),
-  ) as Record<AutomationType, string>;
-  const actions = Object.fromEntries(
-    TYPES.map((type) => [type, t(`actions.${type}`)]),
-  ) as Record<AutomationType, string>;
+  const organizationId = auth.ctx.organization.id;
+  const automations = await getAutomationServices().list(organizationId);
+  const status = await loadStatusInputs(organizationId);
+
+  const translate = t as unknown as Translate;
+  const timeZone = usableTimeZone(auth.ctx.organization.timezone);
+  const schedule = Object.fromEntries(
+    AUTOMATION_TYPES.map((type) => {
+      const automation = automations.find((row) => row.type === type);
+      return [type, automation ? describeSchedule(automation, translate, locale) : []];
+    }),
+  ) as Record<AutomationType, string[]>;
+  const lastAt = Object.fromEntries(
+    AUTOMATION_TYPES.map((type) => [
+      type,
+      formatWhen(automations.find((row) => row.type === type)?.lastExecutionAt, locale, timeZone),
+    ]),
+  ) as Record<AutomationType, string | null>;
 
   return (
     <div className="flex flex-col gap-6">
       <header>
-        <h1 className="font-[family-name:var(--font-archivo)] text-2xl font-extrabold text-navy">
+        <h1 className="font-heading text-2xl font-extrabold text-navy">
           {t("headline")}
         </h1>
         <p className="mt-2 max-w-2xl text-navy/70">{t("intro")}</p>
@@ -52,33 +55,25 @@ export default async function AutomationsPage({
           history: t("subnav.history"),
         }}
       />
+      <section aria-labelledby="automation-how" className="rounded-xl border border-navy/10 bg-white p-5 shadow-[0_1px_2px_rgb(12_20_30/0.04)] sm:p-6">
+        <h2 id="automation-how" className="font-semibold text-navy">
+          {t("how.title")}
+        </h2>
+        <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-sm text-navy/80">
+          <li>{t("how.onOff")}</li>
+          <li>{t("how.consent")}</li>
+          <li>{t("how.recheck")}</li>
+          <li>{t("how.timing")}</li>
+        </ul>
+      </section>
       <AutomationBoard
-        organizationId={auth.ctx.organization.id}
+        organizationId={organizationId}
         automations={automations}
-        labels={{
-          automation: t("table.automation"),
-          status: t("table.status"),
-          trigger: t("table.trigger"),
-          action: t("table.action"),
-          active: t("active"),
-          inactive: t("inactive"),
-          enable: t("enable"),
-          disable: t("disable"),
-          edit: t("edit"),
-          test: t("test"),
-          history: t("subnav.history"),
-          last: t("table.last"),
-          success: t("table.success"),
-          failures: t("table.failures"),
-          responses: t("table.responses"),
-          none: t("none"),
-          later: t("later"),
-          names,
-          triggers,
-          actions,
-          error: t("error"),
-        }}
+        status={status}
+        schedule={schedule}
+        lastAt={lastAt}
       />
+      <p className="text-xs text-navy/60">{t("card.statsNote")}</p>
     </div>
   );
 }

@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  authorizeOpsRequest,
-  logOpsAccess,
-  missingOpsActorResponse,
-  unauthorizedOpsResponse,
-} from "@/lib/ops-auth";
+import { guardOpsRequest } from "@/lib/ops-auth";
 import { sendBusinessNotifyEmail } from "@/lib/business-notifications";
 import { safeDatabaseErrorCode } from "@/lib/postgres-pool";
 import { createTwilioSmsPort } from "@/product/missed-call/twilio";
@@ -33,10 +28,8 @@ function retryNotifications(
  * was lost, and purge transcripts past each profile's retention window.
  */
 async function tick(request: NextRequest) {
-  if (!authorizeOpsRequest(request)) return unauthorizedOpsResponse();
-  const audit = logOpsAccess(request, "receptionist.tick");
-  const isCron = Boolean(request.headers.get("x-vercel-cron"));
-  if (audit.missingActor && !isCron) return missingOpsActorResponse();
+  const refusal = guardOpsRequest(request, "receptionist.tick");
+  if (refusal) return refusal;
 
   const runtime = getReceptionistRuntime();
   await runtime.refresh();

@@ -1,5 +1,5 @@
 import type { Pool, PoolClient, QueryResultRow } from "pg";
-import { createPostgresPool } from "@/lib/postgres-pool";
+import { closePgPool, getPgPool, setPgPoolForTests } from "@/lib/postgres-pool";
 import type {
   CallRecord,
   ClientAccount,
@@ -27,35 +27,7 @@ const ACTIVE = [
   "awaiting_human",
 ];
 
-let pool: Pool | null = null;
-
-export function getPgPool(connectionString: string): Pool {
-  if (!pool) {
-    pool = createPostgresPool({
-      connectionString,
-      max: 5,
-      idleTimeoutMillis: 20_000,
-      connectionTimeoutMillis: 8_000,
-    });
-  }
-  return pool;
-}
-
-/**
- * Test seam: lets a suite run the real billing SQL against an in-process
- * PostgreSQL (see tests/support/pglite-pool.ts). Application code never calls
- * it; pass null afterwards to restore the normal lazy pool.
- */
-export function setPgPoolForTests(next: Pool | null): void {
-  pool = next;
-}
-
-export async function closePgPool(): Promise<void> {
-  if (pool) {
-    await pool.end();
-    pool = null;
-  }
-}
+export { closePgPool, getPgPool, setPgPoolForTests };
 
 async function q<T extends QueryResultRow>(
   client: Pool | PoolClient,

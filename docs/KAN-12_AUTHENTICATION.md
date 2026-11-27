@@ -20,9 +20,9 @@
 
 1. "Forgot your password?" on the sign-in page → `POST /api/auth/forgot-password`.
 2. The answer is identical for known and unknown emails. In production the lookup and email happen after the response is sent, so response time does not reveal an account either.
-3. The emailed link is single use and expires in 30 minutes. Only the hash is stored. A newer request or a successful reset invalidates older links.
+3. The emailed link is single use and expires in 30 minutes. Only the hash is stored. The secret travels in the address **fragment** (`/set-password#token=…`), which browsers never send to a server, so it cannot reach request logs, traces or a `Referer` header. A newer request or a successful reset invalidates older links, and finishing a reset is one all-or-nothing step. (KAN-12 originally documented the "newer request invalidates older links" rule without enforcing it, and sent the secret in the query string; KAN-27 corrected both. See `docs/KAN-27-PASSWORD-RESET.md`.)
 4. Setting the password enforces the password policy, signs out every session and refresh token for the user, and sends a "your password was changed" confirmation email. First-time activation sends no warning.
-5. Limits: per email address (5 per window) and per IP (`auth.forgot-password` in `src/lib/rate-limit-policy.ts`).
+5. Limits: per IP (`auth.forgot-password`) and per address (`auth.forgot-password-account`, an atomic KAN-11 bucket spent for every address typed so an unknown address looks the same; KAN-12's check-then-record counter was replaced), plus `auth.set-password-check` for link checks, all in `src/lib/rate-limit-policy.ts`. A refusal is a visible `429` with `Retry-After`.
 
 ## Lost email: support-based recovery
 

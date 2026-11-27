@@ -249,9 +249,10 @@ describe("account activation and password reset", () => {
       origin: "https://example.invalid",
     });
     // No mail provider here, so the local run hands the link back.
-    assert.ok(result.devToken);
+    assert.equal(result.ok, true);
+    if (!result.ok || !result.devToken) throw new Error("expected a dev link");
     const done = await completePassword({
-      rawToken: result.devToken!,
+      rawToken: result.devToken,
       password: OTHER,
     });
     assert.equal(done.ok, true);
@@ -262,8 +263,8 @@ describe("account activation and password reset", () => {
   it("an invite still goes out as an email link when password storage is not migrated yet", async () => {
     const account = await newAccount();
     const store = getSaasStore();
-    const original = store.createPasswordToken;
-    store.createPasswordToken = async () => {
+    const original = store.replacePasswordToken;
+    store.replacePasswordToken = async () => {
       throw new Error('relation "tc_password_tokens" does not exist');
     };
     try {
@@ -276,7 +277,7 @@ describe("account activation and password reset", () => {
       // No provider here: a clean refusal, not an exception.
       assert.deepEqual(result, { ok: false, error: "Email is not configured." });
     } finally {
-      store.createPasswordToken = original;
+      store.replacePasswordToken = original;
     }
   });
 
@@ -322,13 +323,14 @@ describe("account activation and password reset", () => {
   });
 
   it("an activation link points at the set-password page in the customer's language and never carries a password", async () => {
+    // The secret rides in the fragment, which no server ever receives.
     assert.equal(
       setPasswordUrl("https://tradecatch.ca/", "fr", "tok/en+1"),
-      "https://tradecatch.ca/fr/definir-mot-de-passe?token=tok%2Fen%2B1",
+      "https://tradecatch.ca/fr/definir-mot-de-passe#token=tok%2Fen%2B1",
     );
     assert.equal(
       setPasswordUrl("https://tradecatch.ca", "en", "abc"),
-      "https://tradecatch.ca/set-password?token=abc",
+      "https://tradecatch.ca/set-password#token=abc",
     );
     const account = await newAccount();
     const result = await sendActivationInvite({

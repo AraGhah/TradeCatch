@@ -127,6 +127,13 @@ function addressFeedback(check: AddressCheck): AddressFeedback {
 export type AgentDetails = {
   /** `rejected` when something sent could not be saved; `saved` otherwise. */
   status: "saved" | "rejected";
+  /**
+   * "yes" only when the call now holds every detail booking needs and nothing
+   * sent was refused. `saved` alone is not enough: a request with empty values
+   * (a voice platform that had not extracted them yet) saves nothing and is
+   * still "saved". A string, because voice platforms compare it as text.
+   */
+  ready: "yes" | "no";
   confirmed: ConfirmedDetails;
   /** Still needed before booking (human labels, same as `book`). */
   missing: string[];
@@ -696,12 +703,12 @@ export function createAgentCallService(deps: AgentCallDeps) {
               confirmedFields: [...new Set([...(s.confirmedFields ?? []), ...saved])],
             }))) ?? session);
       const confirmed = confirmedOf(after);
+      const missing = DETAIL_FIELDS.filter((field) => !confirmed[field]);
       return {
         status: rejected.length > 0 ? "rejected" : "saved",
+        ready: rejected.length === 0 && missing.length === 0 ? "yes" : "no",
         confirmed,
-        missing: DETAIL_FIELDS.filter((field) => !confirmed[field]).map(
-          (field) => MISSING_LABEL[field],
-        ),
+        missing: missing.map((field) => MISSING_LABEL[field]),
         rejected,
         ...(address ? { address } : {}),
       };

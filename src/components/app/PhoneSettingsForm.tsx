@@ -6,9 +6,13 @@ import { useState } from "react";
 import { Link } from "@/i18n/navigation";
 import type { PhoneSettingsView } from "@/product/telephony/types";
 
+import { useGuarded } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
+import { APP_CARD } from "@/components/app/card-classes";
 const INPUT =
   "mt-1 w-full rounded-md border border-navy/20 px-3 py-2 text-sm text-navy disabled:bg-navy/5";
-const CARD = "rounded-md border border-navy/10 bg-white px-4 py-4";
+const CARD = APP_CARD;
 const BUTTON =
   "rounded-md bg-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-50";
 
@@ -46,13 +50,14 @@ export function PhoneSettingsForm({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function onSubmit(e: React.FormEvent) {
+  const onSubmit = useGuarded(onSubmitHandler);
+  async function onSubmitHandler(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setSaved(false);
     setError(null);
     try {
-      const res = await fetch(
+      const res = await timedFetch(
         `/api/businesses/${organizationId}/phone-settings`,
         {
           method: "PUT",
@@ -183,8 +188,8 @@ export function PhoneSettingsForm({
         </p>
       ) : null}
 
-      <button type="submit" disabled={dis} className={BUTTON}>
-        {busy ? t("saving") : t("save")}
+      <button aria-busy={busy} type="submit" disabled={dis} className={BUTTON}>
+        <BusyLabel pending={busy} busyLabel={t("saving")}>{t("save")}</BusyLabel>
       </button>
     </form>
   );

@@ -3,9 +3,36 @@
 import { Link, usePathname } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  CalendarDays,
+  CreditCard,
+  Gift,
+  HelpCircle,
+  LayoutDashboard,
+  LogOut,
+  MessageSquare,
+  Phone,
+  Settings,
+  Shield,
+  UserRound,
+  ClipboardList,
+} from "lucide-react";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { SessionKeeper } from "@/components/app/SessionKeeper";
+import { LogoMark } from "@/components/BrandLockup";
+import {
+  Sidebar,
+  SidebarBody,
+  SidebarLink,
+  useSidebar,
+} from "@/components/ui/sidebar";
 import { planNameOrNull } from "@/lib/plan-names";
+import { useSingleFlight } from "@/lib/client/use-single-flight";
+import { timedFetch } from "@/lib/client/timed-fetch";
+import { BusyLabel } from "@/components/ui/Spinner";
+import { cn } from "@/lib/cn";
+import type { ComponentProps } from "react";
 
 /**
  * The Account Center menu, in the order owners use it. Appointments belong to
@@ -14,22 +41,27 @@ import { planNameOrNull } from "@/lib/plan-names";
  * from Business settings so the menu stays short.
  */
 const NAV_ITEMS = [
-  { href: "/app", key: "overview" },
-  { href: "/app/calls", key: "callActivity" },
-  { href: "/app/leads", key: "customerRequests" },
-  { href: "/app/bookings", key: "appointments", professionalOnly: true },
-  { href: "/app/conversations", key: "smsActivity" },
-  { href: "/app/settings", key: "businessSettings" },
-  { href: "/billing", key: "billing" },
-  { href: "/app/referrals", key: "referrals" },
-  { href: "/app/settings/account", key: "accountSettings" },
-  { href: "/app/support", key: "support" },
+  { href: "/app", key: "overview", icon: LayoutDashboard },
+  { href: "/app/calls", key: "callActivity", icon: Phone },
+  { href: "/app/leads", key: "customerRequests", icon: ClipboardList },
+  {
+    href: "/app/bookings",
+    key: "appointments",
+    icon: CalendarDays,
+    professionalOnly: true,
+  },
+  { href: "/app/conversations", key: "smsActivity", icon: MessageSquare },
+  { href: "/app/settings", key: "businessSettings", icon: Settings },
+  { href: "/billing", key: "billing", icon: CreditCard },
+  { href: "/app/referrals", key: "referrals", icon: Gift },
+  { href: "/app/settings/account", key: "accountSettings", icon: UserRound },
+  { href: "/app/support", key: "support", icon: HelpCircle },
 ] as const;
 
 const ALL_HREFS: string[] = NAV_ITEMS.map((item) => item.href);
 
-const FOCUS_RING =
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2";
+const ICON_CLASS = "h-5 w-5 shrink-0 text-heading";
+const ICON_STROKE = 1.75;
 
 function itemIsActive(pathname: string, href: string): boolean {
   if (href === "/app") return pathname === "/app";
@@ -40,6 +72,122 @@ function itemIsActive(pathname: string, href: string): boolean {
       other !== href &&
       other.length > href.length &&
       (pathname === other || pathname.startsWith(`${other}/`)),
+  );
+}
+
+function userInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "TC";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+}
+
+function BrandHeader({ href = "/app" as const }: { href?: "/app" }) {
+  const { open, animate } = useSidebar();
+  return (
+    <Link
+      href={href}
+      className="relative z-20 flex items-center gap-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+      aria-label="TradeCatch"
+    >
+      <LogoMark className="h-8 w-8 rounded-[9px]" />
+      <motion.span
+        transition={{ duration: 0 }}
+        animate={{
+          display: animate ? (open ? "inline-block" : "none") : "inline-block",
+          opacity: animate ? (open ? 1 : 0) : 1,
+        }}
+        className="font-cabinet text-[17px] font-extrabold tracking-[-0.03em] text-heading whitespace-pre"
+      >
+        TradeCatch
+      </motion.span>
+    </Link>
+  );
+}
+
+function AccountFooter({
+  userName,
+  orgName,
+  planName,
+  isDemo,
+  demoBadge,
+  onLogout,
+  logoutPending,
+  logoutLabel,
+  loggingOutLabel,
+}: {
+  userName: string;
+  orgName: string;
+  planName: string | null;
+  isDemo: boolean;
+  demoBadge: string;
+  onLogout: () => void;
+  logoutPending: boolean;
+  logoutLabel: string;
+  loggingOutLabel: string;
+}) {
+  const { open, animate } = useSidebar();
+  const initials = userInitials(userName);
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-[rgb(var(--ink-rgb)/0.08)] pt-4">
+      <div className="flex items-center gap-2 px-2 py-1">
+        <span
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-semibold tracking-wide text-white"
+          aria-hidden
+        >
+          {initials}
+        </span>
+        <motion.div
+          transition={{ duration: 0 }}
+          animate={{
+            display: animate ? (open ? "block" : "none") : "block",
+            opacity: animate ? (open ? 1 : 0) : 1,
+          }}
+          className="min-w-0"
+        >
+          <p className="truncate text-sm font-medium text-heading">
+            {userName}
+          </p>
+          <p className="truncate text-xs text-muted">
+            {planName ? `${orgName} · ${planName}` : orgName}
+            {isDemo ? ` · ${demoBadge}` : null}
+          </p>
+        </motion.div>
+      </div>
+      <button
+        type="button"
+        disabled={logoutPending}
+        aria-busy={logoutPending || undefined}
+        aria-label={logoutLabel}
+        title={!open && animate ? logoutLabel : undefined}
+        onClick={onLogout}
+        className={cn(
+          "group/sidebar flex min-h-11 w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-muted",
+          "hover:bg-[rgb(var(--ink-rgb)/0.05)] hover:text-heading",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2",
+          "disabled:cursor-not-allowed disabled:opacity-60",
+        )}
+      >
+        <LogOut className={ICON_CLASS} strokeWidth={ICON_STROKE} aria-hidden />
+        <motion.span
+          transition={{ duration: 0 }}
+          animate={{
+            display: animate
+              ? open
+                ? "inline-block"
+                : "none"
+              : "inline-block",
+            opacity: animate ? (open ? 1 : 0) : 1,
+          }}
+          className="whitespace-pre"
+        >
+          <BusyLabel pending={logoutPending} busyLabel={loggingOutLabel}>
+            {logoutLabel}
+          </BusyLabel>
+        </motion.span>
+      </button>
+    </div>
   );
 }
 
@@ -71,103 +219,118 @@ export function AppShell({
   const t = useTranslations("app");
   const pathname = usePathname();
   const isDemo = accountType === "demo";
-  // One name per plan, shared with the website and the billing page.
   const planName = planNameOrNull(plan);
-  const [navOpen, setNavOpen] = useState(false);
-  // Close the mobile menu after navigating. Adjusted during render rather than in an effect.
+  const [open, setOpen] = useState(false);
+
+  // Close the mobile drawer after the route changes.
   const [menuPath, setMenuPath] = useState(pathname);
   if (pathname !== menuPath) {
     setMenuPath(pathname);
-    setNavOpen(false);
+    setOpen(false);
   }
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
+  const logoutFlight = useSingleFlight();
+  async function logoutHandler() {
+    try {
+      await timedFetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      return;
+    }
     window.location.href = locale === "fr" ? "/fr/connexion" : "/login";
   }
 
+  const visibleItems = NAV_ITEMS.filter(
+    (item) => !("professionalOnly" in item) || appointmentsEnabled,
+  );
+
   return (
-    <div className="min-h-[70vh] border-b border-[rgb(var(--ink-rgb)/0.1)] bg-paper [&_input[type=checkbox]]:h-[1.125rem] [&_input[type=checkbox]]:w-[1.125rem] [&_input[type=checkbox]]:shrink-0 [&_input[type=radio]]:h-[1.125rem] [&_input[type=radio]]:w-[1.125rem] [&_input[type=radio]]:shrink-0">
-      <div className="mx-auto grid max-w-7xl gap-4 px-4 py-4 md:grid-cols-[16rem_minmax(0,1fr)] md:gap-8 md:px-6 md:py-10">
-        <aside className="flex flex-col gap-3 md:sticky md:top-6 md:gap-6 md:self-start">
-          {/* On a phone the business name and the menu button share one row,
-              so the page itself starts near the top of the screen. */}
-          <div className="flex items-start justify-between gap-3 md:block">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.08em] text-muted">
-              TradeCatch
-              {isDemo ? (
-                <span className="ml-2 font-mono text-[10px] tracking-[0.1em] text-ember-text">
-                  {t("demoAccountBadge")}
-                </span>
+    <div className="flex min-h-screen w-full flex-1 flex-col bg-paper font-cabinet md:flex-row">
+      <Sidebar open={open} setOpen={setOpen}>
+        <SidebarBody
+          className="justify-between gap-8"
+          openMenuLabel={t("nav.menu")}
+          closeMenuLabel={t("nav.closeMenu")}
+          mobileLeading={
+            <div className="flex min-w-0 items-center gap-2">
+              <LogoMark className="h-8 w-8 rounded-[9px]" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-heading">
+                  TradeCatch
+                </p>
+                <p className="truncate text-xs text-muted">{orgName}</p>
+              </div>
+            </div>
+          }
+          mobileTrailing={<NotificationBell organizationId={organizationId} />}
+        >
+          <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
+            <div className="hidden md:block">
+              <BrandHeader />
+            </div>
+            <div className="mt-2 md:hidden">
+              <BrandHeader />
+            </div>
+            <nav aria-label="TradeCatch" className="mt-8 flex flex-col gap-1">
+              {isPlatformAdmin ? (
+                <SidebarLink
+                  link={{
+                    label: t("nav.admin"),
+                    href: "/admin",
+                    icon: (
+                      <Shield
+                        className={ICON_CLASS}
+                        strokeWidth={ICON_STROKE}
+                        aria-hidden
+                      />
+                    ),
+                  }}
+                  active={pathname.startsWith("/admin")}
+                />
               ) : null}
-            </p>
-            <p className="mt-1 text-lg font-semibold text-heading">{orgName}</p>
-            <p className="text-sm text-muted">
-              {planName ? `${userName} · ${planName}` : userName}
-            </p>
-          </div>
-          <button
-            type="button"
-            className={`min-h-11 w-fit shrink-0 rounded-md border border-[rgb(var(--ink-rgb)/0.15)] px-4 py-2.5 text-sm font-semibold text-heading md:hidden ${FOCUS_RING}`}
-            aria-expanded={navOpen}
-            onClick={() => setNavOpen((open) => !open)}
-          >
-            {navOpen ? t("nav.closeMenu") : t("nav.menu")}
-          </button>
-          </div>
-          <div
-            className={
-              navOpen
-                ? "flex flex-col gap-5 rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-3 md:border-0 md:bg-transparent md:p-0"
-                : "hidden md:flex md:flex-col md:gap-6"
-            }
-          >
-          <nav aria-label="TradeCatch" className="flex flex-col gap-4 md:gap-5">
-            {isPlatformAdmin ? (
-              <Link
-                href="/admin"
-                className={`w-fit rounded-md px-3 py-2.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
-              >
-                {t("nav.admin")}
-              </Link>
-            ) : null}
-            <ul className="flex flex-col">
-              {NAV_ITEMS.filter(
-                (item) => !("professionalOnly" in item) || appointmentsEnabled,
-              ).map((item) => {
+              {visibleItems.map((item) => {
+                const Icon = item.icon;
                 const active = itemIsActive(pathname, item.href);
                 return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={`block min-h-11 rounded-md px-3 py-2.5 text-sm ${FOCUS_RING} ${
-                        active
-                          ? "bg-navy text-white"
-                          : "text-heading hover:bg-[rgb(var(--ink-rgb)/0.05)]"
-                      }`}
-                    >
-                      {t(`nav.${item.key}`)}
-                    </Link>
-                  </li>
+                  <SidebarLink
+                    key={item.href}
+                    link={{
+                      label: t(`nav.${item.key}`),
+                      href: item.href as ComponentProps<typeof Link>["href"],
+                      icon: (
+                        <Icon
+                          className={ICON_CLASS}
+                          strokeWidth={ICON_STROKE}
+                          aria-hidden
+                        />
+                      ),
+                    }}
+                    active={active}
+                  />
                 );
               })}
-            </ul>
-          </nav>
-          <button
-            type="button"
-            onClick={() => void logout()}
-            className={`w-fit rounded-md px-2 py-1.5 text-sm text-muted hover:bg-[rgb(var(--ink-rgb)/0.05)] ${FOCUS_RING}`}
-          >
-            {t("nav.logout")}
-          </button>
+            </nav>
           </div>
-        </aside>
-        <div className="min-w-0">
-          <div className="mb-3 flex justify-end md:mb-6">
-            <NotificationBell organizationId={organizationId} />
-          </div>
+          <AccountFooter
+            userName={userName}
+            orgName={orgName}
+            planName={planName}
+            isDemo={isDemo}
+            demoBadge={t("demoAccountBadge")}
+            onLogout={() => void logoutFlight.run(logoutHandler)}
+            logoutPending={logoutFlight.pending}
+            logoutLabel={t("nav.logout")}
+            loggingOutLabel={t("nav.loggingOut")}
+          />
+        </SidebarBody>
+      </Sidebar>
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="mx-auto hidden w-full max-w-[1240px] justify-end px-6 pt-6 md:flex md:px-8">
+          <NotificationBell organizationId={organizationId} />
+        </div>
+        {/* One content width and gutter for every dashboard page: wide screens get a
+            readable measure instead of lines that run edge to edge. */}
+        <div className="mx-auto w-full min-w-0 max-w-[1240px] flex-1 px-4 py-5 sm:px-6 md:px-8 md:pt-4 md:pb-10">
           <SessionKeeper accessExpiresAt={accessExpiresAt} locale={locale} />
           {children}
         </div>
