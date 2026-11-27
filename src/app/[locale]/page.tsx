@@ -7,6 +7,9 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { FounderSection } from "@/components/FounderSection";
 import { PricingPreview } from "@/components/PricingPreview";
 import { HomeMobile } from "@/components/home/HomeMobile";
+import { LossRecovery } from "@/components/home/LossRecovery";
+import { SignalFlow } from "@/components/home/SignalFlow";
+import { lossRecoveryCopy } from "@/components/home/loss-recovery-copy";
 import { TradeCatchCinematicHero } from "@/components/ui/tradecatch-cinematic-hero";
 import { StoryDemos } from "@/components/StoryDemos";
 import { WatchDemoButton } from "@/components/WatchDemoButton";
@@ -39,7 +42,6 @@ export default async function HomePage({
   const cta = await getTranslations("cta");
   const site = await getTranslations("site");
 
-  const leakCards = t.raw("leaks.cards") as { title: string; body: string }[];
   const systemSteps = t.raw("system.steps") as {
     title: string;
     body: string;
@@ -66,16 +68,7 @@ export default async function HomePage({
               intro={t("leaks.intro")}
             />
 
-            <ol className="m-0 mt-[clamp(20px,2.4vw,28px)] grid list-none gap-5 p-0 lg:grid-cols-3">
-              {leakCards.map((card) => (
-                <li key={card.title} className="tc-card-quiet flex flex-col p-6">
-                  <h3 className="text-card-title text-heading">{card.title}</h3>
-                  <p className="mt-2 text-[15px] leading-[1.6] text-muted">
-                    {card.body}
-                  </p>
-                </li>
-              ))}
-            </ol>
+            <LossRecovery copy={await lossRecoveryCopy()} />
 
             <div className="mt-6 flex justify-center">
               <CTAButton href="/book-audit" variant="ink">
@@ -85,8 +78,13 @@ export default async function HomePage({
           </Container>
         </section>
 
-        {/* 3. The system: how a missed call becomes a tracked outcome */}
-        <section className="bg-paper" style={{ padding: "var(--section-y) 0" }}>
+        {/* 3. The system: how a missed call becomes a tracked outcome. The
+            seam continues the problem section's line into the diagram. */}
+        <section
+          className="relative bg-paper"
+          style={{ padding: "var(--section-y) 0" }}
+        >
+          <span aria-hidden data-reveal="seam" className="tc-seam" />
           <Container>
             <div data-reveal>
               <SectionHeading
@@ -96,21 +94,18 @@ export default async function HomePage({
               />
             </div>
 
-            <ol className="m-0 mt-[clamp(20px,2.4vw,28px)] grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3">
-              {systemSteps.map((step, i) => (
-                <li key={step.title} data-reveal className="tc-card p-5">
-                  <p className="text-ui text-[12px] font-medium text-muted">
-                    {String(i + 1).padStart(2, "0")}
-                  </p>
-                  <h3 className="text-card-title mt-2 text-heading">
-                    {step.title}
-                  </h3>
-                  <p className="mt-1.5 text-[14.5px] leading-[1.55] text-muted">
-                    {step.body}
-                  </p>
-                </li>
-              ))}
-            </ol>
+            <div className="mt-[clamp(20px,2.4vw,28px)]">
+              <SignalFlow
+                copy={{
+                  label: t("signalFlow.label"),
+                  nodes: t.raw("signalFlow.nodes"),
+                  packets: t.raw("signalFlow.packets"),
+                  stop: t("signalFlow.stop"),
+                  replay: t("signalFlow.replay"),
+                  steps: systemSteps,
+                }}
+              />
+            </div>
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <WatchDemoButton className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] bg-navy px-[22px] py-[14px] text-[15px] font-semibold tracking-[-0.01em] text-white transition-colors hover:bg-navy-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange">
@@ -124,7 +119,7 @@ export default async function HomePage({
         </section>
 
         {/* 3b. The one public demo video */}
-        <StoryDemos locale={locale} id="on-the-job" />
+        <StoryDemos locale={locale} id="on-the-job" simulator />
 
         {/* 4. The two plans (full detail lives on /pricing) */}
         <section
@@ -205,9 +200,14 @@ export default async function HomePage({
 
         {/* 7. Final call to action */}
         <section
-          className="bg-navy text-white"
+          className="relative isolate overflow-hidden bg-navy text-white"
           style={{ padding: "var(--section-y) 0" }}
         >
+          <span
+            aria-hidden
+            data-ambient
+            className="tc-ambient tc-ambient-ink"
+          />
           <Container className="text-center">
             <h2 className="font-heading text-[clamp(28px,3.2vw,40px)] font-extrabold leading-[1.08] tracking-[-0.04em] text-white">
               {t("mobile.finalCta.headline")}

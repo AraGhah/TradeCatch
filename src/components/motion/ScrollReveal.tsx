@@ -87,9 +87,22 @@ export function ScrollReveal() {
       countObserver.observe(el);
     });
 
+    // Ambient backgrounds ([data-ambient]) only move while on screen.
+    const ambientObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        (entry.target as HTMLElement).dataset.ambient = entry.isIntersecting
+          ? ""
+          : "off";
+      });
+    });
+    document.querySelectorAll<HTMLElement>("[data-ambient]").forEach((el) => {
+      ambientObserver.observe(el);
+    });
+
     return () => {
       revealObserver.disconnect();
       countObserver.disconnect();
+      ambientObserver.disconnect();
     };
   }, [pathname]);
 

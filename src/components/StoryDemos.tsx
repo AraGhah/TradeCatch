@@ -10,6 +10,12 @@ import {
   STORY_MEDIA,
   formatRunTime,
 } from "@/components/demo-video/stories";
+import { DemoTabs } from "@/components/home/DemoTabs";
+import {
+  MissedCallSimulator,
+  type SimulatorCopy,
+} from "@/components/home/MissedCallSimulator";
+import { schedulingVerified } from "@/lib/launch-flags";
 
 function PlayGlyph() {
   return (
@@ -37,11 +43,14 @@ export async function StoryDemos({
   locale,
   id,
   compact = false,
+  simulator = false,
 }: {
   locale: string;
   id?: string;
   /** Tighter vertical rhythm for the mobile homepage composition. */
   compact?: boolean;
+  /** Adds a second tab where the visitor simulates a missed call (home page). */
+  simulator?: boolean;
 }) {
   const t = await getTranslations("demoStories");
   const cta = await getTranslations("cta");
@@ -50,6 +59,89 @@ export async function StoryDemos({
   const media = STORY_MEDIA[DEFAULT_STORY_ID];
   const title = t(`cards.${key}.title`);
   const benefits = t.raw("benefits") as string[];
+  const sim = simulator ? await simulatorCopy() : null;
+
+  const story = (
+    <div
+      data-reveal
+      className="grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,300px)] md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-[clamp(40px,6vw,88px)]"
+    >
+      <div className="max-w-[36rem] lg:max-w-none">
+        <SectionHeading
+          align="left"
+          eyebrow={t("eyebrow")}
+          title={t("headline")}
+          intro={t("intro")}
+          className="max-w-none"
+        />
+
+        <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0">
+          {benefits.map((benefit) => (
+            <li
+              key={benefit}
+              className="flex items-start gap-3 text-[15.5px] leading-[1.5] text-secondary"
+            >
+              <span aria-hidden className="mt-0.5 text-muted">
+                –
+              </span>
+              {benefit}
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <CTAButton href="/book-audit" variant="ember">
+            {cta("bookFreeDemo")}
+          </CTAButton>
+          <WatchDemoButton
+            video={DEFAULT_STORY_ID}
+            className="hidden min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] px-[22px] py-[13px] text-[15px] font-semibold tracking-[-0.01em] text-heading transition-colors hover:border-navy lg:inline-flex focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+          >
+            {cta("watchDemo")}
+          </WatchDemoButton>
+        </div>
+      </div>
+
+      <div className="mx-auto w-full max-w-[264px] sm:max-w-[300px] md:mx-0 lg:max-w-[360px]">
+        <WatchDemoButton
+          video={DEFAULT_STORY_ID}
+          className="group tc-card block h-full w-full overflow-hidden text-left transition-[box-shadow] duration-200 hover:shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
+        >
+          {/* The button is named from its content (WCAG 2.5.3: the name contains the visible text); this cue says what it does. */}
+          <span className="sr-only">{t("watchLabel")} </span>
+          <span className="relative block aspect-[4/5] overflow-hidden bg-navy">
+            <Image
+              src={media.poster}
+              alt=""
+              fill
+              unoptimized
+              sizes="(min-width: 1024px) 360px, 92vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-[1.035]"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-0 bg-gradient-to-t from-navy/75 via-navy/5 to-transparent"
+            />
+            <span className="absolute bottom-3 left-3 inline-flex items-center gap-2.5 text-white">
+              <PlayGlyph />
+              <span className="font-mono text-[12.5px] font-semibold">
+                {formatRunTime(media.seconds[lang])}
+              </span>
+            </span>
+          </span>
+          <span className="block p-4">
+            <span className="block font-heading text-[18px] font-bold tracking-[-0.028em] text-heading">
+              {title}
+            </span>
+            <span className="mt-1.5 block text-[14px] leading-[1.5] text-muted">
+              {t(`cards.${key}.blurb`)}
+            </span>
+          </span>
+        </WatchDemoButton>
+        <p className="mt-3 text-[13px] leading-[1.5] text-muted">{t("note")}</p>
+      </div>
+    </div>
+  );
 
   return (
     <section
@@ -60,88 +152,80 @@ export async function StoryDemos({
       style={compact ? undefined : { padding: "var(--section-y) 0" }}
     >
       <Container>
-        <div
-          data-reveal
-          className="grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,300px)] md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)] lg:gap-[clamp(40px,6vw,88px)]"
-        >
-          <div className="max-w-[36rem] lg:max-w-none">
-            <SectionHeading
-              align="left"
-              eyebrow={t("eyebrow")}
-              title={t("headline")}
-              intro={t("intro")}
-              className="max-w-none"
-            />
-
-            <ul className="m-0 mt-4 flex list-none flex-col gap-2 p-0">
-              {benefits.map((benefit) => (
-                <li
-                  key={benefit}
-                  className="flex items-start gap-3 text-[15.5px] leading-[1.5] text-secondary"
-                >
-                  <span aria-hidden className="mt-0.5 text-muted">
-                    –
-                  </span>
-                  {benefit}
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <CTAButton href="/book-audit" variant="ember">
-                {cta("bookFreeDemo")}
-              </CTAButton>
-              <WatchDemoButton
-                video={DEFAULT_STORY_ID}
-                className="hidden min-h-12 items-center justify-center gap-2 rounded-[var(--radius-md)] border-[1.5px] border-[rgb(var(--ink-rgb)/0.16)] px-[22px] py-[13px] text-[15px] font-semibold tracking-[-0.01em] text-heading transition-colors hover:border-navy lg:inline-flex focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
-              >
-                {cta("watchDemo")}
-              </WatchDemoButton>
-            </div>
-          </div>
-
-          <div className="mx-auto w-full max-w-[264px] sm:max-w-[300px] md:mx-0 lg:max-w-[360px]">
-            <WatchDemoButton
-              video={DEFAULT_STORY_ID}
-              className="group tc-card block h-full w-full overflow-hidden text-left transition-[box-shadow] duration-200 hover:shadow-card focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange"
-            >
-              {/* The button is named from its content (WCAG 2.5.3: the name contains the visible text); this cue says what it does. */}
-              <span className="sr-only">{t("watchLabel")} </span>
-              <span className="relative block aspect-[4/5] overflow-hidden bg-navy">
-                <Image
-                  src={media.poster}
-                  alt=""
-                  fill
-                  unoptimized
-                  sizes="(min-width: 1024px) 360px, 92vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-[1.035]"
-                />
-                <span
-                  aria-hidden
-                  className="absolute inset-0 bg-gradient-to-t from-navy/75 via-navy/5 to-transparent"
-                />
-                <span className="absolute bottom-3 left-3 inline-flex items-center gap-2.5 text-white">
-                  <PlayGlyph />
-                  <span className="font-mono text-[12.5px] font-semibold">
-                    {formatRunTime(media.seconds[lang])}
-                  </span>
-                </span>
-              </span>
-              <span className="block p-4">
-                <span className="block font-heading text-[18px] font-bold tracking-[-0.028em] text-heading">
-                  {title}
-                </span>
-                <span className="mt-1.5 block text-[14px] leading-[1.5] text-muted">
-                  {t(`cards.${key}.blurb`)}
-                </span>
-              </span>
-            </WatchDemoButton>
-            <p className="mt-3 text-[13px] leading-[1.5] text-muted">
-              {t("note")}
-            </p>
-          </div>
-        </div>
+        {sim ? (
+          <DemoTabs
+            label={sim.tabsLabel}
+            tabs={[sim.tabWatch, sim.tabTry]}
+            panels={[
+              story,
+              <MissedCallSimulator
+                key="simulator"
+                copy={sim.copy}
+                booked={sim.booked}
+              />,
+            ]}
+          />
+        ) : (
+          story
+        )}
       </Container>
     </section>
   );
+}
+
+/** The simulator's strings, resolved here so the client part needs no namespace. */
+async function simulatorCopy() {
+  const t = await getTranslations("demoStories.simulator");
+  const p = await getTranslations("productPreview");
+  const booked = schedulingVerified();
+  const copy: SimulatorCopy = {
+    badge: t("badge"),
+    title: t("title"),
+    intro: t("intro"),
+    tradeLabel: t("tradeLabel"),
+    trades: t.raw("trades") as SimulatorCopy["trades"],
+    start: t("start"),
+    again: t("again"),
+    skip: t("skip"),
+    note: t("note"),
+    appTitle: t("appTitle"),
+    today: t("today"),
+    newToday: t("newToday"),
+    empty: t("empty"),
+    newCustomer: t("newCustomer"),
+    line: p("line"),
+    textBack: t("textBack"),
+    reply: p("sms4"),
+    confirm: booked ? p("sms7Booked") : p("sms7Request"),
+    threadLabel: t("threadLabel"),
+    fieldService: t("fieldService"),
+    fieldName: t("fieldName"),
+    fieldAddress: t("fieldAddress"),
+    fieldWhen: booked ? t("fieldBooked") : t("fieldRequest"),
+    name: t("name"),
+    address: t("address"),
+    when: booked ? p("slotThu") : t("prefers"),
+    weekLabel: t("weekLabel"),
+    days: t.raw("days") as string[],
+    otherJob: t("otherJob"),
+    tentative: t("tentative"),
+    notifyTitle: booked ? p("notifyBookedTitle") : p("notifyRequestTitle"),
+    resultFrom: p("resultFrom"),
+    resultTo: booked ? p("resultBooked") : p("resultRequest"),
+    status: {
+      ringing: t("status.ringing"),
+      missed: t("status.missed"),
+      texted: t("status.texted"),
+      replied: t("status.replied"),
+      captured: t("status.captured"),
+      scheduled: booked ? t("status.booked") : t("status.request"),
+    },
+  };
+  return {
+    booked,
+    copy,
+    tabsLabel: t("tabsLabel"),
+    tabWatch: t("tabWatch"),
+    tabTry: t("tabTry"),
+  };
 }

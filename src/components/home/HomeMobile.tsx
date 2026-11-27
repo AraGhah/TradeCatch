@@ -3,14 +3,15 @@ import { getTranslations } from "next-intl/server";
 import { Container } from "@/components/Container";
 import { CTAButton } from "@/components/CTAButton";
 import { FaqAccordion } from "@/components/FaqAccordion";
+import { LossRecovery } from "@/components/home/LossRecovery";
+import { lossRecoveryCopy } from "@/components/home/loss-recovery-copy";
 import { StickyAuditCta } from "@/components/StickyAuditCta";
 import { StoryDemos } from "@/components/StoryDemos";
 import { WebsiteServiceAddOn } from "@/components/WebsiteServiceAddOn";
 import { formatPlanPrice, PLAN_PRICES } from "@/lib/plans";
 import { websiteServiceAddOn } from "@/lib/plan-marketing";
 
-const SECTION =
-  "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-6 sm:py-8";
+const SECTION = "border-b border-[rgb(var(--ink-rgb)/0.08)] px-0 py-6 sm:py-8";
 
 const EYEBROW = "text-ui text-[13px] font-medium text-ember-text";
 const H2 =
@@ -75,10 +76,6 @@ export async function HomeMobile({ locale }: { locale: string }) {
   const t = await getTranslations("home");
   const cta = await getTranslations("cta");
   const plans = await getTranslations("plans");
-  const benefits = t.raw("mobile.benefits.items") as {
-    title: string;
-    body: string;
-  }[];
   const steps = t.raw("mobile.howItWorks.steps") as {
     title: string;
     body: string;
@@ -112,30 +109,16 @@ export async function HomeMobile({ locale }: { locale: string }) {
   return (
     <div className="lg:hidden">
       {/* Story demos remain below the hero for mobile conversion. */}
-      <StoryDemos locale={locale} compact />
+      <StoryDemos locale={locale} compact simulator />
 
-      {/* 3. Benefits */}
+      {/* 3. The problem, told as the same three moments with and without TradeCatch. */}
       <SplitSection
         className="bg-paper"
         eyebrow={t("mobile.benefits.eyebrow")}
         title={t("mobile.benefits.headline")}
         intro={t("mobile.benefits.intro")}
       >
-        <ul className="m-0 grid list-none grid-cols-2 gap-2.5 p-0">
-          {benefits.map((item) => (
-            <li
-              key={item.title}
-              className="rounded-[14px] border border-[rgb(var(--ink-rgb)/0.1)] bg-surface p-3"
-            >
-              <h3 className="font-heading text-[14.5px] font-bold leading-snug tracking-[-0.02em] text-heading">
-                {item.title}
-              </h3>
-              <p className="mt-1 text-[12.5px] leading-[1.45] text-muted">
-                {item.body}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <LossRecovery copy={await lossRecoveryCopy()} compact />
       </SplitSection>
 
       {/* 4. How it works */}
@@ -217,7 +200,10 @@ export async function HomeMobile({ locale }: { locale: string }) {
           same HTML (CSS hides one), so the id must differ from the desktop
           `plans` section: duplicate ids are invalid and `#plans` would
           resolve to the hidden copy. */}
-      <section id="plans-mobile" className={`${SECTION} scroll-mt-24 bg-surface`}>
+      <section
+        id="plans-mobile"
+        className={`${SECTION} scroll-mt-24 bg-surface`}
+      >
         <Container>
           <p className={EYEBROW}>{t("mobile.pricing.eyebrow")}</p>
           <h2 className={H2}>{t("mobile.pricing.headline")}</h2>

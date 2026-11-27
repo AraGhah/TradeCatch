@@ -3,11 +3,12 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 /**
- * The hero's one entrance: the phone settles, the call's steps drop onto the
- * rail in order and the waveform rises once. Only transforms move, never
- * opacity, so nothing is ever hidden or low in contrast, and the page is
- * complete and usable whether or not this runs. GSAP is loaded after the page
- * is interactive, and not at all for visitors who ask for reduced motion.
+ * The hero's one entrance: the phone settles into place, then plays the
+ * workflow itself (see WorkflowPhone). Only a transform moves, never opacity,
+ * so nothing is ever hidden or low in contrast, and the page is complete and
+ * usable whether or not this runs. It uses the browser's own Web Animations
+ * API, so no animation library is downloaded, and it does nothing for
+ * visitors who ask for reduced motion.
  */
 export function HeroEntrance({
   children,
@@ -19,58 +20,18 @@ export function HeroEntrance({
   const scope = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const root = scope.current;
-    if (!root) return;
+    const phone = scope.current?.querySelector<HTMLElement>(
+      "[data-motion='phone']",
+    );
+    if (!phone || typeof phone.animate !== "function") return;
     if (!window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
       return;
     }
-
-    let cancelled = false;
-    let revert: (() => void) | undefined;
-
-    void import("gsap")
-      .then(({ gsap }) => {
-        if (cancelled) return;
-        // matchMedia undoes everything if the motion preference changes.
-        const media = gsap.matchMedia(root);
-        media.add("(prefers-reduced-motion: no-preference)", () => {
-          const timeline = gsap.timeline({ defaults: { ease: "power3.out" } });
-          timeline
-            .from("[data-motion='phone']", {
-              y: 14,
-              duration: 0.7,
-              clearProps: "transform",
-            })
-            .from(
-              "[data-motion='stage']",
-              { y: -8, duration: 0.45, stagger: 0.14, clearProps: "transform" },
-              0.1,
-            )
-            .from(
-              "[data-motion='bar']",
-              {
-                scaleY: 0.3,
-                duration: 0.5,
-                stagger: 0.025,
-                clearProps: "transform",
-              },
-              0.2,
-            )
-            .from(
-              "[data-motion='notice']",
-              { y: 12, duration: 0.55, stagger: 0.2, clearProps: "transform" },
-              0.45,
-            );
-        });
-        revert = () => media.revert();
-      })
-      // Decoration only: a chunk that fails to load must not surface as an error.
-      .catch(() => undefined);
-
-    return () => {
-      cancelled = true;
-      revert?.();
-    };
+    const settle = phone.animate(
+      [{ transform: "translateY(14px)" }, { transform: "none" }],
+      { duration: 700, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+    );
+    return () => settle.cancel();
   }, []);
 
   return (

@@ -362,6 +362,57 @@
         "note": "Sans pression. Des prix clairs. Un soutien direct du fondateur."
       },
       "stickyCta": "Réserver une démo gratuite"
+    },
+    "lossRecovery": {
+      "label": "Comparer les trois mêmes moments",
+      "without": "Sans TradeCatch",
+      "with": "Avec TradeCatch",
+      "lost": "Contrat perdu",
+      "recovered": "Contrat récupéré",
+      "saved": [
+        [
+          "L’appel est manqué pendant que vous travaillez",
+          "Un texto part aussitôt vers le client",
+          "Il répond, et la demande vous parvient"
+        ],
+        [
+          "La réceptionniste prend l’appel",
+          "Nom, adresse et service sont notés",
+          "La demande vous attend dans votre compte, prête à lire"
+        ],
+        [
+          "Vous envoyez la soumission et retournez au travail",
+          "Des relances par texto partent aux jours 1, 3, 7 et 14",
+          "Le client répond, et vous reprenez le dossier"
+        ]
+      ]
+    },
+    "signalFlow": {
+      "label": "Comment un appel circule entre votre client, TradeCatch et vous",
+      "nodes": [
+        {
+          "title": "Votre client",
+          "body": "Appelle votre ligne"
+        },
+        {
+          "title": "TradeCatch",
+          "body": "Répond, questionne, note"
+        },
+        {
+          "title": "Vous",
+          "body": "Recevez les détails"
+        }
+      ],
+      "packets": [
+        "Appel",
+        "Questions",
+        "Détails",
+        "Alerte",
+        "Texto de suivi",
+        "Rendez-vous"
+      ],
+      "stop": "Arrêter l’animation",
+      "replay": "Rejouer"
     }
   },
   "services": {
@@ -1522,7 +1573,74 @@
       "Répond en français ou en anglais, sous le nom de votre entreprise.",
       "Recueille le nom, l’adresse, le service demandé et l’urgence.",
       "Vous transmet la demande pour que vous rappeliez quand vous êtes libre."
-    ]
+    ],
+    "simulator": {
+      "tabsLabel": "Démo",
+      "tabWatch": "Voir l’histoire",
+      "tabTry": "Simuler un appel manqué",
+      "badge": "Simulation",
+      "title": "Manquez un appel exprès.",
+      "intro": "Choisissez un métier, puis laissez sonner. Voyez ce que reçoit le client et ce qui arrive dans votre tableau de bord.",
+      "tradeLabel": "Métier",
+      "trades": [
+        {
+          "id": "plumbing",
+          "label": "Plomberie",
+          "ask": "Mon chauffe-eau fuit. Quelqu’un peut passer cette semaine ?",
+          "service": "Fuite de chauffe-eau"
+        },
+        {
+          "id": "electrical",
+          "label": "Électricité",
+          "ask": "La moitié de mes prises ne fonctionnent plus. Quelqu’un peut vérifier cette semaine ?",
+          "service": "Prises hors service"
+        },
+        {
+          "id": "heating",
+          "label": "Chauffage",
+          "ask": "Ma fournaise ne démarre plus. Quelqu’un peut passer cette semaine ?",
+          "service": "Fournaise qui ne démarre pas"
+        }
+      ],
+      "start": "Manquer l’appel",
+      "again": "Recommencer",
+      "skip": "Passer à la fin",
+      "note": "Tout se passe dans votre navigateur. Aucun appel n’est fait et aucun texto n’est envoyé.",
+      "appTitle": "Demandes",
+      "today": "Aujourd’hui",
+      "newToday": "Nouvelles aujourd’hui",
+      "empty": "Aucune nouvelle demande",
+      "newCustomer": "Nouveau client",
+      "textBack": "Désolés d’avoir manqué votre appel. Comment pouvons-nous vous aider ?",
+      "threadLabel": "Conversation texto",
+      "fieldService": "Service",
+      "fieldName": "Nom",
+      "fieldAddress": "Adresse",
+      "fieldBooked": "Rendez-vous",
+      "fieldRequest": "Préférence",
+      "name": "Sam",
+      "address": "24 rue des Érables",
+      "prefers": "Jeudi matin",
+      "weekLabel": "Cette semaine",
+      "days": [
+        "lun.",
+        "mar.",
+        "mer.",
+        "jeu.",
+        "ven."
+      ],
+      "otherJob": "Autre chantier",
+      "tentative": "À confirmer",
+      "status": {
+        "ringing": "Appel entrant",
+        "missed": "Appel manqué",
+        "texted": "Texto envoyé automatiquement",
+        "replied": "Le client a répondu",
+        "captured": "Détails notés",
+        "booked": "Réservé",
+        "request": "Heure à confirmer"
+      }
+    }
   },
   "errors": {
     "eyebrow": "Une erreur est survenue",
@@ -5244,22 +5362,60 @@
   },
   "productPreview": {
     "label": "Aperçu du service TradeCatch",
-    "badge": "Réception téléphonique",
-    "business": "Votre entreprise",
-    "dashboard": "Centre de gestion",
-    "railLabel": "Le parcours d’un appel",
+    "badge": "Récupération des appels manqués",
+    "example": "Exemple de fonctionnement",
+    "screenLabelBooked": "Comment un appel manqué devient un travail réservé",
+    "screenLabelRequest": "Comment TradeCatch fait le suivi d’un appel manqué",
+    "busy": "Sur un chantier",
     "incoming": "Appel entrant",
+    "line": "Vers votre ligne d’entreprise",
     "customer": "Nouveau client",
-    "request": "Demande de service",
     "service": "Demande de plomberie",
-    "appointment": "Prise de rendez-vous",
-    "scheduling": "Selon vos disponibilités",
-    "recorded": "Dans votre tableau de bord",
-    "recordedNote": "Prête pour votre suivi",
-    "handled": "Appel pris en charge",
-    "qualified": "Demande qualifiée",
+    "decline": "Refuser",
+    "answer": "Répondre",
+    "missed": "Appel manqué",
+    "textingBack": "TradeCatch répond par texto",
+    "auto": "Envoyé automatiquement",
+    "sms1": "Bonjour! Ici votre équipe de plomberie. Désolés d’avoir manqué votre appel. Comment pouvons-nous vous aider ? Répondez STOP pour vous désabonner.",
+    "sms2": "Mon chauffe-eau fuit. Quelqu’un peut passer cette semaine ?",
+    "sms3": "Désolés de l’apprendre. Quels sont votre nom et l’adresse du service ?",
+    "sms4": "Sam, 24 rue des Érables",
+    "sms5Booked": "Merci, Sam. Disponibilités : jeudi de 9 h à 11 h ou vendredi de 14 h à 16 h. Laquelle vous convient ?",
+    "sms5Request": "Merci, Sam. Quel jour et quelle heure vous conviennent le mieux ?",
+    "sms6": "Jeudi matin, s’il vous plaît",
+    "sms7Booked": "C’est confirmé : nous vous attendons jeudi, de 9 h à 11 h. Répondez ici si vous devez changer l’heure.",
+    "sms7Request": "Merci! Je transmets votre demande à l’équipe, qui vous confirmera le rendez-vous.",
+    "calTitle": "Votre agenda",
+    "calWorking": "Vérification des disponibilités…",
+    "calFound": "2 plages libres trouvées",
+    "calDone": "Jeudi de 9 h à 11 h réservé",
+    "slotWed": "mer. 13 h à 15 h",
+    "slotThu": "jeu. 9 h à 11 h",
+    "slotFri": "ven. 14 h à 16 h",
+    "slotBusy": "occupé",
+    "reqTitle": "Détails de la demande",
+    "reqWorking": "Organisation de la demande…",
+    "reqDone": "Prête pour que vous confirmiez l’heure",
+    "reqService": "Fuite de chauffe-eau",
+    "reqName": "Sam",
+    "reqAddress": "24 rue des Érables",
+    "notifyApp": "TradeCatch",
+    "notifyNow": "maintenant",
+    "notifyBookedTitle": "Nouveau travail réservé",
+    "notifyBookedBody": "Sam · Fuite de chauffe-eau · jeu. 9 h à 11 h · 24 rue des Érables",
+    "notifyRequestTitle": "Nouvelle demande de travail",
+    "notifyRequestBody": "Sam · Fuite de chauffe-eau · Préfère jeudi matin · 24 rue des Érables",
+    "resultFrom": "Appel manqué",
+    "resultBooked": "Travail réservé",
+    "resultRequest": "Demande de travail",
+    "resultNote": "Récupéré pendant que vous travailliez",
+    "composer": "Texto",
+    "noticeLeft": "Texto instantané",
+    "noticeBooked": "Agenda mis à jour",
+    "noticeRequest": "Détails envoyés",
+    "pause": "Mettre la démo en pause",
+    "play": "Lire la démo",
     "captionTitle": "Vos appels. Vos clients.",
-    "captionBody": "Concentrez-vous sur vos contrats pendant que TradeCatch prend en charge vos appels.",
-    "example": "Exemple de fonctionnement"
+    "captionBody": "Concentrez-vous sur vos contrats pendant que TradeCatch prend en charge vos appels."
   }
 }
