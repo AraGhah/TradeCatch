@@ -563,6 +563,7 @@ export function buildProfileConfig(
     transferHours: transfer.transferHours,
     transferTimeoutSeconds: transfer.timeoutSeconds,
     allowVoicemailOnly: !canTransfer || transfer.failedAction === "voicemail",
+    failedTransferAction: transfer.failedAction,
     collectPreferredTime:
       s.collectPreferredTime !== false && collect.preferredDate !== false,
     phoneBooking,

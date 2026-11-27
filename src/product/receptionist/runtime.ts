@@ -58,6 +58,8 @@ type RuntimeState = {
   envConfigs: ReceptionistConfig[];
   profileConfigs: ReceptionistConfig[];
   profilesLoadedAt: number;
+  /** organizationId -> updatedAt of each profile in the last load (staleness check). */
+  profileVersions?: Map<string, string>;
   profileLoadError?: string;
   /** Founder env configs were refused by production validation (see loadEnvConfigs). */
   envConfigError?: string;
@@ -199,8 +201,18 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
     // Read-only: tenant profiles are DB-backed and must not require an
     // env-provisioned missed-call client (production legitimately has none).
     const missedCall = getMissedCallReadStore();
+    const versions = new Map<string, string>();
+    const store = state.profileStore;
     state.profileConfigs = await loadProfileConfigs({
-      profiles: state.profileStore,
+      // Same store; the load also notes which version of each profile it used.
+      profiles: {
+        ...store,
+        async listActivatedProfiles() {
+          const list = await store.listActivatedProfiles();
+          for (const p of list) versions.set(p.organizationId, p.updatedAt);
+          return list;
+        },
+      },
       getOrganization: (id) => saas.getOrganization(id),
       getClient: (id) => missedCall.getClient(id),
       getPrivacy: (ids) => getPrivacyStore().getMany(ids),
@@ -220,6 +232,7 @@ async function reloadProfiles(state: RuntimeState): Promise<void> {
         }),
     });
     state.profilesLoadedAt = Date.now();
+    state.profileVersions = versions;
     state.profileLoadError = undefined;
     logReceptionistDiagnostic({
       event: "profiles_loaded",
@@ -286,21 +299,28 @@ function callerTextPort(
  * not switched from the dashboard and stay as loaded. A database error keeps
  * the last good answer: one slow query must not drop a customer's call.
  */
-async function confirmLineActive(
+async function lineState(
   profileStore: ProfileStore,
+  versions: Map<string, string> | undefined,
   config: ReceptionistConfig,
-): Promise<boolean> {
-  if (config.source !== "profile") return true;
+): Promise<{ active: boolean; stale: boolean }> {
+  if (config.source !== "profile") return { active: true, stale: false };
+  const organizationId = config.id.replace(/^rc_org_/, "");
   try {
-    const profile = await profileStore.getProfile(
-      config.id.replace(/^rc_org_/, ""),
-    );
-    return Boolean(
-      profile?.activated && profile.settings.callHandlingMode !== "disabled",
-    );
+    const profile = await profileStore.getProfile(organizationId);
+    return {
+      active: Boolean(
+        profile?.activated && profile.settings.callHandlingMode !== "disabled",
+      ),
+      // Saved since this instance loaded it: the owner's change must be live
+      // on this very call, not up to PROFILE_CACHE_TTL_MS later.
+      stale: Boolean(
+        profile && versions?.get(organizationId) !== profile.updatedAt,
+      ),
+    };
   } catch (err) {
     logReceptionistDiagnostic({ event: "activation_check_failed", error: err });
-    return true;
+    return { active: true, stale: false };
   }
 }
 
@@ -381,7 +401,8 @@ function bootstrap(): RuntimeState {
     configs: () => [...state.envConfigs, ...state.profileConfigs],
     brain: llm ? createLlmBrain(llm) : createRuleBrain(),
     llm,
-    confirmActive: (config) => confirmLineActive(profileStore, config),
+    confirmActive: async (config) =>
+      (await lineState(profileStore, state.profileVersions, config)).active,
     notifier: createReceptionistNotifier({
       sms,
       sendEmail: sendBusinessNotifyEmail,
@@ -489,8 +510,11 @@ export function getReceptionistRuntime() {
     llm: s.llm,
     durable: s.durable,
     /** Uncached check that a tenant line is still switched on (see confirmLineActive). */
-    confirmLineActive: (config: ReceptionistConfig) =>
-      confirmLineActive(s.profileStore, config),
+    confirmLineActive: async (config: ReceptionistConfig) =>
+      (await lineState(s.profileStore, s.profileVersions, config)).active,
+    /** Uncached: is the line on, and was its profile saved after this instance loaded it? */
+    lineState: (config: ReceptionistConfig) =>
+      lineState(s.profileStore, s.profileVersions, config),
     /** Set when the number belongs to a business that switched its receptionist off. */
     describeInactiveLine: (numberE164: string) =>
       describeInactiveLine(s.profileStore, numberE164),
